@@ -92,11 +92,6 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
   }
 
   @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
-  }
-
-  @Override
   public boolean dontFormatMyModel() {
     return true;
   }

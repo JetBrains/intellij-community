@@ -44,7 +44,7 @@ public class ConcurrencyAnnotationsManager {
     fillDefaults(myNotThreadSafeList, NOT_THREAD_SAFE);
   }
 
-  private static void fillDefaults(List<String> list, final String annoName) {
+  private static void fillDefaults(List<? super String> list, final String annoName) {
     list.addAll(ContainerUtil.map(FRAMEWORKS, framework -> framework + "." + annoName));
   }
 

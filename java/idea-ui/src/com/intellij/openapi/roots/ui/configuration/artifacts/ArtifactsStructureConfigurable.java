@@ -22,9 +22,12 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorLi
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsState;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.InvalidArtifact;
 import com.intellij.packaging.impl.artifacts.PackagingElementPath;
@@ -135,7 +138,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     if (!element.getLibraryName().equals(name)) {
       return false;
     }
-    
+
     final LibraryTable table = library.getTable();
     if (table != null) {
       return table.getTableLevel().equals(element.getLevel());
@@ -273,6 +276,14 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 
+  @NotNull
+  @Override
+  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+    final ArrayList<AnAction> actions = new ArrayList<>();
+    actions.add(new CopyArtifactAction());
+    return actions;
+  }
+
   @Override
   public void apply() throws ConfigurationException {
     myPackagingEditorContext.saveEditorSettings();
@@ -364,6 +375,41 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       addArtifact(myType, myArtifactTemplate);
+    }
+  }
+
+  private class CopyArtifactAction extends AnAction {
+    private CopyArtifactAction() {
+      super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      final Object o = getSelectedObject();
+      if (o instanceof Artifact) {
+        final Artifact selected = (Artifact)o;
+        ModifiableArtifactModel artifactModel = myPackagingEditorContext.getOrCreateModifiableArtifactModel();
+        String suggestedName = ArtifactUtil.generateUniqueArtifactName(selected.getName(), artifactModel);
+        final String newName = Messages.showInputDialog("Enter artifact name:",
+                                                        "Copy Artifact",
+                                                        COPY_ICON,
+                                                        suggestedName,
+                                                        new NonEmptyInputValidator());
+        if (newName == null) return;
+
+        CompositePackagingElement<?> rootCopy = ArtifactUtil.copyFromRoot(selected.getRootElement(), myProject);
+        artifactModel.addArtifact(newName, selected.getArtifactType(), rootCopy);
+      }
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
+        e.getPresentation().setEnabled(false);
+      }
+      else {
+        e.getPresentation().setEnabled(getSelectedObject() instanceof Artifact);
+      }
     }
   }
 }

@@ -25,7 +25,7 @@ class ScriptRegExpBreakpointTarget(private val regExp: String, val language: Str
     }
   }
 
-  override fun toString() = regExp
+  override fun toString(): String = regExp
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {
@@ -37,5 +37,5 @@ class ScriptRegExpBreakpointTarget(private val regExp: String, val language: Str
     return regExp == (other as ScriptRegExpBreakpointTarget).regExp
   }
 
-  override fun hashCode() = regExp.hashCode()
+  override fun hashCode(): Int = regExp.hashCode()
 }

@@ -1,11 +1,11 @@
 <component name="libraryTable">
   <library name="jediterm-pty">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jediterm-pty-2.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jediterm-pty-2.9.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/jediterm-pty-2.8-src.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jediterm-pty-2.9-src.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -22,7 +22,7 @@ open class KotlinGuiTestCase : GuiTestCase() {
 
   @Rule
   @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest()
+  val screenshotsDuringTest = ScreenshotsDuringTest(1000) // = 1 sec
 
   @Rule
   @JvmField

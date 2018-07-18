@@ -16,11 +16,11 @@ import java.util.*
 
 object PyCollectionTypeUtil {
 
-  val DICT_CONSTRUCTOR = "dict.__init__"
+  val DICT_CONSTRUCTOR: String = "dict.__init__"
   private const val LIST_CONSTRUCTOR = "list.__init__"
   private const val SET_CONSTRUCTOR = "set.__init__"
 
-  var COLLECTION_CONSTRUCTORS = setOf(LIST_CONSTRUCTOR, DICT_CONSTRUCTOR, SET_CONSTRUCTOR)
+  var COLLECTION_CONSTRUCTORS: Set<String> = setOf(LIST_CONSTRUCTOR, DICT_CONSTRUCTOR, SET_CONSTRUCTOR)
 
   private val MAX_ANALYZED_ELEMENTS_OF_LITERALS = 10 /* performance */
 

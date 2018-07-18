@@ -15,17 +15,13 @@
  */
 package org.jetbrains.jps.builders.java
 
-import org.jetbrains.jps.builders.JpsBuildTestCase
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.application.ex.PathManagerEx
-import java.io.File
-import java.util.ArrayList
-import org.jetbrains.jps.builders.BuildResult
-
 /**
  * @author nik
  */
-class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
+class ClassesWithMultipleSourcesTest: IncrementalBuildTestCase() {
+  override val testDataDirectoryName: String
+    get() = "multipleSources"
+
   fun testAddFile() {
     doTest {
       createFile("src/a.p")
@@ -81,35 +77,4 @@ class ClassesWithMultipleSourcesTest: JpsBuildTestCase() {
     }
   }
 
-  private fun doTest(actions: BuildTestActions.() -> Unit) {
-    addModule("m", createDir("src"))
-    val testActions = BuildTestActions()
-    testActions.actions()
-    rebuildAllModules()
-    var result: BuildResult? = null
-    testActions.modifyActions.forEach { action ->
-      action()
-      result = buildAllModules()
-      result!!.assertSuccessful()
-    }
-    checkLog()
-    checkMappingsAreSameAfterRebuild(result)
-  }
-
-  override fun getTestDataRootPath(): String {
-    return FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/incremental/multipleSources").absolutePath, '/')
-  }
-
-  private fun checkLog() {
-    val testName = getTestName(true)
-    checkFullLog(File(testDataRootPath, "$testName.log"))
-  }
-
-  private class BuildTestActions {
-    val modifyActions = ArrayList<() -> Unit>()
-
-    fun modify(action: () -> Unit) {
-      modifyActions.add(action)
-    }
-  }
 }

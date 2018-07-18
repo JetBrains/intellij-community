@@ -135,14 +135,14 @@
                       <text value="Download &amp;JavaDocs"/>
                     </properties>
                   </component>
-                  <component id="75440" class="com.intellij.ui.components.JBCheckBox" binding="myIncludeTransitiveDepsCheckBox">
+                  <grid id="2c1fe" binding="myTransitiveDependenciesPanel" layout-manager="FlowLayout" hgap="0" vgap="0" flow-align="1">
                     <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties>
-                      <text value="Include &amp;transitive dependencies"/>
-                    </properties>
-                  </component>
+                    <properties/>
+                    <border type="none"/>
+                    <children/>
+                  </grid>
                 </children>
               </grid>
             </children>

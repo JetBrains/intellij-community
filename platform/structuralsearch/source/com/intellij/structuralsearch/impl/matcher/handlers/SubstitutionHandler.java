@@ -384,7 +384,7 @@ public class SubstitutionHandler extends MatchingHandler {
         } else {
           // match found
           if (handler.isMatchSequentiallySucceeded(matchNodes)) {
-            return checkSameOccurrencesConstraint();
+            return checkSameOccurrencesConstraint(context);
           }
           removeLastResults(matchedOccurs, context);
           return false;
@@ -404,7 +404,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
           while(matchNodes.hasNext() && matchedOccurs <= maxOccurs) {
             if (nextHandler.matchSequentially(patternNodes, matchNodes, context)) {
-              return checkSameOccurrencesConstraint();
+              return checkSameOccurrencesConstraint(context);
             }
 
             if (flag) {
@@ -427,7 +427,7 @@ public class SubstitutionHandler extends MatchingHandler {
           removeLastResults(matchedOccurs, context);
           return false;
         } else {
-          return checkSameOccurrencesConstraint();
+          return checkSameOccurrencesConstraint(context);
         }
       }
     } finally {
@@ -435,14 +435,16 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   }
 
-  private boolean checkSameOccurrencesConstraint() {
+  private boolean checkSameOccurrencesConstraint(MatchContext context) {
     if (totalMatchedOccurs == -1) {
       totalMatchedOccurs = matchedOccurs;
       return true;
     }
-    else {
-      return totalMatchedOccurs == matchedOccurs;
+    MatchResult result = context.hasResult() ? context.getResult().findChild(name) : null;
+    if (result == null && context.getPreviousResult() != null) {
+      result = context.getPreviousResult().findChild(name);
     }
+    return result == null || result.size() == matchedOccurs;
   }
 
   public void setTarget(boolean target) {

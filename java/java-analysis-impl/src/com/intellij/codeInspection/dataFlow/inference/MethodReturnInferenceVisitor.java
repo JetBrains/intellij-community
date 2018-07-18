@@ -30,6 +30,7 @@ class MethodReturnInferenceVisitor {
   private boolean hasNotNulls;
   private boolean hasNulls;
   private boolean hasUnknowns;
+  private boolean hasSystemExit;
   MultiMap<String, ExpressionRange> delegates = MultiMap.create();
   Set<String> assignments = ContainerUtil.newHashSet();
   Set<String> returnedCheckedVars = ContainerUtil.newHashSet();
@@ -55,6 +56,15 @@ class MethodReturnInferenceVisitor {
     }
     else if (type == ASSIGNMENT_EXPRESSION) {
       ContainerUtil.addIfNotNull(assignments, getNameIdentifierText(tree, findExpressionChild(tree, element)));
+    }
+    else if (type == METHOD_CALL_EXPRESSION) {
+      LighterASTNode reference = findExpressionChild(tree, element);
+      if ("exit".equals(getNameIdentifierText(tree, reference))) {
+        LighterASTNode qualifier = findExpressionChild(tree, reference);
+        if ("System".equals(getNameIdentifierText(tree, qualifier)) && findExpressionChild(tree, qualifier) == null) {
+          hasSystemExit = true;
+        }
+      }
     }
   }
 
@@ -169,6 +179,9 @@ class MethodReturnInferenceVisitor {
       delegateCalls = ContainerUtil.newArrayList(delegates.get(delegates.keySet().iterator().next()));
     }
     if (hasNulls) {
+      if (hasSystemExit) {
+        return new MethodReturnInferenceResult.Predefined(Nullness.UNKNOWN);
+      }
       return delegateCalls == null || hasNotNulls || hasErrors || hasUnknowns
              ? new MethodReturnInferenceResult.Predefined(Nullness.NULLABLE)
              : new MethodReturnInferenceResult.FromDelegate(Nullness.NULLABLE, delegateCalls);

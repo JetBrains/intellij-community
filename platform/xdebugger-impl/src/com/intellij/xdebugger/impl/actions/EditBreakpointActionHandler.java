@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,7 +38,9 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
   }
 
   public void editBreakpoint(@NotNull Project project, @NotNull Editor editor, @NotNull Object breakpoint, @NotNull GutterIconRenderer breakpointGutterRenderer) {
-    if (BreakpointsDialogFactory.getInstance(project).isBreakpointPopupShowing()) return;
+    if (BreakpointsDialogFactory.getInstance(project).popupRequested(breakpoint)) {
+      return;
+    }
     EditorGutterComponentEx gutterComponent = ((EditorEx)editor).getGutterComponentEx();
     Point point = gutterComponent.getCenterPoint(breakpointGutterRenderer);
     if (point == null) { // disabled gutter icons for example

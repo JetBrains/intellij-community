@@ -273,12 +273,11 @@ public class EnvironmentUtil {
   }
 
   @NotNull
-  public static Map<String, String> parseEnv(String text) throws Exception {
+  public static Map<String, String> parseEnv(String... lines) throws Exception {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    String[] lines = text.split("\0");
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
@@ -295,6 +294,13 @@ public class EnvironmentUtil {
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
     return newEnv;
+  }
+
+  @NotNull
+  private static Map<String, String> parseEnv(String text) throws Exception {
+    String[] lines = text.split("\0");
+
+    return parseEnv(lines);
   }
 
   private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {

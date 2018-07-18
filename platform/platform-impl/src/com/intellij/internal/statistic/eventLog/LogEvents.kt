@@ -9,9 +9,9 @@ import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
 open class LogEvent(session: String, bucket: String, recorderId: String, recorderVersion: String, type: String) {
-  val session = escape(session)
-  val bucket = escape(bucket)
-  val time = System.currentTimeMillis()
+  val session: String = escape(session)
+  val bucket: String = escape(bucket)
+  val time: Long = System.currentTimeMillis()
   val recorder: LogEventRecorder = LogEventRecorder(escape(recorderId), escape(recorderVersion))
   val action: LogEventAction = LogEventAction(escape(type))
 

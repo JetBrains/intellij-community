@@ -201,7 +201,7 @@ public class VisibilityInspectionTest extends InspectionTestCase {
 
       @Override
       public int getMinVisibilityLevel(PsiMember member) {
-        return member instanceof PsiMethod && isEntryPoint(member) ? PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL : -1;
+        return member instanceof PsiMethod && isEntryPoint(member) ? PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL : ACCESS_LEVEL_INVALID;
       }
 
       @Override

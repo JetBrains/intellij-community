@@ -355,9 +355,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       // restore watches tab if minimized
       tab.restoreContent(viewId);
 
-      JComponent component = tab.getUi().getComponent();
-      if (component instanceof DataProvider) {
-        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+      RunnerLayoutUi layoutUi = tab.getUi();
+      if (layoutUi instanceof DataProvider) {
+        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)layoutUi));
         if (ui != null) {
           Content content = ui.findContent(viewId);
 
@@ -423,9 +423,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void restoreContent(String contentId) {
-    JComponent component = myUi.getComponent();
-    if (component instanceof DataProvider) {
-      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+    if (myUi instanceof DataProvider) {
+      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)myUi));
       if (ui != null) {
         ui.restoreContent(contentId);
       }

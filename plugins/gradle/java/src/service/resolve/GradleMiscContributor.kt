@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -27,14 +28,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  */
 class GradleMiscContributor : GradleMethodContextContributor {
   companion object {
-    val useJUnitClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_TASKS_TESTING_TEST, "useJUnit"))
-    val testLoggingClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_TASKS_TESTING_TEST, "testLogging"))
-    val downloadClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "download"))
-    val domainCollectionWithTypeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DOMAIN_OBJECT_COLLECTION, "withType"))
-    val manifestClosure = groovyClosure().inMethod(psiMethod(GRADLE_JVM_TASKS_JAR, "manifest"))
+    val useJUnitClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_TASKS_TESTING_TEST, "useJUnit"))
+    val testLoggingClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_TASKS_TESTING_TEST, "testLogging"))
+    val downloadClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "download"))
+    val domainCollectionWithTypeClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DOMAIN_OBJECT_COLLECTION, "withType"))
+    val manifestClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_JVM_TASKS_JAR, "manifest"))
     //    val publicationsClosure = groovyClosure().inMethod(psiMethod("org.gradle.api.publish.PublishingExtension", "publications"))
-    const val downloadSpecFqn = "de.undercouch.gradle.tasks.download.DownloadSpec"
-    const val pluginDependenciesSpecFqn = "org.gradle.plugin.use.PluginDependenciesSpec"
+    const val downloadSpecFqn: String = "de.undercouch.gradle.tasks.download.DownloadSpec"
+    const val pluginDependenciesSpecFqn: String = "org.gradle.plugin.use.PluginDependenciesSpec"
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {

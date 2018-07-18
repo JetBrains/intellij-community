@@ -207,7 +207,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     }
     // We assume that data context from focus-based retrieval should success if performed from EDT.
     Promise<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocusAsync();
-    if (asyncResult.getState() == Promise.State.FULFILLED) {
+    if (asyncResult.isSucceeded()) {
       Editor editor = null;
       try {
         editor = CommonDataKeys.EDITOR.getData(asyncResult.blockingGet(-1));

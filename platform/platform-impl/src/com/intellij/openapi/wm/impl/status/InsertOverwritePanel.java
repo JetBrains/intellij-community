@@ -50,7 +50,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   @Override
   @NotNull
   public String ID() {
-    return "InsertOverwrite";
+    return StatusBar.StandardWidgets.INSERT_OVERWRITE_PANEL;
   }
 
   @Override

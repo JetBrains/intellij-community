@@ -35,7 +35,7 @@ object GlobalActionRecorder {
 
   private val LOG = Logger.getInstance("#${GlobalActionRecorder::class.qualifiedName}")
 
-  var isActive = false
+  var isActive: Boolean = false
     private set
 
   private val globalActionListener = object : AnActionListener {

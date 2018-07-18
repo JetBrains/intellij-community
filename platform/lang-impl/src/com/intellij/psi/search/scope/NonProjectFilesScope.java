@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -10,6 +9,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.scope.packageSet.FilteredPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.Colored;
+import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Colored(color = "ffffe4", darkVariant = "494539")
 public final class NonProjectFilesScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("predefined.scope.non.project.files.name");
+  public static final String NAME = IdeUICustomization.getInstance().getNonProjectFilesScopeTitle();
   public static final NonProjectFilesScope INSTANCE = new NonProjectFilesScope();
 
   private NonProjectFilesScope() {

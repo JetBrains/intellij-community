@@ -55,3 +55,25 @@ class B2:
 class B3:
     <error descr="Fields with a default value must come after any fields without a default.">a</error>: int = dataclasses.field(default_factory=int)
     b: int = dataclasses.field()
+
+
+@dataclasses.dataclass
+class C1:
+    x: int = dataclasses.MISSING
+    y: int
+
+
+@dataclasses.dataclass
+class C2:
+    x: int = dataclasses.field(default=dataclasses.MISSING)
+    y: int
+
+C2(1, 2)
+
+
+@dataclasses.dataclass
+class C3:
+    x: int = dataclasses.field(default_factory=dataclasses.MISSING)
+    y: int
+
+C3(1, 2)

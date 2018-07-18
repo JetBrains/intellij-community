@@ -24,14 +24,6 @@ public class DocumentSettingsManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
   public static final String insertFinalNewlineKey = "insert_final_newline";
-  private static final Map<String, String> trimMap;
-
-  static {
-    Map<String, String> map = new HashMap<>();
-    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
-    map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    trimMap = Collections.unmodifiableMap(map);
-  }
 
   private static final Map<String, Boolean> newlineMap;
 
@@ -68,11 +60,22 @@ public class DocumentSettingsManager implements FileDocumentManagerListener {
     // Apply trailing spaces setting
     final String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
     applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
-                               trimTrailingWhitespaceKey, trimTrailingWhitespace, trimMap);
+                               trimTrailingWhitespaceKey, trimTrailingWhitespace, getTrimMap());
     // Apply final newline setting
     final String insertFinalNewline = Utils.configValueForKey(outPairs, insertFinalNewlineKey);
     applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
                                insertFinalNewlineKey, insertFinalNewline, newlineMap);
+  }
+
+  private static Map<String, String> getTrimMap() {
+    Map<String, String> map = new HashMap<>();
+    String stripSpaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
+    String stripValue = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(stripSpaces) ?
+                        EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE :
+                        stripSpaces;
+    map.put("true", stripValue);
+    map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    return map;
   }
 
   private <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,

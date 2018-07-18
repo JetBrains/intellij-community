@@ -14,6 +14,6 @@ Groovy script
         PsiElement(Integer)('1')
     PsiWhiteSpace(' ')
     PsiElement(:)(':')
-    PsiErrorElement:Expression expected
+    PsiErrorElement:<expression> expected
       <empty list>
   PsiComment(line comment)('// "Bugoga!"')

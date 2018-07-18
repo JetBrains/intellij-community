@@ -21,10 +21,10 @@ class JdkSettingsUsageCollector : UsagesCollector() {
       .toSet()
   }
 
-  val prefixes = listOf("-Xms",
-                        "-Xmx",
-                        "-XX:SoftRefLRUPolicyMSPerMB",
-                        "-XX:ReservedCodeCacheSize")
+  val prefixes: List<String> = listOf("-Xms",
+                                      "-Xmx",
+                                      "-XX:SoftRefLRUPolicyMSPerMB",
+                                      "-XX:ReservedCodeCacheSize")
 
   fun accept(key: String?): Boolean {
     if (key == null) return false

@@ -125,8 +125,6 @@ class DistributionJARsBuilder {
       }
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
-      withModule("intellij.platform.annotations.java5")
-      withModule("intellij.platform.annotations.common", "annotations.jar")
       withModule("intellij.platform.extensions")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
@@ -154,6 +152,8 @@ class DistributionJARsBuilder {
       removeVersionFromProjectLibraryJarNames("Trove4j")
       removeVersionFromProjectLibraryJarNames("Log4J")
       removeVersionFromProjectLibraryJarNames("jna")
+      removeVersionFromProjectLibraryJarNames("jetbrains-annotations-java5")
+      removeVersionFromProjectLibraryJarNames("JDOM")
     }
   }
 

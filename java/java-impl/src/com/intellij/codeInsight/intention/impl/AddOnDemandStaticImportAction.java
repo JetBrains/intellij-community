@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,8 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
         .createReferenceFromText(refNameElement.getText(), refExpr);
       final PsiElement target = copy.resolve();
       if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
+      PsiElement resolve = ((PsiJavaCodeReferenceElement)gParent).resolve();
+      if (resolve instanceof PsiMember && !((PsiMember)resolve).hasModifierProperty(PsiModifier.STATIC)) return null;
     }
 
     PsiFile file = refExpr.getContainingFile();
@@ -120,7 +123,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       return false;
     }
     final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
-    if (aClass != containingClass) {
+    if (aClass != containingClass || !ImportUtils.isInsideClassBody(element, aClass)) {
       PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList == null) {
         return false;
@@ -153,7 +156,9 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
         int delta;
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
-          if (isParameterizedReference(expression) || expression instanceof PsiMethodReferenceExpression) {
+          if (isParameterizedReference(expression) ||
+              expression instanceof PsiMethodReferenceExpression ||
+              expression.getParent() instanceof PsiErrorElement) {
             super.visitElement(expression);
             return;
           }

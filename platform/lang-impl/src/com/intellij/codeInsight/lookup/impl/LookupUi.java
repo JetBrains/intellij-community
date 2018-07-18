@@ -418,16 +418,21 @@ class LookupUi {
     }
 
     private AnAction createSortingAction(boolean checked) {
-      boolean currentSetting = UISettings.getInstance().getSortLookupElementsLexicographically();
-      final boolean newSetting = checked == currentSetting;
-      return new DumbAwareAction(newSetting ? "Sort lexicographically" : "Sort by relevance", null, checked ? PlatformIcons.CHECK_ICON : null) {
+      boolean isAlpha = UISettings.getInstance().getSortLookupElementsLexicographically();
+      boolean makeAlpha = checked == isAlpha;
+      class ChangeSortingAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
+        ChangeSortingAction() {
+          super(makeAlpha ? "Sort alphabetically" : "Sort by relevance", null, checked ? PlatformIcons.CHECK_ICON : null);
+        }
+
         @Override
         public void actionPerformed(AnActionEvent e) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
-          UISettings.getInstance().setSortLookupElementsLexicographically(newSetting);
+          UISettings.getInstance().setSortLookupElementsLexicographically(makeAlpha);
           updateSorting();
         }
-      };
+      }
+      return new ChangeSortingAction();
     }
   }
 

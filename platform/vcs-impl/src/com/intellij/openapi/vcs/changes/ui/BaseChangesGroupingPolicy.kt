@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.IS_CACHING_ROOT
+import com.intellij.openapi.vfs.VirtualFile
 
 abstract class BaseChangesGroupingPolicy : ChangesGroupingPolicy {
   protected var nextPolicy: ChangesGroupingPolicy? = null
@@ -10,12 +11,12 @@ abstract class BaseChangesGroupingPolicy : ChangesGroupingPolicy {
     nextPolicy = policy
   }
 
-  protected fun resolveVirtualFile(nodePath: StaticFilePath) =
+  protected fun resolveVirtualFile(nodePath: StaticFilePath): VirtualFile? =
     generateSequence(nodePath) { it.parent }.mapNotNull { it.resolve() }.firstOrNull()
 
   companion object {
     @JvmStatic
-    fun getCachingRoot(node: ChangesBrowserNode<*>?, subtreeRoot: ChangesBrowserNode<*>) =
+    fun getCachingRoot(node: ChangesBrowserNode<*>?, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> =
       generateSequence(node) { it.parent }.find { IS_CACHING_ROOT.get(it) == true } ?: subtreeRoot
   }
 }

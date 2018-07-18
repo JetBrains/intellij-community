@@ -27,7 +27,7 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
   @NotNull
   @Override
   protected JPanel createOptionsPanel() {
-    myDontShowAgainCheckbox = new JCheckBox("For Commit and Push, preview commits before push");
+    myDontShowAgainCheckbox = new JCheckBox("For Commit and Push to non-protected branches, preview commits before push");
     myDontShowAgainCheckbox.setSelected(GitVcsSettings.getInstance(myProject).shouldPreviewPushOnCommitAndPush());
 
     JPanel basePanel = super.createOptionsPanel();
@@ -43,7 +43,10 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
   @Override
   public void push(boolean forcePush) {
     if (!myDontShowAgainCheckbox.isSelected()) {
-      GitVcsSettings.getInstance(myProject).setPreviewPushOnCommitAndPush(false);
+      GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
+      if (settings.shouldPreviewPushOnCommitAndPush()) {
+        settings.setPreviewPushProtectedOnly(true);
+      }
     }
     super.push(forcePush);
   }

@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 import javax.swing.Icon
 
-fun VariableView(variable: Variable, context: VariableContext) = VariableView(variable.name, variable, context)
+fun VariableView(variable: Variable, context: VariableContext): VariableView = VariableView(variable.name, variable, context)
 
 class VariableView(override val variableName: String, private val variable: Variable, private val context: VariableContext) : XNamedValue(variableName), VariableContext {
   @Volatile private var value: Value? = null
@@ -34,12 +34,12 @@ class VariableView(override val variableName: String, private val variable: Vari
   @Volatile private var remainingChildren: List<Variable>? = null
   @Volatile private var remainingChildrenOffset: Int = 0
 
-  override fun watchableAsEvaluationExpression() = context.watchableAsEvaluationExpression()
+  override fun watchableAsEvaluationExpression(): Boolean = context.watchableAsEvaluationExpression()
 
   override val viewSupport: DebuggerViewSupport
     get() = context.viewSupport
 
-  override val parent = context
+  override val parent: VariableContext = context
 
   override val memberFilter: Promise<MemberFilter>
     get() = context.viewSupport.getMemberFilter(this)
@@ -226,7 +226,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (functionValue != null) {
       // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren)
+      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren && remainingChildren == null)
     }
   }
 
@@ -311,9 +311,9 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
   }
 
-  fun getValue() = variable.value
+  fun getValue(): Value? = variable.value
 
-  override fun canNavigateToSource() = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
+  override fun canNavigateToSource(): Boolean = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
@@ -361,7 +361,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
   }
 
-  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback) = viewSupport.computeInlineDebuggerData(variableName, variable, context, callback)
+  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState = viewSupport.computeInlineDebuggerData(variableName, variable, context, callback)
 
   override fun getEvaluationExpression(): String? {
     if (!watchableAsEvaluationExpression()) {

@@ -114,7 +114,7 @@ public class TestVirtualFile extends VirtualFile {
     return new MockLocalFileSystem() {
       @Override
       public boolean equals(Object o) {
-        return true;
+        return o != null;
       }
     };
   }

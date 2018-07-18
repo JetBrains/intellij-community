@@ -27,15 +27,11 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -51,10 +47,10 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes
-
+import org.jetbrains.org.objectweb.asm.Opcodes 
 /**
  * @author peter
  */
@@ -516,6 +512,16 @@ class Usage {
     myFixture.addClass 'public @interface Anno { Class<?>[] value(); }'
     myFixture.addFileToProject 'Foo.groovy', '@Anno([String]) class Foo {}'
     myFixture.addFileToProject 'Bar.java', 'class Bar extends Foo {}'
+
+    assertEmpty make()
+  }
+
+  void "test with annotation processing enabled"() {
+    def profile = (ProcessorConfigProfile)CompilerConfiguration.getInstance(project).getAnnotationProcessingConfiguration(myModule)
+    profile.enabled = true
+    profile.obtainProcessorsFromClasspath = true
+
+    myFixture.addFileToProject 'Foo.groovy', 'class Foo {}'
 
     assertEmpty make()
   }
@@ -1061,20 +1067,9 @@ class Bar {}'''
 
       ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).defaultCompiler = new GreclipseIdeaCompiler(project)
 
-      def jarName = "groovy-eclipse-batch-2.3.4-01.jar"
-      def jarPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/lib/" + jarName)
+      def jarPath = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Groovy-Eclipse-Batch")[0]
 
       GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
-    }
-
-    @Override
-    void runTest() {
-      if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(myModule).sdk)?.isAtLeast(JavaSdkVersion.JDK_1_9)) {
-        println "Groovy-Eclipse doesn't support JDK9 yet"
-        return
-      }
-
-      super.runTest()
     }
 
     protected List<String> chunkRebuildMessage(String builder) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -34,7 +33,7 @@ import static java.lang.Math.round;
 * @author tav
 */
 public class JBHiDPIScaledImage extends BufferedImage {
-  private final @Nullable Image myImage;
+  @Nullable private final Image myImage;
   private final double myUserWidth;
   private final double myUserHeight;
   private final double myScale;
@@ -163,8 +162,8 @@ public class JBHiDPIScaledImage extends BufferedImage {
 
     Image scaled = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, w, h);
 
-    double newUserWidth = w / this.myScale;
-    double newUserHeight = h / this.myScale;
+    double newUserWidth = w / myScale;
+    double newUserHeight = h / myScale;
 
     if (myImage != null) {
       return new JBHiDPIScaledImage(scaled, newUserWidth, newUserHeight, getType());

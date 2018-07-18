@@ -230,7 +230,7 @@ public abstract class SdkType implements SdkTypeId {
    *         e.g. plugins or android sdks are build over java sdk and for them the method returns {@link JavaSdkType},
    *         null otherwise
    */
-  protected SdkType getDependencyType() {
+  public SdkType getDependencyType() {
     return null;
   }
 

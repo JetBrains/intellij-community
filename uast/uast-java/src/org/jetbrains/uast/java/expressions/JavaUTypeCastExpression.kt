@@ -17,21 +17,18 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeCastExpression
-import org.jetbrains.uast.UBinaryExpressionWithType
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
-import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.*
 
 class JavaUTypeCastExpression(
   override val psi: PsiTypeCastExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
-  override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
+  override val operand: UExpression by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
 
   override val type: PsiType
     get() = psi.castType?.type ?: UastErrorType
 
-  override val typeReference by lz { psi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
+  override val typeReference: JavaUTypeReferenceExpression? by lz { psi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
 
   override val operationKind: UastBinaryExpressionWithTypeKind.TypeCast
     get() = UastBinaryExpressionWithTypeKind.TYPE_CAST

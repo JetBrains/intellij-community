@@ -43,7 +43,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   private val storageLock = ReentrantReadWriteLock()
   private val storages = THashMap<String, StateStorage>()
 
-  val compoundStreamProvider = CompoundStreamProvider()
+  val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     if (first) {
@@ -90,7 +90,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   private data class Macro(val key: String, var value: String)
 
-  @TestOnly fun getVirtualFileTracker() = virtualFileTracker
+  @TestOnly fun getVirtualFileTracker(): StorageVirtualFileTracker? = virtualFileTracker
 
   /**
    * @param expansion System-independent
@@ -135,7 +135,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   @Suppress("CAST_NEVER_SUCCEEDS")
-  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(
+  override final fun getStateStorage(storageSpec: Storage): StateStorage = getOrCreateStorage(
     storageSpec.path,
     storageSpec.roamingType,
     storageSpec.storageClass.java,
@@ -183,11 +183,11 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return storage
   }
 
-  fun getCachedFileStorages() = storageLock.read { storages.values.toSet() }
+  fun getCachedFileStorages(): Set<StateStorage> = storageLock.read { storages.values.toSet() }
 
   fun findCachedFileStorage(name: String) : StateStorage? = storageLock.read { storages.get(name) }
 
-  fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null) = storageLock.read {
+  fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> = storageLock.read {
     Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
   }
 
@@ -407,7 +407,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return normalizeFileSpec(result)
   }
 
-  override final fun startExternalization() = object : StateStorageManager.ExternalizationSession {
+  override final fun startExternalization(): StateStorageManager.ExternalizationSession = object : StateStorageManager.ExternalizationSession {
     private val sessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
     override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
@@ -485,7 +485,7 @@ private fun String.startsWithMacro(macro: String): Boolean {
   return getOrNull(i) == '/' && startsWith(macro)
 }
 
-fun removeMacroIfStartsWith(path: String, macro: String) = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
+fun removeMacroIfStartsWith(path: String, macro: String): String = if (path.startsWithMacro(macro)) path.substring(macro.length + 1) else path
 
 @Suppress("DEPRECATION")
 internal val Storage.path: String

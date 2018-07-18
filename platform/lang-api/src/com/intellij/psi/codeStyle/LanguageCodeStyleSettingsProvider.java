@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -293,4 +295,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
   public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
     return DocCommentSettings.DEFAULTS;
   }
+
+  @Nullable
+  @ApiStatus.Experimental
+  public CodeStyleBean createBean() {
+    return null;
+  }
+
 }

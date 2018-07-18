@@ -1351,6 +1351,7 @@ class XInternalError {}
   void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
 
   void testPackageInMemberType() { doTest() }
+  void testPackageInMemberTypeGeneric() { doTest() }
 
   void testConstantInAnno() { doTest('\n') }
 
@@ -1851,5 +1852,20 @@ class Bar {{
   }
 
   void testSuggestGetInstanceMethodName() { doTest() }
+
+  void testTabOnNewInnerClass() {
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.lookupString.contains('Inner') }
+    myFixture.type('\t')
+    checkResult()
+  }
+
+  void testRemoveUnusedImportOfSameName() {
+    myFixture.addClass("package foo; public class List {}")
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.object instanceof PsiClass && ((PsiClass)it.object).qualifiedName == 'java.util.List' }
+    myFixture.type('\n')
+    checkResult()
+  }
 
 }

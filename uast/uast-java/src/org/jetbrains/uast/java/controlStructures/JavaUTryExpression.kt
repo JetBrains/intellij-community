@@ -23,11 +23,11 @@ class JavaUTryExpression(
   override val psi: PsiTryStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UTryExpression {
-  override val tryClause by lz { JavaConverter.convertOrEmpty(psi.tryBlock, this) }
-  override val catchClauses by lz { psi.catchSections.map { JavaUCatchClause(it, this) } }
-  override val finallyClause by lz { psi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
+  override val tryClause: UExpression by lz { JavaConverter.convertOrEmpty(psi.tryBlock, this) }
+  override val catchClauses: List<JavaUCatchClause> by lz { psi.catchSections.map { JavaUCatchClause(it, this) } }
+  override val finallyClause: UBlockExpression? by lz { psi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
 
-  override val resourceVariables by lz {
+  override val resourceVariables: List<UVariable> by lz {
     psi.resourceList
       ?.filterIsInstance<PsiResourceVariable>()
       ?.map { JavaUVariable.create(it, this) }
@@ -48,13 +48,13 @@ class JavaUCatchClause(
   override val psi: PsiCatchSection,
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UCatchClause {
-  override val body by lz { JavaConverter.convertOrEmpty(psi.catchBlock, this) }
+  override val body: UExpression by lz { JavaConverter.convertOrEmpty(psi.catchBlock, this) }
 
-  override val parameters by lz {
+  override val parameters: List<JavaUParameter> by lz {
     (psi.parameter?.let { listOf(it) } ?: emptyList()).map { JavaUParameter(it, this) }
   }
 
-  override val typeReferences by lz {
+  override val typeReferences: List<UTypeReferenceExpression> by lz {
     val typeElement = psi.parameter?.typeElement ?: return@lz emptyList<UTypeReferenceExpression>()
     if (typeElement.type is PsiDisjunctionType) {
       typeElement.children.filterIsInstance<PsiTypeElement>().map { JavaUTypeReferenceExpression(it, this) }

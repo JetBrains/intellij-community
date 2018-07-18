@@ -190,7 +190,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.8", license: "LGPL 2",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.9", license: "LGPL 2",
                        url: "https://github.com/JetBrains/jediterm", licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/COPYING"),
     new LibraryLicense(name: "JEuclid", libraryName: "jeuclid-core-3.1.9.jar", version: "3.1.9", license: "Apache 2.0",
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
@@ -340,7 +340,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE"),
     new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.4", license: "Apache 2.0",
                        url: "https://github.com/MarkusBernhardt/proxy-vole", licenseUrl: "https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
-    new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.7.3", license: "Eclipse Public License v1.0",
+    new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.7.5", license: "Eclipse Public License v1.0",
                        url: "https://github.com/traff/pty4j"),
     new LibraryLicense(name: "PureJavaComm", libraryName: "purejavacomm", version: "0.0.16", license: "BSD",
                        url: "http://www.sparetimelabs.com/purejavacomm"),
@@ -439,6 +439,10 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0",
                        url: "http://objenesis.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "16.0.1", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/java-annotations"),
+    new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/java-annotations"),
 
     // Android Studio: added by Change I43400d97 / commit 27761cb
     new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",

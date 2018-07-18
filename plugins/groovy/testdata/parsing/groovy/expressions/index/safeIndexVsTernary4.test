@@ -1,0 +1,28 @@
+a == null ? [b] : [c]
+-----
+Groovy script
+  Conditional expression
+    Relational expression
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(==)('==')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(null)('null')
+    PsiWhiteSpace(' ')
+    PsiElement(?)('?')
+    PsiWhiteSpace(' ')
+    Generalized list
+      PsiElement([)('[')
+      Reference expression
+        PsiElement(identifier)('b')
+      PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    Generalized list
+      PsiElement([)('[')
+      Reference expression
+        PsiElement(identifier)('c')
+      PsiElement(])(']')

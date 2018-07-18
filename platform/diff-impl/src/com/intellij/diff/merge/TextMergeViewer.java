@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -149,7 +135,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     components.statusPanel = init.statusPanel;
     components.toolbarActions = init.toolbarActions;
 
-    components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+    components.closeHandler = () -> {
+      if (myViewer.myContentModified)
+        return MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+      else
+        return true;
+    };
 
     return components;
   }
@@ -237,9 +228,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @NotNull
     @Override
     protected List<AnAction> createToolbarActions() {
-      List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
-      group.add(new MyToggleAutoScrollAction());
-      group.add(myEditorSettingsAction);
+      List<AnAction> group = new ArrayList<>();
 
       DefaultActionGroup diffGroup = new DefaultActionGroup("Compare With", true);
       diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
@@ -251,11 +240,16 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.RIGHT));
       group.add(diffGroup);
 
-      group.add(Separator.getInstance());
-      group.add(new ApplyNonConflictsAction(ThreeSide.BASE));
-      group.add(new ApplyNonConflictsAction(ThreeSide.LEFT));
-      group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT));
+      group.add(new Separator("Apply non-conflicting changes:"));
+      group.add(new ApplyNonConflictsAction(ThreeSide.LEFT, "Left"));
+      group.add(new ApplyNonConflictsAction(ThreeSide.BASE, "All"));
+      group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT, "Right"));
       group.add(new MagicResolvedConflictsAction());
+
+      group.add(Separator.getInstance());
+      group.addAll(myTextDiffProvider.getToolbarActions());
+      group.add(new MyToggleAutoScrollAction());
+      group.add(myEditorSettingsAction);
 
       return group;
     }
@@ -1177,10 +1171,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     public class ApplyNonConflictsAction extends DumbAwareAction {
       @NotNull private final ThreeSide mySide;
 
-      public ApplyNonConflictsAction(@NotNull ThreeSide side) {
+      public ApplyNonConflictsAction(@NotNull ThreeSide side, @NotNull String text) {
         String id = side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right");
         ActionUtil.copyFrom(this, id);
         mySide = side;
+        getTemplatePresentation().setText(text);
       }
 
       @Override
@@ -1191,6 +1186,16 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Override
       public void actionPerformed(AnActionEvent e) {
         applyNonConflictedChanges(mySide);
+      }
+
+      @Override
+      public boolean displayTextInToolbar() {
+        return true;
+      }
+
+      @Override
+      public boolean useSmallerFontForTextInToolbar() {
+        return true;
       }
     }
 

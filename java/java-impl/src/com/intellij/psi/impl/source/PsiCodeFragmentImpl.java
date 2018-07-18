@@ -229,7 +229,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     final String className = aClass.getName();
     final String qName = aClass.getQualifiedName();
     if (qName == null) return false;

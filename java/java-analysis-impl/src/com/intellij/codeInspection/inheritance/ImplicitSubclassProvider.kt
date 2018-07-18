@@ -79,10 +79,10 @@ abstract class ImplicitSubclassProvider {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<ImplicitSubclassProvider>("com.intellij.codeInsight.implicitSubclassProvider")
+    val EP_NAME: ExtensionPointName<ImplicitSubclassProvider> = ExtensionPointName.create<ImplicitSubclassProvider>("com.intellij.codeInsight.implicitSubclassProvider")
 
     @Deprecated("To be removed in 2018.2", ReplaceWith("ImplicitSubclassProvider.EP_NAME"))
-    fun getEP_NAME() = EP_NAME
+    fun getEP_NAME(): ExtensionPointName<ImplicitSubclassProvider> = EP_NAME
   }
 
 }

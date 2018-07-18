@@ -35,10 +35,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.*;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -174,7 +171,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
-    List<PsiReference> refs = new ArrayList<>();
+    List<PsiReference> refs = new SmartList<>();
     String prefix = getNamespacePrefix();
 
     boolean inStartTag = hints.offsetInElement == null || childContainsOffset(startTagName.getPsi(), hints.offsetInElement);
@@ -184,7 +181,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         refs.add(startTagRef);
       }
       if (!prefix.isEmpty()) {
-        refs.add(createPrefixReference(startTagName, prefix, startTagRef));
+        refs.addAll(createPrefixReferences(startTagName, prefix, startTagRef));
       }
     }
     boolean inEndTag = endTagName != null && (hints.offsetInElement == null || childContainsOffset(endTagName.getPsi(), hints.offsetInElement));
@@ -193,9 +190,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       if (endTagRef != null) {
         refs.add(endTagRef);
       }
-      prefix = XmlUtil.findPrefixByQualifiedName(endTagName.getText());
+      prefix = getNamespacePrefix(endTagName.getText());
       if (StringUtil.isNotEmpty(prefix)) {
-        refs.add(createPrefixReference(endTagName, prefix, endTagRef));
+        refs.addAll(createPrefixReferences(endTagName, prefix, endTagRef));
       }
     }
 
@@ -236,9 +233,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return elements;
   }
 
-  private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix, TagNameReference tagRef) {
-    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix,
-                                     tagRef);
+  @NotNull
+  protected Collection<PsiReference> createPrefixReferences(@NotNull ASTNode startTagName, 
+                                                            @NotNull String prefix, 
+                                                            @NotNull TagNameReference tagRef) {
+    return Collections.singleton(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix,
+                                     tagRef));
   }
 
   @Override
@@ -462,7 +462,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       return (XmlFile)psiFile;
     }
 
-    return XmlNamespaceIndex.guessSchema(namespace, nsDecl ? null : myLocalName, version, fileLocation, file);
+    return XmlNamespaceIndex.guessSchema(namespace, nsDecl ? null : getLocalName(), version, fileLocation, file);
   }
 
   @Nullable
@@ -786,7 +786,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   @NotNull
   public String getNamespacePrefix() {
-    return XmlUtil.findPrefixByQualifiedName(getName());
+    return getNamespacePrefix(getName());
+  }
+  
+  @NotNull
+  protected String getNamespacePrefix(@NotNull String name) {
+    return XmlUtil.findPrefixByQualifiedName(name);
   }
 
   @Override
@@ -910,6 +915,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
             map = new BidirectionalMap<>();
           }
           for (final String[] prefix2ns : namespacesFromDocument) {
+            if (map.containsKey(prefix2ns[0])) continue;
             map.put(prefix2ns[0], getRealNs(prefix2ns[1]));
           }
         }

@@ -12,11 +12,9 @@ internal fun String.splitWithSpace(): List<String> = this.split(" ").filter { it
 
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
-internal fun String.execute(workingDir: File?): String {
-  log("Executing command $this")
-  val start = System.currentTimeMillis()
-  return try {
-    val process = ProcessBuilder(*this.splitWithSpace().toTypedArray())
+internal fun List<String>.execute(workingDir: File?, silent: Boolean = false): String {
+  val processCall = {
+    val process = ProcessBuilder(*this.filter { it.isNotBlank() }.toTypedArray())
       .directory(workingDir)
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
       .redirectError(ProcessBuilder.Redirect.PIPE)
@@ -24,6 +22,42 @@ internal fun String.execute(workingDir: File?): String {
     val output = process.inputStream.bufferedReader().use { it.readText() }
     process.waitFor()
     output
+  }
+  return if (silent) {
+    processCall()
+  }
+  else {
+    callWithTimer("Executing command ${this.joinToString(" ")}", processCall)
+  }
+}
+
+internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
+  if (this.size < eachSize) return listOf(this)
+  val result = mutableListOf<List<T>>()
+  var start = 0
+  while (start < this.size) {
+    val sub = this.subList(start, Math.min(start + eachSize, this.size))
+    if (!sub.isEmpty()) result += sub
+    start += eachSize
+  }
+  return result
+}
+
+internal fun callSafely(call: () -> Unit) {
+  try {
+    call()
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+    log(e.message ?: e.javaClass.canonicalName)
+  }
+}
+
+internal fun <T> callWithTimer(msg: String? = null, call: () -> T): T {
+  if (msg != null) log(msg)
+  val start = System.currentTimeMillis()
+  try {
+    return call()
   }
   finally {
     log("Took ${System.currentTimeMillis() - start} ms")

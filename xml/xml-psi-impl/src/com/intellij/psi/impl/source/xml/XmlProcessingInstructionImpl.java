@@ -21,7 +21,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlProcessingInstructionImpl extends XmlElementImpl implements XmlProcessingInstruction {
@@ -63,6 +66,6 @@ public class XmlProcessingInstructionImpl extends XmlElementImpl implements XmlP
   @NotNull
   @Override
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlProcessingInstruction.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

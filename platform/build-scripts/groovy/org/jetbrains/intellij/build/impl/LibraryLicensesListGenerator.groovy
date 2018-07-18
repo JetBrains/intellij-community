@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import groovy.text.SimpleTemplateEngine
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LibraryLicense
@@ -76,17 +77,34 @@ class LibraryLicensesListGenerator {
 
     messages.debug("Used libraries:")
     List<String> lines = []
+
+    String line = '''
+  <tr valign="top">
+    <td class="firstColumn">
+      $name
+      <span class="version">$libVersion</span>
+    </td>
+    <td class="secondColumn">
+      $license
+    </td>
+  </tr>
+      '''.trim()
+    def engine = new SimpleTemplateEngine()
+
     licenses.entrySet().each {
       LibraryLicense lib = it.key
       String moduleName = it.value
 
       String libKey = (lib.name + "_" + lib.version ?: "").replace(" ", "_")
       // id here is needed because of a bug IDEA-188262
-      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" href=\"$lib.url\">$lib.name</a>" : lib.name
-      String license = lib.libraryLicenseUrl != null ? "<a id=\"${libKey}_license_url\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" : lib.license
+      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" class=\"name\" href=\"$lib.url\">$lib.name</a>" :
+                    "<span class=\"name\">$lib.name</span>"
+      String license = lib.libraryLicenseUrl != null ?
+                       "<a id=\"${libKey}_license_url\" class=\"licence\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" :
+                       "<span class=\"licence\">$lib.license</span>"
 
       messages.debug(" $lib.name (in module $moduleName)")
-      lines << "<tr><td>$name</td><td>${lib.version ?: ""}</td><td>$license</td></tr>".toString()
+      lines << engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString()
     }
     //projectBuilder.info("Unused libraries:")
     //licensesList.findAll {!licenses.containsKey(it)}.each {LibraryLicense lib ->
@@ -98,8 +116,50 @@ class LibraryLicensesListGenerator {
     file.parentFile.mkdirs()
     FileWriter out = new FileWriter(file)
     try {
+      out.println('''
+<style>
+  table {
+    width: 560px;
+  }
+  
+  th {
+    border:0pt;
+    text-align: left;
+  }
+  
+  td {
+    padding-bottom: 11px;
+  }
+  
+  .firstColumn {
+    width: 410px;
+    padding-left: 16px;
+    padding-right: 50px;
+  }
+  
+  .secondColumn {
+    width: 150px;
+    padding-right: 28px;
+  }
+  
+  .name {
+    color: #4a78c2;
+    margin-right: 5px;
+  }
+    
+  .version {
+    color: #888888;
+    line-height: 1.5em;
+    white-space: nowrap;
+  }
+  
+  .licence {
+    color: #779dbd;
+  }
+</style>
+'''.trim())
       out.println("<table>")
-      out.println("<tr><th>Software</th><th>Version</th><th>License</th></tr>")
+      out.println("<tr><th class=\"firstColumn\">Software</th><th class=\"secondColumn\">License</th></tr>")
       lines.each {
         out.println(it)
       }

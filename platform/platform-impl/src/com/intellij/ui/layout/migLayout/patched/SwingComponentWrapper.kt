@@ -180,8 +180,10 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
   override fun hasBaseline(): Boolean {
     if (hasBaseLine == ThreeState.UNSURE) {
       try {
-        val d = c.minimumSize
-        hasBaseLine = ThreeState.fromBoolean(getBaseline(d.width, d.height) > -1)
+        // do not use component dimensions since it made some components layout themselves to the minimum size
+        // and that stuck after that. E.g. JLabel with HTML content and white spaces would be very tall.
+        // Use large number but don't risk overflow or exposing size bugs with Integer.MAX_VALUE
+        hasBaseLine = ThreeState.fromBoolean(getBaseline(8192, 8192) > -1)
       }
       catch (ignore: Throwable) {
         hasBaseLine = ThreeState.NO

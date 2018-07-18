@@ -6,16 +6,16 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.nameResolver.FQNamesProvider
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 
-fun FQNamesProvider.getQualifiedNames() = names.map(QualifiedName::fromDottedString).toTypedArray()
+fun FQNamesProvider.getQualifiedNames(): Array<QualifiedName> = names.map(QualifiedName::fromDottedString).toTypedArray()
 
-fun FQNamesProvider.getFirstName() = names[0]!!
+fun FQNamesProvider.getFirstName(): String = names[0]!!
 
-fun FQNamesProvider.shortNameMatches(item: NavigationItem) = item.name.run { this in getShortNames() }
+fun FQNamesProvider.shortNameMatches(item: NavigationItem): Boolean = item.name.run { this in getShortNames() }
 
 /**
  * @return all names in unqualified ("after last dot") format
  */
-fun FQNamesProvider.getShortNames() = getQualifiedNames().mapNotNull(QualifiedName::getLastComponent).toList()
+fun FQNamesProvider.getShortNames(): List<String> = getQualifiedNames().mapNotNull(QualifiedName::getLastComponent).toList()
 
 /**
  * Checks if element name matches. [.alwaysCheckQualifiedName] controls if full name should be checked, or only last and first

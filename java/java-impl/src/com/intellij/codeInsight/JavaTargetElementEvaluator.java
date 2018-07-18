@@ -308,7 +308,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         return null;
       }
 
-      private PsiClass[] getInheritors(PsiClass containingClass, PsiClass psiClass, Set<PsiClass> visited) {
+      private PsiClass[] getInheritors(PsiClass containingClass, PsiClass psiClass, Set<? super PsiClass> visited) {
         if (psiClass instanceof PsiTypeParameter) {
           List<PsiClass> result = new ArrayList<>();
           for (PsiClassType classType : psiClass.getExtendsListTypes()) {

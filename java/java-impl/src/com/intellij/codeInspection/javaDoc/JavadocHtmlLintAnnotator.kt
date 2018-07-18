@@ -42,7 +42,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
   data class Result(val annotations: List<Anno>)
 
-  override fun getPairedBatchInspectionShortName() = JavadocHtmlLintInspection.SHORT_NAME
+  override fun getPairedBatchInspectionShortName(): String = JavadocHtmlLintInspection.SHORT_NAME
 
   override fun collectInformation(file: PsiFile): Info? =
     runReadAction { if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null }

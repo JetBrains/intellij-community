@@ -8,7 +8,7 @@ public class Main {
   }
 
   public long test(List<Person> collection, Person include) {
-      long i = collection.stream().filter(include::equals).mapToLong(Person::getAge).sum();
+    long i = collection.stream().filter(include::equals).mapToLong(Person::getAge).sum();
       return i;
   }
 }

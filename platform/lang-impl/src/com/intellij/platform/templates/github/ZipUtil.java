@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -170,7 +154,7 @@ public class ZipUtil {
         return;
       }
     }
-    File child = new File(extractToDir, relativeExtractPath);
+    File child = com.intellij.util.io.ZipUtil.newFileForEntry(extractToDir, relativeExtractPath);
     File dir = zipEntry.isDirectory() ? child : child.getParentFile();
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException("Unable to create dir: '" + dir + "'!");
@@ -182,12 +166,8 @@ public class ZipUtil {
       progress.setText("Extracting " + relativeExtractPath + " ...");
     }
     if (contentProcessor == null) {
-      FileOutputStream fileOutputStream = new FileOutputStream(child);
-      try {
+      try (FileOutputStream fileOutputStream = new FileOutputStream(child)) {
         FileUtil.copy(entryContentStream, fileOutputStream);
-      }
-      finally {
-        fileOutputStream.close();
       }
     }
     else {

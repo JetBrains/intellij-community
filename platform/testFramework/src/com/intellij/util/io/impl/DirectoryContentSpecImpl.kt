@@ -34,7 +34,7 @@ sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
 }
 
 abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
-  protected val children = LinkedHashMap<String, DirectoryContentSpecImpl>()
+  protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap<String, DirectoryContentSpecImpl>()
 
   fun addChild(name: String, spec: DirectoryContentSpecImpl) {
     if (name in children) {

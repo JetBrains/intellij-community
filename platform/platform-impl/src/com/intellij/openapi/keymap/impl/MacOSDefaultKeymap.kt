@@ -37,11 +37,11 @@ class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>, defaultKeymap
     }
   }
 
-  override fun convertKeyStroke(keyStroke: KeyStroke) = _convertKeyStroke(keyStroke)
+  override fun convertKeyStroke(keyStroke: KeyStroke): KeyStroke = _convertKeyStroke(keyStroke)
 
-  override fun convertMouseShortcut(shortcut: MouseShortcut) = _convertMouseShortcut(shortcut)
+  override fun convertMouseShortcut(shortcut: MouseShortcut): MouseShortcut = _convertMouseShortcut(shortcut)
 
-  override fun convertShortcut(shortcut: Shortcut) = convertShortcutFromParent(shortcut)
+  override fun convertShortcut(shortcut: Shortcut): Shortcut = convertShortcutFromParent(shortcut)
 }
 
 private fun _convertKeyStroke(parentKeyStroke: KeyStroke): KeyStroke = KeyStroke.getKeyStroke(parentKeyStroke.keyCode, mapModifiers(parentKeyStroke.modifiers), parentKeyStroke.isOnKeyRelease)

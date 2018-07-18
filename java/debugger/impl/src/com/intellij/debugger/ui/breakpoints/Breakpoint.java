@@ -35,7 +35,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
@@ -334,11 +333,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       ThreadReferenceProxyImpl threadProxy = frame.threadProxy();
       StackFrameProxyImpl parentFrame = threadProxy.frameCount() > 1 ? threadProxy.frame(1) : null;
       String key = parentFrame != null ? DebuggerUtilsEx.methodKey(parentFrame.location().method()) : null;
-      String[] callerFilters = getProperties().getCallerFilters();
-      if (!ArrayUtil.isEmpty(callerFilters) && !ArrayUtil.contains(key, callerFilters)) {
-        return false;
-      }
-      if (ArrayUtil.contains(key, getProperties().getCallerExclusionFilters())) {
+      if (!typeMatchesClassFilters(key, getProperties().getCallerFilters(), getProperties().getCallerExclusionFilters())) {
         return false;
       }
     }
@@ -468,7 +463,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    return event.location().declaringType().name();
+    String className = null;
+    final ObjectReference thisObject = (ObjectReference)context.computeThisObject();
+    if (thisObject != null) {
+      className = thisObject.referenceType().name();
+    }
+    else {
+      final StackFrameProxyImpl frame = context.getFrameProxy();
+      if (frame != null) {
+        className = frame.location().declaringType().name();
+      }
+    }
+    return className;
   }
 
   protected static boolean typeMatchesClassFilters(@Nullable String typeName, ClassFilter[] includeFilters, ClassFilter[] exludeFilters) {

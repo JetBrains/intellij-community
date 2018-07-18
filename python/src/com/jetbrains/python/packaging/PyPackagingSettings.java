@@ -7,8 +7,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.jetbrains.python.packaging.requirement.PyRequirementVersion;
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +45,7 @@ public class PyPackagingSettings implements PersistentStateComponent<PyPackaging
         .of(versions)
         .findFirst(
           version -> {
-            final PyRequirementVersion normalized = PyRequirementVersionNormalizer.normalize(version);
+            final PyPackageVersion normalized = PyPackageVersionNormalizer.normalize(version);
 
             return normalized == null || normalized.getPre() == null && normalized.getDev() == null;
           }

@@ -36,8 +36,8 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
     companion object {
         private const val MAX_INVOCATION_COUNT = 5
 
-        var RUN_COMPLETION_AFTER_CHARS = 2
-        var isEnabledInTests = false
+        var RUN_COMPLETION_AFTER_CHARS: Int = 2
+        var isEnabledInTests: Boolean = false
     }
 
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {

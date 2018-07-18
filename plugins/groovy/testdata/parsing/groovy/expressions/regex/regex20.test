@@ -20,8 +20,5 @@ Groovy script
             Literal
               PsiElement(Integer)('2')
             PsiElement(})('}')
-        GrStringContentImpl(STRING_CONTENT)
-          ASTWrapperPsiElement(regex content)
-            <empty list>
         PsiElement(regex end)('/')
       PsiElement())(')')

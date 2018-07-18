@@ -160,9 +160,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       promises.add(type.computeVariantsAsync(project, position).then(o -> {
         if (((List)o).isEmpty() && types.size() > 1) { // multiple types
           return Collections.singletonList(type.new XLineBreakpointAllVariant(position) {
+            @NotNull
             @Override
             public String getText() {
-              return StringUtil.unpluralize(type.getTitle());
+              return StringUtil.notNullize(StringUtil.unpluralize(type.getTitle()), type.getTitle());
             }
 
             @Nullable

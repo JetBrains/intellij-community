@@ -181,6 +181,7 @@
     </extensionPoint>
 
     <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
+    <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider"/>
 
     <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>
 
@@ -307,6 +308,7 @@
 
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" />
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider">
+      <with attribute="id"/>
       <with attribute="path"/>
     </extensionPoint>
 

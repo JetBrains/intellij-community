@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -231,18 +230,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     CommitChangeListDialog dialog =
       new CommitChangeListDialog(project, changes, included, initialSelection, executors, showVcsCommit, defaultList, changeLists,
                                  affectedVcses, forceCommitInVcs, false, comment, customResultHandler);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.show();
-    }
-    else {
-      Action okAction = dialog.getOKAction();
-      if (okAction.isEnabled()) {
-        okAction.actionPerformed(null);
-      }
-      else {
-        dialog.doCancelAction();
-      }
-    }
+    dialog.show();
     return dialog.isOK();
   }
 
@@ -318,7 +306,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     myHelpId = myShowVcsCommit ? HELP_ID : getHelpId(executors);
 
-    myEnablePartialCommit = ContainerUtil.exists(getAffectedVcses(), AbstractVcs::arePartialChangelistsSupported) &&
+    myEnablePartialCommit = ContainerUtil.exists(myAffectedVcses, AbstractVcs::arePartialChangelistsSupported) &&
                             (myShowVcsCommit || ContainerUtil.exists(myExecutors, executor -> executor.supportsPartialCommit()));
 
     myDiffDetails = new MyChangeProcessor(myProject, myEnablePartialCommit);

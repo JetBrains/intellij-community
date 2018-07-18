@@ -36,7 +36,7 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
       checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars()
+        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars(kotlinVersion)
       )
       checkFacetInOneModule(
         defaultFacetSettings[TargetPlatform.JVM18]!!,
@@ -74,7 +74,7 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
       checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars()
+        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars(kotlinVersion)
       )
       checkFacetInOneModule(
         defaultFacetSettings[TargetPlatform.JavaScript]!!,

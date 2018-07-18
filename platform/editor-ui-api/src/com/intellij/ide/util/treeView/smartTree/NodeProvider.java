@@ -23,6 +23,12 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public interface NodeProvider<T extends TreeElement> extends TreeAction {
+  /**
+   * Provides additional children for the specified node. The node may have its own children.
+   * The additional children are considered after the own ones.
+   *
+   * @return a collection of additional children for the specified node
+   */
   @NotNull
   Collection<T> provideNodes(@NotNull TreeElement node);
 }

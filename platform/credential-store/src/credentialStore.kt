@@ -98,9 +98,9 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 
 // check isEmpty before
 @JvmOverloads
-fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
+fun Credentials.serialize(storePassword: Boolean = true): ByteArray = joinData(userName, if (storePassword) password else null)!!
 
-fun SecureString(value: CharSequence) = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
+fun SecureString(value: CharSequence): SecureString = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
 
 class SecureString(value: ByteArray) {
   companion object {
@@ -109,5 +109,5 @@ class SecureString(value: ByteArray) {
 
   private val data = encryptionSupport.encrypt(value)
 
-  fun get(clearable: Boolean = true) = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
+  fun get(clearable: Boolean = true): OneTimeString = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
 }

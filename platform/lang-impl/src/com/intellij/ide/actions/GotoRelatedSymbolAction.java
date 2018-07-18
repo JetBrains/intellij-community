@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,11 @@ public class GotoRelatedSymbolAction extends AnAction {
     final PsiElement element = getContextElement(dataContext);
     if (element == null) return;
 
+    // it's calculated in advance because `NavigationUtil.collectRelatedItems` might be
+    // calculated under a cancellable progress, and we can't use the data context anymore,
+    // since it can't be reused between swing events
+    RelativePoint popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+
     List<GotoRelatedItem> items = NavigationUtil.collectRelatedItems(element, dataContext);
     if (items.isEmpty()) {
       final JComponent label = HintUtil.createErrorLabel("No related symbols");
@@ -61,7 +67,7 @@ public class GotoRelatedSymbolAction extends AnAction {
         .setFadeoutTime(3000)
         .setFillColor(HintUtil.getErrorColor())
         .createBalloon()
-        .show(JBPopupFactory.getInstance().guessBestPopupLocation(dataContext), Balloon.Position.above);
+        .show(popupLocation, Balloon.Position.above);
       return;
     }
 
@@ -69,7 +75,7 @@ public class GotoRelatedSymbolAction extends AnAction {
       items.get(0).navigate();
       return;
     }
-    NavigationUtil.getRelatedItemsPopup(items, "Choose Target").showInBestPositionFor(dataContext);
+    NavigationUtil.getRelatedItemsPopup(items, "Choose Target").show(popupLocation);
   }
 
   @TestOnly

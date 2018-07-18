@@ -20,10 +20,10 @@ class PyRainbowVisitor : RainbowVisitor() {
     private val DEFAULT_HIGHLIGHTING_KEY = DefaultLanguageHighlighterColors.LOCAL_VARIABLE
 
     @JvmStatic
-    val HIGHLIGHTING_KEYS = setOf(PyHighlighter.PY_PARAMETER, DEFAULT_HIGHLIGHTING_KEY)
+    val HIGHLIGHTING_KEYS: Set<TextAttributesKey> = setOf(PyHighlighter.PY_PARAMETER, DEFAULT_HIGHLIGHTING_KEY)
   }
 
-  override fun suitableForFile(file: PsiFile) = file is PyFile
+  override fun suitableForFile(file: PsiFile): Boolean = file is PyFile
 
   override fun visit(element: PsiElement) {
     when (element) {
@@ -33,7 +33,7 @@ class PyRainbowVisitor : RainbowVisitor() {
     }
   }
 
-  override fun clone() = PyRainbowVisitor()
+  override fun clone(): PyRainbowVisitor = PyRainbowVisitor()
 
   private fun processReference(referenceExpression: PyReferenceExpression) {
     val context = getReferenceContext(referenceExpression, mutableSetOf()) ?: return

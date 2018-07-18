@@ -19,7 +19,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.extensions.python.CaptureExtKt;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -30,10 +30,10 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class PyParameterCompletionContributor extends CompletionContributor {
   public PyParameterCompletionContributor() {
     extend(CompletionType.BASIC,
-           psiElement().inside(PyParameterList.class).afterLeaf("*"),
+           CaptureExtKt.inParameterList(psiElement()).afterLeaf("*"),
            new ParameterCompletionProvider("args"));
     extend(CompletionType.BASIC,
-           psiElement().inside(PyParameterList.class).afterLeaf("**"),
+           CaptureExtKt.inParameterList(psiElement()).afterLeaf("**"),
            new ParameterCompletionProvider("kwargs"));
   }
 

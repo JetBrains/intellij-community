@@ -31,7 +31,9 @@ public class PropertyFalsified extends RuntimeException {
 
     Throwable failureReason = failure.getMinimalCounterexample().getExceptionCause();
     Throwable rootCause = failureReason == null ? null : getRootCause(failureReason);
-    String msg = rootCause != null ? "Failed with " + rootCause + "\nOn " + exampleString : "Falsified on " + exampleString;
+    String msg = rootCause != null && !rootCause.toString().contains("ComparisonFailure") // otherwise IDEA replaces the whole message (including example and rechecking information) with a diff
+                 ? "Failed with " + rootCause + "\nOn " + exampleString 
+                 : "Falsified on " + exampleString;
 
     msg += "\n" + 
            getMinimizationStats() +

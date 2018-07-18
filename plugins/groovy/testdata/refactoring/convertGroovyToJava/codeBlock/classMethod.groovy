@@ -1,5 +1,5 @@
 class A {
-  static foo() {}
+  static int foo() {1}
   static getCanonicalName() { "" }
 }
 

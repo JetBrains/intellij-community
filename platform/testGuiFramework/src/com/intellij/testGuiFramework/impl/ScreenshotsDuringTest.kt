@@ -19,6 +19,7 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
   private val myScreenshotTaker = ScreenshotTaker()
   private val myExecutorService: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
   private var myFolder: File? = null
+  private var isTestSuccessful = false
 
   override fun starting(description: Description) {
     val folderName = description.testClass.simpleName + "-" + description.methodName
@@ -49,9 +50,11 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
     catch (e: InterruptedException) {
       // Do not report the timeout
     }
+    if(isTestSuccessful && myFolder != null) FileUtilRt.delete(myFolder!!)
   }
 
   override fun succeeded(description: Description?) {
-    if (myFolder != null) FileUtilRt.delete(myFolder!!)
+    isTestSuccessful = true
   }
+
 }

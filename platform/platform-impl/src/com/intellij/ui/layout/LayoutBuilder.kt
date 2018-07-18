@@ -12,7 +12,7 @@ import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
 class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
-  inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
+  inline fun row(label: String, init: Row.() -> Unit): Row = row(label = Label(label), init = init)
 
   inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     val row = builder.newRow(label, buttonGroup, separated)
@@ -28,7 +28,7 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
     builder.noteRow(text, linkHandler)
   }
 
-  fun noteRow(text: String) = noteRow(text, null)
+  fun noteRow(text: String): Unit = noteRow(text, null)
 
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
     LayoutBuilder(builder, ButtonGroup()).init()

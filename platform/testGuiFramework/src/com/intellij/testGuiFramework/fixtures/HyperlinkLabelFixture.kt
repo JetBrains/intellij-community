@@ -26,9 +26,9 @@ class HyperlinkLabelFixture(robot: Robot, private val hyperlinkLabel: HyperlinkL
   HyperlinkLabelFixture::class.java, robot, hyperlinkLabel) {
 
   fun clickLink(regionText: String) {
-    if (!hyperlinkLabel.hightlightedRegionsBoundsMap.containsKey(regionText)) throw ComponentLookupException(
+    if (!hyperlinkLabel.highlightedRegionsBoundsMap.containsKey(regionText)) throw ComponentLookupException(
       "Unable to find highlighted region \"$regionText\" in HyperlinkLabel:\"${hyperlinkLabel.text}\"")
-    val rectangle = hyperlinkLabel.hightlightedRegionsBoundsMap[regionText]
+    val rectangle = hyperlinkLabel.highlightedRegionsBoundsMap[regionText]
     driver().click(hyperlinkLabel.parent, rectangle!!.center())
   }
 

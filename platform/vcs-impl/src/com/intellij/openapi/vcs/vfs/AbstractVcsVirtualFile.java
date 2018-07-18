@@ -17,10 +17,12 @@ package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -43,6 +45,15 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
       myParent = new VcsVirtualFolder(file.getParent(), this, myFileSystem);
     else
       myParent = null;
+
+    OutsidersPsiFileSupport.markFile(this);
+  }
+
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, VirtualFileSystem fileSystem) {
+    myFileSystem = fileSystem;
+    myPath = parent != null && !StringUtil.isEmpty(parent.getPath()) ? parent.getPath() + "/" + name : name;
+    myName = name;
+    myParent = parent;
 
     OutsidersPsiFileSupport.markFile(this);
   }

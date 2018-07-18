@@ -25,16 +25,16 @@ class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: Uast
   override val packageName: String
     get() = psi.packageName
 
-  override val imports by lz {
+  override val imports: List<JavaUImportStatement> by lz {
     psi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
   }
 
   override val annotations: List<UAnnotation>
     get() = psi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
 
-  override val classes by lz { psi.classes.map { JavaUClass.create(it, this) } }
+  override val classes: List<UClass> by lz { psi.classes.map { JavaUClass.create(it, this) } }
 
-  override val allCommentsInFile by lz {
+  override val allCommentsInFile: ArrayList<UComment> by lz {
     val comments = ArrayList<UComment>(0)
     psi.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitComment(comment: PsiComment) {
@@ -44,5 +44,5 @@ class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: Uast
     comments
   }
 
-  override fun equals(other: Any?) = (other as? JavaUFile)?.psi == psi
+  override fun equals(other: Any?): Boolean = (other as? JavaUFile)?.psi == psi
 }

@@ -364,8 +364,15 @@ public class DarculaUIUtil {
     }
   }
 
+  public static final String COMPACT_PROPERTY = "JComponent.compactHeight";
+
+  public static boolean isCompact(Component c) {
+    return c instanceof JComponent && ((JComponent)c).getClientProperty(COMPACT_PROPERTY) == Boolean.TRUE;
+  }
+
   public static final JBValue MINIMUM_WIDTH = new JBValue.Float(64);
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
+  public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
   public static final JBValue LW = new JBValue.Float(1);
   public static final JBValue BW = new JBValue.UIInteger("Border.width", 2);

@@ -28,6 +28,6 @@ interface ContextCodeGenerator<C : Component> {
   fun accept(cmp: Component): Boolean
   fun generate(cmp: C): String
   fun typeSafeCast(cmp: Component): C = cmp as C
-  fun closeContext() = "}"
+  fun closeContext(): String = "}"
 
 }

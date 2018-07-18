@@ -18,7 +18,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
 
   private val severityRegistrar = SeverityRegistrar(messageBus)
 
-  final override fun getSeverityRegistrar() = severityRegistrar
+  final override fun getSeverityRegistrar(): SeverityRegistrar = severityRegistrar
 
   internal fun cleanupSchemes(project: Project) {
     for (profile in schemeManager.allSchemes) {

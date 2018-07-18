@@ -35,11 +35,11 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
     gradleReimport()
     waitAMoment(extraTimeOut)
 
-    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars() +
+    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars() else emptyList()) +
+                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList()) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars() else emptyList())
+                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList())
       ).toSet()
 
     checkInProjectStructure {
@@ -91,11 +91,11 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
     gradleReimport()
     waitAMoment(extraTimeOut)
 
-    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars() +
+    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars() else emptyList()) +
+                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList()) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars() else emptyList())
+                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList())
       ).toSet()
 
     checkInProjectStructure {

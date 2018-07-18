@@ -51,7 +51,7 @@ class GrUnnecessaryDefModifierInspection : GroovySuppressableInspectionTool(), C
     addCheckbox(GroovyInspectionBundle.message("unnecessary.def.explicitly.typed.only"), "reportExplicitTypeOnly")
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : PsiElementVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
 
     override fun visitElement(modifier: PsiElement) {
       if (modifier.node.elementType !== kDEF) return

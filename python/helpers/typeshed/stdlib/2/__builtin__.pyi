@@ -1,9 +1,9 @@
+# NB: __builtin__.pyi and builtins.pyi must remain consistent!
 # Stubs for builtins (Python 2.7)
 
 # True and False are deliberately omitted because they are keywords in
 # Python 3, and stub files conform to Python 3 syntax.
 
-from abc import ABCMeta
 from typing import (
     TypeVar, Iterator, Iterable, NoReturn, overload,
     Sequence, Mapping, Tuple, List, Any, Dict, Callable, Generic, Set,
@@ -11,6 +11,7 @@ from typing import (
     SupportsComplex, SupportsRound, IO, BinaryIO, Union, AnyStr, MutableSequence, MutableMapping,
     MutableSet, ItemsView, KeysView, ValuesView, Optional, Container, Type
 )
+from abc import abstractmethod, ABCMeta
 
 _T = TypeVar('_T')
 _T_co = TypeVar('_T_co', covariant=True)
@@ -862,9 +863,9 @@ def reduce(function: Callable[[_T, _T], _T], iterable: Iterable[_T]) -> _T: ...
 
 def reload(module: Any) -> Any: ...
 @overload
-def reversed(object: Reversible[_T]) -> Iterator[_T]: ...
-@overload
 def reversed(object: Sequence[_T]) -> Iterator[_T]: ...
+@overload
+def reversed(object: Reversible[_T]) -> Iterator[_T]: ...
 def repr(o: object) -> str: ...
 @overload
 def round(number: float) -> float: ...

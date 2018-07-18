@@ -99,9 +99,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                          "group = 'my.group'");
 
     importProject("apply plugin: 'java'\n" +
-                                                  "dependencies {\n" +
-                                                  "  compile 'my.group:runtime-mod'\n" +
-                                                  "}");
+                  "dependencies {\n" +
+                  "  compile 'my.group:runtime-mod'\n" +
+                  "}");
 
     assertModules("app", "app_main", "app_test",
                   "lib",
@@ -126,9 +126,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                          "group = 'my.group'");
 
     importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'\n" +
-                  "dependencies {\n" +
-                  "  compile 'my.group:runtime-mod'\n" +
-                  "}");
+                                                  "dependencies {\n" +
+                                                  "  compile 'my.group:runtime-mod'\n" +
+                                                  "}");
 
     assertModules("app",
                   "lib",
@@ -152,7 +152,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
     createProjectSubFile("lib1/settings.gradle", "rootProject.name = 'lib1'\n" +
-                                                "include 'runtime'");
+                                                 "include 'runtime'");
     createProjectSubFile("lib1/runtime/build.gradle",
                          "apply plugin: 'java'\n" +
                          "group = 'my.group.lib_1'");
@@ -165,13 +165,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                          "group = 'my.group.lib_2'");
 
 
-
     importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'\n" +
-                  "dependencies {\n" +
-                  "  compile project(':runtime')\n" +
-                  "  compile 'my.group.lib_1:runtime'\n" +
-                  "  compile 'my.group.lib_2:runtime'\n" +
-                  "}");
+                                                  "dependencies {\n" +
+                                                  "  compile project(':runtime')\n" +
+                                                  "  compile 'my.group.lib_1:runtime'\n" +
+                                                  "  compile 'my.group.lib_2:runtime'\n" +
+                                                  "}");
 
     assertModules("app", "app-runtime",
                   "lib1", "lib1-runtime",
@@ -185,7 +184,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
   @Test
   @TargetVersions("3.3+")
-  // @SuppressWarnings("Duplicates")
   public void testCompositeBuildWithGradleProjectDuplicatesModulePerSourceSet() throws Exception {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "include 'runtime'\n" +
@@ -222,21 +220,23 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                     "app-runtime", "app-runtime_main", "app-runtime_test",
                     "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
                     "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
-    } else {
+    }
+    else {
       assertModules("app", "app_main", "app_test",
                     "runtime", "runtime_main", "runtime_test",
-                    "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
-                    "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
+                    "lib1", "my.group.lib_1-runtime", "my.group.lib_1-runtime_main", "my.group.lib_1-runtime_test",
+                    "lib2", "my.group.lib_2-runtime", "my.group.lib_2-runtime_main", "my.group.lib_2-runtime_test");
     }
 
     if (isGradle40orNewer()) {
       assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
       assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
       assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
-    } else {
+    }
+    else {
       assertModuleModuleDepScope("app_main", "runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "my.group.lib_1-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "my.group.lib_2-runtime_main", COMPILE);
     }
   }
 
@@ -246,8 +246,11 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   public void testCompositeBuildWithProjectNameDuplicates() throws Exception {
     IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
     modelsProvider.newModule(getProjectPath() + "/api.iml", StdModuleTypes.JAVA.getId());
+    modelsProvider.newModule(getProjectPath() + "/api_main.iml", StdModuleTypes.JAVA.getId());
     modelsProvider.newModule(getProjectPath() + "/my-app-api.iml", StdModuleTypes.JAVA.getId());
     modelsProvider.newModule(getProjectPath() + "/my-app-api_main.iml", StdModuleTypes.JAVA.getId());
+    modelsProvider.newModule(getProjectPath() + "/my-utils-api.iml", StdModuleTypes.JAVA.getId());
+    modelsProvider.newModule(getProjectPath() + "/my-utils-api_main.iml", StdModuleTypes.JAVA.getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
 
     createSettingsFile("rootProject.name='adhoc'\n" +
@@ -297,28 +300,44 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject();
 
+    String myAppApiModuleName = myTestDir.getName() + "-my-app-api";
+    String myAppApiMainModuleName = myTestDir.getName() + "-my-app-api_main";
+    String myUtilsApiMainModuleName = isGradle40orNewer() ? "org.sample-my-utils-api_main" : "org.sample-api_main";
     if (isGradle40orNewer()) {
-      assertModules("adhoc", "api",
-                    "my-app", "my-app_main", "my-app_test",
-                    "my-app-api", "my-app-api~1", "my-app-api_main", "my-app-api_main~1", "my-app-api_test",
-                    "my-utils",
-                    "string-utils", "string-utils_main", "string-utils_test",
-                    "number-utils", "number-utils_main", "number-utils_test",
-                    "my-utils-api", "my-utils-api_main", "my-utils-api_test");
+      assertModules(
+        // non-gradle modules
+        "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
+        // generated modules by gradle import
+        "adhoc",
+        "my-app", "my-app_main", "my-app_test",
+        myAppApiModuleName, myAppApiMainModuleName, "my-app-api_test",
+        "my-utils",
+        "org.sample-my-utils-api", myUtilsApiMainModuleName, "my-utils-api_test",
+        "string-utils", "string-utils_main", "string-utils_test",
+        "number-utils", "number-utils_main", "number-utils_test"
+      );
     }
     else {
-      assertModules("adhoc", "api", "api_main", "api_test",
-                    "my-app", "my-app_main", "my-app_test",
-                    "my-app-api", "my-app-api~1", "my-app-api_main",
-                    "my-utils",
-                    "string-utils", "string-utils_main", "string-utils_test",
-                    "number-utils", "number-utils_main", "number-utils_test",
-                    "my-utils-api", "my-utils-api_main", "my-utils-api_test");
+      assertModules(
+        // non-gradle modules
+        "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
+        // generated modules by gradle import
+        "adhoc",
+        "my-app", "my-app_main", "my-app_test",
+        myAppApiModuleName, myAppApiMainModuleName, "org.sample-api_test",
+        "my-utils",
+        "org.sample-api", myUtilsApiMainModuleName, "api_test",
+        "string-utils", "string-utils_main", "string-utils_test",
+        "number-utils", "number-utils_main", "number-utils_test"
+      );
     }
 
     String[] emptyModules =
-      new String[]{"api", "adhoc", "my-app", "my-app-api", "my-app-api_main", "my-app-api~1", "my-utils", "my-utils-api", "string-utils",
-        "number-utils"};
+      new String[]{
+        // non-gradle modules
+        "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
+        // generated modules by gradle import
+        "adhoc", "my-app", myAppApiModuleName, "my-utils", "string-utils", "number-utils"};
     for (String rootModule : emptyModules) {
       assertModuleLibDeps(rootModule);
       assertModuleModuleDeps(rootModule);
@@ -329,19 +348,13 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("my-app_main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
 
     // my-app api project
-    if (isGradle40orNewer()) {
-      assertModuleModuleDeps("my-app-api_main~1");
-      assertModuleLibDeps("my-app-api_main~1", "Gradle: commons-lang:commons-lang:2.6");
-      assertModuleLibDepScope("my-app-api_main~1", "Gradle: commons-lang:commons-lang:2.6", COMPILE);
-    } else {
-      assertModuleModuleDeps("api_main");
-      assertModuleLibDeps("api_main", "Gradle: commons-lang:commons-lang:2.6");
-      assertModuleLibDepScope("api_main", "Gradle: commons-lang:commons-lang:2.6", COMPILE);
-    }
+    assertModuleModuleDeps(myAppApiMainModuleName);
+    assertModuleLibDeps(myAppApiMainModuleName, "Gradle: commons-lang:commons-lang:2.6");
+    assertModuleLibDepScope(myAppApiMainModuleName, "Gradle: commons-lang:commons-lang:2.6", COMPILE);
 
-    assertModuleModuleDeps("my-utils-api_main");
+    assertModuleModuleDeps(myUtilsApiMainModuleName);
     //assertModuleLibDeps("my-utils-api_main", "Gradle: junit:junit:4.11");
-    assertModuleLibDepScope("my-utils-api_main", "Gradle: junit:junit:4.11", COMPILE);
+    assertModuleLibDepScope(myUtilsApiMainModuleName, "Gradle: junit:junit:4.11", COMPILE);
     //assertModuleLibDepScope("my-utils-api_main", "Gradle: org.hamcrest:hamcrest-core:1.3", COMPILE);
   }
 }

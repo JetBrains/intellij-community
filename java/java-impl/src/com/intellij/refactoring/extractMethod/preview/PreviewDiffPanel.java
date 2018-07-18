@@ -95,8 +95,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       return;
     }
     JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(pattern, REFACTORING_NAME);
-    processor.applyFromSnapshot(mySnapshot);
-    if (!processor.prepare(true)) {
+    if (!processor.prepareFromSnapshot(mySnapshot, true)) {
       return;
     }
 
@@ -128,8 +127,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     JavaDuplicatesExtractMethodProcessor copyProcessor = ReadAction.compute(() -> {
       JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy, REFACTORING_NAME);
-      processor.applyFromSnapshot(mySnapshot);
-      return processor.prepare(false) ? processor : null;
+      return processor.prepareFromSnapshot(mySnapshot, false) ? processor : null;
     });
 
     List<Match> copyDuplicates = ReadAction.compute(() -> {
@@ -139,10 +137,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     Map<DuplicateNode, Match> duplicateMatches = ReadAction.compute(() -> filterSelectedDuplicates(allDuplicates, copyDuplicates));
 
-    ElementsRange patternReplacement = ReadAction.compute(() -> {
+    Bounds patternReplacementBounds = ReadAction.compute(() -> {
       Bounds patternBounds = new Bounds(patternCopy[0], patternCopy[patternCopy.length - 1]);
       copyProcessor.doExtract();
-      return patternBounds.getElementsRange();
+      return patternBounds;
     });
     indicator.setFraction(++count / (double)total); // +2
 
@@ -167,6 +165,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       PsiMethod extractedMethod = copyProcessor.getExtractedMethod();
       return (PsiMethod)CodeStyleManager.getInstance(copyProcessor.getProject()).reformat(extractedMethod);
     });
+
+    ElementsRange patternReplacement = ReadAction.compute(() -> patternReplacementBounds.getElementsRange());
 
     Document refactoredDocument = ReadAction.compute(() -> {
       PsiFile refactoredFile = method.getContainingFile();
@@ -228,7 +228,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       Range diffRange = new Range(anchorLineNumber,
                                   anchorLineNumber,
                                   getStartLineNumber(refactoredDocument, methodRange),
-                                  getEndLineNumber(refactoredDocument, methodRange));
+                                  getLineNumberAfter(refactoredDocument, methodRange));
       diffRanges.add(diffRange);
       linesBounds.put(methodNode, Couple.of(new TextRange(anchorOffset, anchorOffset),
                                             getLinesRange(methodRange, refactoredDocument)));
@@ -256,8 +256,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     return document.getLineNumber(textRange.getStartOffset());
   }
 
-  private static int getEndLineNumber(Document document, TextRange textRange) {
-    return Math.min(document.getLineNumber(textRange.getEndOffset() + 1), document.getLineCount() - 1);
+  private static int getLineNumberAfter(Document document, TextRange textRange) {
+    return Math.min(document.getLineNumber(textRange.getEndOffset()) + 1, document.getLineCount());
   }
 
   private static Range getDiffRange(@Nullable TextRange patternRange,
@@ -268,9 +268,9 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       return null;
     }
     return new Range(getStartLineNumber(patternDocument, patternRange),
-                     getEndLineNumber(patternDocument, patternRange),
+                     getLineNumberAfter(patternDocument, patternRange),
                      getStartLineNumber(refactoredDocument, refactoredRange),
-                     getEndLineNumber(refactoredDocument, refactoredRange));
+                     getLineNumberAfter(refactoredDocument, refactoredRange));
   }
 
   @NotNull
@@ -393,6 +393,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   private static class Bounds {
+    private static final Class[] SKIP_TYPES = {PsiWhiteSpace.class, PsiComment.class, PsiEmptyStatement.class};
     final PsiElement myParent;
     final PsiElement myBefore;
     final PsiElement myAfter;
@@ -400,13 +401,13 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     public Bounds(@NotNull PsiElement start, @NotNull PsiElement end) {
       myParent = start.getParent();
       assert myParent != null : "bounds' parent is null";
-      myBefore = PsiTreeUtil.skipSiblingsBackward(start, PsiWhiteSpace.class, PsiComment.class);
-      myAfter = PsiTreeUtil.skipSiblingsForward(end, PsiWhiteSpace.class, PsiComment.class);
+      myBefore = PsiTreeUtil.skipSiblingsBackward(start, SKIP_TYPES);
+      myAfter = PsiTreeUtil.skipSiblingsForward(end, SKIP_TYPES);
     }
 
     ElementsRange getElementsRange() {
-      PsiElement start = myBefore != null ? PsiTreeUtil.skipSiblingsForward(myBefore, PsiWhiteSpace.class, PsiComment.class) : null;
-      PsiElement end = myAfter != null ? PsiTreeUtil.skipSiblingsBackward(myAfter, PsiWhiteSpace.class, PsiComment.class) : null;
+      PsiElement start = PsiTreeUtil.skipSiblingsForward(myBefore, SKIP_TYPES);
+      PsiElement end = PsiTreeUtil.skipSiblingsBackward(myAfter, SKIP_TYPES);
       if (start == null) start = myParent.getFirstChild();
       if (end == null) end = myParent.getLastChild();
       if (start != null && end != null) {

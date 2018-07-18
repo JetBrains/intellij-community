@@ -67,6 +67,10 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     return myConnection.getOrCreateLogManager(project, this);
   }
 
+  public void disposeAllLogs() {
+    myConnection.disposeAllLogs(this);
+  }
+
   @Override
   public void setStatus(@NotNull final DeploymentStatus status, @Nullable final String statusText) {
     myConnection.changeDeploymentState(this, getRuntime(), myState.getStatus(), status, statusText);

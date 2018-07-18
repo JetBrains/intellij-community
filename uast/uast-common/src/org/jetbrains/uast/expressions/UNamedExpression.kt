@@ -30,9 +30,9 @@ interface UNamedExpression : UExpression {
     visitor.afterVisitElement(this)
   }
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
-  override fun asRenderString() = name + " = " + expression.asRenderString()
+  override fun asRenderString(): String = name + " = " + expression.asRenderString()
 
-  override fun evaluate() = expression.evaluate()
+  override fun evaluate(): Any? = expression.evaluate()
 }

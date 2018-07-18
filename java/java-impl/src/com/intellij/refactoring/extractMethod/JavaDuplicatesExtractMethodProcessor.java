@@ -80,7 +80,17 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     return true;
   }
 
-  public void applyFromSnapshot(@NotNull ExtractMethodSnapshot from) {
+  public boolean prepareFromSnapshot(@NotNull ExtractMethodSnapshot from, boolean showErrorHint) {
+    applyFromSnapshot(from);
+    if (!prepare(showErrorHint)) {
+      return false;
+    }
+    myStatic = from.myStatic;
+    myInputVariables.setFoldingAvailable(from.myFoldable);
+    return true;
+  }
+
+  private void applyFromSnapshot(@NotNull ExtractMethodSnapshot from) {
     myMethodName = from.myMethodName;
     myStatic = from.myStatic;
     myIsChainedConstructor = from.myIsChainedConstructor;

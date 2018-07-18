@@ -14,6 +14,10 @@ class SystemStateMonitor : StartupActivity {
   private val PERIOD_DELAY = 24 * 60
 
   override fun runActivity(project: Project) {
+    if (!FeatureUsageLogger.isEnabled()) {
+      return
+    }
+
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       { logSystemEvent() },
       INITIAL_DELAY.toLong(), PERIOD_DELAY.toLong(), TimeUnit.MINUTES

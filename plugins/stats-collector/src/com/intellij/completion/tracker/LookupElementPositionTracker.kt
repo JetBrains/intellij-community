@@ -44,7 +44,7 @@ class UserDataLookupElementPositionTracker : LookupElementPositionTracker {
     companion object {
         private val KEY = Key.create<MutableMap<String, ElementPositionHistory>>("lookup.element.position.history")
 
-        fun history(lookup: LookupImpl) = lookup.getUserData(KEY)
+        fun history(lookup: LookupImpl): MutableMap<String, ElementPositionHistory>? = lookup.getUserData(KEY)
 
         fun addElementPosition(lookup: LookupImpl, element: LookupElement, stagePosition: StagePosition) {
             lookup.putUserDataIfAbsent(KEY, mutableMapOf())

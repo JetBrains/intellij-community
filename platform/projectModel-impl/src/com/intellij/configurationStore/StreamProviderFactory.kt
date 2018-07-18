@@ -12,7 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
  */
 interface StreamProviderFactory {
   companion object {
-    val EP_NAME = ExtensionPointName.create<StreamProviderFactory>("com.intellij.streamProviderFactory")
+    val EP_NAME: ExtensionPointName<StreamProviderFactory> = ExtensionPointName.create<StreamProviderFactory>("com.intellij.streamProviderFactory")
   }
 
   fun createProvider(componentManager: ComponentManager, storageManager: StateStorageManager): StreamProvider? = null

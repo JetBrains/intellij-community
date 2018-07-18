@@ -226,6 +226,10 @@ public class JUnitUtil {
           return true;
         }
 
+        if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, CHECK_HIERARCHY)) {
+          return true;
+        }
+
         //default runners do not implicitly run inner classes
         if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_UNAWARE_OF_INNER_CLASSES)) {
           return true;

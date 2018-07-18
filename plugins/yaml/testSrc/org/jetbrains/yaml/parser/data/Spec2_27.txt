@@ -21,8 +21,9 @@ YAML file
         PsiElement(scalar key)('bill-to:')
         PsiWhiteSpace(' ')
         YAML mapping
-          YAML plain scalar text
-            PsiElement(text)('&id001')
+          YAML anchor
+            PsiElement(&)('&')
+            PsiElement(anchor)('id001')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
@@ -80,8 +81,9 @@ YAML file
       YAML key value
         PsiElement(scalar key)('ship-to:')
         PsiWhiteSpace(' ')
-        YAML plain scalar text
-          PsiElement(text)('*id001')
+        YAML alias
+          PsiElement(*)('*')
+          PsiElement(alias)('id001')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('product:')

@@ -56,7 +56,7 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   @Deprecated
   @Nullable
   public Icon getIcon() {
-    throw new AbstractMethodError();
+    return null;
   }
 
   @Nullable

@@ -20,7 +20,7 @@ import com.intellij.util.Url
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.FunctionValue
 
-const val VM_SCHEME = "vm"
+const val VM_SCHEME: String = "vm"
 
 interface ScriptManager {
   fun getSource(script: Script): Promise<String>
@@ -31,7 +31,7 @@ interface ScriptManager {
 
   fun forEachScript(scriptProcessor: (Script) -> Boolean)
 
-  fun forEachScript(scriptProcessor: Processor<Script>) = forEachScript { scriptProcessor.process(it)}
+  fun forEachScript(scriptProcessor: Processor<Script>): Unit = forEachScript { scriptProcessor.process(it)}
 
   fun getScript(function: FunctionValue): Promise<Script>
 

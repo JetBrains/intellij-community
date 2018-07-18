@@ -44,24 +44,24 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
-        super.visitLambdaExpression(expression);
-        if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
-          final PsiElement body = expression.getBody();
-          final PsiExpression psiExpression = isCodeBlockRedundant(body);
-          if (psiExpression != null) {
-            final PsiElement errorElement;
-            final PsiElement parent = psiExpression.getParent();
-            if (parent instanceof PsiReturnStatement) {
-              errorElement = parent.getFirstChild();
-            } else {
-              errorElement = body.getFirstChild();
-            }
-            holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
+        final PsiElement body = expression.getBody();
+        final PsiExpression psiExpression = isCodeBlockRedundant(body);
+        if (psiExpression != null) {
+          final PsiElement errorElement;
+          final PsiElement parent = psiExpression.getParent();
+          if (parent instanceof PsiReturnStatement) {
+            errorElement = parent.getFirstChild();
+          } else {
+            errorElement = body.getFirstChild();
           }
+          holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
     };

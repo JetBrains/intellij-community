@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
@@ -28,7 +29,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-class SwitchAnnotationSourceAction extends AnAction {
+class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
   private final static String ourShowMerged = VcsBundle.message("annotation.switch.to.merged.text");
   private final static String ourHideMerged = VcsBundle.message("annotation.switch.to.original.text");
   private final AnnotationSourceSwitcher mySwitcher;

@@ -44,6 +44,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the text being parsed
    */
+  @NotNull
   CharSequence getOriginalText();
 
   /**

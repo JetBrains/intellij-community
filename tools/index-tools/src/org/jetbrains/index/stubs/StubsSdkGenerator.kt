@@ -34,13 +34,13 @@ import java.io.File
  */
 
 abstract class ProjectSdkStubsGenerator {
-  open fun createStubsGenerator(stubsFilePath: String) = StubsGenerator("", stubsFilePath)
+  open fun createStubsGenerator(stubsFilePath: String): StubsGenerator = StubsGenerator("", stubsFilePath)
 
   abstract val moduleTypeId: String
 
   abstract fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk?
 
-  open val root = System.getenv("SDK_ROOT")
+  open val root: String? = System.getenv("SDK_ROOT")
 
   private val stubsFileName = "sdk-stubs"
 

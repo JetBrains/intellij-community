@@ -206,7 +206,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
   }
 
-  private class EditorHighlightingLayerAction extends ActionGroup implements EditorSettingAction {
+  private class EditorHighlightingLayerAction extends ActionGroup implements EditorSettingAction, DumbAware {
     private final AnAction[] myOptions;
 
     public EditorHighlightingLayerAction() {

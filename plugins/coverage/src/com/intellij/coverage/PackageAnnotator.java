@@ -52,7 +52,6 @@ public class PackageAnnotator {
 
   private final PsiPackage myPackage;
   private final Project myProject;
-  private final PsiManager myManager;
   private final CoverageDataManager myCoverageManager;
   private final boolean myIgnoreEmptyPrivateConstructors;
   private final boolean myIgnoreImplicitConstructor;
@@ -60,7 +59,6 @@ public class PackageAnnotator {
   public PackageAnnotator(final PsiPackage aPackage) {
     myPackage = aPackage;
     myProject = myPackage.getProject();
-    myManager = PsiManager.getInstance(myProject);
     myCoverageManager = CoverageDataManager.getInstance(myProject);
     JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
     myIgnoreEmptyPrivateConstructors = optionsProvider.ignoreEmptyPrivateConstructors();
@@ -329,7 +327,7 @@ public class PackageAnnotator {
           final String childName = child.getName();
           final String childPackageVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
           VirtualFile[] childSourceRoots = Arrays.stream(sourceRoots)
-                                                 .map(root -> root.findFileByRelativePath(childName))
+                                                 .map(root -> root != null ? root.findFileByRelativePath(childName) : null)
                                                  .toArray(VirtualFile[]::new);
           collectCoverageDataInRoot(child, childPackageVMName, childSourceRoots);
           for (int i = 0; i < sourceRoots.length; i++) {

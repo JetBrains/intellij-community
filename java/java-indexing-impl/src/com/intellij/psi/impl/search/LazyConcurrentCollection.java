@@ -53,8 +53,8 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   //    If more elements requested for this iterator, the processMoreSubclasses() is called which tries to populate 'subClasses' with more inheritors.
   private final HashSetQueue<T> subClasses; // guarded by lock
   private final Object lock = new Object(); // MUST NOT acquire read action inside this lock
-  @NotNull private final Function<T, V> myAnchorToValueConvertor;
-  @NotNull private final MoreElementsGenerator<T,V> myGenerator;
+  @NotNull private final Function<? super T, ? extends V> myAnchorToValueConvertor;
+  @NotNull private final MoreElementsGenerator<? extends T, ? super V> myGenerator;
   @NotNull private final Predicate<? super V> myApplicableForGenerationFilter;
   private final Semaphore currentlyProcessingClasses = new Semaphore();
 
@@ -66,9 +66,9 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   private final Set<T> classesProcessed = new THashSet<>(); // guarded by lock
 
   LazyConcurrentCollection(@NotNull T seedElement,
-                           @NotNull Function<T, V> convertor,
+                           @NotNull Function<? super T, ? extends V> convertor,
                            @NotNull Predicate<? super V> applicableForGenerationFilter,
-                           @NotNull MoreElementsGenerator<T, V> generator) {
+                           @NotNull MoreElementsGenerator<? extends T, ? super V> generator) {
     subClasses = new HashSetQueue<>();
     subClasses.add(seedElement);
     myAnchorToValueConvertor = convertor;
@@ -116,8 +116,9 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
     };
   }
 
-  // polls 'subClasses' for more sub classes and call DirectClassInheritorsSearch for them
-  // returns true if some classes were found
+  // polls 'subClasses' for more sub classes and call generator.generateMoreElementsFor() on them
+  // adds found classes to "subClasses" queue
+  // returns as soon as something was added
   private void processMoreSubclasses(@NotNull Iterator<T> subClassIterator) {
     while (true) {
       ProgressManager.checkCanceled();
@@ -231,7 +232,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   }
 
   // under lock
-  private Pair.NonNull<T,V> findNextClassInQueue(@NotNull HashSetQueue.PositionalIterator.IteratorPosition<T> position) {
+  private Pair.NonNull<T,V> findNextClassInQueue(@NotNull HashSetQueue.PositionalIterator.IteratorPosition<? extends T> position) {
     // find the first class suitable for analyzing inheritors of (not anonymous and not final and retrievable from PsiAnchor) and not already processed or being processed (by other thread)
     // couldn't call iterator.next() until class is processed, so use position.peek()/position.next() which don't advance iterator
     while (position != null) {

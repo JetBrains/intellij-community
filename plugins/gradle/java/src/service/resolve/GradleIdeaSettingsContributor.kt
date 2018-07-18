@@ -21,8 +21,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATE
  */
 class GradleIdeaSettingsContributor : GradleMethodContextContributor {
   companion object {
-    const val PROJECT_SETTINGS_FQN = "org.jetbrains.gradle.ext.ProjectSettings"
-    const val MODULE_SETTINGS_FQN = "org.jetbrains.gradle.ext.ModuleSettings"
+    const val PROJECT_SETTINGS_FQN: String = "org.jetbrains.gradle.ext.ProjectSettings"
+    const val MODULE_SETTINGS_FQN: String = "org.jetbrains.gradle.ext.ModuleSettings"
   }
 
   override fun process(methodCallInfo: MutableList<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {

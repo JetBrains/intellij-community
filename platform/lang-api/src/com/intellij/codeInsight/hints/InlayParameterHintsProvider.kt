@@ -79,15 +79,15 @@ sealed class HintInfo {
 
   open class OptionInfo(protected val option: Option) : HintInfo() {
 
-    open fun disable() = alternate()
-    open fun enable() = alternate()
+    open fun disable(): Unit = alternate()
+    open fun enable(): Unit = alternate()
 
     private fun alternate() {
       val current = option.get()
       option.set(!current)
     }
 
-    open val optionName = option.name
+    open val optionName: String = option.name
 
     fun isOptionEnabled(): Boolean = option.isEnabled()
 
@@ -99,7 +99,7 @@ data class Option(val id: String,
                   val name: String,
                   val defaultValue: Boolean) {
 
-  fun isEnabled() = get()
+  fun isEnabled(): Boolean = get()
 
   fun get(): Boolean {
     return ParameterNameHintsSettings.getInstance().getOption(id) ?: defaultValue

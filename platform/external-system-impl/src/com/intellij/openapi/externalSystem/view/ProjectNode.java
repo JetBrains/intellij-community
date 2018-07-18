@@ -79,12 +79,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  public String getName() {
-    final ProjectData projectData = getData();
-    return projectData != null ? projectData.getExternalName() : "unspecified";
-  }
-
-  @Override
   protected void doUpdate() {
     String autoImportHint = null;
     final ProjectData projectData = getData();

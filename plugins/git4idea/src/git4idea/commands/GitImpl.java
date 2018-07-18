@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -147,6 +148,9 @@ public class GitImpl extends GitImplBase {
       handler.setStdoutSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
+      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && Registry.is("git.clone.recurse.submodules")) {
+        handler.addParameters("--recurse-submodules");
+      }
       handler.addParameters(url);
       handler.endOptions();
       handler.addParameters(clonedDirectoryName);
@@ -285,6 +289,21 @@ public class GitImpl extends GitImplBase {
       h.addParameters(reference);
     }
     if (listener != null) {
+      h.addLineListener(listener);
+    }
+    return runCommand(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult deleteTag(@NotNull GitRepository repository,
+                                    @NotNull String tagName,
+                                    @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
+    h.setSilent(false);
+    h.addParameters("-d");
+    h.addParameters(tagName);
+    for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }
     return runCommand(h);
@@ -453,8 +472,20 @@ public class GitImpl extends GitImplBase {
   @NotNull
   public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
                                      @NotNull GitLineHandlerListener... listeners) {
+    return cherryPick(repository, hash, autoCommit, true, listeners);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult cherryPick(@NotNull GitRepository repository,
+                                     @NotNull String hash,
+                                     boolean autoCommit,
+                                     boolean addCherryPickedFromSuffix,
+                                     @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHERRY_PICK);
-    handler.addParameters("-x");
+    if (addCherryPickedFromSuffix) {
+      handler.addParameters("-x");
+    }
     if (!autoCommit) {
       handler.addParameters("-n");
     }

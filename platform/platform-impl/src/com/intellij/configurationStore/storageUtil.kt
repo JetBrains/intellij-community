@@ -28,7 +28,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-const val NOTIFICATION_GROUP_ID = "Load Error"
+const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
 @TestOnly
 var DEBUG_LOG: String? = null

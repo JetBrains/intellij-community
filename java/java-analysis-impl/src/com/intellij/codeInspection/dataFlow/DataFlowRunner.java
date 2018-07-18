@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -271,7 +272,8 @@ public class DataFlowRunner {
       } else if (instruction instanceof ConditionalGotoInstruction) {
         joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
       } else if (instruction instanceof ControlTransferInstruction) {
-        joinInstructions.addAll(((ControlTransferInstruction)instruction).getPossibleTargetInstructions(myInstructions));
+        IntStreamEx.of(((ControlTransferInstruction)instruction).getPossibleTargetIndices()).elements(myInstructions)
+                   .into(joinInstructions);
       } else if (instruction instanceof MethodCallInstruction && !((MethodCallInstruction)instruction).getContracts().isEmpty()) {
         joinInstructions.add(myInstructions[index + 1]);
       }
@@ -348,7 +350,9 @@ public class DataFlowRunner {
       PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
       DfaValue value = factory.createTypeValue(var.getVariableType(), Nullness.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
-        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+        // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
+        // as fields may not contribute to the visible state
+        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE_VIEW);
       }
       return null;
     }

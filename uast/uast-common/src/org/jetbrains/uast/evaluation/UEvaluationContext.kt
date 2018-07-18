@@ -68,4 +68,4 @@ fun UDeclaration.getEvaluationContextWithCaching(extensions: List<UEvaluatorExte
   } ?: MapBasedEvaluationContext(getUastContext(), extensions)
 }
 
-val EVALUATION_CONTEXT_KEY = Key<SoftReference<out UEvaluationContext>>("uast.EvaluationContext")
+val EVALUATION_CONTEXT_KEY: Key<SoftReference<out UEvaluationContext>> = Key<SoftReference<out UEvaluationContext>>("uast.EvaluationContext")

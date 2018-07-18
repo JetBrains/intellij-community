@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore;
 
 import com.intellij.openapi.application.Application;
@@ -31,17 +17,16 @@ import org.jetbrains.annotations.NotNull;
 public class PasswordSafeSettings implements PersistentStateComponent<PasswordSafeSettings.State> {
   public static final Topic<PasswordSafeSettingsListener> TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener.class);
 
-  private ProviderType myProviderType = getDefaultProviderType();
+  private State state = new State();
 
-  String keepassDb;
-
+  @NotNull
   private static ProviderType getDefaultProviderType() {
     return SystemInfo.isWindows ? ProviderType.KEEPASS : ProviderType.KEYCHAIN;
   }
 
   @NotNull
   public ProviderType getProviderType() {
-    return SystemInfo.isWindows && myProviderType == ProviderType.KEYCHAIN ? ProviderType.KEEPASS : myProviderType;
+    return SystemInfo.isWindows && state.PROVIDER == ProviderType.KEYCHAIN ? ProviderType.KEEPASS : state.PROVIDER;
   }
 
   public void setProviderType(@NotNull ProviderType value) {
@@ -50,9 +35,9 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
       value = ProviderType.MEMORY_ONLY;
     }
 
-    ProviderType oldValue = myProviderType;
+    ProviderType oldValue = state.PROVIDER;
     if (value != oldValue) {
-      myProviderType = value;
+      state.PROVIDER = value;
       Application app = ApplicationManager.getApplication();
       if (app != null) {
         app.getMessageBus().syncPublisher(TOPIC).typeChanged(oldValue, value);
@@ -63,23 +48,23 @@ public class PasswordSafeSettings implements PersistentStateComponent<PasswordSa
   @Override
   @NotNull
   public State getState() {
-    State s = new State();
-    s.PROVIDER = myProviderType;
-    if (keepassDb != null && !keepassDb.equals(PasswordSafeConfigurableKt.getDefaultKeePassDbFilePath())) {
-      s.keepassDb = keepassDb;
+    if (state.keepassDb != null && state.keepassDb.equals(PasswordSafeConfigurableKt.getDefaultKeePassDbFilePath())) {
+      state.keepassDb = null;
     }
-    return s;
+    return state;
   }
 
   @Override
   public void loadState(@NotNull State state) {
+    this.state = state;
     setProviderType(ObjectUtils.chooseNotNull(state.PROVIDER, getDefaultProviderType()));
-    keepassDb = StringUtil.nullize(state.keepassDb, true);
+    state.keepassDb = StringUtil.nullize(state.keepassDb, true);
   }
 
   public static class State {
     public ProviderType PROVIDER = getDefaultProviderType();
 
     public String keepassDb;
+    public boolean isRememberPasswordByDefault = true;
   }
 }

@@ -803,17 +803,17 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static int removeExtraSemicolon(ParameterInfo info, int offset, StringBuilder result, MatchResult match) {
     if (info.isStatementContext()) {
       final int index = offset + info.getStartIndex();
-      if (result.charAt(index)==';' &&
-          ( match == null ||
+      final PsiElement matchElement = (match == null) ? null : match.getMatch();
+      if (result.charAt(index) == ';' &&
+          ( matchElement == null ||
             ( result.charAt(index-1)=='}' &&
-              !(match.getMatch() instanceof PsiDeclarationStatement) && // array init in dcl
-              !(match.getMatch() instanceof PsiNewExpression) // array initializer
+              !(matchElement instanceof PsiDeclarationStatement) && // array init in dcl
+              !(matchElement instanceof PsiNewExpression) && // array initializer
+              !(matchElement instanceof PsiArrayInitializerExpression)
             ) ||
-            ( !match.isMultipleMatch() &&                                                // ; in comment
-              match.getMatch() instanceof PsiComment
-            ) ||
-            ( match.isMultipleMatch() &&                                                 // ; in comment
-              match.getChildren().get( match.getChildren().size() - 1 ).getMatch() instanceof PsiComment
+            ( match.isMultipleMatch()  // ; in comment
+              ? match.getChildren().get(match.getChildren().size() - 1).getMatch() instanceof PsiComment
+              : matchElement instanceof PsiComment
             )
           )
         ) {
@@ -890,6 +890,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
       if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
     }
+    if (grandParent instanceof PsiSwitchLabelStatement) {
+      return ((PsiSwitchLabelStatement)grandParent).getEnclosingSwitchStatement() != null;
+    }
     if (grandParent instanceof PsiVariable) {
       return ((PsiVariable)grandParent).getInitializer() == parent;
     }
@@ -924,6 +927,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
+    if (grandParent instanceof PsiSwitchLabelStatement)  return true;
     if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) return true;
     if (grandParent instanceof PsiReferenceList) {
       final PsiElement greatGrandParent = grandParent.getParent();

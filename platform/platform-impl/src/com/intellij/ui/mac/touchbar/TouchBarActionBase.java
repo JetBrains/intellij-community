@@ -1,12 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.execution.ExecutionListener;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
@@ -17,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +20,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TouchBarActionBase extends TouchBarProjectBase implements ExecutionListener {
+public class TouchBarActionBase extends TouchBarProjectBase {
   private static final Logger LOG = Logger.getInstance(TouchBarActionBase.class);
   private static final String ourLargeSeparatorText = "type.big";
   private static final String ourFlexibleSeparatorText = "type.flexible";
@@ -33,38 +28,33 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private final TimerListener myTimerListener;
-  private final Component myComponent;
 
   static {
     _initExecutorsGroup();
   }
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component) { this(touchbarName, project, component, false); }
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project) { this(touchbarName, project, false); }
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, @NotNull ActionGroup customizedGroup, Component component, boolean replaceEsc) {
-    this(touchbarName, project, component, replaceEsc);
+  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
+    this(touchbarName, project, replaceEsc);
 
     final String groupId = _getActionId(customizedGroup);
     if (groupId == null) {
       LOG.error("unregistered group: " + customizedGroup);
       return;
     }
-    addActionGroupButtons(customizedGroup, component, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, nodeId -> nodeId.contains(groupId + "_"));
+    addActionGroupButtons(customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, nodeId -> nodeId.contains(groupId + "_"), null);
   }
 
-  public TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, Component component, boolean replaceEsc) {
+  private TouchBarActionBase(@NotNull String touchbarName, @NotNull Project project, boolean replaceEsc) {
     super(touchbarName, project, replaceEsc);
 
-    myComponent = component;
     myTimerListener = new TimerListener() {
       @Override
       public ModalityState getModalityState() { return ModalityState.current(); }
       @Override
-      public void run() { _updateActionItems(); }
+      public void run() { updateActionItems(); }
     };
-
-    final MessageBus mb = project.getMessageBus();
-    mb.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, this);
   }
 
   @Override
@@ -75,46 +65,27 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
   @Override
   public void onBeforeShow() {
-    _updateActionItems();
+    updateActionItems();
     ActionManager.getInstance().addTransparentTimerListener(500/*delay param doesn't affect anything*/, myTimerListener);
   }
   @Override
   public void onHide() { ActionManager.getInstance().removeTransparentTimerListener(myTimerListener); }
 
-  TBItemAnActionButton addAnActionButton(String actId) {
-    final AnAction act = _getActionById(actId);
-    if (act == null)
-      return null;
-
-    return _addAnActionButton(act, true, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
-  }
-
-  TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled) {
-    final AnAction act = _getActionById(actId);
-    if (act == null)
-      return null;
-
-    return _addAnActionButton(act, hiddenWhenDisabled, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY, myComponent, null);
-  }
-
-  TBItemAnActionButton addAnActionButton(String actId, boolean hiddenWhenDisabled, int showMode) {
-    final AnAction act = _getActionById(actId);
-    if (act == null)
-      return null;
-
-    return _addAnActionButton(act, hiddenWhenDisabled, showMode, myComponent, null);
-  }
-
-  private TBItemAnActionButton _addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, Component component, ModalityState modality) {
+  private TBItemAnActionButton _addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
     final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
-    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode, component, modality);
+    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, act, hiddenWhenDisabled, showMode, modality);
     myItems.add(butt);
     return butt;
   }
 
-  public void addActionGroupButtons(ActionGroup actionGroup, Component forCtx, ModalityState modality, int showMode) { addActionGroupButtons(actionGroup, forCtx, modality, showMode, null); }
+  public void setComponent(Component component/*for DataContext*/) {
+    myItems.forEach(item -> {
+      if (item instanceof TBItemAnActionButton)
+        ((TBItemAnActionButton)item).setComponent(component);
+    });
+  }
 
-  public void addActionGroupButtons(ActionGroup actionGroup, Component forCtx, ModalityState modality, int showMode, INodeFilter filter) {
+  public void addActionGroupButtons(ActionGroup actionGroup, ModalityState modality, int showMode, INodeFilter filter, ICustomizer customizer) {
     _traverse(actionGroup, new ILeafVisitor() {
       private int mySeparatorCounter = 0;
 
@@ -143,32 +114,24 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
         final boolean isRunConfigPopover = actId != null && actId.contains("RunConfiguration");
         final int mode = isRunConfigPopover ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : showMode;
-        final TBItemAnActionButton butt = _addAnActionButton(act, false, mode, forCtx, modality);
+        final TBItemAnActionButton butt = _addAnActionButton(act, false, mode, modality);
 
         if (isRunConfigPopover)
           butt.setWidth(ourRunConfigurationPopoverWidth);
+
+        if (customizer != null)
+          customizer.customize(butt);
       }
     }, filter);
   }
 
-  @Override
-  public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-    _updateActionItems();
-  }
-  @Override
-  public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-    ApplicationManager.getApplication().invokeLater(()->{
-      _updateActionItems();
-    });
-  }
-
-  protected void _updateActionItems() {
+  void updateActionItems() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    boolean layoutChanged = false;
-    for (TBItem tbitem: myItems) {
+    final boolean[] layoutChanged = new boolean[]{false};
+    forEach(tbitem->{
       if (!(tbitem instanceof TBItemAnActionButton))
-        continue;
+        return;
 
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
       final Presentation presentation = myPresentationFactory.getPresentation(item.getAnAction());
@@ -183,12 +146,12 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
       if (item.isAutoVisibility()) {
         final boolean itemVisibilityChanged = item.updateVisibility(presentation);
         if (itemVisibilityChanged)
-          layoutChanged = true;
+          layoutChanged[0] = true;
       }
       item.updateView(presentation);
-    }
+    });
 
-    if (layoutChanged)
+    if (layoutChanged[0])
       selectVisibleItemsToShow();
   }
 
@@ -248,6 +211,9 @@ public class TouchBarActionBase extends TouchBarProjectBase implements Execution
 
   protected interface INodeFilter {
     boolean skip(String nodeId);
+  }
+  protected interface ICustomizer {
+    void customize(TBItem item);
   }
   private interface ILeafVisitor {
     void visit(AnAction leaf);

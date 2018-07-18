@@ -67,7 +67,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
   @Transient
   private var dirty = true
 
-  var isDebugEnabled = false
+  var isDebugEnabled: Boolean = false
 
   private val debugMillis: Int
     get() {
@@ -369,7 +369,7 @@ open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(),
     }
   }
 
-  override fun maximumLayoutSize(parent: Container) = Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE)
+  override fun maximumLayoutSize(parent: Container): Dimension = Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE)
 
   private fun getSizeImpl(parent: Container, sizeType: Int): Dimension {
     checkCache(parent)

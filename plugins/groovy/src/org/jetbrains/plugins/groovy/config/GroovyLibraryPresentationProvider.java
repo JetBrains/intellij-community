@@ -54,7 +54,7 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
 
   @Override
   @NotNull
-  public Icon getIcon() {
+  public Icon getIcon(GroovyLibraryProperties properties) {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 

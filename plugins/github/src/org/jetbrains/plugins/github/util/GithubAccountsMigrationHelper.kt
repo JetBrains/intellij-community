@@ -78,7 +78,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
                 GithubApiTaskExecutor.execute(progressManager.progressIndicator, server, password,
                                               GithubTask { GithubApiUtil.getCurrentUser(it).login })
               }, "Accessing Github", true, project)
-              val account = GithubAccount(accountName, server)
+              val account = GithubAccountManager.createAccount(accountName, server)
               registerAccount(account, password)
             }
             catch (e: Exception) {
@@ -106,7 +106,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
   private fun registerFromDialog(dialog: GithubLoginDialog): Boolean {
     DialogManager.show(dialog)
     return if (dialog.isOK) {
-      registerAccount(GithubAccount(dialog.getLogin(), dialog.getServer()), dialog.getToken())
+      registerAccount(GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer()), dialog.getToken())
       true
     }
     else false

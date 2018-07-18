@@ -68,8 +68,4 @@ public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingM
     }, element.getProject(), settings, file.getFileType(), file);
   }
 
-  @Override
-  public TextRange getRangeAffectingIndent(final PsiFile file, final int offset, final ASTNode elementAtOffset) {
-    return null;
-  }
 }

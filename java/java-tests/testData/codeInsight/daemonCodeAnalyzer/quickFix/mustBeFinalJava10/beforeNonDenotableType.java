@@ -1,11 +1,11 @@
 // "Move 'x' into anonymous object" "false"
 class Test {
-    public void test() {
-        var x = new Object() {
-          int y = 12;
-        }
+    void test() {
+        Integer i = 1;
+        var x = (Number & Comparable<?>)i;
         Runnable r = () -> {
-            x<caret> = null;
+            x<caret> = 2;
         };
+        System.out.println(x.compareTo(null));
     }
 }

@@ -223,7 +223,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
       }
       else {
         final PsiMethodMember[] elementsToRender = myMerge ? myAllElements : myOnlyPrimaryElements;
-        resetElementsWithDefaultComparator(elementsToRender, true);
+        resetElementsWithDefaultComparator(elementsToRender);
       }
     }
   }

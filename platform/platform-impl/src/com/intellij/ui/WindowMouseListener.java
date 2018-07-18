@@ -181,7 +181,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
    * It can be overridden if another approach is used.
    */
   protected void setCursor(Component content, Cursor cursor) {
-    content.setCursor(cursor);
+    UIUtil.setCursor(content, cursor);
   }
 
   /**

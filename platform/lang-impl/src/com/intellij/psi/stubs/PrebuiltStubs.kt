@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs
 
 import com.google.common.hash.HashCode
@@ -38,7 +24,7 @@ import java.io.File
  * @author traff
  */
 
-val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
+const val EP_NAME: String = "com.intellij.filetype.prebuiltStubsProvider"
 
 object PrebuiltStubsProviders : FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
@@ -50,7 +36,7 @@ interface PrebuiltStubsProvider {
 class FileContentHashing {
   private val hashing = Hashing.sha256()
 
-  fun hashString(fileContent: FileContent) = hashing.hashBytes(fileContent.content)!!
+  fun hashString(fileContent: FileContent): HashCode = hashing.hashBytes(fileContent.content)!!
 }
 
 
@@ -60,7 +46,7 @@ class HashCodeDescriptor : HashCodeExternalizers(), KeyDescriptor<HashCode> {
   override fun isEqual(val1: HashCode, val2: HashCode): Boolean = val1 == val2
 
   companion object {
-    val instance = HashCodeDescriptor()
+    val instance: HashCodeDescriptor = HashCodeDescriptor()
   }
 }
 
@@ -84,7 +70,7 @@ class StubTreeExternalizer : DataExternalizer<SerializedStubTree> {
     value.write(out)
   }
 
-  override fun read(`in`: DataInput) = SerializedStubTree(`in`)
+  override fun read(`in`: DataInput): SerializedStubTree = SerializedStubTree(`in`)
 }
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedStubTree>(), PrebuiltStubsProvider {
@@ -93,29 +79,29 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedS
 
   protected abstract val stubVersion: Int
 
-  override val indexName get() = SDK_STUBS_STORAGE_NAME
+  override val indexName: String get() = SDK_STUBS_STORAGE_NAME
 
-  override val indexExternalizer get() = StubTreeExternalizer()
+  override val indexExternalizer: StubTreeExternalizer get() = StubTreeExternalizer()
 
   companion object {
-    val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
-    val SDK_STUBS_STORAGE_NAME = "sdk-stubs"
+    const val PREBUILT_INDICES_PATH_PROPERTY: String = "prebuilt_indices_path"
+    const val SDK_STUBS_STORAGE_NAME: String = "sdk-stubs"
     private val LOG = Logger.getInstance("#com.intellij.psi.stubs.PrebuiltStubsProviderBase")
   }
 
   override fun openIndexStorage(indexesRoot: File): PersistentHashMap<HashCode, SerializedStubTree>? {
-    val versionInFile = FileUtil.loadFile(File(indexesRoot, indexName + ".version"))
+    val versionInFile = FileUtil.loadFile(File(indexesRoot, "$indexName.version"))
 
-    if (Integer.parseInt(versionInFile) == stubVersion) {
-      mySerializationManager = SerializationManagerImpl(File(indexesRoot, indexName + ".names"))
+    return if (Integer.parseInt(versionInFile) == stubVersion) {
+      mySerializationManager = SerializationManagerImpl(File(indexesRoot, "$indexName.names"))
 
       Disposer.register(ApplicationManager.getApplication(), mySerializationManager!!)
 
-      return super.openIndexStorage(indexesRoot)
+      super.openIndexStorage(indexesRoot)
     }
     else {
       LOG.error("Prebuilt stubs version mismatch: $versionInFile, current version is $stubVersion")
-      return null
+      null
     }
   }
 

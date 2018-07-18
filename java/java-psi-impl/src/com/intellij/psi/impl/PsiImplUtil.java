@@ -610,7 +610,7 @@ public class PsiImplUtil {
     return element instanceof PsiAnnotation && AnnotationTargetUtil.isTypeAnnotation((PsiAnnotation)element);
   }
 
-  public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<PsiAnnotation> annotations) {
+  public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<? super PsiAnnotation> annotations) {
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
         annotations.add(annotation);
@@ -729,8 +729,6 @@ public class PsiImplUtil {
     if (module instanceof LightJavaModule) {
       return ((LightJavaModule)module).getRootVirtualFile();
     }
-    else {
-      return module.getContainingFile().getVirtualFile();
-    }
+    return module.getContainingFile().getVirtualFile();
   }
 }

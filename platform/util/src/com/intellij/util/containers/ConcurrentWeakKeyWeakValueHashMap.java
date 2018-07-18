@@ -32,13 +32,13 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
   ConcurrentWeakKeyWeakValueHashMap(int initialCapacity,
                                     float loadFactor,
                                     int concurrencyLevel,
-                                    @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+                                    @NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   private static class WeakValue<K, V> extends WeakReference<V> implements ValueReference<K,V> {
     @NotNull private volatile KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
-    private WeakValue(@NotNull V value, @NotNull ReferenceQueue<V> queue) {
+    private WeakValue(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
       super(value, queue);
     }
 
@@ -74,7 +74,7 @@ class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValue
 
   @Override
   @NotNull
-  protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<V> queue) {
+  protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
     return new WeakValue<K, V>(value, queue);
   }
 }

@@ -28,14 +28,8 @@ public class GithubAccount {
     myServer = new GithubServerPath();
   }
 
-  public GithubAccount(@NotNull String name, @NotNull GithubServerPath server) {
+  GithubAccount(@NotNull String name, @NotNull GithubServerPath server) {
     myId = UUID.randomUUID().toString();
-    myName = name;
-    myServer = server;
-  }
-
-  public GithubAccount(@NotNull String id, @NotNull String name, @NotNull GithubServerPath server) {
-    myId = id;
     myName = name;
     myServer = server;
   }

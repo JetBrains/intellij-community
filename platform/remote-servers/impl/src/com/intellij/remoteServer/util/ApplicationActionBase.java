@@ -23,10 +23,11 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.actions.ServersTreeAction;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
-import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Optional;
 
 public abstract class ApplicationActionBase<T extends CloudApplicationRuntime> extends ServersTreeAction<DeploymentNode> {
 
@@ -39,17 +40,15 @@ public abstract class ApplicationActionBase<T extends CloudApplicationRuntime> e
     return DeploymentNode.class;
   }
 
-  protected Deployment getDeployment(DeploymentNode node) {
-    return ObjectUtils.tryCast(node.getValue(), Deployment.class);
+  protected Deployment getDeployment(@Nullable DeploymentNode node) {
+    return node == null ? null : ObjectUtils.tryCast(node.getValue(), Deployment.class);
   }
 
-  protected T getApplicationRuntime(DeploymentNode node) {
-    Deployment deployment = getDeployment(node);
-    if (deployment == null) {
-      return null;
-    }
-    DeploymentRuntime deploymentRuntime = deployment.getRuntime();
-    return ObjectUtils.tryCast(deploymentRuntime, getApplicationRuntimeClass());
+  protected T getApplicationRuntime(@Nullable DeploymentNode node) {
+    return Optional.ofNullable(getDeployment(node))
+                   .map(Deployment::getRuntime)
+                   .map(rt -> ObjectUtils.tryCast(rt, getApplicationRuntimeClass()))
+                   .orElse(null);
   }
 
   protected static ServerConnection<?> getConnection(DeploymentNode node) {

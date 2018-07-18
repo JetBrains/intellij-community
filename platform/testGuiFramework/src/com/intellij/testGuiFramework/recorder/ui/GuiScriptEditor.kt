@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorTextField
+import javax.swing.JComponent
 import kotlin.with
 
 /**
@@ -34,7 +35,7 @@ class GuiScriptEditor : Disposable {
 
   val myEditor: EditorEx
 
-  fun getPanel() = myEditor.component
+  fun getPanel(): JComponent = myEditor.component
 
   init {
     val editorFactory = EditorFactory.getInstance()

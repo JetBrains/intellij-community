@@ -163,17 +163,22 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     PsiMethod[] methods = null;
     if (element instanceof PsiIdentifier) {
       final String identifierName = element.getText();
-      final List<PsiMethod> result = new ArrayList<>();
-      for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
-        if (identifierName.equals(signature.getName())) {
-          result.add(signature.getMethod());
+      // findMethodsByName is supposed to be faster than getVisibleSignatures
+      methods = containingClass.findMethodsByName(identifierName, true);
+      if (methods.length == 0) return null;
+      if (methods.length > 1) {
+        final List<PsiMethod> result = new ArrayList<>();
+        for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
+          if (identifierName.equals(signature.getName())) {
+            result.add(signature.getMethod());
+          }
         }
-      }
 
-      if (result.isEmpty()) {
-        return null;
+        if (result.isEmpty()) {
+          return null;
+        }
+        methods = result.toArray(PsiMethod.EMPTY_ARRAY);
       }
-      methods = result.toArray(PsiMethod.EMPTY_ARRAY);
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());

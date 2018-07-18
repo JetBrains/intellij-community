@@ -57,10 +57,10 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
   val visibility: UastVisibility
     get() = UastVisibility[this]
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitDeclaration(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitDeclaration(this, data)
 }
 
-fun UElement.getContainingDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
+fun UElement.getContainingDeclaration(): UDeclaration? = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
 
 /**
  * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]

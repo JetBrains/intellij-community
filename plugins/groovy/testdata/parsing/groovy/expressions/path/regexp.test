@@ -23,9 +23,6 @@ Groovy script
       PsiElement(.)('.')
       Compound regular expression
         PsiElement(regex begin)('/')
-        GrStringContentImpl(STRING_CONTENT)
-          ASTWrapperPsiElement(regex content)
-            <empty list>
         GString injection
           PsiElement($)('$')
           Closable block
@@ -35,9 +32,6 @@ Groovy script
             Reference expression
               PsiElement(identifier)('a')
             PsiElement(})('}')
-        GrStringContentImpl(STRING_CONTENT)
-          ASTWrapperPsiElement(regex content)
-            <empty list>
         PsiElement(regex end)('/')
     PsiElement(.)('.')
     Compound regular expression
@@ -48,7 +42,4 @@ Groovy script
         PsiElement($)('$')
         Reference expression
           PsiElement(identifier)('g')
-      GrStringContentImpl(STRING_CONTENT)
-        ASTWrapperPsiElement($/ regex content)
-          <empty list>
       PsiElement($/ regex end)('/$')

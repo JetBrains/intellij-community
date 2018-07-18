@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 class BufferingTextSplitter {
   @NotNull private final StringBuilder myLineBuffer = new StringBuilder();
   @NotNull private final Consumer<String> myLineConsumer;
+  private boolean myCrLast = false;
 
   public BufferingTextSplitter(@NotNull Consumer<String> lineConsumer) {myLineConsumer = lineConsumer;}
 
@@ -15,29 +16,24 @@ class BufferingTextSplitter {
    * Walks the input array from 0 to {@param contentLength - 1} and sends complete lines (separated by \n,\r or \r\n) to the consumer
    */
   public void process(char[] input, int contentLength) {
-    boolean crLast = false;
     for (int i = 0; i < contentLength; i++) {
       char character = input[i];
       switch (character) {
         case '\n':
           myLineBuffer.append(character);
-          crLast = false;
           sendLine();
           break;
         case '\r':
+          if (myCrLast) sendLine();
           myLineBuffer.append(character);
-          crLast = true;
+          myCrLast = true;
           break;
         default:
-          if (crLast) {
-            sendLine();
-            crLast = false;
-          }
+          if (myCrLast) sendLine();
           myLineBuffer.append(character);
           break;
       }
     }
-    if (crLast) sendLine();
   }
 
   /**
@@ -52,6 +48,7 @@ class BufferingTextSplitter {
   private void sendLine() {
     String text = myLineBuffer.toString();
     myLineBuffer.setLength(0);
+    myCrLast = false;
     myLineConsumer.accept(text);
   }
 }

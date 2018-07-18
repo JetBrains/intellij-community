@@ -22,5 +22,5 @@ class GithubAccountsStatisticsCollector internal constructor(private val account
                  getBooleanUsage("github.accounts.not.default.host", hasAccountsWithNonDefaultHost))
   }
 
-  override fun getGroupId() = GROUP_ID
+  override fun getGroupId(): String = GROUP_ID
 }

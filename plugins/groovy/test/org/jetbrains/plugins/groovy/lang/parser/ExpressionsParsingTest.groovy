@@ -1,6 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
-
 /**
  * @author peter
  */
@@ -81,6 +80,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testconditional$elvis1() throws Throwable { doTest() }
 
   void testconditional$elvis2() throws Throwable { doTest() }
+
+  void testconditional$ternaryQuestionOnly() { doTest() }
+
+  void testconditional$ternaryWithoutElse() { doTest() }
+
+  void testconditional$ternaryWithoutThen() { doTest() }
+
+  void testconditional$ternaryWithoutThenElse() { doTest() }
 
   void testerrors$err_final() throws Throwable { doTest() }
 
@@ -173,8 +180,45 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testnew$arr_decl() throws Throwable { doTest() }
 
   void testnew$emptyTypeArgs() { doTest() }
+
+  void testnew$noArgumentList() { doTest() }
+
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
+
+  void testanonymous$anonymous1() throws Throwable { doTest() }
+
+  void testanonymous$anonymous2() throws Throwable { doTest() }
+
+  void testanonymous$anonymous3() throws Throwable { doTest() }
+
+  void testanonymous$anonymous4() throws Throwable { doTest() }
+
+  void testanonymous$anonymous5() throws Throwable { doTest() }
+
+  void testanonymous$anonymous6() throws Throwable { doTest() }
+
+  void testanonymous$anonymous7() throws Throwable { doTest() }
+
+  void testanonymous$anonymous8() throws Throwable { doTest() }
+
+  void testanonymous$anonymous9() throws Throwable { doTest() }
+
+  void testanonymous$anonymous10() throws Throwable { doTest() }
+
+  void testanonymous$anonymous11() throws Throwable { doTest() }
+
+  void testanonymous$anonymous12() throws Throwable { doTest() }
+
+  void testanonymous$anonymous13() throws Throwable { doTest() }
+
+  void testanonymous$anonymous14() throws Throwable { doTest() }
+
+  void testanonymous$anonymous15() throws Throwable { doTest() }
+
+  void testanonymous$anonymous16() throws Throwable { doTest() }
+
+  void testanonymous$anonymous17() throws Throwable { doTest() }
 
   void testnumbers() throws Throwable { doTest() }
 
@@ -238,6 +282,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$method$method9() throws Throwable { doTest() }
 
+  void testpath$method$method14() { doTest() }
+
   void testpath$path1() throws Throwable { doTest() }
 
   void testpath$path13() throws Throwable { doTest() }
@@ -285,6 +331,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testreferences$ref8() throws Throwable { doTest() }
 
   void testreferences$ref9() throws Throwable { doTest() }
+
+  void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }
 
@@ -352,6 +400,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testregex$regex_begin2() throws Throwable { doTest() }
 
+  void testregex$slashyEq() { doTest() }
+
   void testregex$multiLineSlashy() throws Throwable { doTest() }
 
   void testregex$dollarSlashy() throws Throwable { doTest() }
@@ -412,6 +462,16 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testrelational$rel1() throws Throwable { doTest() }
 
+  void testrelational$newlineAfterOperator() { doTest() }
+
+  void testrelational$noRValue() { doTest() }
+
+  void testrelational$exclamationAfterExpression() { doTest() }
+
+  void testrelational$inNegated() { doTest() }
+
+  void testrelational$instanceOfNegated() { doTest() }
+
   void testspecial$grvy1173() throws Throwable { doTest() }
 
   void testspecial$list1() throws Throwable { doTest() }
@@ -454,6 +514,12 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testtypecast$elvis() throws Throwable { doTest() }
 
+  void testtypecast$equality() { doTest() }
+
+  void testtypecast$parenthesized() { doTest() }
+
+  void testtypecast$noExpression() { doTest() }
+
   void testtypecast$conditional() throws Throwable { doTest() }
 
   void testAtHang() throws Throwable { doTest() }
@@ -474,7 +540,13 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testsuper$super() throws Throwable { doTest() }
 
-  void testTripleEqual() throws Exception { doTest() }
+  void testbinary$identity() { doTest() }
+
+  void testbinary$elvisAssign() { doTest() }
+
+  void testbinary$elvisAssignNewLine() { doTest() }
+
+  void testbinary$elvisAssignWithoutRValue() { doTest() }
 
   void testcommandExpr$closureArg() { doTest() }
 
@@ -532,7 +604,19 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$literalInvoked() { doTest() }
 
+  void testcommandExpr$safeIndex() { doTest() }
+
+  void testcommandExpr$safeIndexEmpty() { doTest() }
+
+  void testcommandExpr$safeIndexEmptyMap() { doTest() }
+
+  void testcommandExpr$safeIndexLBrack() { doTest() }
+
+  void testcommandExpr$safeIndexMap() { doTest() }
+
   void testDiamond() { doTest() }
+
+  void testDiamondErrors() { doTest() }
 
   void testpath$stringMethodCall1() { doTest() }
 
@@ -555,4 +639,28 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testspecial$mapHang() { doTest() }
 
   void testindexpropertyWithUnfinishedInvokedExpression() { doTest() }
+
+  void testindex$safeIndex() { doTest() }
+
+  void testindex$safeIndexEmpty() { doTest() }
+
+  void testindex$safeIndexEmptyMap() { doTest() }
+
+  void testindex$safeIndexLBrack() { doTest() }
+
+  void testindex$safeIndexMap() { doTest() }
+
+  void testindex$safeIndexNoRBrack() { doTest() }
+
+  void testindex$safeIndexVsTernary() { doTest() }
+
+  void testindex$safeIndexVsTernary2() { doTest() }
+
+  void testindex$safeIndexVsTernary3() { doTest() }
+
+  void testindex$safeIndexVsTernary4() { doTest() }
+
+  void testindex$safeIndexNewLineAfterQ() { doTest() }
+
+  void testindex$safeIndexNewLineBeforeQ() { doTest() }
 }

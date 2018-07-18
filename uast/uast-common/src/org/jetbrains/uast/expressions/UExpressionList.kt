@@ -41,12 +41,12 @@ interface UExpressionList : UExpression {
     visitor.afterVisitExpressionList(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitExpressionList(this, data)
 
   fun firstOrNull(): UExpression? = expressions.firstOrNull()
 
-  override fun asLogString() = log(kind.name)
+  override fun asLogString(): String = log(kind.name)
 
-  override fun asRenderString() = kind.name + " " + expressions.joinToString(" : ") { it.asRenderString() }
+  override fun asRenderString(): String = kind.name + " " + expressions.joinToString(" : ") { it.asRenderString() }
 }

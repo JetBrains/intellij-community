@@ -31,8 +31,8 @@ class ReplayDataStructure extends AbstractDataStructure {
 
   @NotNull
   @Override
-  DataStructure subStructure(@NotNull Generator<?> generator) {
-    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint(), customizer);
+  DataStructure subStructure(@NotNull Generator<?> generator, int childSizeHint) {
+    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint, customizer);
   }
 
   @Override
@@ -41,7 +41,7 @@ class ReplayDataStructure extends AbstractDataStructure {
   }
 
   @Override
-  public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition) {
+  public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition) {
     T value = generate(generator);
     if (!condition.test(value)) throw new CannotRestoreValue();
     return value;

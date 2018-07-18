@@ -25,11 +25,11 @@ import com.intellij.openapi.diagnostic.Logger
 class GuiTestStarter : IdeaApplication.IdeStarter(), ApplicationStarter {
 
   companion object {
-    val COMMAND_NAME = "guitest"
+    val COMMAND_NAME: String = "guitest"
 
-    val GUI_TEST_PORT = "idea.gui.test.port"
-    val GUI_TEST_HOST = "idea.gui.test.host"
-    val GUI_TEST_LIST = "idea.gui.test.list"
+    val GUI_TEST_PORT: String = "idea.gui.test.port"
+    val GUI_TEST_HOST: String = "idea.gui.test.host"
+    val GUI_TEST_LIST: String = "idea.gui.test.list"
 
     fun isGuiTestThread(): Boolean = Thread.currentThread().name == GuiTestThread.GUI_TEST_THREAD_NAME
   }
@@ -40,7 +40,7 @@ class GuiTestStarter : IdeaApplication.IdeStarter(), ApplicationStarter {
 
   private val guiTestThread = GuiTestThread()
 
-  override fun getCommandName() = COMMAND_NAME
+  override fun getCommandName(): String = COMMAND_NAME
 
   override fun premain(args: Array<String>) {
     processArgs(args)

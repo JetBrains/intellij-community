@@ -215,6 +215,31 @@ public abstract class TestUtils {
     }
   }
 
+  public static void checkCompletionType(JavaCodeInsightTestFixture fixture, String lookupString, String expectedTypeCanonicalText) {
+    LookupElement[] lookupElements = fixture.completeBasic();
+    PsiType type = null;
+
+    for (LookupElement lookupElement : lookupElements) {
+      if (lookupElement.getLookupString().equals(lookupString)) {
+        PsiElement element = lookupElement.getPsiElement();
+        if (element instanceof PsiField) {
+          type = ((PsiField)element).getType();
+          break;
+        }
+        if (element instanceof PsiMethod) {
+          type = ((PsiMethod)element).getReturnType();
+          break;
+        }
+      }
+    }
+
+    if (type == null) {
+      Assert.fail("No field or method called '" + lookupString + "' found in completion lookup elements");
+    }
+
+    Assert.assertEquals(expectedTypeCanonicalText, type.getCanonicalText());
+  }
+
   public static void checkResolve(PsiFile file, final String ... expectedUnresolved) {
     final List<String> actualUnresolved = new ArrayList<>();
 

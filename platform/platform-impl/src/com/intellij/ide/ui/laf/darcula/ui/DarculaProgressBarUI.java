@@ -257,11 +257,13 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     if (!(c instanceof JProgressBar)) {
       return size;
     }
-
-    if (((JProgressBar)c).getOrientation() == SwingConstants.HORIZONTAL) {
-      size.height = getStripeWidth();
-    } else {
-      size.width = getStripeWidth();
+    if( !((JProgressBar)c).isStringPainted()) {
+      if (((JProgressBar)c).getOrientation() == SwingConstants.HORIZONTAL) {
+        size.height = getStripeWidth();
+      }
+      else {
+        size.width = getStripeWidth();
+      }
     }
     return size;
   }

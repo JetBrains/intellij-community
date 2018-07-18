@@ -477,7 +477,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     public Dimension getPreferredSize() {
       Dimension dim = super.getPreferredSize();
-      dim.width = getFontMetrics(getFont()).stringWidth(getText()) + 10;
+      Insets m = getMargin();
+      dim.width = getFontMetrics(getFont()).stringWidth(getText()) + 10 + m.left + m.right;
       return dim;
     }
 

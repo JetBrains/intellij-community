@@ -81,7 +81,7 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
       checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars()
+        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars(kotlinVersion)
       )
       checkFacetInOneModule(
         expectedFacet,
@@ -92,10 +92,10 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   }
 
   override fun isIdeFrameRun(): Boolean =
-    if (!KotlinTestProperties.isActualKotlinUsed() || (KotlinTestProperties.isArtifactPresentInConfigureDialog /*&& !KotlinTestProperties.isArtifactOnlyInDevRep*/)) true
+    if (KotlinTestProperties.isArtifactFinalRelease) true
     else {
-      logInfo(
-        "There is no maven archetype for the tested artifact ${KotlinTestProperties.kotlin_artifact_version}. This is not a bug, but the test '${testMethod.methodName}' is skipped (though marked as passed)")
+      logInfo("Maven archetype for the tested artifact ${KotlinTestProperties.kotlin_artifact_version} is absent."+
+                 " This is not a bug, but the test '${testMethod.methodName}' is skipped (though marked as passed)")
       false
     }
 }

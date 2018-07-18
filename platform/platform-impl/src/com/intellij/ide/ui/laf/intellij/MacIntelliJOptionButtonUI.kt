@@ -11,9 +11,9 @@ import javax.swing.JComponent
 
 // TODO replace arrow with specific icon when it's ready
 class MacIntelliJOptionButtonUI : DarculaOptionButtonUI() {
-  override val arrowButtonPreferredSize get() = Dimension(scale(21), optionButton.preferredSize.height)
+  override val arrowButtonPreferredSize: Dimension get() = Dimension(scale(21), optionButton.preferredSize.height)
 
-  override val showPopupXOffset = scale(3)
+  override val showPopupXOffset: Int = scale(3)
 
   override fun paintSeparator(g: Graphics2D, c: JComponent) {
     val insets = mainButton.insets
@@ -26,6 +26,6 @@ class MacIntelliJOptionButtonUI : DarculaOptionButtonUI() {
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
-    fun createUI(c: JComponent) = MacIntelliJOptionButtonUI()
+    fun createUI(c: JComponent): MacIntelliJOptionButtonUI = MacIntelliJOptionButtonUI()
   }
 }

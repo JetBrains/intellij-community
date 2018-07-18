@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -41,4 +42,9 @@ public abstract class ExternalSystemViewContributor {
   @NotNull
   public abstract List<ExternalSystemNode<?>> createNodes(
     ExternalProjectsView externalProjectsView, MultiMap<Key<?>, DataNode<?>> dataNodes);
+
+  @Nullable
+  public String getDisplayName(@NotNull DataNode node) {
+    return null;
+  }
 }

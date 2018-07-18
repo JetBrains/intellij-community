@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -330,9 +328,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         }
       }
       catch (Exception ex) {
-        String text = terminalCall.getText();
-        LOG.error(LogMessageEx.createEvent("Error converting Stream to loop", ExceptionUtil.getThrowableText(ex),
-                                           new Attachment("Stream_code.txt", text)));
+        LOG.error("Error converting Stream to loop", ex, new Attachment("Stream_code.txt", terminalCall.getText()));
       }
     }
 

@@ -17,12 +17,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class ImmutableCDATA extends CDATA {
   ImmutableCDATA(@NotNull String str) {
-    super.setText(str);
+    //todo[nik] fake change to ensure that this file is recompiled, otherwise the call will invoke the incorrect method and exception will fail
+    //noinspection unused
+    CDATA cdata = super.setText(str);
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
-  public Text clone() {
+  public CDATA clone() {
     CDATA text = new CDATA();
     text.value = value;
     return text;
@@ -35,7 +37,7 @@ public class ImmutableCDATA extends CDATA {
 
   //////////////////////////////////////////////////////////////////////////
   @Override
-  public Text setText(String str) {
+  public CDATA setText(String str) {
     throw ImmutableElement.immutableError(this);
   }
 
@@ -50,12 +52,12 @@ public class ImmutableCDATA extends CDATA {
   }
 
   @Override
-  public Content detach() {
+  public CDATA detach() {
     throw ImmutableElement.immutableError(this);
   }
 
   @Override
-  protected Content setParent(Parent parent) {
+  protected CDATA setParent(Parent parent) {
     throw ImmutableElement.immutableError(this);
     //return null; // to be able to add this to the other element
   }

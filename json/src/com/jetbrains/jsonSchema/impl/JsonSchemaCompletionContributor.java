@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
@@ -84,21 +84,21 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   }
 
   private static void updateStat(@Nullable JsonSchemaFileProvider provider) {
-    // TODO: move to the new statistics engine
     if (provider == null) return;
     final SchemaType schemaType = provider.getSchemaType();
+    FUSApplicationUsageTrigger usageTrigger = FUSApplicationUsageTrigger.getInstance();
     switch (schemaType) {
       case schema:
-        UsageTrigger.trigger(SCHEMA_USAGE_KEY);
+        usageTrigger.trigger(JsonSchemaUsageTriggerCollector.class, SCHEMA_USAGE_KEY);
         break;
       case userSchema:
-        UsageTrigger.trigger(USER_USAGE_KEY);
+        usageTrigger.trigger(JsonSchemaUsageTriggerCollector.class, USER_USAGE_KEY);
         break;
       case embeddedSchema:
-        UsageTrigger.trigger(BUILTIN_USAGE_KEY);
+        usageTrigger.trigger(JsonSchemaUsageTriggerCollector.class, BUILTIN_USAGE_KEY);
         break;
       case remoteSchema:
-        UsageTrigger.trigger(REMOTE_USAGE_KEY);
+        usageTrigger.trigger(JsonSchemaUsageTriggerCollector.class, REMOTE_USAGE_KEY);
         break;
     }
   }

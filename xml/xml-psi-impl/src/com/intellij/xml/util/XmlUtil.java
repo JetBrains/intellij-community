@@ -566,6 +566,9 @@ public class XmlUtil {
     final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(compositeElement);
     if (emptyTagEnd == null) return;
 
+    if (XmlTokenType.WHITESPACES.contains(emptyTagEnd.getTreePrev().getElementType())) {
+      compositeElement.removeChild(emptyTagEnd.getTreePrev());
+    }
     compositeElement.removeChild(emptyTagEnd);
     PsiElement[] children = newTag.getChildren();
 

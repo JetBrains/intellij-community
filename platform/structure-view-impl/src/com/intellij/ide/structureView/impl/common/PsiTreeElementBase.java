@@ -104,17 +104,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   private StructureViewTreeElement[] doGetChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
-    Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
-    List<StructureViewTreeElement> result = new ArrayList<>(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
-    StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstanceEx(element.getProject());
-    Class<? extends PsiElement> aClass = element.getClass();
-    for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {
-      StructureViewTreeElement[] children = extension.getChildren(element);
-      if (children != null) {
-        ContainerUtil.addAll(result, children);
-      }
-    }
-    return result.toArray(StructureViewTreeElement.EMPTY_ARRAY);
+    return mergeWithExtensions(element, getChildrenBase());
   }
 
   @Override
@@ -155,5 +145,21 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
 
   public boolean isValid() {
     return getElement() != null;
+  }
+
+  /** @return element base children merged with children provided by extensions */
+  @NotNull
+  public static StructureViewTreeElement[] mergeWithExtensions(@NotNull PsiElement element,
+                                                               @NotNull Collection<StructureViewTreeElement> baseChildren) {
+    List<StructureViewTreeElement> result = new ArrayList<>(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
+    StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstanceEx(element.getProject());
+    Class<? extends PsiElement> aClass = element.getClass();
+    for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {
+      StructureViewTreeElement[] children = extension.getChildren(element);
+      if (children != null) {
+        ContainerUtil.addAll(result, children);
+      }
+    }
+    return result.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 }

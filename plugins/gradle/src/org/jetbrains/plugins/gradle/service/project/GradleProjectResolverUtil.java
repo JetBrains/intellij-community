@@ -280,20 +280,16 @@ public class GradleProjectResolverUtil {
   @Nullable
   public static String getGradlePath(final Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
-    final String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
-    if (projectId == null) return null;
+    final String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
+    if (externalProjectId == null) return null;
+
     final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
-    final String gradlePath;
-    if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
-      int lastColonIndex = projectId.lastIndexOf(':');
-      assert lastColonIndex != -1;
-      int firstColonIndex = projectId.indexOf(':');
-      gradlePath = firstColonIndex == lastColonIndex ? ":" : projectId.substring(firstColonIndex, lastColonIndex);
-    }
-    else {
-      gradlePath = projectId.charAt(0) == ':' ? projectId : ":";
-    }
-    return gradlePath;
+    boolean trimSourceSet = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType);
+    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
+    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
+    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+    String join = StringUtil.join(pathParts, ":");
+    return join.isEmpty() ? ":" : ":" + join;
   }
 
   @NotNull
@@ -585,7 +581,8 @@ public class GradleProjectResolverUtil {
               library.addPath(LibraryPathType.BINARY, artifact.getPath());
             }
             depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
-          } else {
+          }
+          else {
             depOwnerDataNode = ownerDataNode;
           }
         }
@@ -604,7 +601,7 @@ public class GradleProjectResolverUtil {
 
           // put transitive dependencies to the ownerDataNode,
           // since we can not determine from what project dependency artifact it was originated
-          if(projectDependencyInfos.size() > 1) {
+          if (projectDependencyInfos.size() > 1) {
             depOwnerDataNode = ownerDataNode;
           }
         }
@@ -733,9 +730,8 @@ public class GradleProjectResolverUtil {
     final String taskName;
     if (StringUtil.startsWith(taskPath, ":")) {
       final int i = taskPath.lastIndexOf(':');
-      String path = taskPath.substring(0, i);
-      moduleNode = findModuleById(projectNode, path);
-      if (moduleNode == null || !FileUtil.isAncestor(moduleNode.getData().getLinkedExternalProjectPath(), modulePath, false)) {
+      moduleNode = i == 0 ? null : findModuleById(projectNode, taskPath.substring(0, i));
+      if (moduleNode == null) {
         moduleNode = findModule(projectNode, modulePath);
       }
       taskName = (i + 1) <= taskPath.length() ? taskPath.substring(i + 1) : taskPath;

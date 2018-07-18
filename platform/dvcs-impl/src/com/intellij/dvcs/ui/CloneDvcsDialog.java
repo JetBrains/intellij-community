@@ -21,10 +21,12 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -132,25 +134,46 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myCreateDirectoryValidationInfo = createDestination();
-    super.doOKAction();
+    String path = myDirectoryField.getText();
+    new Task.Modal(myProject, "Creating Destination Directory", true) {
+      private ValidationInfo error = null;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        error = createDestination(path);
+      }
+
+      @Override
+      public void onSuccess() {
+        if (error == null) {
+          CloneDvcsDialog.super.doOKAction();
+        }
+        else {
+          myCreateDirectoryValidationInfo = error;
+          startTrackingValidation();
+        }
+      }
+    }.queue();
   }
 
   @Nullable
-  private ValidationInfo createDestination() {
-    Path directoryPath = Paths.get(myDirectoryField.getText());
-    if (!Files.exists(directoryPath)) {
-      try {
+  private static ValidationInfo createDestination(@NotNull String path) {
+    try {
+      Path directoryPath = Paths.get(path);
+      if (!Files.exists(directoryPath)) {
         Files.createDirectories(directoryPath);
       }
-      catch (Exception e) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"));
+      else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
+        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
       }
+      return null;
     }
-    else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"));
+    catch (InvalidPathException e) {
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
     }
-    return null;
+    catch (Exception e) {
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+    }
   }
 
   @NotNull
@@ -193,12 +216,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
-        startTrackingValidation();
-      }
-    });
-    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
         myDirectoryField.trySetChildPath(defaultDirectoryName(myRepositoryUrlField.getText().trim()));
       }
     });
@@ -222,12 +239,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
                                              DvcsBundle.getString("clone.destination.directory.browser.description"),
                                              myProject,
                                              fcd);
-    myDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        startTrackingValidation();
-      }
-    });
 
     if (defaultUrl != null) {
       myRepositoryUrlField.setText(defaultUrl);
@@ -253,6 +264,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     for (RepositoryHostingService service : repositoryHostingServices) {
       String serviceDisplayName = service.getServiceDisplayName();
       RepositoryListLoader loader = service.getRepositoryListLoader(myProject);
+      if (loader == null) continue;
       if (loader.isEnabled()) {
         enabledLoaders.put(serviceDisplayName, loader);
       }
@@ -333,13 +345,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private void showRepositoryUrlAutoCompletionTooltipNow() {
     if (!hasErrors(myRepositoryUrlCombobox) && !myLoadedRepositoryHostingServicesNames.isEmpty()) {
+      Editor editor = myRepositoryUrlField.getEditor();
+      if (editor == null) return;
       String completionShortcutText =
         KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      HintManager.getInstance().showInformationHint(
-        Objects.requireNonNull(myRepositoryUrlField.getEditor()),
-        DvcsBundle.message("clone.repository.url.autocomplete.hint",
-                           DvcsUtil.joinWithAnd(myLoadedRepositoryHostingServicesNames, 0),
-                           completionShortcutText));
+      HintManager.getInstance().showInformationHint(editor,
+                                                    DvcsBundle.message("clone.repository.url.autocomplete.hint",
+                                                                       DvcsUtil.joinWithAnd(myLoadedRepositoryHostingServicesNames, 0),
+                                                                       completionShortcutText));
     }
   }
 
@@ -363,9 +376,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
           public void onSuccess() {
             if (myTestResult.isSuccess()) {
               myRepositoryTestValidationInfo = null;
+              Disposable dialogDisposable = getDisposable();
+              if (Disposer.isDisposed(dialogDisposable)) return;
               JBPopupFactory.getInstance()
                             .createBalloonBuilder(new JLabel(DvcsBundle.getString("clone.repository.url.test.success.message")))
-                            .setDisposable(getDisposable())
+                            .setDisposable(dialogDisposable)
                             .createBalloon()
                             .show(new RelativePoint(myTestButton, new Point(myTestButton.getWidth() / 2,
                                                                             myTestButton.getHeight())),
@@ -375,6 +390,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
               myRepositoryTestValidationInfo =
                 new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message", myTestResult.myErrorMessage),
                                    myRepositoryUrlCombobox);
+              startTrackingValidation();
             }
             myRepositoryTestProgressIndicator = null;
           }
@@ -493,7 +509,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    */
   @Deprecated
   public void prependToHistory(@NotNull final String item) {
-    myRepositoryUrlCombobox.addItem(item);
+    myRepositoryUrlComboboxModel.add(item);
   }
 
   public void rememberSettings() {

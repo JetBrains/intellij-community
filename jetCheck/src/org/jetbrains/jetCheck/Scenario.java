@@ -19,6 +19,9 @@ class Scenario {
     try {
       performCommand(cmd, data, log);
     }
+    catch (DataSerializer.EOFException e) {
+      throw e;
+    }
     catch (Throwable e) {
       addFailure(e);
     }

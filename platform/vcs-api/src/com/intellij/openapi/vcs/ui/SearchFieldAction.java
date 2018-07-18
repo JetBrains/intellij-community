@@ -29,8 +29,9 @@ import javax.swing.border.CompoundBorder;
 import java.awt.event.KeyEvent;
 
 /**
- * @author irengrig
+ * @deprecated Use {@link SearchTextField}.
  */
+@Deprecated
 public abstract class SearchFieldAction extends AnAction implements CustomComponentAction {
   private final JPanel myComponent;
   private final SearchTextField myField;

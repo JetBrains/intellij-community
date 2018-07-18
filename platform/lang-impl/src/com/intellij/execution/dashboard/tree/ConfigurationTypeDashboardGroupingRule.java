@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.execution.dashboard.RunDashboardGroupingRule;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
@@ -46,12 +45,7 @@ public class ConfigurationTypeDashboardGroupingRule implements RunDashboardGroup
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(ExecutionBundle.message("run.dashboard.group.by.type.action.name"),
                                       ExecutionBundle.message("run.dashboard.group.by.type.action.name"),
-                                      AllIcons.Actions.GroupByFile);
-  }
-
-  @Override
-  public int getPriority() {
-    return Priorities.BY_TYPE;
+                                      null);
   }
 
   @Override

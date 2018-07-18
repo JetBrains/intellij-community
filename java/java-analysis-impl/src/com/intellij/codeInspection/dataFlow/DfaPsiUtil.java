@@ -463,7 +463,7 @@ public class DfaPsiUtil {
               final PsiExpression rValue = assignmentExpression.getRExpression();
               if (!literalsOnly || allOperandsAreLiterals(rValue)) {
                 // if there's a codeBlock omit the values assigned later
-                if (codeBlock != null && PsiTreeUtil.isAncestor(codeBlock, parent, true)
+                if (PsiTreeUtil.isAncestor(codeBlock, parent, true)
                     && placeOffset < parent.getTextRange().getStartOffset()) {
                   return null;
                 }

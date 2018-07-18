@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTuplesTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
@@ -54,7 +54,7 @@ class PyNamedTupleInspection : PyInspection() {
 
       if (node != null &&
           LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
-          PyNamedTuplesTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
+          PyNamedTupleTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
         inspectFieldsOrder(node, this::registerProblem)
       }
     }

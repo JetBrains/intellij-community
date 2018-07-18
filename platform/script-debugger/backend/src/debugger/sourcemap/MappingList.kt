@@ -116,7 +116,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
   }
 
   // todo honor Google Chrome bug related to paused location
-  override fun get(line: Int, column: Int) = mappings.getOrNull(indexOf(line, column))
+  override fun get(line: Int, column: Int): MappingEntry? = mappings.getOrNull(indexOf(line, column))
 
   private fun getNext(index: Int) = mappings.getOrNull(index + 1)
 
@@ -163,7 +163,7 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
     return if (nextMapping == null) document.getLineEndOffset(getLine(mapping)) else lineStartOffset + getColumn(nextMapping)
   }
 
-  override fun getByIndex(index: Int) = mappings.get(index)
+  override fun getByIndex(index: Int): MappingEntry = mappings.get(index)
 
   // entries will be processed in this list order
   fun processMappingsInLine(line: Int, entryProcessor: MappingsProcessorInLine): Boolean {

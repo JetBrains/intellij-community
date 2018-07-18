@@ -1,0 +1,161 @@
+--- FIND MODEL ---
+myStringToFind =
+myStringToReplace =
+isReplaceState =false
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+ aba
+--
+------------
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =
+isReplaceState =false
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+ [[<a>]]b[a]
+--
+RangeHighlighter: (1,2); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (1,2); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
+RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+------------
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =c
+isReplaceState =false
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+ [[<a>]]b[a]
+--
+RangeHighlighter: (1,2); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (1,2); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
+RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+------------
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =c
+isReplaceState =true
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+ [[<a>]]b[a]
+--
+RangeHighlighter: (1,2); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (1,2); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
+RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+------------
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =c
+isReplaceState =true
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+ cb[[<a>]]
+--
+RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (3,4); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
+------------

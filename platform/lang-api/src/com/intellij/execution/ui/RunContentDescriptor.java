@@ -42,6 +42,7 @@ public class RunContentDescriptor implements Disposable {
   private final Icon myIcon;
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
+  private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
 
   private boolean myActivateToolWindowWhenAdded = true;
   private boolean myReuseToolWindowActivation = false;
@@ -277,5 +278,16 @@ public class RunContentDescriptor implements Disposable {
   @ApiStatus.Experimental
   public boolean isHiddenContent() {
     return false;
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public RunContentDescriptorReusePolicy getReusePolicy() {
+    return myReusePolicy;
+  }
+
+  @ApiStatus.Experimental
+  public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
+    myReusePolicy = reusePolicy;
   }
 }

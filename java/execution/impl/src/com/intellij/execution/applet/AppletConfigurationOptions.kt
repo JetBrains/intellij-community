@@ -10,23 +10,23 @@ import com.intellij.util.xmlb.annotations.*
 
 class AppletConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("HTML_FILE_NAME")
-  var htmlFileName by string()
+  var htmlFileName: String? by string()
 
   @get:OptionTag("HTML_USED")
-  var htmlUsed by property(false)
+  var htmlUsed: Boolean by property(false)
 
   @get:OptionTag("WIDTH")
-  var width by property(400)
+  var width: Int by property(400)
 
   @get:OptionTag("HEIGHT")
-  var height by property(300)
+  var height: Int by property(300)
 
   @get:OptionTag("POLICY_FILE")
-  var policyFile by string(ExternalizablePath.urlValue("${PathManager.getHomePath()}/bin/appletviewer.policy"))
+  var policyFile: String? by string(ExternalizablePath.urlValue("${PathManager.getHomePath()}/bin/appletviewer.policy"))
 
   @get:Property(surroundWithTag = false)
   @get:XCollection()
-  var appletParameters by list<AppletParameter>()
+  var appletParameters: MutableList<AppletParameter> by list()
 }
 
 @Tag("parameter")

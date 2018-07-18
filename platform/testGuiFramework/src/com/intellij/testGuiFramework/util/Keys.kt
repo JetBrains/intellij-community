@@ -219,7 +219,7 @@ class Shortcut(var modifiers: HashSet<Modifier> = HashSet(), var key: Key? = nul
     return if (mods.isNotEmpty()) "$mods $cleanKeyName" else cleanKeyName
   }
 
-  override fun toString() = getKeystroke()
+  override fun toString(): String = getKeystroke()
 }
 
 operator fun Modifier.plus(modifier: Modifier): Shortcut {

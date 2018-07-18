@@ -116,10 +116,10 @@ public class JavaSdkImpl extends JavaSdk {
       if (version == JavaSdkVersion.JDK_1_5) {
         return "https://docs.oracle.com/javase/1.5.0/docs/api/";
       }
-      if (version == JavaSdkVersion.JDK_10) {
-        return "https://download.java.net/java/jdk10/docs/api/";
+      if (version == JavaSdkVersion.JDK_11) {
+        return "https://download.java.net/java/early_access/jdk11/docs/api/";
       }
-      if (version.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+      if (version.compareTo(JavaSdkVersion.JDK_1_6) >= 0) {
         return "https://docs.oracle.com/javase/" + version.ordinal() + "/docs/api/";
       }
     }
@@ -129,7 +129,7 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   @Override
   public String getDownloadSdkUrl() {
-    return "http://www.oracle.com/technetwork/java/javase/downloads/index.html";
+    return "https://www.oracle.com/technetwork/java/javase/downloads/index.html";
   }
 
   @Override
@@ -522,7 +522,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
 
       if (getVersion(sdk) == JavaSdkVersion.JDK_1_7) {
-        VirtualFile fxDocUrl = VirtualFileManager.getInstance().findFileByUrl("http://docs.oracle.com/javafx/2/api/");
+        VirtualFile fxDocUrl = VirtualFileManager.getInstance().findFileByUrl("https://docs.oracle.com/javafx/2/api/");
         if (fxDocUrl != null) {
           sdkModificator.addRoot(fxDocUrl, docRootType);
         }

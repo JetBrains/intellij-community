@@ -228,10 +228,12 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       PsiStatement thenBranch = ifStatement.getThenBranch();
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if (thenBranch == null || elseBranch == null) return false;
-      if (!tryCleanUpHead(ifStatement, thenElse.myHeadUnitsOfThen, factory, thenElse.mySubstitutionTable)) return true;
-      cleanUpTail(ifStatement, thenElse.myTailStatementsOfThen);
+      CommentTracker ct = new CommentTracker();
+      if (!tryCleanUpHead(ifStatement, thenElse.myHeadUnitsOfThen, factory, thenElse.mySubstitutionTable, ct)) return true;
+      cleanUpTail(ifStatement, thenElse.myTailStatementsOfThen, ct);
       boolean elseToDelete = ControlFlowUtils.unwrapBlock(elseBranch).length == 0;
       boolean thenToDelete = ControlFlowUtils.unwrapBlock(thenBranch).length == 0;
+      ct.insertCommentsBefore(ifStatement);
       if (thenToDelete && elseToDelete) {
         ifStatement.delete();
       }
@@ -263,7 +265,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
     private static boolean tryCleanUpHead(PsiIfStatement ifStatement,
                                           List<ExtractionUnit> units, PsiElementFactory factory,
-                                          Map<PsiLocalVariable, String> substitutionTable) {
+                                          Map<PsiLocalVariable, String> substitutionTable, CommentTracker ct) {
       PsiElement parent = ifStatement.getParent();
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if(elseBranch == null) return false;
@@ -306,7 +308,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         }
         parent.addBefore(thenStatement.copy(), ifStatement);
         thenStatement.delete();
-        elseStatement.delete();
+        ct.delete(elseStatement);
       }
       return true;
     }
@@ -329,7 +331,9 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       return thenStatement;
     }
 
-    private static void cleanUpTail(@NotNull PsiIfStatement ifStatement, @NotNull List<PsiStatement> tailStatements) {
+    private static void cleanUpTail(@NotNull PsiIfStatement ifStatement,
+                                    @NotNull List<PsiStatement> tailStatements,
+                                    CommentTracker ct) {
       if (!tailStatements.isEmpty()) {
         for (PsiStatement statement : tailStatements) {
           ifStatement.getParent().addAfter(statement.copy(), ifStatement);
@@ -340,7 +344,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         int elseLength = elseStatements.length;
         for (int i = 0; i < tailStatements.size(); i++) {
           thenStatements[thenLength - 1 - i].delete();
-          elseStatements[elseLength - 1 - i].delete();
+          ct.delete(elseStatements[elseLength - 1 - i]);
         }
       }
     }
@@ -623,17 +627,18 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     }
 
 
-    @Contract("true, _, _ -> true")
     private static boolean mayChangeSemantics(boolean conditionHasSideEffects,
                                               boolean conditionVariablesCantBeChangedTransitively,
                                               List<ExtractionUnit> headCommonParts) {
+      if (headCommonParts.isEmpty()) return false;
       if (conditionHasSideEffects) return true;
       if (conditionVariablesCantBeChangedTransitively) {
-        return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
-          .anyMatch(unit -> unit.mayInfluenceCondition() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
+        return StreamEx.of(headCommonParts)
+                       .anyMatch(unit -> unit.mayInfluenceCondition() &&
+                                         !(unit.getThenStatement() instanceof PsiDeclarationStatement));
       }
-      return !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
-        .anyMatch(unit -> unit.haveSideEffects() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
+      return StreamEx.of(headCommonParts)
+                     .anyMatch(unit -> unit.haveSideEffects() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
     }
 
     @NotNull

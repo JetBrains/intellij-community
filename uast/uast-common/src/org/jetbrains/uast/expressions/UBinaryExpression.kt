@@ -16,9 +16,9 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiMethod
-import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
+import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -58,8 +58,8 @@ interface UBinaryExpression : UPolyadicExpression {
     visitor.afterVisitBinaryExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitBinaryExpression(this, data)
 
-  override fun asLogString() = log("operator = $operator")
+  override fun asLogString(): String = log("operator = $operator")
 }

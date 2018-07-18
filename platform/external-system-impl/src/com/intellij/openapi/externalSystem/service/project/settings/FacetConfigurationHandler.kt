@@ -33,7 +33,7 @@ import com.intellij.openapi.project.Project
 class FacetConfigurationHandler : ConfigurationHandler {
 
   companion object {
-    val LOG = Logger.getInstance(FacetConfigurationHandler::class.java)
+    val LOG: Logger = Logger.getInstance(FacetConfigurationHandler::class.java)
   }
 
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {

@@ -504,47 +504,11 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated to be removed in IDEA 2018 */
-  public static void copyFromResource(@NotNull VirtualFile file, @NonNls @NotNull String resourceUrl) throws IOException {
-    InputStream out = VfsUtil.class.getResourceAsStream(resourceUrl);
-    if (out == null) {
-      throw new FileNotFoundException(resourceUrl);
-    }
-    try {
-      byte[] bytes = FileUtil.adaptiveLoadBytes(out);
-      file.setBinaryContent(bytes);
-    } finally {
-      out.close();
-    }
-  }
 
   /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
-  }
-
-  /** @deprecated to be removed in IDEA 2018 */
-  public static <T> T processInputStream(@NotNull final VirtualFile file, @NotNull Function<InputStream, T> function) {
-    InputStream stream = null;
-    try {
-      stream = file.getInputStream();
-      return function.fun(stream);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        if (stream != null) {
-          stream.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    return null;
   }
 
   /** @deprecated to be removed in IDEA 2018 */

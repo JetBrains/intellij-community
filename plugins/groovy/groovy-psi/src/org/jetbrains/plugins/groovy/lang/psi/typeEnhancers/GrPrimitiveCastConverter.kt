@@ -35,7 +35,7 @@ class GrPrimitiveCastConverter : GrTypeConverter() {
     )
   }
 
-  override fun isApplicableTo(position: ApplicableTo) = position == ApplicableTo.EXPLICIT_CAST
+  override fun isApplicableTo(position: ApplicableTo): Boolean = position == ApplicableTo.EXPLICIT_CAST
 
   override fun isConvertibleEx(lType: PsiType, rType: PsiType, context: GroovyPsiElement, position: ApplicableTo): ConversionResult? {
     if (lType.unbox() == rType) return OK // boxing

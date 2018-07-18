@@ -118,8 +118,8 @@ public class HelpTooltip implements Disposable {
 
   private static final Set<String> REINIT_PROP_NAMES = new HashSet<>(Arrays.asList(
     "HelpTooltip.fontSizeDelta",
-    "HelpTooltip.defaultTextBorder",
-    "HelpTooltip.smallTextBorder",
+    "HelpTooltip.defaultTextBorderInsets",
+    "HelpTooltip.smallTextBorderInsets",
     "HelpTooltip.verticalGap",
     "HelpTooltip.horizontalGap",
     "HelpTooltip.maxWidth"
@@ -467,7 +467,7 @@ public class HelpTooltip implements Disposable {
   }
 
   private static Border textBorder(boolean isDefault) {
-    return UIManager.getBorder(isDefault ? "HelpTooltip.defaultTextBorder" : "HelpTooltip.smallTextBorder");
+    return UIManager.getBorder(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
   }
 
   private static Font modifyFont(Font font) {

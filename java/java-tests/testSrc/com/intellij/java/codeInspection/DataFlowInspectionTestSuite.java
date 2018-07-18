@@ -33,6 +33,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspection10Test.class);
     suite.addTestSuite(DataFlowInspectionHeavyTest.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
+    suite.addTestSuite(DataFlowInspectionCancellingTest.class);
     suite.addTestSuite(ContractCheckTest.class);
     suite.addTestSuite(HardcodedContractsTest.class);
     suite.addTestSuite(DataFlowRangeAnalysisTest.class);

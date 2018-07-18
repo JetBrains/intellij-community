@@ -28,7 +28,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -62,8 +61,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.*;
 
 /**
  * @author Anton Katilin
@@ -345,8 +342,8 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    tab = new TabInfo(comp).setText(getPresentableNameForUI(myProject, file))
-                           .setTabColor(getFileTabBackgroundColor(myProject, file))
+    tab = new TabInfo(comp).setText(EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow))
+                           .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
                            .setIcon(icon)
                            .setTooltipText(tooltip)
                            .setObject(file)
@@ -391,22 +388,22 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  /** @deprecated Use {@link VfsPresentationUtil#getPresentableNameForUI} */
+  /** @deprecated Use {@link EditorTabPresentationUtil#getEditorTabTitle(Project, VirtualFile, EditorWindow)} */
   @NotNull
   public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    return getPresentableNameForUI(project, file);
+    return EditorTabPresentationUtil.getEditorTabTitle(project, file, null);
   }
 
-  /** @deprecated Use {@link VfsPresentationUtil#getUniquePresentableNameForUI} */
+  /** @deprecated Use {@link EditorTabPresentationUtil#getUniqueEditorTabTitle(Project, VirtualFile, EditorWindow)} */
   @NotNull
   public static String calcFileName(@NotNull Project project, @NotNull VirtualFile file) {
-    return getUniquePresentableNameForUI(project, file);
+    return EditorTabPresentationUtil.getUniqueEditorTabTitle(project, file, null);
   }
 
-  /** @deprecated Use {@link VfsPresentationUtil#getFileBackgroundColor} */
+  /** @deprecated Use {@link EditorTabPresentationUtil#getEditorTabBackgroundColor(Project, VirtualFile, EditorWindow)} */
   @Nullable
   public static Color calcTabColor(@NotNull Project project, @NotNull VirtualFile file) {
-    return getFileTabBackgroundColor(project, file);
+    return EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file, null);
   }
 
   public Component getComponentAt(final int i) {

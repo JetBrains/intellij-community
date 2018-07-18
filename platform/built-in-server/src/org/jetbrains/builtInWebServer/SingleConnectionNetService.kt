@@ -15,7 +15,7 @@ import org.jetbrains.io.oioClientBootstrap
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class SingleConnectionNetService(project: Project) : NetService(project) {
-  protected val processChannel = AtomicReference<Channel>()
+  protected val processChannel: AtomicReference<Channel> = AtomicReference<Channel>()
 
   private @Volatile var port = -1
   private @Volatile var bootstrap: Bootstrap? = null

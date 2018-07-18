@@ -7,7 +7,7 @@ import java.io.File
 
 abstract class SchemeManager<T> {
   companion object {
-    const val EDITABLE_COPY_PREFIX = "_@user_"
+    const val EDITABLE_COPY_PREFIX: String = "_@user_"
 
     @JvmStatic
     fun getDisplayName(scheme: Scheme): String {
@@ -48,7 +48,7 @@ abstract class SchemeManager<T> {
     addScheme(scheme as T, replaceExisting)
   }
 
-  fun addScheme(scheme: T) = addScheme(scheme, true)
+  fun addScheme(scheme: T): Unit = addScheme(scheme, true)
 
   abstract fun addScheme(scheme: T, replaceExisting: Boolean)
 

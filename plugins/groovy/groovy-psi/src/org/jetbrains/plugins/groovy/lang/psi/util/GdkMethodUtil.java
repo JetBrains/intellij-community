@@ -310,22 +310,22 @@ public class GdkMethodUtil {
   @Nullable
   private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
-    if (invoked instanceof GrReferenceExpression && GrImportUtil.acceptName((GrReferenceExpression)invoked, "mixin")) {
-      PsiElement resolved = ((GrReferenceExpression)invoked).resolve();
+    if (!(invoked instanceof GrReferenceExpression)) return null;
+    GrReferenceExpression referenceExpression = (GrReferenceExpression)invoked;
+    if (GrImportUtil.acceptName(referenceExpression, "mixin")) {
+
+      PsiElement resolved = referenceExpression.resolve();
       if (resolved instanceof PsiMethod && isMixinMethod((PsiMethod)resolved)) {
-        GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
+        GrExpression qualifier = referenceExpression.getQualifierExpression();
         Pair<PsiClassType, GrReferenceExpression> type = getPsiClassFromReference(qualifier);
         if (type != null) {
           return type;
-        }
-        if (qualifier == null) {
-          qualifier = PsiImplUtil.getRuntimeQualifier((GrReferenceExpression)invoked);
         }
         if (qualifier != null && isMetaClass(qualifier.getType())) {
           if (qualifier instanceof GrMethodCall) qualifier = ((GrMethodCall)qualifier).getInvokedExpression();
 
           if (qualifier instanceof GrReferenceExpression) {
-            GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifier();
+            GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
             if (qqualifier != null) {
               Pair<PsiClassType, GrReferenceExpression> type1 = getPsiClassFromMetaClassReference(qqualifier);
               if (type1 != null) {

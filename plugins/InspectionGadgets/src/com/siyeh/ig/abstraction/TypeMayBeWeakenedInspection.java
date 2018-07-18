@@ -77,8 +77,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("PublicField")
   public boolean doNotWeakenReturnType = true;
 
-  @SuppressWarnings("PublicField")
-  public boolean doNotWeakenInferredVariableType = false;
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  public boolean doNotWeakenInferredVariableType;
 
   public OrderedSet<String> myStopClassSet = new OrderedSet<>();
 
@@ -187,7 +187,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
     if (!myStopClassSet.isEmpty()) {
       Element stopClasses = new Element("stopClasses");
-      stopClasses.addContent(myStopClassSet.stream().collect(Collectors.joining(",")));
+      stopClasses.addContent(String.join(",", myStopClassSet));
       node.addContent(stopClasses);
     }
   }

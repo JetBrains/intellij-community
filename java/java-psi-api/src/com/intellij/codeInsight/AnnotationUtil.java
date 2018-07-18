@@ -620,13 +620,10 @@ public class AnnotationUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link NullableNotNullManager} (to be removed in IDEA 2018) */
-  public static final Set<String> ALL_ANNOTATIONS = ContainerUtil.newTroveSet(NULLABLE, NOT_NULL);
-
   private static final String[] SIMPLE_NAMES =
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
-  /** @deprecated wrong; do not use (to be removed in IDEA 2018) */
+  /** @deprecated simple name is not enough for reliable identification (to be removed in IDEA 2019) */
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
   }

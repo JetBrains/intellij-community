@@ -87,7 +87,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   @NotNull
-  public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<MergeableLineMarkerInfo> markers) {
+  public static List<LineMarkerInfo<PsiElement>> merge(@NotNull List<? extends MergeableLineMarkerInfo> markers) {
     List<LineMarkerInfo<PsiElement>> result = new SmartList<>();
     for (int i = 0; i < markers.size(); i++) {
       MergeableLineMarkerInfo marker = markers.get(i);
@@ -124,11 +124,11 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
-    private MyLineMarkerInfo(@NotNull List<MergeableLineMarkerInfo> markers) {
+    private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo> markers) {
       this(markers, markers.get(0));
     }
 
-    private MyLineMarkerInfo(@NotNull List<MergeableLineMarkerInfo> markers, @NotNull MergeableLineMarkerInfo template) {
+    private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo> markers, @NotNull MergeableLineMarkerInfo template) {
       //noinspection ConstantConditions
       super(template.getElement(),
             getCommonTextRange(markers),
@@ -140,7 +140,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     @NotNull
-    private static TextRange getCommonTextRange(@NotNull List<MergeableLineMarkerInfo> markers) {
+    private static TextRange getCommonTextRange(@NotNull List<? extends MergeableLineMarkerInfo> markers) {
       int startOffset = Integer.MAX_VALUE;
       int endOffset = Integer.MIN_VALUE;
       for (MergeableLineMarkerInfo marker : markers) {
@@ -151,21 +151,21 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     @NotNull
-    private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<MergeableLineMarkerInfo> markers) {
+    private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<? extends MergeableLineMarkerInfo> markers) {
       return new MergedGutterIconNavigationHandler(markers);
     }
   }
 
-  public static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
+  static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     private final List<LineMarkerInfo> myInfos;
 
-    public MergedGutterIconNavigationHandler(List<MergeableLineMarkerInfo> markers) {
+    MergedGutterIconNavigationHandler(List<? extends MergeableLineMarkerInfo> markers) {
       final List<LineMarkerInfo> infos = new ArrayList<>(markers);
       Collections.sort(infos, Comparator.comparingInt(o -> o.startOffset));
       myInfos = Collections.unmodifiableList(infos);
     }
 
-    public List<LineMarkerInfo> getMergedLineMarkersInfos() {
+    List<LineMarkerInfo> getMergedLineMarkersInfos() {
       return myInfos;
     }
 

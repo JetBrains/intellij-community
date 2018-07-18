@@ -11,9 +11,17 @@ public class ContributorSearchResult<T> {
     return new Builder<>();
   }
 
-  private ContributorSearchResult(List<T> items, boolean hasMoreItems) {
+  public static <E> ContributorSearchResult<E> empty() {
+    return new ContributorSearchResult<>(Collections.emptyList(), false);
+  }
+
+  public ContributorSearchResult(List<T> items, boolean hasMoreItems) {
     this.items = items;
     this.hasMoreItems = hasMoreItems;
+  }
+
+  public ContributorSearchResult(List<T> items) {
+    this(items, false);
   }
 
   public List<T> getItems() {

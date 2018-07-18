@@ -260,11 +260,9 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
     }
 
     private boolean isPureMethod(PsiMethod method) {
-      final PsiAnnotation anno = JavaMethodContractUtil.findContractAnnotation(method);
-      if (anno == null) return false;
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
-      if (!honorInferred && AnnotationUtil.isInferredAnnotation(anno)) return false;
-      return Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure")) &&
+      if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
+      return JavaMethodContractUtil.isPure(method) &&
              !SideEffectChecker.mayHaveExceptionalSideEffect(method) &&
              !hasTrivialReturnValue(method);
     }

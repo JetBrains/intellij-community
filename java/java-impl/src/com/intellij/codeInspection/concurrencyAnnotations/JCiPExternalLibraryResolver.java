@@ -15,30 +15,19 @@
  */
 package com.intellij.codeInspection.concurrencyAnnotations;
 
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.ThreeState;
-import net.jcip.annotations.GuardedBy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
  */
 public class JCiPExternalLibraryResolver extends ExternalLibraryResolver {
   private static final ExternalLibraryDescriptor JDCIP_LIBRARY_DESCRIPTOR =
-    new ExternalLibraryDescriptor("net.jcip", "jcip-annotations") {
-      @NotNull
-      @Override
-      public List<String> getLibraryClassesRoots() {
-        return Collections.singletonList(PathUtil.getJarPathForClass(GuardedBy.class));
-      }
-
+    new ExternalLibraryDescriptor("net.jcip", "jcip-annotations", null, null, "1.0") {
       @Override
       public String getPresentableName() {
         return "jcip-annotations.jar";

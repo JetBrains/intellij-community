@@ -116,6 +116,12 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myParent;
   }
 
+  @Override
+  public String getName() {
+    String displayName = ((ExternalProjectsViewImpl)getExternalProjectsView()).getDisplayName(myDataNode);
+    return displayName == null ? super.getName() : displayName;
+  }
+
   protected ExternalProjectsView getExternalProjectsView() {
     return myExternalProjectsView;
   }

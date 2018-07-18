@@ -29,30 +29,30 @@ private fun canActivateOnStart(id: String?): Boolean {
 class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   companion object {
     internal const val TAG = "window_info"
-    const val DEFAULT_WEIGHT = 0.33f
+    const val DEFAULT_WEIGHT: Float = 0.33f
   }
 
   @get:Transient
-  var isRegistered = false
+  var isRegistered: Boolean = false
 
-  override var isActive by property(false)
+  override var isActive: Boolean by property(false)
 
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor: ToolWindowAnchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
   @get:Attribute("auto_hide")
-  override var isAutoHide by property(false)
+  override var isAutoHide: Boolean by property(false)
 
   /**
    * Bounds of window in "floating" mode. It equals to `null` if floating bounds are undefined.
    */
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  override var floatingBounds by property<Rectangle?>()
+  override var floatingBounds: Rectangle? by property<Rectangle?>()
 
   /**
    * ID of the tool window
    */
-  var id by string()
+  var id: String? by string()
 
   /**
    * @return type of the tool window in internal (docked or sliding) mode. Actually the tool
@@ -60,27 +60,27 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * tool window had when it was internal one.
    */
   @get:Attribute("internal_type")
-  var internalType by property(ToolWindowType.DOCKED)
+  var internalType: ToolWindowType by property(ToolWindowType.DOCKED)
 
-  override var type by property(ToolWindowType.DOCKED)
+  override var type: ToolWindowType by property(ToolWindowType.DOCKED)
 
   @get:Attribute("visible")
-  var isVisible by property(false)
+  var isVisible: Boolean by property(false)
 
   @get:Attribute("show_stripe_button")
-  override var isShowStripeButton by property(true)
+  override var isShowStripeButton: Boolean by property(true)
 
   /**
    * Internal weight of tool window. "weight" means how much of internal desktop
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */
-  var weight by property(DEFAULT_WEIGHT) { Math.max(0f, Math.min(1f, it)) }
+  var weight: Float by property(DEFAULT_WEIGHT) { Math.max(0f, Math.min(1f, it)) }
 
-  var sideWeight by property(0.5f) { Math.max(0f, Math.min(1f, it)) }
+  var sideWeight: Float by property(0.5f) { Math.max(0f, Math.min(1f, it)) }
 
   @get:Attribute("side_tool")
-  override var isSplit by property(false)
+  override var isSplit: Boolean by property(false)
 
   @get:Attribute("content_ui", converter = ContentUiTypeConverter::class)
   override var contentUiType: ToolWindowContentUiType by property(ToolWindowContentUiType.TABBED) { it == ToolWindowContentUiType.TABBED }
@@ -88,7 +88,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   /**
    * Defines order of tool window button inside the stripe.
    */
-  var order by property(-1)
+  var order: Int by property(-1)
 
   @get:Transient
   var isWasRead: Boolean = false
@@ -138,7 +138,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     return anchor.hashCode() + id!!.hashCode() + type.hashCode() + order
   }
 
-  override fun toString() = "id: $id, ${super.toString()}"
+  override fun toString(): String = "id: $id, ${super.toString()}"
 }
 
 private class ContentUiTypeConverter : Converter<ToolWindowContentUiType>() {

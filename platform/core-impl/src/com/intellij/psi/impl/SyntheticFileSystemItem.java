@@ -29,7 +29,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
     myManager = PsiManager.getInstance(myProject);
   }
 
-  protected static boolean processFileSystemItem(PsiElementProcessor<PsiFileSystemItem> processor, PsiFileSystemItem element) {
+  protected static boolean processFileSystemItem(PsiElementProcessor<? super PsiFileSystemItem> processor, PsiFileSystemItem element) {
     if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(element.getName(), true)) {
       return true;
     }

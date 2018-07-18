@@ -395,9 +395,13 @@ public class MinusculeMatcher implements Matcher {
 
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
-    while (nameIndex + i < name.length() &&
-           patternIndex + i < myPattern.length &&
-           charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
+    while (nameIndex + i < name.length() && patternIndex + i < myPattern.length) {
+      if (!charEquals(myPattern[patternIndex + i], patternIndex + i, name.charAt(nameIndex + i), ignoreCase)) {
+        if (Character.isDigit(myPattern[patternIndex + i]) && Character.isDigit(myPattern[patternIndex + i - 1])) {
+          return 0;
+        }
+        break;
+      }
       if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i) &&
           shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
         break;

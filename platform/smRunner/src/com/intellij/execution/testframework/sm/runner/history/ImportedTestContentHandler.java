@@ -67,7 +67,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
   @Override
   public void endElement(String uri, String localName, String qName) {
     final String currentText = StringUtil.unescapeXml(currentValue.toString());
-    final boolean isTestOutput = myCurrentTest == null || TestResultsXmlFormatter.STATUS_PASSED.equals(myStatus) || myErrorOutput;
+    final boolean isTestOutput = myCurrentTest == null || TestResultsXmlFormatter.STATUS_PASSED.equals(myStatus) || !myErrorOutput;
     if (isTestOutput) {
       currentValue.setLength(0);
     }

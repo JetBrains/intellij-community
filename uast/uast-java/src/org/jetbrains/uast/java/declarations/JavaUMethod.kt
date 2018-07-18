@@ -12,19 +12,19 @@ open class JavaUMethod(
   psi: PsiMethod,
   uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UMethodTypeSpecific, JavaUElementWithComments, UAnchorOwner, PsiMethod by psi {
-  override val psi
+  override val psi: PsiMethod
     get() = javaPsi
 
-  override val javaPsi = unwrap<UMethod, PsiMethod>(psi)
+  override val javaPsi: PsiMethod = unwrap<UMethod, PsiMethod>(psi)
 
-  override val uastBody by lz {
+  override val uastBody: UExpression? by lz {
     val body = psi.body ?: return@lz null
     getLanguagePlugin().convertElement(body, this) as? UExpression
   }
 
-  override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
+  override val annotations: List<JavaUAnnotation> by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
 
-  override val uastParameters by lz {
+  override val uastParameters: List<JavaUParameter> by lz {
     psi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
@@ -34,11 +34,11 @@ open class JavaUMethod(
   override val uastAnchor: UIdentifier
     get() = UIdentifier((psi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psi.nameIdentifier, this)
 
-  override fun equals(other: Any?) = other is JavaUMethod && psi == other.psi
-  override fun hashCode() = psi.hashCode()
+  override fun equals(other: Any?): Boolean = other is JavaUMethod && psi == other.psi
+  override fun hashCode(): Int = psi.hashCode()
 
   companion object {
-    fun create(psi: PsiMethod, languagePlugin: UastLanguagePlugin, containingElement: UElement?) = when (psi) {
+    fun create(psi: PsiMethod, languagePlugin: UastLanguagePlugin, containingElement: UElement?): JavaUMethod = when (psi) {
       is PsiAnnotationMethod -> JavaUAnnotationMethod(psi, languagePlugin, containingElement)
       else -> JavaUMethod(psi, containingElement)
     }
@@ -54,7 +54,7 @@ class JavaUAnnotationMethod(
   override val javaPsi: PsiAnnotationMethod
     get() = psi
 
-  override val uastDefaultValue by lz {
+  override val uastDefaultValue: UExpression? by lz {
     val defaultValue = psi.defaultValue ?: return@lz null
     languagePlugin.convertElement(defaultValue, this, null) as? UExpression
   }

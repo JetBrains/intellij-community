@@ -200,6 +200,31 @@ public class ProcessListUtil {
   }
 
   @Nullable
+  public static List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
+    List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
+    List<MacProcessInfo> fulls = doParseMacOutput(full);
+    if (commands == null || fulls == null) return null;
+
+    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<>();
+    for (MacProcessInfo each : commands) {
+      idToCommand.put(each.pid, each.commandLine);
+    }
+
+    List<ProcessInfo> result = new ArrayList<>();
+    for (MacProcessInfo each : fulls) {
+      if (!idToCommand.containsKey(each.pid)) continue;
+
+      String command = idToCommand.get(each.pid);
+      String name = PathUtil.getFileName(command);
+      String args = each.commandLine.startsWith(command) ? each.commandLine.substring(command.length()).trim()
+                                                         : each.commandLine;
+
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command));
+    }
+    return result;
+  }
+
+  @Nullable
   private static List<MacProcessInfo> doParseMacOutput(String output) {
     List<MacProcessInfo> result = ContainerUtil.newArrayList();
     String[] lines = StringUtil.splitByLinesDontTrim(output);

@@ -394,9 +394,9 @@ class SsiProcessor(allowExec: Boolean) {
     return if (firstLetter == -1) "" else instruction.substring(firstLetter, lastLetter + 1)
   }
 
-  protected fun charCmp(buf: CharSequence, index: Int, command: String) = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
+  protected fun charCmp(buf: CharSequence, index: Int, command: String): Boolean = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
 
-  protected fun isSpace(c: Char) = c == ' ' || c == '\n' || c == '\t' || c == '\r'
+  protected fun isSpace(c: Char): Boolean = c == ' ' || c == '\n' || c == '\t' || c == '\r'
 
-  protected fun isQuote(c: Char) = c == '\'' || c == '\"' || c == '`'
+  protected fun isQuote(c: Char): Boolean = c == '\'' || c == '\"' || c == '`'
 }

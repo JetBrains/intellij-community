@@ -60,10 +60,10 @@ interface UForExpression : ULoopExpression {
     visitor.afterVisitForExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitForExpression(this, data)
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append("for (")
     declaration?.let { append(it.asRenderString()) }
     append("; ")
@@ -74,5 +74,5 @@ interface UForExpression : ULoopExpression {
     append(body.asRenderString())
   }
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

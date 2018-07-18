@@ -1,32 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.groups;
 
-import com.intellij.ide.actions.runAnything.RunAnythingCache;
-import com.intellij.ide.actions.runAnything.RunAnythingSearchListModel;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 
 /**
- * Represents 'run anything' list group. See {@link RunAnythingCommandGroup} and {@link RunAnythingRunConfigurationGroup} as examples.
+ * Represents 'run anything' list group.
  */
 public abstract class RunAnythingGroup {
-  public static final ExtensionPointName<RunAnythingGroup> EP_NAME =
-    ExtensionPointName.create("com.intellij.runAnything.group");
-
   /**
    * {@link #myMoreIndex} is a group's 'load more..' index in the main list.
    * -1 means that group has all items loaded and no more 'load more..' placeholder
    */
-  private volatile int myMoreIndex = -1;
+  volatile int myMoreIndex = -1;
 
   /**
    * {@link #myTitleIndex} is an index of group title in the main list.
@@ -41,15 +35,11 @@ public abstract class RunAnythingGroup {
   public abstract String getTitle();
 
   /**
-   * @return Unique settings key to store current group visibility property.
-   */
-  @NotNull
-  public abstract String getVisibilityKey();
-
-  /**
    * @return Current group maximum number of items to be shown.
    */
-  protected abstract int getMaxInitialItems();
+  protected int getMaxInitialItems() {
+    return 5;
+  }
 
   /**
    * @return Current group maximum number of items to be insert by click on 'load more..'.
@@ -59,44 +49,19 @@ public abstract class RunAnythingGroup {
   }
 
   /**
-   * @return Defines whether this group should be shown with empty input or not.
-   */
-  public boolean shouldBeShownInitially() {
-    return false;
-  }
-
-  /**
    * Gets current group items to add into the main list.
    *
+   * @param dataContext
    * @param model               needed to avoid adding duplicates into the list
    * @param pattern             input search string
    * @param isInsertionMode     if true gets {@link #getMaxItemsToInsert()} group items, else limits to {@link #getMaxInitialItems()}
    * @param cancellationChecker checks 'load more' calculation process to be cancelled
    */
-  protected abstract SearchResult getItems(@NotNull Project project,
-                                           @Nullable Module module,
-                                           @NotNull RunAnythingSearchListModel model,
-                                           @NotNull String pattern,
-                                           boolean isInsertionMode,
-                                           @NotNull Runnable cancellationChecker);
-
-  /**
-   * Gets all current group matched by {@code pattern} items if its visibility turned on and empty collection otherwise
-   *
-   * @param model               needed to avoid adding duplicates into the list
-   * @param pattern             input search string
-   * @param isInsertionMode     limits group items to get by a constant group specific value
-   * @param cancellationChecker checks 'load more' calculation process to be cancelled
-   */
-  public SearchResult getVisibleItems(@NotNull Project project,
-                                      @Nullable Module module,
-                                      @NotNull RunAnythingSearchListModel model,
-                                      @NotNull String pattern,
-                                      boolean isInsertionMode,
-                                      @NotNull Runnable cancellationChecker) {
-    return RunAnythingCache.getInstance(project).isGroupVisible(getVisibilityKey())
-           ? getItems(project, module, model, pattern, isInsertionMode, cancellationChecker) : new SearchResult();
-  }
+  public abstract SearchResult getItems(@NotNull DataContext dataContext,
+                                        @NotNull DefaultListModel model,
+                                        @NotNull String pattern,
+                                        boolean isInsertionMode,
+                                        @NotNull Runnable cancellationChecker);
 
   /**
    * Resets current group 'load more..' {@link #myMoreIndex} index.
@@ -108,8 +73,8 @@ public abstract class RunAnythingGroup {
   /**
    * Shifts {@link #myMoreIndex} for all groups starting from {@code baseIndex} by {@code shift}.
    */
-  private static void shiftMoreIndex(int baseIndex, int shift) {
-    Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.myMoreIndex >= baseIndex)
+  private static void shiftMoreIndex(Collection<RunAnythingGroup> groups, int baseIndex, int shift) {
+    groups.stream().filter(runAnythingGroup -> runAnythingGroup.myMoreIndex >= baseIndex)
           .forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex += shift);
   }
 
@@ -119,16 +84,16 @@ public abstract class RunAnythingGroup {
    * @return group title if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
   @Nullable
-  public static String getTitle(int titleIndex) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst()
+  public static String getTitle(@NotNull Collection<RunAnythingGroup> groups, int titleIndex) {
+    return groups.stream().filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst()
                  .map(RunAnythingGroup::getTitle).orElse(null);
   }
 
   /**
    * Shifts {@link #myTitleIndex} starting from {@code baseIndex} to {@code shift}.
    */
-  private static void shiftTitleIndex(int baseIndex, int shift) {
-    Arrays.stream(EP_NAME.getExtensions())
+  private static void shiftTitleIndex(@NotNull Collection<RunAnythingGroup> groups, int baseIndex, int shift) {
+    groups.stream()
           .filter(runAnythingGroup -> runAnythingGroup.myTitleIndex != -1 && runAnythingGroup.myTitleIndex > baseIndex)
           .forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex += shift);
   }
@@ -136,26 +101,26 @@ public abstract class RunAnythingGroup {
   /**
    * Clears {@link #myMoreIndex} of all groups.
    */
-  public static void clearMoreIndex() {
-    Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex = -1);
+  public static void clearMoreIndex(@NotNull Collection<RunAnythingGroup> groups) {
+    groups.forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex = -1);
   }
 
   /**
    * Clears {@link #myTitleIndex} of all groups.
    */
-  private static void clearTitleIndex() {
-    Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex = -1);
+  private static void clearTitleIndex(@NotNull Collection<RunAnythingGroup> groups) {
+    groups.forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex = -1);
   }
 
   /**
    * Joins {@link #myTitleIndex} and {@link #myMoreIndex} of all groups; using for navigating by 'TAB' between groups.
    */
-  public static int[] getAllIndexes() {
+  public static int[] getAllIndexes(@NotNull Collection<RunAnythingGroup> groups) {
     TIntArrayList list = new TIntArrayList();
-    for (RunAnythingGroup runAnythingGroup : EP_NAME.getExtensions()) {
+    for (RunAnythingGroup runAnythingGroup : groups) {
       list.add(runAnythingGroup.myTitleIndex);
     }
-    for (RunAnythingGroup runAnythingGroup : EP_NAME.getExtensions()) {
+    for (RunAnythingGroup runAnythingGroup : groups) {
       list.add(runAnythingGroup.myMoreIndex);
     }
 
@@ -166,47 +131,46 @@ public abstract class RunAnythingGroup {
    * Finds matched by {@link #myMoreIndex} group.
    */
   @Nullable
-  public static RunAnythingGroup findGroupByMoreIndex(int moreIndex) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex).findFirst()
-                 .orElse(null);
+  public static RunAnythingGroup findGroupByMoreIndex(@NotNull Collection<RunAnythingGroup> groups, int moreIndex) {
+    return groups.stream().filter(runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex).findFirst().orElse(null);
   }
 
   /**
    * Returns {@code true} if {@code index} is a {@link #myMoreIndex} of some group, {@code false} otherwise
    */
-  public static boolean isMoreIndex(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).anyMatch(runAnythingGroup -> runAnythingGroup.myMoreIndex == index);
+  public static boolean isMoreIndex(@NotNull Collection<RunAnythingGroup> groups, int index) {
+    return groups.stream().anyMatch(runAnythingGroup -> runAnythingGroup.myMoreIndex == index);
   }
 
   /**
    * Shifts {@link #myMoreIndex} and {@link #myTitleIndex} of all groups starting from {@code baseIndex} to {@code shift}.
    */
-  public static void shiftIndexes(int baseIndex, int shift) {
-    shiftTitleIndex(baseIndex, shift);
-    shiftMoreIndex(baseIndex, shift);
+  public static void shiftIndexes(@NotNull Collection<RunAnythingGroup> groups, int baseIndex, int shift) {
+    shiftTitleIndex(groups, baseIndex, shift);
+    shiftMoreIndex(groups, baseIndex, shift);
   }
 
   /**
    * Clears {@link #myMoreIndex} and {@link #myTitleIndex} of all groups.
    */
-  public static void clearIndexes() {
-    clearTitleIndex();
-    clearMoreIndex();
+  public static void clearIndexes(@NotNull Collection<RunAnythingGroup> groups) {
+    clearTitleIndex(groups);
+    clearMoreIndex(groups);
   }
 
   /**
    * Adds current group matched items into the list.
    *
+   * @param dataContext
    * @param model               needed to avoid adding duplicates into the list
    * @param pattern             input search string
    * @param cancellationChecker runnable that should throw a {@code ProcessCancelledException} if 'load more' process was cancelled
    */
-  public final synchronized void collectItems(@NotNull Project project,
-                                              @Nullable Module module,
-                                              @NotNull RunAnythingSearchListModel model,
+  public final synchronized void collectItems(DataContext dataContext,
+                                              @NotNull DefaultListModel model,
                                               @NotNull String pattern,
                                               @NotNull Runnable cancellationChecker) {
-    SearchResult result = getVisibleItems(project, module, model, pattern, false, cancellationChecker);
+    SearchResult result = getItems(dataContext, model, pattern, false, cancellationChecker);
 
     cancellationChecker.run();
     if (!result.isEmpty()) {

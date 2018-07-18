@@ -71,15 +71,15 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   class State {
     var myShellPath: String? = null
-    var myTabName = "Local"
-    var myCloseSessionOnLogout = true
-    var myReportMouse = true
-    var mySoundBell = true
-    var myCopyOnSelection = true
-    var myPasteOnMiddleMouseButton = true
-    var myOverrideIdeShortcuts = true
-    var myShellIntegration = true
-    var myHighlightHyperlinks = true
+    var myTabName: String = "Local"
+    var myCloseSessionOnLogout: Boolean = true
+    var myReportMouse: Boolean = true
+    var mySoundBell: Boolean = true
+    var myCopyOnSelection: Boolean = true
+    var myPasteOnMiddleMouseButton: Boolean = true
+    var myOverrideIdeShortcuts: Boolean = true
+    var myShellIntegration: Boolean = true
+    var myHighlightHyperlinks: Boolean = true
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {

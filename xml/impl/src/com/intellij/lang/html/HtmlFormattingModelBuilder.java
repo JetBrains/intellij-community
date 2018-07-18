@@ -45,8 +45,4 @@ public class HtmlFormattingModelBuilder implements FormattingModelBuilder {
                                                            documentModel);
   }
 
-  @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
-  }
 }

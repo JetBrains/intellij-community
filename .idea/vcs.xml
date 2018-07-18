@@ -6,6 +6,15 @@
       <inspection_tool class="SubjectLimit" enabled="true" level="WARNING" enabled_by_default="true"/>
     </profile>
   </component>
+  <component name="GitSharedSettings">
+    <option name="FORCE_PUSH_PROHIBITED_PATTERNS">
+      <list>
+        <option value="master" />
+        <option value="\d{3}" />
+        <option value="\d{3}.\d+" />
+      </list>
+    </option>
+  </component>
   <component name="IssueNavigationConfiguration">
     <option name="links">
       <list>

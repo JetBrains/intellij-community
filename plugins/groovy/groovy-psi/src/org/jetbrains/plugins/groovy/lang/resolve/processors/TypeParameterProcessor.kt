@@ -15,7 +15,7 @@ class TypeParameterProcessor(name: String) : FindFirstProcessor<ElementGroovyRes
     hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.Hint { it === GroovyResolveKind.TYPE_PARAMETER })
   }
 
-  override fun result(element: PsiElement, state: ResolveState) = (element as? PsiTypeParameter)?.let {
+  override fun result(element: PsiElement, state: ResolveState): ElementGroovyResult<PsiTypeParameter>? = (element as? PsiTypeParameter)?.let {
     ElementGroovyResult(it)
   }
 }

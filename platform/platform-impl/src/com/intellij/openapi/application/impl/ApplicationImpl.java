@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl;
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -25,6 +24,7 @@ import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -98,7 +98,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myWriteStackBase;
   private volatile Thread myWriteActionThread;
 
-  private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
   @Nullable
   private Splash mySplash;
@@ -1107,15 +1106,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
-  private void assertIsDispatchThread(@NotNull String message) {
+  private void assertIsDispatchThread(String message) {
     if (isDispatchThread()) return;
-    final Attachment dump = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
-    throw new LogEventException(message,
-              " EventQueue.isDispatchThread()="+EventQueue.isDispatchThread()+
-              " isDispatchThread()="+isDispatchThread()+
-              " Toolkit.getEventQueue()="+Toolkit.getDefaultToolkit().getSystemEventQueue()+
-              " Current thread: " + describe(Thread.currentThread())+
-              " SystemEventQueueThread: " + describe(getEventQueueThread()), dump);
+    throw new RuntimeExceptionWithAttachments(
+      message,
+      " EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
+      " isDispatchThread()=" + isDispatchThread() +
+      " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
+      " Current thread: " + describe(Thread.currentThread()) +
+      " SystemEventQueueThread: " + describe(getEventQueueThread()),
+      new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
   @Override
@@ -1379,15 +1379,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     });
   }
 
-  public void editorPaintStart() {
-    myInEditorPaintCounter++;
-  }
-
-  public void editorPaintFinish() {
-    myInEditorPaintCounter--;
-    LOG.assertTrue(myInEditorPaintCounter >= 0);
-  }
-
   @Override
   public void addApplicationListener(@NotNull ApplicationListener l) {
     myDispatcher.addListener(l);
@@ -1445,14 +1436,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveAll() {
-    saveAll(false);
-  }
-
-  @Override
-  public void saveAll(boolean isForce) {
-    if (mySaveAllowed) {
-      StoreUtil.saveDocumentsAndProjectsAndApp(isForce);
-    }
+    StoreUtil.saveDocumentsAndProjectsAndApp(false);
   }
 
   @Override

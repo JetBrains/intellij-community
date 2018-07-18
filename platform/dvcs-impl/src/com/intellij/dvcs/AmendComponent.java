@@ -53,7 +53,7 @@ public abstract class AmendComponent {
 
   @NotNull private final RepositoryManager<? extends Repository> myRepoManager;
   @NotNull private final CheckinProjectPanel myCheckinPanel;
-  @NotNull private final JCheckBox myAmend;
+  @NotNull protected final JCheckBox myAmend;
   @NotNull private final String myPreviousMessage;
 
   @Nullable private Map<VirtualFile, String> myMessagesForRoots;

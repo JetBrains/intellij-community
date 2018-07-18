@@ -39,6 +39,25 @@ class BufferingTextSplitterTest : UsefulTestCase() {
           listOf("lineCR\r", "lineLF\n", "lineCRLF\r\n", "lineLFCR\n", "\r"))
   }
 
+  fun `test lines split separate CR LF`() {
+    check(listOf("lineCR\r", "\nlineLF"),
+          listOf("lineCR\r\n", "lineLF"))
+  }
+
+  fun `test empty lines`() {
+    check(listOf("\r\r\r"),
+          listOf("\r", "\r", "\r"))
+
+    check(listOf("\n\n\n"),
+          listOf("\n", "\n", "\n"))
+
+    check(listOf("\r\n\r\n\r\n"),
+          listOf("\r\n", "\r\n", "\r\n"))
+
+    check(listOf("\r\r\n\n\n"),
+          listOf("\r", "\r\n", "\n", "\n"))
+  }
+
   private fun check(text: List<String>, expectedLines: List<String>) {
     val result = mutableListOf<String>()
     val outputSplitter = BufferingTextSplitter({ line -> result.add(line) })

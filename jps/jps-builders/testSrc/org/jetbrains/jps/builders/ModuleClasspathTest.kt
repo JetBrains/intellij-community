@@ -40,7 +40,7 @@ class ModuleClasspathTest : JpsBuildTestCase() {
 
   private fun getProjectPath() = FileUtil.toSystemIndependentName(testDataRootPath) + "/moduleClasspath/moduleClasspath.ipr"
 
-  override fun getTestDataRootPath() =
+  override fun getTestDataRootPath(): String =
     FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output")!!.absolutePath, '/')!!
 
   fun testSimpleClasspath() {

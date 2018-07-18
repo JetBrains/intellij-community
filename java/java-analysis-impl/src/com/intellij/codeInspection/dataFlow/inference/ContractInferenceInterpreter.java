@@ -62,7 +62,7 @@ class ContractInferenceInterpreter {
       ContractReturnValue value = getDefaultReturnValue(statements);
       if (!value.isFail() && !value.equals(returnAny())) {
         contracts = singletonList(
-          new KnownContract(new StandardMethodContract(StandardMethodContract.createConstraintArray(getParameters().size()), value)));
+          new KnownContract(StandardMethodContract.trivialContract(getParameters().size(), value)));
       }
     }
     return contracts;

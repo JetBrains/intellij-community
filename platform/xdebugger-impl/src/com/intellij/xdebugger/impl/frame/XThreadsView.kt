@@ -11,6 +11,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+import javax.swing.JPanel
 
 /**
  * @author egor
@@ -19,9 +20,9 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
   private val treePanel = XDebuggerTreePanel(project, session.debugProcess.editorsProvider, this, null, "", null)
 
   private fun getTree() = treePanel.tree
-  fun getPanel() = treePanel.mainPanel
+  fun getPanel(): JPanel = treePanel.mainPanel
 
-  fun getDefaultFocusedComponent() =  treePanel.tree
+  fun getDefaultFocusedComponent(): XDebuggerTree =  treePanel.tree
 
   override fun clear() {
     DebuggerUIUtil.invokeLater {

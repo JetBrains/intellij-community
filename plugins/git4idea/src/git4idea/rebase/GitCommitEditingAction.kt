@@ -23,11 +23,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
+import git4idea.findProtectedRemoteBranch
+import git4idea.repo.GitRepository
 
 /**
  * Base class for Git action which is going to edit existing commits,
@@ -114,15 +115,15 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
   }
 
-  protected fun getLog(e: AnActionEvent) = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
+  protected fun getLog(e: AnActionEvent): VcsLog = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
 
-  protected fun getLogData(e: AnActionEvent) = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
+  protected fun getLogData(e: AnActionEvent): VcsLogData = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
 
-  protected fun getUi(e: AnActionEvent) = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
+  protected fun getUi(e: AnActionEvent): VcsLogUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
 
-  protected fun getSelectedCommit(e: AnActionEvent) = getLog(e).selectedShortDetails[0]!!
+  protected fun getSelectedCommit(e: AnActionEvent): VcsShortCommitDetails = getLog(e).selectedShortDetails[0]!!
 
-  protected fun getRepository(e: AnActionEvent) = getRepositoryManager(e.project!!).getRepositoryForRoot(getSelectedCommit(e).root)!!
+  protected fun getRepository(e: AnActionEvent): GitRepository = getRepositoryManager(e.project!!).getRepositoryForRoot(getSelectedCommit(e).root)!!
 
   protected abstract fun getFailureTitle(): String
 

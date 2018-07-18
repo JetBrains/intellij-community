@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -138,12 +139,12 @@ public class CodeStyle {
   }
 
   /**
-   * Returns indent options for the given PSI file. The method attempts to use {@link com.intellij.psi.codeStyle.FileIndentOptionsProvider}
+   * Returns indent options for the given PSI file. The method attempts to use {@link FileIndentOptionsProvider}
    * if applicable to the file. If there are no suitable indent options providers, it takes configurable language indent options or
    * retrieves indent options by file type.
    * @param file The file to get indent options for.
    * @return The file indent options.
-   * @see com.intellij.psi.codeStyle.FileIndentOptionsProvider
+   * @see FileIndentOptionsProvider
    */
   @NotNull
   public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
@@ -268,10 +269,44 @@ public class CodeStyle {
       if (documentManager != null) {
         PsiFile file = documentManager.getPsiFile(document);
         if (file != null) {
-          CommonCodeStyleSettings.IndentOptions indentOptions = CodeStyle.getSettings(file).getIndentOptionsByFile(file, null, true, null);
+          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(file).getIndentOptionsByFile(file, null, true, null);
           indentOptions.associateWithDocument(document);
         }
       }
     }
+  }
+
+  /**
+   * Assign main project-wide code style settings and force the project to use its own code style instead of a global (application) one.
+   *
+   * @param project   The project to assign the settings to.
+   * @param settings  The settings to use with the project.
+   */
+  public static void setMainProjectSettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
+    @SuppressWarnings("deprecation")
+    CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
+    codeStyleSettingsManager.setMainProjectCodeStyle(settings);
+    codeStyleSettingsManager.USE_PER_PROJECT_SETTINGS = true;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static CodeStyleBean getBean(@NotNull Project project, @NotNull Language language) {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    CodeStyleBean codeStyleBean = null;
+    if (provider != null) {
+      codeStyleBean = provider.createBean();
+    }
+    if (codeStyleBean == null) {
+      codeStyleBean = new CodeStyleBean() {
+        @NotNull
+        @Override
+        protected Language getLanguage() {
+          return language;
+        }
+      };
+    }
+    codeStyleBean.setRootSettings(getSettings(project));
+    return codeStyleBean;
   }
 }

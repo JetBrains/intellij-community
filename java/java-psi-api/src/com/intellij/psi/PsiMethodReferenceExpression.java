@@ -45,6 +45,7 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression, Ps
    *      ii) is not declared static and supports arity n-1.
    *   The method reference has some other form and at least one potentially-applicable method is not declared static.
    */
+  @Override
   boolean isPotentiallyCompatible(PsiType functionalInterfaceType);
 
   /**

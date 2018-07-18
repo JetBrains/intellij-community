@@ -249,8 +249,18 @@ public abstract class QuickFixFactory {
 
   public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
 
+  /**
+   * Use {@link #createAddToDependencyInjectionAnnotationsFix(Project, String)} instead
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   @NotNull
-  public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName, @NotNull String element);
+  public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName, @NotNull String element) {
+    return createAddToDependencyInjectionAnnotationsFix(project, qualifiedName);
+  }
+
+  @NotNull
+  public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName);
 
   @NotNull
   public abstract IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull String qualifiedName);

@@ -65,6 +65,9 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    if (!(b.getBorder() instanceof DarculaRadioButtonBorder)) {
+      JBInsets.removeFrom(viewRect, b.getInsets());
+    }
     return viewRect;
   }
 

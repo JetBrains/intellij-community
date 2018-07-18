@@ -6,28 +6,45 @@
 import sys
 import typing
 from typing import (
+    TypeVar, Generic, Dict, overload, List, Tuple,
+    Any, Type, Optional, Union
+)
+# These are exported.
+from . import abc
+
+from typing import (
     Callable as Callable,
+    Container as Container,
+    Hashable as Hashable,
     Iterable as Iterable,
     Iterator as Iterator,
+    Sized as Sized,
+    Generator as Generator,
+    ByteString as ByteString,
     Reversible as Reversible,
     Mapping as Mapping,
+    MappingView as MappingView,
     ItemsView as ItemsView,
     KeysView as KeysView,
     ValuesView as ValuesView,
     MutableMapping as MutableMapping,
     Sequence as Sequence,
     MutableSequence as MutableSequence,
+    MutableSet as MutableSet,
+    AbstractSet as Set,
 )
-from typing import (
-    TypeVar, Generic, Dict, overload, List, Tuple,
-    Any, Type, Optional, Union
-)
-
-# These are exported.
 if sys.version_info >= (3, 6):
-    pass
+    from typing import (
+        Collection as Collection,
+        AsyncGenerator as AsyncGenerator,
+    )
 if sys.version_info >= (3, 5):
-    pass
+    from typing import (
+        Awaitable as Awaitable,
+        Coroutine as Coroutine,
+        AsyncIterable as AsyncIterable,
+        AsyncIterator as AsyncIterator,
+    )
 
 _T = TypeVar('_T')
 _KT = TypeVar('_KT')

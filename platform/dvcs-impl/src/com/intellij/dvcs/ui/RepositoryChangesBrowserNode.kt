@@ -38,14 +38,14 @@ class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<
     appendCount(renderer)
   }
 
-  override fun getSortWeight() = REPOSITORY_SORT_WEIGHT
+  override fun getSortWeight(): Int = REPOSITORY_SORT_WEIGHT
 
-  override fun compareUserObjects(o2: Repository) = getShortRepositoryName(getUserObject()).compareTo(getShortRepositoryName(o2), true)
+  override fun compareUserObjects(o2: Repository): Int = getShortRepositoryName(getUserObject()).compareTo(getShortRepositoryName(o2), true)
 
-  override fun getTextPresentation() = getShortRepositoryName(getUserObject())
+  override fun getTextPresentation(): String = getShortRepositoryName(getUserObject())
 
   companion object {
-    fun getColorManager(project: Project) = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
+    fun getColorManager(project: Project): VcsLogColorManagerImpl = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
       findLogProviders(ProjectLevelVcsManagerImpl.getInstance(project).allVcsRoots.asList(), project).keys)
   }
 }

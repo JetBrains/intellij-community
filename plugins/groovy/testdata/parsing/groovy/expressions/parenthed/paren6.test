@@ -12,5 +12,5 @@ Groovy script
           PsiElement(identifier)('a')
         PsiElement(.)('.')
         PsiElement(identifier)('toString')
-      PsiErrorElement:')' expected
+      PsiErrorElement:')' or ',' expected
         <empty list>

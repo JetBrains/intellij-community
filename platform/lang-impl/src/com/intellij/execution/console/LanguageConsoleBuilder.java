@@ -82,7 +82,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.psi.PsiCodeFragment}
+   * @see com.intellij.psi.PsiCodeFragment
    */
   public LanguageConsoleBuilder psiFileFactory(@NotNull PairFunction<VirtualFile, Project, PsiFile> value) {
     psiFileFactory = value;
@@ -134,7 +134,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
    */
   @SuppressWarnings("UnusedDeclaration")
   public LanguageConsoleBuilder oneLineInput() {
@@ -143,7 +143,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
    */
   public LanguageConsoleBuilder oneLineInput(boolean value) {
     oneLineInput = value;
@@ -180,7 +180,7 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
-  private static class MyHelper extends LanguageConsoleImpl.Helper {
+  public static class MyHelper extends LanguageConsoleImpl.Helper {
     private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
@@ -207,7 +207,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
+  public static class GutteredLanguageConsole extends LanguageConsoleImpl {
     private final GutterContentProvider gutterContentProvider;
 
     public GutteredLanguageConsole(@NotNull MyHelper helper, @Nullable GutterContentProvider gutterContentProvider) {
@@ -453,7 +453,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  private static class MyConsoleRootType extends ConsoleRootType {
+  public static class MyConsoleRootType extends ConsoleRootType {
     public MyConsoleRootType(String historyType) {
       super(historyType, null);
     }

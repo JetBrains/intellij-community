@@ -156,7 +156,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    TypeConstraint initial = type == null ? null : TypeConstraint.EMPTY.withInstanceofValue(runner.getFactory().createDfaType(type));
+    TypeConstraint initial = type == null ? null : runner.getFactory().createDfaType(type).asConstraint();
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();

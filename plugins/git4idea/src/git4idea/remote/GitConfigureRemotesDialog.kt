@@ -80,9 +80,9 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     updateTableWidth()
   }
 
-  override fun createActions() = arrayOf(okAction)
+  override fun createActions(): Array<Action> = arrayOf(okAction)
 
-  override fun getPreferredFocusedComponent() = table
+  override fun getPreferredFocusedComponent(): JBTable = table
 
   override fun createCenterPanel(): JComponent? {
     table.selectionModel = DefaultListSelectionModel()

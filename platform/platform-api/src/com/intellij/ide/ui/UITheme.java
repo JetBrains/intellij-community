@@ -10,12 +10,12 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,10 +23,10 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class UITheme {
-  private Map<String, Object> myProperties;
   private String name;
   private boolean dark;
   private String author;
+  private String id;
   private Map<String, Object> ui;
   private Map<String, Object> icons;
 
@@ -45,12 +45,45 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream) throws IOException {
-    return new ObjectMapper().readValue(stream, UITheme.class);
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId) throws IOException {
+    UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
+    theme.id = themeId;
+    return theme;
+  }
+
+  public String getId() {
+    return id;
   }
 
   public void applyProperties(UIDefaults defaults) {
-    //todo[kb] apply properties to LaF
+    if (ui == null) return;
+
+    for (Map.Entry<String, Object> entry : ui.entrySet()) {
+      apply(entry.getKey(), entry.getValue(), defaults);
+    }
+  }
+
+  private static void apply(String key, Object value, UIDefaults defaults) {
+    if (value instanceof HashMap) {
+      for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
+        apply(key + "." + o.getKey(), o.getValue(), defaults);
+      }
+    } else {
+      value = parseValue(key, value.toString());
+      if (key.startsWith("*.")) {
+        String tail = key.substring(1);
+        Object finalValue = value;
+
+        //please DO NOT invoke forEach on UIDefaults directly
+        ((UIDefaults)defaults.clone()).entrySet().forEach(e -> {
+          if (e.getKey() instanceof String && ((String)e.getKey()).endsWith(tail)) {
+            defaults.put(e.getKey(), finalValue);
+          }
+        });
+      } else {
+        defaults.put(key, value);
+      }
+    }
   }
 
   public static Object parseValue(String key, @NotNull String value) {
@@ -60,14 +93,9 @@ public class UITheme {
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
-    } else if (key.endsWith("Border") || key.endsWith("border")) {
-
+    } else if (key.endsWith("border")) {
       try {
-        if (StringUtil.split(value, ",").size() == 4) {
-          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
-        } else {
-          return Class.forName(value).newInstance();
-        }
+        return Class.forName(value).newInstance();
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -128,14 +156,9 @@ public class UITheme {
     return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
   }
 
-
-  //public static void main(String[] args) throws IOException {
-  //  try (FileInputStream stream = new FileInputStream("C:\\IDEA\\community\\platform\\platform-api\\src\\com\\intellij\\ide\\ui\\example.theme.json")) {
-  //    loadFromJson(stream);
-  //  }
-  //}
-
+  //
   //json deserialization methods
+  //
 
   @SuppressWarnings("unused")
   private void setName(String name) {

@@ -13,12 +13,11 @@ Groovy script
           PsiElement(])(']')
       Arguments
         PsiElement([)('[')
-        PsiErrorElement:Expression expected
-          <empty list>
         PsiWhiteSpace(' ')
-        PsiElement())(')')
+        PsiErrorElement:<expression> or ']' expected, got ')'
+          PsiElement())(')')
         PsiWhiteSpace(' ')
         Literal
           PsiElement(Integer)('3')
-        PsiErrorElement:']' expected
+        PsiErrorElement:',' or ']' expected
           <empty list>

@@ -12,11 +12,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaMappingsConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,10 +129,10 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     UserDefinedJsonSchemaConfiguration mappingForFile = configuration.findMappingForFile(virtualFile);
     if (mappingForFile != null) {
       for (UserDefinedJsonSchemaConfiguration.Item pattern : mappingForFile.patterns) {
-        if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.path), virtualFile)
+        if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts()), virtualFile)
               || virtualFile.getUrl().equals(pattern.path)) {
           mappingForFile.patterns.remove(pattern);
-          if (mappingForFile.patterns.size() == 0) {
+          if (mappingForFile.patterns.size() == 0 && mappingForFile.isApplicationDefined()) {
             configuration.removeConfiguration(mappingForFile);
           }
           else {
@@ -153,14 +153,16 @@ class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> {
     UserDefinedJsonSchemaConfiguration existing = configuration.findMappingBySchemaInfo(selectedValue);
     UserDefinedJsonSchemaConfiguration.Item item = new UserDefinedJsonSchemaConfiguration.Item(path, false, false);
     if (existing != null) {
-      existing.patterns.add(item);
-      existing.refreshPatterns();
+      if (!existing.patterns.contains(item)) {
+        existing.patterns.add(item);
+        existing.refreshPatterns();
+      }
     }
     else {
       configuration.addConfiguration(new UserDefinedJsonSchemaConfiguration(selectedValue.getDescription(),
                                                                             selectedValue.getSchemaVersion(),
                                                                             selectedValue.getUrl(project),
-                                                                            false,
+                                                                            true,
                                                                             Collections.singletonList(item)));
     }
   }

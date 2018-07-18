@@ -15,11 +15,11 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('Person')
-    PsiElement(new line)('\n ')
     Extends clause
       <empty list>
     Implements clause
       <empty list>
+    PsiElement(new line)('\n ')
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n   ')
@@ -29,9 +29,9 @@ Groovy script
         PsiElement(enum)('enum')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('Day')
-        PsiElement(new line)('\n   ')
         Implements clause
           <empty list>
+        PsiElement(new line)('\n   ')
         Type definition body
           PsiElement({)('{')
           PsiWhiteSpace('\n     ')

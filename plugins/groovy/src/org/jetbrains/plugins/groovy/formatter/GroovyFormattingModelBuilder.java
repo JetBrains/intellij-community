@@ -68,12 +68,6 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     }
   }
 
-  @Override
-  @Nullable
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
-  }
-
   /**
    * Standard {@link PsiBasedFormattingModel} extension that handles the fact that groovy uses not single white space token type
    * ({@link TokenType#WHITE_SPACE}) but one additional token type as well: {@link GroovyTokenTypes#mNLS}. So, it allows to adjust

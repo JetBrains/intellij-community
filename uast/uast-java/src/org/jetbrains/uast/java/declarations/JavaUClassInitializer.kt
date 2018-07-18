@@ -24,20 +24,20 @@ class JavaUClassInitializer(
   psi: PsiClassInitializer,
   uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UClassInitializer, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by psi {
-  override val psi
+  override val psi: PsiClassInitializer
     get() = javaPsi
 
-  override val javaPsi = unwrap<UClassInitializer, PsiClassInitializer>(psi)
+  override val javaPsi: PsiClassInitializer = unwrap<UClassInitializer, PsiClassInitializer>(psi)
 
   override val uastAnchor: UIdentifier?
     get() = null
 
-  override val uastBody by lz {
+  override val uastBody: UExpression by lz {
     getLanguagePlugin().convertElement(psi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
   }
 
-  override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
+  override val annotations: List<JavaUAnnotation> by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
 
-  override fun equals(other: Any?) = this === other
-  override fun hashCode() = psi.hashCode()
+  override fun equals(other: Any?): Boolean = this === other
+  override fun hashCode(): Int = psi.hashCode()
 }

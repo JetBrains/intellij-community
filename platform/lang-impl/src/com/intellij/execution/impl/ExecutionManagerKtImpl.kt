@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
   @set:TestOnly
-  @Volatile var forceCompilationInTests = false
+  @Volatile var forceCompilationInTests: Boolean = false
 
   override fun startRunProfile(starter: RunProfileStarter, state: RunProfileState, environment: ExecutionEnvironment) {
     val project = environment.project

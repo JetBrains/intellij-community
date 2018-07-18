@@ -47,7 +47,7 @@ public class BranchContextTracker implements BranchChangeListener {
     myContextManager.loadContext(contextName);
 
     Notification notification =
-      NOTIFICATION.createNotification("Workspace is restored to how it was in the ‘" + branchName + "' branch", NotificationType.INFORMATION);
+      NOTIFICATION.createNotification("Workspace associated with branch ‘" + branchName + "' has been restored", NotificationType.INFORMATION);
     if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
       notification.addAction(new NotificationAction("Rollback") {
         @Override
@@ -62,7 +62,7 @@ public class BranchContextTracker implements BranchChangeListener {
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();
       }
-    }).setContextHelpAction(new AnAction("What is a workspace?", "Workspace includes open editors, current run configuration, and breakpoints.", null) {
+    }).setContextHelpAction(new AnAction("What is a workspace?", "A workspace is a set of opened files, the current run configuration, and breakpoints.", null) {
       @Override
       public void actionPerformed(AnActionEvent e) {
 

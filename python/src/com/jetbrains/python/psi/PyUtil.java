@@ -626,7 +626,7 @@ public class PyUtil {
   /**
    * Returns Python language level for a virtual file.
    *
-   * @see {@link LanguageLevel#forElement}
+   * @see LanguageLevel#forElement
    */
   @NotNull
   public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,

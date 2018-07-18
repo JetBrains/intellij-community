@@ -17,6 +17,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.ThreeState;
+import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaPatternComparator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 

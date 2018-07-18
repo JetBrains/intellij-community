@@ -12,7 +12,6 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -681,7 +680,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       result.add(expression.getName());
     }
 
-    result.addAll(ObjectUtils.notNull(myClass.getSlots(context), Collections.emptyList()));
+    if (myClass.isNewStyleClass(context)) {
+      result.addAll(ContainerUtil.notNullize(myClass.getOwnSlots()));
+    }
 
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyCustomMember member : provider.getMembers(this, null, context)) {
@@ -745,11 +746,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     // We are here because of completion (see call stack), so we use code complete here
     final TypeEvalContext context =
       (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) : null);
-    List<String> slots = myClass.isNewStyleClass(context) ? myClass.getSlots(
-      context) : null;
-    if (slots != null) {
-      processor.setAllowedNames(slots);
-    }
+
+    processor.setAllowedNames(myClass.getSlots(context));
     myClass.processInstanceLevelDeclarations(processor, expressionHook);
 
     for (LookupElement le : processor.getResultList()) {
@@ -760,8 +758,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       namesAlready.add(name);
       ret.add(le);
     }
-    if (slots != null) {
-      for (String name : slots) {
+    if (myClass.isNewStyleClass(context)) {
+      for (String name : ContainerUtil.notNullize(myClass.getOwnSlots())) {
         if (!namesAlready.contains(name)) {
           ret.add(LookupElementBuilder.create(name));
         }
@@ -862,6 +860,18 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public boolean isValid() {
     return myClass.isValid();
+  }
+
+  @Override
+  public boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
+    final PyClass cls = getPyClass();
+
+    if (isDefinition() || PyUtil.isObjectClass(cls)) return true;
+
+    final List<String> slots = cls.getSlots(context);
+    return slots == null ||
+           slots.contains(name) && cls.findClassAttribute(name, true, context) == null ||
+           cls.findProperty(name, true, context) != null;
   }
 
   @Nullable

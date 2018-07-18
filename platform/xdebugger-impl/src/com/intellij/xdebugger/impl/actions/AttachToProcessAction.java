@@ -234,7 +234,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  static List<AttachToProcessItem> collectAttachProcessItems(@NotNull final Project project,
+  public static List<AttachToProcessItem> collectAttachProcessItems(@NotNull final Project project,
                                                                @NotNull XAttachHost host,
                                                                @NotNull ProgressIndicator indicator) {
     return doCollectAttachProcessItems(project, host, getProcessInfos(host), indicator, getProvidersApplicableForHost(host));
@@ -307,11 +307,12 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  public static List<RecentItem> getRecentItems(XAttachHost host,
+  public static List<RecentItem> getRecentItems(@NotNull XAttachHost host,
                                                 @NotNull Project project) {
     Map<XAttachHost, LinkedHashSet<RecentItem>> recentItems = project.getUserData(RECENT_ITEMS_KEY);
-    return recentItems == null ? Collections.emptyList()
-                           : Collections.unmodifiableList(new ArrayList<>(recentItems.get(host)));
+    return recentItems == null || !recentItems.containsKey(host)
+           ? Collections.emptyList()
+           : Collections.unmodifiableList(new ArrayList<>(recentItems.get(host)));
   }
 
   public static class RecentItem {
@@ -425,6 +426,9 @@ public class AttachToProcessAction extends AnAction {
     abstract boolean hasSubStep();
 
     abstract String getText(@NotNull Project project);
+
+    @Nullable
+    abstract String getTooltipText(@NotNull Project project);
 
     abstract List<AttachToProcessItem> getSubItems();
 
@@ -639,7 +643,7 @@ public class AttachToProcessAction extends AnAction {
     @Nullable
     @Override
     public String getTooltipTextFor(AttachItem value) {
-      return value.getText(myProject);
+      return value.getTooltipText(myProject);
     }
 
     @Override

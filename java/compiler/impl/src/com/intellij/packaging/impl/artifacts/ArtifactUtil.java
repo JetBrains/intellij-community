@@ -34,6 +34,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -298,7 +299,7 @@ public class ArtifactUtil {
             process = true;
           }
         }
-        
+
         if (process) {
           if (tail.length() == 0) {
             if (!processor.process(element, path)) return false;
@@ -437,9 +438,9 @@ public class ArtifactUtil {
             ContainerUtil.addIfNotNull(result, sourceRoot.findFileByRelativePath(path));
           }
         }
-        else if (element instanceof ModuleOutputPackagingElement) {
+        else if (element instanceof ModulePackagingElement) {
           final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
-          for (VirtualFile sourceRoot : ((ModuleOutputPackagingElement)element).getSourceRoots(context)) {
+          for (VirtualFile sourceRoot : ((ModulePackagingElement)element).getSourceRoots(context)) {
             final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
             if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
               result.add(sourceFile);
@@ -607,12 +608,7 @@ public class ArtifactUtil {
     }
 
     final String baseName = configuration.getArtifactName();
-    String name = baseName;
-    int i = 2;
-    while (artifactModel.findArtifact(name) != null) {
-      name = baseName + i;
-      i++;
-    }
+    String name = generateUniqueArtifactName(baseName, artifactModel);
 
     ArtifactType actualType = configuration.getArtifactType();
     if (actualType == null) {
@@ -621,6 +617,11 @@ public class ArtifactUtil {
     final ModifiableArtifact artifact = artifactModel.addArtifact(name, actualType, configuration.getRootElement());
     artifactTemplate.setUpArtifact(artifact, configuration);
     return artifact;
+  }
+
+  @NotNull
+  public static String generateUniqueArtifactName(String baseName, @NotNull ModifiableArtifactModel artifactModel) {
+    return UniqueNameGenerator.generateUniqueName(baseName, name -> artifactModel.findArtifact(name) == null);
   }
 }
 

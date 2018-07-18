@@ -102,7 +102,7 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
 
     while (step != null && !step.equals(limit)) {
       StructureNode node = step.apply(minimized.data);
-      if (node != null && iteration.session.generatedNodes.add(node)) {
+      if (node != null && iteration.session.addGeneratedNode(node)) {
         CombinatorialIntCustomizer customizer = new CombinatorialIntCustomizer();
         if (tryStep(node, customizer)) {
           return step;

@@ -1,0 +1,20 @@
+def foo = (Foo)
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('foo')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Typecast expression
+        PsiElement(()('(')
+        Type element
+          Reference element
+            PsiElement(identifier)('Foo')
+        PsiElement())(')')
+        PsiErrorElement:<expression> or '=' expected
+          <empty list>

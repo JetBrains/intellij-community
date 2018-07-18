@@ -15,7 +15,7 @@ Groovy script
         Arguments
           PsiElement([)('[')
           PsiElement(])(']')
-      PsiErrorElement:')' expected
+      PsiErrorElement:')' expected, got '3'
         <empty list>
     PsiWhiteSpace(' ')
     Command arguments

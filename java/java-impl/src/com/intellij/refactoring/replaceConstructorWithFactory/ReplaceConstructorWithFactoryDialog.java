@@ -82,7 +82,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     return myNameField.getFocusableComponent();
   }
 
-  public String getTargetClassName() {
+  private String getTargetClassName() {
     if (!myIsInner) {
       return myTfTargetClassName.getText();
     }

@@ -47,7 +47,7 @@ Groovy script
                   Parameter list
                     <empty list>
                   PsiElement(})('}')
-              PsiErrorElement:')' expected
+              PsiErrorElement:')' expected, got '}'
                 <empty list>
             PsiWhiteSpace('\n  ')
             PsiElement(})('}')
@@ -91,7 +91,7 @@ Groovy script
               PsiElement(()('(')
               Literal
                 PsiElement(true)('true')
-              PsiErrorElement:')' expected
+              PsiErrorElement:')' expected, got ';'
                 <empty list>
             PsiElement(;)(';')
             PsiWhiteSpace(' ')

@@ -9,7 +9,7 @@ public class BoundedIntDistribution implements IntDistribution {
   private final int max;
   private final ToIntFunction<Random> producer;
 
-  public BoundedIntDistribution(int min, int max, ToIntFunction<Random> producer) {
+  BoundedIntDistribution(int min, int max, ToIntFunction<Random> producer) {
     if (min > max) throw new IllegalArgumentException(min + ">" + max);
     this.min = min;
     this.max = max;

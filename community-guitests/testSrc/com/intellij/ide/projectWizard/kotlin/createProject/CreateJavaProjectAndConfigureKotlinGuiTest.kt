@@ -13,10 +13,12 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
     configureKotlinJvm(libInPlugin = false)
     checkKotlinLibInProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JVM)
+      kotlinKind = KotlinKind.JVM,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
     checkKotlinLibsInStructureFromProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JVM)
+      kotlinKind = KotlinKind.JVM,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
 
   @Test
@@ -25,7 +27,8 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
     createJavaProject(projectFolder)
     configureKotlinJvm(libInPlugin = true)
     checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JVM)
+      kotlinKind = KotlinKind.JVM,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
 
   @Test
@@ -35,10 +38,12 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
     configureKotlinJs(libInPlugin = false)
     checkKotlinLibInProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JS)
+      kotlinKind = KotlinKind.JS,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
     checkKotlinLibsInStructureFromProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JS)
+      kotlinKind = KotlinKind.JS,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
 
   @Test
@@ -47,7 +52,8 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
     createJavaProject(projectFolder)
     configureKotlinJs(libInPlugin = true)
     checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JS)
+      kotlinKind = KotlinKind.JS,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
 
   @Test

@@ -35,7 +35,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -163,7 +162,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     processor.setPreviewSupported(true);
     if (processor.showDialog(directTypes)) {
       if (processor.isPreviewDuplicates()) {
-        return previewExtractMethod(processor);
+        previewExtractMethod(processor);
+        return true;
       }
       extractMethod(project, processor);
       DuplicatesImpl.processDuplicates(processor, project, editor);
@@ -172,16 +172,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return false;
   }
 
-  private static boolean previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
+  private static void previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
     processor.previewRefactoring();
-    boolean showToolWindow = Registry.is("extract.method.duplicates.tool.window");
-    if (showToolWindow) {
-      ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
-    }
-    else {
-      new ExtractDuplicatesProcessor(processor).run();
-    }
-    return true;
+    ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
   }
 
   public static void extractMethod(@NotNull final Project project, final ExtractMethodProcessor processor) {

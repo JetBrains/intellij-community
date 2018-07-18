@@ -104,7 +104,7 @@ fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), backgro
   return pane
 }
 
-fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
+fun RadioButton(text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
 fun CheckBox(text: String, selected: Boolean = false, toolTip: String? = null): JCheckBox {
   val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)

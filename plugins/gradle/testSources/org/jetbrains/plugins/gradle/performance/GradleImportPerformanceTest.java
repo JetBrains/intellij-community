@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import org.hamcrest.core.IsNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
@@ -21,10 +22,17 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
+import static org.junit.Assume.assumeThat;
 
 public class GradleImportPerformanceTest extends GradleImportingTestCase {
 
   public static final String TEST_DATA_PATH = System.getenv("gradle.performance.test.data.path");
+
+  @Override
+  public void setUp() throws Exception {
+    assumeThat(TEST_DATA_PATH, IsNull.notNullValue());
+    super.setUp();
+  }
 
   @Override
   protected void collectAllowedRoots(List<String> roots) {
@@ -40,7 +48,7 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testImportTiming() throws Exception {
+  public void testImportTiming() {
     GradleSystemSettings.getInstance().setGradleVmOptions("-Dorg.gradle.jvmargs=-Xmx2g");
     importProjectUsingSingeModulePerGradleProject();
     long startTime = System.currentTimeMillis();
@@ -58,7 +66,7 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
 
     final long gradleModelsTrace = sumByPrefix(trace, "Get model ");
     final long resolverChainTrace = sumByPrefix(trace, "Resolver chain ");
-    final long dataServiceTrace  = sumByPrefix(trace, "Data import ");
+    final long dataServiceTrace = sumByPrefix(trace, "Data import ");
 
     reportTiming("gradleModelsTrace", gradleModelsTrace);
     reportTiming("resolverChainTrace", resolverChainTrace);
@@ -70,7 +78,7 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testImportPerSourceSetTiming() throws Exception {
+  public void testImportPerSourceSetTiming() {
     GradleSystemSettings.getInstance().setGradleVmOptions("-Dorg.gradle.jvmargs=-Xmx2g");
     importProject();
     long startTime = System.currentTimeMillis();
@@ -87,7 +95,7 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
 
     final long gradleModelsTrace = sumByPrefix(trace, "Get model ");
     final long resolverChainTrace = sumByPrefix(trace, "Resolver chain ");
-    final long dataServiceTrace  = sumByPrefix(trace, "Data import ");
+    final long dataServiceTrace = sumByPrefix(trace, "Data import ");
 
     reportTiming("gradleModelsTrace", gradleModelsTrace);
     reportTiming("resolverChainTrace", resolverChainTrace);
@@ -120,6 +128,7 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
                             + trace.get("Data import total");
 
     double percent = (double)tracedTime / time * 100;
-    assertTrue( String.format("Test time [%d] traced time [%d], percentage [%.2f]", time, tracedTime, percent), percent > threshold && percent < 100);
+    assertTrue(String.format("Test time [%d] traced time [%d], percentage [%.2f]", time, tracedTime, percent),
+               percent > threshold && percent < 100);
   }
 }

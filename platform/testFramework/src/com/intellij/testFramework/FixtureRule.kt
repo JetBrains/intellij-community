@@ -174,10 +174,10 @@ class EdtRule : TestRule {
 }
 
 class InitInspectionRule : TestRule {
-  override fun apply(base: Statement, description: Description) = statement { runInInitMode { base.evaluate() } }
+  override fun apply(base: Statement, description: Description): Statement = statement { runInInitMode { base.evaluate() } }
 }
 
-inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
+inline fun statement(crossinline runnable: () -> Unit): Statement = object : Statement() {
   override fun evaluate() {
     runnable()
   }
@@ -221,7 +221,7 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false) = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
 
 fun Project.use(task: (Project) -> Unit) {
   val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
@@ -265,7 +265,7 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
  * So, should be one task per rule.
  */
 class WrapRule(private val before: () -> () -> Unit) : TestRule {
-  override fun apply(base: Statement, description: Description) = statement {
+  override fun apply(base: Statement, description: Description): Statement = statement {
     val after = before()
     try {
       base.evaluate()

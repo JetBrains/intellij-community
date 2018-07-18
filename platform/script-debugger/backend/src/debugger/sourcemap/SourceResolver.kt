@@ -22,13 +22,18 @@ interface SourceFileResolver {
 }
 
 class SourceResolver(private val rawSources: List<String>,
+                     trimFileScheme: Boolean,
+                     baseUrl: Url?,
                      private val sourceContents: List<String?>?,
-                     urlCanonicalizer: (String, String?) -> Url) {
+                     baseUrlIsFile: Boolean = true) {
   companion object {
-    fun isAbsolute(path: String) = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
+    fun isAbsolute(path: String): Boolean = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
   }
 
-  val canonicalizedUrls: Array<Url> by lazy { Array(rawSources.size) { urlCanonicalizer(rawSources[it], sourceContents?.get(it)) } }
+  val canonicalizedUrls: Array<Url> by lazy {
+    Array(rawSources.size) { canonicalizeUrl(rawSources[it], baseUrl, trimFileScheme, baseUrlIsFile) }
+  }
+
   private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> by lazy {
     (
       if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size)
@@ -39,14 +44,6 @@ class SourceResolver(private val rawSources: List<String>,
       }
     }
   }
-
-  constructor(rawSources: List<String>,
-              trimFileScheme: Boolean,
-              baseUrl: Url?,
-              sourceContents: List<String?>?,
-              baseUrlIsFile: Boolean = true)
-    : this(rawSources, sourceContents, { sourceUrl, _ -> canonicalizeUrl(sourceUrl, baseUrl, trimFileScheme, baseUrlIsFile) })
-
 
   fun getSource(entry: MappingEntry): Url? {
     val index = entry.source
@@ -69,7 +66,7 @@ class SourceResolver(private val rawSources: List<String>,
     return if (sourceIndex < 0 || sourceIndex >= sourceContents!!.size) null else sourceContents[sourceIndex]
   }
 
-  fun getSourceIndex(url: Url) = canonicalizedUrlToSourceIndex[url]
+  fun getSourceIndex(url: Url): Int = canonicalizedUrlToSourceIndex[url]
 
   fun getRawSource(entry: MappingEntry): String? {
     val index = entry.source
@@ -126,7 +123,7 @@ class SourceResolver(private val rawSources: List<String>,
     return -1
   }
 
-  fun getUrlIfLocalFile(entry: MappingEntry) = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it else null }
+  fun getUrlIfLocalFile(entry: MappingEntry): Url? = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it else null }
 }
 
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {

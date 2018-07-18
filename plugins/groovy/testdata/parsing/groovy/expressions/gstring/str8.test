@@ -10,9 +10,6 @@ Groovy script
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('str')
-    GrStringContentImpl(STRING_CONTENT)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     GString injection
       PsiElement($)('$')
       Reference expression
@@ -34,9 +31,6 @@ Groovy script
         Reference expression
           PsiElement(identifier)('str')
         PsiElement(})('}')
-    GrStringContentImpl(STRING_CONTENT)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     GString injection
       PsiElement($)('$')
       Reference expression

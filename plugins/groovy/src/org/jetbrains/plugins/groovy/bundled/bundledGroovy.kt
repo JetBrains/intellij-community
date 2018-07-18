@@ -17,11 +17,11 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import java.io.File
 import java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION
 
-val bundledGroovyVersion by lazy(::doGetBundledGroovyVersion)
+val bundledGroovyVersion: String by lazy(::doGetBundledGroovyVersion)
 
 private fun doGetBundledGroovyVersion(): String = getJarAttribute(bundledGroovyFile, IMPLEMENTATION_VERSION) ?: UNDEFINED_VERSION
 
-val bundledGroovyFile by lazy(::doGetBundledGroovyFile)
+val bundledGroovyFile: File by lazy(::doGetBundledGroovyFile)
 
 private fun doGetBundledGroovyFile(): File {
   val jarPath = PathManager.getJarPathForClass(GroovyObject::class.java) ?: error("Cannot find JAR containing groovy classes")
@@ -30,7 +30,7 @@ private fun doGetBundledGroovyFile(): File {
   return jar
 }
 
-val bundledGroovyJarRoot by lazy(::doGetBundledGroovyRoot)
+val bundledGroovyJarRoot: VirtualFile? by lazy(::doGetBundledGroovyRoot)
 
 private fun doGetBundledGroovyRoot(): VirtualFile? {
   val jar = bundledGroovyFile

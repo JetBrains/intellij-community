@@ -296,7 +296,7 @@ class PostHighlightingVisitor {
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);
         if (!field.hasInitializer() && !field.hasModifierProperty(PsiModifier.FINAL)) {
           QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), 
-                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
+                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field), myDeadCodeKey);
         }
         return highlightInfo;
       }
@@ -318,10 +318,10 @@ class PostHighlightingVisitor {
         QuickFixAction.registerQuickFixAction(info, quickFixFactory.createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
           QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), 
-                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
+                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field), myDeadCodeKey);
         }
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
-          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToImplicitlyWrittenFieldsFix(project, annoName));
+          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToImplicitlyWrittenFieldsFix(project, annoName), myDeadCodeKey);
           return true;
         });
         return info;
@@ -347,7 +347,8 @@ class PostHighlightingVisitor {
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
       QuickFixAction
         .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName, "fields"));
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName, "fields"),
+                                myDeadCodeKey);
       return true;
     });
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(field), myDeadCodeKey);
@@ -435,7 +436,7 @@ class PostHighlightingVisitor {
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
       IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
       return true;
     });
     return highlightInfo;
@@ -488,7 +489,8 @@ class PostHighlightingVisitor {
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {
       QuickFixAction
         .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element));
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element),
+                                highlightDisplayKey);
       return true;
     });
     return highlightInfo;

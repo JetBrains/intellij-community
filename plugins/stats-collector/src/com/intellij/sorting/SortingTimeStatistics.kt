@@ -53,9 +53,9 @@ class TimingStatState {
     }
     
     
-    @JvmField val totalSortsByTime = MutableList(size, { 0 })
-    @JvmField val avgSortingTimeByN = MutableList(size, { 0.0 })
-    @JvmField val totalSortsByN = MutableList(size, { 0 })
+    @JvmField val totalSortsByTime: MutableList<Int> = MutableList(size, { 0 })
+    @JvmField val avgSortingTimeByN: MutableList<Double> = MutableList(size, { 0.0 })
+    @JvmField val totalSortsByN: MutableList<Int> = MutableList(size, { 0 })
     
 
     fun registerSortTiming(elementsSorted: Int, timeSpentMillis: Long) {

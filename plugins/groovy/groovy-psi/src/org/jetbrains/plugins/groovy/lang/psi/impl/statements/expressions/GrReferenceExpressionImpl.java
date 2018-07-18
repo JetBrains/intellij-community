@@ -479,7 +479,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean hasMemberPointer() {
-    return findChildByType(GroovyTokenTypes.mMEMBER_POINTER) != null;
+    return false;
   }
 
   @Override

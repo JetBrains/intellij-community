@@ -87,10 +87,10 @@ interface UTryExpression : UExpression {
     visitor.afterVisitTryExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitTryExpression(this, data)
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append("try ")
     if (hasResources) {
       append("(")
@@ -102,7 +102,7 @@ interface UTryExpression : UExpression {
     finallyClause?.let { append("finally ").append(it.asRenderString().trim('\n', '\r')) }
   }
 
-  override fun asLogString() = log(if (hasResources) "with resources" else "")
+  override fun asLogString(): String = log(if (hasResources) "with resources" else "")
 }
 
 /**
@@ -136,10 +136,10 @@ interface UCatchClause : UElement {
     visitor.afterVisitCatchClause(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitCatchClause(this, data)
 
-  override fun asLogString() = log(parameters.joinToString { it.name ?: "<error>" })
+  override fun asLogString(): String = log(parameters.joinToString { it.name ?: "<error>" })
 
-  override fun asRenderString() = "catch (e) " + body.asRenderString()
+  override fun asRenderString(): String = "catch (e) " + body.asRenderString()
 }

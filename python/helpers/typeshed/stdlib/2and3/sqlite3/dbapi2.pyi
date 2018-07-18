@@ -2,8 +2,8 @@
 # based heavily on Andrey Vlasovskikh's python-skeletons https://github.com/JetBrains/python-skeletons/blob/master/sqlite3.py
 
 import sys
-from datetime import date, time, datetime
 from typing import Any, Callable, Iterable, Iterator, List, Optional, Text, Tuple, Type, TypeVar, Union
+from datetime import date, time, datetime
 
 _T = TypeVar('_T')
 

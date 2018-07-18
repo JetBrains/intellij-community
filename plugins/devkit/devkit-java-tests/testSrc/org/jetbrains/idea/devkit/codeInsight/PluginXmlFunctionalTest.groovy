@@ -11,8 +11,12 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
 import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -467,5 +471,48 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testExtensionPointNameValidity() {
     myFixture.testHighlighting(getTestName(true) + ".xml")
+  }
+
+  void testRegistrationCheck() {
+    Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
+                                                 myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
+    ModuleRootModificationUtil.addDependency(myModule, anotherModule)
+
+    def dependencyModuleClass = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClass.java",
+                                                            "../anotherModuleDir/DependencyModuleClass.java")
+    def dependencyModuleClassWithEp = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModuleClassWithEpName.java",
+                                                                  "../anotherModuleDir/DependencyModuleClassWithEpName.java")
+    def dependencyModulePlugin = myFixture.copyFileToProject("registrationCheck/dependencyModule/DependencyModulePlugin.xml",
+                                                             "../anotherModuleDir/META-INF/DependencyModulePlugin.xml")
+    def mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
+                                                      "MainModuleClass.java")
+    def mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
+                                                       "META-INF/MainModulePlugin.xml")
+
+    myFixture.configureFromExistingVirtualFile(dependencyModuleClass)
+    myFixture.configureFromExistingVirtualFile(dependencyModuleClassWithEp)
+    myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
+    myFixture.configureFromExistingVirtualFile(mainModuleClass)
+    myFixture.configureFromExistingVirtualFile(mainModulePlugin)
+
+    myFixture.testHighlighting(true, false, false, dependencyModulePlugin)
+    myFixture.testHighlighting(true, false, false, mainModulePlugin)
+    def highlightInfos = myFixture.doHighlighting(HighlightSeverity.WARNING)
+    assertSize(2, highlightInfos)
+
+    for (info in highlightInfos) {
+      def ranges = info.quickFixActionRanges
+      assertNotNull(ranges)
+      assertSize(1, ranges)
+      def quickFix = ranges.get(0).getFirst().getAction()
+      myFixture.launchAction(quickFix)
+    }
+
+    myFixture.checkResultByFile("../anotherModuleDir/META-INF/DependencyModulePlugin.xml",
+                                "registrationCheck/dependencyModule/DependencyModulePlugin_after.xml",
+                                true)
+    myFixture.checkResultByFile("META-INF/MainModulePlugin.xml",
+                                "registrationCheck/module/MainModulePlugin_after.xml",
+                                true)
   }
 }

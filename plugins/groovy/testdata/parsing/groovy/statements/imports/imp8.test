@@ -13,7 +13,7 @@ Groovy script
       Reference element
         PsiElement(identifier)('a')
       PsiElement(.)('.')
-      PsiErrorElement:Identifier expected
+      PsiErrorElement:identifier expected, got ';'
         <empty list>
   PsiElement(;)(';')
   PsiElement(new line)('\n')
@@ -29,7 +29,7 @@ Groovy script
         PsiElement(.)('.')
         PsiElement(identifier)('b')
       PsiElement(.)('.')
-      PsiErrorElement:Identifier expected
+      PsiErrorElement:identifier expected, got ';'
         <empty list>
   PsiElement(;)(';')
   PsiElement(new line)('\n')
@@ -37,7 +37,7 @@ Groovy script
     Modifiers
       <empty list>
     PsiElement(import)('import')
-    PsiErrorElement:package or class name expected
+    PsiErrorElement:identifier expected, got ';'
       <empty list>
   PsiElement(;)(';')
   PsiElement(new line)('\n')

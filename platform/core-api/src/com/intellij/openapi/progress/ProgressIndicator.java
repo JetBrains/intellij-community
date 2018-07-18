@@ -57,11 +57,11 @@ public interface ProgressIndicator {
 
   /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
   @Deprecated
-  void startNonCancelableSection();
+  default void startNonCancelableSection() {}
 
   /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
   @Deprecated
-  void finishNonCancelableSection();
+  default void finishNonCancelableSection() {}
 
   boolean isModal();
 

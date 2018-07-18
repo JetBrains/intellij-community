@@ -58,9 +58,9 @@ class GroovyUastPlugin : UastLanguagePlugin {
 
   override fun isExpressionValueUsed(element: UExpression): Boolean = TODO("not implemented")
 
-  override val priority = 0
+  override val priority: Int = 0
 
-  override fun isFileSupported(fileName: String) = fileName.endsWith(".groovy", ignoreCase = true)
+  override fun isFileSupported(fileName: String): Boolean = fileName.endsWith(".groovy", ignoreCase = true)
 
   override val language: Language = GroovyLanguage
 
@@ -69,7 +69,7 @@ class GroovyUastPlugin : UastLanguagePlugin {
 class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, JvmDeclarationUElement {
   override val value: Any? get() = grElement.value
   override fun evaluate(): Any? = value
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
   override val psi: PsiElement? = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
 }
@@ -80,9 +80,9 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
   override val expression: UExpression
     get() = grElement.value.toUElementOfType() ?: GrUnknownUExpression(grElement.value, this)
 
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
 
-  override val psi = grElement
+  override val psi: GrAnnotationNameValuePair = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
 
   override fun equals(other: Any?): Boolean {
@@ -116,7 +116,7 @@ class GrUAnnotation(val grElement: GrAnnotation,
 
   override fun findDeclaredAttributeValue(name: String?): UExpression? = null //not implemented
 
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
 
   override val psi: PsiElement? = grElement
 

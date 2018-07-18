@@ -30,7 +30,7 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
   }
 
   @Override
-  protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
+  protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(cellIcons[0], 0);
     icon.setIcon(cellIcons[1], 1, JBUI.scale(10), JBUI.scale(6));

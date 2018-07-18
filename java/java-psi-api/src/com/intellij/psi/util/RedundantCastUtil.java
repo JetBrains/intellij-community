@@ -421,7 +421,7 @@ public class RedundantCastUtil {
                 final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, i, varargs);
                 final PsiType newArgType = newResult.getSubstitutor().substitute(parameterType);
 
-                if (Comparing.equal(castType, ((PsiFunctionalExpression)newArgs[i]).getGroundTargetType(newArgType))) {
+                if (Comparing.equal(castType, ((PsiFunctionalExpression)newArg).getGroundTargetType(newArgType))) {
                   addToResults(cast);
                 }
               }
@@ -541,7 +541,10 @@ public class RedundantCastUtil {
             if (opposite == null || conditionalType instanceof PsiPrimitiveType &&
                                     !Comparing.equal(conditionalType, opposite.getType())) return;
           }
-        } else if (parent instanceof PsiSynchronizedStatement && expr != null && expr.getType() instanceof PsiPrimitiveType) {
+        }
+        else if (parent instanceof PsiSynchronizedStatement &&
+                 expr != null &&
+                 (expr.getType() instanceof PsiPrimitiveType || expr instanceof PsiFunctionalExpression)) {
           return;
         } else if (expr instanceof PsiLambdaExpression || expr instanceof PsiMethodReferenceExpression) {
           if (parent instanceof PsiParenthesizedExpression && parent.getParent() instanceof PsiReferenceExpression) {

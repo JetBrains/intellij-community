@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType
 
 class GroovyOutOfSourcesChecker : OutOfSourcesChecker {
 
-  override fun getFileType() = GroovyFileType.GROOVY_FILE_TYPE
+  override fun getFileType(): GroovyFileType = GroovyFileType.GROOVY_FILE_TYPE
 
   override fun isOutOfSources(project: Project, virtualFile: VirtualFile): Boolean {
     return !ProjectRootManager.getInstance(project).fileIndex.isUnderSourceRootOfType(virtualFile, ROOT_TYPES)

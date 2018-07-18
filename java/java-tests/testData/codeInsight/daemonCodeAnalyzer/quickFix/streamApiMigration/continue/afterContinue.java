@@ -9,7 +9,7 @@ public class Main {
   }
 
   public long test(List<Person> collection) {
-      long i = collection.stream().filter(Objects::nonNull).mapToLong(Person::getAge).sum();
+    long i = collection.stream().filter(Objects::nonNull).mapToLong(Person::getAge).sum();
       return i;
   }
 }

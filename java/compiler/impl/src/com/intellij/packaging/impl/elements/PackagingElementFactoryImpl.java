@@ -58,7 +58,10 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public static final PackagingElementType<ArtifactRootElement<?>> ARTIFACT_ROOT_ELEMENT_TYPE = new ArtifactRootElementType();
   private static final PackagingElementType[] STANDARD_TYPES = {
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
-      LibraryElementType.LIBRARY_ELEMENT_TYPE, ProductionModuleOutputElementType.ELEMENT_TYPE, TestModuleOutputElementType.ELEMENT_TYPE,
+      LibraryElementType.LIBRARY_ELEMENT_TYPE,
+      ProductionModuleOutputElementType.ELEMENT_TYPE,
+      TestModuleOutputElementType.ELEMENT_TYPE,
+      ProductionModuleSourceElementType.ELEMENT_TYPE,
       ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE, DIRECTORY_COPY_ELEMENT_TYPE, EXTRACTED_DIRECTORY_ELEMENT_TYPE
   };
 
@@ -189,6 +192,13 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public PackagingElement<?> createModuleOutput(@NotNull Module module) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
     return new ProductionModuleOutputPackagingElement(module.getProject(), modulePointer);
+  }
+
+  @NotNull
+  @Override
+  public PackagingElement<?> createModuleSource(@NotNull Module module) {
+    final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
+    return new ProductionModuleSourcePackagingElement(module.getProject(), modulePointer);
   }
 
   @NotNull

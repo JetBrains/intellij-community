@@ -18,6 +18,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 
 /**
@@ -104,5 +105,18 @@ fun ULiteralExpression.getLongValue(): Long = value.let {
 /**
  * @return corresponding [PsiLanguageInjectionHost] for this literal expression if it exists.
  */
-val ULiteralExpression.psiLanguageInjectionHost
+val ULiteralExpression.psiLanguageInjectionHost: PsiLanguageInjectionHost?
   get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+
+/**
+ * @return all references injected into this [ULiteralExpression]
+ *
+ * Note: getting references simply from the `sourcePsi` will not work for Kotlin polyadic strings for instance
+ */
+val ULiteralExpression.injectedReferences: Iterable<PsiReference>
+  get() {
+    val element = this.psiLanguageInjectionHost ?: return emptyList()
+    val references = element.references.asSequence()
+    val innerReferences = element.children.asSequence().flatMap { e -> e.references.asSequence() }
+    return (references + innerReferences).asIterable()
+  }

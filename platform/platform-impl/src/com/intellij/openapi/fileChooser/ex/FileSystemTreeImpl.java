@@ -274,8 +274,9 @@ public class FileSystemTreeImpl implements FileSystemTree {
           if (onDone != null) onDone.run();
           break;
         case 1:
+          myTree.clearSelection();
           TreeUtil.promiseExpand(myTree, new FileNodeVisitor(file[0])).onSuccess(path -> {
-            if (path != null) {
+            if (path != null && myTree.isSelectionEmpty()) {
               myTree.setSelectionPath(path);
               myTree.scrollPathToVisible(path);
               if (onDone != null) onDone.run();

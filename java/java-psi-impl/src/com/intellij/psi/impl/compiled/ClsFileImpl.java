@@ -191,7 +191,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     throw new UnsupportedOperationException("Cannot add imports to compiled classes");
   }
 

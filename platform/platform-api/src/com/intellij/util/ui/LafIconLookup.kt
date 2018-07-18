@@ -35,14 +35,12 @@ object LafIconLookup {
       UIUtil.isUnderIntelliJLaF() -> "intellij/"
       else -> ""
     }
-
-    key = dir + key
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/$key.png", LafIconLookup::class.java, true, isThrowErrorIfNotFound)
+    return IconLoader.findLafIcon(dir + key, LafIconLookup::class.java, isThrowErrorIfNotFound)
   }
 
   @JvmStatic
-  fun getDisabledIcon(name: String) = getIcon(name, enabled = false)
+  fun getDisabledIcon(name: String): Icon = getIcon(name, enabled = false)
 
   @JvmStatic
-  fun getSelectedIcon(name: String) = getIcon(name, selected = true)
+  fun getSelectedIcon(name: String): Icon = getIcon(name, selected = true)
 }

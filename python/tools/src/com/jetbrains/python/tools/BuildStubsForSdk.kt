@@ -3,6 +3,9 @@ package com.jetbrains.python.tools
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase.Companion.PREBUILT_INDICES_PATH_PROPERTY
@@ -23,11 +26,11 @@ import java.io.File
  * @author traff
  */
 
-val stubsFileName = SDK_STUBS_STORAGE_NAME
+val stubsFileName: String = SDK_STUBS_STORAGE_NAME
 
-val MERGE_STUBS_FROM_PATHS = "MERGE_STUBS_FROM_PATHS"
+val MERGE_STUBS_FROM_PATHS: String = "MERGE_STUBS_FROM_PATHS"
 
-val PACK_STDLIB_FROM_PATH = "PACK_STDLIB_FROM_PATH"
+val PACK_STDLIB_FROM_PATH: String = "PACK_STDLIB_FROM_PATH"
 
 fun getBaseDirValue(): String? {
   val path: String? = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY)
@@ -45,7 +48,7 @@ fun getBaseDirValue(): String? {
   return null
 }
 
-val stubsVersion = PyFileElementType.INSTANCE.stubVersion.toString()
+val stubsVersion: String = PyFileElementType.INSTANCE.stubVersion.toString()
 
 fun main(args: Array<String>) {
   val baseDir = getBaseDirValue()!!
@@ -88,9 +91,9 @@ class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
   override val moduleTypeId: String
     get() = PythonModuleTypeBase.PYTHON_MODULE
 
-  override fun createSdkProducer(sdkPath: String) = createPythonSdkProducer(sdkPath)
+  override fun createSdkProducer(sdkPath: String): (Project, Module) -> Sdk? = createPythonSdkProducer(sdkPath)
 
-  override fun createStubsGenerator(stubsFilePath: String) = PyStubsGenerator(stubsFilePath)
+  override fun createStubsGenerator(stubsFilePath: String): PyStubsGenerator = PyStubsGenerator(stubsFilePath)
 
   override val root: String?
     get() = System.getenv(PYCHARM_PYTHONS)
@@ -99,7 +102,7 @@ class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
 class PyStubsGenerator(stubsStorageFilePath: String) : LanguageLevelAwareStubsGenerator<LanguageLevel>(PyFileElementType.INSTANCE.stubVersion.toString(), stubsStorageFilePath) {
   override fun defaultLanguageLevel(): LanguageLevel = LanguageLevel.getDefault()
 
-  override fun languageLevelIterator() = LanguageLevel.SUPPORTED_LEVELS.iterator()
+  override fun languageLevelIterator(): MutableIterator<LanguageLevel> = LanguageLevel.SUPPORTED_LEVELS.iterator()
 
   override fun applyLanguageLevel(level: LanguageLevel) {
     LanguageLevel.FORCE_LANGUAGE_LEVEL = level

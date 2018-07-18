@@ -96,13 +96,13 @@ class IntelliJProjectConfiguration {
   }
 
   class LibraryRoots(val classes: List<File>, val sources: List<File>) {
-    val classesPaths
+    val classesPaths: List<String>
       get() = classes.map { FileUtil.toSystemIndependentName(it.absolutePath) }
 
-    val classesUrls
+    val classesUrls: List<String>
       get() = classes.map { JpsPathUtil.getLibraryRootUrl(it) }
 
-    val sourcesUrls
+    val sourcesUrls: List<String>
       get() = sources.map { JpsPathUtil.getLibraryRootUrl(it) }
   }
 }

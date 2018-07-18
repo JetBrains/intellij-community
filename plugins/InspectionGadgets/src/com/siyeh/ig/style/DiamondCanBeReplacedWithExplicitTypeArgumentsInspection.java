@@ -16,10 +16,12 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -68,7 +70,10 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends Bas
           if (newExpression != null) {
             final List<PsiType> types = PsiDiamondTypeImpl.resolveInferredTypesNoCheck(newExpression, newExpression).getInferredTypes();
             if (!types.isEmpty()) {
-              registerError(referenceParameterList);
+              boolean pullToErrors = !PsiUtil.isLanguageLevel7OrHigher(referenceParameterList) || 
+                                     PsiDiamondTypeImpl.resolveInferredTypes(newExpression, newExpression).getErrorMessage() != null;
+              registerError(referenceParameterList,
+                            pullToErrors ? ProblemHighlightType.ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             }
           }
         }

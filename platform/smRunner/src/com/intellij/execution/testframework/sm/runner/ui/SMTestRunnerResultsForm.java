@@ -48,6 +48,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ColorProgressBar;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -340,7 +341,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final RunProfile configuration = consoleProperties.getConfiguration();
     if (configuration instanceof RunConfiguration && 
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
-        !ApplicationManager.getApplication().isUnitTestMode() &&
         !myDisposed) {
       final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
@@ -832,24 +832,25 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     private void writeState() {
-      // read action to prevent project (and storage) from being disposed
-      ApplicationManager.getApplication().runReadAction(() -> {
-        Project project = getProject();
-        if (project.isDisposed() || myRoot == null) return;
-        TestStateStorage storage = TestStateStorage.getInstance(project);
-        List<SMTestProxy> tests = myRoot.getAllTests();
-        for (SMTestProxy proxy : tests) {
-          String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
-          if (url != null) {
-            String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-            TestStackTraceParser info = new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+      if (myRoot == null) return;
+      List<SMTestProxy> tests = myRoot.getAllTests();
+      for (SMTestProxy proxy : tests) {
+        String url =
+          proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
+        if (url != null) {
+          String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
+          DumbService.getInstance(getProject()).runWhenSmart(() -> {
+            Project project = getProject();
+            TestStackTraceParser info =
+              new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+            TestStateStorage storage = TestStateStorage.getInstance(project);
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
                                                                 configurationName == null ? 0 : configurationName.hashCode(),
                                                                 info.getFailedLine(), info.getFailedMethodName(),
                                                                 info.getErrorMessage(), info.getTopLocationLine()));
-          }
+          });
         }
-      });
+      }
     }
 
     @Override

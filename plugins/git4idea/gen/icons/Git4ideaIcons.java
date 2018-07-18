@@ -28,6 +28,5 @@ public class Git4ideaIcons {
     return IconLoader.getIcon(path, Git4ideaIcons.class);
   }
 
-  public static final Icon DeepCompare = load("/icons/DeepCompare.png"); // 16x16
   public static final Icon Star = load("/icons/star.png"); // 13x13
 }

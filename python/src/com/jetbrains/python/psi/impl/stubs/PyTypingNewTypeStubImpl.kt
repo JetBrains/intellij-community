@@ -58,9 +58,9 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String,
     }
   }
 
-  override fun getName() = qualifiedName
+  override fun getName(): String = qualifiedName
 
-  override fun getClassType() = baseClassName
+  override fun getClassType(): String = baseClassName
 
 
 }

@@ -495,7 +495,9 @@ public class ExternalSystemUtil {
               .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
             rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
             */
-            String message = isPreviewMode ? "creating of the project preview..." : "syncing...";
+
+            if(isPreviewMode) return;
+            String message = "syncing...";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
                 .withProcessHandler(processHandler, null)
@@ -507,8 +509,7 @@ public class ExternalSystemUtil {
                     return null;
                   }
                   else {
-                    boolean activateToolWindow = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE ||
-                                                 project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
+                    boolean activateToolWindow = isNewProject(project);
                     BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
                       consoleView, processHandler, consoleView.getComponent(), "Sync");
                     contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
@@ -551,7 +552,7 @@ public class ExternalSystemUtil {
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-            if (event instanceof ExternalSystemTaskExecutionEvent) {
+            if (!isPreviewMode && event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
               ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
             }
@@ -605,7 +606,7 @@ public class ExternalSystemUtil {
         }
         finally {
           if (!isPreviewMode) {
-            boolean isNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
+            boolean isNewProject = isNewProject(project);
             if(isNewProject) {
               VirtualFile virtualFile = VfsUtil.findFileByIoFile(projectFile, false);
               if (virtualFile != null) {
@@ -614,8 +615,8 @@ public class ExternalSystemUtil {
             }
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
+            sendSyncFinishEvent(finishSyncEventSupplier);
           }
-          sendSyncFinishEvent(finishSyncEventSupplier);
         }
       }
 
@@ -683,6 +684,11 @@ public class ExternalSystemUtil {
           }
         }.queue();
     }
+  }
+
+  public static boolean isNewProject(Project project) {
+    return project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE ||
+           project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
   }
 
   public static void printFailure(@NotNull Exception e,

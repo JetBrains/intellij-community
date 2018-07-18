@@ -423,7 +423,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                   final HighlightInfo.IntentionActionDescriptor actionDescriptor =
                     new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
                                                                 key, null, HighlightSeverity.INFORMATION);
-                  intentions.intentionsToShow.add(actionDescriptor);
+                  (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR 
+                   ? intentions.errorFixesToShow 
+                   : intentions.intentionsToShow).add(actionDescriptor);
                 }
               }
             }

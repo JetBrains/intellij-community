@@ -59,8 +59,8 @@ open class ChangesModuleGroupingPolicy(val myProject: Project, val myModel: Defa
   }
 
   companion object {
-    val MODULE_CACHE = NotNullLazyKey.create<MutableMap<Module?, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>(
+    val MODULE_CACHE: NotNullLazyKey<MutableMap<Module?, ChangesBrowserNode<*>>, ChangesBrowserNode<*>> = NotNullLazyKey.create<MutableMap<Module?, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>(
       "ChangesTree.ModuleCache") { _ -> mutableMapOf() }
-    val HIDE_EXCLUDED_FILES = Registry.`is`("ide.hide.excluded.files")
+    val HIDE_EXCLUDED_FILES: Boolean = Registry.`is`("ide.hide.excluded.files")
   }
 }

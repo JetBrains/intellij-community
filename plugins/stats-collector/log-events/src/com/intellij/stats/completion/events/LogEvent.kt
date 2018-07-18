@@ -28,11 +28,11 @@ abstract class LogEvent(
         @Transient var actionType: Action
 ) {
 
-    @Transient var recorderId = "completion-stats"
-    @Transient var recorderVersion = "4"
-    @Transient var timestamp = System.currentTimeMillis()
-    @Transient var bucket = "-1"
-    var validationStatus = ValidationStatus.UNKNOWN
+    @Transient var recorderId: String = "completion-stats"
+    @Transient var recorderVersion: String = "4"
+    @Transient var timestamp: Long = System.currentTimeMillis()
+    @Transient var bucket: String = "-1"
+    var validationStatus: ValidationStatus = ValidationStatus.UNKNOWN
 
     abstract fun accept(visitor: LogEventVisitor)
 }

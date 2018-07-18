@@ -22,47 +22,47 @@ from collections import UserString as UserString
 from builtins import range as xrange
 from builtins import zip as zip
 from itertools import zip_longest as zip_longest
-import builtins as builtins
-import configparser as configparser
+from . import builtins
+from . import configparser
 # import copyreg as copyreg
 # import dbm.gnu as dbm_gnu
-import _dummy_thread as _dummy_thread
-import http.cookiejar as http_cookiejar
-import http.cookies as http_cookies
-import html.entities as html_entities
-import html.parser as html_parser
-import http.client as http_client
-import email.mime.multipart as email_mime_multipart
-import email.mime.nonmultipart as email_mime_nonmultipart
-import email.mime.text as email_mime_text
-import email.mime.base as email_mime_base
-import http.server as BaseHTTPServer
-import http.server as CGIHTTPServer
-import http.server as SimpleHTTPServer
-import pickle as cPickle
-import queue as queue
-import reprlib as reprlib
-import socketserver as socketserver
-import _thread as _thread
-import tkinter as tkinter
-# import tkinter.dialog as tkinter_dialog
-# import tkinter.filedialog as tkinter_filedialog
+from . import _dummy_thread
+from . import http_cookiejar
+from . import http_cookies
+from . import html_entities
+from . import html_parser
+from . import http_client
+from . import email_mime_multipart
+from . import email_mime_nonmultipart
+from . import email_mime_text
+from . import email_mime_base
+from . import BaseHTTPServer
+from . import CGIHTTPServer
+from . import SimpleHTTPServer
+from . import cPickle
+from . import queue
+from . import reprlib
+from . import socketserver
+from . import _thread
+from . import tkinter
+from . import tkinter_dialog
+from . import tkinter_filedialog
 # import tkinter.scrolledtext as tkinter_scrolledtext
 # import tkinter.simpledialog as tkinter_simpledialog
 # import tkinter.tix as tkinter_tix
-import tkinter.ttk as tkinter_ttk
-import tkinter.constants as tkinter_constants
+from . import tkinter_ttk
+from . import tkinter_constants
 # import tkinter.dnd as tkinter_dnd
 # import tkinter.colorchooser as tkinter_colorchooser
-# import tkinter.commondialog as tkinter_commondialog
-# import tkinter.filedialog as tkinter_tkfiledialog
+from . import tkinter_commondialog
+from . import tkinter_tkfiledialog
 # import tkinter.font as tkinter_font
 # import tkinter.messagebox as tkinter_messagebox
 # import tkinter.simpledialog as tkinter_tksimpledialog
-import urllib.parse as urllib_parse
-import urllib.error as urllib_error
-import six.moves.urllib as urllib
-import urllib.robotparser as urllib_robotparser
+from . import urllib_parse
+from . import urllib_error
+from . import urllib
+from . import urllib_robotparser
 # import xmlrpc.client as xmlrpc_client
 # import xmlrpc.server as xmlrpc_server
 

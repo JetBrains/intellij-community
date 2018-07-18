@@ -21,4 +21,4 @@ import com.intellij.openapi.util.registry.RegistryValue
 /**
  * @return list of values in case they are comma separated
  */
-fun RegistryValue.asList() = this.asString().split(",")
+fun RegistryValue.asList(): List<String> = this.asString().split(",")

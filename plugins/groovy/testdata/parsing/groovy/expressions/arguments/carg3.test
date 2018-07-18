@@ -10,7 +10,7 @@ Groovy script
         Argument label
           PsiElement(identifier)('a')
         PsiElement(:)(':')
-        PsiErrorElement:Expression expected
+        PsiErrorElement:<expression> expected, got ','
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(,)(',')

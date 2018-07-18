@@ -186,7 +186,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiMember && !PsiUtil.isAccessible((PsiMember)resolved, method, null)) {
+        if (resolved instanceof PsiMember && !PsiUtil.isMemberAccessibleAt((PsiMember)resolved, method)) {
           isNotConstantAccessible.set(Boolean.TRUE);
         }
       }

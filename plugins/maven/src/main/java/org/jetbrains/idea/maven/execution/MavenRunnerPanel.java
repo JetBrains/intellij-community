@@ -36,6 +36,7 @@ public class MavenRunnerPanel {
   protected final Project myProject;
   private final boolean myRunConfigurationMode;
 
+  private JCheckBox myDelegateBuildToMavenCheckbox;
   private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
@@ -59,6 +60,9 @@ public class MavenRunnerPanel {
     c.anchor = GridBagConstraints.WEST;
     c.insets.bottom = 5;
 
+    myDelegateBuildToMavenCheckbox = new JCheckBox("Delegate IDE build actions to maven (experimental)");
+    myDelegateBuildToMavenCheckbox.setMnemonic('d');
+
     myRunInBackgroundCheckbox = new JCheckBox("Run in background");
     myRunInBackgroundCheckbox.setMnemonic('b');
     if (!myRunConfigurationMode) {
@@ -67,6 +71,9 @@ public class MavenRunnerPanel {
       c.weightx = 1;
       c.gridwidth = GridBagConstraints.REMAINDER;
 
+      panel.add(myDelegateBuildToMavenCheckbox, c);
+
+      c.gridy++;
       panel.add(myRunInBackgroundCheckbox, c);
     }
     c.gridwidth = 1;
@@ -145,6 +152,7 @@ public class MavenRunnerPanel {
   }
 
   protected void getData(MavenRunnerSettings data) {
+    myDelegateBuildToMavenCheckbox.setSelected(data.isDelegateBuildToMaven());
     myRunInBackgroundCheckbox.setSelected(data.isRunMavenInBackground());
     myVMParametersEditor.setText(data.getVmOptions());
     mySkipTestsCheckBox.setSelected(data.isSkipTests());
@@ -159,6 +167,7 @@ public class MavenRunnerPanel {
 
 
   protected void setData(MavenRunnerSettings data) {
+    data.setDelegateBuildToMaven(myDelegateBuildToMavenCheckbox.isSelected());
     data.setRunMavenInBackground(myRunInBackgroundCheckbox.isSelected());
     data.setVmOptions(myVMParametersEditor.getText().trim());
     data.setSkipTests(mySkipTestsCheckBox.isSelected());

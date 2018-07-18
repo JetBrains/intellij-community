@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -22,6 +8,7 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +35,6 @@ public class GitLineHandler extends GitTextHandler {
    * Line listeners
    */
   private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
-  private boolean myWithMediator = true;
 
   /**
    * Remote url which require authentication
@@ -106,10 +92,6 @@ public class GitLineHandler extends GitTextHandler {
     myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
   }
 
-  public void setWithMediator(boolean value) {
-    myWithMediator = value;
-  }
-
   protected void processTerminated(final int exitCode) {}
 
   public void addLineListener(GitLineHandlerListener listener) {
@@ -131,30 +113,26 @@ public class GitLineHandler extends GitTextHandler {
     String lineWithoutSeparator = LineHandlerHelper.trimLineSeparator(line);
     // do not log git remote progress (progress lines are separated with CR by convention)
     if (!line.endsWith("\r")) logOutput(lineWithoutSeparator, outputType);
+    if (outputType == ProcessOutputTypes.SYSTEM) return;
     myLineListeners.getMulticaster().onLineAvailable(lineWithoutSeparator, outputType);
   }
 
   private void logOutput(@NotNull String line, @NotNull Key outputType) {
     String trimmedLine = line.trim();
-    if (outputType == ProcessOutputTypes.STDOUT) {
-      if (!isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(trimmedLine)) {
-        LOG.info(trimmedLine);
-      }
-      else {
-        OUTPUT_LOG.debug(trimmedLine);
-      }
-    }
-    else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(trimmedLine)) {
+    if (!StringUtil.isEmptyOrSpaces(trimmedLine) &&
+        !mySilent &&
+        ((outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) ||
+         outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed())) {
       LOG.info(trimmedLine);
     }
     else {
-      LOG.debug(trimmedLine);
+      OUTPUT_LOG.debug(trimmedLine);
     }
   }
 
   @Override
   protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator) {
+    return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator")) {
       @NotNull
       @Override
       protected BaseDataReader createOutputDataReader() {

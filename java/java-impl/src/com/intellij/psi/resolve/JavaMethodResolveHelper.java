@@ -63,7 +63,7 @@ public class JavaMethodResolveHelper {
       }
 
       @Override
-      protected boolean isAccepted(final PsiMethod candidate) {
+      protected boolean isAccepted(@NotNull final PsiMethod candidate) {
         return !candidate.isConstructor();
       }
     };

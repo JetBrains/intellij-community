@@ -16,15 +16,16 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CallToNativeMethodWhileLockedInspection
-  extends BaseInspection {
+import java.util.Set;
 
+public class CallToNativeMethodWhileLockedInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
@@ -44,30 +45,22 @@ public class CallToNativeMethodWhileLockedInspection
     return new CallToNativeMethodWhileLockedVisitor();
   }
 
-  private static class CallToNativeMethodWhileLockedVisitor
-    extends BaseInspectionVisitor {
+  private static class CallToNativeMethodWhileLockedVisitor extends BaseInspectionVisitor {
+
+    private static final Set<String> EXCLUDED_CLASS_NAMES =
+      ContainerUtil.immutableSet(CommonClassNames.JAVA_LANG_OBJECT, "java.lang.System", "sun.misc.Unsafe", "java.lang.invoke.MethodHandle");
 
     @Override
     public void visitMethodCallExpression(
       @NotNull PsiMethodCallExpression expression) {
       final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      if (!method.hasModifierProperty(PsiModifier.NATIVE)) {
-        return;
-      }
+      if (method == null || !method.hasModifierProperty(PsiModifier.NATIVE)) return;
+
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String className = containingClass.getQualifiedName();
-      if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
-        return;
-      }
-      if (!SynchronizationUtil.isInSynchronizedContext(expression)) {
-        return;
-      }
+      if (containingClass == null) return;
+      if (EXCLUDED_CLASS_NAMES.contains(containingClass.getQualifiedName())) return;
+
+      if (!SynchronizationUtil.isInSynchronizedContext(expression)) return;
       registerMethodCallError(expression);
     }
   }

@@ -346,7 +346,7 @@ public class GitRebaseDialog extends DialogWrapper {
       else {
         LOG.error("Repository is null for root " + root);
       }
-      GitTag.list(myProject, root, myTags);
+      myTags.addAll(GitTag.list(myProject, root));
     }
     catch (VcsException e) {
       GitUIUtil.showOperationError(myProject, e, "git branch -a");

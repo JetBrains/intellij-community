@@ -33,7 +33,7 @@ class GroovyObjectTransformationSupport : AstTransformationSupport {
     private val KEY: Key<Boolean> = Key.create("groovy.object.method")
 
     private fun TransformationContext.findClass(fqn: String) = psiFacade.findClass(fqn, resolveScope)
-    @JvmStatic fun isGroovyObjectSupportMethod(method: PsiMethod) = method.getUserData(KEY) == true
+    @JvmStatic fun isGroovyObjectSupportMethod(method: PsiMethod): Boolean = method.getUserData(KEY) == true
   }
 
   override fun applyTransformation(context: TransformationContext) {

@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link com.intellij.execution.ui.ConsoleViewContentType#getConsoleViewType} to get TextAttributes for an instance
  * of this class.
  * <p/>
- * @see {@link com.intellij.execution.process.ColoredOutputTypeRegistry}
- * @see {@link com.intellij.execution.ui.ConsoleViewContentType#registerNewConsoleViewType}
+ * @see com.intellij.execution.process.ColoredOutputTypeRegistry
+ * @see com.intellij.execution.ui.ConsoleViewContentType#registerNewConsoleViewType
  */
 @SuppressWarnings({"JavaDoc", "JavadocReference"})
 public class ProcessOutputType extends Key {

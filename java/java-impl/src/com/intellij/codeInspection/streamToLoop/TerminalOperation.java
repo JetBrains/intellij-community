@@ -326,7 +326,7 @@ abstract class TerminalOperation extends Operation {
     Project project = resultClass.getProject();
     PsiClass superClass = JavaPsiFacade.getInstance(project).findClass(superClassName, resultClass.getResolveScope());
     if(superClass == null) return resultType;
-    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY, null);
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY);
     if(superClassSubstitutor == null) {
       // inconsistent class hierarchy: probably something is not resolved
       return resultType;

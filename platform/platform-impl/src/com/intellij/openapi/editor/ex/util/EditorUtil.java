@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
@@ -169,11 +169,11 @@ public final class EditorUtil {
     CharSequence editorInfo = "editor's class: " + editor.getClass()
                               + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
                               + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
-    LogMessageEx.error(LOG, "Can't calculate last visual column", String.format(
+    LOG.error("Can't calculate last visual column", new Throwable(), AttachmentFactory.createContext(String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
       + "the target logical line: %s. Editor info: %s",
       line, resultLogLine, resVisStart, resVisEnd, softWraps, editorInfo
-    ));
+    )));
 
     return resVisEnd.column;
   }
@@ -276,9 +276,8 @@ public final class EditorUtil {
         else {
           documentInfo = "Text holder class: " + text.getClass();
         }
-        LogMessageEx.error(
-          LOG, "detected incorrect offset -> column number calculation",
-          "start: " + start + ", given offset: " + offset+", given tab size: " + tabSize + ". "+documentInfo+ editorInfo);
+        LOG.error("detected incorrect offset -> column number calculation", new Throwable(), AttachmentFactory.createContext(
+          "start: " + start + ", given offset: " + offset + ", given tab size: " + tabSize + ". " + documentInfo + editorInfo));
       }
     }
 

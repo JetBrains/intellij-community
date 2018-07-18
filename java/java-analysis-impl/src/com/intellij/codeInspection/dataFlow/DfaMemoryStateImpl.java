@@ -19,6 +19,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
@@ -231,8 +232,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void emptyStack() {
-    myCachedHash = null;
     while (!myStack.isEmpty() && !(myStack.peek() instanceof DfaControlTransferValue)) {
+      myCachedHash = null;
       myStack.pop();
     }
   }
@@ -562,7 +563,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void checkInvariants() {
-    if (!LOG.isDebugEnabled()) return;
+    if (!LOG.isDebugEnabled() && !ApplicationManager.getApplication().isEAP()) return;
     myIdToEqClassesIndices.forEachEntry((id, eqClasses) -> {
       for (int classNum : eqClasses) {
         if (myEqClasses.get(classNum) == null) {
@@ -701,8 +702,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
       if (!isUnknownState(var)) {
-        DfaVariableState state = getVariableState(var).withoutFact(factType);
-        setVariableState(var, state);
+        DfaVariableState state = findVariableState(var);
+        if (state != null) {
+          state = state.withoutFact(factType);
+          setVariableState(var, state);
+        }
       }
     }
   }
@@ -860,7 +864,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
       return relationType == RelationType.NE;
     }
-    if (canBeNaN(dfaLeft) && canBeNaN(dfaRight)) {
+    if ((canBeNaN(dfaLeft) && !isNull(dfaRight)) || (canBeNaN(dfaRight) && !isNull(dfaLeft))) {
       if (dfaLeft == dfaRight &&
           dfaLeft instanceof DfaVariableValue &&
           !(((DfaVariableValue)dfaLeft).getVariableType() instanceof PsiPrimitiveType)) {

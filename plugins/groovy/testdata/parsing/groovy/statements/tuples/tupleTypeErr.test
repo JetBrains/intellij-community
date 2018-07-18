@@ -26,12 +26,8 @@ Groovy script
     PsiElement())(')')
     Throw clause
       <empty list>
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:'=' unexpected
     PsiElement(=)('=')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   Generalized list
     PsiElement([)('[')
     Reference expression

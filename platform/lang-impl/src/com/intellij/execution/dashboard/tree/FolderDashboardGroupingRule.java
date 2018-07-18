@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.execution.dashboard.RunDashboardGroupingRule;
@@ -45,14 +44,7 @@ public class FolderDashboardGroupingRule implements RunDashboardGroupingRule {
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(ExecutionBundle.message("run.dashboard.group.by.folder.action.name"),
-                                      ExecutionBundle.message("run.dashboard.group.by.folder.action.name"),
-                                      AllIcons.Actions.GroupByPackage);
-  }
-
-  @Override
-  public int getPriority() {
-    return Priorities.BY_FOLDER;
+    return new ActionPresentationData("", "", null);
   }
 
   @Override

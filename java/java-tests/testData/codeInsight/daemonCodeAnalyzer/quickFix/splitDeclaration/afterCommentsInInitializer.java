@@ -2,8 +2,8 @@
 import java.util.*;
 class Test {
   {
-    List<String> l  //end line comment
-            ;
-      l = new ArrayList<>();
+    List<String> l;
+      l = new ArrayList//end line comment
+      <>();
   }
 }

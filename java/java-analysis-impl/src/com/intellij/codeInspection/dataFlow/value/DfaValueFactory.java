@@ -77,7 +77,7 @@ public class DfaValueFactory {
         return getFactFactory().createValue(DfaFactType.RANGE, range);
       }
     }
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.EMPTY.withInstanceofValue(createDfaType(type)))
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, createDfaType(type).asConstraint())
       .with(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(nullability));
     return getFactFactory().createValue(facts);
   }

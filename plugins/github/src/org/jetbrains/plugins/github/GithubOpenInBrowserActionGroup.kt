@@ -51,7 +51,7 @@ open class GithubOpenInBrowserActionGroup
     return emptyArray()
   }
 
-  override fun isPopup() = true
+  override fun isPopup(): Boolean = true
 
   override fun actionPerformed(e: AnActionEvent?) {
     if (e == null) return
@@ -66,7 +66,7 @@ open class GithubOpenInBrowserActionGroup
     return data != null && data.first.size == 1
   }
 
-  override fun disableIfNoVisibleChildren() = false
+  override fun disableIfNoVisibleChildren(): Boolean = false
 
   protected open fun getData(dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT)

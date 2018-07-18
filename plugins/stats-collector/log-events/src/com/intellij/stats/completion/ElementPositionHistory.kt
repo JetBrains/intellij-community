@@ -22,8 +22,8 @@ class ElementPositionHistory(history: List<StagePosition>) {
 
     private val history = history.toMutableList()
 
-    fun add(position: StagePosition) = history.add(position)
-    fun history() = history
+    fun add(position: StagePosition): Boolean = history.add(position)
+    fun history(): List<StagePosition> = history
 }
 
 

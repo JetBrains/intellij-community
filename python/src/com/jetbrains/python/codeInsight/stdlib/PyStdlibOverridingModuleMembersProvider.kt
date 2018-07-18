@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyStdlibOverridingModuleMembersProvider: PyOverridingModuleMembersProvider() {
 
-  override fun getMembersByQName(module: PyFile, qName: String, context: TypeEvalContext) = emptyList<PyCustomMember>()
+  override fun getMembersByQName(module: PyFile, qName: String, context: TypeEvalContext): List<PyCustomMember> = emptyList<PyCustomMember>()
 
   override fun resolveMember(module: PyFile, name: String, resolveContext: PyResolveContext): PsiElement? {
     if (module.languageLevel.isPython2 &&

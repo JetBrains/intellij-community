@@ -41,4 +41,4 @@ abstract class WebServerFileHandler {
                        extraHeaders: HttpHeaders): Boolean
 }
 
-fun getRequestPath(canonicalPath: CharSequence, projectNameIfNotCustomHost: String?) = if (projectNameIfNotCustomHost == null) "/$canonicalPath" else "/$projectNameIfNotCustomHost/$canonicalPath"
+fun getRequestPath(canonicalPath: CharSequence, projectNameIfNotCustomHost: String?): String = if (projectNameIfNotCustomHost == null) "/$canonicalPath" else "/$projectNameIfNotCustomHost/$canonicalPath"

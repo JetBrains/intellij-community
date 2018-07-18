@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NonNls;
@@ -13,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> implements UsagesCollectorConsumer {
-
+  private static final Logger LOG = Logger.getInstance("#" + AbstractUsageTrigger.class.getPackage().getName());
+  
   final static class State {
     @Property(surroundWithTag = false)
     @XCollection
@@ -27,6 +29,9 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
     FeatureUsagesCollector collector = findCollector(fusClass);
     if (collector != null) {
       doTrigger(collector.getGroupId(), feature);
+    }
+    else {
+      LOG.warn("Cannot find collector `" + fusClass + "`. Make sure it's registered");
     }
   }
 

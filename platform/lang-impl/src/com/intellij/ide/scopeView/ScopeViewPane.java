@@ -38,6 +38,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.ContainerUtil;
@@ -178,6 +179,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       myTree.setName("ScopeViewTree");
       myTree.setRootVisible(false);
       myTree.setShowsRootHandles(true);
+      myTree.addTreeSelectionListener(new RestoreSelectionListener());
       TreeUtil.installActions(myTree);
       ToolTipManager.sharedInstance().registerComponent(myTree);
       EditSourceOnDoubleClickHandler.install(myTree);

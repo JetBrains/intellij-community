@@ -1,0 +1,16 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij.myPlugin</id>
+  <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensionPoints>
+    <extensionPoint name="myMainModuleClassEp" interface="MainModuleClass"/>
+    <extensionPoint name="myDependencyModuleClassEp" interface="DependencyModuleClass"/>
+    <<error descr="Element should be registered in DependencyModulePlugin.xml">extensionPoint</error> name="myDependencyModuleClassWithEpNameEp" interface="DependencyModuleClassWithEpName"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <myPlugin.myMainModuleClassEp implementation="MainModuleClass"/>
+    <<error descr="Element should be registered in DependencyModulePlugin.xml">myPlugin.myDependencyModuleClassEp</error> implementation="DependencyModuleClass"/>
+  </extensions>
+
+</idea-plugin>

@@ -33,15 +33,15 @@ interface UImportStatement : UResolvable, UElement {
    */
   val importReference: UElement?
 
-  override fun asLogString() = log("isOnDemand = $isOnDemand")
+  override fun asLogString(): String = log("isOnDemand = $isOnDemand")
 
-  override fun asRenderString() = "import " + (importReference?.asRenderString() ?: "<error>")
+  override fun asRenderString(): String = "import " + (importReference?.asRenderString() ?: "<error>")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitImportStatement(this)) return
     visitor.afterVisitImportStatement(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitImportStatement(this, data)
 }

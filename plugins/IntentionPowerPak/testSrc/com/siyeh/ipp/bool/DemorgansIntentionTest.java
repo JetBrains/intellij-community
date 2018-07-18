@@ -23,6 +23,7 @@ public class DemorgansIntentionTest extends IPPTestCase {
   public void testNeedsMoreParentheses() { doTest(); }
   public void testNotTooManyParentheses() { doTest(); }
   public void testErrorElement() { assertIntentionNotAvailable(); }
+  public void testFlattenPolyadic() { doTest(); }
 
   @Override
   protected String getIntentionName() {

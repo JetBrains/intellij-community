@@ -5,5 +5,5 @@ Groovy script
     PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(final)('final')
-  PsiErrorElement:Identifier, string literal or '(' expected
+  PsiErrorElement:identifier expected
     <empty list>

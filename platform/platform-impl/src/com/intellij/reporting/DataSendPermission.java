@@ -26,7 +26,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  *
  * INTERNAL USE ONLY
  */
-interface DataSendPermission {
+public interface DataSendPermission {
   boolean isDataSendAllowed();
   ExtensionPointName<DataSendPermission> EP_NAME = new ExtensionPointName<>("com.intellij.reporting.sendPermission");
 }

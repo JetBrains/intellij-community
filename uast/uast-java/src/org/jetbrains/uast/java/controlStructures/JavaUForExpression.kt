@@ -18,6 +18,7 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiForStatement
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UForExpression
 import org.jetbrains.uast.UIdentifier
 
@@ -25,10 +26,10 @@ class JavaUForExpression(
   override val psi: PsiForStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UForExpression {
-  override val declaration by lz { psi.initialization?.let { JavaConverter.convertStatement(it, this) } }
-  override val condition by lz { psi.condition?.let { JavaConverter.convertExpression(it, this) } }
-  override val update by lz { psi.update?.let { JavaConverter.convertStatement(it, this) } }
-  override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
+  override val declaration: UExpression? by lz { psi.initialization?.let { JavaConverter.convertStatement(it, this) } }
+  override val condition: UExpression? by lz { psi.condition?.let { JavaConverter.convertExpression(it, this) } }
+  override val update: UExpression? by lz { psi.update?.let { JavaConverter.convertStatement(it, this) } }
+  override val body: UExpression by lz { JavaConverter.convertOrEmpty(psi.body, this) }
 
   override val forIdentifier: UIdentifier
     get() = UIdentifier(psi.getChildByRole(ChildRole.FOR_KEYWORD), this)

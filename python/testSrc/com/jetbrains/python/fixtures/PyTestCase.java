@@ -188,11 +188,13 @@ public abstract class PyTestCase extends UsefulTestCase {
     return ourPyDescriptor;
   }
 
+  @Nullable
   protected PsiReference findReferenceBySignature(final String signature) {
     int pos = findPosBySignature(signature);
     return findReferenceAt(pos);
   }
 
+  @Nullable
   protected PsiReference findReferenceAt(int pos) {
     return myFixture.getFile().findReferenceAt(pos);
   }

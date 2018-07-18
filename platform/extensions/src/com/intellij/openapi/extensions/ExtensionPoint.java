@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -28,6 +26,11 @@ public interface ExtensionPoint<T> {
   boolean hasExtension(@NotNull T extension);
 
   void unregisterExtension(@NotNull T extension);
+
+  /**
+   * Unregisters an extension of the specified type.
+   */
+  void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @NotNull Disposable parentDisposable);
 

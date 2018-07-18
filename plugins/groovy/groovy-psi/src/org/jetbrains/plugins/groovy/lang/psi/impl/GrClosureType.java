@@ -58,12 +58,6 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Override
-  @NotNull
-  public String getClassName() {
-    return "Closure";
-  }
-
-  @Override
   public int getParameterCount() {
     PsiClass resolved = resolve();
     return resolved != null && resolved.getTypeParameters().length == 1 ? 1 : 0;

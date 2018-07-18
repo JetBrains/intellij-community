@@ -185,6 +185,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testOrderVarargsParameterLast() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("f2", PsiField.class), new RefactoringTestUtil.MemberDescriptor("f1", PsiField.class));
+  }
+
   public void testOuterClassRefsNoConflictIfAsAbstract() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class, true));
   }

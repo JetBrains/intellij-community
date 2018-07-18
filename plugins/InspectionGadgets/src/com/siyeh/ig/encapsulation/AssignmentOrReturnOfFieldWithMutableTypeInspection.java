@@ -1,15 +1,18 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -106,16 +109,10 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInsp
       if (!(rhs instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiElement lhsReferent = ((PsiReference)lhs).resolve();
-      if (!(lhsReferent instanceof PsiField)) {
-        return;
-      }
-      final PsiElement rhsReferent = ((PsiReference)rhs).resolve();
-      if (!(rhsReferent instanceof PsiParameter)) {
-        return;
-      }
-      final PsiParameter parameter = (PsiParameter)rhsReferent;
-      if (!(parameter.getDeclarationScope() instanceof PsiMethod)) {
+      final PsiField field = ObjectUtils.tryCast(((PsiReference)lhs).resolve(), PsiField.class);
+      if (field == null) return;
+      final PsiParameter parameter = ObjectUtils.tryCast(((PsiReference)rhs).resolve(), PsiParameter.class);
+      if (parameter == null || !(parameter.getDeclarationScope() instanceof PsiMethod) || ClassUtils.isImmutable(parameter.getType())) {
         return;
       }
       if (ignorePrivateMethods) {
@@ -130,7 +127,7 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInsp
           }
         }
       }
-      registerError(rhs, lhsReferent, rhs, type, Boolean.TRUE);
+      registerError(rhs, field, rhs, type, Boolean.TRUE);
     }
 
     @Override
@@ -144,19 +141,13 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInsp
       if (ignorePrivateMethods && element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)returnValue;
-      final PsiElement referent = referenceExpression.resolve();
-      if (!(referent instanceof PsiField)) {
-        return;
-      }
+      final PsiField field = ObjectUtils.tryCast(((PsiReferenceExpression)returnValue).resolve(), PsiField.class);
+      if (field == null) return;
       final String type = TypeUtils.expressionHasTypeOrSubtype(returnValue, MUTABLE_TYPES);
-      if (type == null && !(returnValue.getType() instanceof PsiArrayType)) {
-        return;
-      }
-      final PsiField field = (PsiField)referent;
-      if (CollectionUtils.isConstantEmptyArray(field)) {
-        return;
-      }
+      if (type == null && !(returnValue.getType() instanceof PsiArrayType)) return;
+      if (CollectionUtils.isConstantEmptyArray(field) ||
+          ClassUtils.isImmutable(field.getType()) ||
+          Mutability.getMutability(field).isUnmodifiable()) return;
       registerError(returnValue, field, returnValue, type, Boolean.FALSE);
     }
   }

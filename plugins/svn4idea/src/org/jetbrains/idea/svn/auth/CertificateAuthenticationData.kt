@@ -7,6 +7,6 @@ class CertificateAuthenticationData(val certificate: Credentials, isStorageAllow
   constructor(certificatePath: String, certificatePassword: CharArray?, isStorageAllowed: Boolean) : this(
     Credentials(certificatePath, certificatePassword), isStorageAllowed)
 
-  val certificatePath = certificate.userName.orEmpty()
-  val certificatePassword = certificate.getPasswordAsString().orEmpty()
+  val certificatePath: String = certificate.userName.orEmpty()
+  val certificatePassword: String = certificate.getPasswordAsString().orEmpty()
 }

@@ -35,7 +35,6 @@ import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
 import org.junit.Assume.assumeTrue
 import java.io.File
-import java.io.IOException
 import java.util.Collections.singletonMap
 import javax.swing.Action
 
@@ -146,13 +145,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
                           updateMethod: UpdateMethod,
                           checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
         val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
-        try {
-          pushCommitFromBro()
-        }
-        catch (e: IOException) {
-          throw RuntimeException(e)
-        }
-
+        pushCommitFromBro()
         return updateResult
       }
     }.execute()
@@ -180,16 +173,10 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
                           updateMethod: UpdateMethod,
                           checkForRebaseOverMergeProblem: Boolean): GitUpdateResult {
         val updateResult = super.update(rootsToUpdate, updateMethod, checkForRebaseOverMergeProblem)
-        try {
-          if (!updateHappened) {
-            updateHappened = true
-            pushCommitFromBro()
-          }
+        if (!updateHappened) {
+          updateHappened = true
+          pushCommitFromBro()
         }
-        catch (e: IOException) {
-          throw RuntimeException(e)
-        }
-
         return updateResult
       }
     }.execute()
@@ -266,7 +253,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val log = git("log -3 --pretty=%H#%s")
     val commits = StringUtil.splitByLines(log)
     val lastCommitMsg = commits[0].split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1]
-    assertTrue("The last commit doesn't look like a merge commit: " + lastCommitMsg, lastCommitMsg.contains("Merge"))
+    assertTrue("The last commit doesn't look like a merge commit: $lastCommitMsg", lastCommitMsg.contains("Merge"))
     assertEquals(hash, commits[1].split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0])
     assertEquals(broHash, commits[2].split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0])
 
@@ -405,13 +392,13 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     })
 
     push("master", "origin/master")
-    assertTrue("Default action in rejected-push dialog is incorrect: " + defaultActionName,
-        defaultActionName.toLowerCase().contains("rebase"))
+    assertTrue("Default action in rejected-push dialog is incorrect: $defaultActionName",
+               defaultActionName.toLowerCase().contains("rebase"))
 
     git("config branch.master.rebase false")
     push("master", "origin/master")
-    assertTrue("Default action in rejected-push dialog is incorrect: " + defaultActionName,
-        defaultActionName.toLowerCase().contains("merge"))
+    assertTrue("Default action in rejected-push dialog is incorrect: $defaultActionName",
+               defaultActionName.toLowerCase().contains("merge"))
   }
 
   fun `test respect branch default setting for silent update when rejected push`() {
@@ -500,7 +487,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   private fun assertPushed(expectedHash: String, branch: String) {
     Executor.cd(parentRepo.path)
-    val actualHash = git("log -1 --pretty=%H " + branch)
+    val actualHash = git("log -1 --pretty=%H $branch")
     assertEquals(expectedHash, actualHash)
   }
 

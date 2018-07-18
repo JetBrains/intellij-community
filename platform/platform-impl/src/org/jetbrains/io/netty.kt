@@ -15,5 +15,7 @@
  */
 package org.jetbrains.io
 
+import io.netty.bootstrap.Bootstrap
+
 // used in Go
-fun oioClientBootstrap() = com.intellij.util.io.oioClientBootstrap()
+fun oioClientBootstrap(): Bootstrap = com.intellij.util.io.oioClientBootstrap()

@@ -126,7 +126,7 @@ public class PyPackageManagerUI {
     Map<String, Set<PyPackage>> dependentPackages = new HashMap<>();
     for (PyPackage pkg : packages) {
       final Set<PyPackage> dependents = PyPackageManager.getInstance(sdk).getDependents(pkg);
-      if (dependents != null && !dependents.isEmpty()) {
+      if (!dependents.isEmpty()) {
         for (PyPackage dependent : dependents) {
           if (!packages.contains(dependent)) {
             dependentPackages.put(pkg.getName(), dependents);
@@ -246,7 +246,7 @@ public class PyPackageManagerUI {
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       for (int i = 0; i < size; i++) {
         final PyRequirement requirement = myRequirements.get(i);
-        indicator.setText(String.format("Installing package '%s'...", requirement));
+        indicator.setText(String.format("Installing package '%s'...", requirement.getPresentableText()));
         if (i == 0) {
           indicator.setIndeterminate(true);
         }

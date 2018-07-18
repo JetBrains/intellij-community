@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.index
 
 import com.google.common.hash.HashCode
@@ -34,7 +34,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexProviderBase")
 
     @JvmField
-    val DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
+    val DEBUG_PREBUILT_INDICES: Boolean = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
   }
 
   init {
@@ -81,7 +81,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
 
   open fun openIndexStorage(indexesRoot: File): PersistentHashMap<HashCode, Value>? {
     return object : PersistentHashMap<HashCode, Value>(
-      File(indexesRoot, indexName + ".input"),
+      File(indexesRoot, "$indexName.input"),
       HashCodeDescriptor.instance,
       indexExternalizer) {
       override fun isReadOnly(): Boolean {
@@ -92,7 +92,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
 
   @Throws(IOException::class)
   private fun copyPrebuiltIndicesToIndexRoot(prebuiltIndicesRoot: File): File {
-    val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt/" + dirName)
+    val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt/$dirName")
 
     FileUtil.copyDir(prebuiltIndicesRoot, indexRoot, FileFilter { f -> f.name.startsWith(indexName) })
 

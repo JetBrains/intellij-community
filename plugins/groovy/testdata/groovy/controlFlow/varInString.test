@@ -3,9 +3,9 @@ if (i in String) i = i.substring(2)
 0(1) element: null
 1(2) element: IF statement
 2(3) READ i
-3(4,6) Condition Relational expression
+3(4,6) Condition GrInExpressionImpl(IN_EXPRESSION)
 4(5) instanceof: i in String
-5(10)  Negating goto instruction, condition=3Relational expression
+5(10)  Negating goto instruction, condition=3GrInExpressionImpl(IN_EXPRESSION)
 6(7) instanceof: i in String
 7(8) READ i
 8(9) WRITE i

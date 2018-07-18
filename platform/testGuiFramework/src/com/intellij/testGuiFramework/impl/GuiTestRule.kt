@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.timing.Pause
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import org.jdom.xpath.XPath
@@ -52,7 +53,7 @@ import java.util.concurrent.TimeUnit
 
 class GuiTestRule : TestRule {
 
-  var CREATE_NEW_PROJECT_ACTION_NAME = "Create New Project"
+  var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
@@ -184,20 +185,21 @@ class GuiTestRule : TestRule {
     private fun checkForModalDialogs(): List<AssertionError> {
       val errors = ArrayList<AssertionError>()
       // We close all modal dialogs left over, because they block the AWT thread and could trigger a deadlock in the next test.
-      val modalDialogsSet = Collections.newSetFromMap(WeakHashMap<Dialog, Boolean>());
+      val closedModalDialogSet = hashSetOf<Dialog>()
       try {
         waitUntil("all modal dialogs will be closed", timeoutInSeconds = 10) {
           val modalDialog: Dialog = getActiveModalDialog() ?: return@waitUntil true
-          if (modalDialogsSet.contains(modalDialog)) {
-            errors.add(AssertionError("Unable to close: ${modalDialog.javaClass.name} with title '${modalDialog.title}' by robot"))
+          if (closedModalDialogSet.contains(modalDialog)) {
+            //wait a second to let a dialog be closed
+            Pause.pause(1L, TimeUnit.SECONDS)
           }
           else {
-            modalDialogsSet.add(modalDialog)
-            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
+            closedModalDialogSet.add(modalDialog)
+            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogFail")
             robot().close(modalDialog)
             errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
-            return@waitUntil false
           }
+          return@waitUntil false
         }
       }
       catch (timeoutError: WaitTimedOutError) {
@@ -224,7 +226,7 @@ class GuiTestRule : TestRule {
 
       }
       catch (e: WaitTimedOutError) {
-        throw AssumptionViolatedException("didn't find welcome frame", e) as Throwable
+        throw AssumptionViolatedException("didn't find welcome frame", e)
       }
       GuiTestUtilKt.waitUntil("Splash is gone") { !GuiTestUtilKt.windowsShowing().any { it is Splash } }
       Assume.assumeTrue("Only welcome frame is showing", GuiTestUtilKt.windowsShowing().size == 1)
@@ -304,7 +306,7 @@ class GuiTestRule : TestRule {
   }
 
   fun importProjectAndWaitForProjectSyncToFinish(projectDirName: String, gradleVersion: String?): IdeFrameFixture {
-    val projectPath = setUpProject(projectDirName, false)
+    val projectPath = setUpProject(projectDirName)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -313,7 +315,7 @@ class GuiTestRule : TestRule {
   }
 
   fun importProject(projectDirName: String): File {
-    val projectPath = setUpProject(projectDirName, false)
+    val projectPath = setUpProject(projectDirName)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -321,7 +323,7 @@ class GuiTestRule : TestRule {
   }
 
   fun importProject(projectFile: File): File {
-    val projectPath = setUpProject(projectFile, false)
+    val projectPath = setUpProject(projectFile)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -336,15 +338,13 @@ class GuiTestRule : TestRule {
   }
 
 
-  private fun setUpProject(projectDirName: String,
-                           forOpen: Boolean): File {
+  private fun setUpProject(projectDirName: String): File {
     val projectPath = copyProjectBeforeOpening(projectDirName)
     Assert.assertNotNull(projectPath)
     return projectPath
   }
 
-  private fun setUpProject(projectDirFile: File,
-                           forOpen: Boolean): File {
+  private fun setUpProject(projectDirFile: File): File {
     val projectPath = copyProjectBeforeOpening(projectDirFile)
     Assert.assertNotNull(projectPath)
     return projectPath

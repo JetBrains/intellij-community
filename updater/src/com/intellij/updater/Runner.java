@@ -240,7 +240,8 @@ public class Runner {
       "                   diffing algorithm will be used.\n" +
       "    --jar=<jar file>: Include the specified patcher code in the generated patch instead of the currently-running\n" +
       "                      patcher jar.\n" +
-      "    --no_jar: Do not include the patcher code in the generated patch.");
+      "    --no_jar: Do not include the patcher code in the generated patch.\n" +
+      "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
 
   private static boolean create(PatchSpec spec) {
@@ -395,11 +396,31 @@ public class Runner {
     finally {
       try {
         cleanup(ui);
+        refreshApplicationIcon(destPath);
       }
       catch (Throwable t) {
         logger().warn("cleanup failed", t);
       }
     }
+  }
+
+  private static void refreshApplicationIcon(String destPath) {
+    if (isMac()) {
+      try {
+        String applicationPath = destPath.contains("/Contents") ? destPath.substring(0, destPath.lastIndexOf("/Contents")) : destPath;
+        logger().info("refreshApplicationIcon for: " + applicationPath);
+        Runtime runtime = Runtime.getRuntime();
+        String[] args = {"touch", applicationPath};
+        runtime.exec(args);
+      }
+      catch (IOException e) {
+        logger().warn("refreshApplicationIcon failed", e);
+      }
+    }
+  }
+
+  private static boolean isMac() {
+    return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("mac");
   }
 
   public static String resolveJarFile() {

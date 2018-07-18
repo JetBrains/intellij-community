@@ -17,10 +17,13 @@ public final class UIThemeProvider {
   @Attribute("path")
   public String path;
 
+  @Attribute("id")
+  public String id;
+
   @Nullable
   public UITheme createTheme() {
     try {
-      return UITheme.loadFromJson(getClass().getResourceAsStream(path));
+      return UITheme.loadFromJson(getClass().getResourceAsStream(path), id);
     }
     catch (IOException e) {
       Logger.getInstance(getClass()).warn(e);

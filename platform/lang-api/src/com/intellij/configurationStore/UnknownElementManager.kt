@@ -25,7 +25,7 @@ import java.util.function.Function
 class UnknownElementWriter internal constructor(private val unknownElements: Map<String, Element> = emptyMap()) {
   companion object {
     @JvmField
-    val EMPTY = UnknownElementWriter()
+    val EMPTY: UnknownElementWriter = UnknownElementWriter()
   }
 
   fun <T> write(outElement: Element, items: Collection<T>, itemToTagName: Function<T, String>, writer: Consumer<T>) {

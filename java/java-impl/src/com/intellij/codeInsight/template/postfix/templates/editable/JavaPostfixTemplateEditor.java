@@ -35,7 +35,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
   @NotNull private final ComboBox<LanguageLevel> myLanguageLevelCombo;
 
   public JavaPostfixTemplateEditor(@NotNull PostfixTemplateProvider provider) {
-    super(provider, createEditor());
+    super(provider, createEditor(), true);
     myLanguageLevelCombo = new ComboBox<>(LanguageLevel.values());
     myLanguageLevelCombo.setRenderer(new ColoredListCellRenderer<LanguageLevel>() {
       @Override

@@ -150,7 +150,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
 
   private static boolean isInitializedWithSameExpression(final PsiField field,
                                                          final PsiAssignmentExpression assignment,
-                                                         final Collection<PsiAssignmentExpression> initializingAssignments) {
+                                                         final Collection<? super PsiAssignmentExpression> initializingAssignments) {
     final PsiExpression expression = assignment.getRExpression();
     if (expression == null) return false;
     PsiClass containingClass = field.getContainingClass();

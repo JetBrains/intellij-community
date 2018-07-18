@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PySpecialMethodNamesCompletionContributor : CompletionContributor() {
-  override fun handleAutoCompletionPossibility(context: AutoCompletionContext) = autoInsertSingleItem(context)
+  override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)
 
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().afterDefInFunction(), MyCompletionProvider)

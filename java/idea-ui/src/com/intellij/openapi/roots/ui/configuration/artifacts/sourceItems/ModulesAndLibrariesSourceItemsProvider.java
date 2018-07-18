@@ -23,8 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
-import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
+import com.intellij.packaging.impl.elements.*;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.packaging.ui.PackagingSourceItemsProvider;
@@ -49,17 +48,22 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
       return createModuleItems(editorContext, ((ModuleGroupItem)parent).getPath());
     }
     else if (parent instanceof ModuleSourceItemGroup) {
-      return createClasspathItems(editorContext, artifact, ((ModuleSourceItemGroup)parent).getModule());
+      return createAvailableItems(editorContext, artifact, ((ModuleSourceItemGroup)parent).getModule());
     }
     return Collections.emptyList();
   }
 
   @NotNull
-  private static Collection<? extends PackagingSourceItem> createClasspathItems(@NotNull ArtifactEditorContext editorContext,
+  private static Collection<? extends PackagingSourceItem> createAvailableItems(@NotNull ArtifactEditorContext editorContext,
                                                                                 @NotNull Artifact artifact, @NotNull Module module) {
     final List<PackagingSourceItem> items = new ArrayList<>();
-    final ModuleRootModel rootModel = editorContext.getModulesProvider().getRootModel(module);
+
+    for (Module toAdd : getAvailableModules(editorContext, artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, module)) {
+      items.add(new ModuleOutputSourceItem(toAdd));
+    }
+
     List<Library> libraries = new ArrayList<>();
+    final ModuleRootModel rootModel = editorContext.getModulesProvider().getRootModel(module);
     for (OrderEntry orderEntry : rootModel.getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
@@ -69,10 +73,6 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
           libraries.add(library);
         }
       }
-    }
-
-    for (Module toAdd : getNotAddedModules(editorContext, artifact, module)) {
-      items.add(new ModuleOutputSourceItem(toAdd));
     }
 
     for (Library library : getNotAddedLibraries(editorContext, artifact, libraries)) {
@@ -102,11 +102,19 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   }
 
   @NotNull
-  private static List<? extends Module> getNotAddedModules(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
-                                                          final Module... allModules) {
-    final Set<Module> modules = new HashSet<>(Arrays.asList(allModules));
-    ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, moduleOutputPackagingElement -> {
-      modules.remove(moduleOutputPackagingElement.findModule(context));
+  private static <E extends ModulePackagingElementBase> List<? extends Module> getAvailableModules(@NotNull final ArtifactEditorContext context,
+                                                                                                   @NotNull Artifact artifact,
+                                                                                                   @NotNull ModuleElementTypeBase<E> elementType,
+                                                                                                   final Module... allModules) {
+    final Set<Module> modules = new HashSet<>();
+    for (Module module : allModules) {
+      if (elementType.isSuitableModule(context.getModulesProvider(), module)) {
+        modules.add(module);
+      }
+    }
+
+    ArtifactUtil.processPackagingElements(artifact, elementType, moduleElement -> {
+      modules.remove(moduleElement.findModule(context));
       return true;
     }, context, true);
     return new ArrayList<>(modules);

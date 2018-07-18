@@ -17,19 +17,17 @@ package org.jetbrains.uast
 
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.*
 
 interface UastLanguagePlugin {
   companion object {
     val extensionPointName: ExtensionPointName<UastLanguagePlugin> =
       ExtensionPointName.create<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
+    private val extensionArray: Array<UastLanguagePlugin> by lazy(LazyThreadSafetyMode.PUBLICATION) { extensionPointName.extensions }
 
-    fun getInstances(): Collection<UastLanguagePlugin> {
-      val rootArea = Extensions.getRootArea()
-      if (!rootArea.hasExtensionPoint(extensionPointName.name)) return listOf()
-      return rootArea.getExtensionPoint(extensionPointName).extensions.toList()
-    }
+    fun getInstances(): Collection<UastLanguagePlugin> = extensionArray.toList()
+
+    fun byLanguage(language: Language): UastLanguagePlugin? = extensionArray.firstOrNull { it.language === language }
   }
 
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)

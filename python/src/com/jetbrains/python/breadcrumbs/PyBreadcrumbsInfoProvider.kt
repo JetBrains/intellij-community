@@ -48,9 +48,9 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
     )
   }
 
-  override fun getLanguages() = LANGUAGES
+  override fun getLanguages(): Array<PythonLanguage> = LANGUAGES
 
-  override fun acceptElement(e: PsiElement) = getHelper(e) != null
+  override fun acceptElement(e: PsiElement): Boolean = getHelper(e) != null
 
   override fun getParent(e: PsiElement): PsiElement? {
     val default = e.parent
@@ -67,8 +67,8 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
     return if (sameLine) nonWhiteSpace.parent else default
   }
 
-  override fun getElementInfo(e: PsiElement) = getHelper(e)!!.elementInfo(e as PyElement)
-  override fun getElementTooltip(e: PsiElement) = getHelper(e)!!.elementTooltip(e as PyElement)
+  override fun getElementInfo(e: PsiElement): String = getHelper(e)!!.elementInfo(e as PyElement)
+  override fun getElementTooltip(e: PsiElement): String = getHelper(e)!!.elementTooltip(e as PyElement)
 
   private fun getHelper(e: PsiElement): Helper<in PyElement>? {
     if (e !is PyElement) return null

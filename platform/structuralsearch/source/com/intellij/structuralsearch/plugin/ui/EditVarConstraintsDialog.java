@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -197,7 +196,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
-    customScriptCode.getButton().addActionListener(new ActionListener() {
+    customScriptCode.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
         final List<String> variableNames = ContainerUtil.newArrayList(matchOptions.getVariableConstraintNames());
@@ -299,7 +298,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
                                    ? referenceTargetConstraint
                                    : '"' + referenceTargetConstraint + '"');
     varInfo.setInvertReference(invertReferenceTarget.isSelected());
-
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
@@ -361,7 +359,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
                                          myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, nodes, completePattern, false));
       referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, false));
       containedInConstraints.setVisible(completePattern);
-      scriptConstraints.setVisible(Registry.is("ssr.enable.script.constraint.on.all.variables") || completePattern);
+      scriptConstraints.setVisible(true);
 
       partOfSearchResults.setEnabled(!completePattern);
     }

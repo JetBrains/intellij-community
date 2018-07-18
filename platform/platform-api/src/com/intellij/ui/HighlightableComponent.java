@@ -384,7 +384,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
   }
 
   @NotNull
-  public Map<String, Rectangle> getHightlightedRegionsBoundsMap() {
+  public Map<String, Rectangle> getHighlightedRegionsBoundsMap() {
 
     HashMap<String, Rectangle> map = new HashMap<>();
     FontMetrics defFontMetrics = getFontMetrics(getFont());
@@ -404,7 +404,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
         FontMetrics fontMetrics = getFontMetrics(regFont);
         pivot += fontMetrics.stringWidth(text);
         end = pivot;
-        map.put(text, new Rectangle(this.getBounds().x + start, this.getBounds().y, end, this.getBounds().height));
+        map.put(text, new Rectangle(this.getBounds().x + start, this.getBounds().y, end - start, this.getBounds().height));
       }
     }
     return map;

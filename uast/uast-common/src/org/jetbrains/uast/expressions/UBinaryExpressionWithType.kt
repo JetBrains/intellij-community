@@ -46,9 +46,9 @@ interface UBinaryExpressionWithType : UExpression {
    */
   val type: PsiType
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-  override fun asRenderString() = "${operand.asRenderString()} ${operationKind.name} ${type.name}"
+  override fun asRenderString(): String = "${operand.asRenderString()} ${operationKind.name} ${type.name}"
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitBinaryExpressionWithType(this)) return
@@ -58,6 +58,6 @@ interface UBinaryExpressionWithType : UExpression {
     visitor.afterVisitBinaryExpressionWithType(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitBinaryExpressionWithType(this, data)
 }

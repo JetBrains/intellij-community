@@ -56,12 +56,6 @@ public class GenerateDependencyUtil {
           return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), MavenIcons.MavenProject);
         }
 
-        @NotNull
-        @Override
-        protected String convertElementText(@NotNull String originalElementText) {
-          return originalElementText;
-        }
-
         protected String getAllContainersNodeName() {
           return MavenDomBundle.message("all.dependencies");
         }

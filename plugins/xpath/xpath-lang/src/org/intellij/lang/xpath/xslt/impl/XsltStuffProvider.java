@@ -97,6 +97,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return "Template (" + sb.toString() + ")";
         }
 
+        @Override
         @Nullable
         public FileStatus getFileStatus() {
             return null;

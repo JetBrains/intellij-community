@@ -40,17 +40,17 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
   protected fun agreeToUpdate(exitCode: Int) {
     dialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
-                                        TestDialogHandler<GitRejectedPushUpdateDialog> { exitCode })
+                                        TestDialogHandler { exitCode })
   }
 
   internal fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,
                              updateResult: GitUpdateResult?,
                              actualResult: GitPushRepoResult) {
-    val message = "Result is incorrect: " + actualResult
+    val message = "Result is incorrect: $actualResult"
     assertEquals(message, type, actualResult.type)
     assertEquals(message, pushedCommits, actualResult.numberOfPushedCommits)
     assertEquals(message, GitBranch.REFS_HEADS_PREFIX + from, actualResult.sourceBranch)
     assertEquals(message, GitBranch.REFS_REMOTES_PREFIX + to, actualResult.targetBranch)
-    assertEquals(message, updateResult, actualResult.updateResult)
+    if (updateResult != null) assertEquals(message, updateResult, actualResult.updateResult)
   }
 }

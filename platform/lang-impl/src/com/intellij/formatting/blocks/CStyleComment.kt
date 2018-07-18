@@ -26,7 +26,7 @@ import com.intellij.psi.formatter.common.AbstractBlock
 class CStyleCommentBlock(comment: ASTNode, private val indent: Indent?): AbstractBlock(comment, null, null) {
 
   private val lines by lazy { lineBlocks() }
-  val isCommentFormattable by lazy {
+  val isCommentFormattable: Boolean by lazy {
     lines.drop(1).all { it.text.startsWith("*") }
   }
 
@@ -42,7 +42,7 @@ class CStyleCommentBlock(comment: ASTNode, private val indent: Indent?): Abstrac
     return child2.getSpacing(null, this)
   }
 
-  override fun getIndent() = indent
+  override fun getIndent(): Indent? = indent
 
   override fun buildChildren(): List<Block> {
     if (!isCommentFormattable) return emptyList()
@@ -76,7 +76,7 @@ class CStyleCommentBlock(comment: ASTNode, private val indent: Indent?): Abstrac
         }
   }
 
-  override fun isLeaf() = !isCommentFormattable
+  override fun isLeaf(): Boolean = !isCommentFormattable
 
 }
 

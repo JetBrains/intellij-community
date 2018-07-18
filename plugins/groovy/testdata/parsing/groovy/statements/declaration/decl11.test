@@ -28,22 +28,13 @@ Groovy script
             PsiElement(identifier)('Cate')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('gory')
-    PsiErrorElement:')' expected
-      <empty list>
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'other' unexpected
+        PsiElement(identifier)('other')
+    PsiElement())(')')
     Throw clause
       <empty list>
-  PsiWhiteSpace(' ')
-  Reference expression
-    PsiElement(identifier)('other')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement())(')')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiWhiteSpace(' ')
-  Closable block
-    PsiElement({)('{')
-    Parameter list
-      <empty list>
-    PsiElement(})('}')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

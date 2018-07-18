@@ -57,7 +57,7 @@ Groovy script
               PsiElement(identifier)('abc')
           PsiWhiteSpace(' ')
           PsiElement(|)('|')
-          PsiErrorElement:Type expected
+          PsiErrorElement:<type> expected, got '|'
             <empty list>
           PsiWhiteSpace(' ')
           PsiElement(|)('|')

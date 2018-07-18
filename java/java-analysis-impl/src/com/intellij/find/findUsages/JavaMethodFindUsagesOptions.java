@@ -69,9 +69,5 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     if (isOverridingMethods) {
       strings.add(FindBundle.message("find.usages.panel.title.overriding.methods"));
     }
-    if (isImplicitToString) {
-      strings.add(FindBundle.message("find.usages.panel.title.implicit.to.string.calls"));
-    }
-
   }
 }

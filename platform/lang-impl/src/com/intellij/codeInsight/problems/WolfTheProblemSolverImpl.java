@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.problems;
 
@@ -59,31 +45,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Collection<VirtualFile> myCheckingQueue = new THashSet<>(10);
 
   private final Project myProject;
-  private final List<ProblemListener> myProblemListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myFiltersLoaded = false;
-  private final ProblemListener fireProblemListeners = new ProblemListener() {
-    @Override
-    public void problemsAppeared(@NotNull VirtualFile file) {
-      for (final ProblemListener problemListener : myProblemListeners) {
-        problemListener.problemsAppeared(file);
-      }
-    }
-
-    @Override
-    public void problemsChanged(@NotNull VirtualFile file) {
-      for (final ProblemListener problemListener : myProblemListeners) {
-        problemListener.problemsChanged(file);
-      }
-    }
-
-    @Override
-    public void problemsDisappeared(@NotNull VirtualFile file) {
-      for (final ProblemListener problemListener : myProblemListeners) {
-        problemListener.problemsDisappeared(file);
-      }
-    }
-  };
 
   private void doRemove(@NotNull VirtualFile problemFile) {
     ProblemFileInfo old;
@@ -95,7 +58,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     if (old != null) {
       // firing outside lock
-      fireProblemListeners.problemsDisappeared(problemFile);
+      myProject.getMessageBus().syncPublisher(com.intellij.problems.ProblemListener.TOPIC).problemsDisappeared(problemFile);
     }
   }
 
@@ -332,24 +295,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   @Override
-  public void addProblemListener(@NotNull ProblemListener listener) {
-    myProblemListeners.add(listener);
-  }
-
-  @Override
-  public void addProblemListener(@NotNull final ProblemListener listener, @NotNull Disposable parentDisposable) {
-    addProblemListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeProblemListener(listener);
-      }
-    });
-  }
-
-  @Override
-  public void removeProblemListener(@NotNull ProblemListener listener) {
-    myProblemListeners.remove(listener);
+  public void addProblemListener(@NotNull WolfTheProblemSolver.ProblemListener listener, @NotNull Disposable parentDisposable) {
+    myProject.getMessageBus().connect(parentDisposable).subscribe(com.intellij.problems.ProblemListener.TOPIC, listener);
   }
 
   @Override
@@ -424,7 +371,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     doQueue(virtualFile);
     if (fireListener) {
-      fireProblemListeners.problemsAppeared(virtualFile);
+      myProject.getMessageBus().syncPublisher(com.intellij.problems.ProblemListener.TOPIC).problemsAppeared(virtualFile);
     }
   }
 
@@ -470,10 +417,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     doQueue(file);
     if (!hasProblemsBefore) {
-      fireProblemListeners.problemsAppeared(file);
+      myProject.getMessageBus().syncPublisher(com.intellij.problems.ProblemListener.TOPIC).problemsAppeared(file);
     }
     else if (fireChanged) {
-      fireProblemListeners.problemsChanged(file);
+      myProject.getMessageBus().syncPublisher(com.intellij.problems.ProblemListener.TOPIC).problemsChanged(file);
     }
   }
 

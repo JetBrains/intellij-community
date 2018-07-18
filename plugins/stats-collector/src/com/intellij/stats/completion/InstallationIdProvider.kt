@@ -23,5 +23,5 @@ interface InstallationIdProvider {
 }
 
 class PermanentInstallationIdProvider: InstallationIdProvider {
-    override fun installationId() = PermanentInstallationID.get()
+    override fun installationId(): String = PermanentInstallationID.get()
 }

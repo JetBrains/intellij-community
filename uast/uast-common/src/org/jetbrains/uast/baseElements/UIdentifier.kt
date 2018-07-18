@@ -29,7 +29,7 @@ open class UIdentifier(
   open val name: String
     get() = psi?.text ?: "<error>"
 
-  override fun asLogString() = log("Identifier ($name)")
+  override fun asLogString(): String = log("Identifier ($name)")
 
   override val sourcePsi: PsiElement?
     get() = psi

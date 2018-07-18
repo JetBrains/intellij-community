@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -85,20 +71,15 @@ public class RedundantEscapeInspection extends LocalInspectionTool {
       if (!(element instanceof RegExpChar)) {
         return;
       }
-      final RegExpChar aChar = (RegExpChar)element;
-      final ASTNode node = aChar.getNode().getFirstChildNode();
-      final ASTNode parent = node.getTreeParent();
-      parent.addLeaf(RegExpTT.CHARACTER, replacement(aChar), node);
-      parent.removeChild(node);
+      RegExpReplacementUtil.replaceInContext(element, replacement((RegExpChar)element));
     }
 
     @NotNull
     private static String replacement(RegExpChar aChar) {
       final int codePoint = aChar.getValue();
-      final String s = Character.isSupplementaryCodePoint(codePoint)
-                       ? Character.toString(Character.highSurrogate(codePoint)) + Character.toString(Character.lowSurrogate(codePoint))
-                       : Character.toString((char)codePoint);
-      return RegExpReplacementUtil.escapeForContext(s, aChar);
+      return Character.isSupplementaryCodePoint(codePoint)
+             ? Character.toString(Character.highSurrogate(codePoint)) + Character.toString(Character.lowSurrogate(codePoint))
+             : Character.toString((char)codePoint);
     }
   }
 }

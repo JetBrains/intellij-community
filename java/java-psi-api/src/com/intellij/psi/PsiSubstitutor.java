@@ -54,7 +54,7 @@ public interface PsiSubstitutor {
 
   /**
    * Substitutes type parameters occurring in {@code type} with their values.
-   * If value for type parameter is <code>null<code>, appropriate erasure is returned.
+   * If value for type parameter is {@code null}, appropriate erasure is returned.
    *
    * @param type the type to substitute the type parameters for.
    * @return the result of the substitution.

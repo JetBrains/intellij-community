@@ -95,7 +95,12 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   }
 
   @NotNull
-  public Icon getIcon() {
+  public Icon getLibraryTypeIcon() {
+    return myIcon;
+  }
+
+  @NotNull
+  public Icon getIcon(LibraryVersionProperties properties) {
     return myIcon;
   }
 

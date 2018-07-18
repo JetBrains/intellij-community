@@ -24,16 +24,16 @@ open class PrimitiveValue(type: ValueType, override val valueString: String) : V
   }
 
   companion object {
-    val NA_N_VALUE = "NaN"
-    val INFINITY_VALUE = "Infinity"
+    val NA_N_VALUE: String = "NaN"
+    val INFINITY_VALUE: String = "Infinity"
 
     @JvmField
-    val NULL = PrimitiveValue(ValueType.NULL, "null")
+    val NULL: PrimitiveValue = PrimitiveValue(ValueType.NULL, "null")
     @JvmField
-    val UNDEFINED = PrimitiveValue(ValueType.UNDEFINED, "undefined")
+    val UNDEFINED: PrimitiveValue = PrimitiveValue(ValueType.UNDEFINED, "undefined")
 
-    val NAN = PrimitiveValue(ValueType.NUMBER, NA_N_VALUE)
-    val INFINITY = PrimitiveValue(ValueType.NUMBER, INFINITY_VALUE)
+    val NAN: PrimitiveValue = PrimitiveValue(ValueType.NUMBER, NA_N_VALUE)
+    val INFINITY: PrimitiveValue = PrimitiveValue(ValueType.NUMBER, INFINITY_VALUE)
 
     private val TRUE = PrimitiveValue(ValueType.BOOLEAN, "true")
     private val FALSE = PrimitiveValue(ValueType.BOOLEAN, "false")

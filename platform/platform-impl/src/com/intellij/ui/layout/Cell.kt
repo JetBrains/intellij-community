@@ -21,8 +21,10 @@ import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.JButton
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -37,22 +39,22 @@ abstract class Cell {
    * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
    * Grow weight will only be compared against the weights for the same cell.
    */
-  val growX = CCFlags.growX
+  val growX: CCFlags = CCFlags.growX
   @Suppress("unused")
-  val growY = CCFlags.growY
-  val grow = CCFlags.grow
+  val growY: CCFlags = CCFlags.growY
+  val grow: CCFlags = CCFlags.grow
 
   /**
    * Makes the column that the component is residing in grow with `weight`.
    */
-  val pushX = CCFlags.pushX
+  val pushX: CCFlags = CCFlags.pushX
 
   /**
    * Makes the row that the component is residing in grow with `weight`.
    */
   @Suppress("unused")
-  val pushY = CCFlags.pushY
-  val push = CCFlags.push
+  val pushY: CCFlags = CCFlags.pushY
+  val push: CCFlags = CCFlags.push
 
   fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit) {
     val result = Link(text, action = action)
@@ -64,6 +66,13 @@ abstract class Cell {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
     button(*constraints)
+  }
+
+  fun checkBox(text: String, isSelected: Boolean = false, vararg constraints: CCFlags, actionListener: (event: ActionEvent, component: JCheckBox) -> Unit) {
+    val component = JCheckBox(text)
+    component.isSelected = isSelected
+    component.addActionListener(ActionListener { actionListener(it, component) })
+    component(*constraints)
   }
 
   fun textFieldWithBrowseButton(browseDialogTitle: String,

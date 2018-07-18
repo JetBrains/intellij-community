@@ -22,7 +22,7 @@ import java.io.File
  */
 object IdeaGuiTestUtil{
 
-  val LOG = Logger.getInstance("#com.intellij.testGuiFramework.idea.IdeaGuiTestUtil")
+  val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.idea.IdeaGuiTestUtil")
 
   fun setUpSdks() {
 

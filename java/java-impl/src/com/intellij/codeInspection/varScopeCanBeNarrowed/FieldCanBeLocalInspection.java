@@ -20,13 +20,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.lang.java.JavaCommenter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -97,7 +98,7 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
     private static boolean findExistentBlock(Map<PsiCodeBlock, Collection<PsiReference>> refs,
                                              PsiReference psiReference,
                                              PsiCodeBlock block,
-                                             Collection<PsiReference> references) {
+                                             Collection<? super PsiReference> references) {
       for (Iterator<PsiCodeBlock> iterator = refs.keySet().iterator(); iterator.hasNext(); ) {
         PsiCodeBlock codeBlock = iterator.next();
         if (PsiTreeUtil.isAncestor(codeBlock, block, false)) {
@@ -121,8 +122,6 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
 
     @Override
     protected void beforeDelete(@NotNull Project project, @NotNull PsiField variable, @NotNull PsiElement newDeclaration) {
-      final PsiDocComment docComment = variable.getDocComment();
-      if (docComment != null) moveDocCommentToDeclaration(project, docComment, newDeclaration);
     }
 
     @NotNull
@@ -133,19 +132,6 @@ public class FieldCanBeLocalInspection extends FieldCanBeLocalInspectionBase {
       final String propertyName = styleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
       final String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
       return RefactoringUtil.suggestUniqueVariableName(localName, scope, field);
-    }
-
-    private static void moveDocCommentToDeclaration(@NotNull Project project, @NotNull PsiDocComment docComment, @NotNull PsiElement declaration) {
-      final StringBuilder buf = new StringBuilder();
-      for (PsiElement psiElement : docComment.getDescriptionElements()) {
-        buf.append(psiElement.getText());
-      }
-      if (buf.length() > 0) {
-        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-        final JavaCommenter commenter = new JavaCommenter();
-        final PsiComment comment = elementFactory.createCommentFromText(commenter.getBlockCommentPrefix() + buf.toString() + commenter.getBlockCommentSuffix(), declaration);
-        declaration.getParent().addBefore(comment, declaration);
-      }
     }
   }
 }

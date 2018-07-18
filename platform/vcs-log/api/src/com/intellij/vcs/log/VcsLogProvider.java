@@ -70,7 +70,7 @@ public interface VcsLogProvider {
   void readFullDetails(@NotNull VirtualFile root,
                        @NotNull List<String> hashes,
                        @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                       boolean fast)
+                       boolean isForIndexing)
     throws VcsException;
 
   /**

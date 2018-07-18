@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
@@ -24,7 +25,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,7 +64,6 @@ public class ProjectBytecodeAnalysis {
    */
   private static final boolean SKIP_INDEX = false;
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
-  public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
   public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
   public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
@@ -400,7 +399,7 @@ public class ProjectBytecodeAnalysis {
   @NotNull
   private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
-    annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
+    InferredAnnotationsManagerImpl.markInferred(annotation);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
   }
@@ -470,7 +469,7 @@ public class ProjectBytecodeAnalysis {
     // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
     if (nonFailingContracts.size() == 1) {
       StandardMethodContract contract = nonFailingContracts.get(0);
-      if (contract.getReturnValue().isNotNull() && contract.isTrivial()) {
+      if (contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && contract.isTrivial()) {
         nonFailingContracts = Collections.emptyList();
         notNulls.add(methodKey);
       }
@@ -479,8 +478,7 @@ public class ProjectBytecodeAnalysis {
     removeConstraintFromNonNullParameter(methodKey, allContracts);
 
     if (allContracts.isEmpty() && !fullReturnValue.equals(ContractReturnValue.returnAny())) {
-      StandardMethodContract contract = new StandardMethodContract(StandardMethodContract.createConstraintArray(arity), fullReturnValue);
-      allContracts.add(contract);
+      allContracts.add(StandardMethodContract.trivialContract(arity, fullReturnValue));
     }
     if (notNulls.contains(methodKey)) {
       // filter contract clauses for @NotNull methods
@@ -533,8 +531,8 @@ public class ProjectBytecodeAnalysis {
       return c1;
     }).nonNull().findFirst().orElse(null);
     if(soleContract != null) {
-      ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
-      contractClauses = Collections.singletonList(new StandardMethodContract(constraints, soleContract.getReturnValue()));
+      contractClauses =
+        Collections.singletonList(StandardMethodContract.trivialContract(soleContract.getParameterCount(), soleContract.getReturnValue()));
     }
     return contractClauses;
   }

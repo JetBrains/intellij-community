@@ -16,11 +16,12 @@
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -84,7 +85,8 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
-    return true;
+    FileType type = file.getFileType();
+    return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof TemplateLanguage;
   }
 
   @Override
@@ -113,7 +115,7 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
       try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
         DataInputOutputUtil.writeINT(oStream, ourLanguagesEnumerator.getId(value.getID()));
       }
-      PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, Conditions.alwaysTrue());
+      PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, this::acceptsFile);
     }
   }
 

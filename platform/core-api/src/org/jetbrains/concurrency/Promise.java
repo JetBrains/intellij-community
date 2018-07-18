@@ -22,13 +22,13 @@ import java.util.concurrent.TimeoutException;
  *
  * <ul>
  *   <li>pending: initial state, neither fulfilled nor rejected.</li>
- *   <li>fulfilled: meaning that the operation completed successfully.</li>
+ *   <li>succeeded: meaning that the operation completed successfully.</li>
  *   <li>rejected: meaning that the operation failed.</li>
  * </ul>
  */
 public interface Promise<T> {
   enum State {
-    PENDING, FULFILLED, REJECTED
+    PENDING, SUCCEEDED, REJECTED
   }
 
   /**
@@ -138,5 +138,9 @@ public interface Promise<T> {
   @Nullable
   default T blockingGet(int timeout) throws TimeoutException, ExecutionException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
+  }
+
+  default boolean isSucceeded() {
+    return getState() == State.SUCCEEDED;
   }
 }

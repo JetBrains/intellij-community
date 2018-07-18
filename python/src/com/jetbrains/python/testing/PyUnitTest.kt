@@ -41,7 +41,7 @@ class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
 class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyUnitTestConfiguration>(configuration, environment) {
 
-  override fun getRunner() =
+  override fun getRunner(): PythonHelper =
     // different runner is used for setup.py
     if (configuration.isSetupPyBased()) {
       PythonHelper.SETUPPY
@@ -87,7 +87,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   }
 
   // setup.py runner is not id-based
-  override fun isIdTestBased() = !isSetupPyBased()
+  override fun isIdTestBased(): Boolean = !isSetupPyBased()
 
   override fun checkConfiguration() {
     super.checkConfiguration()
@@ -96,14 +96,14 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
     }
   }
 
-  override fun isFrameworkInstalled() = true //Unittest is always available
+  override fun isFrameworkInstalled(): Boolean = true //Unittest is always available
 
   // Unittest does not support filesystem path. It needs qname resolvable against root or working directory
   override fun shouldSeparateTargetPath() = false
 }
 
 object PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project) = PyUnitTestConfiguration(project, this)
+  override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME
 }

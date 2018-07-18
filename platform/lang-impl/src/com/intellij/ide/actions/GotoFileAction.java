@@ -25,6 +25,7 @@ import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -55,7 +56,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (Registry.is("new.search.everywhere")) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere")) {
       showInSearchEverywherePopup(FileSearchEverywhereContributor.class.getSimpleName(), e);
     } else {
       super.actionPerformed(e);
@@ -130,11 +131,11 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
    * <li>File type with greater name is greater (case is ignored).</li>
    * </ol>
    */
-  static class FileTypeComparator implements Comparator<FileType> {
+  public static class FileTypeComparator implements Comparator<FileType> {
     /**
      * an instance of comparator
      */
-    static final Comparator<FileType> INSTANCE = new FileTypeComparator();
+    public static final Comparator<FileType> INSTANCE = new FileTypeComparator();
 
     /**
      * {@inheritDoc}

@@ -8,14 +8,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.ui.mac.touchbar.NSAutoreleaseLock;
-import com.intellij.ui.mac.touchbar.NSTLibrary;
-import com.intellij.ui.mac.touchbar.TouchBar;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
@@ -144,10 +140,10 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    final TouchBar tb = createModalMsgDlgTouchBar(buttons, defaultButton);
-    TouchBarsManager.showTempTouchBar(tb);
+    final Runnable closer = _showTouchBar(buttons, defaultButton);
     myWindow.setVisible(true);
-    TouchBarsManager.closeTouchBar(tb, true);
+    if (closer != null)
+      closer.run();
     LaterInvocator.leaveModal(myWindow);
 
     Component focusCandidate = beforeShowFocusOwner.get();
@@ -171,19 +167,17 @@ class SheetMessage implements Disposable {
     myWindow.dispose();
   }
 
-  private TouchBar createModalMsgDlgTouchBar(String[] buttons, String defaultButton) {
+  private Runnable _showTouchBar(String[] buttons, String defaultButton) {
     if (!TouchBarsManager.isTouchBarAvailable())
       return null;
 
-    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
-      TouchBar result = new TouchBar("message_dlg_bar", false);
-      final ModalityState ms = LaterInvocator.getCurrentModalityState();
-      for (String sb: buttons) {
-        final NSTLibrary.Action act = () -> ApplicationManager.getApplication().invokeLater(()->myController.setResultAndStartClose(sb), ms);
-        result.addButton(null, sb, act, Comparing.equal(sb, defaultButton) ? NSTLibrary.BUTTON_FLAG_COLORED : 0);
-      }
-      return result;
+    final Runnable[] actions = new Runnable[buttons.length];
+    final ModalityState ms = LaterInvocator.getCurrentModalityState();
+    for (int c = 0; c < buttons.length; ++c) {
+      final String sb = buttons[c];
+      actions[c] = () -> ApplicationManager.getApplication().invokeLater(() -> myController.setResultAndStartClose(sb), ms);
     }
+    return TouchBarsManager.showMessageDlgBar(buttons, actions, defaultButton);
   }
 
   private static void maximizeIfNeeded(final Window owner) {

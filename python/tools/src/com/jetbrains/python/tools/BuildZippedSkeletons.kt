@@ -32,7 +32,7 @@ import java.util.zip.ZipOutputStream
  * @author traff
  */
 
-val PYCHARM_PYTHONS = "PYCHARM_PYTHONS"
+val PYCHARM_PYTHONS: String = "PYCHARM_PYTHONS"
 
 fun main(args: Array<String>) {
   val app = IdeaTestApplication.getInstance()

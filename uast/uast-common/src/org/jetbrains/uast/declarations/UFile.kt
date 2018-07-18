@@ -56,9 +56,9 @@ interface UFile : UElement, UAnnotated {
    */
   val allCommentsInFile: List<UComment>
 
-  override fun asLogString() = log("package = $packageName")
+  override fun asLogString(): String = log("package = $packageName")
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     if (annotations.isNotEmpty()) {
       annotations.joinTo(buffer = this, separator = "\n", postfix = "\n", transform = UAnnotation::asRenderString)
     }
@@ -92,7 +92,7 @@ interface UFile : UElement, UAnnotated {
     visitor.afterVisitFile(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitFile(this, data)
 }
 

@@ -26,7 +26,7 @@ internal class RunConfigurationBean {
 enum class RunConfigurableNodeKind {
   CONFIGURATION_TYPE, FOLDER, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN;
 
-  fun supportsDnD() = this == FOLDER || this == CONFIGURATION || this == TEMPORARY_CONFIGURATION
+  fun supportsDnD(): Boolean = this == FOLDER || this == CONFIGURATION || this == TEMPORARY_CONFIGURATION
 
   val isConfiguration: Boolean
     get() = (this == CONFIGURATION) or (this == TEMPORARY_CONFIGURATION)

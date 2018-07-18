@@ -82,6 +82,15 @@
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.lang.Enum java.lang.Class&lt;E&gt; getDeclaringClass()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Enum java.lang.String name()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item name='java.lang.Enum java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.Integer int bitCount(int)'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>

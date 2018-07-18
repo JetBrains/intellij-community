@@ -25,7 +25,6 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastContext
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.UastVisitor
-import java.io.File
 
 abstract class AbstractUastFixtureTest : LightCodeInsightFixtureTestCase() {
   protected val uastContext: UastContext by lazy {
@@ -44,22 +43,6 @@ abstract class AbstractUastFixtureTest : LightCodeInsightFixtureTestCase() {
   }
 }
 
-abstract class AbstractUastTest : AbstractTestWithCoreEnvironment() {
-  protected companion object {
-    val TEST_DATA_DIR = File("testData")
-  }
-
-  abstract fun getVirtualFile(testName: String): VirtualFile
-  abstract fun check(testName: String, file: UFile)
-
-  fun doTest(testName: String, checkCallback: (String, UFile) -> Unit = { testName, file -> check(testName, file) }) {
-    val virtualFile = getVirtualFile(testName)
-
-    val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")
-    val uFile = uastContext.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
-    checkCallback(testName, uFile as UFile)
-  }
-}
 
 fun <T> UElement.findElementByText(refText: String, cls: Class<T>): T {
   val matchingElements = mutableListOf<T>()

@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -89,22 +91,28 @@ final class FileTrees {
     return myRefToPsi != null;
   }
 
-  FileTrees switchToSpineRefs(@NotNull StubbedSpine srcSpine) {
+  FileTrees switchToSpineRefs(@NotNull List<PsiElement> spine) {
     List<Reference<StubBasedPsiElementBase>> refToPsi = myRefToPsi;
-    if (refToPsi == null) refToPsi = new ArrayList<>(Collections.nCopies(srcSpine.getStubCount(), null));
-    
-    for (int i = firstNonFilePsiIndex; i < refToPsi.size(); i++) {
-      StubBasedPsiElementBase psi = (StubBasedPsiElementBase)srcSpine.getStubPsi(i);
-      assert psi != null;
-      psi.setSubstrateRef(new SpineRef(myFile, i));
-      StubBasedPsiElementBase existing = SoftReference.dereference(refToPsi.get(i));
-      if (existing != null) {
-        assert existing == psi : "Duplicate PSI found";
-      } else {
-        refToPsi.set(i, new WeakReference<>(psi));
+    if (refToPsi == null) refToPsi = new ArrayList<>(Collections.nCopies(spine.size(), null));
+
+    try {
+      for (int i = firstNonFilePsiIndex; i < refToPsi.size(); i++) {
+        StubBasedPsiElementBase psi = (StubBasedPsiElementBase)Objects.requireNonNull(spine.get(i));
+        psi.setSubstrateRef(new SpineRef(myFile, i));
+        StubBasedPsiElementBase existing = SoftReference.dereference(refToPsi.get(i));
+        if (existing != null) {
+          assert existing == psi : "Duplicate PSI found";
+        } else {
+          refToPsi.set(i, new WeakReference<>(psi));
+        }
       }
+      return new FileTrees(myFile, myStub, myTreeElementPointer, refToPsi);
     }
-    return new FileTrees(myFile, myStub, myTreeElementPointer, refToPsi);
+    catch (Throwable e) {
+      throw new RuntimeException("Exceptions aren't allowed here", e);
+      // otherwise, e.g. in case of PCE, we'd remain with PSI having SpineRef's but not registered in any "myRefToPsi" 
+      // and so that PSI wouldn't be updated on AST change
+    }
   }
 
   FileTrees clearStub(@NotNull String reason) {
@@ -152,6 +160,9 @@ final class FileTrees {
 
     List<StubElement<?>> stubList = stubTree == null ? null : stubTree.getPlainList();
     List<CompositeElement> nodeList = astRoot == null ? null : astRoot.getStubbedSpine().getSpineNodes();
+    List<PsiElement> srcSpine = stubList == null || nodeList == null
+                                ? null
+                                : getAllSpinePsi(takePsiFromStubs ? stubTree.getSpine() : astRoot.getStubbedSpine());
 
     try {
       return DebugUtil.performPsiModification("reconcilePsi", () -> {
@@ -163,7 +174,6 @@ final class FileTrees {
         if (stubList != null && nodeList != null) {
           assert stubList.size() == nodeList.size() : "Stub count doesn't match stubbed node length";
 
-          StubbedSpine srcSpine = takePsiFromStubs ? stubTree.getSpine() : astRoot.getStubbedSpine();
           FileTrees result = switchToSpineRefs(srcSpine);
           bindStubsWithAst(srcSpine, stubList, nodeList, takePsiFromStubs);
           return result;
@@ -177,6 +187,15 @@ final class FileTrees {
       myFile.rebuildStub();
       throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(e.getMessage(), stubTree, myFile);
     }
+  }
+
+  /**
+   * {@link StubbedSpine#getStubPsi(int)} may throw {@link com.intellij.openapi.progress.ProcessCanceledException}, 
+   * so shouldn't be invoked in the middle of a mutating operation to avoid leaving inconsistent state.
+   * So we obtain PSI all at once in advance.
+   */
+  static List<PsiElement> getAllSpinePsi(@NotNull StubbedSpine spine) {
+    return IntStream.range(0, spine.getStubCount()).mapToObj(spine::getStubPsi).collect(Collectors.toList());
   }
 
   private void bindSubstratesToCachedPsi(List<StubElement<?>> stubList, List<CompositeElement> nodeList) {
@@ -195,14 +214,13 @@ final class FileTrees {
     }
   }
 
-  private static void bindStubsWithAst(StubbedSpine srcSpine, List<StubElement<?>> stubList, List<CompositeElement> nodeList, boolean takePsiFromStubs) {
+  private static void bindStubsWithAst(@NotNull List<PsiElement> srcSpine, List<StubElement<?>> stubList, List<CompositeElement> nodeList, boolean takePsiFromStubs) {
     for (int i = firstNonFilePsiIndex; i < stubList.size(); i++) {
       StubElement<?> stub = stubList.get(i);
       CompositeElement node = nodeList.get(i);
       assert stub.getStubType() == node.getElementType() : "Stub type mismatch";
 
-      PsiElement psi = srcSpine.getStubPsi(i);
-      assert psi != null;
+      PsiElement psi = Objects.requireNonNull(srcSpine.get(i));
       if (takePsiFromStubs) {
         node.setPsi(psi);
       } else {

@@ -31,7 +31,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
   protected abstract val virtualFile: VirtualFile?
 
-  override public fun loadData() = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+  override public fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
 
   override fun startExternalization(): StateStorage.ExternalizationSession? = null
 
@@ -73,7 +73,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
     return state
   }
 
-  override fun hasState(storageData: StateMap, componentName: String) = storageData.hasStates()
+  override fun hasState(storageData: StateMap, componentName: String): Boolean = storageData.hasStates()
 }
 
 open class DirectoryBasedStorage(private val dir: Path,

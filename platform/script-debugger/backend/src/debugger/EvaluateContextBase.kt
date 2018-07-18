@@ -20,7 +20,7 @@ import org.jetbrains.concurrency.thenRun
 import org.jetbrains.debugger.values.ValueManager
 
 abstract class EvaluateContextBase<VALUE_MANAGER : ValueManager>(val valueManager: VALUE_MANAGER) : EvaluateContext {
-  override fun withValueManager(objectGroup: String) = this
+  override fun withValueManager(objectGroup: String): EvaluateContextBase<VALUE_MANAGER> = this
 
-  override fun refreshOnDone(promise: Promise<*>) = promise.thenRun { valueManager.clearCaches() }
+  override fun refreshOnDone(promise: Promise<*>): Promise<Unit> = promise.thenRun { valueManager.clearCaches() }
 }

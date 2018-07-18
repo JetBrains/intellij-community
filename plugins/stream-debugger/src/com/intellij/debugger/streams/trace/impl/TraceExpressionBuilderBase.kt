@@ -22,7 +22,7 @@ import java.util.*
  */
 abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val handlerFactory: HandlerFactory)
   : TraceExpressionBuilder {
-  protected val resultVariableName = "myRes"
+  protected val resultVariableName: String = "myRes"
 
   override fun createTraceExpression(chain: StreamChain): String {
     val intermediateHandlers = chain.intermediateCalls.mapIndexedTo(ArrayList(), handlerFactory::getForIntermediate)

@@ -78,6 +78,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     initShrunkSequence();
   }
 
+  @NotNull
   @Override
   public CharSequence getOriginalText() {
     return myShrunkCharSequence;

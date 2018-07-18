@@ -24,6 +24,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class EntireFileDifferenceModel extends FileDifferenceModel {
   private final Entry myLeft;
@@ -73,7 +74,13 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
 
   private DiffContent getDiffContent(Entry e) {
     byte[] content = e.getContent().getBytes();
-    FileType fileType = myGateway.getFileType(e.getName());
-    return DiffContentFactoryEx.getInstanceEx().createDocumentFromBytes(myProject, content, fileType, e.getName());
+    VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
+    if (virtualFile != null) {
+      return DiffContentFactoryEx.getInstanceEx().createDocumentFromBytes(myProject, content, virtualFile);
+    }
+    else {
+      FileType fileType = myGateway.getFileType(e.getName());
+      return DiffContentFactoryEx.getInstanceEx().createDocumentFromBytes(myProject, content, fileType, e.getName());
+    }
   }
 }

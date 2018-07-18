@@ -16,7 +16,6 @@ import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToExistingCatchFix;
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix;
 import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
 import com.intellij.codeInspection.*;
@@ -25,7 +24,6 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
@@ -724,11 +722,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project,
-                                                                      @NotNull String qualifiedName,
-                                                                      @NotNull String element) {
+                                                                      @NotNull String qualifiedName) {
     final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
+      QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
       entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
   }
@@ -799,9 +796,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       if (oldStamp != document.getModificationStamp()) {
         String afterText = file.getText();
         if (Comparing.strEqual(beforeText, afterText)) {
-          LOG.error(
-            LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
-                                     AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
+          LOG.error("Import optimizer hasn't optimized any imports",
+                    new Throwable(file.getViewProvider().getVirtualFile().getPath()),
+                    AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
         }
       }
     });

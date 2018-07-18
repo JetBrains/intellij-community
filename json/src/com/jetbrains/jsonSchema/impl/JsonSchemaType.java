@@ -14,6 +14,27 @@ public enum JsonSchemaType {
     return name().substring(1);
   }
 
+  public String getDefaultValue() {
+    switch (this) {
+      case _string:
+        return "\"\"";
+      case _number:
+      case _integer:
+        return "0";
+      case _object:
+        return "{}";
+      case _array:
+        return "[]";
+      case _boolean:
+        return "false";
+      case _null:
+        return "null";
+      case _any:
+      default:
+        return "";
+    }
+  }
+
   @Nullable
   static JsonSchemaType getType(@NotNull final JsonValueAdapter value) {
     if (value.isNull()) return _null;

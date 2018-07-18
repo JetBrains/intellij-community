@@ -32,7 +32,7 @@ public class RemoveUnusedVariableUtil {
     CANCEL
   }
 
-  public static boolean checkSideEffects(PsiExpression element, @Nullable PsiVariable variableToIgnore, List<PsiElement> sideEffects) {
+  public static boolean checkSideEffects(PsiExpression element, @Nullable PsiVariable variableToIgnore, List<? super PsiElement> sideEffects) {
     if (sideEffects == null || element == null) return false;
     List<PsiElement> writes = new ArrayList<>();
     SideEffectChecker.checkSideEffects(element, writes);
@@ -102,13 +102,13 @@ public class RemoveUnusedVariableUtil {
     }
   }
 
-  static void deleteReferences(PsiVariable variable, List<PsiElement> references, @NotNull RemoveMode mode) throws IncorrectOperationException {
+  static void deleteReferences(PsiVariable variable, List<? extends PsiElement> references, @NotNull RemoveMode mode) throws IncorrectOperationException {
     for (PsiElement expression : references) {
       processUsage(expression, variable, null, mode);
     }
   }
 
-  static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
+  static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<? super PsiElement> references) {
     context.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
@@ -123,7 +123,7 @@ public class RemoveUnusedVariableUtil {
    *         null if read usage found (may happen if interval between fix creation in invoke() call was long enough)
    * @throws IncorrectOperationException
    */
-  static Boolean processUsage(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
+  static Boolean processUsage(PsiElement element, PsiVariable variable, List<? super PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
     throws IncorrectOperationException {
     if (!element.isValid()) return null;
     PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();

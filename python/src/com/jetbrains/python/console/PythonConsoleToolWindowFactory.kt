@@ -32,6 +32,6 @@ class PythonConsoleToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   companion object {
-    val ID = "Python Console"
+    val ID: String = "Python Console"
   }
 }

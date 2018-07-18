@@ -15,17 +15,19 @@
  */
 package org.jetbrains.uast.java
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethodReferenceExpression
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiType
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 
 class JavaUCallableReferenceExpression(
   override val psi: PsiMethodReferenceExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression {
-  override val qualifierExpression by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
+  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
 
   override val qualifierType: PsiType?
     get() = psi.qualifierType?.type
@@ -33,7 +35,7 @@ class JavaUCallableReferenceExpression(
   override val callableName: String
     get() = psi.referenceName.orAnonymous()
 
-  override fun resolve() = psi.resolve()
+  override fun resolve(): PsiElement? = psi.resolve()
 
   override val resolvedName: String? = (psi.resolve() as? PsiNamedElement)?.name
 }

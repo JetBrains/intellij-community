@@ -11,11 +11,8 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -293,22 +290,6 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       }
       return list;
     });
-  }
-
-  @Override
-  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    String className = null;
-    final ObjectReference thisObject = (ObjectReference)context.computeThisObject();
-    if (thisObject != null) {
-      className = thisObject.referenceType().name();
-    }
-    else {
-      final StackFrameProxyImpl frame = context.getFrameProxy();
-      if (frame != null) {
-        className = frame.location().declaringType().name();
-      }
-    }
-    return className;
   }
 
   @Override

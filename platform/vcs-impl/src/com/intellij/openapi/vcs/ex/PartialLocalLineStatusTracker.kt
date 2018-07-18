@@ -75,7 +75,7 @@ class PartialLocalLineStatusTracker(project: Project,
   private val undoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.undo")
   private val redoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.redo")
 
-  override val renderer = MyLineStatusMarkerRenderer(this)
+  override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
 
   private var defaultMarker: ChangeListMarker
   private var currentMarker: ChangeListMarker? = null

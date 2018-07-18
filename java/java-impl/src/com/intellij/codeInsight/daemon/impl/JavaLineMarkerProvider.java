@@ -479,8 +479,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       return (Function<PsiElement, String>)element -> "Multiple method overrides";
     }
 
+    @NotNull
     @Override
-    public String getElementPresentation(PsiElement element) {
+    public String getElementPresentation(@NotNull PsiElement element) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiFunctionalExpression) {
         return PsiExpressionTrimRenderer.render((PsiExpression)parent);

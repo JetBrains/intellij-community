@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,12 +16,18 @@ import java.util.Set;
  */
 public class ConditionInstruction extends InstructionImpl implements Instruction {
 
+  private final boolean myNegated;
   private final Set<ConditionInstruction> myDependent;
 
-  public ConditionInstruction(@NotNull PsiElement element, @NotNull Collection<ConditionInstruction> dependent) {
+  public ConditionInstruction(@NotNull PsiElement element, boolean negated, @NotNull Collection<ConditionInstruction> dependent) {
     super(element);
+    myNegated = negated;
     myDependent = new LinkedHashSet<>(dependent);
     myDependent.add(this);
+  }
+
+  public boolean isNegated() {
+    return myNegated;
   }
 
   @NotNull
@@ -43,6 +35,7 @@ public class ConditionInstruction extends InstructionImpl implements Instruction
   protected String getElementPresentation() {
     StringBuilder builder = new StringBuilder();
     builder.append("Condition ").append(getElement());
+    if (myNegated) builder.append(", negated");
     if (myDependent.size() > 1) {
       builder.append(", dependent: ");
       builder.append(StringUtil.join(ContainerUtil.filter(myDependent, d -> d != this), i -> String.valueOf(i.num()), ", "));

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.reference.SoftReference
 
-val CACHED_UELEMENT_KEY = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
+val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
 
 /**
  * Manages the UAST to PSI conversion.
@@ -50,7 +50,7 @@ class UastContext(val project: Project) : UastLanguagePlugin {
     return languagePlugins.firstOrNull { it.language == language }
   }
 
-  override fun isFileSupported(fileName: String) = languagePlugins.any { it.isFileSupported(fileName) }
+  override fun isFileSupported(fileName: String): Boolean = languagePlugins.any { it.isFileSupported(fileName) }
 
   fun getMethod(method: PsiMethod): UMethod = convertWithParent<UMethod>(method)!!
 
@@ -93,7 +93,7 @@ class UastContext(val project: Project) : UastLanguagePlugin {
 
   override fun isExpressionValueUsed(element: UExpression): Boolean {
     val language = element.getLanguage()
-    return (languagePlugins.firstOrNull { it.language == language })?.isExpressionValueUsed(element) ?: false
+    return UastLanguagePlugin.byLanguage(language)?.isExpressionValueUsed(element) ?: false
   }
 
   private tailrec fun UElement.getLanguage(): Language {
@@ -106,7 +106,7 @@ class UastContext(val project: Project) : UastLanguagePlugin {
 /**
  * Converts the element along with its parents to UAST.
  */
-fun PsiElement?.toUElement() =
+fun PsiElement?.toUElement(): UElement? =
   this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, null) }
 
 /**

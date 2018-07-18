@@ -38,12 +38,12 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
   final ReferenceQueue<K> myKeyQueue = new ReferenceQueue<K>();
   final ReferenceQueue<V> myValueQueue = new ReferenceQueue<V>();
-  @NotNull final TObjectHashingStrategy<K> myHashingStrategy;
+  @NotNull final TObjectHashingStrategy<? super K> myHashingStrategy;
 
   protected ConcurrentWeakKeySoftValueHashMap(int initialCapacity,
                                               float loadFactor,
                                               int concurrencyLevel,
-                                              @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+                                              @NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
     myHashingStrategy = hashingStrategy;
     myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
   }
@@ -73,13 +73,13 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {
     private final int myHash; // Hash code of the key, stored here since the key may be tossed by the GC
-    private final TObjectHashingStrategy<K> myStrategy;
+    private final TObjectHashingStrategy<? super K> myStrategy;
     @NotNull private final ValueReference<K, V> myValueReference;
 
     WeakKey(@NotNull K k,
             @NotNull ValueReference<K, V> valueReference,
-            @NotNull TObjectHashingStrategy<K> strategy,
-            @NotNull ReferenceQueue<K> queue) {
+            @NotNull TObjectHashingStrategy<? super K> strategy,
+            @NotNull ReferenceQueue<? super K> queue) {
       super(k, queue);
       myValueReference = valueReference;
       myHash = strategy.computeHashCode(k);
@@ -110,7 +110,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   static class SoftValue<K, V> extends SoftReference<V> implements ValueReference<K,V> {
    @NotNull volatile KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
-   private SoftValue(@NotNull V value, @NotNull ReferenceQueue<V> queue) {
+   private SoftValue(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
      super(value, queue);
    }
 
@@ -144,7 +144,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   }
 
   @NotNull
-  protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<V> queue) {
+  protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
     return new SoftValue<K, V>(value, queue);
   }
 

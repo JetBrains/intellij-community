@@ -54,6 +54,8 @@ public class JavaCompletionSession {
   }
 
   public void addClassItem(LookupElement lookupElement) {
+    if (!myResult.getPrefixMatcher().prefixMatches(lookupElement)) return;
+    
     PsiClass psiClass = extractClass(lookupElement);
     if (psiClass != null) {
       registerClass(psiClass);

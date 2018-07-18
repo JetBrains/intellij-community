@@ -234,6 +234,11 @@ class CommunityRepositoryModules {
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
 */
+    },
+    plugin("intellij.statsCollector") {
+      withModule("intellij.statsCollector.features", "features.jar")
+      withModule("intellij.statsCollector.logEvents")
+      withResource("features/resources", "lib")
     }
   ]
 
@@ -339,6 +344,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
       withProjectLibrary("com.android.tools:annotations:26.0.0")
       withProjectLibrary("com.android.tools:sdk-common:26.0.0")
+      withProjectLibrary("com.android.tools.ddms:ddmlib:26.0.0")
       withProjectLibrary("com.android.tools.build:manifest-merger:26.0.0")
       withProjectLibrary("analytics-protos")
       */

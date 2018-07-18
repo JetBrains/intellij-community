@@ -62,7 +62,7 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
 
   @Override
   @NotNull
-  public abstract Icon getIcon();
+  public abstract Icon getIcon(GroovyLibraryProperties properties);
 
   public abstract boolean isSDKHome(@NotNull VirtualFile file);
 

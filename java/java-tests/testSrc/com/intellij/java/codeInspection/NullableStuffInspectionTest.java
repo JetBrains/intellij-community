@@ -226,6 +226,16 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testNullableDefaultOnClassVsNonnullOnPackage() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    myFixture.addFileToProject("foo/package-info.java", "@NonnullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(myInspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
   public void testBeanValidationNotNull() {
     myFixture.addClass("package javax.annotation.constraints; public @interface NotNull{}");
     DataFlowInspection8Test.setCustomAnnotations(getProject(), getTestRootDisposable(), "javax.annotation.constraints.NotNull", "javax.annotation.constraints.Nullable");
@@ -282,6 +292,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void testAnnotateQuickFixOnMethodReference() {
     doTest();
     myFixture.launchAction(myFixture.findSingleIntention("Annotate"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testAnnotateOverridingParametersOnNotNullMethod() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate overridden method parameters"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 

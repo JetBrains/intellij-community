@@ -19,7 +19,6 @@ import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -59,10 +58,6 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       else {
         final FilePath newFilePath = detectNewFilePathForMovedOrModified();
         myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
-        if (myCurrentBase != null) {
-          ApplicationManager.getApplication().executeOnPooledThread(
-            (Runnable)() -> ((LazyPatchContentRevision)myNewContentRevision).getContent());
-        }
       }
     }
     return myNewContentRevision;

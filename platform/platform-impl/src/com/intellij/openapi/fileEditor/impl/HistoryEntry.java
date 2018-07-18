@@ -37,6 +37,8 @@ final class HistoryEntry {
   @NonNls private static final String STATE_ELEMENT = "state";
 
   @NotNull private final VirtualFilePointer myFilePointer;
+
+  private static final Element EMPTY_ELEMENT = JDOMUtil.internElement(new Element("state"));
   /**
    * can be null when read from XML
    */
@@ -200,8 +202,7 @@ final class HistoryEntry {
 
       if (file != null) {
         Element stateElement = providerElement.getChild(STATE_ELEMENT);
-        // due to backward compatibility null cannot be passed, so, use empty element
-        FileEditorState state = provider.readState(stateElement == null ? JDOMUtil.internElement(new Element("state")) : stateElement, project, file);
+        FileEditorState state = provider.readState(stateElement == null ? EMPTY_ELEMENT : stateElement, project, file);
         providerStates.add(Pair.create(provider, state));
       }
     }

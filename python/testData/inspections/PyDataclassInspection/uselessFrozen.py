@@ -14,7 +14,7 @@ class Base4:
         pass
 
 
-@dataclasses.dataclass(order=True)
+@dataclasses.dataclass(frozen=True)
 class Derived4(Base4):
     d: int = 1
 
@@ -32,6 +32,6 @@ class Base2:
         pass
 
 
-@dataclasses.dataclass(order=True)
+@dataclasses.dataclass(frozen=True)
 class Derived2(Base2):
     d: int = 1

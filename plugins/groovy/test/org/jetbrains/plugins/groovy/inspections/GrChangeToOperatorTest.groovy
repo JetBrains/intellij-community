@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.groovy.inspections
 
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -173,6 +174,8 @@ class Operators {
   }
 
   void testSamePrioritiesExpression() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable())
+    
     doTest "a.eq<caret>uals(b) == 1", "(a == b) == 1"
     doTest "(a == b).eq<caret>uals(1)", "(a == b) == 1"
     doTest "1 == a.eq<caret>uals(b)", "1 == (a == b)"

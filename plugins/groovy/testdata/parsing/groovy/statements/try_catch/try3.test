@@ -24,25 +24,19 @@ Groovy script
             PsiElement(identifier)('Exception1')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('e1')
-      PsiErrorElement:')' expected
+      PsiErrorElement:')' expected, got '{'
         <empty list>
-  PsiWhiteSpace(' ')
-  Closable block
-    PsiElement({)('{')
-    Parameter list
-      <empty list>
-    PsiElement(})('}')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiWhiteSpace('\n')
-  PsiErrorElement:'finally' without 'try'
-    PsiElement(finally)('finally')
-  Closable block
-    PsiElement({)('{')
-    PsiWhiteSpace(' ')
-    Parameter list
-      <empty list>
-    Reference expression
-      PsiElement(identifier)('doNothing')
-    PsiWhiteSpace(' ')
-    PsiElement(})('}')
+      PsiWhiteSpace(' ')
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
+    PsiWhiteSpace('\n')
+    Finally clause
+      PsiElement(finally)('finally')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        Reference expression
+          PsiElement(identifier)('doNothing')
+        PsiWhiteSpace(' ')
+        PsiElement(})('}')

@@ -37,7 +37,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
     companion object {
         // Log only 10% of all completion sessions
         private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 10
-        var isEnabledInTests = false
+        var isEnabledInTests: Boolean = false
     }
 
   private var loggingStrategy: LoggingStrategy = if (isEAP()) LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP) else LogAllSessions

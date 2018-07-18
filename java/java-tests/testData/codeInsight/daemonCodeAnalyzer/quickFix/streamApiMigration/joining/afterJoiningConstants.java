@@ -9,6 +9,6 @@ public class Test {
     int BUFLENGTH = 42;
     char CH = 'a';
 
-      String sb = IntStream.range(0, BUFLENGTH >> 1).mapToObj(i -> "\u041b" + CH + 'i').collect(Collectors.joining());
+    String sb = IntStream.range(0, BUFLENGTH >> 1).mapToObj(i -> "\u041b" + CH + 'i').collect(Collectors.joining());
   }
 }

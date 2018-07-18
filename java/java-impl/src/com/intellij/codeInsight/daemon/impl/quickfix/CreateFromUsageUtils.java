@@ -804,9 +804,7 @@ public class CreateFromUsageUtils {
 
       PsiType[] types = ExpectedTypesProvider.processExpectedTypes(expectedTypes, visitor, manager.getProject());
       if (types.length == 0) {
-        return allowVoidType
-               ? new PsiType[]{PsiType.VOID}
-               : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+        return Arrays.stream(expectedTypes).map(type -> type.getType()).toArray(PsiType[]::new);
       }
 
       return types;

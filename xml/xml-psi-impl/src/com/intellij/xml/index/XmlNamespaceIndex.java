@@ -15,6 +15,9 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.ide.highlighter.DTDFileType;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -25,10 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -91,6 +91,20 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return NAME;
   }
 
+  @NotNull
+  @Override
+  public FileBasedIndex.InputFilter getInputFilter() {
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, DTDFileType.INSTANCE) {
+      @Override
+      public boolean acceptInput(@NotNull final VirtualFile file) {
+        FileType fileType = file.getFileType();
+        final String extension = file.getExtension();
+        return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||
+               DTDFileType.INSTANCE.equals(fileType) && "dtd".equals(extension);
+      }
+    };
+  }
+
   @Override
   @NotNull
   public DataIndexer<String, XsdNamespaceBuilder, FileContent> getIndexer() {
@@ -148,7 +162,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @Nullable

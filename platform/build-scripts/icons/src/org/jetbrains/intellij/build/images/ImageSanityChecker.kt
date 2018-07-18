@@ -116,7 +116,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
 
   private fun checkOverridingFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "Overridden icons should be replaced with stub.png as fallback", module) { image ->
-      if (image.deprecationReplacement == null) return@process true
+      if (image.deprecation?.replacement == null) return@process true
 
       return@process isStubFallbackVersion(image.files)
     }

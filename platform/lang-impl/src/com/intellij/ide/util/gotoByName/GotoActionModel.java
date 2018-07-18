@@ -242,6 +242,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       
       return o.hashCode() - hashCode(); 
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MatchedValue value1 = (MatchedValue)o;
+      return Objects.equals(value, value1.value) &&
+             Objects.equals(pattern, value1.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(value, pattern);
+    }
   }
 
   @Override

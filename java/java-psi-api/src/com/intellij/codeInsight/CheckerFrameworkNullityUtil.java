@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -14,30 +15,39 @@ class CheckerFrameworkNullityUtil {
   private static final String DEFAULT_QUALIFIER = "org.checkerframework.framework.qual.DefaultQualifier";
   private static final String DEFAULT_QUALIFIERS = "org.checkerframework.framework.qual.DefaultQualifiers";
 
-  static boolean isCheckerDefault(PsiAnnotation anno, boolean nullable, PsiAnnotation.TargetType[] types) {
+  @Nullable
+  static NullityDefault isCheckerDefault(PsiAnnotation anno, PsiAnnotation.TargetType[] types) {
     String qName = anno.getQualifiedName();
     if (DEFAULT_QUALIFIER.equals(qName)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-      return value instanceof PsiClassObjectAccessExpression &&
-             isNullityAnnotationReference(nullable, (PsiClassObjectAccessExpression)value) &&
-             hasAppropriateTarget(types, anno.findAttributeValue("locations"));
+      if (value instanceof PsiClassObjectAccessExpression &&
+          hasAppropriateTarget(types, anno.findAttributeValue("locations"))) {
+        PsiClass valueClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
+        if (valueClass != null) {
+          NullableNotNullManager instance = NullableNotNullManager.getInstance(value.getProject());
+          if (instance.getNullables().contains(valueClass.getQualifiedName())) {
+            return new NullityDefault(anno, true);
+          }
+          if (instance.getNotNulls().contains(valueClass.getQualifiedName())) {
+            return new NullityDefault(anno, true);
+          }
+        }
+      }
+      return null;
     }
     
     if (DEFAULT_QUALIFIERS.equals(qName)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       for (PsiAnnotationMemberValue initializer : AnnotationUtil.arrayAttributeValues(value)) {
-        if (initializer instanceof PsiAnnotation && isCheckerDefault((PsiAnnotation)initializer, nullable, types)) {
-          return true;
+        if (initializer instanceof PsiAnnotation) {
+          NullityDefault result = isCheckerDefault((PsiAnnotation)initializer, types);
+          if (result != null) {
+            return result;
+          }
         }
       }
     }
-    return false;
-  }
-
-  private static boolean isNullityAnnotationReference(boolean nullable, PsiClassObjectAccessExpression value) {
-    PsiClass valueClass = PsiUtil.resolveClassInClassTypeOnly(value.getOperand().getType());
-    NullableNotNullManager instance = NullableNotNullManager.getInstance(value.getProject());
-    return valueClass != null && (nullable ? instance.getNullables() : instance.getNotNulls()).contains(valueClass.getQualifiedName());
+    return null;
   }
 
   private static boolean hasAppropriateTarget(PsiAnnotation.TargetType[] types, PsiAnnotationMemberValue locations) {

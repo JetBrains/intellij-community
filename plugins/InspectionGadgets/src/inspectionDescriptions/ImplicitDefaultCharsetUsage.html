@@ -2,7 +2,8 @@
 <body>
 Reports method and constructor calls which implicitly use the platform's default charset.
 These can produce different results on (e.g. foreign language) systems that use a different default charset,
-resulting in unexpected behaviour.
+resulting in unexpected behaviour. A quick-fix could be suggested to specify explicit UTF-8 charset
+if the corresponding overloaded method is available.
 <!-- tooltip end -->
 <p>
 </body>

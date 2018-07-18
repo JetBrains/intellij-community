@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
 import org.jetbrains.idea.maven.aether.ArtifactKind;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
@@ -259,21 +260,31 @@ public class JarRepositoryManager {
     );
   }
 
-  public static void getAvailableVersionsAsync(Project project,  RepositoryLibraryDescription libraryDescription, Consumer<Collection<String>> resultProcessor) {
-    final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
-    submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos)
-      .andThen(
-        versions -> {
-          resultProcessor.accept(versions);
-          return versions;
-        }
-      ));
-  }
-
   @NotNull
   public static Promise<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
     final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos));
+  }
+
+  @Nullable
+  public static ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
+    List<RemoteRepositoryDescription> repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
+    return submitModalJob(project, "Resolving Maven Dependencies", new AetherJob<ArtifactDependencyNode>(repositories) {
+      @Override
+      protected String getProgressText() {
+        return "Loading dependencies of " + description.getMavenCoordinates(version);
+      }
+
+      @Override
+      protected ArtifactDependencyNode perform(ProgressIndicator progress, ArtifactRepositoryManager manager) throws Exception {
+        return manager.collectDependencies(description.getGroupId(), description.getArtifactId(), version);
+      }
+
+      @Override
+      protected ArtifactDependencyNode getDefaultResult() {
+        return null;
+      }
+    });
   }
 
   private static void notifyArtifactsDownloaded(Project project, Collection<OrderRoot> roots) {
@@ -289,7 +300,7 @@ public class JarRepositoryManager {
     Notifications.Bus.notify(new Notification("Repository", title, sb.toString(), NotificationType.INFORMATION), project);
   }
 
-  public static void searchArtifacts(final Project project, String coord, final Consumer<Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
+  public static void searchArtifacts(final Project project, String coord, final Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
     if (coord == null || coord.length() == 0) {
       return;
     }
@@ -336,11 +347,11 @@ public class JarRepositoryManager {
     });
   }
 
-  public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<Collection<RemoteRepositoryDescription>> resultProcessor) {
+  public static void searchRepositories(final Project project, final Collection<String> serviceUrls, final Processor<? super Collection<RemoteRepositoryDescription>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
-        final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.<RemoteRepositoryDescription>emptyList());
+        final Ref<List<RemoteRepositoryDescription>> result = Ref.create(Collections.emptyList());
         try {
           final ArrayList<RemoteRepositoryDescription> repoList = new ArrayList<>();
           for (String url : serviceUrls) {
@@ -544,7 +555,7 @@ public class JarRepositoryManager {
       final String version = myDesc.getVersion();
       try {
         return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
-                                                   myDesc.isIncludeTransitiveDependencies());
+                                                   myDesc.isIncludeTransitiveDependencies(), myDesc.getExcludedDependencies());
       }
       catch (TransferCancelledException e) {
         throw new ProcessCanceledException(e);
@@ -559,7 +570,7 @@ public class JarRepositoryManager {
         }
         try {
           return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), resolvedVersion, myKinds,
-                                                     myDesc.isIncludeTransitiveDependencies());
+                                                     myDesc.isIncludeTransitiveDependencies(), myDesc.getExcludedDependencies());
         }
         catch (TransferCancelledException e1) {
           throw new ProcessCanceledException(e1);

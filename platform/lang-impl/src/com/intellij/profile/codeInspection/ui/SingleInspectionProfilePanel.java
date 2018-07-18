@@ -1212,7 +1212,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     private void setupResetLinkVisibility() {
-      if (myTreeTable == null) return;
+      if (myTreeTable == null || myProfile == null) return;
       InspectionConfigTreeNode.Tool node = myTreeTable.getStrictlySelectedToolNode();
       if (node != null) {
         ScopeToolState state = getSelectedState();

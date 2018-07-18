@@ -44,6 +44,7 @@ import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
+import org.assertj.core.util.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -804,9 +805,29 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
+    @VisibleForTesting
     @Override
     public boolean isCancelable() {
       return super.isCancelable();
+    }
+  }
+
+  public void testIndicatorsStillNotThrowInCheckCanceledIfCalledStartNonCancelableSectionBeforeByOldStaleDeprecatedPluginsNotYetPortedToProgressManagerExecuteInNonCancelableSection() {
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new EmptyProgressIndicator());
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new AbstractProgressIndicatorBase());
+  }
+
+  private static void checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(ProgressIndicator indicator) {
+    assertFalse(ProgressManager.getInstance().isInNonCancelableSection());
+    indicator.startNonCancelableSection();
+    indicator.cancel();
+    indicator.checkCanceled();
+    indicator.finishNonCancelableSection();
+    try {
+      indicator.checkCanceled();
+      fail("Must throw");
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

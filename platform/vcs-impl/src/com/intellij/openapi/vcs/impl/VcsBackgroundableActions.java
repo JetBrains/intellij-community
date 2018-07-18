@@ -23,8 +23,4 @@ public enum VcsBackgroundableActions {
   CREATE_HISTORY_SESSION,
   HISTORY_FOR_SELECTION,
   COMMITTED_CHANGES_DETAILS;
-
-  public static String keyFrom(final VirtualFile vf) {
-    return vf.getPath();
-  }
 }

@@ -12,7 +12,7 @@ Groovy script
       PsiElement(()('(')
       builtin type class expression
         PsiElement(int)('int')
-      PsiErrorElement:',' or ')' expected
+      PsiErrorElement:')' or ',' expected, got 'a'
         <empty list>
       PsiWhiteSpace(' ')
       Reference expression

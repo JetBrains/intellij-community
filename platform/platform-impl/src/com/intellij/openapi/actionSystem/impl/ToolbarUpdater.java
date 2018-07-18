@@ -97,7 +97,7 @@ public abstract class ToolbarUpdater implements Activatable {
     final Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
     final Application app = ApplicationManager.getApplication();
 
-    if (now || app.isUnitTestMode()) {
+    if (now || (app.isUnitTestMode() && app.isDispatchThread())) {
       updateRunnable.run();
     }
     else {

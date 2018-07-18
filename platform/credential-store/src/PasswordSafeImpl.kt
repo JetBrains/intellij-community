@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Paths
 
@@ -28,6 +29,11 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
                                                  provider: CredentialStore? = null) : PasswordSafe(), SettingsSavingComponent {
+  override var isRememberPasswordByDefault: Boolean
+    get() = settings.state.isRememberPasswordByDefault
+    set(value) {
+      settings.state.isRememberPasswordByDefault = value
+    }
 
   private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
 
@@ -40,7 +46,8 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { KeePassCredentialStore(emptyMap(), memoryOnly = true) }
 
-  override fun isMemoryOnly() = settings.providerType == ProviderType.MEMORY_ONLY
+  override val isMemoryOnly: Boolean
+    get() = settings.providerType == ProviderType.MEMORY_ONLY
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
@@ -78,7 +85,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   }
 
   // maybe in the future we will use native async, so, this method added here instead "if need, just use runAsync in your code"
-  override fun getAsync(attributes: CredentialAttributes) = runAsync { get(attributes) }
+  override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
   override fun save() {
     (currentProvider as? KeePassCredentialStore)?.save()

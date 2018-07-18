@@ -20,6 +20,7 @@ import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiLambdaExpression
 import com.intellij.psi.PsiType
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.ULambdaExpression
 import org.jetbrains.uast.UastEmptyExpression
 
@@ -30,11 +31,11 @@ class JavaULambdaExpression(
   override val functionalInterfaceType: PsiType?
     get() = psi.functionalInterfaceType
 
-  override val valueParameters by lz {
+  override val valueParameters: List<JavaUParameter> by lz {
     psi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
-  override val body by lz {
+  override val body: UExpression by lz {
     val b = psi.body
     when (b) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)

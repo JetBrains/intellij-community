@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
@@ -7,6 +6,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
 
 /**
@@ -73,6 +74,12 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @NotNull
   public GrExpression getInvokedExpression() {
     return findNotNullChildByClass(GrExpression.class);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getSafeAccessToken() {
+    return findChildByType(T_Q);
   }
 
   @Override

@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
@@ -539,7 +542,16 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor);
 
+  /**
+   *  Misnamed, actually it checks only parameter hints
+    */
   void testInlays();
+
+  /**
+   * @param inlayPresenter function to render text of inlay. Inlays come to this function only if inlayFilter returned true
+   * @param inlayFilter filter to check only required inlays
+   */
+  void testInlays(Function<? super Inlay, String> inlayPresenter, Predicate<? super Inlay> inlayFilter);
 
   void checkResultWithInlays(String text);
 

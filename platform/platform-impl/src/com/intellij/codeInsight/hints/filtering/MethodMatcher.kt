@@ -27,7 +27,7 @@ interface MethodMatcher {
 }
 
 object AnyParamMatcher: ParamMatcher {
-  override fun isMatching(paramNames: List<String>) = true
+  override fun isMatching(paramNames: List<String>): Boolean = true
 }
 
 class StringParamMatcher(private val paramMatchers: List<StringMatcher>): ParamMatcher {

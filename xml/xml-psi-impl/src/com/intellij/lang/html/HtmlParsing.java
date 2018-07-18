@@ -169,6 +169,9 @@ public class HtmlParsing {
 
         if (originalTagName != null && isSingleTag(tagName, originalTagName)) {
           final PsiBuilder.Marker footer = mark();
+          while (token() == XmlTokenType.XML_REAL_WHITE_SPACE) {
+            advance();
+          }
           if (token() == XmlTokenType.XML_END_TAG_START) {
             advance();
             if (token() == XmlTokenType.XML_NAME) {

@@ -459,6 +459,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
 
   void testMethodCallTypeFromMultiResolve() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("methodCallTypeFromMultiResolve/A.groovy").element
+    def result = ref.advancedResolve()
     assertNull(ref.resolve())
     assertTrue(((GrMethodCallExpression)ref.parent).type.equalsToText("java.lang.String"))
   }

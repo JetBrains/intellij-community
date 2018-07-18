@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -84,13 +84,15 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
     if (astNode == null) {
       return false;
     }
+    ASTNode child = null;
     if (astNode instanceof CompositeElement) { // in some languages token nodes are wrapped within a single-child composite
       ASTNode[] children = astNode.getChildren(null);
-      if (children.length != 1) return false;
-      astNode = children[0];
+      if (children.length == 1) {
+        child = children[0];
+      }
     }
-    final IElementType elementType = astNode.getElementType();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
-    return parserDefinition.getStringLiteralElements().contains(elementType);
+    final TokenSet literalElements = parserDefinition.getStringLiteralElements();
+    return literalElements.contains(astNode.getElementType()) || child != null && literalElements.contains(child.getElementType());
   }
 }

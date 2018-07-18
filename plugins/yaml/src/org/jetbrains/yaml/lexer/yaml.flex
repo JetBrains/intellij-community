@@ -28,6 +28,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   private int braceCount = 0;
   private IElementType valueTokenType = null;
   private int previousState = YYINITIAL;
+  private int previousAnchorState = YYINITIAL;
 
   protected int yycolumn = 0;
 
@@ -173,6 +174,10 @@ C_NS_SHORTHAND_TAG = {C_TAG_HANDLE} {NS_TAG_CHAR}+
 C_NON_SPECIFIC_TAG = "!"
 C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TAG}
 
+//[102] ns-anchor-char ::= ns-char - c-flow-indicator
+//[103] ns-anchor-name ::= ns-anchor-char+
+NS_ANCHOR_NAME = [^,\[\]\{\}\s]+
+
 BS_HEADER_ERR_WORD = [^ \t#\n] [^ \t\n]*
 
 /*
@@ -193,7 +198,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, BS_HEADER_TAIL
+%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, BS_HEADER_TAIL, ANCHOR_MODE, ALIAS_MODE
 
 %%
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,6 +254,17 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   return TAG;
 }
 
+//[101] c-ns-anchor-property ::= “&” ns-anchor-name
+& / {NS_ANCHOR_NAME}            {   previousAnchorState = yystate();
+                                    yyBegin(ANCHOR_MODE);
+                                    return AMPERSAND;
+                                }
+}
+
+<ANCHOR_MODE> {
+{NS_ANCHOR_NAME}                {   yyBegin(previousAnchorState);
+                                    return ANCHOR;
+                                }
 }
 
 <YYINITIAL, BRACES, VALUE_OR_KEY> {
@@ -313,6 +329,17 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
  return SCALAR_DSTRING;
 }
 
+//[104] c-ns-alias-node ::= “*” ns-anchor-name
+\* / {NS_ANCHOR_NAME}           {   previousAnchorState = yystate();
+                                    yyBegin(ALIAS_MODE);
+                                    return STAR;
+                                }
+}
+
+<ALIAS_MODE> {
+{NS_ANCHOR_NAME}                {   yyBegin(previousAnchorState);
+                                    return ALIAS;
+                                }
 }
 
 // See 8.1 Block Scalar Styles

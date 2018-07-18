@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
@@ -248,6 +249,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-15506
   public void testEmptyListOfBaseClasses() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
@@ -263,11 +265,13 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3126
   public void testChainedComparison1() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-3126
   public void testChainedComparison2() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -278,6 +282,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-5623
   public void testChainedComparison4() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -288,6 +293,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20004
   public void testChainedComparison7() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 

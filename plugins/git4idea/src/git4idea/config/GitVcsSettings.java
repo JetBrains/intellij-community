@@ -65,6 +65,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public int BRANCH_INFO_UPDATE_TIME = 10;
     public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
     public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
+    public boolean COMMIT_RENAMES_SEPARATELY = false;
+    public boolean ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS = true;
 
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
@@ -276,6 +278,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.PREVIEW_PUSH_PROTECTED_ONLY = state;
   }
 
+  public boolean isCommitRenamesSeparately() {
+    return myState.COMMIT_RENAMES_SEPARATELY;
+  }
+
+  public void setCommitRenamesSeparately(boolean state) {
+    myState.COMMIT_RENAMES_SEPARATELY = state;
+  }
+
   /**
    * Provides migration from project settings.
    * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
@@ -307,6 +317,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setSwapSidesInCompareBranches(boolean value) {
     myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
+  }
+
+  public boolean shouldAddSuffixToCherryPicksOfPublishedCommits() {
+    return myState.ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS;
+  }
+
+  public void setAddSuffixToCherryPicks(boolean value) {
+    myState.ADD_SUFFIX_TO_CHERRY_PICKS_OF_PUBLISHED_COMMITS = value;
   }
 
   @Tag("push-target-info")

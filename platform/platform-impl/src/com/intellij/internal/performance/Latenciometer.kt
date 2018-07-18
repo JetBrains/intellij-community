@@ -31,9 +31,9 @@ class LatencyRecorderImpl : LatencyRecorder {
 }
 
 class LatencyRecord {
-  var totalKeysTyped = 0
-  var totalLatency = 0L
-  var maxLatency = 0L
+  var totalKeysTyped: Int = 0
+  var totalLatency: Long = 0L
+  var maxLatency: Long = 0L
 
   fun update(latencyInMS: Long) {
     totalKeysTyped++
@@ -43,12 +43,12 @@ class LatencyRecord {
     }
   }
 
-  val averageLatency get() = totalLatency / totalKeysTyped
+  val averageLatency: Long get() = totalLatency / totalKeysTyped
 }
 
 class FileTypeLatencyRecord(val fileType: FileType) {
-  val totalLatency = LatencyRecord()
-  val actionLatencyRecords = mutableMapOf<String, LatencyRecord>()
+  val totalLatency: LatencyRecord = LatencyRecord()
+  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf<String, LatencyRecord>()
 
   fun update(action: String, latencyInMS: Long) {
     totalLatency.update(latencyInMS)
@@ -56,7 +56,7 @@ class FileTypeLatencyRecord(val fileType: FileType) {
   }
 }
 
-val latencyMap = mutableMapOf<FileType, FileTypeLatencyRecord>()
+val latencyMap: MutableMap<FileType, FileTypeLatencyRecord> = mutableMapOf<FileType, FileTypeLatencyRecord>()
 
 fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
   val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
@@ -66,7 +66,7 @@ fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
   latencyRecord.update(getActionKey(action), latencyInMS)
 }
 
-fun getActionKey(action: String) =
+fun getActionKey(action: String): String =
   if (action.length == 1) {
     when(action[0]) {
       in 'A'..'Z', in 'a'..'z', in '0'..'9' -> "Letter"

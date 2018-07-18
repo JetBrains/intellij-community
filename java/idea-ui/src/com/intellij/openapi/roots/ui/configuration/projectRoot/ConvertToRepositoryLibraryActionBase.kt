@@ -62,7 +62,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
   "Convert to Repository Library...",
   "Convert a regular library to a repository library which additionally stores its Maven coordinates, so the IDE can automatically download the library JARs if they are missing",
   null) {
-  protected val project = context.project
+  protected val project: Project = context.project
 
   protected abstract fun getSelectedLibrary(): LibraryEx?
 
@@ -80,7 +80,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun downloadLibraryAndReplace(library: LibraryEx,
                                         mavenCoordinates: JpsMavenRepositoryLibraryDescriptor) {
-    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version, mavenCoordinates.isIncludeTransitiveDependencies)
+    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version,
+                                                        mavenCoordinates.isIncludeTransitiveDependencies, mavenCoordinates.excludedDependencies)
     val hasSources = RepositoryUtils.libraryHasSources(library)
     val hasJavadoc = RepositoryUtils.libraryHasJavaDocs(library)
     LOG.debug("Resolving $mavenCoordinates")
@@ -151,7 +152,8 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
       return null
     }
 
-    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies)
+    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies,
+                                               emptyList<String>())
   }
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
@@ -298,7 +300,7 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
           val len2 = input2.read(buffer2)
           if (len1 != len2) return false
           if (len1 <= 0) break
-          for (i in 0..len1 - 1) {
+          for (i in 0 until len1) {
             if (buffer1[i] != buffer2[i]) return false
           }
         }

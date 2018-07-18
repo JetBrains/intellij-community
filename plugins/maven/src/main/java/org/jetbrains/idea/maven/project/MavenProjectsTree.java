@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,7 +61,7 @@ public class MavenProjectsTree {
 
   private static final Logger LOG = Logger.getInstance(MavenProjectsTree.class);
 
-  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".6";
+  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".7";
 
   private final Object myStateLock = new Object();
   private final ReentrantReadWriteLock myStructureLock = new ReentrantReadWriteLock();
@@ -668,6 +669,10 @@ public class MavenProjectsTree {
       long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
       VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
       long profilesTimestamp = getFileTimestamp(profilesXmlFile);
+      VirtualFile jvmConfigFile = getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
+      long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
+      VirtualFile mavenConfigFile = getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+      long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
 
       long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
       long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
@@ -679,8 +684,18 @@ public class MavenProjectsTree {
                                        profilesTimestamp,
                                        userSettingsTimestamp,
                                        globalSettingsTimestamp,
-                                       profilesHashCode);
+                                       profilesHashCode,
+                                       jvmConfigTimestamp,
+                                       mavenConfigTimestamp);
     });
+  }
+
+  private static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
+    VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(mavenProject.getDirectoryFile()), false);
+    if (baseDir != null) {
+      return baseDir.findFileByRelativePath(fileRelativePath);
+    }
+    return null;
   }
 
   private static long getFileTimestamp(VirtualFile file) {
@@ -1579,23 +1594,31 @@ public class MavenProjectsTree {
     private final long myUserSettingsTimestamp;
     private final long myGlobalSettingsTimestamp;
     private final long myExplicitProfilesHashCode;
+    private final long myJvmConfigTimestamp;
+    private final long myMavenConfigTimestamp;
 
     private MavenProjectTimestamp(long pomTimestamp,
                                   long parentLastReadStamp,
                                   long profilesTimestamp,
                                   long userSettingsTimestamp,
                                   long globalSettingsTimestamp,
-                                  long explicitProfilesHashCode) {
+                                  long explicitProfilesHashCode,
+                                  long jvmConfigTimestamp,
+                                  long mavenConfigTimestamp) {
       myPomTimestamp = pomTimestamp;
       myParentLastReadStamp = parentLastReadStamp;
       myProfilesTimestamp = profilesTimestamp;
       myUserSettingsTimestamp = userSettingsTimestamp;
       myGlobalSettingsTimestamp = globalSettingsTimestamp;
       myExplicitProfilesHashCode = explicitProfilesHashCode;
+      myJvmConfigTimestamp = jvmConfigTimestamp;
+      myMavenConfigTimestamp = mavenConfigTimestamp;
     }
 
     public static MavenProjectTimestamp read(DataInputStream in) throws IOException {
       return new MavenProjectTimestamp(in.readLong(),
+                                       in.readLong(),
+                                       in.readLong(),
                                        in.readLong(),
                                        in.readLong(),
                                        in.readLong(),
@@ -1610,6 +1633,8 @@ public class MavenProjectsTree {
       out.writeLong(myUserSettingsTimestamp);
       out.writeLong(myGlobalSettingsTimestamp);
       out.writeLong(myExplicitProfilesHashCode);
+      out.writeLong(myJvmConfigTimestamp);
+      out.writeLong(myMavenConfigTimestamp);
     }
 
     @Override
@@ -1619,7 +1644,9 @@ public class MavenProjectsTree {
              + ":" + myProfilesTimestamp
              + ":" + myUserSettingsTimestamp
              + ":" + myGlobalSettingsTimestamp
-             + ":" + myExplicitProfilesHashCode + ")";
+             + ":" + myExplicitProfilesHashCode
+             + ":" + myJvmConfigTimestamp
+             + ":" + myMavenConfigTimestamp + ")";
     }
 
     @Override
@@ -1635,6 +1662,8 @@ public class MavenProjectsTree {
       if (myUserSettingsTimestamp != timestamp.myUserSettingsTimestamp) return false;
       if (myGlobalSettingsTimestamp != timestamp.myGlobalSettingsTimestamp) return false;
       if (myExplicitProfilesHashCode != timestamp.myExplicitProfilesHashCode) return false;
+      if (myJvmConfigTimestamp != timestamp.myJvmConfigTimestamp) return false;
+      if (myMavenConfigTimestamp != timestamp.myMavenConfigTimestamp) return false;
 
       return true;
     }
@@ -1648,6 +1677,8 @@ public class MavenProjectsTree {
       result = 31 * result + (int)(myUserSettingsTimestamp ^ (myUserSettingsTimestamp >>> 32));
       result = 31 * result + (int)(myGlobalSettingsTimestamp ^ (myGlobalSettingsTimestamp >>> 32));
       result = 31 * result + (int)(myExplicitProfilesHashCode ^ (myExplicitProfilesHashCode >>> 32));
+      result = 31 * result + (int)(myJvmConfigTimestamp ^ (myJvmConfigTimestamp >>> 32));
+      result = 31 * result + (int)(myMavenConfigTimestamp ^ (myMavenConfigTimestamp >>> 32));
       return result;
     }
   }

@@ -762,13 +762,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
                   return wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
                 },
                 identity())
+              .nonNullKeys()
               .grouping();
 
     return EntryStream.of(byWorkingCopy)
                       .flatMapToValue((workingCopy, files) -> {
-                        if (workingCopy != null) {
-                          FilterDescendantVirtualFiles.filter(files);
-                        }
+                        FilterDescendantVirtualFiles.filter(files);
                         return files.stream();
                       })
                       .values()

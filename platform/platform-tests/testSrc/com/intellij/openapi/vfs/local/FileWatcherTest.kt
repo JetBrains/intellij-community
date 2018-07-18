@@ -13,6 +13,12 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.INTER_RESPONSE_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PlatformTestUtil
@@ -45,11 +51,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
 
-  private val START_STOP_DELAY = 10000L      // time to wait for the watcher spin up/down
-  private val INTER_RESPONSE_DELAY = 500L    // time to wait for a next event in a sequence
-  private val NATIVE_PROCESS_DELAY = 60000L  // time to wait for a native watcher response
-  private val SHORT_PROCESS_DELAY = 5000L    // time to wait when no native watcher response is expected
-
   @Rule @JvmField val tempDir = TempDirectory()
 
   private lateinit var fs: LocalFileSystem
@@ -74,14 +75,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
     watchedPaths += tempDir.root.path
-    watcher.startup { path ->
-      if (path == FileWatcher.RESET || path != FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
+    startup(watcher, { path ->
+      if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
         alarm.cancelAllRequests()
         alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
         if (path == FileWatcher.RESET) resetHappened.set(true)
       }
-    }
-    wait { !watcher.isOperational }
+    })
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
   }
@@ -89,8 +89,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @After fun tearDown() {
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
-    watcher.shutdown()
-    wait { watcher.isOperational }
+    shutdown(watcher)
 
     runInEdtAndWait {
       runWriteAction { root.delete(this) }
@@ -401,7 +400,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val file2 = tempDir.newFile("top/root/2.txt")
     refresh(top)
     val fsRoot = File(if (SystemInfo.isUnix) "/" else top.path.substring(0, 3))
-    assertTrue(fsRoot.exists(), "can't guess root of " + top)
+    assertTrue(fsRoot.exists(), "can't guess root of $top")
 
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
@@ -451,10 +450,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   // tests the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
-  @Test fun testPartialRefresh() = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
-  @Test fun testInterruptedRefresh() = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
-  @Test fun testRefreshAndFindFile() = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
-  @Test fun testRefreshEquality() = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
+  @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
+  @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
+  @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
+  @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
     val name = IoTestUtil.getUnicodeName()
@@ -527,23 +526,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   //<editor-fold desc="Helpers">
 
-  private fun wait(timeout: Long = START_STOP_DELAY, condition: () -> Boolean) {
-    val stopAt = System.currentTimeMillis() + timeout
-    while (condition()) {
-      assertTrue(System.currentTimeMillis() < stopAt, "operation timed out")
-      TimeoutUtil.sleep(10)
-    }
-  }
-
-  private fun watch(file: File, recursive: Boolean = true): LocalFileSystem.WatchRequest {
-    val request = fs.addRootToWatch(file.path, recursive)!!
-    wait { watcher.isSettingRoots }
-    return request
-  }
+  private fun watch(file: File, recursive: Boolean = true) = FileWatcherTestUtil.watch(watcher, file, recursive)
 
   private fun unwatch(request: LocalFileSystem.WatchRequest) {
-    fs.removeWatchedRoot(request)
-    wait { watcher.isSettingRoots }
+    FileWatcherTestUtil.unwatch(watcher, request)
     fs.refresh(false)
   }
 

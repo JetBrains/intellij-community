@@ -63,6 +63,15 @@ class TryFinallyCanBeTryWithResources {
       fileInputStream.close();
     }
   }
+
+  public void resourceListExists() throws IOException {
+    FileInputStream f1 = new FileInputStream("1");
+    <warning descr="'try' can use automatic resource management">try</warning> (FileInputStream f2 = new FileInputStream("2");/**/) {
+
+    } finally {
+      f1.close();
+    }
+  }
 }
 
 class Java9 {

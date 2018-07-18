@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -83,14 +84,14 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   public interface SpeedsearchAction {
   }
 
-  private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction {
+  private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction, DumbAware {
 
     public MySpeedSearchAction(@NotNull AnAction action) {
       super(action);
     }
   }
 
-  private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup implements SpeedsearchAction {
+  private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup implements SpeedsearchAction, DumbAware {
     public MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
       super(actionGroup);
     }

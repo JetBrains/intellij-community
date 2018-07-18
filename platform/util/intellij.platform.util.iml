@@ -16,7 +16,7 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.resources.en" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" exported="" />
+    <orderEntry type="library" exported="" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" exported="" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />

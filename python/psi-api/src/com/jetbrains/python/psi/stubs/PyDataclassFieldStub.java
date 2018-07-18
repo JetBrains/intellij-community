@@ -8,17 +8,17 @@ import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 public interface PyDataclassFieldStub extends CustomTargetExpressionStub {
 
   /**
-   * @return true if `default` parameter is specified, false otherwise.
+   * @return true if default value is specified, false otherwise.
    */
   boolean hasDefault();
 
   /**
-   * @return true if `default_factory` parameter is specified, false otherwise.
+   * @return true if factory providing default value is specified, false otherwise.
    */
   boolean hasDefaultFactory();
 
   /**
-   * @return value of `init` parameter.
+   * @return true if field is used in `__init__`.
    */
   boolean initValue();
 }

@@ -3,26 +3,27 @@ package com.jetbrains.python.packaging
 
 import com.intellij.webcore.packaging.PackageVersionComparator
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.packaging.requirement.PyRequirementVersion
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer
 import one.util.streamex.EntryStream
 import one.util.streamex.StreamEx
 import java.math.BigInteger
 import java.util.stream.Stream
 
 /**
- * Compares normalized [PyPackageVersions][PyPackageVersion].
+ * Compares [PyPackageVersions][PyPackageVersion].
  *
  * Based on [PEP-440][https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering].
  */
 object PyPackageVersionComparator : Comparator<PyPackageVersion> {
 
+  /**
+   * Compares versions by normalizing them or using [com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR] as a fallback
+   */
   @JvmStatic
   val STR_COMPARATOR: Comparator<String> = Comparator { o1, o2 ->
-    val normalized1 = PyRequirementVersionNormalizer.normalize(o1)?.toPkgVersion()
+    val normalized1 = PyPackageVersionNormalizer.normalize(o1)
                       ?: return@Comparator PackageVersionComparator.VERSION_COMPARATOR.compare(o1, o2)
 
-    val normalized2 = PyRequirementVersionNormalizer.normalize(o2)?.toPkgVersion()
+    val normalized2 = PyPackageVersionNormalizer.normalize(o2)
                       ?: return@Comparator PackageVersionComparator.VERSION_COMPARATOR.compare(o1, o2)
 
     compare(normalized1, normalized2)
@@ -51,16 +52,14 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
     return compareLocals(o1, o2)
   }
 
-  private fun PyRequirementVersion.toPkgVersion() = PyPackageVersion(epoch, release, pre, post, dev, local)
-
   /**
-   * @see com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer.normalizeEpoch
+   * @see PyPackageVersionNormalizer.normalizeEpoch
    */
   private fun compareEpochs(o1: PyPackageVersion, o2: PyPackageVersion) = compareAsInts(
     o1.epoch ?: "0", o2.epoch ?: "0")
 
   /**
-   * @see com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer.normalizeRelease
+   * @see PyPackageVersionNormalizer.normalizeRelease
    */
   private fun compareReleases(o1: PyPackageVersion, o2: PyPackageVersion): PyRequirementRelation {
     for ((releasePart1, releasePart2) in zipLongest(o1.release.split('.'),
@@ -88,7 +87,7 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
   }
 
   /**
-   * @see com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer.normalizePost
+   * @see PyPackageVersionNormalizer.normalizePost
    */
   private fun comparePosts(o1: PyPackageVersion, o2: PyPackageVersion): Int {
     return compareAsInts(o1.post?.substring(4) ?: "-1",
@@ -96,7 +95,7 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
   }
 
   /**
-   * @see com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer.normalizePre
+   * @see PyPackageVersionNormalizer.normalizePre
    */
   private fun comparePres(o1: PyPackageVersion, o2: PyPackageVersion): Int {
     val pre1 = o1.pre
@@ -116,7 +115,7 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
   }
 
   /**
-   * @see com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer.normalizeDev
+   * @see PyPackageVersionNormalizer.normalizeDev
    */
   private fun compareDevs(o1: PyPackageVersion, o2: PyPackageVersion): Int {
     val dev1 = o1.dev
@@ -130,7 +129,7 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
   }
 
   /**
-   * @see com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer.normalizeLocal
+   * @see PyPackageVersionNormalizer.normalizeLocal
    */
   private fun compareLocals(o1: PyPackageVersion, o2: PyPackageVersion) = (o1.local ?: "").compareTo(o2.local ?: "")
 

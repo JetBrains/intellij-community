@@ -45,6 +45,7 @@ import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,14 @@ public class ShowFilePathAction extends DumbAwareAction {
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
       URL url = e.getURL();
-      if (url != null) openFile(new File(url.getPath()));
+      if (url != null) {
+        try {
+          openFile(new File(url.toURI()));
+        }
+        catch (URISyntaxException ex) {
+          LOG.warn("invalid URL: " + url, ex);
+        }
+      }
       notification.expire();
     }
   };

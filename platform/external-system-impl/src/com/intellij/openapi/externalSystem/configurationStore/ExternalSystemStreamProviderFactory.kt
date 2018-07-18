@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -138,11 +138,13 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     if (!moduleStorage.hasSomeData &&
         isReimportOnMissedExternalStorageScheduled.compareAndSet(false, true) &&
         !project.isInitialized &&
-        project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != true) {
+        !ExternalSystemUtil.isNewProject(project)) {
       StartupManager.getInstance(project).runWhenProjectIsInitialized {
         val externalProjectsManager = ExternalProjectsManager.getInstance(project)
         externalProjectsManager.runWhenInitialized {
-          externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+          if (!ExternalSystemUtil.isNewProject(project)) {
+            externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+          }
         }
       }
     }

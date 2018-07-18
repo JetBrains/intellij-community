@@ -91,7 +91,18 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
                                                        .map(ResourceVariable::generateResourceDeclaration)
                                                        .collect(Collectors.joining(";"));
       StringBuilder sb = new StringBuilder("try(");
-      sb.append(resourceList).append(")");
+      sb.append(resourceList);
+      PsiResourceList resourceListElement = tryStatement.getResourceList();
+      if (resourceListElement != null) {
+        PsiElement[] children = resourceListElement.getChildren();
+        if (children.length > 2 && resourceListElement.getResourceVariablesCount() > 0) {
+          sb.append(";");
+          for (int i = 1; i < children.length - 1; i++) {
+            sb.append(children[i].getText());
+          }
+        }
+      }
+      sb.append(")");
       List<PsiLocalVariable> locals = StreamEx.of(context.myResourceVariables)
                                               .map(resourceVariable -> resourceVariable.myVariable)
                                               .select(PsiLocalVariable.class)
@@ -205,6 +216,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       if (finallyBlock == null) return null;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return null;
+      //if (tryStatement.getResourceList() != null) return null;
       PsiStatement[] tryStatements = tryBlock.getStatements();
       PsiStatement[] finallyStatements = finallyBlock.getStatements();
       BitSet closedVariableStatementIndices = new BitSet(finallyStatements.length);

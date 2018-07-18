@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="Groovy-Eclipse-Batch">
+  <library name="Groovy-Eclipse-Batch" type="repository">
+    <properties maven-id="org.codehaus.groovy:groovy-eclipse-batch:2.4.15-01" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-eclipse-batch/2.4.15-01/groovy-eclipse-batch-2.4.15-01.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

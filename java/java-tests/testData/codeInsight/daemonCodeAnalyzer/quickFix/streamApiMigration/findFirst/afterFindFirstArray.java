@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public class Main {
   public int[] testMap(Map<String, List<String>> map) throws Exception {
-      int[] arr = map.values().stream().filter(Objects::nonNull).findFirst().map(list -> new int[]{list.size()}).orElse(null);
+    int[] arr = map.values().stream().filter(Objects::nonNull).findFirst().map(list -> new int[]{list.size()}).orElse(null);
       return arr;
   }
 }

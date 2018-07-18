@@ -12,7 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
 
-fun Path.exists() = Files.exists(this)
+fun Path.exists(): Boolean = Files.exists(this)
 
 fun Path.createDirectories(): Path {
   // symlink or existing regular file - Java SDK do this check, but with as `isDirectory(dir, LinkOption.NOFOLLOW_LINKS)`, i.e. links are not checked
@@ -144,11 +144,11 @@ fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
-fun Path.readChars() = inputStream().reader().readCharSequence(size().toInt())
+fun Path.readChars(): CharSequence = inputStream().reader().readCharSequence(size().toInt())
 
-fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
+fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
 
-fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
+fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
 
 @JvmOverloads
 fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
@@ -191,7 +191,7 @@ fun Path.write(data: String): Path {
   return this
 }
 
-fun Path.size() = Files.size(this)
+fun Path.size(): Long = Files.size(this)
 
 fun Path.basicAttributesIfExists(): BasicFileAttributes? {
   try {
@@ -202,13 +202,13 @@ fun Path.basicAttributesIfExists(): BasicFileAttributes? {
   }
 }
 
-fun Path.sizeOrNull() = basicAttributesIfExists()?.size() ?: -1
+fun Path.sizeOrNull(): Long = basicAttributesIfExists()?.size() ?: -1
 
-fun Path.isHidden() = Files.isHidden(this)
+fun Path.isHidden(): Boolean = Files.isHidden(this)
 
-fun Path.isDirectory() = Files.isDirectory(this)
+fun Path.isDirectory(): Boolean = Files.isDirectory(this)
 
-fun Path.isFile() = Files.isRegularFile(this)
+fun Path.isFile(): Boolean = Files.isRegularFile(this)
 
 fun Path.move(target: Path): Path = Files.move(this, target, StandardCopyOption.REPLACE_EXISTING)
 

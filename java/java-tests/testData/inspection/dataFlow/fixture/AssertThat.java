@@ -44,4 +44,18 @@ class Contracts {
     }
   }
 
+  private void testArraySize() {
+    String[] things = retrieveThings();
+    assertThat(things, is(arrayWithSize(1)));
+    assertThat(things[0], is(equalTo("...")));
+  }
+
+  @Nullable
+  private static native String[] retrieveThings();
+
+  private void testNotArraySize() {
+    String[] things = retrieveThings();
+    assertThat(things, not(is(arrayWithSize(2))));
+    assertThat(<warning descr="Array access 'things[0]' may produce 'java.lang.NullPointerException'">things[0]</warning>, is(equalTo("...")));
+  }
 }

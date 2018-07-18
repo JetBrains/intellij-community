@@ -29,7 +29,7 @@ import java.io.IOException
 abstract class HttpRequestHandler {
   companion object {
     // Your handler will be instantiated on first user request
-    val EP_NAME = ExtensionPointName.create<HttpRequestHandler>("com.intellij.httpRequestHandler")
+    val EP_NAME: ExtensionPointName<HttpRequestHandler> = ExtensionPointName.create<HttpRequestHandler>("com.intellij.httpRequestHandler")
 
     @JvmStatic
     fun checkPrefix(uri: String, prefix: String): Boolean {

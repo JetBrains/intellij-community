@@ -1,4 +1,4 @@
-// "Randomly change serial version UID" "true"
+// "Randomly change 'serialVersionUID' initializer" "true"
 
 import java.util.function.BinaryOperator;
 import java.util.function.Function;

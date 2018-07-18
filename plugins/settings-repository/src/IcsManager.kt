@@ -37,13 +37,13 @@ internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 }
 
 class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
-  val credentialsStore = lazy { IcsCredentialsStore() }
+  val credentialsStore: Lazy<IcsCredentialsStore> = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
-  val readOnlySourcesManager = ReadOnlySourceManager(this, dir)
+  val readOnlySourcesManager: ReadOnlySourceManager = ReadOnlySourceManager(this, dir)
 
   init {
     settings = try {
@@ -67,7 +67,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   private @Volatile var autoCommitEnabled = true
 
-  @Volatile var repositoryActive = false
+  @Volatile var repositoryActive: Boolean = false
 
   val active: Boolean
     get() = repositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
@@ -111,7 +111,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 //    }
 //  }
 
-  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
+  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean = syncManager.sync(syncType, project, localRepositoryInitializer)
 
   private fun cancelAndDisableAutoCommit() {
     if (autoCommitEnabled) {
@@ -196,9 +196,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
 
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
+    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       if (!repositoryActive) {

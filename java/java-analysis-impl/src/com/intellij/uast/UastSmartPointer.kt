@@ -16,5 +16,5 @@ class UastSmartPointer<T : UElement>(uElement: T, val targetClass: Class<T>) {
 
 }
 
-inline fun <reified T : UElement> T.createUastSmartPointer() = UastSmartPointer(this, T::class.java)
+inline fun <reified T : UElement> T.createUastSmartPointer(): UastSmartPointer<T> = UastSmartPointer(this, T::class.java)
 

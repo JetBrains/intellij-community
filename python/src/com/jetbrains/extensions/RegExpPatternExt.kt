@@ -4,4 +4,4 @@ package com.jetbrains.extensions
 import org.intellij.lang.regexp.psi.RegExpPattern
 import java.util.regex.Pattern
 
-fun RegExpPattern.asPattern() = Pattern.compile(text)!!
+fun RegExpPattern.asPattern(): Pattern = Pattern.compile(text)!!

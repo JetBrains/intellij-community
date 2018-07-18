@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.fileEditor.impl;
 
@@ -26,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -47,7 +34,6 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
    * Updates icons for open files when project roots change
    */
   private final FileEditorPsiTreeChangeListener myPsiTreeChangeListener;
-  private final WolfTheProblemSolver.ProblemListener myProblemListener;
 
   public PsiAwareFileEditorManagerImpl(final Project project,
                                        final PsiManager psiManager,
@@ -58,12 +44,12 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     myPsiManager = psiManager;
     myProblemSolver = problemSolver;
     myPsiTreeChangeListener = new FileEditorPsiTreeChangeListener(this);
-    myProblemListener = new MyProblemListener();
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
     // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
     // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
-    project.getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
         UIUtil.invokeLaterIfNeeded(() -> {
@@ -73,6 +59,8 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
         });
       }
     });
+
+    connection.subscribe(ProblemListener.TOPIC, new MyProblemListener());
   }
 
   @Override
@@ -80,7 +68,6 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     super.projectOpened(connection);
 
     myPsiManager.addPsiTreeChangeListener(myPsiTreeChangeListener);
-    myProblemSolver.addProblemListener(myProblemListener);
   }
 
   @Override
@@ -114,7 +101,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
   }
 
-  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
+  private class MyProblemListener implements ProblemListener {
     @Override
     public void problemsAppeared(@NotNull final VirtualFile file) {
       updateFile(file);

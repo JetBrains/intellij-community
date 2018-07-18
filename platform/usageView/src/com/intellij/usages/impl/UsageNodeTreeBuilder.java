@@ -62,7 +62,9 @@ class UsageNodeTreeBuilder {
     return Arrays.stream(myFilteringRules).allMatch(rule -> rule.isVisible(usage, myTargets));
   }
 
-  UsageNode appendOrGet(@NotNull Usage usage, @NotNull Consumer<Node> edtInsertedUnderQueue, boolean filterDuplicateLines) {
+  UsageNode appendOrGet(@NotNull Usage usage,
+                        boolean filterDuplicateLines,
+                        @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
     if (!isVisible(usage)) return null;
 
     final boolean dumb = DumbService.isDumb(myProject);
@@ -78,6 +80,6 @@ class UsageNodeTreeBuilder {
       }
     }
 
-    return groupNode.addOrGetUsage(usage, edtInsertedUnderQueue, filterDuplicateLines);
+    return groupNode.addOrGetUsage(usage, filterDuplicateLines, edtInsertedUnderQueue);
   }
 }

@@ -160,6 +160,9 @@ public class InlineUtil {
     if (typeElement == null) {
       typeElement = factory.createTypeElement(variable.getType());
     }
+    else if (typeElement.isInferredType()) {
+      return expr;
+    }
     castTypeElement.replace(typeElement);
     final PsiExpression operand = cast.getOperand();
     assert operand != null;

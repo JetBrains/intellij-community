@@ -15,6 +15,8 @@ public class TBItemGroup extends TBItem {
     myGroupItems.addAll(items);
   }
 
+  List<TBItem> getGroupItems() { return myGroupItems; }
+
   @Override
   protected void _updateNativePeer() { myGroupItems.forEach(item->item._updateNativePeer()); }
 

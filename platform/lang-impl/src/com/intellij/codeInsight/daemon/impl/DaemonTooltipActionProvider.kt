@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.xml.util.XmlStringUtil
 import java.util.*
 
 class DaemonTooltipActionProvider : TooltipActionProvider {
@@ -89,7 +90,11 @@ fun extractMostPriorityFix(highlightInfo: HighlightInfo, editor: Editor): Toolti
     }
 
     if (action !is AbstractEmptyIntentionAction && action.isAvailable(project, editor, psiFile)) {
-      return DaemonTooltipAction(it.text, highlightInfo.actualStartOffset)
+      val text = it.text
+      //we cannot properly render html inside the fix button fixes with html text
+      if (!XmlStringUtil.isWrappedInHtml(text)) {
+        return DaemonTooltipAction(text, highlightInfo.actualStartOffset)
+      }
     }
   }
   return null

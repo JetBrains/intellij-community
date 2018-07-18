@@ -82,16 +82,16 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
       if (!fieldReferenced.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      if (isInStaticMethod(expression)) {
+      if (isInStaticMember(expression)) {
         return;
       }
       registerError(expression);
     }
 
-    private static boolean isInStaticMethod(PsiElement element) {
+    private static boolean isInStaticMember(PsiElement element) {
       final PsiMember member =
         PsiTreeUtil.getParentOfType(element,
-                                    PsiMethod.class, PsiClassInitializer.class);
+                                    PsiMethod.class, PsiClassInitializer.class, PsiField.class);
       if (member == null) {
         return false;
       }

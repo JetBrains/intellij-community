@@ -158,7 +158,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     );
   }
 
-  private static void collectClassFiles(@NotNull File file, @NotNull List<File> files) {
+  private static void collectClassFiles(@NotNull File file, @NotNull List<? super File> files) {
     final File[] children = file.listFiles();
     if (children != null) { // is Directory
       for (File child : children) {
@@ -347,7 +347,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return moduleInfo;
     }
 
-    private static void createFiles(Project project, List<ModuleInfo> moduleInfos, ProgressIndicator indicator) {
+    private static void createFiles(Project project, List<? extends ModuleInfo> moduleInfos, ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
       int count = 0;
       double total = moduleInfos.size();

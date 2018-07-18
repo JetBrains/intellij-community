@@ -80,7 +80,7 @@ public abstract class CachedValueBase<T> {
   }
 
   @Nullable
-  protected Object[] getDependenciesPlusValue(CachedValueProvider.Result<T> result) {
+  protected Object[] getDependenciesPlusValue(CachedValueProvider.Result<? extends T> result) {
     if (result == null) {
       return null;
     }

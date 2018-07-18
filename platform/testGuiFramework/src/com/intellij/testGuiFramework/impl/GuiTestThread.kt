@@ -41,7 +41,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
   private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.impl.GuiTestThread")
 
   companion object {
-    val GUI_TEST_THREAD_NAME = "GuiTest Thread"
+    val GUI_TEST_THREAD_NAME: String = "GuiTest Thread"
     var client: JUnitClient? = null
   }
 

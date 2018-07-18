@@ -29,6 +29,13 @@ static WatchRoot *firstWatchRoot = NULL;
 
 static CRITICAL_SECTION csOutput;
 
+#define EVENT_BUFFER_SIZE (16*1024)
+
+#ifdef __PRINT_STATS
+static UINT64 _total_ = 0, _post_ = 0;
+static UINT32 _calls_ = 0, _max_events_ = 0;
+#endif
+
 // -- Utilities ---------------------------------------------------
 
 typedef struct {
@@ -43,8 +50,7 @@ static void AppendString(PrintBuffer *buffer, const char *str) {
         if (buffer->text != NULL) {
             strcpy_s(newData, newSize, buffer->text);
             free(buffer->text);
-        }
-        else {
+        } else {
             newData[0] = '\0';
         }
         buffer->text = newData;
@@ -138,19 +144,17 @@ static void PrintChangeInfo(const char *rootPath, FILE_NOTIFY_INFORMATION *info)
     const char *event;
     if (info->Action == FILE_ACTION_ADDED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
         event = "CREATE";
-    }
-    else if (info->Action == FILE_ACTION_REMOVED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+    } else if (info->Action == FILE_ACTION_REMOVED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
         event = "DELETE";
-    }
-    else if (info->Action == FILE_ACTION_MODIFIED) {
+    } else if (info->Action == FILE_ACTION_MODIFIED) {
         event = "CHANGE";
-    }
-    else {
+    } else {
         return;  // unknown event
     }
 
     char utfBuffer[4 * MAX_PATH + 1];
-    int converted = WideCharToMultiByte(CP_UTF8, 0, info->FileName, info->FileNameLength / sizeof(wchar_t), utfBuffer, sizeof(utfBuffer), NULL, NULL);
+    int wcsLen = info->FileNameLength / sizeof(wchar_t);
+    int converted = WideCharToMultiByte(CP_UTF8, 0, info->FileName, wcsLen, utfBuffer, sizeof(utfBuffer), NULL, NULL);
     utfBuffer[converted] = '\0';
 
     EnterCriticalSection(&csOutput);
@@ -175,6 +179,10 @@ static void PrintEverythingChangedUnderRoot(const char *rootPath) {
                     FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE)
 
 static DWORD WINAPI WatcherThread(void *param) {
+#ifdef __PRINT_STATS
+    LARGE_INTEGER t1, t2, t3;
+    UINT32 nEvents = 0;
+#endif
     WatchDrive *drive = (WatchDrive *)param;
 
     OVERLAPPED overlapped;
@@ -184,14 +192,10 @@ static DWORD WINAPI WatcherThread(void *param) {
     const char *rootPath = drive->rootPath;
     HANDLE hRootDir = CreateFileA(rootPath, GENERIC_READ, CREATE_SHARE, NULL, OPEN_EXISTING, CREATE_FLAGS, NULL);
 
-    DWORD buffer_size = 1024 * 1024;
-    char *buffer = (char *)malloc(buffer_size);
-
-    HANDLE handles[2];
-    handles[0] = drive->hStopEvent;
-    handles[1] = overlapped.hEvent;
+    char buffer[EVENT_BUFFER_SIZE];
+    HANDLE handles[2] = {drive->hStopEvent, overlapped.hEvent};
     while (true) {
-        int rcDir = ReadDirectoryChangesW(hRootDir, buffer, buffer_size, TRUE, EVENT_MASK, NULL, &overlapped, NULL);
+        int rcDir = ReadDirectoryChangesW(hRootDir, buffer, sizeof(buffer), TRUE, EVENT_MASK, NULL, &overlapped, NULL);
         if (rcDir == 0) {
             drive->bFailed = true;
             break;
@@ -202,12 +206,18 @@ static DWORD WINAPI WatcherThread(void *param) {
             break;
         }
         if (rc == WAIT_OBJECT_0 + 1) {
+#ifdef __PRINT_STATS
+            QueryPerformanceCounter(&t1);
+#endif
             DWORD dwBytesReturned;
             if (!GetOverlappedResult(hRootDir, &overlapped, &dwBytesReturned, FALSE)) {
                 drive->bFailed = true;
                 break;
             }
 
+#ifdef __PRINT_STATS
+            QueryPerformanceCounter(&t2);
+#endif
             if (dwBytesReturned == 0) {
                 // don't send dirty too much, everything is changed anyway
                 if (WaitForSingleObject(drive->hStopEvent, 500) == WAIT_OBJECT_0)
@@ -216,19 +226,28 @@ static DWORD WINAPI WatcherThread(void *param) {
                 // Got a buffer overflow => current changes lost => send RECDIRTY on root
                 PrintEverythingChangedUnderRoot(rootPath);
             } else {
-                FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *) buffer;
-                while (true) {
+                FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *)buffer;
+                do {
                     PrintChangeInfo(rootPath, info);
-                    if (!info->NextEntryOffset)
-                        break;
-                    info = (FILE_NOTIFY_INFORMATION *)((char *) info + info->NextEntryOffset);
-                }
+                    info = (FILE_NOTIFY_INFORMATION *)((char *)info + info->NextEntryOffset);
+#ifdef __PRINT_STATS
+                    nEvents++;
+#endif
+                } while (info->NextEntryOffset != 0);
             }
+
+#ifdef __PRINT_STATS
+            QueryPerformanceCounter(&t3);
+            _post_ += t2.QuadPart - t1.QuadPart;
+            _total_ += t3.QuadPart - t1.QuadPart;
+            _calls_++;
+            _max_events_ = max(_max_events_, nEvents);
+#endif
         }
     }
+
     CloseHandle(overlapped.hEvent);
     CloseHandle(hRootDir);
-    free(buffer);
     return 0;
 }
 
@@ -243,6 +262,7 @@ static void MarkAllRootsUnused() {
 static void StartRoot(WatchDrive *drive) {
     drive->hStopEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     drive->hThread = CreateThread(NULL, 0, &WatcherThread, drive, 0, NULL);
+    SetThreadPriority(drive->hThread, THREAD_PRIORITY_ABOVE_NORMAL);
     drive->bInitialized = true;
 }
 
@@ -364,5 +384,19 @@ int main(int argc, char *argv[]) {
     MarkAllRootsUnused();
     UpdateRoots(false);
     DeleteCriticalSection(&csOutput);
+
+#ifdef __PRINT_STATS
+    if (_calls_ > 0) {
+        LARGE_INTEGER fcy;
+        QueryPerformanceFrequency(&fcy);
+        _total_ = _total_ * 1000000 / fcy.QuadPart;
+        _post_ = _post_ * 1000000 / fcy.QuadPart;
+        fprintf(stderr, "!! TOTAL=%llu(%d) POST=%llu(%d) MAX.EVENTS=%u\n",
+                _total_, (int) (_total_ / _calls_),
+                _post_, (int) (_post_ / _calls_),
+                _max_events_);
+    }
+#endif
+
     return 0;
 }

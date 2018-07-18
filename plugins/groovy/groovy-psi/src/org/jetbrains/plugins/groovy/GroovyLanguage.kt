@@ -12,5 +12,5 @@ import com.intellij.lang.jvm.JvmLanguage
  */
 object GroovyLanguage : Language("Groovy"), JvmLanguage {
 
-  override fun isCaseSensitive() = true
+  override fun isCaseSensitive(): Boolean = true
 }

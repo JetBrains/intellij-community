@@ -261,6 +261,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
     }
+    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
     return size;
   }
 

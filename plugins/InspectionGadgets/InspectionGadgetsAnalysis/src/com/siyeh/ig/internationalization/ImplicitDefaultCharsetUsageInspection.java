@@ -15,14 +15,22 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 /**
  * @author Bas Leijdekkers
@@ -45,6 +53,40 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     else {
       return InspectionGadgetsBundle.message("implicit.default.charset.usage.problem.descriptor");
     }
+  }
+
+  private static final Key<Boolean> HAS_CHARSET_OVERLOAD = Key.create("Method has Charset overload");
+
+  @Contract("null -> false")
+  private static boolean hasCharsetOverload(PsiMethod method) {
+    if (method == null) return false;
+    Boolean hasCharsetOverload = method.getUserData(HAS_CHARSET_OVERLOAD);
+    if (hasCharsetOverload == null) {
+      PsiMethod methodWithCharsetArgument = null;
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null) {
+        MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+        PsiType charsetType =
+          JavaPsiFacade.getElementFactory(method.getProject()).createTypeByFQClassName("java.nio.charset.Charset", method.getResolveScope());
+        MethodSignature newSignature = MethodSignatureUtil
+          .createMethodSignature(signature.getName(), ArrayUtil.append(signature.getParameterTypes(), charsetType),
+                                 signature.getTypeParameters(), signature.getSubstitutor(), signature.isConstructor()
+          );
+        methodWithCharsetArgument = MethodSignatureUtil.findMethodBySignature(aClass, newSignature, false);
+      }
+      hasCharsetOverload = methodWithCharsetArgument != null;
+      method.putUserData(HAS_CHARSET_OVERLOAD, hasCharsetOverload);
+    }
+    return hasCharsetOverload;
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    PsiCallExpression call = (PsiCallExpression)infos[0];
+    if (!PsiUtil.isLanguageLevel7OrHigher(call)) return null;
+    PsiMethod method = call.resolveMethod();
+    return hasCharsetOverload(method) ? new AddUtf8CharsetFix() : null;
   }
 
   @Override
@@ -148,6 +190,26 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
                                                 "java.nio.charset.Charset",
                                                 "java.nio.charset.CharsetEncoder",
                                                 "java.nio.charset.CharsetDecoder");
+    }
+  }
+
+  private static class AddUtf8CharsetFix extends InspectionGadgetsFix {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiCallExpression.class);
+      if (call == null) return;
+      PsiExpressionList arguments = call.getArgumentList();
+      if (arguments == null) return;
+      PsiExpression charsetArg =
+        JavaPsiFacade.getElementFactory(project).createExpressionFromText("java.nio.charset.StandardCharsets.UTF_8", call);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(arguments.add(charsetArg));
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("implicit.default.charset.usage.fix.family.name");
     }
   }
 }

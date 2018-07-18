@@ -572,7 +572,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String s, @NotNull String s2) {
+  public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String s) {
     return QuickFixes.EMPTY_FIX;
   }
 

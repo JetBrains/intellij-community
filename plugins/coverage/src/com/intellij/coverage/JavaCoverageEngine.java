@@ -167,7 +167,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
     final Project project = psiFile.getProject();
-    if (!suite.isTrackTestFolders() && TestSourcesFilter.isTestSources(virtualFile, project)) {
+    if (!suite.isTrackTestFolders() && ReadAction.compute(() -> TestSourcesFilter.isTestSources(virtualFile, project))) {
       return false;
     }
 

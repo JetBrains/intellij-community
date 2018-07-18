@@ -23,7 +23,7 @@ Groovy script
           PsiElement(})('}')
       GrStringContentImpl(STRING_CONTENT)
         PsiElement(Gstring content)('\dfsd')
-      PsiErrorElement:String end expected
+      PsiErrorElement:Gstring end expected
         <empty list>
   PsiElement(new line)('\n')
   Literal

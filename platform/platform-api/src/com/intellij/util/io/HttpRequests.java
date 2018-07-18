@@ -563,10 +563,8 @@ public final class HttpRequests {
         if (idx >= 0) {
           httpURLConnection.disconnect();
           url = connection.getHeaderField("Location");
+          if (LOG.isDebugEnabled()) LOG.debug("redirect: " + url);
           if (url != null) {
-            if (idx >= PERMANENT_IDX) {
-              LOG.warn("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
-            }
             request.myUrl = url;
             continue;
           }

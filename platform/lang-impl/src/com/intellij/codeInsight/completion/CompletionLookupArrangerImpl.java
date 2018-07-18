@@ -39,8 +39,6 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   };
   static final int MAX_PREFERRED_COUNT = 5;
   public static final String OVERFLOW_MESSAGE = "Not all variants are shown, please type more letters to see the rest";
-  public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
-  public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
   private final List<LookupElement> myFrozenItems = new ArrayList<>();
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");

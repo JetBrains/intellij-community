@@ -162,26 +162,21 @@ class ProgressDialog implements Disposable {
   }
 
   void cancel() {
-    setCancelButtonEnabledASAP(false);
+    enableCancelButtonIfNeeded(false);
   }
 
-  private void setCancelButtonEnabledASAP(boolean enabled) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      myCancelButton.setEnabled(enabled);
-      myDisableCancelAlarm.cancelAllRequests();
-    });
+  private void setCancelButtonEnabledInEDT() {
+    myCancelButton.setEnabled(true);
+  }
+  private void setCancelButtonDisabledInEDT() {
+    myCancelButton.setEnabled(false);
   }
 
   void enableCancelButtonIfNeeded(boolean enable) {
-    if (!myProgressWindow.myShouldShowCancel) return;
+    if (!myProgressWindow.myShouldShowCancel || myDisableCancelAlarm.isDisposed()) return;
 
-    if (enable && !myProgressWindow.isCanceled()) {
-      setCancelButtonEnabledASAP(true);
-    }
-    else {
-      myDisableCancelAlarm.cancelAllRequests();
-      myDisableCancelAlarm.addRequest(() -> setCancelButtonEnabledASAP(false), 500);
-    }
+    myDisableCancelAlarm.cancelAllRequests();
+    myDisableCancelAlarm.addRequest(enable ? this::setCancelButtonEnabledInEDT : this::setCancelButtonDisabledInEDT, 500);
   }
 
   private final Alarm myDisableCancelAlarm = new Alarm(this);

@@ -4,7 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.*
 import com.intellij.util.messages.Topic
 
-val STORAGE_TOPIC = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+val STORAGE_TOPIC: Topic<StorageManagerListener> = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
 interface StateStorageManager {
   val macroSubstitutor: TrackingPathMacroSubstitutor?

@@ -79,7 +79,8 @@ public class JavaBuilderUtil {
 
   /**
    * The files accepted by {@code filter} won't be marked dirty by {@link #updateMappings} method when this compilation round finishes.
-   * Use this method to register a filter accepting files of your language if you compute and mark as dirty affected files yourself in your builder.
+   * Call this method from {@link ModuleLevelBuilder#build} to register a filter accepting files of your language if you compute and mark
+   * as dirty affected files yourself.
    */
   public static void registerFilterToSkipMarkingAffectedFileDirty(@NotNull CompileContext context, @NotNull FileFilter filter) {
     List<FileFilter> filters = SKIP_MARKING_DIRTY_FILTERS_KEY.get(context);
@@ -119,8 +120,12 @@ public class JavaBuilderUtil {
     final Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
     SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
     FileFilter filter = createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context));
-    SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, null);
     return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, CompilationRound.NEXT, filter);
+  }
+
+  public static void clearDataOnRoundCompletion(CompileContext context) {
+    //during next compilation round ModuleLevelBuilders may register filters again so we need to remove old ones to avoid duplicating instances
+    SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, null);
   }
 
   /**

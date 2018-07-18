@@ -11,21 +11,22 @@ import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
+import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-val EMPTY_STATE = ExternalStateComponent()
+val EMPTY_STATE: ExternalStateComponent = ExternalStateComponent()
 
 @Suppress("DEPRECATION")
 @State(name = "ExternalSystem")
 class ExternalSystemModulePropertyManager(private val module: Module) : PersistentStateComponent<ExternalStateComponent>, ProjectModelElement {
-  override fun getExternalSource() = store.externalSystem?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
+  override fun getExternalSource(): ProjectModelExternalSource? = store.externalSystem?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
 
   private var store = if (module.project.isExternalStorageEnabled) ExternalStateComponent() else ExternalStateModule(module)
 
-  override fun getState() = store as? ExternalStateComponent ?: EMPTY_STATE
+  override fun getState(): ExternalStateComponent = store as? ExternalStateComponent ?: EMPTY_STATE
 
   override fun loadState(state: ExternalStateComponent) {
     store = state
@@ -33,26 +34,26 @@ class ExternalSystemModulePropertyManager(private val module: Module) : Persiste
 
   companion object {
     @JvmStatic
-    fun getInstance(module: Module) = ModuleServiceManager.getService(module, ExternalSystemModulePropertyManager::class.java)!!
+    fun getInstance(module: Module): ExternalSystemModulePropertyManager = ModuleServiceManager.getService(module, ExternalSystemModulePropertyManager::class.java)!!
   }
 
   @Suppress("DEPRECATION")
-  fun getExternalSystemId() = store.externalSystem
+  fun getExternalSystemId(): String? = store.externalSystem
 
-  fun getExternalModuleType() = store.externalSystemModuleType
+  fun getExternalModuleType(): String? = store.externalSystemModuleType
 
-  fun getExternalModuleVersion() = store.externalSystemModuleVersion
+  fun getExternalModuleVersion(): String? = store.externalSystemModuleVersion
 
-  fun getExternalModuleGroup() = store.externalSystemModuleGroup
+  fun getExternalModuleGroup(): String? = store.externalSystemModuleGroup
 
-  fun getLinkedProjectId() = store.linkedProjectId
+  fun getLinkedProjectId(): String? = store.linkedProjectId
 
-  fun getRootProjectPath() = store.rootProjectPath
+  fun getRootProjectPath(): String? = store.rootProjectPath
 
-  fun getLinkedProjectPath() = store.linkedProjectPath
+  fun getLinkedProjectPath(): String? = store.linkedProjectPath
 
   @Suppress("DEPRECATION")
-  fun isMavenized() = store.isMavenized
+  fun isMavenized(): Boolean = store.isMavenized
 
   @Suppress("DEPRECATION")
   fun setMavenized(mavenized: Boolean) {

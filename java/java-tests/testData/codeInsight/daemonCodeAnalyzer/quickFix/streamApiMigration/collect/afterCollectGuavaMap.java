@@ -13,7 +13,7 @@ class Maps {
 
 public class Test {
   public void test() {
-      Map<String, Integer> map = IntStream.range(0, 10).filter(i -> i % 2 == 0).boxed().collect(Collectors.toMap(String::valueOf, i -> i, (a, b) -> b));
+    Map<String, Integer> map = IntStream.range(0, 10).filter(i -> i % 2 == 0).boxed().collect(Collectors.toMap(String::valueOf, i -> i, (a, b) -> b));
       System.out.println(map);
   }
 }

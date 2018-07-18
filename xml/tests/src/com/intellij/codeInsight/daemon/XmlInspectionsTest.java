@@ -34,7 +34,7 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
     myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" elementFormDefault=<warning descr=\"Redundant default attribute value assignment\">\"unqua<caret>lified\"</warning>>\n" +
                                                     "</schema>");
     myFixture.checkHighlighting();
-    IntentionAction action = myFixture.findSingleIntention(XmlErrorMessages.message("remove.attribute.quickfix.family"));
+    IntentionAction action = myFixture.findSingleIntention(XmlErrorMessages.message("remove.attribute.quickfix.family") + " e");
     myFixture.launchAction(action);
     myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
                           "</schema>");

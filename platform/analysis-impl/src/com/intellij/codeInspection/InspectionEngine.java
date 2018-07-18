@@ -239,7 +239,7 @@ public class InspectionEngine {
 
   private static void convertToProblemDescriptors(@NotNull PsiElement element,
                                                   @NotNull CommonProblemDescriptor[] commonProblemDescriptors,
-                                                  @NotNull List<ProblemDescriptor> descriptors) {
+                                                  @NotNull List<? super ProblemDescriptor> descriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
       if (common instanceof ProblemDescriptor) {
         descriptors.add((ProblemDescriptor)common);
@@ -322,8 +322,8 @@ public class InspectionEngine {
   }
 
   private static void addDialects(@NotNull List<PsiElement> elements,
-                                  @NotNull Set<Language> outProcessedLanguages,
-                                  @NotNull Set<String> outDialectIds) {
+                                  @NotNull Set<? super Language> outProcessedLanguages,
+                                  @NotNull Set<? super String> outDialectIds) {
     for (PsiElement element : elements) {
       Language language = element.getLanguage();
       outDialectIds.add(language.getID());

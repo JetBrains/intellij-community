@@ -73,7 +73,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
     }
   }
 
-  override fun getState() = state
+  override fun getState(): State = state
 
   override fun loadState(state: PySdkSettings.State) {
     XmlSerializerUtil.copyBean(state, this.state)

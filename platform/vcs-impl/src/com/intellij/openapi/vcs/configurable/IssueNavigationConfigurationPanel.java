@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
@@ -111,7 +112,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
             myModel.fireTableDataChanged();
           }
         }
-      }).addExtraAction(new AnActionButton("Add JIRA Pattern", IconUtil.getAddJiraPatternIcon()) {
+      }).addExtraAction(new DumbAwareActionButton("Add JIRA Pattern", IconUtil.getAddJiraPatternIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter JIRA installation URL:",
@@ -125,7 +126,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
           myModel.fireTableDataChanged();
         }
-      }).addExtraAction(new AnActionButton("Add YouTrack Pattern", IconUtil.getAddYouTrackPatternIcon()) {
+      }).addExtraAction(new DumbAwareActionButton("Add YouTrack Pattern", IconUtil.getAddYouTrackPatternIcon()) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter YouTrack installation URL:",

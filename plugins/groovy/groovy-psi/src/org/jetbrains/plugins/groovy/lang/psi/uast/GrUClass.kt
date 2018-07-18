@@ -11,17 +11,17 @@ import org.jetbrains.uast.*
 class GrUClass(val grElement: GrTypeDefinition,
                parentProvider: () -> UElement?) : UClassTypeSpecific, JvmDeclarationUElement, UAnchorOwner, PsiClass by grElement {
 
-  override val sourcePsi = grElement
+  override val sourcePsi: GrTypeDefinition = grElement
 
   override val javaPsi: PsiClass = grElement
 
-  override val psi = sourcePsi
+  override val psi: GrTypeDefinition = sourcePsi
 
   override fun getQualifiedName(): String? = grElement.qualifiedName
 
   override val uastSuperTypes: List<UTypeReferenceExpression> = emptyList() //not implemented
 
-  override val uastDeclarations by lazy {
+  override val uastDeclarations: MutableList<UDeclaration> by lazy {
     mutableListOf<UDeclaration>().apply {
       addAll(fields)
       addAll(initializers)
@@ -33,7 +33,7 @@ class GrUClass(val grElement: GrTypeDefinition,
   override val uastAnchor: UIdentifier?
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 
@@ -84,9 +84,9 @@ class GrUParameter(val grElement: GrParameter,
   override val sourcePsi: PsiElement = grElement
   override val javaPsi: PsiParameter = grElement
 
-  override val psi = javaPsi
+  override val psi: PsiParameter = javaPsi
 
-  override val uastInitializer by lazy {
+  override val uastInitializer: UExpression? by lazy {
     val initializer = grElement.initializerGroovy ?: return@lazy null
     getLanguagePlugin().convertElement(initializer, this) as? UExpression
   }

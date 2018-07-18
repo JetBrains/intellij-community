@@ -68,7 +68,7 @@ public class TagNameReference implements PsiReference {
       return TextRange.EMPTY_RANGE;
     }
 
-    int colon = nameElement.getText().indexOf(':') + 1;
+    int colon = getPrefixIndex(nameElement.getText()) + 1;
     if (myStartTagFlag) {
       final int parentOffset = ((TreeElement)nameElement).getStartOffsetInParent();
       return new TextRange(parentOffset + colon, parentOffset + nameElement.getTextLength());
@@ -89,6 +89,10 @@ public class TagNameReference implements PsiReference {
     }
   }
 
+  protected int getPrefixIndex(@NotNull String name) {
+    return name.indexOf(":");
+  }
+  
   public ASTNode getNameElement() {
     return myNameElement;
   }
@@ -123,7 +127,7 @@ public class TagNameReference implements PsiReference {
     final XmlTag element = getTagElement();
     if (element == null || !myStartTagFlag) return element;
 
-    if (newElementName.indexOf(':') == -1) {
+    if (getPrefixIndex(newElementName) == -1) {
       final String namespacePrefix = element.getNamespacePrefix();
       final int index = newElementName.lastIndexOf('.');
 
@@ -140,7 +144,7 @@ public class TagNameReference implements PsiReference {
     return element;
   }
 
-  private static String prependNamespacePrefix(String newElementName, String namespacePrefix) {
+  protected String prependNamespacePrefix(String newElementName, String namespacePrefix) {
     newElementName = (!namespacePrefix.isEmpty() ? namespacePrefix + ":":namespacePrefix) + newElementName;
     return newElementName;
   }

@@ -29,11 +29,15 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 
 public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
@@ -45,7 +49,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
                          @NotNull VcsUserRegistryImpl userRegistry,
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(logId, USERS, getVersion(), new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE,
+    super(logId, USERS, getVersion(), new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE, true,
           consumer, disposableParent);
     myUserRegistry = userRegistry;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
@@ -57,6 +61,19 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
       ids.add(myUserRegistry.getUserId(user));
     }
     return getCommitsWithAnyKey(ids);
+  }
+
+  @Nullable
+  public VcsUser getAuthorForCommit(int commit) throws IOException {
+    Collection<Integer> userIds = getKeysForCommit(commit);
+    if (userIds == null || userIds.isEmpty()) return null;
+    LOG.assertTrue(userIds.size() == 1);
+    return myUserRegistry.getUserById(notNull(getFirstItem(userIds)));
+  }
+
+  @Nullable
+  public VcsUser getUserById(int id) throws IOException {
+    return myUserRegistry.getUserById(id);
   }
 
   private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {

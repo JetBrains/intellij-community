@@ -101,9 +101,9 @@ class TextOutput(val out: StringBuilder) {
     return this
   }
 
-  fun comma() = append(',').space()
+  fun comma(): TextOutput = append(',').space()
 
-  fun space() = append(' ')
+  fun space(): TextOutput = append(' ')
 
   fun doc(description: String?): TextOutput {
     if (description == null) {
@@ -112,7 +112,7 @@ class TextOutput(val out: StringBuilder) {
     return append("/**").newLine().append(" * ").append(description).newLine().append(" */").newLine()
   }
 
-  fun quote(s: CharSequence) = append('"').append(s).append('"')
+  fun quote(s: CharSequence): TextOutput = append('"').append(s).append('"')
 
   fun maybeIndent() {
     if (justNewLined) {
@@ -133,5 +133,5 @@ class TextOutput(val out: StringBuilder) {
     return this
   }
 
-  operator fun plus(value: String) = append(value)
+  operator fun plus(value: String): TextOutput = append(value)
 }

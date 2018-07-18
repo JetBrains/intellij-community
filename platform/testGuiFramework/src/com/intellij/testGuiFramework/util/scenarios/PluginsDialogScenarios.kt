@@ -18,7 +18,7 @@ class PluginsDialogScenarios(val testCase: GuiTestCase) : TestUtilsClass(testCas
   )
 }
 
-val GuiTestCase.pluginsDialogScenarios by PluginsDialogScenarios
+val GuiTestCase.pluginsDialogScenarios: PluginsDialogScenarios by PluginsDialogScenarios
 
 fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
   with(testCase) {

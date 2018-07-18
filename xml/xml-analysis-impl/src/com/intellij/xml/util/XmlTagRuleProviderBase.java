@@ -19,7 +19,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
-import com.intellij.codeInspection.htmlInspections.RemoveAttributeIntentionAction;
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -132,7 +132,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
       if (attribute != null) {
         PsiElement attributeNameElement = getAttributeNameElement(attribute);
         if (attributeNameElement != null) {
-          holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionAction(myAttrName));
+          holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionFix(myAttrName));
         }
       }
     }
@@ -156,7 +156,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
         if (!ArrayUtil.contains(attrName, myAttrNames)) {
           PsiElement attributeNameElement = getAttributeNameElement(xmlAttribute);
           if (attributeNameElement != null) {
-            holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionAction(attrName));
+            holder.registerProblem(attributeNameElement, myText, myType, new RemoveAttributeIntentionFix(attrName));
           }
         }
       }

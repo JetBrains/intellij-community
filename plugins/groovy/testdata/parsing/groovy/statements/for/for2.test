@@ -21,8 +21,6 @@ Groovy script
         Literal
           PsiElement(Integer)('10')
     PsiElement())(')')
-    PsiErrorElement:Statement expected
-      <empty list>
-  PsiElement(new line)('\n')
-  PsiErrorElement:Unexpected symbol
+    PsiElement(new line)('\n')
+  PsiErrorElement:<statement> expected, got '#'
     PsiElement(wrong token)('#')

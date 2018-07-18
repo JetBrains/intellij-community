@@ -23,7 +23,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
@@ -73,10 +75,13 @@ public class StubTextInconsistencyException extends RuntimeException implements 
     PsiUtilCore.ensureValid(file);
 
     FileViewProvider viewProvider = file.getViewProvider();
-    if (viewProvider instanceof FreeThreadedFileViewProvider) return;
+    if (viewProvider instanceof FreeThreadedFileViewProvider || viewProvider.getVirtualFile() instanceof LightVirtualFile) return;
 
     PsiFile bindingRoot = viewProvider.getStubBindingRoot();
-    if (!(bindingRoot instanceof PsiFileImpl) || ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder() == null) return;
+    if (!(bindingRoot instanceof PsiFileImpl)) return;
+
+    IStubFileElementType fileElementType = ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder();
+    if (fileElementType == null || !fileElementType.shouldBuildStubFor(viewProvider.getVirtualFile())) return;
 
     List<PsiFileStub> fromText = restoreStubsFromText(viewProvider);
 

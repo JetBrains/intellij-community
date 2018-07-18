@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedSynchronizedStatementInspection extends BaseInspection {
@@ -51,13 +48,9 @@ public class NestedSynchronizedStatementInspection extends BaseInspection {
     @Override
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
-      if (isNestedStatement(statement, PsiSynchronizedStatement.class)) {
+      if (ControlFlowUtils.isNestedElement(statement, PsiSynchronizedStatement.class)) {
         registerStatementError(statement);
       }
     }
-  }
-
-  public static <T extends PsiStatement> boolean isNestedStatement(@NotNull T statement, @NotNull Class<T> aClass) {
-    return PsiTreeUtil.getParentOfType(statement, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
   }
 }

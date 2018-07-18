@@ -84,7 +84,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Node> edtInsertedUnderQueue) {
+  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
     GroupNode newNode;
     synchronized (this) {
       newNode = new GroupNode(this, group, ruleIndex);
@@ -215,7 +215,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  UsageNode addOrGetUsage(@NotNull Usage usage, @NotNull Consumer<Node> edtInsertedUnderQueue, boolean filterDuplicateLines) {
+  UsageNode addOrGetUsage(@NotNull Usage usage,
+                          boolean filterDuplicateLines,
+                          @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
     UsageNode newNode;
     synchronized (this) {
       if (filterDuplicateLines) {

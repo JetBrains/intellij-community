@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -36,15 +37,16 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   public void setUp() throws Exception {
     super.setUp();
     installCompiler();
+    myFixture.setTestDataPath(getTestDataPath() + getName() + "/");
   }
 
   public void testIsNotReady() {
-    myFixture.configureByFile(getName() + "/Foo.java");
+    myFixture.configureByFile("Foo.java");
     assertNull(getReferentFilesForElementUnderCaret());
   }
 
   public void testSimpleUsagesInFullyCompiledProject() {
-    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/Bar.java", getName() + "/Baz.java", getName() + "/FooImpl.java");
+    myFixture.configureByFiles("Foo.java", "Bar.java", "Baz.java", "FooImpl.java");
     rebuildProject();
 
     final Set<VirtualFile> referents = getReferentFilesForElementUnderCaret();
@@ -57,7 +59,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testLambda() {
-    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/BarRef.java");
+    myFixture.configureByFiles("Foo.java", "FooImpl.java", "Bar.java", "BarRef.java");
     rebuildProject();
     final CompilerDirectHierarchyInfo funExpressions = getFunctionalExpressionsForElementUnderCaret();
     List<PsiFunctionalExpression> funExprs = funExpressions.getHierarchyChildren().map(PsiFunctionalExpression.class::cast).collect(Collectors.toList());
@@ -65,7 +67,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testInnerFunExpressions() {
-    myFixture.configureByFiles(getName() + "/Foo.java");
+    myFixture.configureByFiles("Foo.java");
     rebuildProject();
     List<PsiFunctionalExpression> funExpressions =
       getFunExpressionsFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_LANG_RUNNABLE))
@@ -88,7 +90,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testHierarchy() {
-    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/Baz.java", getName() + "/Test.java");
+    myFixture.configureByFiles("Foo.java", "FooImpl.java", "Bar.java", "Baz.java", "Test.java");
     rebuildProject();
     CompilerDirectHierarchyInfo directInheritorInfo = getHierarchyForElementUnderCaret();
 
@@ -104,7 +106,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testHierarchyOfLibClass() {
-    myFixture.configureByFiles(getName() + "/Foo.java");
+    myFixture.configureByFiles("Foo.java");
     rebuildProject();
     CompilerDirectHierarchyInfo directInheritorInfo = getDirectInheritorsFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST));
     PsiClass inheritor = assertOneElement(directInheritorInfo.getHierarchyChildren().map(PsiClass.class::cast).collect(Collectors.toList()));
@@ -113,13 +115,13 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
 
 
   public void testNestedAnonymousInheritors() {
-    myFixture.configureByFiles(getName() + "/Anonymouses.java",
-                               getName() + "/Foo1.java",
-                               getName() + "/Foo2.java",
-                               getName() + "/Foo3.java",
-                               getName() + "/Foo4.java",
-                               getName() + "/Foo5.java",
-                               getName() + "/Foo6.java");
+    myFixture.configureByFiles("Anonymouses.java",
+                               "Foo1.java",
+                               "Foo2.java",
+                               "Foo3.java",
+                               "Foo4.java",
+                               "Foo5.java",
+                               "Foo6.java");
     rebuildProject();
 
     PsiClass[] classes = IntStream
@@ -143,7 +145,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testExtensionRename() {
-    VirtualFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.txt")[1].getVirtualFile();
+    VirtualFile file = myFixture.configureByFiles("Bar.java", "Foo.txt")[1].getVirtualFile();
     rebuildProject();
     assertOneElement(getReferentFilesForElementUnderCaret());
     myFixture.renameElement(getPsiManager().findFile(file), "Foo.java");
@@ -156,7 +158,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testReverseExtensionRename() {
-    VirtualFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.java")[1].getVirtualFile();
+    VirtualFile file = myFixture.configureByFiles("Bar.java", "Foo.java")[1].getVirtualFile();
     rebuildProject();
     assertSize(2, getReferentFilesForElementUnderCaret());
     myFixture.renameElement(getPsiManager().findFile(file), "Foo.txt");

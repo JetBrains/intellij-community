@@ -14,14 +14,14 @@ class GrUFile(override val psi: GroovyFile, override val languagePlugin: UastLan
   override val packageName: String
     get() = psi.packageName
 
-  override val imports = emptyList<UImportStatement>() // not implemented
+  override val imports: List<UImportStatement> = emptyList<UImportStatement>() // not implemented
 
   override val annotations: List<UAnnotation>
     get() = psi.packageDefinition?.annotationList?.annotations?.map { GrUAnnotation(it, { this }) } ?: emptyList()
 
-  override val classes by lazy { psi.classes.mapNotNull { (it as? GrTypeDefinition)?.let { GrUClass(it, { this }) } } }
+  override val classes: List<GrUClass> by lazy { psi.classes.mapNotNull { (it as? GrTypeDefinition)?.let { GrUClass(it, { this }) } } }
 
-  override val allCommentsInFile by lazy {
+  override val allCommentsInFile: ArrayList<UComment> by lazy {
     val comments = ArrayList<UComment>(0)
     psi.accept(object : PsiRecursiveElementWalkingVisitor() {
       override fun visitComment(comment: PsiComment) {
@@ -31,5 +31,5 @@ class GrUFile(override val psi: GroovyFile, override val languagePlugin: UastLan
     comments
   }
 
-  override fun equals(other: Any?) = (other as? GrUFile)?.psi == psi
+  override fun equals(other: Any?): Boolean = (other as? GrUFile)?.psi == psi
 }

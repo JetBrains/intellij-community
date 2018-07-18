@@ -152,8 +152,8 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
+  @NotNull
   @Override
-  @Nullable
   public String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;
     if (access_id == ACCESS_PRIVATE) return PsiModifier.PRIVATE;

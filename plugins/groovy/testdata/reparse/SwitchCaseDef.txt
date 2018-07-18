@@ -37,7 +37,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n    ')
+          PsiElement(new line)('\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n  ')
       PsiElement(})('}')
@@ -79,7 +79,7 @@ Groovy script
           PsiElement(new line)('\n      ')
           Modifiers
             PsiElement(def)('def')
-          PsiErrorElement:Identifier, string literal or '(' expected
+          PsiErrorElement:identifier expected, got 'return'
             <empty list>
           PsiWhiteSpace(' ')
           RETURN statement
@@ -87,7 +87,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n    ')
+          PsiElement(new line)('\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n  ')
       PsiElement(})('}')

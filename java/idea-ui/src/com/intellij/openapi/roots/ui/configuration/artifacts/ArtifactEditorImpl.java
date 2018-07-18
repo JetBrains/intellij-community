@@ -62,7 +62,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
@@ -108,7 +107,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myPropertiesEditors = new ArtifactPropertiesEditors(myContext, myOriginalArtifact, myOriginalArtifact);
     Disposer.register(this, mySourceItemsTree);
     Disposer.register(this, myLayoutTreeComponent);
-    myTopPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+    myTopPanel.setBorder(JBUI.Borders.empty(0, 10));
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
     myOutputDirectoryField.addBrowseFolderListener(CompilerBundle.message("dialog.title.output.directory.for.artifact"),
@@ -215,17 +214,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final JPanel leftPanel = new JPanel(new BorderLayout());
     JPanel treePanel = myLayoutTreeComponent.getTreePanel();
     if (UIUtil.isUnderDarcula()) {
-      treePanel.setBorder(new EmptyBorder(3, 0, 0, 0));
+      treePanel.setBorder(JBUI.Borders.emptyTop(3));
     } else {
-      treePanel.setBorder(new LineBorder(UIUtil.getBorderColor()));
+      treePanel.setBorder(new LineBorder(JBColor.border()));
     }
     leftPanel.add(treePanel, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
       CompoundBorder border =
-        new CompoundBorder(new CustomLineBorder(0, 0, 0, 1), BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        new CompoundBorder(new CustomLineBorder(0, 0, 0, 1), JBUI.Borders.empty());
       leftPanel.setBorder(border);
     } else {
-      leftPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 0));
+      leftPanel.setBorder(JBUI.Borders.empty(3, 3, 3, 0));
     }
     splitter.setFirstComponent(leftPanel);
 
@@ -254,16 +253,16 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     JPanel scrollPaneWrap = new JPanel(new BorderLayout());
     scrollPaneWrap.add(scrollPane, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
-      scrollPaneWrap.setBorder(new EmptyBorder(3, 0, 0, 0));
+      scrollPaneWrap.setBorder(JBUI.Borders.emptyTop(3));
     } else {
-      scrollPaneWrap.setBorder(new LineBorder(UIUtil.getBorderColor()));
+      scrollPaneWrap.setBorder(new LineBorder(JBColor.border()));
     }
 
     rightPanel.add(scrollPaneWrap, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
-      rightPanel.setBorder(new CompoundBorder(new CustomLineBorder(0, 1, 0, 0), BorderFactory.createEmptyBorder(0, 0, 0, 0)));
+      rightPanel.setBorder(new CompoundBorder(new CustomLineBorder(0, 1, 0, 0), JBUI.Borders.empty()));
     } else {
-      rightPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 3));
+      rightPanel.setBorder(JBUI.Borders.empty(3, 0, 3, 3));
     }
     splitter.setSecondComponent(rightPanel);
     splitter.getDivider().setBackground(UIUtil.getPanelBackground());
@@ -292,7 +291,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
     JComponent toolbarComponent = toolbar.getComponent();
     if (UIUtil.isUnderDarcula()) {
-      toolbarComponent.setBorder(new CustomLineBorder(0,0,1,0));
+      toolbarComponent.setBorder(new CustomLineBorder(0, 0, 1, 0));
     }
     leftPanel.add(toolbarComponent, BorderLayout.NORTH);
     toolbar.updateActionsImmediately();
@@ -554,7 +553,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   private void createUIComponents() {
     myShowContentCheckBox = new ThreeStateCheckBox();
-    myShowSpecificContentOptionsButton = new FixedSizeButton(16);
+    myShowSpecificContentOptionsButton = new FixedSizeButton();
   }
 
   public String getHelpTopic() {

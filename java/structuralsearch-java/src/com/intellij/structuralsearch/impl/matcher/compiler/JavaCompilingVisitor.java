@@ -260,17 +260,24 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     boolean typedVarProcessed = false;
     final PsiElement referenceParent = reference.getParent();
 
-    if ((myCompilingVisitor.getContext().getPattern().isRealTypedVar(reference)) &&
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    if ((pattern.isRealTypedVar(reference)) &&
         reference.getQualifierExpression() == null &&
         !(referenceParent instanceof PsiExpressionStatement)
       ) {
       // typed var for expression (but not top level)
       MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
       GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
+      final PsiElement parent = reference.getParent();
+      if (parent instanceof PsiSwitchLabelStatement && handler instanceof SubstitutionHandler) {
+        final SubstitutionHandler handler1 = (SubstitutionHandler)handler;
+        pattern.setHandler(parent, new SubstitutionHandler("__case_" + parent.getTextOffset(), false,
+                                                           handler1.getMinOccurs(), handler1.getMaxOccurs(), true));
+      }
       typedVarProcessed = true;
     }
 
-    MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
+    MatchingHandler handler = pattern.getHandler(reference);
 
     // We want to merge qname related to class to find it in any form
     final String referencedName = reference.getReferenceName();
@@ -291,9 +298,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         PsiReferenceExpression currentReference = reference;
 
         while ((qualifier = currentReference.getQualifierExpression()) != null) {
-          if (!(qualifier instanceof PsiReferenceExpression) ||
-              myCompilingVisitor.getContext().getPattern().getHandler(qualifier) instanceof SubstitutionHandler
-            ) {
+          if (!(qualifier instanceof PsiReferenceExpression) || pattern.getHandler(qualifier) instanceof SubstitutionHandler) {
             hasNoNestedSubstitutionHandlers = true;
             break;
           }

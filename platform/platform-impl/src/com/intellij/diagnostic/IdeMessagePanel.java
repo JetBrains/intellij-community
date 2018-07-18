@@ -182,10 +182,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     else if (state == IdeErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
       Project project = myFrame == null ? null : myFrame.getProject();
       if (project != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          String notificationText = getNotificationText(myMessagePool.getFatalErrors(false, false));
-          showErrorNotification(notificationText, project);
-        }, project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
         myNotificationPopupAlreadyShown = true;
       }
     }
@@ -194,20 +191,15 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   private static final String ERROR_TITLE = DiagnosticBundle.message("error.new.notification.title");
   private static final String ERROR_LINK = DiagnosticBundle.message("error.new.notification.link");
 
-  private void showErrorNotification(@Nullable String notificationText, @NotNull Project project) {
-    String title = notificationText == null ? ERROR_TITLE : "";
-    String content = notificationText == null ? "" : notificationText;
-    Notification notification = new Notification("", AllIcons.Ide.FatalError, title, null, content, NotificationType.ERROR, null);
-
-    if (notificationText == null) {
-      notification.addAction(new NotificationAction(ERROR_LINK) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          doOpenErrorsDialog(null);
-        }
-      });
-    }
+  private void showErrorNotification(@NotNull Project project) {
+    Notification notification = new Notification("", AllIcons.Ide.FatalError, ERROR_TITLE, null, null, NotificationType.ERROR, null);
+    notification.addAction(new NotificationAction(ERROR_LINK) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        doOpenErrorsDialog(null);
+      }
+    });
 
     BalloonLayout layout = myFrame.getBalloonLayout();
     assert layout != null;
@@ -221,28 +213,5 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
     Disposer.register(myBalloon, () -> myBalloon = null);
     layout.add(myBalloon);
-  }
-
-  private static String getNotificationText(List<AbstractMessage> messages) {
-    String result = null;
-    for (AbstractMessage message : messages) {
-      String s;
-      if (message instanceof LogMessageEx) {
-        s = ((LogMessageEx)message).getNotificationText();
-      }
-      else if (message instanceof GroupedLogMessage) {
-        s = getNotificationText(((GroupedLogMessage)message).getMessages());
-      }
-      else {
-        return null;
-      }
-      if (result == null) {
-        result = s;
-      }
-      else if (!result.equals(s)) {
-        return null;  // if texts are different, show default
-      }
-    }
-    return result;
   }
 }

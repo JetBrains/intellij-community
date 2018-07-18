@@ -4,5 +4,5 @@ package org.jetbrains.idea.svn.branchConfig
 import org.jetbrains.idea.svn.api.Url
 
 class SvnBranchItem(val url: Url, val creationDateMillis: Long, val revision: Long) : Comparable<SvnBranchItem> {
-  override fun compareTo(other: SvnBranchItem) = other.creationDateMillis.compareTo(creationDateMillis)
+  override fun compareTo(other: SvnBranchItem): Int = other.creationDateMillis.compareTo(creationDateMillis)
 }

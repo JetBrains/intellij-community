@@ -32,7 +32,7 @@ import java.util.List;
  * </ul>
  * Please note that since weak references can be collected at any time, index-based methods (like get(index))
  * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
- * Instead, please use add(element) and iterator().
+ * Instead, please use {@link #add(T)} and {@link #iterator()}.
  */
 public class WeakList<T> extends UnsafeWeakList<T> {
   public WeakList() {

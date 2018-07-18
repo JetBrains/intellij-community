@@ -28,7 +28,7 @@ import org.jetbrains.io.JsonUtil
 
 open class OutMessage() {
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.heapBuffer()
-  val writer = JsonWriter(ByteBufUtf8Writer(buffer))
+  val writer: JsonWriter = JsonWriter(ByteBufUtf8Writer(buffer))
 
   private var finalized: Boolean = false
 

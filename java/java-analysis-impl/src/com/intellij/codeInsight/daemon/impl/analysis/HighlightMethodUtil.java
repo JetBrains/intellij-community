@@ -608,7 +608,7 @@ public class HighlightMethodUtil {
 
   private static String buildOneLineMismatchDescription(@NotNull PsiExpressionList list,
                                                         @NotNull MethodCandidateInfo candidateInfo,
-                                                        @NotNull Ref<PsiElement> elementToHighlight) {
+                                                        @NotNull Ref<? super PsiElement> elementToHighlight) {
     final PsiExpression[] expressions = list.getExpressions();
     final PsiMethod resolvedMethod = candidateInfo.getElement();
     final PsiSubstitutor substitutor = candidateInfo.getSubstitutor();

@@ -86,11 +86,11 @@ class SelectTestStep(title: String?,
     }
   }
 
-  override fun getTextFor(value: RecentTestsPopupEntry) = value.presentation
+  override fun getTextFor(value: RecentTestsPopupEntry): String = value.presentation
   
-  override fun isSpeedSearchEnabled() = true
+  override fun isSpeedSearchEnabled(): Boolean = true
 
-  override fun hasSubstep(selectedValue: RecentTestsPopupEntry) = getConfigurations(selectedValue).isNotEmpty()
+  override fun hasSubstep(selectedValue: RecentTestsPopupEntry): Boolean = getConfigurations(selectedValue).isNotEmpty()
 
   override fun onChosen(entry: RecentTestsPopupEntry, finalChoice: Boolean): PopupStep<RecentTestsPopupEntry>? {
     if (finalChoice) {
@@ -128,7 +128,7 @@ class SelectConfigurationStep(items: List<RecentTestsPopupEntry>,
     return presentation
   } 
 
-  override fun getIconFor(value: RecentTestsPopupEntry?) = AllIcons.RunConfigurations.Junit
+  override fun getIconFor(value: RecentTestsPopupEntry?): Icon? = AllIcons.RunConfigurations.Junit
 
   override fun onChosen(selectedValue: RecentTestsPopupEntry, finalChoice: Boolean): PopupStep<RecentTestsPopupEntry>? {
     if (finalChoice) {

@@ -55,7 +55,7 @@ public class PyPackageUtilTest extends PyTestCase {
   // PY-18966
   public void testSetupPyDependencyLinksReading() {
     final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(myFixture.getModule());
-    final List<PyRequirement> expected = PyRequirement.fromText(
+    final List<PyRequirement> expected = PyRequirementParser.fromText(
       "sqlalchemy >=1.0.12, <1.1\ngit+https://github.com/mysql/mysql-connector-python.git@2.1.3#egg=mysql-connector-python-2.1.3");
 
     assertEquals(expected, actual);
@@ -183,7 +183,7 @@ public class PyPackageUtilTest extends PyTestCase {
   }
 
   private static void checkRequirements(@Nullable List<PyRequirement> actual, int fromIndex) {
-    final List<PyRequirement> expected = PyRequirement.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose");
+    final List<PyRequirement> expected = PyRequirementParser.fromText("Markdown\nNewDjango==1.3.1\nnumpy\nmynose");
     assertEquals(expected.subList(fromIndex, expected.size()), actual);
   }
 
@@ -205,7 +205,7 @@ public class PyPackageUtilTest extends PyTestCase {
     checkSetupArgumentText(module, keyword, "['NewDjango==1.3.1', 'Markdown']");
 
     final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
-    final List<PyRequirement> expected = PyRequirement.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
+    final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
     assertEquals(expected, actual);
   }
 

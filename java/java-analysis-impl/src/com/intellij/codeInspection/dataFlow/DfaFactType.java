@@ -51,7 +51,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     public String getPresentationText(@NotNull Boolean fact, @Nullable PsiType type) {
       if (type instanceof PsiPrimitiveType) return "";
-      return super.getPresentationText(fact, type);
+      return fact ? "nullable" : "non-null";
     }
 
     @Override
@@ -230,7 +230,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     @NotNull
     @Override
     public String toString(@NotNull Boolean fact) {
-      return fact ? "Local object" : "";
+      return fact ? "local object" : "";
     }
   };
 

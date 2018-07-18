@@ -51,7 +51,7 @@ private val LOG = Logger.getInstance(CopyrightManager::class.java)
 class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<CopyrightManager>()
+    fun getInstance(project: Project): CopyrightManager = project.service<CopyrightManager>()
   }
 
   private var defaultCopyrightName: String? = null
@@ -62,8 +62,8 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       defaultCopyrightName = value?.name
     }
 
-  val scopeToCopyright = LinkedHashMap<String, String>()
-  val options = Options()
+  val scopeToCopyright: LinkedHashMap<String, String> = LinkedHashMap<String, String>()
+  val options: Options = Options()
 
   private val schemeWriter = { scheme: CopyrightProfile ->
     val element = scheme.writeScheme()

@@ -57,10 +57,10 @@ interface UObjectLiteralExpression : UCallExpression {
     visitor.afterVisitObjectLiteralExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitObjectLiteralExpression(this, data)
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-  override fun asRenderString() = "anonymous " + declaration.text
+  override fun asRenderString(): String = "anonymous " + declaration.text
 }

@@ -84,8 +84,13 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
     editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
 
-    return new Dimension(Math.max(size.width + padding.left, editorWidth + iconWidth),
-                         Math.max(Math.max(iconHeight, size.height), editorHeight));
+    int width = size != null ? size.width : 0;
+    int height = size != null ? size.height : 0;
+
+    width = Math.max(width + padding.left, editorWidth + iconWidth);
+    height = Math.max(Math.max(iconHeight, height), editorHeight);
+
+    return new Dimension(width, height);
   }
 
   @Override

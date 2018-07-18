@@ -19,10 +19,12 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -33,7 +35,10 @@ import java.util.*;
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER = new PropertyCreationHandler() {
     @Override
-    public void createProperty(@NotNull final Project project, @NotNull final Collection<PropertiesFile> propertiesFiles, @NotNull final String key, @NotNull final String value,
+    public void createProperty(@NotNull final Project project,
+                               @NotNull final Collection<PropertiesFile> propertiesFiles,
+                               @NotNull final String key,
+                               @NotNull final String value,
                                @NotNull final PsiExpression[] parameters) throws IncorrectOperationException {
       I18nUtil.createProperty(project, propertiesFiles, key, value, true);
     }
@@ -50,7 +55,7 @@ public class JavaI18nUtil extends I18nUtil {
       return new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
     }
     PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
-    if (psiElement==null || psiElement instanceof PsiWhiteSpace) return null;
+    if (psiElement == null || psiElement instanceof PsiWhiteSpace) return null;
     return psiElement.getTextRange();
   }
 
@@ -65,6 +70,26 @@ public class JavaI18nUtil extends I18nUtil {
       }
     }
     return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, resourceBundleRef, null);
+  }
+
+  public static boolean mustBePropertyKey(@NotNull ULiteralExpression expression) {
+    final UElement parent = expression.getUastParent();
+    if (parent instanceof UVariable) {
+      UAnnotation annotation = ((UVariable)parent).findAnnotation(AnnotationUtil.PROPERTY_KEY);
+      if (annotation != null) {
+        return true;
+      }
+    }
+
+    UCallExpression callExpression = UastUtils.getUCallExpression(expression);
+    if (callExpression == null) return false;
+    PsiMethod psiMethod = callExpression.resolve();
+    if (psiMethod == null) return false;
+    PsiParameter parameter = UastUtils.getParameterForArgument(callExpression, expression);
+    if (parameter == null) return false;
+    int paramIndex = ArrayUtil.indexOf(psiMethod.getParameterList().getParameters(), parameter);
+    if (paramIndex == -1) return false;
+    return isMethodParameterAnnotatedWith(psiMethod, paramIndex, null, AnnotationUtil.PROPERTY_KEY, null, null);
   }
 
   static boolean isPassedToAnnotatedParam(@NotNull PsiExpression expression,
@@ -107,7 +132,9 @@ public class JavaI18nUtil extends I18nUtil {
     while (expression.getParent() instanceof PsiExpression) {
       final PsiExpression parent = (PsiExpression)expression.getParent();
       if (parent instanceof PsiConditionalExpression &&
-          ((PsiConditionalExpression)parent).getCondition() == expression) break;
+          ((PsiConditionalExpression)parent).getCondition() == expression) {
+        break;
+      }
       expression = parent;
       if (expression instanceof PsiAssignmentExpression) break;
     }
@@ -134,7 +161,7 @@ public class JavaI18nUtil extends I18nUtil {
       if (params.length == 0) {
         return false;
       }
-      PsiParameter lastParam = params [params.length-1];
+      PsiParameter lastParam = params[params.length - 1];
       if (lastParam.isVarArgs()) {
         param = lastParam;
       }
@@ -162,7 +189,8 @@ public class JavaI18nUtil extends I18nUtil {
     return false;
   }
 
-  private static void processAnnotationAttributes(@Nullable Ref<PsiAnnotationMemberValue> resourceBundleRef, @NotNull PsiAnnotation annotation) {
+  private static void processAnnotationAttributes(@Nullable Ref<PsiAnnotationMemberValue> resourceBundleRef,
+                                                  @NotNull PsiAnnotation annotation) {
     if (resourceBundleRef != null) {
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
@@ -271,7 +299,9 @@ public class JavaI18nUtil extends I18nUtil {
     return result;
   }
 
-  private static void addAvailableMethodsOfType(final PsiClassType type, final PsiLiteralExpression context, final Collection<String> result) {
+  private static void addAvailableMethodsOfType(final PsiClassType type,
+                                                final PsiLiteralExpression context,
+                                                final Collection<String> result) {
     PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -299,7 +329,8 @@ public class JavaI18nUtil extends I18nUtil {
   public static int getPropertyValuePlaceholdersCount(@NotNull final String propertyValue) {
     try {
       return new MessageFormat(propertyValue).getFormatsByArgumentIndex().length;
-    } catch (final IllegalArgumentException e) {
+    }
+    catch (final IllegalArgumentException e) {
       return 0;
     }
   }
@@ -309,17 +340,17 @@ public class JavaI18nUtil extends I18nUtil {
    *
    * <i>Class {0} info: Class {0} extends class {1} and implements interface {2}</i> in one translation of property
    * <i>Class {0} info: Class {0} extends class {1} </i> in other translation of property
-   *
+   * <p>
    * number of parameters is 3.
    *
    * @param expression i18n literal
    * @return number of parameters
    */
-  public static int getPropertyValueParamsMaxCount(@NotNull final PsiExpression expression) {
+  public static int getPropertyValueParamsMaxCount(@NotNull final UExpression expression) {
     return getPropertyValueParamsMaxCount(expression, null);
   }
 
-  private static int getPropertyValueParamsMaxCount(@NotNull final PsiExpression expression, @Nullable final String resourceBundleName) {
+  private static int getPropertyValueParamsMaxCount(@NotNull final UExpression expression, @Nullable final String resourceBundleName) {
     final SortedSet<Integer> paramsCount = getPropertyValueParamsCount(expression, resourceBundleName);
     if (paramsCount.isEmpty()) {
       return -1;
@@ -328,25 +359,35 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   @NotNull
-  static SortedSet<Integer> getPropertyValueParamsCount(@NotNull final PsiExpression expression, @Nullable final String resourceBundleName) {
-    final PsiLiteralExpression literalExpression;
-    if (expression instanceof PsiLiteralExpression) {
-      literalExpression = (PsiLiteralExpression)expression;
-    } else if (expression instanceof PsiReferenceExpression) {
-      final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+  static SortedSet<Integer> getPropertyValueParamsCount(@NotNull final PsiExpression expression,
+                                                        @Nullable final String resourceBundleName) {
+    UExpression uExpression = UastContextKt.toUElement(expression, UExpression.class);
+    if (uExpression == null) return new TreeSet<>();
+    return getPropertyValueParamsCount(uExpression, resourceBundleName);
+  }
+
+  @NotNull
+  static SortedSet<Integer> getPropertyValueParamsCount(@NotNull final UExpression expression, @Nullable final String resourceBundleName) {
+    final ULiteralExpression literalExpression;
+    if (expression instanceof ULiteralExpression) {
+      literalExpression = (ULiteralExpression)expression;
+    }
+    else if (expression instanceof UReferenceExpression) {
+      final PsiElement resolved = ((UReferenceExpression)expression).resolve();
       final PsiField field = resolved == null ? null : (PsiField)resolved;
       literalExpression =
         field != null && field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() instanceof PsiLiteralExpression
-        ? (PsiLiteralExpression)field.getInitializer()
+        ? UastContextKt.toUElement(field.getInitializer(), ULiteralExpression.class)
         : null;
-    } else {
+    }
+    else {
       literalExpression = null;
     }
     final TreeSet<Integer> paramsCount = new TreeSet<>();
     if (literalExpression == null) {
       return paramsCount;
     }
-    for (PsiReference reference : literalExpression.getReferences()) {
+    for (PsiReference reference : UastLiteralUtils.getInjectedReferences(literalExpression)) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
           if (result.isValidResult() && result.getElement() instanceof IProperty) {

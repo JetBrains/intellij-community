@@ -15,11 +15,15 @@
  */
 package org.intellij.images.editor.impl;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Alarm;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +52,17 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     ImageFileEditorImpl viewer = new ImageFileEditorImpl(project, file);
     if ("svg".equalsIgnoreCase(file.getExtension())) {
-      return new TextEditorWithPreview((TextEditor)TextEditorProvider.getInstance().createEditor(project, file), viewer, "SvgEditor");
+      TextEditor editor = (TextEditor)TextEditorProvider.getInstance().createEditor(project, file);
+      editor.getEditor().getDocument().addDocumentListener(new DocumentListener() {
+        Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, editor);
+        @Override
+        public void documentChanged(DocumentEvent event) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(() -> ((ImageEditorImpl)viewer.getImageEditor()).setValue(new LightVirtualFile("preview.svg", file.getFileType(), event.getDocument().getText())),
+                             500);
+        }
+      }, editor);
+      return new TextEditorWithPreview(editor, viewer, "SvgEditor");
     }
     return viewer;
   }

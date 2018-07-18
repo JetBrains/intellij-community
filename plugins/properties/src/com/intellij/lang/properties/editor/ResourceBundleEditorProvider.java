@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, DumbAware {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
@@ -60,7 +59,7 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
 
   @Override
   @NotNull
-  public FileEditorState readState(@Nullable Element element, @NotNull Project project, @NotNull VirtualFile file) {
+  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     return new ResourceBundleEditor.ResourceBundleEditorState(null);
   }
 

@@ -61,6 +61,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
+  private volatile int myNonCancelableSectionCount;
 
   @Override
   public synchronized void start() {
@@ -209,14 +210,16 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void startNonCancelableSection() {
+    myNonCancelableSectionCount++;
   }
 
   @Override
   public void finishNonCancelableSection() {
+    myNonCancelableSectionCount--;
   }
 
   protected boolean isCancelable() {
-    return !ProgressManager.getInstance().isInNonCancelableSection();
+    return myNonCancelableSectionCount == 0 && !ProgressManager.getInstance().isInNonCancelableSection();
   }
 
   @Override

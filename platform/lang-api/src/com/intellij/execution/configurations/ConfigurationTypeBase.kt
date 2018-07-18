@@ -26,14 +26,14 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
     factories = ArrayUtil.append(factories, factory)
   }
 
-  override fun getDisplayName() = displayName
+  override fun getDisplayName(): String = displayName
 
-  override final fun getConfigurationTypeDescription() = description
+  override final fun getConfigurationTypeDescription(): String = description
 
   // open due to backward compatibility
-  override fun getIcon() = icon?.value
+  override fun getIcon(): Icon? = icon?.value
 
-  override final fun getId() = id
+  override final fun getId(): String = id
 
-  override fun getConfigurationFactories() = factories
+  override fun getConfigurationFactories(): Array<ConfigurationFactory> = factories
 }

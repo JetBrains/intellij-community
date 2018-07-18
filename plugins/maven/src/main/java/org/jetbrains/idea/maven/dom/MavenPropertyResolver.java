@@ -258,6 +258,12 @@ public class MavenPropertyResolver {
     result = MavenUtil.getPropertiesFromMavenOpts().get(propName);
     if (result != null) return result;
 
+    result = mavenProject.getMavenConfig().get(propName);
+    if (result != null) return result;
+
+    result = mavenProject.getJvmConfig().get(propName);
+    if (result != null) return result;
+
     result = MavenServerUtil.collectSystemProperties().getProperty(propName);
     if (result != null) return result;
 

@@ -113,7 +113,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   @Override
   public void update(@NotNull VcsContext e, @NotNull Presentation presentation) {
-    AbstractShowDiffAction.updateDiffAction(presentation, e, VcsBackgroundableActions.COMPARE_WITH);
+    AbstractShowDiffAction.updateDiffAction(presentation, e);
   }
 
 
@@ -133,8 +133,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                          }
                          else {
                            showListPopup(revisions, project,
-                                         revision -> DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project,
-                                                                                 VcsBackgroundableActions.COMPARE_WITH), true);
+                                         revision -> DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project), true);
                          }
                        });
   }
@@ -150,7 +149,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
       VcsFileRevision revision = getRevisionAt(treeTable, index);
       if (revision != null) {
-        DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project, VcsBackgroundableActions.COMPARE_WITH);
+        DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project);
       }
     };
 
