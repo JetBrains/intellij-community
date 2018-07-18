@@ -94,7 +94,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
 
   @Override
   public boolean isValid() {
-    return myConstructor.isValid() && mySubstitutor.isValid();
+    return myConstructor.isValid() && myType.isValid();
   }
 
   @Override
