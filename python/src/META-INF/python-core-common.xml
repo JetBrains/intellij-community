@@ -585,8 +585,8 @@
 
     <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
 
-    <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyPackageUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyLegacyInterpreterUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyLegacyPackageUsagesCollector"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/PythonDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
