@@ -30,10 +30,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -331,11 +328,19 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyType getTypeForSuperClass(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
-    final PyArgumentList arguments = PsiTreeUtil.getParentOfType(referenceExpression, PyArgumentList.class, true, ScopeOwner.class);
-    if (arguments != null && arguments.getParent() instanceof PyClass) {
-      final PyType type = Ref.deref(getType(referenceExpression, context));
-      if (type instanceof PyInstantiableType) {
-        return ((PyInstantiableType)type).toClass();
+    // checking for stub is necessary here for code fragments.
+    // `context.maySwitchToAst(referenceExpression)` does not help because context file will be unstubbed while resolving in fragment.
+    // see PyClassImpl.classTypeFromQName
+    // see PyReferenceImpl.resolveInner
+    // see PyResolveUtil.scopeCrawlUp(PsiScopeProcessor, PsiElement, String, PsiElement)
+    final PyFileImpl file = as(referenceExpression.getContainingFile(), PyFileImpl.class);
+    if (file != null && file.getStub() == null  || context.maySwitchToAST(referenceExpression)) {
+      final PyArgumentList arguments = PsiTreeUtil.getParentOfType(referenceExpression, PyArgumentList.class, true, ScopeOwner.class);
+      if (arguments != null && arguments.getParent() instanceof PyClass) {
+        final PyType type = Ref.deref(getType(referenceExpression, context));
+        if (type instanceof PyInstantiableType) {
+          return ((PyInstantiableType)type).toClass();
+        }
       }
     }
     return null;
