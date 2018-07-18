@@ -13,8 +13,6 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -28,7 +26,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.Nls;
@@ -83,24 +80,13 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     builder.replaceElement(value, range, myData.myMissingPropertyIssues.iterator().next().hasEnumItems
                                           ? new MacroCallNode(new CompleteMacro())
                                           : new ConstantNode(quoted ? StringUtil.unquoteString(text) : text));
-    Template template = builder.buildTemplate();
-    int endOffset = newElement.getTextRange().getEndOffset();
-    int offset = hadComma.get() ? endOffset + 1 : endOffset;
-    // yes, we need separate write actions for each step
-    WriteAction.run(() -> editor.getCaretModel().moveToOffset(offset));
-    WriteAction.run(() -> newElement.delete());
-    addNewline(editor);
-    template.setToReformat(true);
-    templateManager.startTemplate(editor, template);
-  }
-
-  private static void addNewline(@NotNull Editor editor) {
-    int newOffset = editor.getCaretModel().getOffset();
-    Document document = editor.getDocument();
-    int lineStartOffset = DocumentUtil.getLineStartOffset(newOffset, document);
-    CharSequence docText = document.getCharsSequence();
-    int lineStartWsEndOffset = CharArrayUtil.shiftForward(docText, lineStartOffset, " \t");
-    WriteAction.run(() -> document.insertString(newOffset, "\n" + docText.subSequence(lineStartOffset, Math.min(newOffset, lineStartWsEndOffset))));
+    editor.getCaretModel().moveToOffset(newElement.getTextRange().getStartOffset());
+    builder.setEndVariableAfter(newElement);
+    WriteAction.run(() -> {
+            Template template = builder.buildInlineTemplate();
+            template.setToReformat(true);
+            templateManager.startTemplate(editor, template);
+          });
   }
 
   private PsiElement performFix(@NotNull Project project, PsiElement element, Ref<Boolean> hadComma) {
