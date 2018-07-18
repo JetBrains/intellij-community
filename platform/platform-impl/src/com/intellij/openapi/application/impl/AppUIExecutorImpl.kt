@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.experimental.*
 import java.util.*
 import kotlin.coroutines.experimental.CoroutineContext
@@ -105,11 +104,8 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun expireWith(parentDisposable: Disposable): AppUIExecutor {
-    if (myDisposables.contains(parentDisposable)) return this
-
-    val disposables = ContainerUtil.newHashSet(myDisposables)
-    disposables.add(parentDisposable)
-    return AppUIExecutorImpl(myModality, disposables, *myConstraints)
+    val disposables = myDisposables + parentDisposable
+    return if (disposables === myDisposables) this else AppUIExecutorImpl(myModality, disposables, *myConstraints)
   }
 
   override suspend fun <T> runCoroutine(block: suspend () -> T): T {
@@ -245,5 +241,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
+
+    private operator fun <T> Set<T>.plus(element: T): Set<T> = if (element in this) this else this.plusElement(element)
   }
 }
