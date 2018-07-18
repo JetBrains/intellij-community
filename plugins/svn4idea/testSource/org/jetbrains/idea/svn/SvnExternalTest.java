@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,13 +11,14 @@ import org.jetbrains.idea.svn.api.Url;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.util.containers.ContainerUtil.list;
+import static com.intellij.util.containers.ContainerUtil.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
 
@@ -32,62 +32,35 @@ public class SvnExternalTest extends SvnTestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myMainUrl = parseUrl(myRepoUrl + "/root/source", false);
-    myExternalURL = parseUrl(myRepoUrl + "/root/target", false);
+    myMainUrl = myRepositoryUrl.appendPath("root/source", false);
+    myExternalURL = myRepositoryUrl.appendPath("root/target", false);
   }
 
   @Test
   public void testExternalCopyIsDetected() throws Exception {
     prepareExternal();
-    externalCopyIsDetectedImpl();
+    assertWorkingCopies();
   }
 
   @Test
   public void testExternalCopyIsDetectedAnotherRepo() throws Exception {
     prepareExternal(true, true, true);
-    externalCopyIsDetectedImpl();
+    assertWorkingCopies();
   }
 
-  private void externalCopyIsDetectedImpl() {
-    final SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
-    final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
-    assertEquals(2, infos.size());
-    Set<Url> expectedUrls = new HashSet<>();
-    if (myAnotherRepoUrl != null) {
-      expectedUrls.add(parseUrl(myAnotherRepoUrl + "/root/target", false));
-    } else {
-      expectedUrls.add(myExternalURL);
-    }
-    expectedUrls.add(myMainUrl);
+  private void assertWorkingCopies() {
+    List<RootUrlInfo> infos = vcs.getSvnFileUrlMapping().getAllWcInfos();
+    Url[] urls = ar(myAnotherRepoUrl != null ? parseUrl(myAnotherRepoUrl + "/root/target", false) : myExternalURL, myMainUrl);
 
-    for (RootUrlInfo info : infos) {
-      expectedUrls.remove(info.getUrl());
-    }
-    assertTrue(expectedUrls.isEmpty());
-  }
-
-  protected void prepareInnerCopy() throws Exception {
-    prepareInnerCopy(false);
+    assertThat(map(infos, RootUrlInfo::getUrl), containsInAnyOrder(urls));
   }
 
   @Test
   public void testInnerCopyDetected() throws Exception {
-    prepareInnerCopy();
+    prepareInnerCopy(false);
 
-    final SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
-    final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
-    assertEquals(2, infos.size());
-    Set<Url> expectedUrls = new HashSet<>();
-    expectedUrls.add(myExternalURL);
-    expectedUrls.add(myMainUrl);
-
-    boolean sawInner = false;
-    for (RootUrlInfo info : infos) {
-      expectedUrls.remove(info.getUrl());
-      sawInner |= NestedCopyType.inner.equals(info.getType());
-    }
-    assertTrue(expectedUrls.isEmpty());
-    assertTrue(sawInner);
+    assertWorkingCopies();
+    assertThat(map(vcs.getSvnFileUrlMapping().getAllWcInfos(), RootUrlInfo::getType), hasItem(equalTo(NestedCopyType.inner)));
   }
 
   @Test
@@ -105,7 +78,6 @@ public class SvnExternalTest extends SvnTestCase {
   private void simpleExternalStatusImpl() {
     final File sourceFile = new File(myWorkingCopyDir.getPath(), "source" + File.separator + "s1.txt");
     final File externalFile = new File(myWorkingCopyDir.getPath(), "source" + File.separator + "external" + File.separator + "t12.txt");
-
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final VirtualFile vf1 = lfs.refreshAndFindFileByIoFile(sourceFile);
     final VirtualFile vf2 = lfs.refreshAndFindFileByIoFile(externalFile);
@@ -113,9 +85,8 @@ public class SvnExternalTest extends SvnTestCase {
     assertNotNull(vf1);
     assertNotNull(vf2);
 
-    VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
-    VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
-
+    editFileInCommand(vf1, "test externals 123" + System.currentTimeMillis());
+    editFileInCommand(vf2, "test externals 123" + System.currentTimeMillis());
     refreshChanges();
 
     final Change change1 = changeListManager.getChange(vf1);
@@ -123,10 +94,8 @@ public class SvnExternalTest extends SvnTestCase {
 
     assertNotNull(change1);
     assertNotNull(change2);
-
     assertNotNull(change1.getBeforeRevision());
     assertNotNull(change2.getBeforeRevision());
-
     assertNotNull(change1.getAfterRevision());
     assertNotNull(change2.getAfterRevision());
   }
@@ -176,7 +145,6 @@ public class SvnExternalTest extends SvnTestCase {
     final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
     assertNotNull(externalVf);
     editFileInCommand(externalVf, "some new content");
-
     refreshChanges();
 
     final Change change = changeListManager.getChange(externalVf);
@@ -197,11 +165,10 @@ public class SvnExternalTest extends SvnTestCase {
   }
 
   private void uncommittedExternalCopyIsDetectedImpl() {
-    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    setNewDirectoryMappings(sourceDir);
+    setNewDirectoryMappings(new File(myWorkingCopyDir.getPath(), "source"));
     imitUpdate();
     refreshSvnMappingsSynchronously();
 
-    externalCopyIsDetectedImpl();
+    assertWorkingCopies();
   }
 }
