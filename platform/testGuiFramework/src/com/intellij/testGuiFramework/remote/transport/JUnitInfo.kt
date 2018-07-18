@@ -23,6 +23,8 @@ import java.io.Serializable
  */
 enum class Type {RUN_STARTED, STARTED, ASSUMPTION_FAILURE, RUN_FINISHED, FAILURE, FINISHED, IGNORED }
 
+typealias FailureException = Pair<String?, Array<StackTraceElement>>
+
 data class JUnitInfo(val type: Type, val obj: Any?, val testClassAndMethodName: String) : Serializable {
   companion object {
     fun getClassAndMethodName(description: Description): String = "${description.className}#${description.methodName}"

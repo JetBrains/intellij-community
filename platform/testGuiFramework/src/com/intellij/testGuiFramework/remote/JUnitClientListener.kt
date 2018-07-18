@@ -27,7 +27,7 @@ import org.junit.runner.notification.RunListener
 /**
  * @author Sergey Karashevich
  */
-class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener() {
+class JUnitClientListener(private val sendObjectFun: (JUnitInfo) -> Unit) : RunListener() {
 
   val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClientListener")
 
@@ -39,11 +39,14 @@ class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener(
   }
 
   override fun testAssumptionFailure(failure: Failure?) {
-    sendObjectFun(JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable(), JUnitInfo.getClassAndMethodName(failure!!.description)))
+    sendObjectFun(
+      JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable(), JUnitInfo.getClassAndMethodName(failure!!.description)))
   }
 
   override fun testFailure(failure: Failure?) {
-    sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception, JUnitInfo.getClassAndMethodName(failure.description)))
+    val exception = failure!!.exception
+    sendObjectFun(
+      JUnitInfo(Type.FAILURE, Pair(exception.message, exception.stackTrace), JUnitInfo.getClassAndMethodName(failure.description)))
   }
 
   override fun testFinished(description: Description?) {
