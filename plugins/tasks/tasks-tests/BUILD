@@ -17,6 +17,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     # do not sort: must match IML order
@@ -39,5 +40,6 @@ iml_module(
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module, test]",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module, test]",
         "//tools/idea/.idea/libraries:http-client-3.1[test]",
+        "//tools/idea/.idea/libraries:Mocks[test]",
     ],
 )

@@ -38,7 +38,7 @@ iml_module(
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
         "//tools/idea/plugins/xpath/xslt-rt:intellij.xslt.debugger.rt[module]",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/.idea/libraries:Jaxen",
         "//tools/idea/resources-en:intellij.java.resources.en[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",

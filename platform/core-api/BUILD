@@ -20,7 +20,6 @@ iml_module(
         "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en[module]",
         "//tools/idea/.idea/libraries:automaton",
-        "//tools/idea/.idea/libraries:CGLIB",
         "//tools/idea/.idea/libraries:JDOM",
     ],
 )

@@ -15,3 +15,9 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
     ],
 )
+
+filegroup(
+    name = "resources",
+    srcs = glob(["resources/**"]),
+    visibility = ["//visibility:public"],
+)

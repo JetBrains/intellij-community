@@ -10,6 +10,7 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
@@ -36,7 +37,7 @@ iml_module(
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/resources:intellij.java.resources[module, test]",

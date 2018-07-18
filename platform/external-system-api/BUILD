@@ -15,13 +15,14 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/.idea/libraries:Objenesis",
         "//tools/idea/.idea/libraries:jackson",
+        "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
@@ -36,7 +37,7 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",

@@ -6,6 +6,7 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.java.compiler.antTasks.iml"],
     visibility = ["//visibility:public"],
+    runtime_deps = ["//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8"],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:Ant",

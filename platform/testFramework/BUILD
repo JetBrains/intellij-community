@@ -53,7 +53,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
-        "//tools/idea/jetCheck:intellij.tools.jetCheck[module, test]",
+        "//tools/idea/jetCheck:intellij.tools.jetCheck[module]",
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module]",
     ],
 )

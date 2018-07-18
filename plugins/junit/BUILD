@@ -19,6 +19,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     # do not sort: must match IML order
@@ -37,5 +38,6 @@ iml_module(
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module]",
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
         "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
+        "//tools/idea/jvm/jvm-analysis-api:intellij.jvm.analysis[module]",
     ],
 )

@@ -15,7 +15,7 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/platform/analysis-impl:intellij.platform.analysis.impl",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/extensions:intellij.platform.extensions",
         "//tools/idea/platform/util:intellij.platform.util",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing",
@@ -39,7 +39,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/analysis-impl:intellij.platform.analysis.impl[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",

@@ -11,7 +11,7 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt",
     ],
     # do not sort: must match IML order
@@ -21,7 +21,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:OroMatcher",

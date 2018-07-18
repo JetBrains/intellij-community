@@ -13,7 +13,7 @@ iml_module(
     runtime_deps = ["//tools/idea/jps/lib:optimizedFileManager"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:protobuf",

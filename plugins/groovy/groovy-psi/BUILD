@@ -23,6 +23,7 @@ iml_module(
     exports = ["//tools/idea/.idea/libraries:Groovy"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
@@ -41,7 +42,7 @@ iml_module(
         "//tools/idea:intellij.java.impl[module]",
         "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/xml/xml-psi-impl:intellij.xml.psi.impl[module]",
         "//tools/idea/platform/editor-ui-ex:intellij.platform.editor.ex[module]",
         "//tools/idea:intellij.java.analysis.impl[module]",

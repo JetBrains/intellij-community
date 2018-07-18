@@ -12,6 +12,7 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
@@ -82,5 +83,6 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module, test]",
+        "//tools/idea/.idea/libraries:http-client",
     ],
 )

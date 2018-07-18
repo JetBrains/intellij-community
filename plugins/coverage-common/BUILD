@@ -38,7 +38,7 @@ iml_module(
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:intellij-coverage",
         "//tools/idea/.idea/libraries:intellij-test-discovery",

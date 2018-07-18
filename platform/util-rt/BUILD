@@ -6,5 +6,5 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.platform.util.rt.iml"],
     visibility = ["//visibility:public"],
-    deps = ["//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]"],
+    deps = ["//tools/idea/.idea/libraries:jetbrains-annotations-java5"],
 )

@@ -21,7 +21,6 @@ iml_module(
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/json:intellij.json",
-        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
@@ -46,5 +45,6 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-core/jira:intellij.tasks.jira[module, test]",
         "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore[module]",
     ],
 )

@@ -34,6 +34,7 @@ iml_project(
         "//tools/idea/jps/lib:jars",
         "//tools/idea/lib:all-libs",
         "//tools/idea/platform/build-scripts:scripts",
+        "//tools/idea/plugins/stats-collector/features:resources",
         "//tools/idea/studio:ant_prebuilts",
     ] + glob([
         "license/**",
@@ -235,11 +236,13 @@ iml_project(
         "//tools/idea/jps/standalone-builder:intellij.tools.jps.build.standalone",
         "//tools/idea/json/tests:intellij.json.tests",
         "//tools/idea/json:intellij.json",
+        "//tools/idea/jvm/jvm-analysis-api:intellij.jvm.analysis",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
+        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
+        "//tools/idea/jvm/jvm-analysis-kotlin-tests:intellij.jvm.analysis.kotlin.tests",
+        "//tools/idea/jvm/jvm-analysis-tests-api:intellij.jvm.analysis.tests",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis",
         "//tools/idea/platform/analysis-impl:intellij.platform.analysis.impl",
-        "//tools/idea/platform/annotations/common:intellij.platform.annotations.common",
-        "//tools/idea/platform/annotations:intellij.platform.annotations",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5",
         "//tools/idea/platform/boot:intellij.platform.boot",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap",
         "//tools/idea/platform/build-scripts/testFramework:intellij.platform.buildScripts.testFramework",
@@ -494,11 +497,7 @@ iml_module(
     iml_files = ["java/java-analysis-impl/intellij.java.analysis.impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
-        "//tools/idea/images:intellij.platform.images",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
-    ],
+    test_runtime_deps = ["//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -511,16 +510,13 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
-        "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
-        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
-        "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -564,6 +560,7 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
@@ -639,6 +636,7 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
     ],
@@ -703,11 +701,10 @@ iml_module(
         "//tools/idea/jps/javac-ref-scanner-8:intellij.java.jps.javacRefScanner8",
         "//tools/idea/.idea/libraries:jgoodies-common",
         "//tools/idea/.idea/libraries:commons-net",
-        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/vendor/intellij/cidr:intellij.c.doxygen",
-        "//tools/idea/plugins/settings-repository:intellij.settingsRepository",
     ],
     # do not sort: must match IML order
     deps = [
@@ -715,7 +712,7 @@ iml_module(
         "//tools/idea/plugins/ant:intellij.ant[module]",
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
         "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
         "//tools/idea/java/debugger/openapi:intellij.java.debugger[module]",
@@ -883,6 +880,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -952,6 +950,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
     deps = ["//tools/idea:intellij.platform.jps.build_and_others[module]"],
@@ -973,6 +972,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",

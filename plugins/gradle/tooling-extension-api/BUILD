@@ -15,7 +15,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
         "//tools/idea/.idea/libraries:Groovy",

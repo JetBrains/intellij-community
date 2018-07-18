@@ -7,6 +7,7 @@ iml_module(
     iml_files = ["intellij.platform.lang.iml"],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     test_srcs = ["testSources"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [

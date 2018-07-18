@@ -266,8 +266,8 @@ java_library(
 java_library(
     name = "JDOM",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jdom"],
-    runtime_deps = ["//tools/idea/lib:jdom"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6:jar"],
 )
 
 # managed by go/iml_to_build
@@ -372,8 +372,8 @@ java_library(
 java_library(
     name = "batik",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-all/1.9.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-all/1.9.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-all/1.10:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/batik-all/1.10:jar"],
 )
 
 # managed by go/iml_to_build
@@ -407,9 +407,15 @@ java_library(
     name = "Xerces",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar"],
+    exports = [
+        "//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar",
+        "//prebuilts/tools/common/m2/repository/xml-apis/xml-apis/1.4.01:jar",
+    ],
     # do not sort: must match IML order
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar"],
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar",
+        "//prebuilts/tools/common/m2/repository/xml-apis/xml-apis/1.4.01:jar",
+    ],
 )
 
 # managed by go/iml_to_build
@@ -442,21 +448,21 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.24.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.25.Final:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.24.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.24.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.25.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.25.Final:jar",
     ],
 )
 
@@ -464,8 +470,8 @@ java_library(
 java_library(
     name = "netty-handler",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.24.Final:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.24.Final:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.25.Final:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.25.Final:jar"],
 )
 
 # managed by go/iml_to_build
@@ -480,8 +486,8 @@ java_library(
 java_library(
     name = "pty4j",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:pty4j-0.7.3"],
-    runtime_deps = ["//tools/idea/lib:pty4j-0.7.3"],
+    exports = ["//tools/idea/lib:pty4j-0.7.5"],
+    runtime_deps = ["//tools/idea/lib:pty4j-0.7.5"],
 )
 
 # managed by go/iml_to_build
@@ -544,8 +550,8 @@ java_library(
 java_library(
     name = "Groovy",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.12:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.12:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.15:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.15:jar"],
 )
 
 # managed by go/iml_to_build
@@ -742,8 +748,8 @@ java_library(
 java_library(
     name = "Groovy-Eclipse-Batch",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/plugins/groovy/lib:groovy-eclipse-batch-2.3.4-01"],
-    runtime_deps = ["//tools/idea/plugins/groovy/lib:groovy-eclipse-batch-2.3.4-01"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-eclipse-batch/2.4.15-01:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-eclipse-batch/2.4.15-01:jar"],
 )
 
 # managed by go/iml_to_build
@@ -994,8 +1000,8 @@ java_library(
 java_library(
     name = "jediterm-pty",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jediterm-pty-2.8"],
-    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.8"],
+    exports = ["//tools/idea/lib:jediterm-pty-2.9"],
+    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.9"],
 )
 
 # managed by go/iml_to_build
@@ -1302,4 +1308,28 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.3.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.3.0:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "jetbrains-annotations-java5",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/16.0.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/16.0.2:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "jetbrains-annotations",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations/16.0.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations/16.0.2:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "javassist",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.22.0-GA:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.22.0-GA:jar"],
 )

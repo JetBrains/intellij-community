@@ -28,13 +28,6 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "jdom",
-    jars = ["jdom.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "eawtstub",
     jars = ["eawtstub.jar"],
     visibility = ["//visibility:public"],
@@ -49,8 +42,8 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "pty4j-0.7.3",
-    jars = ["pty4j-0.7.3.jar"],
+    name = "pty4j-0.7.5",
+    jars = ["pty4j-0.7.5.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -105,8 +98,8 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "jediterm-pty-2.8",
-    jars = ["jediterm-pty-2.8.jar"],
+    name = "jediterm-pty-2.9",
+    jars = ["jediterm-pty-2.9.jar"],
     visibility = ["//visibility:public"],
 )
 

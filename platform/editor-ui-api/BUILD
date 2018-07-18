@@ -10,7 +10,7 @@ iml_module(
     deps = [
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
-        "//tools/idea/platform/annotations:intellij.platform.annotations.java5[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
