@@ -59,7 +59,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)
                 : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
-    if (count > 0) {
+    if (count != 0) {
       executeImpl(queryParameters, consumer);
     }
   }
