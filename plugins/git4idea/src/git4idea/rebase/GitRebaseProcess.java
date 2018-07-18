@@ -450,6 +450,13 @@ public class GitRebaseProcess {
       if (myRebasingBranch == null || myBaseBranch == null) return super.getRightPanelTitle(file, revisionNumber);
       return GitDefaultMergeDialogCustomizerKt.getDefaultRightPanelTitleForBranch(myBaseBranch, revisionNumber, myOntoBranch);
     }
+
+    @Nullable
+    @Override
+    public List<String> getColumnNames() {
+      if (myRebasingBranch == null || myBaseBranch == null) return null;
+      return asList(GitMergeProvider.calcColumnName(false, myRebasingBranch), GitMergeProvider.calcColumnName(true, myBaseBranch));
+    }
   }
 
   private void showStoppedForEditingMessage() {

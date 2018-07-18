@@ -162,11 +162,21 @@ open class MultipleFileMergeDialog2(
       override fun getColumnClass(): Class<*> = TreeTableModel::class.java
     })
 
-    mergeSession?.mergeInfoColumns?.mapTo(columns) { ColumnInfoAdapter(it) }
+    val mergeInfoColumns = mergeSession?.mergeInfoColumns
+    if (mergeInfoColumns != null) {
+      var customColumnNames = mergeDialogCustomizer.columnNames
+      if (customColumnNames != null && customColumnNames.size != mergeInfoColumns.size) {
+        LOG.error("Custom column names ($customColumnNames) don't match default columns ($mergeInfoColumns)")
+        customColumnNames = null
+      }
+      mergeInfoColumns.mapIndexedTo(columns) { index, columnInfo ->
+        ColumnInfoAdapter(columnInfo, customColumnNames?.get(index) ?: columnInfo.name) }
+    }
     return columns.toTypedArray()
   }
 
-  private class ColumnInfoAdapter(private val base: ColumnInfo<Any, Any>) : ColumnInfo<DefaultMutableTreeNode, Any>(base.name) {
+  private class ColumnInfoAdapter(private val base: ColumnInfo<Any, Any>,
+                                  columnName: String) : ColumnInfo<DefaultMutableTreeNode, Any>(columnName) {
     override fun valueOf(node: DefaultMutableTreeNode) = (node.userObject as? VirtualFile)?.let { base.valueOf(it) }
     override fun getMaxStringValue() = base.maxStringValue
     override fun getAdditionalWidth() = base.additionalWidth
