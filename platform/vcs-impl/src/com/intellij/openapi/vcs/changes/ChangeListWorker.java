@@ -618,7 +618,7 @@ public class ChangeListWorker {
                                      @NotNull PlusMinusModify<BaseRevision> deltaListener) {
     HashMap<Change, ListData> oldChangeMappings = new HashMap<>(myChangeMappings);
 
-    boolean somethingChanged = notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
+    notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
 
     myIdx.copyFrom(updatedWorker.myIdx);
     myChangeMappings.clear();
@@ -654,9 +654,7 @@ public class ChangeListWorker {
       }
     }
 
-    if (somethingChanged) {
-      FileStatusManager.getInstance(myProject).fileStatusesChanged();
-    }
+    FileStatusManager.getInstance(myProject).fileStatusesChanged();
 
     if (myMainWorker) {
       myDelayedNotificator.allChangeListsMappingsChanged();
@@ -667,8 +665,8 @@ public class ChangeListWorker {
     }
   }
 
-  private static boolean notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
-                                            @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+  private static void notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
+                                         @NotNull PlusMinusModify<BaseRevision> deltaListener) {
     final Set<BaseRevision> toRemove = new HashSet<>();
     final Set<BaseRevision> toAdd = new HashSet<>();
     final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
@@ -683,7 +681,6 @@ public class ChangeListWorker {
     for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
       deltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
     }
-    return !toRemove.isEmpty() || !toAdd.isEmpty();
   }
 
   void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
