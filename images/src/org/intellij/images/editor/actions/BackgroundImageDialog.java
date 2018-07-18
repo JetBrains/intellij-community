@@ -67,7 +67,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
-public class SetBackgroundImageDialog extends DialogWrapper {
+public class BackgroundImageDialog extends DialogWrapper {
   private static final String EDITOR = "editor";
   private static final String FRAME = "ide";
   
@@ -97,7 +97,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private final SimpleEditorPreview myEditorPreview;
   private final JComponent myIdePreview;
 
-  public SetBackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
+  public BackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
     myProject = project;
     setTitle("Background Image");
