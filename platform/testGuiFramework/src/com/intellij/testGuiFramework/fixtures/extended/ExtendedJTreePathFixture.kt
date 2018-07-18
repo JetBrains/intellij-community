@@ -101,7 +101,7 @@ open class ExtendedJTreePathFixture(
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtilKt.waitUntil(condition = "wait to find a correct path to click", timeoutInSeconds = 2) {
+        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeoutInSeconds = 2) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
               .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
