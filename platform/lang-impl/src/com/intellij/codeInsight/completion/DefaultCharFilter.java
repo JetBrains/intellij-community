@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.integrate;
 
-public class WorkingCopyInfo {
-  private final String myLocalPath;
-  private final boolean myUnderProjectRoot;
+package com.intellij.codeInsight.completion;
 
-  public WorkingCopyInfo(final String localPath, final boolean underProjectRoot) {
-    myLocalPath = localPath;
-    myUnderProjectRoot = underProjectRoot;
+import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.Lookup;
+
+public class DefaultCharFilter extends CharFilter {
+
+  @Override
+  public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
+    if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
+    switch(c){
+      case '.':
+      case ',':
+      case ';':
+      case '=':
+      case ' ':
+      case ':':
+      case '(':
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+
+      default:
+        return Result.HIDE_LOOKUP;
+    }
   }
 
-  public String getLocalPath() {
-    return myLocalPath;
-  }
-
-  public boolean isUnderProjectRoot() {
-    return myUnderProjectRoot;
-  }
-
-  public String toString() {
-    return myLocalPath;
-  }
 }

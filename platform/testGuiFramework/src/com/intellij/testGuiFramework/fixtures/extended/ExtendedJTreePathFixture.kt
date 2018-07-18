@@ -31,7 +31,7 @@ open class ExtendedJTreePathFixture(
     robot: Robot = GuiRobotHolder.robot,
     driver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
   ) :
-    this(tree, path.path.map { it.toString() }.toList(), predicate, robot, driver)
+    this(tree, path.getPathStrings(), predicate, robot, driver)
 
   init {
     replaceDriverWith(myDriver)
@@ -101,7 +101,7 @@ open class ExtendedJTreePathFixture(
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtilKt.waitUntil(condition = "wait to find a correct path to click", timeoutInSeconds = 2) {
+        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeoutInSeconds = 2) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
               .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
@@ -128,7 +128,7 @@ open class ExtendedJTreePathFixture(
 
   fun drop(): Unit = myDriver.drop(tree, path)
 
-  fun getPathStrings(): List<String> = path.path.map { it.toString() }
+  fun getPathStrings(): List<String> = path.getPathStrings()
 
   ////////////////////////////////////////////////////////////////
   // Overridden functions
@@ -179,3 +179,19 @@ open class ExtendedJTreePathFixture(
   }
 
 }
+
+  /**
+   * Returns list of visible strings not including the first invisible item
+   *
+   * Note: code `this.path.joinToString()` always includes the first invisible item
+   * */
+  fun TreePath.getPathStrings(): List<String> {
+    val result = mutableListOf<String>()
+    var currPath = this
+
+    while(currPath.lastPathComponent.toString().isNotEmpty()) {
+      result.add(currPath.lastPathComponent.toString())
+      currPath = parentPath
+    }
+    return result.reversed().toList()
+  }

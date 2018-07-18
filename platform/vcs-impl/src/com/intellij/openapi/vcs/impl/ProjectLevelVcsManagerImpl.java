@@ -676,11 +676,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void updateActiveVcss() {
-    // not needed
-  }
-
-  @Override
   public void notifyDirectoryMappingChanged() {
     BackgroundTaskUtil.syncPublisher(myProject, VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
   }

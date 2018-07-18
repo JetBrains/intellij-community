@@ -58,10 +58,10 @@ class SmartPointerTracker {
 
     if (needsExpansion() || isTooSparse()) {
       resize();
-      assert isActual(reference.file, reference.key);
+      if (!isActual(reference.file, reference.key)) throw new AssertionError();
     }
 
-    assert references[nextAvailableIndex] == null : references[nextAvailableIndex];
+    if (references[nextAvailableIndex] != null) throw new AssertionError(references[nextAvailableIndex]);
     storePointerReference(references, nextAvailableIndex++, reference);
     size++;
     mySorted = false;
@@ -102,7 +102,9 @@ class SmartPointerTracker {
     if (index < 0) return;
 
     assertActual(expectedKey, reference.file, reference.key);
-    assert references[index] == reference : "At " + index + " expected " + reference + ", found " + references[index];
+    if (references[index] != reference) {
+      throw new AssertionError("At " + index + " expected " + reference + ", found " + references[index]);
+    }
     references[index].index = -1;
     references[index] = null;
     if (--size == 0) {
@@ -111,10 +113,12 @@ class SmartPointerTracker {
   }
 
   private void assertActual(@NotNull Key<SmartPointerTracker> expectedKey, @NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> refKey) {
-    assert isActual(file, refKey) : "Smart pointer list mismatch mismatch:" +
-                                    " ref.key=" + expectedKey +
-                                    ", manager.key=" + refKey +
-                                    (file.getUserData(refKey) != null ? "; has another pointer list" : "");
+    if (!isActual(file, refKey)) {
+      throw new AssertionError("Smart pointer list mismatch mismatch:" +
+                               " ref.key=" + expectedKey +
+                               ", manager.key=" + refKey +
+                               (file.getUserData(refKey) != null ? "; has another pointer list" : ""));
+    }
   }
 
   private void processAlivePointers(@NotNull Processor<? super SmartPsiElementPointerImpl<?>> processor) {
@@ -122,7 +126,7 @@ class SmartPointerTracker {
       PointerReference ref = references[i];
       if (ref == null) continue;
 
-      assert isActual(ref.file, ref.key);
+      if (!isActual(ref.file, ref.key)) throw new AssertionError();
       SmartPsiElementPointerImpl<?> pointer = ref.get();
       if (pointer == null) {
         removeReference(ref, ref.key);
@@ -139,7 +143,7 @@ class SmartPointerTracker {
     if (!mySorted) {
       List<SmartPsiElementPointerImpl<?>> pointers = new ArrayList<>();
       processAlivePointers(new CommonProcessors.CollectProcessor<>(pointers));
-      assert size == pointers.size();
+      if (size != pointers.size()) throw new AssertionError();
 
       pointers
         .sort((p1, p2) -> MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo()));

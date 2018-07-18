@@ -2750,7 +2750,7 @@ public class PluginManagerConfigurableNew
     return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
-  private static abstract class CellPluginComponent extends JPanel {
+  public static abstract class CellPluginComponent extends JPanel {
     private static final Color HOVER_COLOR = new JBColor(0xE9EEF5, 0x464A4D);
     private static final Color GRAY_COLOR = new JBColor(Gray._130, Gray._120);
 
@@ -2765,6 +2765,12 @@ public class PluginManagerConfigurableNew
 
     protected CellPluginComponent(@NotNull IdeaPluginDescriptor plugin) {
       myPlugin = plugin;
+    }
+
+    @TestOnly
+    @NotNull
+    public IdeaPluginDescriptor getPluginDescriptor() {
+      return myPlugin;
     }
 
     protected void addIconComponent(@NotNull JPanel parent, @Nullable Object constraints) {

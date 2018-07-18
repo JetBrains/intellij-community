@@ -67,7 +67,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
-public class SetBackgroundImageDialog extends DialogWrapper {
+public class BackgroundImageDialog extends DialogWrapper {
   private static final String EDITOR = "editor";
   private static final String FRAME = "ide";
   
@@ -85,6 +85,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private JPanel myPreviewPanel;
   private ComboboxWithBrowseButton myPathField;
   private JBCheckBox myThisProjectOnlyCb;
+  private JBCheckBox myFlipHorCb;
+  private JBCheckBox myFlipVerCb;
   private JPanel myAnchorPanel;
   private JPanel myFillPanel;
   private JPanel myTargetPanel;
@@ -95,7 +97,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private final SimpleEditorPreview myEditorPreview;
   private final JComponent myIdePreview;
 
-  public SetBackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
+  public BackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
     myProject = project;
     setTitle("Background Image");
@@ -242,6 +244,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
       button.setActionCommand(button.getText());
       button.addItemListener(this::fillOrAnchorChanged);
     }
+    myFlipHorCb.addItemListener(this::fillOrAnchorChanged);
+    myFlipVerCb.addItemListener(this::fillOrAnchorChanged);
     ChangeListener opacitySync = new ChangeListener() {
 
       @Override
@@ -296,7 +300,6 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     updatePreview();
   }
 
-  /** @noinspection unused*/
   private void fillOrAnchorChanged(ItemEvent event) {
     updatePreview();
   }
@@ -337,11 +340,14 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
     String fill = split.length > 2 ? split[2] : "scale";
     String anchor = split.length > 3 ? split[3] : "center";
+    String flip = split.length > 4 ? split[4] : "none";
     setSelectedPath(split[0]);
     myOpacitySlider.setValue(opacity);
     myOpacitySpinner.setValue(opacity);
     setSelected(getFillRbGroup(), fill);
     setSelected(getAnchorRbGroup(), anchor);
+    myFlipHorCb.setSelected("flipHV".equals(flip) || "flipH".equals(flip));
+    myFlipVerCb.setSelected("flipHV".equals(flip) || "flipV".equals(flip));
     myAdjusting = false;
   }
 
@@ -432,7 +438,9 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     String path = (String)myPathField.getComboBox().getEditor().getItem();
     String type = getFillRbGroup().getSelection().getActionCommand().replace('-', '_');
     String anchor = getAnchorRbGroup().getSelection().getActionCommand().replace('-', '_');
-    return path.trim() + "," + myOpacitySpinner.getValue() + "," + (type + "," + anchor).toLowerCase(Locale.ENGLISH);
+    int flip = (myFlipHorCb.isSelected() ? 1 : 0) << 1 | (myFlipVerCb.isSelected() ? 1 : 0);
+    return path.trim() + "," + myOpacitySpinner.getValue() + "," + StringUtil.toLowerCase(type + "," + anchor) +
+           (flip == 0 ? "" : "," + (flip == 3 ? "flipHV" : flip == 2 ? "flipH" : "flipV"));
   }
 
   private static void setSelected(ButtonGroup group, String fill) {

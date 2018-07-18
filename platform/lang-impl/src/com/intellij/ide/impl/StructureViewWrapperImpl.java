@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -278,43 +279,35 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
       else {
         FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-        boolean needDisposeEditor = false;
-        if (editor == null) {
-          editor = createTempFileEditor(file);
-          needDisposeEditor = true;
-        }
-        if (editor != null && editor.isValid()) {
-          final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
-          if (structureViewBuilder != null) {
-            myStructureView = structureViewBuilder.createStructureView(editor, myProject);
-            myFileEditor = needDisposeEditor ? null : editor;
-            Disposer.register(this, myStructureView);
-            updateHeaderActions(myStructureView);
+        StructureViewBuilder structureViewBuilder =
+          editor != null && editor.isValid() ? editor.getStructureViewBuilder() :
+          createStructureViewBuilder(file);
+        if (structureViewBuilder != null) {
+          myStructureView = structureViewBuilder.createStructureView(editor, myProject);
+          myFileEditor = editor;
+          Disposer.register(this, myStructureView);
+          updateHeaderActions(myStructureView);
 
-            if (myStructureView instanceof StructureView.Scrollable) {
-              ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
-            }
-
-            if (myStructureView instanceof StructureViewComposite) {
-              final StructureViewComposite composite = (StructureViewComposite)myStructureView;
-              final StructureViewComposite.StructureViewDescriptor[] views = composite.getStructureViews();
-              myPanels = new JPanel[views.length];
-              names = new String[views.length];
-              for (int i = 0; i < myPanels.length; i++) {
-                myPanels[i] = createContentPanel(views[i].structureView.getComponent());
-                names[i] = views[i].title;
-              }
-            }
-            else {
-              createSinglePanel(myStructureView.getComponent());
-            }
-
-            myStructureView.restoreState();
-            myStructureView.centerSelectedRow();
+          if (myStructureView instanceof StructureView.Scrollable) {
+            ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
           }
-        }
-        if (needDisposeEditor && editor != null) {
-          Disposer.dispose(editor);
+
+          if (myStructureView instanceof StructureViewComposite) {
+            final StructureViewComposite composite = (StructureViewComposite)myStructureView;
+            final StructureViewComposite.StructureViewDescriptor[] views = composite.getStructureViews();
+            myPanels = new JPanel[views.length];
+            names = new String[views.length];
+            for (int i = 0; i < myPanels.length; i++) {
+              myPanels[i] = createContentPanel(views[i].structureView.getComponent());
+              names[i] = views[i].title;
+            }
+          }
+          else {
+            createSinglePanel(myStructureView.getComponent());
+          }
+
+          myStructureView.restoreState();
+          myStructureView.centerSelectedRow();
         }
       }
     }
@@ -370,12 +363,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   @Nullable
-  private FileEditor createTempFileEditor(@NotNull VirtualFile file) {
+  private StructureViewBuilder createStructureViewBuilder(@NotNull VirtualFile file) {
     if (file.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return null;
 
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
-    return providers.length == 0 ? null : providers[0].createEditor(myProject, file);
+    FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
+    FileEditorProvider provider = providers.length == 0 ? null : providers[0];
+    if (provider == null) return null;
+    if (provider instanceof TextEditorProvider) {
+      return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, myProject);
+    }
+    FileEditor editor = provider.createEditor(myProject, file);
+    StructureViewBuilder builder = editor.getStructureViewBuilder();
+    Disposer.dispose(editor);
+    return builder;
   }
 
 

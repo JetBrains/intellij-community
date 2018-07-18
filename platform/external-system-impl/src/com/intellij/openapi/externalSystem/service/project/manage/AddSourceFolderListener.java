@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -20,6 +21,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
 public class AddSourceFolderListener implements VirtualFileListener {
+  private static final Logger LOG = Logger.getInstance(AddSourceFolderListener.class);
   private final ContentRootData.SourceRoot myRoot;
   private final Project myProject;
   private final Module myModule;
@@ -46,6 +48,7 @@ public class AddSourceFolderListener implements VirtualFileListener {
         ExternalSystemApiUtil.executeProjectChangeAction(false, new DisposeAwareProjectChange(myProject) {
           @Override
           public void execute() {
+            LOG.info("Detected file [" + event.getFile().getPath() + "] appeared for content root [" + myRoot.getPath() + "], attaching new source folder");
             final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
             final ContentEntry entry = MarkRootActionBase.findContentEntry(rootModel, event.getFile());
             if (entry != null) {

@@ -17,11 +17,11 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
-import com.intellij.vcs.log.data.index.VcsLogIndex;
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EmptyIndex implements VcsLogIndex {
+public class EmptyIndex implements VcsLogModifiableIndex {
   @Override
   public void scheduleIndex(boolean full) {
   }

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface VcsLogIndex {
-  void scheduleIndex(boolean full);
 
   boolean isIndexed(int commit);
 
@@ -28,14 +27,8 @@ public interface VcsLogIndex {
 
   boolean isIndexingEnabled(@NotNull VirtualFile root);
 
-  void markForIndexing(int commit, @NotNull VirtualFile root);
-
-  void reindexWithRenames(int commit, @NotNull VirtualFile root);
-
   @Nullable
   IndexDataGetter getDataGetter();
-
-  void markCorrupted();
 
   void addListener(@NotNull IndexingFinishedListener l);
 

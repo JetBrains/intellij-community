@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.Template
@@ -482,6 +483,28 @@ java.util.List<? extends Integer> list;
         
     }
 }}'''
+  }
 
+  void "test overtyping suggestion with a quote"() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+
+    myFixture.configureByText 'a.java', '''
+class A {
+  {
+    String s;
+    <caret>s.toString();
+  }
+}'''
+    myFixture.doHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention('Initialize variable'))
+    myFixture.type('"')
+    myFixture.checkResult '''
+class A {
+  {
+    String s = "";
+    s.toString();
+  }
+}'''
+    assert !myFixture.lookup
   }
 }

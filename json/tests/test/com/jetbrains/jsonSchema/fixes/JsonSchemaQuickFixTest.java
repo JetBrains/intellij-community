@@ -39,6 +39,19 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                                     "}");
   }
 
+  public void testAddMissingStringProperty() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"a\": {\n" +
+           "      \"type\": \"string\"" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"a\"]\n" +
+           "}", "<warning>{\"c\": 5}</warning>", "Add missing property 'a'", "{\"c\": 5,\n" +
+                                                                             "  \"a\": \"<caret>\"" +
+                                                                             "\n}");
+  }
+
   public void testRemoveProhibitedProperty() throws Exception {
     doTest("{\n" +
            "  \"properties\": {\n" +

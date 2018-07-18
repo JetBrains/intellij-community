@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PathMacroManager;
@@ -735,7 +736,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     @Override
     public void appStarting(Project projectFromCommandLine) {
-      if (projectFromCommandLine != null) return;
+      if (projectFromCommandLine != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
+        return;
+      }
+
       doReopenLastProject();
     }
 

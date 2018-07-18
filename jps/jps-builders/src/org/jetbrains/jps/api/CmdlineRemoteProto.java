@@ -5,6 +5,7 @@
 
 package org.jetbrains.jps.api;
 
+@javax.annotation.Generated(value="protoc", comments="annotations:CmdlineRemoteProto.java.pb.meta")
 public final class CmdlineRemoteProto {
   private CmdlineRemoteProto() {}
   public static void registerAllExtensions(
@@ -2846,7 +2847,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;</code>
          */
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> 
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope>
             getScopeList();
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;</code>
@@ -2879,7 +2880,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;</code>
          */
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair> 
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair>
             getBuilderParameterList();
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;</code>
@@ -3857,7 +3858,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;</code>
          */
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScopeOrBuilder> 
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScopeOrBuilder>
             getScopeOrBuilderList() {
           return scope_;
         }
@@ -4060,7 +4061,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;</code>
          */
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePairOrBuilder> 
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePairOrBuilder>
             getBuilderParameterOrBuilderList() {
           return builderParameter_;
         }
@@ -6547,7 +6548,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile generated_files = 4;</code>
          */
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> 
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile>
             getGeneratedFilesList();
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile generated_files = 4;</code>
@@ -7993,7 +7994,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile generated_files = 4;</code>
          */
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFileOrBuilder> 
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFileOrBuilder>
             getGeneratedFilesOrBuilderList() {
           return generatedFiles_;
         }
