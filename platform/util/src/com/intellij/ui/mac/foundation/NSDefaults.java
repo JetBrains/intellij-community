@@ -60,8 +60,10 @@ public class NSDefaults {
 
         int pos = myPath.size() - 1;
         Node child = myPath.get(pos--);
-        if (!child.isValid())
-          return;
+        if (!child.isValid()) {
+          if (val == null) // nothing to erase
+            return;
+        }
 
         child.writeStringValue(key, val);
         while (pos >= 0) {
@@ -149,13 +151,21 @@ public class NSDefaults {
         cachedNodeObj = nodeObj;
       }
 
-      void writeStringValue(@NotNull String key, String val) {
-        if (!isValid()) {
-          LOG.error("try to write to invalid node: " + toString());
-          return;
-        }
+      private static ID _createDictionary() { return Foundation.invoke("NSMutableDictionary", "new"); }
 
-        final ID mnode = Foundation.invoke(cachedNodeObj, "mutableCopy");
+      void writeStringValue(@NotNull String key, String val) {
+        final ID mnode;
+        if (!isValid()) {
+          if (val == null) // nothing to erase
+            return;
+
+          mnode = _createDictionary();
+        } else
+          mnode = Foundation.invoke(cachedNodeObj, "mutableCopy");
+
+        if (mnode == null || mnode.equals(ID.NIL))
+          return;
+
         if (val != null)
           Foundation.invoke(mnode, "setObject:forKey:", Foundation.nsString(val), Foundation.nsString(key));
         else
