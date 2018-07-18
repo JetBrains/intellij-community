@@ -328,7 +328,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     PsiDocumentManager.getInstance(project).commitDocument(document);
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
-    if (handler.findElementForParameterInfo(infoContext) == null) {
+    if (!methodCall.isValid() || handler.findElementForParameterInfo(infoContext) == null) {
       document.deleteString(offset, offset + commas.length());
       return;
     }
