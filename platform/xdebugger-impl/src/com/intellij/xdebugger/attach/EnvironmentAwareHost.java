@@ -74,4 +74,8 @@ public abstract class EnvironmentAwareHost implements XAttachHost {
    */
   @NotNull
   public abstract String getFileSystemHostId();
+
+  public boolean checkCredentials(@NotNull final Object credentialsObject) {
+    return false;
+  }
 }
