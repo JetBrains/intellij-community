@@ -912,9 +912,7 @@ public class PluginManagerCore {
         int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
         if (oldIndex >= 0) {
           IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
-          if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0
-            // AndroidStudio: temporarily prefer the bundled Kotlin plugin over user-installed versions.
-            || (descriptor.isBundled() && "org.jetbrains.kotlin".equals(descriptor.getPluginId().getIdString()))) {
+          if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
             if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
               getLogger().info("newer plugin is incompatible, ignoring: " + descriptor.getPath());
             }
