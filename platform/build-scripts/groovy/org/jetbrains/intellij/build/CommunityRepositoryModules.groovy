@@ -206,6 +206,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.cucumber.java") {
       withModule("intellij.cucumber.jvmFormatter")
+      withModule("intellij.cucumber.jvmFormatter3")
       withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")
       withResource("../../community/lib/gherkin-2.12.2.jar", "lib")
       doNotCreateSeparateJarForLocalizableResources()
