@@ -19,57 +19,50 @@ import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
+import com.jetbrains.python.packaging.PyPIPackageCache;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author yole
  */
-public class PyInterpreterUsagesCollector extends AbstractProjectsUsagesCollector {
-  private static final String GROUP_ID = "py-interpreter";
+public class PyLegacyPackageUsagesCollector extends AbstractProjectsUsagesCollector {
+  private static final String GROUP_ID = "py-packages";
 
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    Set<UsageDescriptor> result = new HashSet<>();
-    for (Module m : ModuleManager.getInstance(project).getModules()) {
-      Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
+    final Set<UsageDescriptor> result = new HashSet<>();
+    for(final Module m: ModuleManager.getInstance(project).getModules()) {
+      final Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
       if (pythonSdk != null) {
-        String versionString = pythonSdk.getVersionString();
-        if (StringUtil.isEmpty(versionString)) {
-          versionString = "unknown version";
-        }
-        if (PythonSdkType.isRemote(pythonSdk)) {
-          versionString = versionString + " (" + getRemoteSuffix(pythonSdk) + ")";
-        }
-        
-        if (PythonSdkType.isVirtualEnv(pythonSdk)) {
-          versionString += " [virtualenv]";
-        }
-
-        if (PythonSdkType.isConda(pythonSdk)) {
-          versionString += " [condavenv]";
-        }
-        result.add(new UsageDescriptor(versionString, 1));
+        ApplicationManager.getApplication().runReadAction(() -> {
+          List<PyRequirement> requirements = PyPackageManager.getInstance(pythonSdk).getRequirements(m);
+          if (requirements != null) {
+            Collection<String> packages = new HashSet<>(PyPIPackageCache.getInstance().getPackageNames());
+            for (PyRequirement requirement : requirements) {
+              String name = requirement.getName();
+              if (packages.contains(name)) {
+                result.add(new UsageDescriptor(name, 1));
+              }
+            }
+          }
+        });
       }
     }
     return result;
-  }
-
-  @NotNull
-  private static String getRemoteSuffix(@NotNull Sdk pythonSdk) {
-    return pythonSdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase
-           ? "Remote " + (((PyRemoteSdkAdditionalDataBase)pythonSdk.getSdkAdditionalData()).getRemoteConnectionType()).getName()
-           : "";
   }
 
   @NotNull
