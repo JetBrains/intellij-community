@@ -47,8 +47,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE;
-import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE;
+import static com.intellij.diff.util.DiffUserDataKeysEx.*;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
@@ -261,16 +260,19 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @Nullable
   public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
+    Map<Key, Object> context = ContainerUtil.newHashMap();
     if (userObject instanceof MergedChange) {
       MergedChange mergedChange = (MergedChange)userObject;
       if (mergedChange.getSourceChanges().size() == 2) {
-        return new MergedChangeDiffRequestProvider.MyProducer(myProject, mergedChange);
+        if (forDiffPreview) {
+          putFilePathsIntoContext(mergedChange, context);
+        }
+        return new MergedChangeDiffRequestProvider.MyProducer(myProject, mergedChange, context);
       }
     }
     if (userObject instanceof Change) {
       Change change = (Change)userObject;
 
-      Map<Key, Object> context = ContainerUtil.newHashMap();
       if (forDiffPreview) {
         putFilePathsIntoContext(change, context);
       }
@@ -291,6 +293,18 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
       return ChangeDiffRequestProducer.create(myProject, change, context);
     }
     return null;
+  }
+
+  private static void putFilePathsIntoContext(@NotNull MergedChange change, @NotNull Map<Key, Object> context) {
+    ContentRevision centerRevision = change.getAfterRevision();
+    ContentRevision leftRevision = change.getSourceChanges().get(0).getBeforeRevision();
+    ContentRevision rightRevision = change.getSourceChanges().get(1).getBeforeRevision();
+    FilePath centerFile = centerRevision == null ? null : centerRevision.getFile();
+    FilePath leftFile = leftRevision == null ? null : leftRevision.getFile();
+    FilePath rightFile = rightRevision == null ? null : rightRevision.getFile();
+    context.put(VCS_DIFF_CENTER_CONTENT_TITLE, getRevisionTitle(centerRevision, centerFile, null));
+    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(rightRevision, rightFile, centerFile));
+    context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
   private static void putFilePathsIntoContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
