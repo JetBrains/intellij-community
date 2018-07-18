@@ -24,10 +24,16 @@ fun main(args: Array<String>) {
   val repos = args.find(repoArg)?.split(",") ?: emptyList()
   if (repos.size < 2) printUsageAndExit()
   val skipPattern = args.find(patternArg)
-  checkIcons(repos[0], repos[1], skipPattern,
+  checkIcons(ignoreCaseInDirName(repos[0]), ignoreCaseInDirName(repos[1]), skipPattern,
              args.find(syncIcons)?.toBoolean() ?: false,
              args.find(syncDevIcons)?.toBoolean() ?: false,
              args.find(syncRemovedIconsInDev)?.toBoolean() ?: true)
+}
+
+private fun ignoreCaseInDirName(path: String) = File(path).let {
+  it.parentFile.listFiles().first {
+    it.absolutePath.equals(path, ignoreCase = true)
+  }.absolutePath
 }
 
 private fun Array<String>.find(arg: String) = this.find {
