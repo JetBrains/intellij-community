@@ -70,7 +70,11 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
     return StringUtil.notNullize(myEditor.getText());
   }
 
-  public ExpandableTextField getTextField() {
+  public JTextField getTextField() {
+    return myEditor;
+  }
+
+  public ExpandableTextField getEditorField() {
     return myEditor;
   }
 
