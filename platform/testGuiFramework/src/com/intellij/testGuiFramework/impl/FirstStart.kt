@@ -274,7 +274,7 @@ abstract class FirstStart(val ideType: IdeType) {
       return JCheckBoxFixture(this, jCheckBox)
     }
 
-    fun Robot.waitFrame(title: String, timeoutInSeconds: Int = 10, titleMatching: (String) -> Boolean) {
+    fun Robot.waitFrame(title: String, timeoutInSeconds: Int = 10, titleMatching: (String?) -> Boolean) {
       GuiTestUtilKt.waitUntil("frame with title '$title' will appear",
                               timeoutInSeconds) { this.hierarchy().roots().any { it is JFrame && titleMatching(it.title) } }
     }
