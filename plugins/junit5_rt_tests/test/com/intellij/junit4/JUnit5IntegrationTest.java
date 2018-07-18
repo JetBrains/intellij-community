@@ -33,6 +33,7 @@ import com.intellij.testFramework.TestDataProvider;
 import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import jetbrains.buildServer.messages.serviceMessages.TestIgnored;
+import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -166,6 +167,16 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertSize(2, ignoredTests); // each method from class reported
   }
 
+  public void testDirectory() throws Exception {
+    RunConfiguration configuration = createRunDirectoryConfiguration("mixed.v5");
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertEquals(1, processOutput.messages.stream().filter(TestStarted.class::isInstance).count());
+    
+  }
+
   @Bombed(month = Calendar.AUGUST, day = 31, user = "Timur Yuldashev", description = "IDEA-174534")
   public void testRunSpecificDisabledTestClass() throws Exception {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("disabled.DisabledClass", GlobalSearchScope.projectScope(myProject));
@@ -230,6 +241,19 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertNotNull(aPackage);
     RunConfiguration configuration = createConfiguration(aPackage);
     assertInstanceOf(configuration, JUnitConfiguration.class);
+    return configuration;
+  }
+
+  @NotNull
+  public RunConfiguration createRunDirectoryConfiguration(final String packageName) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
+    assertNotNull(aPackage);
+    PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(myModule));
+    assertTrue(directories.length > 0);
+    JUnitConfiguration configuration = new JUnitConfiguration("dir", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
+    data.setDirName(directories[0].getVirtualFile().getPath());
     return configuration;
   }
 }
