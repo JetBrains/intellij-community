@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -9,16 +8,17 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.util.containers.ContainerUtil.list;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
 
@@ -154,8 +154,8 @@ public class SvnExternalTest extends SvnTestCase {
   }
 
   private void setNewDirectoryMappings(final File sourceDir) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> vcsManager.setDirectoryMappings(
-      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
+    runInEdtAndWait(
+      () -> vcsManager.setDirectoryMappings(list(new VcsDirectoryMapping(toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
   }
 
   @Test
