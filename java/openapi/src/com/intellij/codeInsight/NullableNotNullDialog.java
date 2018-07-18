@@ -34,11 +34,11 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -176,6 +176,9 @@ public class NullableNotNullDialog extends DialogWrapper {
           }
         }
       }, null));
+
+      myTable = new JBTable(myTableModel, columnModel);
+
       if (showInstrumentationOptions) {
         columnModel.getColumn(0).setHeaderValue("Annotation");
 
@@ -183,13 +186,28 @@ public class NullableNotNullDialog extends DialogWrapper {
         columnModel.addColumn(checkColumn);
         checkColumn.setHeaderValue(" Instrument ");
 
-        DefaultTableCellHeaderRenderer renderer = new DefaultTableCellHeaderRenderer();
-        renderer.setToolTipText("Add runtime assertions for notnull-annotated methods and parameters");
-        checkColumn.setHeaderRenderer(renderer);
+        TableCellRenderer defaultRenderer = myTable.getTableHeader().getDefaultRenderer();
+
+        TableCellRenderer headerRenderer = new TableCellRenderer() {
+          @Override
+          public Component getTableCellRendererComponent(JTable table,
+                                                         Object value,
+                                                         boolean isSelected,
+                                                         boolean hasFocus,
+                                                         int row,
+                                                         int column) {
+            Component component = defaultRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (component instanceof JComponent) {
+              ((JComponent)component)
+                .setToolTipText(column == 1 ? "Add runtime assertions for notnull-annotated methods and parameters" : null);
+            }
+            return component;
+          }
+        };
+        myTable.getTableHeader().setDefaultRenderer(headerRenderer);
+        checkColumn.setHeaderRenderer(headerRenderer);
         checkColumn.sizeWidthToFit();
       }
-
-      myTable = new JBTable(myTableModel, columnModel);
 
       final AnActionButton selectButton =
         new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
