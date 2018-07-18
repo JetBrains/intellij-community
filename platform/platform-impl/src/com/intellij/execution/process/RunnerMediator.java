@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.sun.jna.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,8 @@ public class RunnerMediator {
   private static final char IAC = (char)5;
   private static final char BRK = (char)3;
   private static final char C = (char)5;
-  private static final String STANDARD_RUNNERW = "runnerw.exe";
+  private static final String RUNNERW = "runnerw.exe";
+  private static final String RUNNERW_64 = "runnerw64.exe";
   private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
 
   /**
@@ -92,15 +94,18 @@ public class RunnerMediator {
       if (new File(path).exists()) {
         return path;
       }
-      LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + "=" + path);
+      LOG.warn("Cannot locate " + RUNNERW + " by " + IDEA_RUNNERW + "=" + path);
     }
 
-    File runnerw = PathManager.findBinFile(STANDARD_RUNNERW);
-    if (runnerw != null && runnerw.exists()) {
-      return runnerw.getPath();
+    String[] names = Platform.is64Bit() ? new String[] {RUNNERW_64, RUNNERW} : new String[] {RUNNERW};
+    for (String name : names) {
+      File runnerw = PathManager.findBinFile(name);
+      if (runnerw != null && runnerw.exists()) {
+        return runnerw.getPath();
+      }
     }
 
-    LOG.warn("Cannot locate " + STANDARD_RUNNERW + " in " + PathManager.getBinPath());
+    LOG.warn("Cannot locate " + RUNNERW + " in " + PathManager.getBinPath());
     return null;
   }
 
