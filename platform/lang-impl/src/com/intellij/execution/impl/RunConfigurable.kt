@@ -860,8 +860,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     get() = RunManagerImpl.getInstanceImpl(project)
 
   override fun getHelpTopic(): String? {
-    val type = selectedConfigurationType ?: return "reference.dialogs.rundebug"
-    return "reference.dialogs.rundebug.${type.id}"
+    return selectedConfigurationType?.helpTopic ?: "reference.dialogs.rundebug"
   }
 
   private fun clickDefaultButton() {
