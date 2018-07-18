@@ -135,7 +135,10 @@ public class IJSwingUtilities extends JBSwingUtilities {
     if (c == null) return;
 
     if (c instanceof RootPaneContainer) {
-      UIUtil.decorateWindowHeader(((RootPaneContainer)c).getRootPane());
+      JRootPane rootPane = ((RootPaneContainer)c).getRootPane();
+      if (rootPane != null) {
+        UIUtil.decorateWindowHeader(rootPane);
+      }
     }
 
     for (Component component : UIUtil.uiTraverser(c).postOrderDfsTraversal()) {
