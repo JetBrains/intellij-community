@@ -519,6 +519,14 @@
     </intentionAction>
     <intentionAction>
       <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.CDataToTextIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.TextToCDataIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
 
