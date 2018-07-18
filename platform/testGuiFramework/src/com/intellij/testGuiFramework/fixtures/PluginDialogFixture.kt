@@ -19,7 +19,7 @@ import org.fest.swing.fixture.ContainerFixture
 import javax.swing.*
 import javax.swing.text.Position
 
-class PluginFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(robot, pluginDialog), ContainerFixture<JDialog> {
+class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(robot, pluginDialog), ContainerFixture<JDialog> {
   fun isPluginInstalled(pluginId: String): Boolean = PluginManager.isPluginInstalled(PluginId.getId(pluginId))
 
   fun getPluginVersion(pluginId: String): String =
