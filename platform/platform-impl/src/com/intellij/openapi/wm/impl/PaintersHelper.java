@@ -37,7 +37,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.image.VolatileImage;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.*;
 import java.io.File;
 import java.net.URL;
 import java.util.Iterator;
@@ -141,7 +143,7 @@ final class PaintersHelper implements Painter.Listener {
     }
     return offsets;
   }
-  
+
   public static class Offsets {
     AffineTransform transform;
     int[] offsets;
@@ -223,6 +225,9 @@ final class PaintersHelper implements Painter.Listener {
         float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
         IdeBackgroundUtil.Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? parts[2].toUpperCase(Locale.ENGLISH) : "", SCALE, IdeBackgroundUtil.Fill.class);
         IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? parts[3].toUpperCase(Locale.ENGLISH) : "", CENTER, IdeBackgroundUtil.Anchor.class);
+        String flip = parts.length > 4 ? parts[4] : "none";
+        boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
+        boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
         String filePath = parts[0];
         if (StringUtil.isEmpty(filePath)) {
           resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
@@ -235,7 +240,8 @@ final class PaintersHelper implements Painter.Listener {
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
           ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            Image m = ImageLoader.loadFromUrl(url);
+            BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
+            Image m = ImageLoader.loadFromUrl(url, true, true, new ImageFilter[]{flipFilter}, JBUI.ScaleContext.create());
             ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newAnchor), modalityState);
           });
         }
@@ -464,6 +470,31 @@ final class PaintersHelper implements Painter.Listener {
     private static String logPrefix(@Nullable GraphicsConfiguration cfg, @NotNull VolatileImage image) {
       return "(" + (cfg == null ? "null" : cfg.getClass().getSimpleName()) + ") "
              + image.getWidth() + "x" + image.getHeight() + " ";
+    }
+
+    @NotNull
+    static BufferedImageFilter flipFilter(boolean flipV, boolean flipH) {
+      return new BufferedImageFilter(new BufferedImageOp() {
+        @Override
+        public BufferedImage filter(BufferedImage src, BufferedImage dest) {
+          AffineTransform tx = AffineTransform.getScaleInstance(flipH ? -1 : 1, flipV ? -1 : 1);
+          tx.translate(flipH ? -src.getWidth(null) : 0, flipV ? -src.getHeight(null) : 0);
+          AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+          return op.filter(src, dest);
+        }
+
+        @Override
+        public Rectangle2D getBounds2D(BufferedImage src) { return null;}
+
+        @Override
+        public BufferedImage createCompatibleDestImage(BufferedImage src, ColorModel destCM) { return null;}
+
+        @Override
+        public Point2D getPoint2D(Point2D srcPt, Point2D dstPt) { return null;}
+
+        @Override
+        public RenderingHints getRenderingHints() { return null;}
+      });
     }
   }
 }
