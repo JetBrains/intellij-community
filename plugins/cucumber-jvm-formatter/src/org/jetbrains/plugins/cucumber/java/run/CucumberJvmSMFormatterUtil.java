@@ -47,9 +47,10 @@ public class CucumberJvmSMFormatterUtil {
   }
 
   /**
-   * Gets feature title from @param featureHeader
+   * Gets feature title from @param featureHeader. Skips comments and tags
    * From code:
    * <pre>{@code
+   *     #language: en
    *     @wip
    *     Feature: super puper
    *       my feature
@@ -60,22 +61,19 @@ public class CucumberJvmSMFormatterUtil {
    * }</pre> returned
    */
   public static String getFeatureName(String featureHeader) {
-    int i = featureHeader.indexOf(":");
-    if (i < 0) {
-      return featureHeader;
-    }
+    String[] lines = featureHeader.split("\n");
+    for (String line : lines) {
+      line = line.trim();
 
-    int start = i;
-    while (start >= 0 && !Character.isWhitespace(featureHeader.charAt(start))) {
-      start--;
+      if (line.length() == 0 || line.charAt(0) == '#' || line.charAt(0) == '@') {
+        continue;
+      }
+      int i = featureHeader.indexOf(":");
+      if (i < 0) {
+        continue;
+      }
+      return line;
     }
-    start++;
-
-    int end = i;
-    while (end < featureHeader.length() && featureHeader.charAt(end) != '\n') {
-      end++;
-    }
-
-    return featureHeader.substring(start, end);
+    return featureHeader;
   }
 }
