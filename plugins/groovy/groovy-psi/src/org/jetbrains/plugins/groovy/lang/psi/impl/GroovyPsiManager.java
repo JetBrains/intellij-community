@@ -132,48 +132,34 @@ public class GroovyPsiManager {
 
   @Nullable
   public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
-    PsiType type = myCalculatedTypes.get(element);
-    if (type == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      type = calculator.fun(element);
-      if (type == null) {
-        type = UNKNOWN_TYPE;
-      }
-      if (stamp.mayCacheNow()) {
-        type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, element, type);
-      } else {
-        final PsiType alreadyInferred = myCalculatedTypes.get(element);
-        if (alreadyInferred != null) {
-          type = alreadyInferred;
-        }
-      }
-    }
-    if (!type.isValid()) {
-      error(element, type);
-    }
-    return UNKNOWN_TYPE == type ? null : type;
+    return getTypeWithCaching(element, myCalculatedTypes, calculator);
   }
 
   @Nullable
   public PsiType getTopLevelType(@NotNull GrExpression expression) {
-    PsiType type = topLevelTypes.get(expression);
+    return getTypeWithCaching(expression, topLevelTypes, InferenceKt::getTopLevelType);
+  }
+
+  @Nullable
+  private static <K extends GroovyPsiElement> PsiType getTypeWithCaching(@NotNull K key, @NotNull ConcurrentMap<? super K, PsiType> map, @NotNull Function<K, PsiType> calculator) {
+    PsiType type = map.get(key);
     if (type == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      type = InferenceKt.getTopLevelType(expression);
+      type = calculator.fun(key);
       if (type == null) {
         type = UNKNOWN_TYPE;
       }
       if (stamp.mayCacheNow()) {
-        type = ConcurrencyUtil.cacheOrGet(topLevelTypes, expression, type);
+        type = ConcurrencyUtil.cacheOrGet(map, key, type);
       } else {
-        final PsiType alreadyInferred = topLevelTypes.get(expression);
+        final PsiType alreadyInferred = map.get(key);
         if (alreadyInferred != null) {
           type = alreadyInferred;
         }
       }
     }
     if (!type.isValid()) {
-      error(expression, type);
+      error(key, type);
     }
     return UNKNOWN_TYPE == type ? null : type;
   }
