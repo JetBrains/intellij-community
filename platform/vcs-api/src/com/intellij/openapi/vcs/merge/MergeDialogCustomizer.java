@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Provides custom titles and messages used in the MultipleFileMergeDialog and DiffTools invoked from it.
@@ -91,5 +92,16 @@ public class MergeDialogCustomizer {
   @NotNull
   public String getMultipleFileDialogTitle() {
     return VcsBundle.message("multiple.file.merge.title");
+  }
+
+  /**
+   * Allows to override the names of the columns of the multiple files merge dialog, defined in {@link MergeSession#getMergeInfoColumns()}.
+   * <br/><br/>
+   * Return the column names, matching the order of columns defined in the MergeSession.
+   * Return {@code null} to use names from {@link MergeSession#getMergeInfoColumns()}.
+   */
+  @Nullable
+  public List<String> getColumnNames() {
+    return null;
   }
 }
