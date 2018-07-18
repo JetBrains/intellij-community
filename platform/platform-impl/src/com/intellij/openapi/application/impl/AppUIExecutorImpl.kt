@@ -12,8 +12,10 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.experimental.*
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.coroutineContext
 
@@ -23,9 +25,12 @@ import kotlin.coroutines.experimental.coroutineContext
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      private val myDisposables: Set<Disposable>,
-                                                     private vararg val myConstraints: ConstrainedExecutor) : AppUIExecutorEx {
+                                                     private vararg val myConstraints: ContextConstraint) : AppUIExecutorEx {
 
-  constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), object : ConstrainedExecutor() {
+  private val myFallbackDispatcher: CoroutineDispatcher
+    get() = myConstraints[0] // EDT + ModalityState (refer to the constructor argument)
+
+  constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), /* fallback */ object : SimpleContextConstraint() {
     override val isCorrectContext: Boolean
       get() = ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
 
@@ -36,13 +41,16 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
     override fun toString() = "onUiThread($modality)"
   })
 
-  private fun withConstraint(element: ConstrainedExecutor): AppUIExecutor {
-    return AppUIExecutorImpl(myModality, myDisposables, *myConstraints, element)
+  private fun withConstraint(element: ContextConstraint): AppUIExecutor {
+    val disposables = (element as? ExpirableContextConstraint)?.expirable?.let { disposable ->
+      myDisposables + disposable
+    } ?: myDisposables
+    return AppUIExecutorImpl(myModality, disposables, *myConstraints, element)
   }
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null
-    return withConstraint(object : ConstrainedExecutor() {
+    return withConstraint(object : SimpleContextConstraint() {
       @Volatile
       var usedOnce: Boolean = false
 
@@ -64,43 +72,43 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun withDocumentsCommitted(project: Project): AppUIExecutor {
-    return withConstraint(object : ConstrainedExecutor() {
+    return withConstraint(object : ExpirableContextConstraint(project, myFallbackDispatcher) {
       override val isCorrectContext: Boolean
         get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
-      override fun schedule(runnable: Runnable) {
+      override fun scheduleExpirable(runnable: Runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality)
       }
 
       override fun toString() = "withDocumentsCommitted"
-    }).expireWith(project)
+    })
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
-    return withConstraint(object : ConstrainedExecutor() {
+    return withConstraint(object : ExpirableContextConstraint(project, myFallbackDispatcher) {
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
-      override fun schedule(runnable: Runnable) {
+      override fun scheduleExpirable(runnable: Runnable) {
         DumbService.getInstance(project).smartInvokeLater(runnable, myModality)
       }
 
       override fun toString() = "inSmartMode"
-    }).expireWith(project)
+    })
   }
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
     val id = TransactionGuard.getInstance().contextTransaction
-    return withConstraint(object : ConstrainedExecutor() {
+    return withConstraint(object : ExpirableContextConstraint(parentDisposable, myFallbackDispatcher) {
       override val isCorrectContext: Boolean
         get() = TransactionGuard.getInstance().contextTransaction != null
 
-      override fun schedule(runnable: Runnable) {
+      override fun scheduleExpirable(runnable: Runnable) {
         TransactionGuard.getInstance().submitTransaction(parentDisposable, id, runnable)
       }
 
       override fun toString() = "inTransaction"
-    }).expireWith(parentDisposable)
+    })
   }
 
   override fun expireWith(parentDisposable: Disposable): AppUIExecutor {
@@ -129,15 +137,26 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
     }
 
     val newContext = newCoroutineContext(coroutineContext, job)
-    val dispatcher = CompositeCoroutineDispatcherWithRescheduleAttemptLimit(myConstraints)
+    val dispatcher = CompositeCoroutineDispatcherWithRescheduleAttemptLimit(myConstraints, myFallbackDispatcher)
 
     return withContext(newContext + dispatcher) {
       block()
     }
   }
 
-  private abstract class ConstrainedExecutor : CoroutineDispatcher() {
+  private abstract class ContextConstraint : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext) = !isCorrectContext
+
+    abstract val isCorrectContext: Boolean
+    abstract override fun toString(): String
+  }
+
+  /**
+   * Implementation MUST guarantee to execute a runnable passed to [schedule] at some point.
+   * For dispatchers that may refuse to run the task based on some condition
+   * consider using [ExpirableContextConstraint] instead.
+   */
+  private abstract class SimpleContextConstraint : ContextConstraint() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
       schedule(Runnable {
         LOG.assertTrue(isCorrectContext, this)
@@ -145,9 +164,63 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       })
     }
 
-    abstract val isCorrectContext: Boolean
     abstract fun schedule(runnable: Runnable)
-    abstract override fun toString(): String
+  }
+
+  /**
+   * This class ensures that a coroutine continuation is invoked at some point
+   * even if the underlying dispatcher doesn't usually run a task once some [Disposable] is disposed.
+   *
+   * At the very least, the implementation MUST guarantee to execute a runnable passed to [scheduleExpirable]
+   * if the corresponding [expirable] is not disposed by the time the dispatcher arranges the proper execution context.
+   * It is OK to execute it if the [expirable] has been disposed though.
+   */
+  private abstract class ExpirableContextConstraint(val expirable: Disposable,
+                                                    private val myFallbackDispatcher: CoroutineDispatcher) : ContextConstraint() {
+    private val isExpired get() = Disposer.isDisposing(expirable) || Disposer.isDisposed(expirable)
+
+    override fun isDispatchNeeded(context: CoroutineContext) = super.isDispatchNeeded(context) && !isExpired
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+      val runOnce = RunOnce()
+
+      val job = context[Job]!!
+      val childDisposable = invokeWhenExpired {
+        runOnce {
+          // defer in case this disposable cleans up before the one which cancels the job in runCoroutine()
+          job.invokeOnCompletion(onCancelling = true) {
+            myFallbackDispatcher.dispatch(context, Runnable {
+              LOG.assertTrue(job.isCancelled, "The job should have been cancelled by a disposable registered in runCoroutine()")
+              block.run()
+            })
+          }
+        }
+      }
+
+      scheduleExpirable(Runnable {
+        runOnce {
+          Disposer.dispose(childDisposable, false)  // doesn't run disposal code; just unregisters the disposable
+          block.run()
+        }
+      })
+    }
+
+    private fun invokeWhenExpired(block: () -> Unit) =
+      Disposable { block() }.also { childDisposable ->
+        fun tryRegister(): Boolean =
+          try {
+            Disposer.register(expirable, childDisposable)
+            true
+          }
+          catch (e: IncorrectOperationException) {  // Sorry but Disposer.register() is inherently thread-unsafe
+            false
+          }
+        if (isExpired || !tryRegister()) {
+          childDisposable.dispose()
+        }
+      }
+
+    abstract fun scheduleExpirable(runnable: Runnable)
   }
 
   private abstract class CompositeCoroutineDispatcher : CoroutineDispatcher() {
@@ -185,14 +258,12 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   private class CompositeCoroutineDispatcherWithRescheduleAttemptLimit(override val dispatchers: Array<out CoroutineDispatcher>,
+                                                                       private val myFallbackDispatcher: CoroutineDispatcher,
                                                                        private val myLimit: Int = 3000) : CompositeCoroutineDispatcher() {
     private var myAttemptCount: Int = 0
 
     private val myLogLimit: Int = 30
     private val myLastDispatchers: Deque<CoroutineDispatcher> = ArrayDeque(myLogLimit)
-
-    private val myFallbackDispatcher: CoroutineDispatcher
-      get() = dispatchers[0] // EDT + ModalityState (refer to AppUIExecutorImpl constructor)
 
     override fun delegateDispatchIfNeeded(dispatcher: CoroutineDispatcher, context: CoroutineContext, block: Runnable): Boolean {
       return super.delegateDispatchIfNeeded(dispatcher, context, block).also { isDispatchNeeded ->
@@ -241,6 +312,13 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
+
+    private class RunOnce : (() -> Unit) -> Unit {
+      private val hasNotRunYet = AtomicBoolean(true)
+      override operator fun invoke(block: () -> Unit) {
+        if (hasNotRunYet.compareAndSet(true, false)) block()
+      }
+    }
 
     private operator fun <T> Set<T>.plus(element: T): Set<T> = if (element in this) this else this.plusElement(element)
   }
