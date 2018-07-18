@@ -256,6 +256,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     Editor editor = context.getEditor();
     context.commitDocument();
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+
     PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCall.class, false);
     PsiExpressionList argList = call == null ? null : call.getArgumentList();
     if (argList == null || !argList.isEmpty()) {
