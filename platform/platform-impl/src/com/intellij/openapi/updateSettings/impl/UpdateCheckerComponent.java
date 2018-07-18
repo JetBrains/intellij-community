@@ -41,7 +41,8 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
-  static final String AUTO_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.autoupdate.started.for.build";
+  static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";//must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
@@ -130,17 +131,18 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
 
   private static void checkIfPreviousUpdateFailed() {
     PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(AUTO_UPDATE_STARTED_FOR_BUILD_PROPERTY))) {
-      File updateErrorsLog = new File(PathManager.getLogPath(), "idea_updater_error.log");
+    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY))) {
+      File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
       try {
         if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
           FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "update.failed");
+          LOG.info("Previous update of the IDE failed");
         }
       }
       catch (IOException ignored) {
       }
     }
-    properties.setValue(AUTO_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
+    properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
   }
 
   @Override

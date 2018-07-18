@@ -42,8 +42,8 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
   private boolean useParam = false;
   private boolean useKeyword = false;
 
-  protected String myTitle = "py.test";
-  protected String myPluralTitle = "py.tests";
+  protected String myTitle = "pytest";
+  protected String myPluralTitle = "pytests";
 
 
   private static final String TEST_TO_RUN_FIELD = "testToRun";
@@ -156,13 +156,13 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
     }
     Sdk sdk = PythonSdkType.findSdkByPath(getInterpreterPath());
     if (sdk != null && !VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)) {
-      throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
+      throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "pytest"));
     }
   }
 
   @Override
   public String suggestedName() {
-    return "py.test in " + getName();
+    return "pytest in " + getName();
   }
 
   @Override

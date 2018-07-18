@@ -237,12 +237,18 @@ public class CodeStyle {
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
     try {
       setTemporarySettings(project, tempSettings);
       runnable.run();
     }
     finally {
-      dropTemporarySettings(project);
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(project, tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings(project);
+      }
     }
   }
 

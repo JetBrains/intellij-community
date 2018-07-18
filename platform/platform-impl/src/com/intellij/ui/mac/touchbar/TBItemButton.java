@@ -18,11 +18,10 @@ class TBItemButton extends TBItem {
   protected int myLayoutBits = 0;
   protected int myFlags = 0;
   protected boolean myHasArrowIcon = false;
+  protected int myUpdateOptions;
 
   private @Nullable Runnable myAction;
   private @Nullable NSTLibrary.Action myNativeCallback;
-
-  private int myUpdateOptions;
 
   TBItemButton(@NotNull String uid, @Nullable ItemListener listener) { super(uid, listener); }
 

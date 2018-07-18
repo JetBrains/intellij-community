@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoClassAction;
+import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.lang.DependentLanguage;
@@ -39,7 +40,8 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @NotNull
   @Override
   public String getGroupName() {
-    return "Classes";
+    String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
+    return StringUtil.pluralize(split[0]) + (split.length > 1 ? " +" : "");
   }
 
   @Override

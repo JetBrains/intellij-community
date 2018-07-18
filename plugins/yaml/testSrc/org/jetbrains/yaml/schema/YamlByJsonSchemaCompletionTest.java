@@ -50,4 +50,25 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
                  "  }\n" +
                  "}", "colorMap:\n  - <caret>", "yml", "blue", "red", "white");
   }
+
+  public void testBeforeProps() throws Exception {
+    testBySchema("{\n" +
+                 "  \"properties\": {\n" +
+                 "    \"root\": {\n" +
+                 "      \"properties\": {\n" +
+                 "        \"item1\": { },\n" +
+                 "        \"item2\": { },\n" +
+                 "        \"item3\": { },\n" +
+                 "        \"item4\": { },\n" +
+                 "        \"item5\": { },\n" +
+                 "        \"item6\": { }\n" +
+                 "      }\n" +
+                 "    }\n" +
+                 "  }\n" +
+                 "}", "root:\n" +
+                      "    item1: 1\n" +
+                      "    item3: 3\n" +
+                      "    <caret>\n" +
+                      "    item5: 5", "yml", "item2", "item4", "item6");
+  }
 }

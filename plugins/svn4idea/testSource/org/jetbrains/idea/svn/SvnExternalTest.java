@@ -146,7 +146,7 @@ public class SvnExternalTest extends SvnTestCase {
   private void updatedCreatedExternalFromIDEAImpl() {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     setNewDirectoryMappings(sourceDir);
-    imitUpdate(myProject);
+    imitUpdate();
 
     final File externalFile = new File(sourceDir, "external/t11.txt");
     final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
@@ -199,7 +199,7 @@ public class SvnExternalTest extends SvnTestCase {
   private void uncommittedExternalCopyIsDetectedImpl() {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     setNewDirectoryMappings(sourceDir);
-    imitUpdate(myProject);
+    imitUpdate();
     refreshSvnMappingsSynchronously();
 
     externalCopyIsDetectedImpl();

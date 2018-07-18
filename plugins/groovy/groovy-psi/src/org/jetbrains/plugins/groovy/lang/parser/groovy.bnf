@@ -1222,9 +1222,6 @@ private qualified_name ::= <<qualifiedName code_reference>>
 
 // region Variables
 private var ::= IDENTIFIER mb_initializer
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
 private mb_initializer ::= ['=' mb_nl expression_or_application]
 {
   pin('.*') = 1

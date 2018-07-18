@@ -28,19 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavaModuleGraphUtil {
-  private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
-
   private JavaModuleGraphUtil() { }
 
   @Nullable
@@ -63,13 +56,7 @@ public class JavaModuleGraphUtil {
     if (index.isInLibrary(file)) {
       VirtualFile root = index.getClassRootForFile(file);
       if (root != null) {
-        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-        if (descriptorFile == null) {
-          VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
-          if (alt != null && isMultiReleaseJar(root)) {
-            descriptorFile = alt;
-          }
-        }
+        VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
         if (descriptorFile != null) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
           if (psiFile instanceof PsiJavaFile) {
@@ -86,20 +73,6 @@ public class JavaModuleGraphUtil {
     }
 
     return null;
-  }
-
-  private static boolean isMultiReleaseJar(VirtualFile root) {
-    if (root.getFileSystem() instanceof JarFileSystem) {
-      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      if (manifest != null) {
-        try (InputStream stream = manifest.getInputStream()) {
-          return Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(MULTI_RELEASE));
-        }
-        catch (IOException ignored) { }
-      }
-    }
-
-    return false;
   }
 
   @Nullable

@@ -64,6 +64,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.JsonReaderEx;
 import sun.swing.SwingUtilities2;
 
@@ -1190,7 +1191,7 @@ public class PluginManagerConfigurableNew
     return toolbarComponent;
   }
 
-  private static class TabHeaderComponent extends JComponent {
+  public static class TabHeaderComponent extends JComponent {
     private final List<Computable<String>> myTabs = new ArrayList<>();
     private final JComponent myToolbarComponent;
     private final TabHeaderListener myListener;
@@ -1274,6 +1275,19 @@ public class PluginManagerConfigurableNew
         mySelectionTab = index;
       }
       repaint();
+    }
+
+    @TestOnly
+    @NotNull
+    public Point getTabLocation(@NotNull final String tabTitle) {
+      calculateSize();
+      for (int i = 0; i < myTabs.size(); ++i) {
+        if (myTabs.get(i).compute().equals(tabTitle)) {
+          final Point point = mySizeInfo.tabs[i].getLocation();
+          return new Point(getStartX() + point.x, point.y);
+        }
+      }
+      throw new IllegalArgumentException("Tab " + tabTitle + " not found");
     }
 
     private int findTab(@NotNull MouseEvent event) {

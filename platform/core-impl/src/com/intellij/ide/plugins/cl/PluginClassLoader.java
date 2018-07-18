@@ -80,7 +80,6 @@ public class PluginClassLoader extends UrlClassLoader {
     "kotlin.Pair",
     "kotlin.Triple",
     "kotlin.jvm.internal.DefaultConstructorMarker",
-    "kotlin.reflect.KDeclarationContainer",
     "kotlin.properties.ReadWriteProperty",
     "kotlin.properties.ReadOnlyProperty"
   );
@@ -90,7 +89,8 @@ public class PluginClassLoader extends UrlClassLoader {
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
-                                               className.startsWith("kotlin.reflect.KProperty") ||
+                                               className.startsWith("kotlin.reflect.") ||
+                                               className.startsWith("kotlin.jvm.internal.") ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 

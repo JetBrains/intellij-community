@@ -249,7 +249,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private static void restartLaterAndRunCommand(String[] command) {
     FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.update.started");
-    PropertiesComponent.getInstance().setValue(UpdateCheckerComponent.AUTO_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
+    PropertiesComponent.getInstance().setValue(UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     application.invokeLater(() -> application.exit(true, true, true, command));
   }

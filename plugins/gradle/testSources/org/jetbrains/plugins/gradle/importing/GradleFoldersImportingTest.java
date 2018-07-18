@@ -294,8 +294,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     try {
       projectRef.set(projectManager.loadProject(path));
       edt(() -> projectManager.openTestProject(projectRef.get()));
-
       createProjectSubFile("src/test/java/ATest.java");
+
+      edt(() -> UIUtil.dispatchAllInvocationEvents());
       assertTestSources(projectRef.get(), "project", "src/test/java");
     } finally {
       if (!projectRef.isNull()) {
