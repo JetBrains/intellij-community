@@ -288,6 +288,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       VirtualFile root = repository.getRoot();
       String rootPath = root.getPath();
 
+      List<File> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
+      if (!unmergedFiles.isEmpty()) {
+        throw new VcsException("Committing is not possible because you have unmerged files.");
+      }
+
       // Check what is staged besides our changes
       Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));

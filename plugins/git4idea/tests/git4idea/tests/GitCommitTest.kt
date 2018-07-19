@@ -570,6 +570,37 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     }
   }
 
+  fun `test commit during unresolved merge conflict`() {
+    `assume version where git reset returns 0 exit code on success `()
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // "--only" shows dialog in this case
+
+    createFileStructure(projectRoot, "a.txt")
+    addCommit("created some file structure")
+
+    git("branch feature")
+
+    val file = File(projectPath, "a.txt")
+    assertTrue("File doesn't exist!", file.exists())
+    overwrite(file, "my content")
+    addCommit("modified in master")
+
+    checkout("feature")
+    overwrite(file, "brother content")
+    addCommit("modified in feature")
+
+    checkout("master")
+    git("merge feature", true) // ignoring non-zero exit-code reporting about conflicts
+
+    updateChangeListManager()
+    val changes = changeListManager.allChanges
+    assertTrue(!changes.isEmpty())
+
+    val exceptions = vcs.checkinEnvironment!!.commit(ArrayList(changes), "comment")
+    assertTrue(exceptions!!.isNotEmpty())
+
+    assertMessage("modified in master", repo.message("HEAD"))
+  }
+
   private fun `assume version where git reset returns 0 exit code on success `() {
     assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
                vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))
