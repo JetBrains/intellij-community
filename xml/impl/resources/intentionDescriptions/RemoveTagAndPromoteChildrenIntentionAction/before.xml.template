@@ -1,7 +1,7 @@
 <root>
-  <parent>
+  <spot><parent>
     <child></child>
     <child></child>
     <child></child>
-  </parent>
+  </parent></spot>
 </root>
