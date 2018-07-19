@@ -12,7 +12,6 @@ import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
-import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -63,7 +62,6 @@ open class ExtendedJTreePathFixture(
    * It's supposed the new path in the same tree
    * @param node one node value somewhere whithin the same tree
    * @throws LocationUnavailableException if node not found
-   * TODO complete
    * */
   fun pathToNode(node: String): ExtendedJTreePathFixture{
     val newPath = myDriver.findPathToNode(tree, node, predicate)
