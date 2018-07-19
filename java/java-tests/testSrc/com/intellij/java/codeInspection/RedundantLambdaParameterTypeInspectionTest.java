@@ -20,12 +20,13 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsightFixtureTestCase {
-  private RedundantLambdaParameterTypeInspection myInspection = new RedundantLambdaParameterTypeInspection();
   private static final String ourIntentionName = "Remove redundant parameter types";
 
   @Override
@@ -33,22 +34,17 @@ public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsight
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInspection/redundantLambdaParameterType";
   }
 
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     ModuleRootModificationUtil.setModuleSdk(myModule, IdeaTestUtil.getMockJdk18());
-    myFixture.enableInspections(myInspection);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myFixture.disableInspections(myInspection);
-    }
-    finally {
-      myInspection = null;
-      super.tearDown();
-    }
+    myFixture.enableInspections(new RedundantLambdaParameterTypeInspection());
   }
 
   public void testAssignment() {
