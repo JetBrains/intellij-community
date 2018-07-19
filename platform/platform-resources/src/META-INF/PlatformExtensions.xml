@@ -474,6 +474,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <statistic.eventLog.fusEventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLoggerProvider"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
 
