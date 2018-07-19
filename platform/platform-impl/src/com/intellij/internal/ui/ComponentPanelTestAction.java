@@ -6,11 +6,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.panel.ComponentPanel;
 import com.intellij.openapi.ui.panel.ProgressPanel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SideBorder;
@@ -140,6 +139,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 0), 0, 0);
 
       JTextField text1 = new JTextField();
+      new ComponentValidator(getDisposable()).installOn(text1);
       Dimension d = text1.getPreferredSize();
       text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
 
@@ -151,14 +151,34 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JTextField text2 = new JTextField();
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(text2).withLabel("&Path:").createPanel(), gc);
+      new ComponentValidator(getDisposable()).withFocusValidation(() -> {
+        String tt2 = text2.getText();
+        return tt2 != null && tt2.length() >= 5 ? null : new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.", text2);
+      }).installOn(text2);
+      topPanel.add(UI.PanelFactory.panel(text2).
+        withLabel("&Path:").createPanel());
 
       ComponentPanel cp = ComponentPanel.getComponentPanel(text2);
       text1.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
+          String text = text1.getText();
           if (cp != null) {
-            cp.setCommentText(text1.getText());
+            cp.setCommentText(text);
           }
+
+          ComponentValidator.getInstance(text1).ifPresent(v -> {
+            if (StringUtil.isNotEmpty(text)) {
+              try {
+                Integer.parseInt(text);
+                v.updateInfo(null);
+              } catch (NumberFormatException nex) {
+                v.updateInfo(new ValidationInfo("Enter a number", text1).asWarning());
+              }
+            } else {
+              v.updateInfo(null);
+            }
+          });
         }
       });
 

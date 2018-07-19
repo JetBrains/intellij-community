@@ -1965,8 +1965,7 @@ public abstract class DialogWrapper {
     if (Registry.is("ide.inplace.validation.tooltip")) {
       corrected.stream().filter(vi -> vi.component != null).
         map(vi -> ComponentValidator.getInstance(vi.component)).
-        filter(c -> c != null).
-        forEach(c -> c.reset());
+        forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
     }
 
     myInfo = info;
@@ -1974,10 +1973,9 @@ public abstract class DialogWrapper {
     if (Registry.is("ide.inplace.validation.tooltip") && !myInfo.isEmpty()) {
       myInfo.forEach(vi -> {
         if (vi.component != null) {
-          ComponentValidator v = ComponentValidator.getInstance(vi.component);
-          if (v == null) {
-            v = new ComponentValidator(getDisposable()).installOn(vi.component);
-          }
+          ComponentValidator v = ComponentValidator.getInstance(vi.component).
+            orElse(new ComponentValidator(getDisposable()).installOn(vi.component).orElse(null));
+
           if (v != null) {
             v.updateInfo(vi);
             return;

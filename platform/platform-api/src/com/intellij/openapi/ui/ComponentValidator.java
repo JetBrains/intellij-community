@@ -18,9 +18,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeListener;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public class ComponentValidator {
   private static final String PROPERTY_NAME = "JComponent.componentValidator";
@@ -35,6 +40,7 @@ public class ComponentValidator {
   private final Disposable parentDisposable;
   private ValidationInfo validationInfo;
 
+  private Supplier<ValidationInfo> infoSupplier;
   private ComponentPopupBuilder popupBuilder;
   private JBPopup popup;
   private RelativePoint popupLocation;
@@ -44,10 +50,14 @@ public class ComponentValidator {
     this.parentDisposable = parentDisposable;
   }
 
-  @Nullable
-  public ComponentValidator installOn(@NotNull JComponent component) {
+  public ComponentValidator withFocusValidation(Supplier<ValidationInfo> infoSupplier) {
+    this.infoSupplier = infoSupplier;
+    return this;
+  }
+
+  public Optional<ComponentValidator> installOn(@NotNull JComponent component) {
     Component fc = getFocusable(component);
-    if (fc != null && fc.isFocusable()) {
+    if (fc != null) {
       component.putClientProperty(PROPERTY_NAME, this);
 
       FocusListener focusListener = new ValidationFocusListener();
@@ -59,30 +69,43 @@ public class ComponentValidator {
         }
       };
 
+      PropertyChangeListener ancestorListener = e -> {
+        Window w = (Window)UIUtil.findParentByCondition((Component)e.getSource(), v -> v instanceof Window);
+        if (w != null) {
+          if (e.getNewValue() != null) {
+            w.addComponentListener(componentListener);
+          } else {
+            w.removeComponentListener(componentListener);
+          }
+        }
+      };
+
       Window w = (Window)UIUtil.findParentByCondition(component, v -> v instanceof Window);
       if (w != null) {
         w.addComponentListener(componentListener);
+      } else {
+        component.addPropertyChangeListener("ancestor", ancestorListener);
       }
 
       fc.addFocusListener(focusListener);
       Disposer.register(parentDisposable, () -> {
         fc.removeFocusListener(focusListener);
+
         if (w != null) {
           w.removeComponentListener(componentListener);
         }
       });
-      return this;
+      return Optional.of(this);
     } else {
-      return null;
+      return Optional.empty();
     }
   }
 
-  @Nullable
-  public static ComponentValidator getInstance(@NotNull JComponent component) {
-    return (ComponentValidator)component.getClientProperty(PROPERTY_NAME);
+  public static Optional<ComponentValidator> getInstance(@NotNull JComponent component) {
+    return Optional.ofNullable((ComponentValidator)component.getClientProperty(PROPERTY_NAME));
   }
 
-  public void reset() {
+  private void reset() {
     if (validationInfo != null && validationInfo.component != null) {
       validationInfo.component.putClientProperty("JComponent.outline", null);
     }
@@ -98,35 +121,38 @@ public class ComponentValidator {
     validationInfo = null;
   }
 
-  public void updateInfo(@NotNull ValidationInfo info) {
-    if (!info.equals(validationInfo)) {
+  public void updateInfo(@Nullable ValidationInfo info) {
+    boolean resetInfo = info == null && validationInfo != null;
+    boolean newInfo = info != null && !info.equals(validationInfo);
+    if (resetInfo || newInfo) {
       reset();
-
       validationInfo = info;
 
-      if (validationInfo.component != null) {
-        validationInfo.component.putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
-      }
+      if (newInfo) {
+        if (validationInfo.component != null) {
+          validationInfo.component.putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
+        }
 
-      if (StringUtil.isNotEmpty(validationInfo.message)) {
-        JLabel tipComponent = new JLabel();
-        int textWidth = SwingUtilities.computeStringWidth(tipComponent.getFontMetrics(tipComponent.getFont()), validationInfo.message);
-        String labelText = textWidth > MAX_WIDTH.get() ?
-                           String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), validationInfo.message) :
-                           validationInfo.message;
+        if (StringUtil.isNotEmpty(validationInfo.message)) {
+          JLabel tipComponent = new JLabel();
+          View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", validationInfo.message));
+          String labelText = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
+                             String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), validationInfo.message) :
+                             String.format("<html><div>%s</div></html>", validationInfo.message);
 
-        tipComponent.setText(labelText);
-        tipComponent.setBackground(validationInfo.warning ? WARNING_BACKGROUND_COLOR : ERROR_BACKGROUND_COLOR);
-        tipComponent.setOpaque(true);
-        tipComponent.setBorder(getBorder());
-        popupSize = tipComponent.getPreferredSize();
+          tipComponent.setText(labelText);
+          tipComponent.setBackground(validationInfo.warning ? WARNING_BACKGROUND_COLOR : ERROR_BACKGROUND_COLOR);
+          tipComponent.setOpaque(true);
+          tipComponent.setBorder(getBorder());
+          popupSize = tipComponent.getPreferredSize();
 
-        popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
-          setBorderColor(validationInfo.warning ? WARNING_BORDER_COLOR : ERROR_BORDER_COLOR).
-          setShowShadow(false);
+          popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
+            setBorderColor(validationInfo.warning ? WARNING_BORDER_COLOR : ERROR_BORDER_COLOR).
+                                         setShowShadow(false);
 
-        if (getFocusable(validationInfo.component).hasFocus()) {
-          showPopup();
+          if (getFocusable(validationInfo.component).hasFocus()) {
+            showPopup();
+          }
         }
       }
     }
@@ -166,6 +192,10 @@ public class ComponentValidator {
       if (popup != null && popup.isVisible()) {
         popup.cancel();
         popup = null;
+      }
+
+      if(infoSupplier != null) {
+        updateInfo(infoSupplier.get());
       }
     }
   }
