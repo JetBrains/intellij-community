@@ -33,8 +33,8 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testRequiresBare() =
     variants("module M { requires <caret>",
-             "transitive", "static", "M2", "java.base", "java.se", "java.xml.bind", "javax.doomed",
-             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "lib.xml.bind")
+             "transitive", "static", "M2", "java.base", "java.se", "java.xml.bind", "java.xml.ws", "javax.doomed",
+             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "lib.xml.bind", "lib.xml.ws")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
   fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")
@@ -46,7 +46,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testExportsTo() = complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
   fun testExportsToList() =
     variants("module M { exports pkg.other to <caret> }",
-             "M2", "java.base", "java.se", "java.xml.bind", "javax.doomed", "lib.multi.release", "lib.named")
+             "M2", "java.base", "java.se", "java.xml.bind", "java.xml.ws", "javax.doomed", "lib.multi.release", "lib.named")
   fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
 
   fun testUsesPrefixed() = complete("module M { uses p<caret> }", "module M { uses pkg.<caret> }")
