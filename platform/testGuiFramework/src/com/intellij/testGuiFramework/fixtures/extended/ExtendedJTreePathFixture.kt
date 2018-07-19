@@ -70,9 +70,6 @@ open class ExtendedJTreePathFixture(
     return ExtendedJTreePathFixture(tree, newPath, predicate, robot(), myDriver)
   }
 
-  fun hasPath(vararg pathStrings: String): Boolean =
-    ExtendedJTreePathFixture(tree, pathStrings.toList(), predicate, robot(), myDriver).hasPath()
-
   fun hasPath(): Boolean {
     return try {
       path
@@ -119,16 +116,6 @@ open class ExtendedJTreePathFixture(
   }
 
   fun collapsePath(): Unit = myDriver.collapsePath(tree, path)
-
-  fun selectPath(): Unit = myDriver.selectPath(tree, path)
-
-  fun openPopupMenu(): JPopupMenu = myDriver.showPopupMenu(tree, path)
-
-  fun drag(): Unit = myDriver.drag(tree, path)
-
-  fun drop(): Unit = myDriver.drop(tree, path)
-
-  fun getPathStrings(): List<String> = path.getPathStrings()
 
   ////////////////////////////////////////////////////////////////
   // Overridden functions
