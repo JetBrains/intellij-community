@@ -91,6 +91,7 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
   ideFrame {
     this.waitForBackgroundTasksToFinish()
   }
+  robot().waitForIdle()
   Pause.pause(extraTimeOut)
 }
 
