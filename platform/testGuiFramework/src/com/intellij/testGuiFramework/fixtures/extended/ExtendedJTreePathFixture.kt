@@ -103,8 +103,7 @@ open class ExtendedJTreePathFixture(
       for (partialList in stringPath.list2tree()) {
         GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeoutInSeconds = 2) {
           try {
-            partialPath = ExtendedJTreePathFinder(tree)
-              .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
+            partialPath = ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(predicate, *partialList.toTypedArray())
             partialPath != null
           }
           catch (e: Exception) {

@@ -18,13 +18,13 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
   private val cellReader: JTreeCellReader = ExtendedJTreeCellReader()
 
   fun findMatchingPath(vararg pathStrings: String): TreePath =
-    findMatchingPathByPredicate(pathStrings = *pathStrings, predicate = predicateEquality)
+    findMatchingPathByPredicate(predicateEquality, *pathStrings)
 
   fun findMatchingPathWithVersion(vararg pathStrings: String): TreePath =
-    findMatchingPathByPredicate(pathStrings = *pathStrings, predicate = predicateWithVersion)
+    findMatchingPathByPredicate(predicateWithVersion, *pathStrings)
 
   // this is ex-XPath version
-  fun findMatchingPathByPredicate(vararg pathStrings: String, predicate: FinderPredicate): TreePath {
+  fun findMatchingPathByPredicate(predicate: FinderPredicate, vararg pathStrings: String): TreePath {
     val model = jTree.model
     if (jTree.isRootVisible) {
       val childValue = jTree.value(model.root) ?: ""
@@ -39,12 +39,12 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
   }
 
   fun exists(vararg pathStrings: String) =
-    existsByPredicate(pathStrings = *pathStrings, predicate = predicateEquality)
+    existsByPredicate(predicateEquality, *pathStrings)
 
   fun existsWithVersion(vararg pathStrings: String) =
-    existsByPredicate(pathStrings= *pathStrings, predicate = predicateWithVersion)
+    existsByPredicate(predicateWithVersion, *pathStrings)
 
-  fun existsByPredicate(vararg pathStrings: String, predicate: FinderPredicate): Boolean{
+  fun existsByPredicate(predicate: FinderPredicate, vararg pathStrings: String): Boolean {
     return try{
       findMatchingPathByPredicate(
         pathStrings = *pathStrings,
@@ -167,6 +167,6 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       currentNode = currentNode.parent as DefaultMutableTreeNode
       result.add(0, currentNode.toString())
     }
-  return findMatchingPathByPredicate(pathStrings = *result.toTypedArray(), predicate = predicate)
+    return findMatchingPathByPredicate(predicate, *result.toTypedArray())
   }
 }
