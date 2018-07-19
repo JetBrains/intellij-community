@@ -175,7 +175,7 @@ public class CodeCompletionHandlerBase {
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
     } else {
-      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
+      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument());
     }
   }
 
