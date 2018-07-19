@@ -126,8 +126,8 @@ class IdeTestFixture(val ide: Ide,
           }
           Type.FAILURE -> {
             println("Test '$testName' failed");
-            val (messageFromException, stackTrace) = jUnitInfo.obj as FailureException
-            System.err.println(messageFromException)
+            val (className, messageFromException, stackTrace) = jUnitInfo.obj as FailureException
+            System.err.println("thrown from $className : $messageFromException")
             System.err.println(stackTrace.joinToString("\t\n"))
             conditionToFinish.countDown()
           }

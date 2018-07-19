@@ -98,8 +98,8 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
             }
             Type.FAILURE -> {
               //reconstruct Throwable
-              val (messageFromException, stackTraceFromException) = message.content.obj as FailureException
-              val throwable = Throwable(messageFromException)
+              val (className, messageFromException, stackTraceFromException) = message.content.obj as FailureException
+              val throwable = Throwable("thrown from $className: $messageFromException")
               throwable.stackTrace = stackTraceFromException
               eachNotifier.addFailure(throwable)
             }
