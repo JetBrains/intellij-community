@@ -31,34 +31,31 @@ public interface PyCallExpression extends PyCallSiteExpression {
   @Nullable
   @Override
   default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    if (resolvedCallee instanceof PyFunction) {
-      final PyFunction function = (PyFunction)resolvedCallee;
-      if (!PyNames.NEW.equals(function.getName()) && function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
-        return null;
-      }
-    }
-
     final PyExpression callee = getCallee();
-    if (callee instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
 
-      if (resolvedCallee instanceof PyFunction &&
-          qualifiedCallee.isQualified() &&
-          PyNames.INIT.equals(resolvedCallee.getName()) &&
-          !PyNames.INIT.equals(qualifiedCallee.getName())) {
+    if (resolvedCallee instanceof PyFunction) {
+      final String functionName = resolvedCallee.getName();
+
+      if (!PyNames.NEW.equals(functionName) && ((PyFunction)resolvedCallee).getModifier() == PyFunction.Modifier.STATICMETHOD) {
         return null;
       }
 
-      if (resolvedCallee instanceof PyFunction &&
-          PyNames.NEW.equals(resolvedCallee.getName()) &&
-          !PyNames.NEW.equals(qualifiedCallee.getName())) {
-        return callee;
-      }
+      if (callee instanceof PyQualifiedExpression) {
+        final String qualifiedCalleeName = callee.getName();
 
-      return qualifiedCallee.getQualifier();
+        if (((PyQualifiedExpression)callee).isQualified() &&
+            PyNames.INIT.equals(functionName) &&
+            !PyNames.INIT.equals(qualifiedCalleeName)) {
+          return null;
+        }
+
+        if (PyNames.NEW.equals(functionName) && !PyNames.NEW.equals(qualifiedCalleeName)) {
+          return callee;
+        }
+      }
     }
 
-    return null;
+    return callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
   }
 
   @NotNull
