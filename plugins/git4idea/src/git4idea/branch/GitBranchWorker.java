@@ -23,10 +23,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
-import git4idea.GitExecutionException;
 import git4idea.GitLocalBranch;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -142,26 +142,26 @@ public final class GitBranchWorker {
 
   public void compare(@NotNull final String branchName, @NotNull final List<GitRepository> repositories,
                       @NotNull final GitRepository selectedRepository) {
-    final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
-    if (myCompareInfo == null) {
-      LOG.error("The task to get compare info didn't finish. Repositories: \n" + repositories + "\nbranch name: " + branchName);
-      return;
+    try {
+      CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository);
+      });
     }
-    ApplicationManager.getApplication().invokeLater(
-      () -> displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
+    catch (VcsException e) {
+      VcsNotifier.getInstance(myProject).notifyError("Can't Compare with Branch", e.getMessage());
+    }
   }
 
-  private CommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) {
+  @NotNull
+  private CommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) throws VcsException {
     CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo();
     for (GitRepository repository: repositories) {
-      loadCommitsToCompare(repository, branchName, compareInfo);
-      try {
-        compareInfo.put(repository, loadTotalDiff(repository, branchName));
-      }
-      catch (VcsException e) {
-        // we treat it as critical and report an error
-        throw new GitExecutionException("Couldn't get [git diff " + branchName + "] on repository [" + repository.getRoot() + "]", e);
-      }
+      List<GitCommit> headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
+      List<GitCommit> branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");
+      compareInfo.put(repository, headToBranch, branchToHead);
+
+      compareInfo.put(repository, loadTotalDiff(repository, branchName));
     }
     return compareInfo;
   }
@@ -172,21 +172,6 @@ public final class GitBranchWorker {
     return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
   }
 
-  private void loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName,
-                                                       @NotNull CommitCompareInfo compareInfo) {
-    final List<GitCommit> headToBranch;
-    final List<GitCommit> branchToHead;
-    try {
-      headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
-      branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");
-    }
-    catch (VcsException e) {
-      // we treat it as critical and report an error
-      throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + repository.getRoot() + "]", e);
-    }
-    compareInfo.put(repository, headToBranch, branchToHead);
-  }
-  
   private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull CommitCompareInfo compareInfo,
                                     @NotNull GitRepository selectedRepository) {
     if (compareInfo.isEmpty()) {

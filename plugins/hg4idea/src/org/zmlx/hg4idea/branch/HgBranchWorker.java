@@ -9,10 +9,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgExecutionException;
 import org.zmlx.hg4idea.action.HgCompareWithBranchAction;
 import org.zmlx.hg4idea.log.HgCommit;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
@@ -36,14 +36,15 @@ public class HgBranchWorker {
 
   public void compare(@NotNull final String branchName, @NotNull final List<HgRepository> repositories,
                       @NotNull final HgRepository selectedRepository) {
-    final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
-    if (myCompareInfo == null) {
-      LOG.error("The task to get compare info didn't finish. Repositories: \n" + repositories + "\nbranch name: " + branchName);
-      return;
+    try {
+      final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository);
+      });
     }
-
-    ApplicationManager.getApplication().invokeLater(
-      () -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
+    catch (VcsException e) {
+      VcsNotifier.getInstance(myProject).notifyError("Can't Compare with Branch", e.getMessage());
+    }
   }
 
   private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull CommitCompareInfo compareInfo,
@@ -72,40 +73,28 @@ public class HgBranchWorker {
     return currentBranch == null ? CURRENT_REVISION : currentBranch;
   }
 
-
-  private CommitCompareInfo loadCommitsToCompare(List<HgRepository> repositories, String branchName) {
+  @NotNull
+  private CommitCompareInfo loadCommitsToCompare(List<HgRepository> repositories, String branchName) throws VcsException {
     CommitCompareInfo compareInfo = new CommitCompareInfo();
     for (HgRepository repository : repositories) {
-      loadCommitsToCompare(repository, branchName, compareInfo);
+      List<HgCommit> headToBranch = loadCommitsBetween(repository, CURRENT_REVISION, branchName);
+      List<HgCommit> branchToHead = loadCommitsBetween(repository, branchName, CURRENT_REVISION);
+      compareInfo.put(repository, headToBranch, branchToHead);
       compareInfo.put(repository, loadTotalDiff(repository, branchName));
     }
     return compareInfo;
   }
 
-  private void loadCommitsToCompare(@NotNull HgRepository repository, @NotNull final String branchName, @NotNull CommitCompareInfo compareInfo) {
-    final List<HgCommit> headToBranch;
-    final List<HgCommit> branchToHead;
-    try {
-      headToBranch = HgHistoryUtil.history(myProject, repository.getRoot(), 1000, Arrays.asList("-r", "reverse(" + branchName + "%" + CURRENT_REVISION + ")"), true);
-      branchToHead = HgHistoryUtil.history(myProject, repository.getRoot(), 1000, Arrays.asList("-r", "reverse(" + CURRENT_REVISION + "%" + branchName + ")"), true);
-    }
-    catch (VcsException e) {
-      // we treat it as critical and report an error
-      throw new HgExecutionException("Couldn't get [hg log :" + branchName + "] on repository [" + repository.getRoot() + "]", e);
-    }
-    compareInfo.put(repository, headToBranch, branchToHead);
+  @NotNull
+  private List<HgCommit> loadCommitsBetween(HgRepository repository, String fromRev, String toRev) throws VcsException {
+    List<String> parameters = Arrays.asList("-r", "reverse(" + toRev + "%" + fromRev + ")");
+    return HgHistoryUtil.history(myProject, repository.getRoot(), 1000, parameters, true);
   }
 
   @NotNull
-  private static Collection<Change> loadTotalDiff(@NotNull HgRepository repository, @NotNull String branchName) {
-    try {
-      // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
-      return HgCompareWithBranchActionCaller.doGetDiffChanges(repository.getProject(), repository.getRoot(), branchName);
-    }
-    catch (VcsException e) {
-      // we treat it as critical and report an error
-      throw new HgExecutionException("Couldn't get [hg diff -r " + branchName + "] on repository [" + repository.getRoot() + "]", e);
-    }
+  private static Collection<Change> loadTotalDiff(@NotNull HgRepository repository, @NotNull String branchName) throws VcsException {
+    // return diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
+    return HgCompareWithBranchActionCaller.doGetDiffChanges(repository.getProject(), repository.getRoot(), branchName);
   }
 
   private static class HgCompareWithBranchActionCaller extends HgCompareWithBranchAction {
