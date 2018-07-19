@@ -36,7 +36,7 @@ public class UITheme {
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
-  private Class providerClass;
+  private ClassLoader providerClassLoader;
 
   private UITheme() {
   }
@@ -53,10 +53,10 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull Class provider) throws IOException {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull ClassLoader provider) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
-    theme.providerClass = provider;
+    theme.providerClassLoader = provider;
     if (!theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
@@ -95,8 +95,8 @@ public class UITheme {
     return patcher;
   }
 
-  public Class getProviderClass() {
-    return providerClass;
+  public ClassLoader getProviderClassLoader() {
+    return providerClassLoader;
   }
 
   private static void apply(String key, Object value, UIDefaults defaults) {
