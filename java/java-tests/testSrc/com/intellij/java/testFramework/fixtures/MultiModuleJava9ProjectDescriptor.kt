@@ -74,6 +74,14 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-multi-release.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib_invalid_1_2.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-bind.jar!/")
+
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-ws.jar!/")
+      ModuleRootModificationUtil.updateModel(main) {
+        val entries = it.orderEntries.toMutableList()
+        entries.add(0, entries.last())  // places an upgrade module before the JDK
+        entries.removeAt(entries.size - 1)
+        it.rearrangeOrderEntries(entries.toTypedArray())
+      }
     }
   }
 
