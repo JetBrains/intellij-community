@@ -1927,16 +1927,23 @@ public class AllIcons {
   }
 
   public static class Windows {
-    public static final Icon CloseActive = IconLoader.getIcon("/windows/closeActive.png"); // 16x16
-    public static final Icon CloseHover = IconLoader.getIcon("/windows/closeHover.png"); // 16x16
-    public static final Icon CloseInactive = IconLoader.getIcon("/windows/closeInactive.png"); // 16x16
-    public static final Icon HelpButton = IconLoader.getIcon("/windows/helpButton.png"); // 16x16
-    public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.png"); // 16x16
-    public static final Icon MaximizeInactive = IconLoader.getIcon("/windows/maximizeInactive.png"); // 16x16
-    public static final Icon Minimize = IconLoader.getIcon("/windows/minimize.png"); // 16x16
-    public static final Icon MinimizeInactive = IconLoader.getIcon("/windows/minimizeInactive.png"); // 16x16
-    public static final Icon Restore = IconLoader.getIcon("/windows/restore.png"); // 16x16
-    public static final Icon RestoreInactive = IconLoader.getIcon("/windows/restoreInactive.png"); // 16x16
+    public static final Icon CloseActive = IconLoader.getIcon("/windows/closeActive.svg"); // 16x16
+    public static final Icon CloseHover = IconLoader.getIcon("/windows/closeHover.svg"); // 16x16
+    public static final Icon CloseInactive = IconLoader.getIcon("/windows/closeInactive.svg"); // 16x16
+    public static final Icon CloseSmall = IconLoader.getIcon("/windows/closeSmall.svg"); // 16x16
+    public static final Icon Help = IconLoader.getIcon("/windows/help.svg"); // 16x16
+    public static final Icon HelpButton = IconLoader.getIcon("/windows/helpButton.svg"); // 16x16
+    public static final Icon HelpButtonInactive = IconLoader.getIcon("/windows/helpButtonInactive.svg"); // 16x16
+    public static final Icon HelpInactive = IconLoader.getIcon("/windows/helpInactive.svg"); // 16x16
+    public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.svg"); // 16x16
+    public static final Icon MaximizeInactive = IconLoader.getIcon("/windows/maximizeInactive.svg"); // 16x16
+    public static final Icon MaximizeSmall = IconLoader.getIcon("/windows/maximizeSmall.svg"); // 16x16
+    public static final Icon Minimize = IconLoader.getIcon("/windows/minimize.svg"); // 16x16
+    public static final Icon MinimizeInactive = IconLoader.getIcon("/windows/minimizeInactive.svg"); // 16x16
+    public static final Icon MinimizeSmall = IconLoader.getIcon("/windows/minimizeSmall.svg"); // 16x16
+    public static final Icon Restore = IconLoader.getIcon("/windows/restore.svg"); // 16x16
+    public static final Icon RestoreInactive = IconLoader.getIcon("/windows/restoreInactive.svg"); // 16x16
+    public static final Icon RestoreSmall = IconLoader.getIcon("/windows/restoreSmall.svg"); // 16x16
 
     public static class Shadow {
       public static final Icon Bottom = IconLoader.getIcon("/windows/shadow/bottom.png"); // 1x13
