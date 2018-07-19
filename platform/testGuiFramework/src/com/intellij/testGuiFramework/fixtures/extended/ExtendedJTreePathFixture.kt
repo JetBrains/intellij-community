@@ -103,7 +103,8 @@ open class ExtendedJTreePathFixture(
       for (partialList in stringPath.list2tree()) {
         GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeoutInSeconds = 2) {
           try {
-            partialPath = ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(predicate, *partialList.toTypedArray())
+            partialPath = ExtendedJTreePathFinder(tree)
+              .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
             partialPath != null
           }
           catch (e: Exception) {
@@ -185,12 +186,6 @@ open class ExtendedJTreePathFixture(
    * Note: code `this.path.joinToString()` always includes the first invisible item
    * */
   fun TreePath.getPathStrings(): List<String> {
-    val result = mutableListOf<String>()
-    var currPath = this
-
-    while(currPath.lastPathComponent.toString().isNotEmpty()) {
-      result.add(currPath.lastPathComponent.toString())
-      currPath = currPath.parentPath
-    }
-    return result.reversed().toList()
+    val pathStrings = this.path.map { it.toString() }
+    return if (pathStrings.first().isEmpty()) pathStrings.drop(1) else pathStrings
   }
