@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.schemeManager.*
+import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.RoamingType
@@ -111,6 +112,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     try {
       val url = when (requestor) {
         is AbstractExtensionPointBean -> requestor.loaderForClass.getResource(resourceName)
+        is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
         else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
       }
 
