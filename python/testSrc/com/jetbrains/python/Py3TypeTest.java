@@ -1050,6 +1050,193 @@ public class Py3TypeTest extends PyTestCase {
       );
   }
 
+  public void testDunderNewWithGenericClsInner() {
+    doTest("A",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class B:\n" +
+           "    class A:\n" +
+           "        def __new__(cls: Type[P]) -> P:\n" +
+           "            pass\n" +
+           "\n" +
+           "expr = B.A()");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("A", PyClass.class).findMethodByName(PyNames.NEW, false, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "A", actualType);
+        }
+      );
+  }
+
+  public void testInheritedDunderNewWithGenericClsInner() {
+    doTest("B",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class A:\n" +
+           "    def __new__(cls: Type[P]) -> P:\n" +
+           "        pass\n" +
+           "        \n" +
+           "class C:\n" +
+           "    class B(A):\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C.B()");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("B", PyClass.class).findMethodByName(PyNames.NEW, true, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "B", actualType);
+        }
+      );
+  }
+
+  public void testExplicitDunderNewWithGenericCls() {
+    doTest("A",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class A:\n" +
+           "    def __new__(cls: Type[P]) -> P:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = A.__new__(A)");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("A", PyClass.class).findMethodByName(PyNames.NEW, false, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "A", actualType);
+        }
+      );
+  }
+
+  public void testExplicitInheritedDunderNewWithGenericCls() {
+    doTest("B",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class A:\n" +
+           "    def __new__(cls: Type[P]) -> P:\n" +
+           "        pass\n" +
+           "        \n" +
+           "class B(A):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = B.__new__(B)");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("B", PyClass.class).findMethodByName(PyNames.NEW, true, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "B", actualType);
+        }
+      );
+  }
+
+  public void testExplicitDunderNewWithGenericClsInner() {
+    doTest("A",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class B:\n" +
+           "    class A:\n" +
+           "        def __new__(cls: Type[P]) -> P:\n" +
+           "            pass\n" +
+           "\n" +
+           "expr = B.A.__new__(B.A)");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("A", PyClass.class).findMethodByName(PyNames.NEW, false, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "A", actualType);
+        }
+      );
+  }
+
+  public void testExplicitInheritedDunderNewWithGenericClsInner() {
+    doTest("B",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class A:\n" +
+           "    def __new__(cls: Type[P]) -> P:\n" +
+           "        pass\n" +
+           "  \n" +
+           "class C:      \n" +
+           "    class B(A):\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C.B.__new__(C.B)");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("B", PyClass.class).findMethodByName(PyNames.NEW, true, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "B", actualType);
+        }
+      );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

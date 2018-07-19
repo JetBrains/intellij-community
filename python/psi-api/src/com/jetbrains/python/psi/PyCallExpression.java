@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Predicate;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
@@ -34,12 +33,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
     if (resolvedCallee instanceof PyFunction) {
       final PyFunction function = (PyFunction)resolvedCallee;
-
-      if (PyNames.NEW.equals(function.getName()) && function.getContainingClass() != null) {
-        return getCallee();
-      }
-
-      if (function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
+      if (!PyNames.NEW.equals(function.getName()) && function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
         return null;
       }
     }
@@ -47,13 +41,18 @@ public interface PyCallExpression extends PyCallSiteExpression {
     final PyExpression callee = getCallee();
     if (callee instanceof PyQualifiedExpression) {
       final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
-      final Predicate<String> isConstructorName = name -> PyNames.INIT.equals(name) || PyNames.NEW.equals(name);
 
       if (resolvedCallee instanceof PyFunction &&
           qualifiedCallee.isQualified() &&
-          isConstructorName.apply(resolvedCallee.getName()) &&
-          !isConstructorName.apply(qualifiedCallee.getName())) {
+          PyNames.INIT.equals(resolvedCallee.getName()) &&
+          !PyNames.INIT.equals(qualifiedCallee.getName())) {
         return null;
+      }
+
+      if (resolvedCallee instanceof PyFunction &&
+          PyNames.NEW.equals(resolvedCallee.getName()) &&
+          !PyNames.NEW.equals(qualifiedCallee.getName())) {
+        return callee;
       }
 
       return qualifiedCallee.getQualifier();
