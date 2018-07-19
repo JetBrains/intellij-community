@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.VfsDependentEnum;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -45,7 +46,8 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
   private static final VfsDependentEnum<String> ourLanguagesEnumerator = new VfsDependentEnum<>(
     "languages",
     EnumeratorStringDescriptor.INSTANCE,
-    1
+    1,
+    FSRecords.INSTANCE.basePath()
   );
 
   @Override

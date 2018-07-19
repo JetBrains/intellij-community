@@ -66,7 +66,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   private FSDir convertDirectory(@NotNull VirtualFile parent) {
     final FSItem fsItem = convert(parent);
     if (fsItem == null) {
-      FSRecords.invalidateCaches();
+      FSRecords.INSTANCE.invalidateCaches();
       throw new IllegalStateException("cannot find parent directory: " + parent.getPath());
     }
     assert fsItem.isDirectory() : "parent is not a directory: " + parent.getPath();
@@ -118,7 +118,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   public void deleteFile(final Object requestor, @NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     if (fsItem == null) {
-      FSRecords.invalidateCaches();
+      FSRecords.INSTANCE.invalidateCaches();
       throw new IllegalStateException("failed to delete file " + file.getPath());
     }
     fsItem.getParent().removeChild(fsItem);

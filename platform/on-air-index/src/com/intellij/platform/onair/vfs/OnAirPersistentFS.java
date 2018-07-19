@@ -39,7 +39,7 @@ public class OnAirPersistentFS extends PersistentFSImpl {
       for (String file : files) {
         String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/vfs/" + file;
         ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
-        File basePath = FSRecords.basePath();
+        File basePath = FSRecords.INSTANCE.basePath();
         basePath.mkdirs();
         try (FileOutputStream fos = new FileOutputStream(new File(basePath, file))) {
           FileChannel dest = fos.getChannel();

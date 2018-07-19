@@ -49,14 +49,14 @@ public class VfsDependentEnum<T> {
   private final Object myLock = new Object();
   private boolean myTriedToLoadFile;
 
-  public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version) {
-    myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
+  public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version, File basePath) {
+    myFile = new File(basePath, DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
     myKeyDescriptor = descriptor;
     myVersion = version;
   }
 
-  static File getBaseFile() {
-    return new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+  static File getBaseFile(FSRecords fsRecords) {
+    return new File(fsRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   }
 
   public int getId(@NotNull T s) throws IOException {
@@ -91,7 +91,7 @@ public class VfsDependentEnum<T> {
 
     try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(fileOutputStream))) {
       if (myFile.length() == 0) {
-        DataInputOutputUtil.writeTIME(output, FSRecords.getCreationTimestamp());
+        DataInputOutputUtil.writeTIME(output, FSRecords.INSTANCE.getCreationTimestamp());
         DataInputOutputUtil.writeINT(output, myVersion);
       }
       myKeyDescriptor.save(output, instance);
@@ -112,7 +112,7 @@ public class VfsDependentEnum<T> {
       try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)))) {
         long vfsVersion = DataInputOutputUtil.readTIME(input);
 
-        if (vfsVersion != FSRecords.getCreationTimestamp()) {
+        if (vfsVersion != FSRecords.INSTANCE.getCreationTimestamp()) {
           // vfs was rebuilt, so the list will be rebuilt
           deleteFile = true;
           return false;
@@ -157,7 +157,7 @@ public class VfsDependentEnum<T> {
   @Contract("_->fail")
   private void doInvalidation(@NotNull Throwable e) {
     FileUtil.deleteWithRenaming(myFile); // better alternatives ?
-    FSRecords.requestVfsRebuild(e);
+    FSRecords.INSTANCE.requestVfsRebuild(e);
   }
 
   private void register(@NotNull T instance, int id) {

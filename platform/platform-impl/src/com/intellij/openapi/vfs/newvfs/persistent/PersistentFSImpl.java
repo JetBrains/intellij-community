@@ -77,7 +77,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public void initComponent() {
-    FSRecords.connect();
+    FSRecords.INSTANCE.connect();
   }
 
   @Override
@@ -92,7 +92,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private void performShutdown() {
     if (myShutDown.compareAndSet(false, true)) {
       LOG.info("VFS dispose started");
-      FSRecords.dispose();
+      FSRecords.INSTANCE.dispose();
       LOG.info("VFS dispose completed");
     }
   }
@@ -111,7 +111,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getCreationTimestamp() {
-    return FSRecords.getCreationTimestamp();
+    return FSRecords.INSTANCE.getCreationTimestamp();
   }
 
   @NotNull
@@ -135,7 +135,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public boolean wereChildrenAccessed(@NotNull final VirtualFile dir) {
-    return FSRecords.wereChildrenAccessed(getFileId(dir));
+    return FSRecords.INSTANCE.wereChildrenAccessed(getFileId(dir));
   }
 
   @Override
@@ -143,7 +143,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public String[] list(@NotNull final VirtualFile file) {
     int id = getFileId(file);
 
-    FSRecords.NameId[] nameIds = FSRecords.listAll(id);
+    FSRecords.NameId[] nameIds = FSRecords.INSTANCE.listAll(id);
     if (!areChildrenLoaded(id)) {
       nameIds  = persistAllChildren(file, id, nameIds);
     }
@@ -153,14 +153,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public String[] listPersisted(@NotNull VirtualFile parent) {
-    return listPersisted(FSRecords.list(getFileId(parent)));
+    return listPersisted(FSRecords.INSTANCE.list(getFileId(parent)));
   }
 
   @NotNull
   private static String[] listPersisted(@NotNull int[] childrenIds) {
     String[] names = ArrayUtil.newStringArray(childrenIds.length);
     for (int i = 0; i < childrenIds.length; i++) {
-      names[i] = FSRecords.getName(childrenIds[i]);
+      names[i] = FSRecords.INSTANCE.getName(childrenIds[i]);
     }
     return names;
   }
@@ -195,15 +195,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
 
-    FSRecords.updateList(id, childrenIds.toNativeArray());
+    FSRecords.INSTANCE.updateList(id, childrenIds.toNativeArray());
     setChildrenCached(id);
 
     return nameIds.toArray(FSRecords.NameId.EMPTY_ARRAY);
   }
 
   private static void setChildrenCached(int id) {
-    int flags = FSRecords.getFlags(id);
-    FSRecords.setFlags(id, flags | CHILDREN_CACHED_FLAG, true);
+    int flags = FSRecords.INSTANCE.getFlags(id);
+    FSRecords.INSTANCE.setFlags(id, flags | CHILDREN_CACHED_FLAG, true);
   }
 
   @Override
@@ -211,7 +211,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public FSRecords.NameId[] listAll(@NotNull VirtualFile parent) {
     final int parentId = getFileId(parent);
 
-    FSRecords.NameId[] nameIds = FSRecords.listAll(parentId);
+    FSRecords.NameId[] nameIds = FSRecords.INSTANCE.listAll(parentId);
     if (!areChildrenLoaded(parentId)) {
       return persistAllChildren(parent, parentId, nameIds);
     }
@@ -220,53 +220,53 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static boolean areChildrenLoaded(final int parentId) {
-    return BitUtil.isSet(FSRecords.getFlags(parentId), CHILDREN_CACHED_FLAG);
+    return BitUtil.isSet(FSRecords.INSTANCE.getFlags(parentId), CHILDREN_CACHED_FLAG);
   }
 
   @Override
   @Nullable
   public DataInputStream readAttribute(@NotNull final VirtualFile file, @NotNull final FileAttribute att) {
-    return FSRecords.readAttributeWithLock(getFileId(file), att);
+    return FSRecords.INSTANCE.readAttributeWithLock(getFileId(file), att);
   }
 
   @Override
   @NotNull
   public DataOutputStream writeAttribute(@NotNull final VirtualFile file, @NotNull final FileAttribute att) {
-    return FSRecords.writeAttribute(getFileId(file), att);
+    return FSRecords.INSTANCE.writeAttribute(getFileId(file), att);
   }
 
   @Nullable
   private static DataInputStream readContent(@NotNull VirtualFile file) {
-    return FSRecords.readContent(getFileId(file));
+    return FSRecords.INSTANCE.readContent(getFileId(file));
   }
 
   @NotNull
   private static DataInputStream readContentById(int contentId) {
-    return FSRecords.readContentById(contentId);
+    return FSRecords.INSTANCE.readContentById(contentId);
   }
 
   @NotNull
   private static DataOutputStream writeContent(@NotNull VirtualFile file, boolean readOnly) {
-    return FSRecords.writeContent(getFileId(file), readOnly);
+    return FSRecords.INSTANCE.writeContent(getFileId(file), readOnly);
   }
 
   private static void writeContent(@NotNull VirtualFile file, ByteArraySequence content, boolean readOnly) {
-    FSRecords.writeContent(getFileId(file), content, readOnly);
+    FSRecords.INSTANCE.writeContent(getFileId(file), content, readOnly);
   }
 
   @Override
   public int storeUnlinkedContent(@NotNull byte[] bytes) {
-    return FSRecords.storeUnlinkedContent(bytes);
+    return FSRecords.INSTANCE.storeUnlinkedContent(bytes);
   }
 
   @Override
   public int getModificationCount(@NotNull final VirtualFile file) {
-    return FSRecords.getModCount(getFileId(file));
+    return FSRecords.INSTANCE.getModCount(getFileId(file));
   }
 
   @Override
   public int getModificationCount() {
-    return FSRecords.getLocalModCount();
+    return FSRecords.INSTANCE.getLocalModCount();
   }
 
   @Override
@@ -280,7 +280,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getFilesystemModificationCount() {
-    return FSRecords.getModCount();
+    return FSRecords.INSTANCE.getModCount();
   }
 
   private static boolean writeAttributesToRecord(final int id,
@@ -291,13 +291,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     assert id > 0 : id;
     String name = file.getName();
     if (!name.isEmpty()) {
-      if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
+      if (namesEqual(fs, name, FSRecords.INSTANCE.getNameSequence(id))) return false; // TODO: Handle root attributes change.
     }
     else {
       if (areChildrenLoaded(id)) return false; // TODO: hack
     }
 
-    FSRecords.writeAttributesToRecord(id, parentId, attributes, name);
+    FSRecords.INSTANCE.writeAttributesToRecord(id, parentId, attributes, name);
 
     return true;
   }
@@ -306,7 +306,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public int getFileAttributes(int id) {
     assert id > 0;
     //noinspection MagicConstant
-    return FSRecords.getFlags(id);
+    return FSRecords.INSTANCE.getFlags(id);
   }
 
   @Override
@@ -325,13 +325,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getTimeStamp(@NotNull final VirtualFile file) {
-    return FSRecords.getTimestamp(getFileId(file));
+    return FSRecords.INSTANCE.getTimestamp(getFileId(file));
   }
 
   @Override
   public void setTimeStamp(@NotNull final VirtualFile file, final long modStamp) throws IOException {
     final int id = getFileId(file);
-    FSRecords.setTimestamp(id, modStamp);
+    FSRecords.INSTANCE.setTimestamp(id, modStamp);
     getDelegate(file).setTimeStamp(file, modStamp);
   }
 
@@ -375,13 +375,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs) {
     int parentId = getFileId(parent);
-    int[] children = FSRecords.list(parentId);
+    int[] children = FSRecords.INSTANCE.list(parentId);
 
     if (children.length > 0) {
       // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing non-cached children
-      int nameId = FSRecords.getNameId(childName);
+      int nameId = FSRecords.INSTANCE.getNameId(childName);
       for (final int childId : children) {
-        if (nameId == FSRecords.getNameId(childId)) {
+        if (nameId == FSRecords.INSTANCE.getNameId(childId)) {
           return childId;
         }
       }
@@ -389,14 +389,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     for (final int childId : children) {
-      if (namesEqual(fs, childName, FSRecords.getNameSequence(childId))) return childId;
+      if (namesEqual(fs, childName, FSRecords.INSTANCE.getNameSequence(childId))) return childId;
     }
 
     final VirtualFile fake = new FakeVirtualFile(parent, childName);
     final FileAttributes attributes = fs.getAttributes(fake);
     if (attributes != null) {
       final int child = createAndFillRecord(fs, fake, parentId, attributes);
-      FSRecords.updateList(parentId, ArrayUtil.append(children, child));
+      FSRecords.INSTANCE.updateList(parentId, ArrayUtil.append(children, child));
       return child;
     }
 
@@ -413,7 +413,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public long getLastRecordedLength(@NotNull VirtualFile file) {
     int id = getFileId(file);
-    return FSRecords.getLength(id);
+    return FSRecords.INSTANCE.getLength(id);
   }
 
   @NotNull
@@ -498,7 +498,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     synchronized (myInputLock) {
       fileId = getFileId(file);
-      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || (length = FSRecords.getLength(fileId)) == -1L;
+      outdated = checkFlag(fileId, MUST_RELOAD_CONTENT) || (length = FSRecords.INSTANCE.getLength(fileId)) == -1L;
       reloadFromDelegate = outdated || (contentStream = readContent(file)) == null;
     }
 
@@ -509,13 +509,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       if (outdated) {
         // in this case, file can have out-of-date length. so, update it first (it's needed for correct contentsToByteArray() work)
         // see IDEA-90813 for possible bugs
-        FSRecords.setLength(fileId, delegate.getLength(file));
+        FSRecords.INSTANCE.setLength(fileId, delegate.getLength(file));
         content = delegate.contentsToByteArray(file);
       }
       else {
         // a bit of optimization
         content = delegate.contentsToByteArray(file);
-        FSRecords.setLength(fileId, content.length);
+        FSRecords.INSTANCE.setLength(fileId, content.length);
       }
 
       Application application = ApplicationManager.getApplication();
@@ -539,7 +539,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       return FileUtil.loadBytes(contentStream, (int)length);
     }
     catch (IOException e) {
-      FSRecords.handleError(e);
+      FSRecords.INSTANCE.handleError(e);
     }
     return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
@@ -570,7 +570,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private static long reloadLengthFromDelegate(@NotNull VirtualFile file, @NotNull NewVirtualFileSystem delegate) {
     final long len = delegate.getLength(file);
-    FSRecords.setLength(getFileId(file), len);
+    FSRecords.INSTANCE.setLength(getFileId(file), len);
     return len;
   }
 
@@ -612,7 +612,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private static boolean mustReloadContent(@NotNull VirtualFile file) {
     int fileId = getFileId(file);
-    return checkFlag(fileId, MUST_RELOAD_CONTENT) || FSRecords.getLength(fileId) == -1L;
+    return checkFlag(fileId, MUST_RELOAD_CONTENT) || FSRecords.INSTANCE.getLength(fileId) == -1L;
   }
 
   @Override
@@ -637,7 +637,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         NewVirtualFileSystem delegate = getDelegate(file);
         OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
-        // FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
+        // FSRecords.INSTANCE.ContentOutputStream already buffered, no need to wrap in BufferedStream
         OutputStream persistenceStream = writeContent(file, delegate.isReadOnly());
 
         try {
@@ -662,17 +662,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int acquireContent(@NotNull VirtualFile file) {
-    return FSRecords.acquireFileContent(getFileId(file));
+    return FSRecords.INSTANCE.acquireFileContent(getFileId(file));
   }
 
   @Override
   public void releaseContent(int contentId) {
-    FSRecords.releaseContent(contentId);
+    FSRecords.INSTANCE.releaseContent(contentId);
   }
 
   @Override
   public int getCurrentContentId(@NotNull VirtualFile file) {
-    return FSRecords.getContentId(getFileId(file));
+    return FSRecords.INSTANCE.getContentId(getFileId(file));
   }
 
   @Override
@@ -903,7 +903,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
 
       int parentId = getFileId(parent);
-      int[] oldIds = FSRecords.list(parentId);
+      int[] oldIds = FSRecords.INSTANCE.list(parentId);
       TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(deleteEvents.size(), oldIds.length));
       parentChildrenIds.addAll(oldIds);
 
@@ -915,12 +915,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         int id = getFileId(file);
         childrenNamesDeleted.add(file.getNameSequence());
         childrenIdsDeleted.add(id);
-        FSRecords.deleteRecordRecursively(id);
+        FSRecords.INSTANCE.deleteRecordRecursively(id);
         invalidateSubtree(file);
         parentChildrenIds.remove(id);
       }
       parent.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
-      FSRecords.updateList(parentId, parentChildrenIds.toArray());
+      FSRecords.INSTANCE.updateList(parentId, parentChildrenIds.toArray());
     }
   }
 
@@ -930,7 +930,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       VirtualDirectoryImpl parent = entry.getKey();
       Collection<VFileCreateEvent> createEvents = entry.getValue();
       int parentId = getFileId(parent);
-      int[] oldIds = FSRecords.list(parentId);
+      int[] oldIds = FSRecords.INSTANCE.list(parentId);
       TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(createEvents.size(), oldIds.length));
       parentChildrenIds.addAll(oldIds);
 
@@ -954,7 +954,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).filter(Objects::nonNull).map(VirtualFile::getName).distinct().count();
         assert count == parentChildrenIds.size();
       }
-      FSRecords.updateList(parentId, parentChildrenIds.toArray());
+      FSRecords.INSTANCE.updateList(parentId, parentChildrenIds.toArray());
     }
   }
 
@@ -992,7 +992,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       return null;
     }
 
-    int rootId = FSRecords.findRootRecord(rootUrl);
+    int rootId = FSRecords.INSTANCE.findRootRecord(rootUrl);
 
     VfsData.Segment segment = VfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
@@ -1013,7 +1013,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             throw new RuntimeException("Duplicate FS roots: " + rootUrl + " and " + entry.getKey() + ", id=" + rootId + ", valid=" + existingRoot.isValid(), e);
           }
         }
-        throw new RuntimeException("No root duplication, roots=" + Arrays.toString(FSRecords.listAll(1)), e);
+        throw new RuntimeException("No root duplication, roots=" + Arrays.toString(FSRecords.INSTANCE.listAll(1)), e);
       }
       incStructuralModificationCount();
       mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
@@ -1023,7 +1023,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       myIdToDirCache.put(rootId, newRoot);
     }
 
-    if (!mark && attributes.lastModified != FSRecords.getTimestamp(rootId)) {
+    if (!mark && attributes.lastModified != FSRecords.INSTANCE.getTimestamp(rootId)) {
       newRoot.markDirtyRecursively();
     }
 
@@ -1057,7 +1057,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Nullable
   public NewVirtualFile findFileById(final int id) {
     VirtualFileSystemEntry cached = myIdToDirCache.get(id);
-    return cached != null ? cached : FSRecords.findFileById(id, myIdToDirCache);
+    return cached != null ? cached : FSRecords.INSTANCE.findFileById(id, myIdToDirCache);
   }
 
   @Override
@@ -1178,15 +1178,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                          @NotNull VirtualFile delegateFile,
                                          int parentId,
                                          @NotNull FileAttributes attributes) {
-    final int childId = FSRecords.createRecord();
+    final int childId = FSRecords.INSTANCE.createRecord();
     writeAttributesToRecord(childId, parentId, delegateFile, delegateSystem, attributes);
     return childId;
   }
 
   private static void appendIdToParentList(final int parentId, final int childId) {
-    int[] childrenList = FSRecords.list(parentId);
+    int[] childrenList = FSRecords.INSTANCE.list(parentId);
     childrenList = ArrayUtil.append(childrenList, childId);
-    FSRecords.updateList(parentId, childrenList);
+    FSRecords.INSTANCE.updateList(parentId, childrenList);
   }
 
   private void executeDelete(@NotNull VirtualFile file) {
@@ -1207,7 +1207,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         myRoots.remove(rootUrl);
         myRootsById.remove(id);
         myIdToDirCache.remove(id);
-        FSRecords.deleteRootRecord(id);
+        FSRecords.INSTANCE.deleteRootRecord(id);
       }
     }
     else {
@@ -1217,7 +1217,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       directory.removeChild(file);
     }
 
-    FSRecords.deleteRecordRecursively(id);
+    FSRecords.INSTANCE.deleteRecordRecursively(id);
 
     invalidateSubtree(file);
     incStructuralModificationCount();
@@ -1232,7 +1232,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static void removeIdFromParentList(final int parentId, final int id, @NotNull VirtualFile parent, VirtualFile file) {
-    int[] childList = FSRecords.list(parentId);
+    int[] childList = FSRecords.INSTANCE.list(parentId);
 
     int index = ArrayUtil.indexOf(childList, id);
     if (index == -1) {
@@ -1241,12 +1241,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                  + "\n\tactual children:" + Arrays.toString(childList));
     }
     childList = ArrayUtil.remove(childList, index);
-    FSRecords.updateList(parentId, childList);
+    FSRecords.INSTANCE.updateList(parentId, childList);
   }
 
   private static void executeRename(@NotNull VirtualFile file, @NotNull final String newName) {
     final int id = getFileId(file);
-    FSRecords.setName(id, newName);
+    FSRecords.INSTANCE.setName(id, newName);
     ((VirtualFileSystemEntry)file).setNewName(newName);
   }
 
@@ -1269,16 +1269,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static void setFlag(final int id, final int mask, final boolean value) {
-    int oldFlags = FSRecords.getFlags(id);
+    int oldFlags = FSRecords.INSTANCE.getFlags(id);
     int flags = value ? oldFlags | mask : oldFlags & ~mask;
 
     if (oldFlags != flags) {
-      FSRecords.setFlags(id, flags, true);
+      FSRecords.INSTANCE.setFlags(id, flags, true);
     }
   }
 
   private static boolean checkFlag(int fileId, int mask) {
-    return BitUtil.isSet(FSRecords.getFlags(fileId), mask);
+    return BitUtil.isSet(FSRecords.INSTANCE.getFlags(fileId), mask);
   }
 
   private static void executeTouch(@NotNull VirtualFile file, boolean reloadContentFromDelegate, long newModificationStamp) {
@@ -1288,8 +1288,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     final NewVirtualFileSystem delegate = getDelegate(file);
     final FileAttributes attributes = delegate.getAttributes(file);
-    FSRecords.setLength(getFileId(file), attributes != null ? attributes.length : DEFAULT_LENGTH);
-    FSRecords.setTimestamp(getFileId(file), attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP);
+    FSRecords.INSTANCE.setLength(getFileId(file), attributes != null ? attributes.length : DEFAULT_LENGTH);
+    FSRecords.INSTANCE.setTimestamp(getFileId(file), attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP);
 
     ((VirtualFileSystemEntry)file).setModificationStamp(newModificationStamp);
   }
@@ -1302,7 +1302,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final int oldParentId = getFileId(file.getParent());
 
     removeIdFromParentList(oldParentId, fileId, file.getParent(), file);
-    FSRecords.setParent(fileId, newParentId);
+    FSRecords.INSTANCE.setParent(fileId, newParentId);
     appendIdToParentList(newParentId, fileId);
     ((VirtualFileSystemEntry)file).setParent(newParent);
   }
@@ -1310,12 +1310,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public String getName(int id) {
     assert id > 0;
-    return FSRecords.getName(id);
+    return FSRecords.INSTANCE.getName(id);
   }
 
   @TestOnly
   public void cleanPersistedContents() {
-    int[] roots = FSRecords.listRoots();
+    int[] roots = FSRecords.INSTANCE.listRoots();
     for (int root : roots) {
       markForContentReloadRecursively(root);
     }
@@ -1323,7 +1323,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private void markForContentReloadRecursively(int id) {
     if (isDirectory(getFileAttributes(id))) {
-      for (int child : FSRecords.list(id)) {
+      for (int child : FSRecords.INSTANCE.list(id)) {
         markForContentReloadRecursively(child);
       }
     }

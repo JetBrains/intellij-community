@@ -128,7 +128,7 @@ public class IndexingStamp {
     try {
       DataInputOutputUtil.writeINT(os, version);
       DataInputOutputUtil.writeINT(os, VERSION);
-      DataInputOutputUtil.writeTIME(os, FSRecords.getCreationTimestamp());
+      DataInputOutputUtil.writeTIME(os, FSRecords.INSTANCE.getCreationTimestamp());
       newIndexVersion.write(os);
       ourIndexIdToCreationStamp.put(indexId, newIndexVersion);
     }
@@ -170,7 +170,7 @@ public class IndexingStamp {
 
           if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
               DataInputOutputUtil.readINT(in) == VERSION &&
-              DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
+              DataInputOutputUtil.readTIME(in) == FSRecords.INSTANCE.getCreationTimestamp()) {
             version = new IndexVersion(in);
             ourIndexIdToCreationStamp.put(indexName, version);
             return version;
@@ -261,7 +261,7 @@ public class IndexingStamp {
 
     // Indexed stamp compact format:
     // (DataInputOutputUtil.timeBase + numberOfOutdatedIndices outdated_index_id+)? (dominating_index_stamp) index_id*
-    // Note, that FSRecords.REASONABLY_SMALL attribute storage allocation policy will give an attribute 32 bytes to each file
+    // Note, that FSRecords.INSTANCE.REASONABLY_SMALL attribute storage allocation policy will give an attribute 32 bytes to each file
     // Compact format allows 22 indexed states in this state
     private void writeToStream(final DataOutputStream stream) throws IOException {
       if (myIndexStamps != null && !myIndexStamps.isEmpty()) {
@@ -361,7 +361,7 @@ public class IndexingStamp {
     }
     Timestamps timestamps = myTimestampsCache.get(id);
     if (timestamps == null) {
-      final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE);
+      final DataInputStream stream = FSRecords.INSTANCE.readAttributeWithLock(id, Timestamps.PERSISTENCE);
       try {
         timestamps = new Timestamps(stream);
       }
@@ -430,7 +430,7 @@ public class IndexingStamp {
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+              try (DataOutputStream sink = FSRecords.INSTANCE.writeAttribute(file, Timestamps.PERSISTENCE)) {
                 timestamp.writeToStream(sink);
               }
             }

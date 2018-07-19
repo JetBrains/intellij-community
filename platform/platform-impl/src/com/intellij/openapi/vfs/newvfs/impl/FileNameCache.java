@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class FileNameCache {
-  private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
+  private static final PersistentStringEnumerator ourNames = FSRecords.INSTANCE.getNames();
   @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache = new IntSLRUCache[16];
   static {
     final int protectedSize = 40000 / ourNameCache.length;
@@ -40,7 +40,7 @@ public class FileNameCache {
   }
 
   public static int storeName(@NotNull String name) {
-    final int idx = FSRecords.getNameId(name);
+    final int idx = FSRecords.INSTANCE.getNameId(name);
     cacheData(name, idx, calcStripeIdFromNameId(idx));
     return idx;
   }
@@ -126,7 +126,7 @@ public class FileNameCache {
   @NotNull
   public static CharSequence getVFileName(int nameId) {
     try {
-      return getVFileName(nameId, FSRecords::getNameByNameId);
+      return getVFileName(nameId, FSRecords.INSTANCE::getNameByNameId);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // actually will be caught in getNameByNameId

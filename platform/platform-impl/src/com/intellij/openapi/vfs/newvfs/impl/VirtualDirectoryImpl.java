@@ -247,7 +247,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                        PersistentFS.isDirectory(attributes) ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     }
     catch (VfsData.FileAlreadyCreatedException e) {
-      throw new RuntimeException("dir=" + myId + "; dir.children=" + Arrays.toString(FSRecords.listAll(myId)), e);
+      throw new RuntimeException("dir=" + myId + "; dir.children=" + Arrays.toString(FSRecords.INSTANCE.listAll(myId)), e);
     }
     LOG.assertTrue(!(getFileSystem() instanceof Win32LocalFileSystem));
 
@@ -576,7 +576,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       int id = getId();
       if (id >= 0) {
-        FSRecords.NameId[] persistentIds = FSRecords.listAll(id);
+        FSRecords.NameId[] persistentIds = FSRecords.INSTANCE.listAll(id);
         for (FSRecords.NameId nameId : persistentIds) {
           existingNames.add(nameId.name);
         }

@@ -568,7 +568,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
       super.setIndexedStateForFile(fileId, file);
 
-      try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
+      try (DataOutputStream stream = FSRecords.INSTANCE.writeAttribute(fileId, VERSION_STAMP)) {
         DataInputOutputUtil.writeINT(stream, myStubVersionMap.getIndexingTimestampDiffForFileType(file.getFileType()));
       }
       catch (IOException e) {
@@ -582,7 +582,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       if (!indexedStateForFile) return false;
 
       try {
-        DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP);
+        DataInputStream stream = FSRecords.INSTANCE.readAttributeWithLock(fileId, VERSION_STAMP);
         int diff = stream != null ? DataInputOutputUtil.readINT(stream) : 0;
         if (diff == 0) return false;
         FileType fileType = myStubVersionMap.getFileTypeByIndexingTimestampDiff(diff);

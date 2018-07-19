@@ -95,7 +95,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     }
 
     UsageTrigger.trigger(ApplicationManagerEx.getApplicationEx().getName() + ".caches.invalidated");
-    if (invalidateCachesInvalidatesVfs) FSRecords.invalidateCaches();
+    if (invalidateCachesInvalidatesVfs) FSRecords.INSTANCE.invalidateCaches();
     else FileBasedIndex.getInstance().invalidateCaches();
 
     for (CachesInvalidator invalidater : CachesInvalidator.EP_NAME.getExtensions()) {
