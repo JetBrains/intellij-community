@@ -16,7 +16,7 @@ import com.jetbrains.python.sdk.pipenv.isPipEnv
 object PyInterpreterUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) =
     project.sdks
-      .map { sdk -> UsageDescriptor(listOf(sdk.version, sdk.remoteType, sdk.interpreterType).joinToString("")) }.toSet()
+      .map { sdk -> UsageDescriptor(listOf(sdk.version, sdk.remoteType, sdk.interpreterType).joinToString(".")) }.toSet()
 
   override fun getGroupId() = "statistics.python.interpreter"
 }
