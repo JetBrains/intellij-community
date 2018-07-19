@@ -171,7 +171,11 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
           if (RedundantCastUtil.isCastRedundant(typeCastExpression)) {
             final PsiExpression operand = typeCastExpression.getOperand();
             assert operand != null;
+            PsiElement parent = typeCastExpression.getParent();
             typeCastExpression.replace(operand);
+            if (parent instanceof PsiParenthesizedExpression) {
+              ParenthesesUtils.removeParentheses((PsiExpression)parent, false);
+            }
           }
         }
       }
