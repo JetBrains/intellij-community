@@ -108,7 +108,11 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     myBalloon.pack(true, true);
 
     myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
-    Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
+    Disposer.register(myBalloon, () -> {
+      myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null);
+      mySearchEverywhereUI = null;
+      myBalloon = null;
+    });
 
     if (project != null) {
       myBalloon.showCenteredInCurrentWindow(project);
