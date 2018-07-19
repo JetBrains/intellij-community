@@ -201,7 +201,7 @@ object GuiTestUtilKt {
   }
 
   fun waitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("for $timeoutInSeconds second(s) until $condition") {
+    Pause.pause(object : Condition("$timeoutInSeconds second(s) until $condition") {
       override fun test() = conditionalFunction()
     }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
   }
