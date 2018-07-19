@@ -105,7 +105,13 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         final RegExpChar ch = (RegExpChar)child;
         final IElementType type = ch.getNode().getFirstChildNode().getElementType();
         if (type == RegExpTT.REDUNDANT_ESCAPE) {
-          text.append((char)ch.getValue());
+          final int value = ch.getValue();
+          if (value == ']') {
+            text.append(ch.getUnescapedText());
+          }
+          else {
+            text.append((char)value);
+          }
         }
         else if (type == RegExpTT.ESC_CHARACTER) {
           final int value = ch.getValue();
