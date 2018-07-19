@@ -34,8 +34,10 @@ import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
+class GitStagingCommitTest : GitCommitTest(true)
+class GitWithOnlyCommitTest : GitCommitTest(false)
 
-open class GitCommitTest : GitSingleRepoTest() {
+abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRepoTest() {
   private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
@@ -46,6 +48,7 @@ open class GitCommitTest : GitSingleRepoTest() {
     val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
     point.registerExtension(myMovementProvider)
     Registry.get("git.allow.explicit.commit.renames").setValue(true)
+    Registry.get("git.force.commit.using.staging.area").setValue(useStagingArea)
 
     (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(true)
   }
@@ -55,6 +58,7 @@ open class GitCommitTest : GitSingleRepoTest() {
       val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
       point.unregisterExtension(myMovementProvider)
       Registry.get("git.allow.explicit.commit.renames").resetToDefault()
+      Registry.get("git.force.commit.using.staging.area").resetToDefault()
 
       (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(false)
     }
