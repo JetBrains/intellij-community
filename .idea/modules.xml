@@ -69,6 +69,7 @@
     <module old-name="coverage_rt" new-name="intellij.java.coverage.rt" />
     <module old-name="credential-store" new-name="intellij.platform.credentialStore" />
     <module old-name="cucumber-jvm-formatter" new-name="intellij.cucumber.jvmFormatter" />
+    <module old-name="cucumber-jvm-formatter3" new-name="intellij.cucumber.jvmFormatter3" />
     <module old-name="cucumber-test-runner" new-name="intellij.cucumber.testRunner" />
     <module old-name="cvs-core" new-name="intellij.vcs.cvs.core" />
     <module old-name="cvs-plugin" new-name="intellij.vcs.cvs" />
