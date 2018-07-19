@@ -47,6 +47,10 @@ public abstract class ProjectTaskRunner {
 
   public abstract boolean canRun(@NotNull ProjectTask projectTask);
 
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask) {
+    return canRun(projectTask);
+  }
+
   @Nullable
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask task,
