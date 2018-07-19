@@ -50,6 +50,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   @NonNls private static final String IS_ALLOWED_ATTR = "allowed";
   @NonNls private static final String PERIOD_ATTR = "period";
   @NonNls private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
+  private ILogger androidLogger;
 
   public static UsageStatisticsPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(UsageStatisticsPersistenceComponent.class);
@@ -168,33 +169,11 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   private void updateAndroidStudioMetrics(boolean allowed) {
-    Logger intelliJLogger = Logger.getInstance("#com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent");
-    // Create logger & scheduler based on IntelliJ/ADT helpers.
-    ILogger logger = new ILogger() {
-      @Override
-      public void error(@com.android.annotations.Nullable Throwable t, @com.android.annotations.Nullable String msgFormat, Object... args) {
-        intelliJLogger.error(String.format(msgFormat, args), t);
-      }
 
-      @Override
-      public void warning(@NonNull String msgFormat, Object... args) {
-        intelliJLogger.warn(String.format(msgFormat, args));
-      }
-
-      @Override
-      public void info(@NonNull String msgFormat, Object... args) {
-        intelliJLogger.info(String.format(msgFormat, args));
-      }
-
-      @Override
-      public void verbose(@NonNull String msgFormat, Object... args) {
-        info(msgFormat, args);
-      }
-    };
-
+    ILogger logger = getAndroidLogger();
     ScheduledExecutorService scheduler = JobScheduler.getScheduler();
     // Update the settings & tracker based on allowed state, will initialize on first call.
-    AnalyticsSettings settings = UsageTracker.updateSettingsAndTracker(allowed, logger, scheduler);
+    UsageTracker.updateSettingsAndTracker(allowed, logger, scheduler);
 
     // Update usage tracker maximums for long-lived process.
     UsageTracker.setMaxJournalTime(10, TimeUnit.MINUTES);
@@ -203,15 +182,15 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     ApplicationInfo application = ApplicationInfo.getInstance();
 
     // Update the publisher based on settings updated above, will initialize on first call.
-    AnalyticsPublisher.updatePublisher(logger, settings, scheduler, application.getStrictVersion());
+    AnalyticsPublisher.updatePublisher(logger, scheduler, application.getStrictVersion());
   }
 
   @Override
   public boolean isAllowed() {
-    boolean allowed = ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
-    // Android Studio: we need to tell our Android Studio specific logging system whether the user opted-in or not.
-    updateAndroidStudioMetrics(allowed);
-    return allowed;
+    /* Android Studio: we use our own mechanism
+    return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+    */
+    return AnalyticsSettings.getInstance(getAndroidLogger()).getOptedIn();
   }
 
   public void setShowNotification(boolean showNotification) {
@@ -234,5 +213,36 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   @NotNull
   public String getComponentName() {
     return "SentUsagesPersistenceComponent";
+  }
+
+  private ILogger getAndroidLogger() {
+    if (androidLogger == null) {
+      Logger intelliJLogger = Logger.getInstance("#com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent");
+      // Create logger & scheduler based on IntelliJ/ADT helpers.
+      androidLogger = new ILogger() {
+        @Override
+        public void error(@com.android.annotations.Nullable Throwable t,
+                          @com.android.annotations.Nullable String msgFormat,
+                          Object... args) {
+          intelliJLogger.error(String.format(msgFormat, args), t);
+        }
+
+        @Override
+        public void warning(@NonNull String msgFormat, Object... args) {
+          intelliJLogger.warn(String.format(msgFormat, args));
+        }
+
+        @Override
+        public void info(@NonNull String msgFormat, Object... args) {
+          intelliJLogger.info(String.format(msgFormat, args));
+        }
+
+        @Override
+        public void verbose(@NonNull String msgFormat, Object... args) {
+          info(msgFormat, args);
+        }
+      };
+    }
+    return androidLogger;
   }
 }
