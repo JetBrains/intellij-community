@@ -67,7 +67,7 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
       RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(clazz));
 
       for (PsiClass candidate : candidates) {
-        if (!queryParameters.isCheckInheritance() || dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
+        if (!queryParameters.isCheckInheritance() || dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate, false))) {
           if (!consumer.process(candidate)) {
             return false;
           }
