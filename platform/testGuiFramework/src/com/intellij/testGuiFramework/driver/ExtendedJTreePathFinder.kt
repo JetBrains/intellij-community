@@ -31,11 +31,7 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       if (!predicate(pathStrings[0], childValue)) pathNotFound(*pathStrings)
       if (pathStrings.size == 1) return TreePath(arrayOf<Any>(model.root))
     }
-    return jTree.traverseChildren(
-      node = model.root,
-      pathStrings = *pathStrings,
-      pathTree = TreePath(model.root),
-      predicate = predicate) ?: throw pathNotFound(*pathStrings)
+    return traverseChildren(jTree, model.root, TreePath(model.root), predicate, *pathStrings) ?: throw pathNotFound(*pathStrings)
   }
 
   fun exists(vararg pathStrings: String) =
@@ -57,22 +53,22 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
     }
   }
 
-  // JTree extensions
-  private fun JTree.traverseChildren(node: Any,
-                                     vararg pathStrings: String,
-                                     pathTree: TreePath,
-                                     predicate: FinderPredicate): TreePath? {
-    val childCount = this.model.getChildCount(node)
+  fun traverseChildren(jTree: JTree,
+                               node: Any,
+                               pathTree: TreePath,
+                               predicate: FinderPredicate,
+                               vararg pathStrings: String): TreePath? {
+    val childCount = jTree.model.getChildCount(node)
 
     val order = pathStrings[0].getOrder() ?: 0
     val original = pathStrings[0].getWithoutOrder()
     var currentOrder = 0
 
     for (childIndex in 0 until childCount) {
-      val child = this.model.getChild(node, childIndex)
+      val child = jTree.model.getChild(node, childIndex)
       if (child is LoadingNode)
-        throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = this.getPathToNode(node))
-      val childValue = value(child) ?: continue
+        throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = jTree.getPathToNode(node))
+      val childValue = jTree.value(child) ?: continue
       if (predicate(original, childValue)) {
         if (currentOrder == order) {
           val newPath = TreePath(arrayOf<Any>(*pathTree.path, child))
@@ -80,12 +76,7 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
             newPath
           }
           else {
-            this.traverseChildren(
-              node = child,
-              pathStrings = *pathStrings.toList().subList(1, pathStrings.size).toTypedArray(),
-              pathTree = newPath,
-              predicate = predicate
-            )
+            traverseChildren(jTree, child, newPath, predicate, *pathStrings.toList().subList(1, pathStrings.size).toTypedArray())
           }
         }
         else {
