@@ -314,6 +314,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  fun testUpgradeableModuleOnClasspath() {
+    highlight("test.java", """
+        import java.xml.bind.*;
+        import java.xml.bind.C;
+        """.trimIndent())
+  }
+
   fun testLinearModuleGraphBug() {
     addFile("module-info.java", "module M6 { requires M7; }", M6)
     addFile("module-info.java", "module M7 { }", M7)
