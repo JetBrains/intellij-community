@@ -73,6 +73,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-multi-release.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib_invalid_1_2.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-bind.jar!/")
     }
   }
 

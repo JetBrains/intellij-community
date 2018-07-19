@@ -93,7 +93,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
 
         val root = PsiJavaModuleReference.resolve(place, "java.se", false)
-        if (!(root == null || JavaModuleGraphUtil.reads(root, targetModule) || inAddedModules(module, targetName))) {
+        if (!(root == null || JavaModuleGraphUtil.reads(root, targetModule) || inAddedModules(module, targetName) ||
+              hasUpgrade(module, targetName, packageName, place))) {
           return if (quick) ERR else ErrorWithFixes(
             JavaErrorMessages.message("module.access.not.in.graph", packageName, targetName),
             listOf(AddModulesOptionFix(module, targetName)))
@@ -131,6 +132,23 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
 
     return null
+  }
+
+  private fun hasUpgrade(module: Module, targetName: String, packageName: String, place: PsiFileSystemItem): Boolean {
+    if (PsiJavaModule.UPGRADEABLE.contains(targetName)) {
+      val target = JavaPsiFacade.getInstance(module.project).findPackage(packageName)
+      if (target != null) {
+        val useVFile = place.virtualFile
+        if (useVFile != null) {
+          val index = ModuleRootManager.getInstance(module).fileIndex
+          val test = index.isInTestSourceContent(useVFile)
+          val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
+          return dirs.asSequence().any { index.getOrderEntryForFile(it.virtualFile) !is JdkOrderEntry }
+        }
+      }
+    }
+
+    return false
   }
 
   private fun inAddedExports(module: Module, targetName: String, packageName: String, useName: String): Boolean {
