@@ -45,6 +45,7 @@ target('default': 'Check icons in IntelliJIcons repository') {
       System.properties.'skip.dirs.pattern'?.toString() ?: null,
       Boolean.parseBoolean(System.properties.'sync.icons' as String),
       Boolean.parseBoolean(System.properties.'sync.dev.icons' as String),
+      Boolean.parseBoolean(System.properties.'sync.dev.icons.removed' as String),
       { String msg -> msg.split(/\n/).each { context.messages.info(it) } },
       { String msg -> context.messages.buildStatus(msg); System.exit(1) }
     )
