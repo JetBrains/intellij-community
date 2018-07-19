@@ -98,7 +98,7 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
   public void apply() throws ConfigurationException {
     EmmetOptions.getInstance().setEmmetExpandShortcut(myTemplateExpandShortcutPanel.getSelectedChar());
     for (Configurable configurable : myInnerConfigurables) {
-      configurable.reset();
+      configurable.apply();
     }
     super.apply();
   }
