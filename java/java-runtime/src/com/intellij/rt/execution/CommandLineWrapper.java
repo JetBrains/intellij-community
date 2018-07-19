@@ -184,7 +184,10 @@ public class CommandLineWrapper {
     }
 
     String mainClassName = args[startArgsIdx - 1];
-    ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[0]), null);
+    // Java 8 and below will get a null, which means the parent will be the bootstrap classloader
+    // Java 9 and above will get the platform classloader as defined in the new classloader hierarchy.
+    ClassLoader nullOrPlatformClassloader = CommandLineWrapper.class.getClassLoader().getParent();
+    ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[0]), nullOrPlatformClassloader);
     String systemLoaderName = System.getProperty("java.system.class.loader");
     if (systemLoaderName != null) {
       try {
