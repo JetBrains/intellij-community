@@ -35,7 +35,7 @@ private fun getUsagesInt(project: Project, addVersion: Boolean): Set<UsageDescri
       PyPackageManager.getInstance(sdk).getRequirements(module)?.apply {
         val packageNames = PyPIPackageCache.getInstance().packageNames
         filter { it.name in packageNames }.forEach { req ->
-          val value = req.name + if (addVersion) "" + req.versionSpecs.firstOrNull()?.version?.trim() else ""
+          val value = req.name + if (addVersion) "." + req.versionSpecs.firstOrNull()?.version?.trim() else ""
           result.add(UsageDescriptor(value, 1))
         }
       }
