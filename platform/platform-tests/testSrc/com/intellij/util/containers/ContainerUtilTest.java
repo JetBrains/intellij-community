@@ -300,4 +300,24 @@ public class ContainerUtilTest {
   private static List<Segment> mergeSegmentLists(List<Segment> list1, List<Segment> list2) {
     return ContainerUtil.mergeSortedLists(list1, list2, Segment.BY_START_OFFSET_THEN_END_OFFSET, true);
   }
+
+  @Test
+  public void testMergeSortedArrays() {
+    List<Integer> list1 = Collections.singletonList(0);
+    List<Integer> list2 = Collections.singletonList(4);
+    List<Integer> m = ContainerUtil.mergeSortedLists(list1, list2, Comparator.naturalOrder(), true);
+    assertEquals(Arrays.asList(0,4), m);
+    m = ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true);
+    assertEquals(Arrays.asList(0,4), m);
+  }
+  
+  @Test
+  public void testMergeSortedArrays2() {
+    int[] a1 = {0,4};
+    int[] a2 = {4};
+    int[] m = ArrayUtil.mergeSortedArrays(a1, a2, true);
+    assertArrayEquals(new int[]{0,4}, m);
+    m = ArrayUtil.mergeSortedArrays(a2, a1, true);
+    assertArrayEquals(new int[]{0,4}, m);
+  }
 }
