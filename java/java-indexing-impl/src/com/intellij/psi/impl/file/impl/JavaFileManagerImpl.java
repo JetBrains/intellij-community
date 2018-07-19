@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
@@ -210,14 +211,10 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static Collection<PsiJavaModule> sortModules(Collection<PsiJavaModule> modules, GlobalSearchScope scope) {
     if (modules.size() > 1) {
       List<PsiJavaModule> list = new ArrayList<>(modules);
-      list.sort((m1, m2) -> scope.compare(virtualFile(m2), virtualFile(m1)));
+      list.sort((m1, m2) -> scope.compare(PsiImplUtil.getModuleVirtualFile(m2), PsiImplUtil.getModuleVirtualFile(m1)));
       modules = list;
     }
     return modules;
-  }
-
-  private static VirtualFile virtualFile(PsiJavaModule m) {
-    return m instanceof LightJavaModule ? ((LightJavaModule)m).getRootVirtualFile() : m.getContainingFile().getVirtualFile();
   }
 
   private static Collection<PsiJavaModule> upgradeModules(Collection<PsiJavaModule> modules, String moduleName, GlobalSearchScope scope) {
