@@ -191,7 +191,7 @@ open class ExtendedJTreePathFixture(
 
     while(currPath.lastPathComponent.toString().isNotEmpty()) {
       result.add(currPath.lastPathComponent.toString())
-      currPath = parentPath
+      currPath = currPath.parentPath
     }
     return result.reversed().toList()
   }
