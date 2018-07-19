@@ -3,6 +3,8 @@ package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,8 +13,9 @@ import java.io.IOException;
 /**
  * @author Konstantin Bulenkov
  */
-public final class UIThemeProvider {
+public final class UIThemeProvider implements PluginAware {
   public static final ExtensionPointName<UIThemeProvider> EP_NAME = ExtensionPointName.create("com.intellij.themeProvider");
+  private PluginDescriptor myDescriptor;
 
   @Attribute("path")
   public String path;
@@ -23,11 +26,17 @@ public final class UIThemeProvider {
   @Nullable
   public UITheme createTheme() {
     try {
-      return UITheme.loadFromJson(getClass().getResourceAsStream(path), id, getClass());
+      ClassLoader loader = myDescriptor != null ? myDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+      return UITheme.loadFromJson(loader.getResourceAsStream(path), id, loader);
     }
     catch (IOException e) {
       Logger.getInstance(getClass()).warn(e);
       return null;
     }
+  }
+
+  @Override
+  public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
+    myDescriptor = pluginDescriptor;
   }
 }
