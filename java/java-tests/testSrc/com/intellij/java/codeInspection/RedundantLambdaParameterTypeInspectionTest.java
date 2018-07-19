@@ -18,8 +18,6 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +41,6 @@ public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsight
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ModuleRootModificationUtil.setModuleSdk(myModule, IdeaTestUtil.getMockJdk18());
     myFixture.enableInspections(new RedundantLambdaParameterTypeInspection());
   }
 
