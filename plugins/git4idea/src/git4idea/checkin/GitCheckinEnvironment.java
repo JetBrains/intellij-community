@@ -241,7 +241,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
         runWithMessageFile(myProject, root, message, messageFile -> {
-          exceptions.addAll(commitUsingIndex(myProject, root, changes, changedWithIndex, messageFile));
+          exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile));
         });
         if (!exceptions.isEmpty()) return exceptions;
 
@@ -276,8 +276,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private List<VcsException> commitUsingIndex(@NotNull Project project,
-                                              @NotNull VirtualFile root,
+  private List<VcsException> commitUsingIndex(@NotNull GitRepository repository,
                                               @NotNull Collection<CommitChange> rootChanges,
                                               @NotNull Set<CommitChange> changedWithIndex,
                                               @NotNull File messageFile) {
@@ -286,10 +285,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
       Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
 
+      VirtualFile root = repository.getRoot();
       String rootPath = root.getPath();
 
       // Check what is staged besides our changes
-      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(project, root);
+      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
 
       // Reset staged changes which are not selected for commit
@@ -303,7 +303,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       if (!excludedStagedChanges.isEmpty()) {
         LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
-        resetExcluded(project, root, excludedStagedChanges);
+        resetExcluded(myProject, root, excludedStagedChanges);
       }
       try {
         List<FilePath> alreadyHandledPaths = getPaths(changedWithIndex);
@@ -316,18 +316,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         toRemove.removeAll(alreadyHandledPaths);
 
         LOG.debug(String.format("Updating index: added: %s, removed: %s", toAdd, toRemove));
-        updateIndex(project, root, toAdd, toRemove, exceptions);
+        updateIndex(myProject, root, toAdd, toRemove, exceptions);
         if (!exceptions.isEmpty()) return exceptions;
 
 
         // Commit the staging area
         LOG.debug("Performing commit...");
-        commitWithoutPaths(project, root, messageFile);
+        commitWithoutPaths(myProject, root, messageFile);
       }
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(project, root, excludedStagedChanges, exceptions);
+          restoreExcluded(myProject, root, excludedStagedChanges, exceptions);
         }
       }
     }
@@ -534,7 +534,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
       runWithMessageFile(myProject, root, message, moveMessageFile -> {
-        exceptions.addAll(commitUsingIndex(myProject, root, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
+        exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
       });
 
       return Pair.create(newRootChanges, exceptions);
