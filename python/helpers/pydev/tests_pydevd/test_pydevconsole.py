@@ -3,8 +3,10 @@ import threading
 import unittest
 
 import pydevconsole
-from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
 from _pydevd_bundle import pydevd_io
+from pydev_console.thrift_communication import console_thrift
+from pydev_console.thrift_rpc import make_rpc_client, start_rpc_server_and_make_client, start_rpc_server
+from pydevconsole import enable_thrift_logging
 
 try:
     raw_input
@@ -27,14 +29,12 @@ class Test(unittest.TestCase):
             pass
 
         try:
-            client_port, _server_port = self.get_free_addresses()
-            client_thread = self.start_client_thread(client_port)  #@UnusedVariable
+            rpc_client = self.start_client_thread()  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
 
             from _pydev_bundle import pydev_localhost
-            # @alexander TODO `InterpreterInterface.__init__()` signature changed
-            interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
+            interpreter = pydevconsole.InterpreterInterface(threading.currentThread(), rpc_client=rpc_client)
 
             (result,) = interpreter.hello("Hello pydevconsole")
             self.assertEqual(result, "Hello eclipse")
@@ -47,16 +47,14 @@ class Test(unittest.TestCase):
         sys.stdout = pydevd_io.IOBuf()
 
         try:
-            client_port, _server_port = self.get_free_addresses()
-            client_thread = self.start_client_thread(client_port)  #@UnusedVariable
+            rpc_client = self.start_client_thread()  #@UnusedVariable
             import time
             time.sleep(.3)  #let's give it some time to start the threads
 
             from _pydev_bundle import pydev_localhost
             from _pydev_bundle.pydev_console_utils import CodeFragment
 
-            # @alexander TODO `InterpreterInterface.__init__()` signature changed
-            interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
+            interpreter = pydevconsole.InterpreterInterface(threading.currentThread(), rpc_client=rpc_client)
             sys.stdout = pydevd_io.IOBuf()
             interpreter.add_exec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
             interpreter.add_exec(CodeFragment('foo=Foo()'))
@@ -105,7 +103,7 @@ class Test(unittest.TestCase):
             self.assertTrue(('__doc__', None, '', '3') not in interpreter.do_get_completions('foo.CO', 'foo.'))
 
             comps = interpreter.do_get_completions('va', 'va')
-            self.assertTrue(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
+            self.assertTrue(('val', '', '', '3') in comps or ('vars', '', '', '4') in comps)
 
             interpreter.add_exec(CodeFragment('s = "mystring"'))
 
@@ -117,6 +115,7 @@ class Test(unittest.TestCase):
                          desc.find('str(object=\'\') -> string') >= 0 or
                          desc.find('str(value: Char*)') >= 0 or
                          desc.find('str(object=\'\') -> str') >= 0 or
+                         desc.find('unicode(object=\'\') -> unicode object') >= 0 or
                          desc.find('The most base type') >= 0 # Jython 2.7 is providing this :P
                          ,
                          'Could not find what was needed in %s' % desc)
@@ -129,42 +128,54 @@ class Test(unittest.TestCase):
                          desc == "<built-in method join of str object>" or
                          desc.find('str join(str self, list sequence)') >= 0 or
                          desc.find('S.join(iterable) -> str') >= 0 or
+                         desc.find('S.join(iterable) -> unicode') >= 0 or
                          desc.find('join(self: str, sequence: list) -> str') >= 0,
                          "Could not recognize: %s" % (desc,))
         finally:
             sys.stdout = self.original_stdout
 
 
-    def start_client_thread(self, client_port):
-        class ClientThread(threading.Thread):
-            def __init__(self, client_port):
-                threading.Thread.__init__(self)
-                self.client_port = client_port
+    def create_frontend_handler(self):
+        class HandleRequestInput:
+            def __init__(self):
+                self.requested_input = False
+                self.notified_finished = 0
+                # todo not the best way
+                self.rpc_client = None
 
-            def run(self):
-                class HandleRequestInput:
-                    def RequestInput(self):
-                        client_thread.requested_input = True
-                        return 'input_request'
+            def requestInput(self, path):
+                self.requested_input = True
+                return 'input_request'
 
-                    def NotifyFinished(self, *args, **kwargs):
-                        client_thread.notified_finished += 1
-                        return 1
+            def notifyFinished(self, needs_more_input):
+                self.notified_finished += 1
 
-                handle_request_input = HandleRequestInput()
+            def notifyAboutMagic(self, commands, is_auto_magic):
+                pass
 
-                from _pydev_bundle import pydev_localhost
-                client_server = SimpleXMLRPCServer((pydev_localhost.get_localhost(), self.client_port), logRequests=False)
-                client_server.register_function(handle_request_input.RequestInput)
-                client_server.register_function(handle_request_input.NotifyFinished)
-                client_server.serve_forever()
+        return HandleRequestInput()
 
-        client_thread = ClientThread(client_port)
-        client_thread.requested_input = False
-        client_thread.notified_finished = 0
-        client_thread.setDaemon(True)
-        client_thread.start()
-        return client_thread
+    def start_client_thread(self):
+        from _pydev_bundle import pydev_localhost
+
+        server_handler = self.create_frontend_handler()
+
+        enable_thrift_logging()
+
+        # here we start the test server
+        server_socket = start_rpc_server_and_make_client(pydev_localhost.get_localhost(), 0,
+                                                         console_thrift.PythonConsoleFrontendService,
+                                                         console_thrift.PythonConsoleBackendService,
+                                                         server_handler)
+
+        host, port = server_socket.getsockname()
+
+        import time
+        time.sleep(1)
+
+        rpc_client, _ = make_rpc_client(console_thrift.PythonConsoleFrontendService, host, port)
+
+        return rpc_client
 
 
     def start_debugger_server_thread(self, debugger_port, socket_code):
@@ -204,36 +215,41 @@ class Test(unittest.TestCase):
         self.original_stdout = sys.stdout
         sys.stdout = pydevd_io.IOBuf()
         try:
-            client_port, server_port = self.get_free_addresses()
+            from _pydev_bundle.pydev_localhost import get_socket_name
+            host, port = get_socket_name(close=True)
+
             class ServerThread(threading.Thread):
-                def __init__(self, client_port, server_port):
+                def __init__(self, backend_port):
                     threading.Thread.__init__(self)
-                    self.client_port = client_port
-                    self.server_port = server_port
+                    self.backend_port = backend_port
 
                 def run(self):
                     from _pydev_bundle import pydev_localhost
-                    pydevconsole.start_server(pydev_localhost.get_localhost(), self.server_port, self.client_port)
-            server_thread = ServerThread(client_port, server_port)
+                    pydevconsole.start_server(self.backend_port)
+
+            server_thread = ServerThread(port)
             server_thread.setDaemon(True)
             server_thread.start()
 
-            client_thread = self.start_client_thread(client_port)  #@UnusedVariable
-
             import time
-            time.sleep(.3)  #let's give it some time to start the threads
-            sys.stdout = pydevd_io.IOBuf()
+            time.sleep(1)  #let's give it some time to start the threads
 
-            from _pydev_bundle import pydev_localhost
-            server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
-            server.execLine('class Foo:')
-            server.execLine('    pass')
-            server.execLine('')
-            server.execLine('foo = Foo()')
-            server.execLine('a = %s()' % (raw_input_name,))
-            server.execLine('print (a)')
+            rpc_client, server_transport = make_rpc_client(console_thrift.PythonConsoleBackendService, host, port)
+
+            server_service = console_thrift.PythonConsoleFrontendService
+
+            server_handler = self.create_frontend_handler()
+
+            start_rpc_server(server_transport, server_service, server_handler)
+
+            rpc_client.execLine('class Foo:')
+            rpc_client.execLine('    pass')
+            rpc_client.execLine('')
+            rpc_client.execLine('foo = Foo()')
+            rpc_client.execLine('a = %s()' % (raw_input_name,))
+            rpc_client.execLine('print (a)')
             initial = time.time()
-            while not client_thread.requested_input:
+            while not server_handler.requested_input:
                 if time.time() - initial > 2:
                     raise AssertionError('Did not get the return asked before the timeout.')
                 time.sleep(.1)
@@ -244,7 +260,7 @@ class Test(unittest.TestCase):
                 if time.time() - initial > 2:
                     break
                 time.sleep(.1)
-            self.assertEqual(['input_request'], found.split())
+            self.assertIn('input_request', found.split())
         finally:
             sys.stdout = self.original_stdout
 

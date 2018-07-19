@@ -7,7 +7,7 @@ from _jetbrains_thriftpy.server import TThreadedServer
 from _jetbrains_thriftpy.thrift import TProcessor
 
 
-def make_rpc_client(client_service, host, port, proto_factory=TBinaryProtocolFactory()):
+def make_rpc_client(client_service, host, port, proto_factory=TBinaryProtocolFactory(strict_read=False, strict_write=False)):
     client_transport, server_transport = open_transports_as_client((host, port))
 
     client_protocol = proto_factory.get_protocol(client_transport)
