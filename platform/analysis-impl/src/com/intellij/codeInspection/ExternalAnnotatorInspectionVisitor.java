@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
@@ -74,16 +75,14 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       return ReadAction.compute(() -> {
         AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), true);
         annotator.apply(file, annotationResult, annotationHolder);
-        return convertToProblemDescriptors(annotationHolder, manager, file);
+        return convertToProblemDescriptors(annotationHolder, file);
       });
     }
     return ProblemDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull
-  private static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<Annotation> annotations,
-                                                                 @NotNull final InspectionManager manager,
-                                                                 @NotNull final PsiFile file) {
+  private static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<Annotation> annotations, @NotNull final PsiFile file) {
     if (annotations.isEmpty()) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
@@ -109,11 +108,12 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       }
 
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
+      ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(annotation.getSeverity());
       ProblemDescriptor descriptor = new ProblemDescriptorBase(startElement,
                                                                      endElement,
                                                                      annotation.getMessage(),
                                                                      quickFixes,
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                     highlightType,
                                                                      annotation.isAfterEndOfLine(),
                                                                      null,
                                                                      true,
