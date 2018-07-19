@@ -267,6 +267,19 @@ public final class JavacRemoteProto {
       }
 
       public static org.jetbrains.jps.javac.JavacRemoteProto.Message.UUID parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.UUID parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.UUID parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -409,9 +422,10 @@ public final class JavacRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.UUID)
       }
       private byte memoizedIsInitialized = -1;
-      protected final Object dynamicMethod(
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.javac.JavacRemoteProto.Message.UUID();
@@ -499,6 +513,7 @@ public final class JavacRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -756,6 +771,19 @@ public final class JavacRemoteProto {
       }
 
       public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Failure parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Failure parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Failure parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -960,9 +988,10 @@ public final class JavacRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Failure)
       }
-      protected final Object dynamicMethod(
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.javac.JavacRemoteProto.Message.Failure();
@@ -1019,13 +1048,13 @@ public final class JavacRemoteProto {
                     break;
                   }
                   case 18: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     bitField0_ |= 0x00000002;
                     description_ = s;
                     break;
                   }
                   case 26: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     bitField0_ |= 0x00000004;
                     stacktrace_ = s;
                     break;
@@ -1041,6 +1070,7 @@ public final class JavacRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -1092,7 +1122,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated string option = 2;</code>
        */
-      java.util.List<String>
+      java.util.List<java.lang.String>
           getOptionList();
       /**
        * <code>repeated string option = 2;</code>
@@ -1111,7 +1141,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated string file = 3;</code>
        */
-      java.util.List<String>
+      java.util.List<java.lang.String>
           getFileList();
       /**
        * <code>repeated string file = 3;</code>
@@ -1130,7 +1160,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated string platform_classpath = 4;</code>
        */
-      java.util.List<String>
+      java.util.List<java.lang.String>
           getPlatformClasspathList();
       /**
        * <code>repeated string platform_classpath = 4;</code>
@@ -1149,7 +1179,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated string classpath = 5;</code>
        */
-      java.util.List<String>
+      java.util.List<java.lang.String>
           getClasspathList();
       /**
        * <code>repeated string classpath = 5;</code>
@@ -1168,7 +1198,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated string sourcepath = 6;</code>
        */
-      java.util.List<String>
+      java.util.List<java.lang.String>
           getSourcepathList();
       /**
        * <code>repeated string sourcepath = 6;</code>
@@ -1201,7 +1231,7 @@ public final class JavacRemoteProto {
       /**
        * <code>repeated string module_path = 8;</code>
        */
-      java.util.List<String>
+      java.util.List<java.lang.String>
           getModulePathList();
       /**
        * <code>repeated string module_path = 8;</code>
@@ -1216,6 +1246,25 @@ public final class JavacRemoteProto {
        */
       com.google.protobuf.ByteString
           getModulePathBytes(int index);
+
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      java.util.List<java.lang.String>
+          getUpgradeModulePathList();
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      int getUpgradeModulePathCount();
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      java.lang.String getUpgradeModulePath(int index);
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      com.google.protobuf.ByteString
+          getUpgradeModulePathBytes(int index);
     }
     /**
      * Protobuf type {@code org.jetbrains.javac.Message.Request}
@@ -1234,6 +1283,7 @@ public final class JavacRemoteProto {
         sourcepath_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
         output_ = emptyProtobufList();
         modulePath_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
+        upgradeModulePath_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
       }
       /**
        * Protobuf enum {@code org.jetbrains.javac.Message.Request.Type}
@@ -1331,7 +1381,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string source_root = 2;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getSourceRootList();
         /**
          * <code>repeated string source_root = 2;</code>
@@ -1412,11 +1462,11 @@ public final class JavacRemoteProto {
         }
 
         public static final int SOURCE_ROOT_FIELD_NUMBER = 2;
-        private com.google.protobuf.Internal.ProtobufList<String> sourceRoot_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> sourceRoot_;
         /**
          * <code>repeated string source_root = 2;</code>
          */
-        public java.util.List<String> getSourceRootList() {
+        public java.util.List<java.lang.String> getSourceRootList() {
           return sourceRoot_;
         }
         /**
@@ -1528,6 +1578,19 @@ public final class JavacRemoteProto {
           return size;
         }
 
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
         public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1659,7 +1722,7 @@ public final class JavacRemoteProto {
           /**
            * <code>repeated string source_root = 2;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getSourceRootList() {
             return java.util.Collections.unmodifiableList(
                 instance.getSourceRootList());
@@ -1731,9 +1794,10 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Request.OutputGroup)
         }
         private byte memoizedIsInitialized = -1;
-        protected final Object dynamicMethod(
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.javac.JavacRemoteProto.Message.Request.OutputGroup();
@@ -1794,13 +1858,13 @@ public final class JavacRemoteProto {
                       break;
                     }
                     case 10: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000001;
                       outputRoot_ = s;
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!sourceRoot_.isModifiable()) {
                         sourceRoot_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(sourceRoot_);
@@ -1819,6 +1883,7 @@ public final class JavacRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -1889,11 +1954,11 @@ public final class JavacRemoteProto {
       }
 
       public static final int OPTION_FIELD_NUMBER = 2;
-      private com.google.protobuf.Internal.ProtobufList<String> option_;
+      private com.google.protobuf.Internal.ProtobufList<java.lang.String> option_;
       /**
        * <code>repeated string option = 2;</code>
        */
-      public java.util.List<String> getOptionList() {
+      public java.util.List<java.lang.String> getOptionList() {
         return option_;
       }
       /**
@@ -1972,11 +2037,11 @@ public final class JavacRemoteProto {
       }
 
       public static final int FILE_FIELD_NUMBER = 3;
-      private com.google.protobuf.Internal.ProtobufList<String> file_;
+      private com.google.protobuf.Internal.ProtobufList<java.lang.String> file_;
       /**
        * <code>repeated string file = 3;</code>
        */
-      public java.util.List<String> getFileList() {
+      public java.util.List<java.lang.String> getFileList() {
         return file_;
       }
       /**
@@ -2055,11 +2120,11 @@ public final class JavacRemoteProto {
       }
 
       public static final int PLATFORM_CLASSPATH_FIELD_NUMBER = 4;
-      private com.google.protobuf.Internal.ProtobufList<String> platformClasspath_;
+      private com.google.protobuf.Internal.ProtobufList<java.lang.String> platformClasspath_;
       /**
        * <code>repeated string platform_classpath = 4;</code>
        */
-      public java.util.List<String> getPlatformClasspathList() {
+      public java.util.List<java.lang.String> getPlatformClasspathList() {
         return platformClasspath_;
       }
       /**
@@ -2138,11 +2203,11 @@ public final class JavacRemoteProto {
       }
 
       public static final int CLASSPATH_FIELD_NUMBER = 5;
-      private com.google.protobuf.Internal.ProtobufList<String> classpath_;
+      private com.google.protobuf.Internal.ProtobufList<java.lang.String> classpath_;
       /**
        * <code>repeated string classpath = 5;</code>
        */
-      public java.util.List<String> getClasspathList() {
+      public java.util.List<java.lang.String> getClasspathList() {
         return classpath_;
       }
       /**
@@ -2221,11 +2286,11 @@ public final class JavacRemoteProto {
       }
 
       public static final int SOURCEPATH_FIELD_NUMBER = 6;
-      private com.google.protobuf.Internal.ProtobufList<String> sourcepath_;
+      private com.google.protobuf.Internal.ProtobufList<java.lang.String> sourcepath_;
       /**
        * <code>repeated string sourcepath = 6;</code>
        */
-      public java.util.List<String> getSourcepathList() {
+      public java.util.List<java.lang.String> getSourcepathList() {
         return sourcepath_;
       }
       /**
@@ -2424,11 +2489,11 @@ public final class JavacRemoteProto {
       }
 
       public static final int MODULE_PATH_FIELD_NUMBER = 8;
-      private com.google.protobuf.Internal.ProtobufList<String> modulePath_;
+      private com.google.protobuf.Internal.ProtobufList<java.lang.String> modulePath_;
       /**
        * <code>repeated string module_path = 8;</code>
        */
-      public java.util.List<String> getModulePathList() {
+      public java.util.List<java.lang.String> getModulePathList() {
         return modulePath_;
       }
       /**
@@ -2506,6 +2571,89 @@ public final class JavacRemoteProto {
         modulePath_.add(value.toStringUtf8());
       }
 
+      public static final int UPGRADE_MODULE_PATH_FIELD_NUMBER = 9;
+      private com.google.protobuf.Internal.ProtobufList<java.lang.String> upgradeModulePath_;
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      public java.util.List<java.lang.String> getUpgradeModulePathList() {
+        return upgradeModulePath_;
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      public int getUpgradeModulePathCount() {
+        return upgradeModulePath_.size();
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      public java.lang.String getUpgradeModulePath(int index) {
+        return upgradeModulePath_.get(index);
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      public com.google.protobuf.ByteString
+          getUpgradeModulePathBytes(int index) {
+        return com.google.protobuf.ByteString.copyFromUtf8(
+            upgradeModulePath_.get(index));
+      }
+      private void ensureUpgradeModulePathIsMutable() {
+        if (!upgradeModulePath_.isModifiable()) {
+          upgradeModulePath_ =
+              com.google.protobuf.GeneratedMessageLite.mutableCopy(upgradeModulePath_);
+         }
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      private void setUpgradeModulePath(
+          int index, java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureUpgradeModulePathIsMutable();
+        upgradeModulePath_.set(index, value);
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      private void addUpgradeModulePath(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureUpgradeModulePathIsMutable();
+        upgradeModulePath_.add(value);
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      private void addAllUpgradeModulePath(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureUpgradeModulePathIsMutable();
+        com.google.protobuf.AbstractMessageLite.addAll(
+            values, upgradeModulePath_);
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      private void clearUpgradeModulePath() {
+        upgradeModulePath_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
+      }
+      /**
+       * <code>repeated string upgrade_module_path = 9;</code>
+       */
+      private void addUpgradeModulePathBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureUpgradeModulePathIsMutable();
+        upgradeModulePath_.add(value.toStringUtf8());
+      }
+
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -2531,6 +2679,9 @@ public final class JavacRemoteProto {
         }
         for (int i = 0; i < modulePath_.size(); i++) {
           output.writeString(8, modulePath_.get(i));
+        }
+        for (int i = 0; i < upgradeModulePath_.size(); i++) {
+          output.writeString(9, upgradeModulePath_.get(i));
         }
         unknownFields.writeTo(output);
       }
@@ -2602,11 +2753,33 @@ public final class JavacRemoteProto {
           size += dataSize;
           size += 1 * getModulePathList().size();
         }
+        {
+          int dataSize = 0;
+          for (int i = 0; i < upgradeModulePath_.size(); i++) {
+            dataSize += com.google.protobuf.CodedOutputStream
+              .computeStringSizeNoTag(upgradeModulePath_.get(i));
+          }
+          size += dataSize;
+          size += 1 * getUpgradeModulePathList().size();
+        }
         size += unknownFields.getSerializedSize();
         memoizedSerializedSize = size;
         return size;
       }
 
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Request parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Request parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
       public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Request parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2721,7 +2894,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string option = 2;</code>
          */
-        public java.util.List<String>
+        public java.util.List<java.lang.String>
             getOptionList() {
           return java.util.Collections.unmodifiableList(
               instance.getOptionList());
@@ -2793,7 +2966,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string file = 3;</code>
          */
-        public java.util.List<String>
+        public java.util.List<java.lang.String>
             getFileList() {
           return java.util.Collections.unmodifiableList(
               instance.getFileList());
@@ -2865,7 +3038,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string platform_classpath = 4;</code>
          */
-        public java.util.List<String>
+        public java.util.List<java.lang.String>
             getPlatformClasspathList() {
           return java.util.Collections.unmodifiableList(
               instance.getPlatformClasspathList());
@@ -2937,7 +3110,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string classpath = 5;</code>
          */
-        public java.util.List<String>
+        public java.util.List<java.lang.String>
             getClasspathList() {
           return java.util.Collections.unmodifiableList(
               instance.getClasspathList());
@@ -3009,7 +3182,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string sourcepath = 6;</code>
          */
-        public java.util.List<String>
+        public java.util.List<java.lang.String>
             getSourcepathList() {
           return java.util.Collections.unmodifiableList(
               instance.getSourcepathList());
@@ -3178,7 +3351,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string module_path = 8;</code>
          */
-        public java.util.List<String>
+        public java.util.List<java.lang.String>
             getModulePathList() {
           return java.util.Collections.unmodifiableList(
               instance.getModulePathList());
@@ -3247,12 +3420,85 @@ public final class JavacRemoteProto {
           return this;
         }
 
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public java.util.List<java.lang.String>
+            getUpgradeModulePathList() {
+          return java.util.Collections.unmodifiableList(
+              instance.getUpgradeModulePathList());
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public int getUpgradeModulePathCount() {
+          return instance.getUpgradeModulePathCount();
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public java.lang.String getUpgradeModulePath(int index) {
+          return instance.getUpgradeModulePath(index);
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public com.google.protobuf.ByteString
+            getUpgradeModulePathBytes(int index) {
+          return instance.getUpgradeModulePathBytes(index);
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public Builder setUpgradeModulePath(
+            int index, java.lang.String value) {
+          copyOnWrite();
+          instance.setUpgradeModulePath(index, value);
+          return this;
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public Builder addUpgradeModulePath(
+            java.lang.String value) {
+          copyOnWrite();
+          instance.addUpgradeModulePath(value);
+          return this;
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public Builder addAllUpgradeModulePath(
+            java.lang.Iterable<java.lang.String> values) {
+          copyOnWrite();
+          instance.addAllUpgradeModulePath(values);
+          return this;
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public Builder clearUpgradeModulePath() {
+          copyOnWrite();
+          instance.clearUpgradeModulePath();
+          return this;
+        }
+        /**
+         * <code>repeated string upgrade_module_path = 9;</code>
+         */
+        public Builder addUpgradeModulePathBytes(
+            com.google.protobuf.ByteString value) {
+          copyOnWrite();
+          instance.addUpgradeModulePathBytes(value);
+          return this;
+        }
+
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Request)
       }
       private byte memoizedIsInitialized = -1;
-      protected final Object dynamicMethod(
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.javac.JavacRemoteProto.Message.Request();
@@ -3289,6 +3535,7 @@ public final class JavacRemoteProto {
             sourcepath_.makeImmutable();
             output_.makeImmutable();
             modulePath_.makeImmutable();
+            upgradeModulePath_.makeImmutable();
             return null;
           }
           case NEW_BUILDER: {
@@ -3306,6 +3553,7 @@ public final class JavacRemoteProto {
             sourcepath_= visitor.visitList(sourcepath_, other.sourcepath_);
             output_= visitor.visitList(output_, other.output_);
             modulePath_= visitor.visitList(modulePath_, other.modulePath_);
+            upgradeModulePath_= visitor.visitList(upgradeModulePath_, other.upgradeModulePath_);
             if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                 .INSTANCE) {
               bitField0_ |= other.bitField0_;
@@ -3343,7 +3591,7 @@ public final class JavacRemoteProto {
                     break;
                   }
                   case 18: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     if (!option_.isModifiable()) {
                       option_ =
                           com.google.protobuf.GeneratedMessageLite.mutableCopy(option_);
@@ -3352,7 +3600,7 @@ public final class JavacRemoteProto {
                     break;
                   }
                   case 26: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     if (!file_.isModifiable()) {
                       file_ =
                           com.google.protobuf.GeneratedMessageLite.mutableCopy(file_);
@@ -3361,7 +3609,7 @@ public final class JavacRemoteProto {
                     break;
                   }
                   case 34: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     if (!platformClasspath_.isModifiable()) {
                       platformClasspath_ =
                           com.google.protobuf.GeneratedMessageLite.mutableCopy(platformClasspath_);
@@ -3370,7 +3618,7 @@ public final class JavacRemoteProto {
                     break;
                   }
                   case 42: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     if (!classpath_.isModifiable()) {
                       classpath_ =
                           com.google.protobuf.GeneratedMessageLite.mutableCopy(classpath_);
@@ -3379,7 +3627,7 @@ public final class JavacRemoteProto {
                     break;
                   }
                   case 50: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     if (!sourcepath_.isModifiable()) {
                       sourcepath_ =
                           com.google.protobuf.GeneratedMessageLite.mutableCopy(sourcepath_);
@@ -3397,12 +3645,21 @@ public final class JavacRemoteProto {
                     break;
                   }
                   case 66: {
-                    String s = input.readString();
+                    java.lang.String s = input.readString();
                     if (!modulePath_.isModifiable()) {
                       modulePath_ =
                           com.google.protobuf.GeneratedMessageLite.mutableCopy(modulePath_);
                     }
                     modulePath_.add(s);
+                    break;
+                  }
+                  case 74: {
+                    java.lang.String s = input.readString();
+                    if (!upgradeModulePath_.isModifiable()) {
+                      upgradeModulePath_ =
+                          com.google.protobuf.GeneratedMessageLite.mutableCopy(upgradeModulePath_);
+                    }
+                    upgradeModulePath_.add(s);
                     break;
                   }
                 }
@@ -3416,6 +3673,7 @@ public final class JavacRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -4176,6 +4434,19 @@ public final class JavacRemoteProto {
         }
 
         public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.CompileMessage parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.CompileMessage parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.CompileMessage parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -4526,9 +4797,10 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.CompileMessage)
         }
         private byte memoizedIsInitialized = -1;
-        protected final Object dynamicMethod(
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.CompileMessage();
@@ -4618,13 +4890,13 @@ public final class JavacRemoteProto {
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000002;
                       text_ = s;
                       break;
                     }
                     case 26: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000004;
                       sourceUri_ = s;
                       break;
@@ -4665,6 +4937,7 @@ public final class JavacRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -5279,6 +5552,19 @@ public final class JavacRemoteProto {
         }
 
         public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -5651,9 +5937,10 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.OutputObject)
         }
         private byte memoizedIsInitialized = -1;
-        protected final Object dynamicMethod(
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.OutputObject();
@@ -5746,31 +6033,31 @@ public final class JavacRemoteProto {
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000002;
                       filePath_ = s;
                       break;
                     }
                     case 26: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000004;
                       outputRoot_ = s;
                       break;
                     }
                     case 34: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000008;
                       relativePath_ = s;
                       break;
                     }
                     case 42: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000010;
                       className_ = s;
                       break;
                     }
                     case 50: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000020;
                       sourceUri_ = s;
                       break;
@@ -5791,6 +6078,7 @@ public final class JavacRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -5847,7 +6135,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string import_statement = 2;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getImportStatementList();
         /**
          * <code>repeated string import_statement = 2;</code>
@@ -5866,7 +6154,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string static_import = 3;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getStaticImportList();
         /**
          * <code>repeated string static_import = 3;</code>
@@ -5885,7 +6173,7 @@ public final class JavacRemoteProto {
         /**
          * <code>repeated string identifier = 4;</code>
          */
-        java.util.List<String>
+        java.util.List<java.lang.String>
             getIdentifierList();
         /**
          * <code>repeated string identifier = 4;</code>
@@ -5968,11 +6256,11 @@ public final class JavacRemoteProto {
         }
 
         public static final int IMPORT_STATEMENT_FIELD_NUMBER = 2;
-        private com.google.protobuf.Internal.ProtobufList<String> importStatement_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> importStatement_;
         /**
          * <code>repeated string import_statement = 2;</code>
          */
-        public java.util.List<String> getImportStatementList() {
+        public java.util.List<java.lang.String> getImportStatementList() {
           return importStatement_;
         }
         /**
@@ -6051,11 +6339,11 @@ public final class JavacRemoteProto {
         }
 
         public static final int STATIC_IMPORT_FIELD_NUMBER = 3;
-        private com.google.protobuf.Internal.ProtobufList<String> staticImport_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> staticImport_;
         /**
          * <code>repeated string static_import = 3;</code>
          */
-        public java.util.List<String> getStaticImportList() {
+        public java.util.List<java.lang.String> getStaticImportList() {
           return staticImport_;
         }
         /**
@@ -6134,11 +6422,11 @@ public final class JavacRemoteProto {
         }
 
         public static final int IDENTIFIER_FIELD_NUMBER = 4;
-        private com.google.protobuf.Internal.ProtobufList<String> identifier_;
+        private com.google.protobuf.Internal.ProtobufList<java.lang.String> identifier_;
         /**
          * <code>repeated string identifier = 4;</code>
          */
-        public java.util.List<String> getIdentifierList() {
+        public java.util.List<java.lang.String> getIdentifierList() {
           return identifier_;
         }
         /**
@@ -6275,6 +6563,19 @@ public final class JavacRemoteProto {
         }
 
         public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -6405,7 +6706,7 @@ public final class JavacRemoteProto {
           /**
            * <code>repeated string import_statement = 2;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getImportStatementList() {
             return java.util.Collections.unmodifiableList(
                 instance.getImportStatementList());
@@ -6477,7 +6778,7 @@ public final class JavacRemoteProto {
           /**
            * <code>repeated string static_import = 3;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getStaticImportList() {
             return java.util.Collections.unmodifiableList(
                 instance.getStaticImportList());
@@ -6549,7 +6850,7 @@ public final class JavacRemoteProto {
           /**
            * <code>repeated string identifier = 4;</code>
            */
-          public java.util.List<String>
+          public java.util.List<java.lang.String>
               getIdentifierList() {
             return java.util.Collections.unmodifiableList(
                 instance.getIdentifierList());
@@ -6621,9 +6922,10 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.ClassData)
         }
         private byte memoizedIsInitialized = -1;
-        protected final Object dynamicMethod(
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            Object arg0, Object arg1) {
+            java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
               return new org.jetbrains.jps.javac.JavacRemoteProto.Message.Response.ClassData();
@@ -6688,13 +6990,13 @@ public final class JavacRemoteProto {
                       break;
                     }
                     case 10: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       bitField0_ |= 0x00000001;
                       className_ = s;
                       break;
                     }
                     case 18: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!importStatement_.isModifiable()) {
                         importStatement_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(importStatement_);
@@ -6703,7 +7005,7 @@ public final class JavacRemoteProto {
                       break;
                     }
                     case 26: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!staticImport_.isModifiable()) {
                         staticImport_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(staticImport_);
@@ -6712,7 +7014,7 @@ public final class JavacRemoteProto {
                       break;
                     }
                     case 34: {
-                      String s = input.readString();
+                      java.lang.String s = input.readString();
                       if (!identifier_.isModifiable()) {
                         identifier_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(identifier_);
@@ -6731,6 +7033,7 @@ public final class JavacRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -7036,6 +7339,19 @@ public final class JavacRemoteProto {
       }
 
       public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.javac.JavacRemoteProto.Message.Response parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -7313,9 +7629,10 @@ public final class JavacRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response)
       }
       private byte memoizedIsInitialized = -1;
-      protected final Object dynamicMethod(
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-          Object arg0, Object arg1) {
+          java.lang.Object arg0, java.lang.Object arg1) {
         switch (method) {
           case NEW_MUTABLE_INSTANCE: {
             return new org.jetbrains.jps.javac.JavacRemoteProto.Message.Response();
@@ -7468,6 +7785,7 @@ public final class JavacRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -7796,6 +8114,19 @@ public final class JavacRemoteProto {
     }
 
     public static org.jetbrains.jps.javac.JavacRemoteProto.Message parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static org.jetbrains.jps.javac.JavacRemoteProto.Message parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static org.jetbrains.jps.javac.JavacRemoteProto.Message parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -8089,9 +8420,10 @@ public final class JavacRemoteProto {
       // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message)
     }
     private byte memoizedIsInitialized = -1;
-    protected final Object dynamicMethod(
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    protected final java.lang.Object dynamicMethod(
         com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        Object arg0, Object arg1) {
+        java.lang.Object arg0, java.lang.Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
           return new org.jetbrains.jps.javac.JavacRemoteProto.Message();
@@ -8254,6 +8586,7 @@ public final class JavacRemoteProto {
           } finally {
           }
         }
+        // fall through
         case GET_DEFAULT_INSTANCE: {
           return DEFAULT_INSTANCE;
         }

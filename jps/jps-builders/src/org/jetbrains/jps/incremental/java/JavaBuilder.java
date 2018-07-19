@@ -420,27 +420,25 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       Collection<File> classPath = originalClassPath;
       Collection<File> modulePath = Collections.emptyList();
+      Collection<File> upgradeModulePath = Collections.emptyList();
 
       if (hasModules) {
         // in Java 9, named modules are not allowed to read classes from the classpath
         // moreover, the compiler requires all transitive dependencies to be on the module path
         modulePath = ProjectPaths.getCompilationModulePath(chunk, false);
         classPath = Collections.emptyList();
+        // modules located above the JDK make a module upgrade path
+        upgradeModulePath = platformCp;
+        platformCp = Collections.emptyList();
       }
 
-      if (!platformCp.isEmpty()) {
-        if (hasModules) {
-          modulePath = JBIterable.from(platformCp).append(modulePath).toList();
-          platformCp = Collections.emptyList();
-        }
-        else if ((getChunkSdkVersion(chunk)) >= 9) {
-          // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
-          // because platform classes are stored in jimage binary files with unknown format.
-          // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
-          // and prepending additional jars from the JDK configuration to compilation classpath
-          classPath = JBIterable.from(platformCp).append(classPath).toList();
-          platformCp = Collections.emptyList();
-        }
+      if (!platformCp.isEmpty() && (getChunkSdkVersion(chunk)) >= 9) {
+        // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
+        // because platform classes are stored in jimage binary files with unknown format.
+        // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
+        // and prepending additional jars from the JDK configuration to compilation classpath
+        classPath = JBIterable.from(platformCp).append(classPath).toList();
+        platformCp = Collections.emptyList();
       }
 
       final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
@@ -448,7 +446,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (!shouldForkJavac) {
         updateCompilerUsageStatistics(context, compilingTool.getDescription(), chunk);
         rc = JavacMain.compile(
-          options, files, classPath, platformCp, modulePath, sourcePath, outs, diagnosticSink, classesConsumer,
+          options, files, classPath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnosticSink, classesConsumer,
           context.getCancelStatus(), compilingTool
         );
       }
@@ -458,7 +456,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         rc = server.forkJavac(
           forkSdk.getFirst(),
           Utils.suggestForkedCompilerHeapSize(),
-          vmOptions, options, platformCp, classPath, modulePath, sourcePath,
+          vmOptions, options, platformCp, classPath, upgradeModulePath, modulePath, sourcePath,
           files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
       }
@@ -938,7 +936,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static int getModuleBytecodeTarget(CompileContext context, ModuleChunk chunk, JpsJavaCompilerConfiguration compilerConfiguration) {
     return getModuleBytecodeTarget(context, chunk, compilerConfiguration, getLanguageLevel(chunk.representativeTarget().getModule()));
   }
-  
+
   private static int getModuleBytecodeTarget(CompileContext context, ModuleChunk chunk, JpsJavaCompilerConfiguration compilerConfiguration, int languageLevel) {
     int bytecodeTarget = 0;
     for (JpsModule module : chunk.getModules()) {
