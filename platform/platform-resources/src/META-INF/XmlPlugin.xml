@@ -581,6 +581,7 @@
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
     <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.structureView.HtmlStructureViewBuilderProvider"/>
     <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
+    <lang.rearranger language="HTML" implementationClass="com.intellij.xml.arrangement.HtmlRearranger"/>
 
     <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
     <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
