@@ -896,5 +896,7 @@
     <action class="com.intellij.ide.actions.SelectInProjectViewAction" id="SelectInProjectView" text="Select in Project View" />
 
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
+
+    <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>
   </actions>
 </idea-plugin>

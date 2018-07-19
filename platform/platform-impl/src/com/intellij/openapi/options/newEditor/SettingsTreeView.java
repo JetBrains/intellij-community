@@ -48,6 +48,7 @@ import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -200,14 +201,25 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       }
 
       {
-        add(new CopyAction(() -> transferable));
+        add(CopySettingsPathAction.createSwingAction(() -> transferable));
       }
     });
   }
 
-  private static Transferable createTransferable(TreePath path) {
-    MyNode node = path == null ? null : extractNode(path);
-    return node == null ? null : CopyAction.createTransferable(getPathNames(node));
+  @Nullable
+  Transferable createTransferable(@Nullable InputEvent event) {
+    if (event instanceof MouseEvent) {
+      MouseEvent mouse = (MouseEvent)event;
+      Point location = mouse.getLocationOnScreen();
+      SwingUtilities.convertPointFromScreen(location, myTree);
+      return createTransferable(myTree.getClosestPathForLocation(location.x, location.y));
+    }
+    return createTransferable(myTree.getSelectionPath());
+  }
+
+  @Nullable
+  private static Transferable createTransferable(@Nullable TreePath path) {
+    return CopySettingsPathAction.createTransferable(getPathNames(extractNode(path)));
   }
 
   @NotNull
@@ -215,7 +227,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return getPathNames(findNode(configurable));
   }
 
-  private static Collection<String> getPathNames(MyNode node) {
+  @NotNull
+  private static Collection<String> getPathNames(@Nullable MyNode node) {
     ArrayDeque<String> path = new ArrayDeque<>();
     while (node != null) {
       path.push(node.myDisplayName);
