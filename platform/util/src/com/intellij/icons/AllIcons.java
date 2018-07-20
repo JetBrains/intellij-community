@@ -12,9 +12,21 @@ import javax.swing.*;
 public class AllIcons {
 
   public static class Actions {
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon AddFacesSupport = IconLoader.getIcon("/actions/addFacesSupport.png"); // 16x16
     public static final Icon AddMulticaret = IconLoader.getIcon("/actions/AddMulticaret.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon AllLeft = IconLoader.getIcon("/actions/allLeft.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon AllRight = IconLoader.getIcon("/actions/allRight.png"); // 16x16
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.svg"); // 16x16
     public static final Icon Back = IconLoader.getIcon("/actions/back.svg"); // 16x16
@@ -56,7 +68,11 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.IntentionBulb */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CreateFromUsage = IconLoader.getIcon("/actions/intentionBulb.png"); // 16x16
+    public static final Icon CreateFromUsage = IconLoader.getIcon("/actions/intentionBulb.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon CreatePatch = IconLoader.getIcon("/actions/createPatch.png"); // 16x16
     public static final Icon Cross = IconLoader.getIcon("/actions/cross.png"); // 12x12
 
@@ -66,10 +82,22 @@ public class AllIcons {
     public static final Icon Delete = IconLoader.getIcon("/actions/cancel.svg"); // 16x16
     public static final Icon DiagramDiff = IconLoader.getIcon("/actions/diagramDiff.svg"); // 16x16
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.svg"); // 16x16
-    public static final Icon DiffPreview = IconLoader.getIcon("/actions/diffPreview.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Diff */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DiffPreview = IconLoader.getIcon("/actions/diff.svg"); // 16x16
     public static final Icon DiffWithClipboard = IconLoader.getIcon("/actions/diffWithClipboard.svg"); // 16x16
-    public static final Icon DiffWithCurrent = IconLoader.getIcon("/actions/diffWithCurrent.png"); // 16x16
-    public static final Icon Down = IconLoader.getIcon("/actions/down.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Diff */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DiffWithCurrent = IconLoader.getIcon("/actions/diff.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.SplitDown */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Down = IconLoader.getIcon("/general/splitDown.png"); // 7x7
     public static final Icon Download = IconLoader.getIcon("/actions/download.svg"); // 16x16
     public static final Icon Dump = IconLoader.getIcon("/actions/dump.svg"); // 16x16
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg"); // 16x16
@@ -103,6 +131,10 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon FindPlain = IconLoader.getIcon("/actions/find.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon FindWhite = IconLoader.getIcon("/actions/findWhite.png"); // 16x16
     public static final Icon ForceRefresh = IconLoader.getIcon("/actions/forceRefresh.svg"); // 16x16
     public static final Icon Forward = IconLoader.getIcon("/actions/forward.svg"); // 16x16
@@ -124,8 +156,12 @@ public class AllIcons {
     public static final Icon Help = IconLoader.getIcon("/actions/help.svg"); // 16x16
     public static final Icon Highlighting = IconLoader.getIcon("/actions/highlighting.svg"); // 16x16
     public static final Icon Install = IconLoader.getIcon("/actions/install.svg"); // 16x16
-    public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.png"); // 16x16
-    public static final Icon Left = IconLoader.getIcon("/actions/left.png"); // 16x16
+    public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.SplitLeft */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Left = IconLoader.getIcon("/general/splitLeft.png"); // 7x7
     public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.svg"); // 16x16
     public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.svg"); // 16x16
     public static final Icon ListFiles = IconLoader.getIcon("/actions/listFiles.svg"); // 16x16
@@ -151,17 +187,25 @@ public class AllIcons {
     public static final Icon Minimize = IconLoader.getIcon("/actions/minimize.png"); // 16x16
     public static final Icon Module = IconLoader.getIcon("/actions/module.png"); // 16x16
     public static final Icon More = IconLoader.getIcon("/actions/more.svg"); // 16x16
-    public static final Icon Move_to_button_top = IconLoader.getIcon("/actions/move-to-button-top.png"); // 11x12
-    public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.png"); // 11x10
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Move_to_button */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Move_to_button_top = IconLoader.getIcon("/actions/move-to-button.svg"); // 12x12
+    public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.svg"); // 12x12
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.svg"); // 16x16
-    public static final Icon MoveTo2 = IconLoader.getIcon("/actions/MoveTo2.png"); // 16x16
+    public static final Icon MoveTo2 = IconLoader.getIcon("/actions/MoveTo2.svg"); // 16x16
     public static final Icon MoveToAnotherChangelist = IconLoader.getIcon("/actions/moveToAnotherChangelist.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/MoveTo2.png"); // 16x16
+    public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/MoveTo2.svg"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Multicaret = IconLoader.getIcon("/actions/multicaret.svg"); // 16x16
     public static final Icon New = IconLoader.getIcon("/actions/new.svg"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.svg"); // 16x16
@@ -187,13 +231,13 @@ public class AllIcons {
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.svg"); // 16x16
     public static final Icon ProfileMemory = IconLoader.getIcon("/actions/profileMemory.svg"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/actions/properties.svg"); // 16x16
-    public static final Icon QuickfixBulb = IconLoader.getIcon("/actions/quickfixBulb.png"); // 16x16
-    public static final Icon QuickfixOffBulb = IconLoader.getIcon("/actions/quickfixOffBulb.png"); // 16x16
+    public static final Icon QuickfixBulb = IconLoader.getIcon("/actions/quickfixBulb.svg"); // 16x16
+    public static final Icon QuickfixOffBulb = IconLoader.getIcon("/actions/quickfixOffBulb.svg"); // 16x16
     public static final Icon QuickList = IconLoader.getIcon("/actions/quickList.png"); // 16x16
-    public static final Icon RealIntentionBulb = IconLoader.getIcon("/actions/realIntentionBulb.png"); // 16x16
+    public static final Icon RealIntentionBulb = IconLoader.getIcon("/actions/realIntentionBulb.svg"); // 16x16
     public static final Icon RealIntentionOffBulb = IconLoader.getIcon("/actions/realIntentionOffBulb.png"); // 16x16
     public static final Icon Redo = IconLoader.getIcon("/actions/redo.svg"); // 16x16
-    public static final Icon RefactoringBulb = IconLoader.getIcon("/actions/refactoringBulb.png"); // 16x16
+    public static final Icon RefactoringBulb = IconLoader.getIcon("/actions/refactoringBulb.svg"); // 16x16
     public static final Icon Refresh = IconLoader.getIcon("/actions/refresh.svg"); // 16x16
     public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.svg"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.svg"); // 16x16
@@ -212,10 +256,10 @@ public class AllIcons {
     public static final Icon Rollback = IconLoader.getIcon("/actions/rollback.svg"); // 16x16
     public static final Icon Run_anything = IconLoader.getIcon("/actions/run_anything.svg"); // 16x16
     public static final Icon RunToCursor = IconLoader.getIcon("/actions/runToCursor.svg"); // 16x16
-    public static final Icon Scratch = IconLoader.getIcon("/actions/scratch.png"); // 16x16
+    public static final Icon Scratch = IconLoader.getIcon("/actions/scratch.svg"); // 16x16
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); // 16x16
-    public static final Icon SearchNewLine = IconLoader.getIcon("/actions/searchNewLine.png"); // 16x16
-    public static final Icon SearchNewLineHover = IconLoader.getIcon("/actions/searchNewLineHover.png"); // 16x16
+    public static final Icon SearchNewLine = IconLoader.getIcon("/actions/searchNewLine.svg"); // 16x16
+    public static final Icon SearchNewLineHover = IconLoader.getIcon("/actions/searchNewLineHover.svg"); // 16x16
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.svg"); // 16x16
     public static final Icon SetDefault = IconLoader.getIcon("/actions/setDefault.svg"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
@@ -253,22 +297,26 @@ public class AllIcons {
     @Deprecated
     public static final Icon Submit1 = IconLoader.getIcon("/actions/setDefault.svg"); // 16x16
     public static final Icon Suspend = IconLoader.getIcon("/actions/suspend.svg"); // 16x16
-    public static final Icon SwapPanels = IconLoader.getIcon("/actions/swapPanels.png"); // 16x16
+    public static final Icon SwapPanels = IconLoader.getIcon("/actions/swapPanels.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Refresh */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon SynchronizeFS = IconLoader.getIcon("/actions/refresh.svg"); // 16x16
-    public static final Icon SynchronizeScrolling = IconLoader.getIcon("/actions/synchronizeScrolling.png"); // 16x16
-    public static final Icon SyncPanels = IconLoader.getIcon("/actions/syncPanels.png"); // 16x16
+    public static final Icon SynchronizeScrolling = IconLoader.getIcon("/actions/synchronizeScrolling.svg"); // 16x16
+    public static final Icon SyncPanels = IconLoader.getIcon("/actions/syncPanels.svg"); // 16x16
     public static final Icon ToggleSoftWrap = IconLoader.getIcon("/actions/toggleSoftWrap.svg"); // 16x16
     public static final Icon TraceInto = IconLoader.getIcon("/actions/traceInto.svg"); // 16x16
     public static final Icon TraceOver = IconLoader.getIcon("/actions/traceOver.svg"); // 16x16
     public static final Icon Undo = IconLoader.getIcon("/actions/undo.svg"); // 16x16
     public static final Icon Uninstall = IconLoader.getIcon("/actions/uninstall.png"); // 16x16
-    public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.png"); // 16x16
+    public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.svg"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
-    public static final Icon UP = IconLoader.getIcon("/actions/up.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.SplitUp */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon UP = IconLoader.getIcon("/general/splitUp.png"); // 7x7
     public static final Icon Upload = IconLoader.getIcon("/actions/upload.svg"); // 16x16
 
   }
