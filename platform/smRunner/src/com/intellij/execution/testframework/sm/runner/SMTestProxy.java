@@ -25,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -256,13 +255,9 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     if (myLocationCachedValue == null) {
-      if (DumbService.isDumb(project)) {
-        // don't cache result in dumb mode
-        return getLocation(project, searchScope, myLocationUrl);
-      }
       myLocationCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
         Location value = getLocation(project, searchScope, myLocationUrl);
-        return CachedValueProvider.Result.create(value, PsiModificationTracker.SERVICE.getInstance(project));
+        return CachedValueProvider.Result.create(value, myLocator.getLocationCacheModificationTracker(project));
       }, false);
     }
     return myLocationCachedValue.getValue();
