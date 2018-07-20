@@ -107,7 +107,7 @@ public class SvnRenameTest extends SvnTestCase {
     // there is no such directory any more
     /*VirtualFile oldChild = myWorkingCopyDir.findChild("child");
     if (oldChild == null) {
-      myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
       oldChild = myWorkingCopyDir.findChild("child");
     }
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));*/

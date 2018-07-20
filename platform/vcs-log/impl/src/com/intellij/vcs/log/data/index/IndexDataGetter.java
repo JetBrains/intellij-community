@@ -43,6 +43,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class IndexDataGetter {
   @NotNull private final Project myProject;
   @NotNull private final Set<VirtualFile> myRoots;
@@ -121,6 +123,18 @@ public class IndexDataGetter {
       }
       return result;
     });
+  }
+
+  @NotNull
+  public Set<FilePath> getChangedPaths(int commit) {
+    List<Hash> parents = getParents(commit);
+    if (parents == null || parents.size() > 1) return Collections.emptySet();
+    return getChangedPaths(commit, 0);
+  }
+
+  @NotNull
+  public Set<FilePath> getChangedPaths(int commit, int parentIndex) {
+    return executeAndCatch(() -> myIndexStorage.paths.getPathsChangedInCommit(commit, parentIndex), Collections.emptySet());
   }
 
   //
@@ -241,6 +255,15 @@ public class IndexDataGetter {
   //
 
   @NotNull
+  public Set<FilePath> getKnownNames(@NotNull FilePath path) {
+    return executeAndCatch(() -> {
+      Set<FilePath> result = ContainerUtil.newHashSet();
+      myIndexStorage.paths.iterateCommits(path, (changes, commit) -> result.add(changes.first));
+      return null;
+    }, Collections.emptySet());
+  }
+
+  @NotNull
   public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
@@ -273,8 +296,9 @@ public class IndexDataGetter {
   }
 
   private class MyFileNamesData extends FileNamesData {
+    @NotNull
     protected FilePath getPathById(int pathId) {
-      return VcsUtil.getFilePath(myIndexStorage.paths.getPath(pathId));
+      return notNull(myIndexStorage.paths.getPath(pathId));
     }
   }
 

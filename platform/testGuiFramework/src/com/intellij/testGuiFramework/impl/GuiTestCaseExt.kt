@@ -91,6 +91,7 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
   ideFrame {
     this.waitForBackgroundTasksToFinish()
   }
+  robot().waitForIdle()
   Pause.pause(extraTimeOut)
 }
 
@@ -162,11 +163,7 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   ideFrame {
     logTestStep("Going to check how the project compiles")
     invokeMainMenu("CompileProject")
-    shortcut(Modifier.CONTROL + Modifier.SHIFT + Key.A)
     waitAMoment()
-    typeText(textEventLog)
-    waitAMoment()
-    shortcut(Key.ENTER)
     toolwindow(id = textEventLog) {
       content(tabName = "") {
         editor{
@@ -180,16 +177,23 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   }
 }
 
-fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
+fun GuiTestCase.openRunConfiguration(vararg configuration: String){
   val cfgName = configuration.last()
   val runDebugConfigurations = "Run/Debug Configurations"
   ideFrame {
-    logTestStep("Going to check presence of Run/Debug configuration `$cfgName`")
+    logTestStep("Going to check presence of $runDebugConfigurations `$cfgName`")
     navigationBar {
       assert(exists { button(cfgName) }) { "Button `$cfgName` not found on Navigation bar" }
       button(cfgName).click()
       popupClick("Edit Configurations...")
     }
+  }
+}
+
+fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
+  openRunConfiguration(*configuration)
+  val runDebugConfigurations = "Run/Debug Configurations"
+  ideFrame {
     dialog(runDebugConfigurations) {
       assert(exists { jTree(*configuration) })
       jTree(*configuration).clickPath()
@@ -202,14 +206,58 @@ fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, varar
   }
 }
 
+fun GuiTestCase.changeRunConfiguration(changedValues: Map<String, String>, vararg configuration: String) {
+  openRunConfiguration(*configuration)
+  val runDebugConfigurations = "Run/Debug Configurations"
+  ideFrame {
+    dialog(runDebugConfigurations) {
+      assert(exists { jTree(*configuration) })
+      jTree(*configuration).clickPath()
+      for ((field, changedValue) in changedValues) {
+        logTestStep("Going to set field `$field`to a value = `$changedValue`")
+        changeOneValue(this@changeRunConfiguration, field, changedValue)
+      }
+      button("OK").click()
+    }
+  }
+}
+
 fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String, expectedValue: String){
   val actualValue = when {
-    guiTestCase.exists {textfield(expectedField)} -> textfield(expectedField).text()
-    guiTestCase.exists { combobox(expectedField) } -> combobox(expectedField).selectedItem()
+    guiTestCase.exists { textfield(expectedField, timeout = 1) } -> {
+      textfield(expectedField).text()
+    }
+    guiTestCase.exists { combobox(expectedField, timeout = 1) } -> {
+      val combo = combobox(expectedField)
+      println("combo = $combo")
+      println("listItems() = ${combo.listItems()}")
+      combo.selectedItem()
+    }
+    guiTestCase.exists { checkbox(expectedField, timeout = 1) } -> {
+      checkbox(expectedField).isSelected.toString()
+    }
     else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
   }
-  assert(actualValue == expectedValue) {
-    "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
+  println("Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`")
+    assert(actualValue == expectedValue) {
+      "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
+    }
+}
+
+fun JDialogFixture.changeOneValue(guiTestCase: GuiTestCase, expectedField: String, newValue: String){
+  when {
+    guiTestCase.exists { textfield(expectedField, timeout = 1) } -> {
+      textfield(expectedField).setText(newValue)
+    }
+    guiTestCase.exists { combobox(expectedField, timeout = 1) } -> {
+      combobox(expectedField).selectItem(newValue)
+    }
+    guiTestCase.exists { checkbox(expectedField, timeout = 1) } -> {
+      val newBooleanValue = newValue.toBoolean()
+      if(checkbox(expectedField).isSelected != newBooleanValue)
+        checkbox(expectedField).isSelected = newBooleanValue
+    }
+    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
   }
 }
 

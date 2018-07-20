@@ -6,6 +6,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -59,6 +60,16 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * @return the run configuration factories.
    */
   ConfigurationFactory[] getConfigurationFactories();
+
+  /**
+   * Returns the topic in the help file or in Web Help which is shown when help for configurations of this type is requested.
+   *
+   * @return the help topic, or {@code null} if no help is available
+   */
+  @Nullable
+  default String getHelpTopic() {
+    return "reference.dialogs.rundebug." + getId();
+  }
 
   /**
    * Is configuration fully managed by RunManager.

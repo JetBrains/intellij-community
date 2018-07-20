@@ -158,7 +158,6 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
 
     fun cancel() {
       myExecutor.shutdownNow()
-      objectOutputStream.close()
     }
   }
 

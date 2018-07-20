@@ -70,7 +70,6 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertSetLiteral() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doTest(PyBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
   }
 
@@ -275,7 +274,6 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertTripleQuotedUnicodeString() { //PY-7152
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
 
@@ -299,7 +297,6 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertTripleQuotedEmptyString() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 

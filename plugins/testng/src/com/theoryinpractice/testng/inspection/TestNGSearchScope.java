@@ -34,7 +34,7 @@ public class TestNGSearchScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return myFileIndex.isInContent(file) && TestNGUtil.isTestngXML(file);
+    return myFileIndex.isInContent(file) && TestNGUtil.isTestngSuiteFile(file);
   }
 
   @Override

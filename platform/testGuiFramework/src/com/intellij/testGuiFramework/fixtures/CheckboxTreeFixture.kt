@@ -30,9 +30,6 @@ class CheckboxTreeFixture(
     val checkbox = getCheckboxComponent()
     if (checkbox != null && checkbox.isSelected != value) {
       clickCheckbox()
-      GuiTestUtilKt.waitUntil("Wait until checkbox got value $value") {
-        getCheckboxComponent()?.isSelected ?: false
-      }
       val actualValue = getCheckboxComponent()?.isSelected
       assert(actualValue == value) {
         "Checkbox at path $path: actual value is $actualValue, but expected is $value"

@@ -27,12 +27,7 @@ private const val decoratorName: String = "pytest.fixture"
 internal fun getFixture(element: PyNamedParameter, typeEvalContext: TypeEvalContext): PyTestFixture? {
   val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
   val func = PsiTreeUtil.getParentOfType(element, PyFunction::class.java) ?: return null
-  return getFixtures(module, func, typeEvalContext)
-    .filter { o -> o.name == element.name }
-    .sortedBy {
-      ModuleUtilCore.findModuleForPsiElement(it.function) != module
-    }
-    .firstOrNull()
+  return getFixtures(module, func, typeEvalContext).firstOrNull { o -> o.name == element.name }
 }
 
 /**
@@ -51,15 +46,9 @@ internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName
  * @property resolveTarget PyElement where this fixture is resolved
  * @property name String fixture name
  */
-data class PyTestFixture(val function: PyFunction, val resolveTarget: PyElement, val name: String)
+data class PyTestFixture(val function: PyFunction? = null, val resolveTarget: PyElement? = function, val name: String)
 
 
-/**
- *
- * @param module Module
- * @param name String
- * @return (kotlin.collections.MutableCollection<(com.jetbrains.python.psi.PyDecorator..com.jetbrains.python.psi.PyDecorator?)>..kotlin.collections.Collection<(com.jetbrains.python.psi.PyDecorator..com.jetbrains.python.psi.PyDecorator?)>?)
- */
 fun findDecoratorsByName(module: Module, name: String): Iterable<PyDecorator> =
   StubIndex.getElements(PyDecoratorStubIndex.KEY, name, module.project,
                         GlobalSearchScope.union(
@@ -87,7 +76,7 @@ private val pyTestName = PyTestFrameworkService.getSdkReadableNameByFramework(Py
  *
  * @param forWhat function that you want to use fixtures with. Could be test or fixture itself.
  *
- * @return List<PyFunction> all py.test fixtures in project
+ * @return List<PyFunction> all pytest fixtures in project
  */
 internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: TypeEvalContext): List<PyTestFixture> {
   // Fixtures could be used only by test functions or other fixtures.

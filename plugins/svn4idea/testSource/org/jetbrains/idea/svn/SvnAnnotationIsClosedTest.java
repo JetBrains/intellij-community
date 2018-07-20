@@ -87,7 +87,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     refreshChanges();
 
-    imitUpdate(myProject);
+    imitUpdate();
     assertTrue(myIsClosed);
   }
 
@@ -113,7 +113,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     refreshChanges();
     assertFalse(myIsClosed);
 
-    imitUpdate(myProject);
+    imitUpdate();
     assertTrue(myIsClosed);
   }
 
@@ -140,7 +140,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertFalse(myIsClosed);
 
     update();
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     imitateEvent(myWorkingCopyDir);
 
     changeListManager.ensureUpToDate(false);
@@ -223,7 +223,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertFalse(myIsClosed);
 
     checkin();
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     imitateEvent(myWorkingCopyDir);
 
     changeListManager.ensureUpToDate(false);

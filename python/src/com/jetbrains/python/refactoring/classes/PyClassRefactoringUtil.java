@@ -41,6 +41,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,10 +206,10 @@ public final class PyClassRefactoringUtil {
 
 
   /**
-   * Restores references saved by {@link #rememberNamedReferences(com.intellij.psi.PsiElement, String...)}.
+   * Restores references saved by {@link #rememberNamedReferences(PsiElement, String...)}.
    *
    * @param element newly created element to restore references
-   * @see #rememberNamedReferences(com.intellij.psi.PsiElement, String...)
+   * @see #rememberNamedReferences(PsiElement, String...)
    */
   public static void restoreNamedReferences(@NotNull final PsiElement element) {
     restoreNamedReferences(element, null);
@@ -337,9 +339,9 @@ public final class PyClassRefactoringUtil {
   }
 
   /**
-   * Searches for references inside some element (like {@link com.jetbrains.python.psi.PyAssignmentStatement}, {@link com.jetbrains.python.psi.PyFunction} etc
+   * Searches for references inside some element (like {@link PyAssignmentStatement}, {@link PyFunction} etc
    * and stored them.
-   * After that you can add element to some new parent. Newly created element then should be processed via {@link #restoreNamedReferences(com.intellij.psi.PsiElement)}
+   * After that you can add element to some new parent. Newly created element then should be processed via {@link #restoreNamedReferences(PsiElement)}
    * and all references would be restored.
    *
    * @param element     element to store references for
@@ -526,10 +528,10 @@ public final class PyClassRefactoringUtil {
    * @param paramExpressions param expressions. Like "object" or "MySuperClass". Will not add any param exp. if null.
    * @param keywordArguments keyword args like "metaclass=ABCMeta". key-value pairs.  Will not add any keyword arg. if null.
    */
-  public static void addSuperClassExpressions(@NotNull final Project project,
-                                              @NotNull final PyClass clazz,
-                                              @Nullable final Collection<String> paramExpressions,
-                                              @Nullable final Collection<Pair<String, String>> keywordArguments) {
+  private static void addSuperClassExpressions(@NotNull final Project project,
+                                               @NotNull final PyClass clazz,
+                                               @Nullable final Collection<String> paramExpressions,
+                                               @Nullable final Collection<Pair<String, String>> keywordArguments) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
     final LanguageLevel languageLevel = LanguageLevel.forElement(clazz);
 
@@ -597,11 +599,32 @@ public final class PyClassRefactoringUtil {
     return PyUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
   }
 
+  public static boolean addMetaClassIfNotExist(@NotNull PyClass cls, @NotNull PyClass metaClass, @NotNull TypeEvalContext context) {
+    final String metaClassName = metaClass.getName();
+    if (metaClassName == null) return false;
+
+    final PyType metaClassType = cls.getMetaClassType(false, context);
+    if (metaClassType != null) return false;
+
+    insertImport(cls, metaClass);
+
+    final LanguageLevel languageLevel = LanguageLevel.forElement(cls);
+    if (languageLevel.isPython2()) {
+      addClassAttributeIfNotExist(cls, PyNames.DUNDER_METACLASS, metaClassName);
+    }
+    else {
+      final List<Pair<String, String>> keywordArguments = Collections.singletonList(Pair.create(PyNames.METACLASS, metaClassName));
+      addSuperClassExpressions(cls.getProject(), cls, null, keywordArguments);
+    }
+
+    return true;
+  }
+
   private static class DynamicNamedElement extends LightElement implements PsiNamedElement {
     private final PsiFile myFile;
     private final String myName;
 
-    public DynamicNamedElement(@NotNull PsiFile file, @NotNull String name) {
+    private DynamicNamedElement(@NotNull PsiFile file, @NotNull String name) {
       super(file.getManager(), file.getLanguage());
       myName = name;
       myFile = file;

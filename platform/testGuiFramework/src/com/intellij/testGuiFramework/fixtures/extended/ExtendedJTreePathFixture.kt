@@ -12,7 +12,6 @@ import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
-import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -31,7 +30,7 @@ open class ExtendedJTreePathFixture(
     robot: Robot = GuiRobotHolder.robot,
     driver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
   ) :
-    this(tree, path.path.map { it.toString() }.toList(), predicate, robot, driver)
+    this(tree, path.getPathStrings(), predicate, robot, driver)
 
   init {
     replaceDriverWith(myDriver)
@@ -63,15 +62,11 @@ open class ExtendedJTreePathFixture(
    * It's supposed the new path in the same tree
    * @param node one node value somewhere whithin the same tree
    * @throws LocationUnavailableException if node not found
-   * TODO complete
    * */
   fun pathToNode(node: String): ExtendedJTreePathFixture{
     val newPath = myDriver.findPathToNode(tree, node, predicate)
     return ExtendedJTreePathFixture(tree, newPath, predicate, robot(), myDriver)
   }
-
-  fun hasPath(vararg pathStrings: String): Boolean =
-    ExtendedJTreePathFixture(tree, pathStrings.toList(), predicate, robot(), myDriver).hasPath()
 
   fun hasPath(): Boolean {
     return try {
@@ -101,7 +96,7 @@ open class ExtendedJTreePathFixture(
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtilKt.waitUntil(condition = "wait to find a correct path to click", timeoutInSeconds = 2) {
+        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeoutInSeconds = 2) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
               .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
@@ -119,16 +114,6 @@ open class ExtendedJTreePathFixture(
   }
 
   fun collapsePath(): Unit = myDriver.collapsePath(tree, path)
-
-  fun selectPath(): Unit = myDriver.selectPath(tree, path)
-
-  fun openPopupMenu(): JPopupMenu = myDriver.showPopupMenu(tree, path)
-
-  fun drag(): Unit = myDriver.drag(tree, path)
-
-  fun drop(): Unit = myDriver.drop(tree, path)
-
-  fun getPathStrings(): List<String> = path.path.map { it.toString() }
 
   ////////////////////////////////////////////////////////////////
   // Overridden functions
@@ -179,3 +164,13 @@ open class ExtendedJTreePathFixture(
   }
 
 }
+
+  /**
+   * Returns list of visible strings not including the first invisible item
+   *
+   * Note: code `this.path.joinToString()` always includes the first invisible item
+   * */
+  fun TreePath.getPathStrings(): List<String> {
+    val pathStrings = this.path.map { it.toString() }
+    return if (pathStrings.first().isEmpty()) pathStrings.drop(1) else pathStrings
+  }

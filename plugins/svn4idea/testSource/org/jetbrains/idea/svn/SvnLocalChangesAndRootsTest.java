@@ -29,7 +29,6 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
 
     myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
     myProjectLevelVcsManager.setDirectoryMapping(myAlienRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
-    myProjectLevelVcsManager.updateActiveVcss();
 
     myClManager = ChangeListManager.getInstance(myProject);*/
   }
@@ -142,7 +141,6 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
       }
       newMappings.add(new VcsDirectoryMapping(myMappingTarget.getPath(), SvnVcs.VCS_NAME));
       myProjectLevelVcsManager.setDirectoryMappings(newMappings);
-      myProjectLevelVcsManager.updateActiveVcss();
       sleep100();
     }
 

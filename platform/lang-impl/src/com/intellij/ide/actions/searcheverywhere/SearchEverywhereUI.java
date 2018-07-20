@@ -589,10 +589,19 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     mySearchField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        stopSearching();
-        searchFinishedHandler.run();
+        if (!isHintComponent(e.getOppositeComponent())) {
+          stopSearching();
+          searchFinishedHandler.run();
+        }
       }
     });
+  }
+
+  private boolean isHintComponent(Component component) {
+    if (myHint != null && !myHint.isDisposed()) {
+      return SwingUtilities.isDescendingFrom(component, myHint.getContent());
+    }
+    return false;
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {

@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
@@ -309,7 +309,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public void readSettings(@NotNull Element node) {
     if (useNewSerializer()) {
       try {
-        XmlSerializer.deserializeInto(this, node);
+        XmlSerializer.deserializeInto(node, this);
       }
       catch (XmlSerializationException e) {
         throw new InvalidDataException(e);
@@ -329,7 +329,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    */
   public void writeSettings(@NotNull Element node) {
     if (useNewSerializer()) {
-      XmlSerializer.serializeInto(this, node, getSerializationFilter());
+      //noinspection deprecation
+      XmlSerializer.serializeObjectInto(this, node, getSerializationFilter());
     }
     else {
       //noinspection deprecation
@@ -345,7 +346,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   private static void loadBlackList() {
-    ourBlackList = ContainerUtil.newHashSet();
+    ourBlackList = new THashSet<>();
 
     final URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
     if (url == null) {
@@ -381,8 +382,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return serialization filter.
    */
-  @SuppressWarnings("MethodMayBeStatic")
+  @SuppressWarnings({"MethodMayBeStatic", "DeprecatedIsStillUsed"})
   @Nullable
+  @Deprecated
   protected SerializationFilter getSerializationFilter() {
     return DEFAULT_FILTER;
   }

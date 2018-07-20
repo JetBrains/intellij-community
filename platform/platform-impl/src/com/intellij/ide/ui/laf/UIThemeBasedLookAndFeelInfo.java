@@ -43,19 +43,23 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     if (background != null) {
       Object path = background.get("image");
       if (path instanceof String) {
-        URL resource = myTheme.getProviderClass().getResource((String)path);
-        String image = resource.getPath();
-        Object transparency = background.get("transparency");
-        String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
-        String fill = parseEnumValue(background.get("fill"), IdeBackgroundUtil.Fill.SCALE);
-        String anchor = parseEnumValue(background.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
+        URL resource = myTheme.getProviderClassLoader().getResource((String)path);
+        if (resource != null) {
+          String image = resource.getPath();
+          Object transparency = background.get("transparency");
+          String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
+          String fill = parseEnumValue(background.get("fill"), IdeBackgroundUtil.Fill.SCALE);
+          String anchor = parseEnumValue(background.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
 
-        String spec = StringUtil.join(new String[]{image, alpha, fill, anchor}, ",");
-        String currentSpec = PropertiesComponent.getInstance().getValue(IdeBackgroundUtil.EDITOR_PROP);
-        PropertiesComponent.getInstance().setValue("old." + IdeBackgroundUtil.EDITOR_PROP, currentSpec);
+          String spec = StringUtil.join(new String[]{image, alpha, fill, anchor}, ",");
+          String currentSpec = PropertiesComponent.getInstance().getValue(IdeBackgroundUtil.EDITOR_PROP);
+          PropertiesComponent.getInstance().setValue("old." + IdeBackgroundUtil.EDITOR_PROP, currentSpec);
 
-        PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, spec);
-        IdeBackgroundUtil.repaintAllWindows();
+          PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, spec);
+          IdeBackgroundUtil.repaintAllWindows();
+        } else {
+          throw new IllegalArgumentException("Can't load background: " + path);
+        }
       }
     }
   }

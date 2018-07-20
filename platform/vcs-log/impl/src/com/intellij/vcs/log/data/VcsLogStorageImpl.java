@@ -29,6 +29,7 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
+import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.TObjectIntHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -70,11 +71,11 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     String logId = PersistentUtil.calcLogId(project, logProviders);
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
 
-    File storageFile = PersistentUtil.getStorageFile(HASHES_STORAGE, logId, VERSION);
+    File storageFile = new StorageId(HASHES_STORAGE, logId, VERSION).getStorageFile();
     myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(storageFile, commitIdKeyDescriptor),
                                                          storageFile);
     myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor),
-                                                                 REFS_STORAGE, logId, VERSION + REFS_VERSION);
+                                                                 new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION));
     Disposer.register(parent, this);
   }
 

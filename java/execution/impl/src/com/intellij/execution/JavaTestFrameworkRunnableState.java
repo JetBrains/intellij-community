@@ -383,15 +383,18 @@ public abstract class JavaTestFrameworkRunnableState<T extends
    * Configuration based on package which spans multiple modules
    */
   protected boolean forkPerModule() {
-    final String workingDirectory = getConfiguration().getWorkingDirectory();
-    //noinspection deprecation
     return getScope() != TestSearchScope.SINGLE_MODULE &&
-           (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory) ||
-            PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory) ||
-            ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory)) &&
+           toChangeWorkingDirectory(getConfiguration().getWorkingDirectory()) &&
            spansMultipleModules(getConfiguration().getPackage());
   }
 
+  private static boolean toChangeWorkingDirectory(final String workingDirectory) {
+    //noinspection deprecation
+    return PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory) ||
+           PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory) ||
+           ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory);
+  }
+  
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
       myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
@@ -411,10 +414,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 
+      String workingDirectory = getConfiguration().getWorkingDirectory();
+      //when only classpath should be changed, e.g. for starting tests in IDEA's project when some modules can never appear on the same classpath, 
+      //like plugin and corresponding IDE register the same components twice 
+      boolean toChangeWorkingDirectory = toChangeWorkingDirectory(workingDirectory);
+
       try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8)) {
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
-          wWriter.println(PathMacroUtil.getModuleDir(module.getModuleFilePath()));
+          wWriter.println(toChangeWorkingDirectory ? PathMacroUtil.getModuleDir(module.getModuleFilePath()) : workingDirectory);
           wWriter.println(module.getName());
 
           if (classpath == null) {

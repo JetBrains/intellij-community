@@ -20,6 +20,7 @@ import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -211,7 +212,7 @@ public class VcsLogManager implements Disposable {
       }
 
       if (source instanceof VcsLogStorage || source instanceof VcsUserRegistry) {
-        myLogData.getIndex().markCorrupted();
+        ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
       }
     }
 
