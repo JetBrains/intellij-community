@@ -130,6 +130,7 @@ iml_project(
         "//tools/adt/idea/sdk-updates:intellij.android.sdkUpdates",
         "//tools/adt/idea/sdk-updates:intellij.android.sdkUpdates.tests",
         "//tools/adt/idea/smali:intellij.android.smali",
+        "//tools/adt/idea/swingp:intellij.android.adt.swingp",
         "//tools/adt/idea/uitest-framework-bazel",
         "//tools/adt/idea/uitest-framework-gradle",
         "//tools/adt/idea/uitest-framework:intellij.android.guiTestFramework",

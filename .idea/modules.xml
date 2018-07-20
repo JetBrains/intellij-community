@@ -409,6 +409,7 @@
       <module fileurl="file://$PROJECT_DIR$/../studio/google/samples/google-samples.iml" filepath="$PROJECT_DIR$/../studio/google/samples/google-samples.iml" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/services/google-services.iml" filepath="$PROJECT_DIR$/../studio/google/services/google-services.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/swingp/intellij.android.adt.swingp.iml" filepath="$PROJECT_DIR$/../adt/idea/swingp/intellij.android.adt.swingp.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui-model/intellij.android.adt.ui.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" filepath="$PROJECT_DIR$/../adt/idea/artwork/intellij.android.artwork.iml" />
