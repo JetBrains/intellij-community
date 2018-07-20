@@ -614,9 +614,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           });
         }
       }
-
-
-      myChangesViewManager.scheduleRefresh();
     }
     catch (ProcessCanceledException e) {
       // OK, we're finishing all the stuff now.
