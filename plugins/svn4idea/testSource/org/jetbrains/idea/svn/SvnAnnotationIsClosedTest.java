@@ -171,14 +171,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertRevision(vf2, 4);
 
     setUpAnnotation(vf1);
-    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
-    final FileAnnotation annotation1 = createTestAnnotation(vcs.getAnnotationProvider(), vf2);
-    annotation1.setCloser(() -> {
-      myIsClosed1 = true;
-      listener.unregisterAnnotation(vf1, annotation1);
-    });
-    listener.registerAnnotation(vf1, annotation1);
-
+    setUpAnnotation(vf2, () -> myIsClosed1 = true);
     runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
     imitateEvent(sourceDir);
     imitateEvent(externalDir);
@@ -202,10 +195,14 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
   }
 
   private void setUpAnnotation(@NotNull VirtualFile file) throws VcsException {
+    setUpAnnotation(file, () -> myIsClosed = true);
+  }
+
+  private void setUpAnnotation(@NotNull VirtualFile file, @NotNull Runnable closer) throws VcsException {
     final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), file);
     annotation.setCloser(() -> {
-      myIsClosed = true;
+      closer.run();
       listener.unregisterAnnotation(file, annotation);
     });
     listener.registerAnnotation(file, annotation);
