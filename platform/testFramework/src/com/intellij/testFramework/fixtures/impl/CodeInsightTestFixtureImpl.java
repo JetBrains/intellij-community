@@ -693,7 +693,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(lookup);
       lookup.finishLookup(completionChar);
     };
-    CommandProcessor.getInstance().executeCommand(getProject(), command, null, null);
+    CommandProcessor.getInstance().executeCommand(getProject(), command, null, null, myEditor.getDocument());
   }
 
   @Override
