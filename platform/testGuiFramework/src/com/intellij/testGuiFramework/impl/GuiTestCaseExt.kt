@@ -163,11 +163,7 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   ideFrame {
     logTestStep("Going to check how the project compiles")
     invokeMainMenu("CompileProject")
-    shortcut(Modifier.CONTROL + Modifier.SHIFT + Key.A)
     waitAMoment()
-    typeText(textEventLog)
-    waitAMoment()
-    shortcut(Key.ENTER)
     toolwindow(id = textEventLog) {
       content(tabName = "") {
         editor{
