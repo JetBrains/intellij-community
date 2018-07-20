@@ -21,9 +21,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -52,7 +49,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext;
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.PluginPathManager.getPluginHomePath;
 import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -61,7 +57,6 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
@@ -101,20 +96,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   protected SvnTestCase(@NotNull String testDataDir) {
     myTestDataDir = testDataDir;
     myWcRootName = "wcroot";
-  }
-
-  public static void imitateEvent(VirtualFile dir) {
-    runInEdtAndWait(() -> {
-      final VirtualFile child = notNull(dir.findChild(".svn"));
-      final VirtualFile wcdb = notNull(child.findChild("wc.db"));
-      final BulkFileListener listener = getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-      final VFileContentChangeEvent event =
-        new VFileContentChangeEvent(null, wcdb, wcdb.getModificationStamp() - 1, wcdb.getModificationStamp(), true);
-      final List<VFileContentChangeEvent> events = singletonList(event);
-
-      listener.before(events);
-      listener.after(events);
-    });
   }
 
   @NotNull

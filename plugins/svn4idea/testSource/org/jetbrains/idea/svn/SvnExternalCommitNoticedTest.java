@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -43,7 +42,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     checkin();
     refreshVfs();
-    imitateEvent(myWorkingCopyDir);
     changeListManager.ensureUpToDate(false);
     assertNoChanges();
   }
@@ -60,7 +58,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     checkin();
 
     refreshVfs();
-    imitateEvent(myWorkingCopyDir);
     changeListManager.ensureUpToDate(false);
     assertNoChanges();
   }
@@ -74,7 +71,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
     refreshVfs();
-    imitateEvent(myWorkingCopyDir);
     changeListManager.ensureUpToDate(false);
     assertStatus(tree.myS1File, FileStatus.SWITCHED);
     assertStatus(tree.myS2File, FileStatus.NOT_CHANGED);
@@ -116,9 +112,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath());
 
     refreshVfs();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    imitateEvent(lfs.refreshAndFindFileByIoFile(sourceDir));
-    imitateEvent(lfs.refreshAndFindFileByIoFile(externalDir));
     changeListManager.ensureUpToDate(false);
     assertNoChanges();
   }

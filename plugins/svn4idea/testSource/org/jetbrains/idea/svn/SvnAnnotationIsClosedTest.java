@@ -93,8 +93,6 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     update();
     refreshVfs();
-    imitateEvent(myWorkingCopyDir);
-
     waitChangesAndAnnotations();
     assertTrue(myIsClosed);
   }
@@ -136,8 +134,6 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     checkin();
     refreshVfs();
-    imitateEvent(myWorkingCopyDir);
-
     waitChangesAndAnnotations();
     assertTrue(myIsClosed);
   }
@@ -173,8 +169,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     setUpAnnotation(vf1);
     setUpAnnotation(vf2, () -> myIsClosed1 = true);
     runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
-    imitateEvent(sourceDir);
-    imitateEvent(externalDir);
+    refreshVfs();
     waitChangesAndAnnotations();
     assertRevision(vf1, 3);
     assertRevision(vf2, 5);
