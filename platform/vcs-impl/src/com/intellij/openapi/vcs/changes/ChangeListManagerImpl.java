@@ -624,10 +624,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     finally {
       myDirtyScopeManager.changesProcessed();
 
-      synchronized (myDataLock) {
-        myDelayedNotificator.changeListUpdateDone();
-        myChangesViewManager.scheduleRefresh();
-      }
+      myDelayedNotificator.changeListUpdateDone();
+      myChangesViewManager.scheduleRefresh();
     }
   }
 
