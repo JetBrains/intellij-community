@@ -167,7 +167,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Gets the extension of this file. If file name contains '.' extension is the substring from the last '.'
-   * to the end of the name, otherwise extension is null.
+   * to the end of the name (not including the '.'), otherwise extension is null.
    *
    * @return the extension or null if file name doesn't contain '.'
    */
