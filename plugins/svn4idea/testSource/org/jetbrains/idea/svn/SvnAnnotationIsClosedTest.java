@@ -51,7 +51,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertTrue(isEmpty(exceptions));
 
     dirtyScopeManager.fileDirty(tree.myS1File);
-    refreshChangesAndWait();
+    waitChangesAndAnnotations();
     assertTrue(myIsClosed);
   }
 
@@ -95,7 +95,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     refreshVfs();
     imitateEvent(myWorkingCopyDir);
 
-    refreshChangesAndWait();
+    waitChangesAndAnnotations();
     assertTrue(myIsClosed);
   }
 
@@ -138,7 +138,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     refreshVfs();
     imitateEvent(myWorkingCopyDir);
 
-    refreshChangesAndWait();
+    waitChangesAndAnnotations();
     assertTrue(myIsClosed);
   }
 
@@ -182,7 +182,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
     imitateEvent(sourceDir);
     imitateEvent(externalDir);
-    refreshChangesAndWait();
+    waitChangesAndAnnotations();
     assertRevision(vf1, 3);
     assertRevision(vf2, 5);
 
@@ -209,12 +209,6 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
       listener.unregisterAnnotation(file, annotation);
     });
     listener.registerAnnotation(file, annotation);
-  }
-
-  private void refreshChangesAndWait() {
-    changeListManager.ensureUpToDate(false);
-    changeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
-    sleep(100); // zipper updater
   }
 
   private void assertRevision(@NotNull VirtualFile file, final long number) {

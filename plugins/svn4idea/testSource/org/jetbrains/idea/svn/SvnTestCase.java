@@ -195,6 +195,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     changeListManager.ensureUpToDate(false);
   }
 
+  protected void waitChangesAndAnnotations() {
+    changeListManager.ensureUpToDate(false);
+    ((VcsAnnotationLocalChangesListenerImpl)vcsManager.getAnnotationLocalChangesListener()).calmDown();
+  }
+
   @Override
   protected void projectCreated() {
     SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
@@ -416,9 +421,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     action
       .actionPerformed(new AnActionEvent(null, getProjectContext(myProject), "test", new Presentation(), ActionManager.getInstance(), 0));
 
-    changeListManager.ensureUpToDate(false);
-    changeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
-    sleep(100); // zipper updater
+    waitChangesAndAnnotations();
   }
 
   protected void runAndVerifyStatusSorted(final String... stdoutLines) throws IOException {
