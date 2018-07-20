@@ -15,8 +15,10 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.xml.arrangement.XmlArrangementPanel;
 
 /**
  * @author Rustam Vishnyakov
@@ -30,5 +32,6 @@ public class HtmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   protected void initTabs(CodeStyleSettings settings) {
     addIndentOptionsTab(settings);
     addTab(new CodeStyleHtmlPanel(settings));
+    addTab(new XmlArrangementPanel(settings, HTMLLanguage.INSTANCE, HtmlFileType.INSTANCE));
   }
 }

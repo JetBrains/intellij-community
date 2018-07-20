@@ -54,7 +54,7 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
   }
 
   fun listItems(): List<String> {
-    return (0 until target().itemCount).map { target().getItemAt(it) }.map { it.toString() }
+    return (0 until target().itemCount).map { target().getItemAt(it) }.filterNotNull().map { it.toString() }
   }
 
   private fun doSelectItem(selectItemFunction: () -> Unit): Boolean {

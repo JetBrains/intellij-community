@@ -39,14 +39,12 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.image.ScreenshotTaker
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
-import org.fest.swing.timing.Timeout
 import org.junit.Rule
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -124,8 +122,8 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
-  fun pluginDialog(timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: PluginFixture.() -> Unit) {
-    val pluginDialog = PluginFixture(robot(), findDialog("Plugins", false, timeout))
+  fun pluginDialog(timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
+    val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
     func(pluginDialog)
     if (!needToKeepDialog) pluginDialog.waitTillGone()
   }

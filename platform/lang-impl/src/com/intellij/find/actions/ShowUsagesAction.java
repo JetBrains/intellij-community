@@ -261,7 +261,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     Runnable itemChosenCallback = prepareTable(table, editor, popupPosition, handler, maxUsages, options, isPreviewMode);
 
     @Nullable final JBPopup popup = isPreviewMode ? null : createUsagePopup(usages, visibleNodes, handler, editor, popupPosition,
-                                           maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon, project);
+                                           maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon);
     if (popup != null) {
       Disposer.register(popup, usageView);
 
@@ -616,8 +616,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final JTable table,
                                    @NotNull final Runnable itemChoseCallback,
                                    @NotNull final UsageViewPresentation presentation,
-                                   @NotNull final AsyncProcessIcon processIcon,
-                                   @NotNull Project project) {
+                                   @NotNull final AsyncProcessIcon processIcon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     PopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
@@ -687,7 +686,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     builder.setSettingButton(toolBar);
     builder.setCancelKeyEnabled(false);
 
-    PopupUpdateProcessor processor = new PopupUpdateProcessor(project) {
+    PopupUpdateProcessor processor = new PopupUpdateProcessor(usageView.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {/*not used*/}
     };

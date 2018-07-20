@@ -134,6 +134,15 @@ class CompareBranchesDiffPanel extends JPanel {
 
     @NotNull
     @Override
+    protected List<AnAction> createToolbarActions() {
+      return ContainerUtil.append(
+        super.createToolbarActions(),
+        new MyCopyChangesAction()
+      );
+    }
+
+    @NotNull
+    @Override
     protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),

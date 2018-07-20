@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -316,6 +317,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   @Override
   JComponent getPreferredFocusedComponent() {
     return myTreeView != null ? myTreeView.myTree : myEditor;
+  }
+
+  @Nullable
+  Collection<String> getPathNames() {
+    return myTreeView == null ? null : myTreeView.getPathNames(myFilter.myContext.getCurrentConfigurable());
   }
 
   public void addOptionsListener(OptionsEditorColleague colleague) {

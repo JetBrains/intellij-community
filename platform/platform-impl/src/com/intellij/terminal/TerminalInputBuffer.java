@@ -2,6 +2,7 @@
 package com.intellij.terminal;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.PlatformUtils;
 import com.jediterm.terminal.model.JediTerminal;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,6 +69,9 @@ public class TerminalInputBuffer {
   private static boolean isDisabled() {
     // WinPty copies characters passed to process's input to its output =>
     // No need to emulate terminal buffer for winpty.
-    return SystemInfo.isWindows;
+    //
+    // Disable for Rider as well, as processes spawned by Rider have stdin configured
+    // to echo input characters to the terminal.
+    return SystemInfo.isWindows || PlatformUtils.isRider();
   }
 }

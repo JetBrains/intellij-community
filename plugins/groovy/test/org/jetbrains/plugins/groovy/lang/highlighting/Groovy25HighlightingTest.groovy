@@ -5,6 +5,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -22,6 +23,11 @@ class Groovy25HighlightingTest extends LightGroovyTestCase implements Highlighti
 
   void 'test named params type check'() { highlightingTest() }
   void 'test named params type check with setter'() { highlightingTest() }
+
+  void 'test named params unused check'() {
+    fixture.enableInspections(new GroovyUnusedDeclarationInspection())
+    highlightingTest()
+  }
 
   void 'test named delegate without properties'() { highlightingTest() }
 

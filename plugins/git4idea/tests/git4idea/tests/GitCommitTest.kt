@@ -34,8 +34,10 @@ import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
+class GitStagingCommitTest : GitCommitTest(true)
+class GitWithOnlyCommitTest : GitCommitTest(false)
 
-open class GitCommitTest : GitSingleRepoTest() {
+abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRepoTest() {
   private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
@@ -46,6 +48,7 @@ open class GitCommitTest : GitSingleRepoTest() {
     val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
     point.registerExtension(myMovementProvider)
     Registry.get("git.allow.explicit.commit.renames").setValue(true)
+    Registry.get("git.force.commit.using.staging.area").setValue(useStagingArea)
 
     (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(true)
   }
@@ -55,6 +58,7 @@ open class GitCommitTest : GitSingleRepoTest() {
       val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
       point.unregisterExtension(myMovementProvider)
       Registry.get("git.allow.explicit.commit.renames").resetToDefault()
+      Registry.get("git.force.commit.using.staging.area").resetToDefault()
 
       (vcs.checkinEnvironment as GitCheckinEnvironment).setCommitRenamesSeparately(false)
     }
@@ -564,6 +568,37 @@ open class GitCommitTest : GitSingleRepoTest() {
     repo.assertCommitted {
       rename("a.txt", "b.txt")
     }
+  }
+
+  fun `test commit during unresolved merge conflict`() {
+    `assume version where git reset returns 0 exit code on success `()
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // "--only" shows dialog in this case
+
+    createFileStructure(projectRoot, "a.txt")
+    addCommit("created some file structure")
+
+    git("branch feature")
+
+    val file = File(projectPath, "a.txt")
+    assertTrue("File doesn't exist!", file.exists())
+    overwrite(file, "my content")
+    addCommit("modified in master")
+
+    checkout("feature")
+    overwrite(file, "brother content")
+    addCommit("modified in feature")
+
+    checkout("master")
+    git("merge feature", true) // ignoring non-zero exit-code reporting about conflicts
+
+    updateChangeListManager()
+    val changes = changeListManager.allChanges
+    assertTrue(!changes.isEmpty())
+
+    val exceptions = vcs.checkinEnvironment!!.commit(ArrayList(changes), "comment")
+    assertTrue(exceptions!!.isNotEmpty())
+
+    assertMessage("modified in master", repo.message("HEAD"))
   }
 
   private fun `assume version where git reset returns 0 exit code on success `() {

@@ -309,9 +309,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
       else {
-        JsonSchemaType type = jsonSchemaObject.getType();
+        String type = jsonSchemaObject.getTypeDescription(true);
         if (type != null) {
-          builder = builder.withTypeText(type.getDescription(), true);
+          builder = builder.withTypeText(type, true);
         }
       }
 
@@ -335,9 +335,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (type == null) return AllIcons.Nodes.Property;
       switch (type) {
         case _object:
-          return AllIcons.Json.Property_braces;
+          return AllIcons.Json.Object;
         case _array:
-          return AllIcons.Json.Property_brackets;
+          return AllIcons.Json.Array;
         default:
           return AllIcons.Nodes.Property;
       }

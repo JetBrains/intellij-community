@@ -46,7 +46,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   protected List<SliceNode> myCachedChildren;
   boolean dupNodeCalculated;
   protected SliceNode duplicate;
-  final DuplicateMap targetEqualUsages;
+  public final DuplicateMap targetEqualUsages;
   protected boolean changed;
   private int index; // my index in parent's mycachedchildren
 

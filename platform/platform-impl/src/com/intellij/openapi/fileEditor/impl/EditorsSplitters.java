@@ -231,11 +231,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         // clear empty splitters
         for (EditorWindow window : getWindows()) {
-          if (window.getEditors().length == 0) {
-            for (EditorWindow sibling : window.findSiblings()) {
-              sibling.unsplit(false);
-            }
-          }
+          if (window.getTabCount() == 0) window.removeFromSplitter();
         }
       });
     }

@@ -34,6 +34,6 @@ public class JavaFilesSearchScope extends GlobalSearchScope {
     if (file.isDirectory())
       return false;
     FileViewProvider viewProvider = myPsiManager.findViewProvider(file);
-    return viewProvider != null && viewProvider.getLanguages().contains(JavaLanguage.INSTANCE);
+    return viewProvider != null && viewProvider.hasLanguage(JavaLanguage.INSTANCE);
   }
 }

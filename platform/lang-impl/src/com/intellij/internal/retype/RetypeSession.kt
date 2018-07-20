@@ -116,7 +116,17 @@ class RetypeSession(
       typedChars++
       if (c == '\n') {
         column = 0   // line will be incremented in next loop
-        executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+
+        // Check if the next line was partially inserted with some insert handler (e.g. braces in java)
+        if (line + 1 < document.lineCount
+            && line + 1 < lines.size
+            && lines[line + 1].startsWith(getEditorLineText(line + 1))) {
+          // the caret will be moved right during the next position sync
+          executeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
+        }
+        else {
+          executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+        }
       }
       else {
         column++

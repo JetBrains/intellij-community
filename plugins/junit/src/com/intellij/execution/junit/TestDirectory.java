@@ -17,11 +17,14 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.TestClassCollector;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -38,10 +41,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 class TestDirectory extends TestPackage {
@@ -120,6 +126,33 @@ class TestDirectory extends TestPackage {
   @Override
   protected GlobalSearchScope filterScope(JUnitConfiguration.Data data) throws CantRunException {
     return GlobalSearchScope.allScope(getConfiguration().getProject());
+  }
+
+  @Override
+  protected JavaParameters createJavaParameters() throws ExecutionException {
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+      JavaParameters javaParameters = createDefaultJavaParameters();
+      createTempFiles(javaParameters);
+      String packageName = super.getPackageName(getConfiguration().getPersistentData());
+      try {
+        Path rootPath = getRootPath();
+        LOG.assertTrue(rootPath != null);
+        JUnitStarter
+          .printClassesList(Collections.singletonList("\u002B" + rootPath.toFile().getAbsolutePath()), packageName, "", packageName + ".*", myTempFile);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      return javaParameters;
+    }
+    return super.createJavaParameters();
+  }
+
+  @Override
+  public SearchForTestsTask createSearchingForTestsTask() {
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) return null;
+
+    return super.createSearchingForTestsTask();
   }
 
   @Override

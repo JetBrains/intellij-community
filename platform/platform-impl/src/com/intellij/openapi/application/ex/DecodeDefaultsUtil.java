@@ -36,14 +36,14 @@ public class DecodeDefaultsUtil {
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
     URL url = RESOURCE_CACHE.get(componentResourcePath);
     if (url == null) {
-      Class<?> requestorClass = requestor instanceof Class ? (Class<?>)requestor : requestor.getClass();
+      ClassLoader loader = requestor instanceof ClassLoader ? (ClassLoader)requestor : requestor.getClass().getClassLoader();
       if (StringUtil.startsWithChar(componentResourcePath, '/')) {
-        url = requestorClass.getResource(appendExt(componentResourcePath));
+        url = loader.getResource(appendExt(componentResourcePath));
       }
       else {
-        url = requestorClass.getResource(appendExt('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath));
+        url = loader.getResource(appendExt('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath));
         if (url == null) {
-          url = requestorClass.getResource(appendExt('/' + componentResourcePath));
+          url = loader.getResource(appendExt('/' + componentResourcePath));
         }
       }
       RESOURCE_CACHE.put(componentResourcePath, url);

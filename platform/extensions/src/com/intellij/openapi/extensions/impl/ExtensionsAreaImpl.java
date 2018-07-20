@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -170,7 +171,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
     }
     else {
-      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, true);
+      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, !JDOMUtil.isEmpty(extensionElement));
     }
     myPicoContainer.registerComponent(adapter);
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
@@ -182,7 +183,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     // has custom attributes
     for (Attribute attribute : extensionElement.getAttributes()) {
       final String name = attribute.getName();
-      if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name)) {
+      if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name) && !"os".equals(name)) {
         return true;
       }
     }

@@ -279,12 +279,10 @@ public class QuickEditHandler implements Disposable, DocumentListener {
         unsplit = true;
       }
     }
-    FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
     if (unsplit) {
-      for (EditorWindow editorWindow : mySplittedWindow.findSiblings()) {
-        editorWindow.unsplit(true);
-      }
+      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow, false);
     }
+    FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
   }
 
   public void initMarkers(Place shreds) {
