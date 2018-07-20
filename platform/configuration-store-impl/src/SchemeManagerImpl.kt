@@ -142,9 +142,6 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           LOG.warn("Duplicated scheme ${schemeKey} - old: $oldScheme, new $scheme")
         }
         schemes.add(scheme)
-        if (requestor is UITheme) {
-          requestor.editorSchemeName = schemeKey
-        }
       }
     }
     catch (e: ProcessCanceledException) {
