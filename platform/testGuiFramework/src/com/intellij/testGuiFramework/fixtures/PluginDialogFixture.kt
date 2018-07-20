@@ -1,31 +1,39 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures
 
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerConfigurableNew.CellPluginComponent
 import com.intellij.ide.plugins.PluginManagerConfigurableNew.TabHeaderComponent
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelButton
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.popupClick
 import com.intellij.testGuiFramework.impl.waitUntilFound
+import com.intellij.testGuiFramework.impl.waitUntilFoundList
 import com.intellij.ui.components.BasicOptionButtonUI.ArrowButton
 import com.intellij.ui.components.JBOptionButton
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.ContainerFixture
 import javax.swing.*
 import javax.swing.text.Position
 
 class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(robot, pluginDialog), ContainerFixture<JDialog> {
-  fun isPluginInstalled(pluginId: String): Boolean = PluginManager.isPluginInstalled(PluginId.getId(pluginId))
+  fun isPluginInstalled(pluginName: String): Boolean = findPluginsAppearedOnTheScreen().find { it.name == pluginName } != null
 
-  fun getPluginVersion(pluginId: String): String =
-    PluginManager.getPlugin(PluginId.getId(pluginId))?.version ?: throw IllegalArgumentException("Plugin ${pluginId} not found")
+  fun isPluginEnabled(pluginName: String): Boolean = findEnableDisableCheckBox(pluginName).isSelected
 
-  fun isPluginEnabled(pluginId: String): Boolean = !PluginManager.getDisabledPlugins().contains(pluginId)
+  fun enablePlugin(pluginName: String) {
+    if (!isPluginEnabled(pluginName)) robot().click(findEnableDisableCheckBox(pluginName))
+  }
+
+  fun disablePlugin(pluginName: String) {
+    if (isPluginEnabled(pluginName)) robot().click(findEnableDisableCheckBox(pluginName))
+  }
 
   fun showInstalledPlugins() {
     val tabHeader: TabHeaderComponent = findTabHeader()
@@ -53,20 +61,51 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
 
   fun cancel() = findAndClickCancelButton(this)
 
+  fun findPluginsAppearedOnTheScreen(): Iterable<IdeaPluginDescriptor> =
+    waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java, defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
+
+  private fun findEnableDisableCheckBox(pluginName: String) =
+    waitUntilFound(findCellPluginComponent(pluginName), JCheckBox::class.java, defaultTimeout) { true }
+
   private fun findTabHeader(): TabHeaderComponent =
     waitUntilFound(target(), TabHeaderComponent::class.java, defaultTimeout) { true }
 
-  private fun findPluginDetailsLink(pluginName: String): JLabel {
-    val pluginsCardPanel: ConfigurableCardPanel =
-      waitUntilFound(target(), ConfigurableCardPanel::class.java, defaultTimeout) { true }
-    return waitUntilFound(pluginsCardPanel, JLabel::class.java, defaultTimeout) { it.text == pluginName }
-  }
+  private fun findPluginCardsPanel(): ConfigurableCardPanel =
+    waitUntilFound(target(), ConfigurableCardPanel::class.java, defaultTimeout) { true }
+
+  private fun findCellPluginComponent(pluginName: String): CellPluginComponent =
+    waitUntilFound(findPluginCardsPanel(), CellPluginComponent::class.java, defaultTimeout) { it.isShowing && it.pluginDescriptor.name == pluginName }
+
+  private fun findPluginDetailsLink(pluginName: String): JLabel =
+    waitUntilFound(findCellPluginComponent(pluginName), JLabel::class.java, defaultTimeout) { it.text == pluginName }
 
   class PluginDetailsFixture(robot: Robot, dialog: JDialog): JDialogFixture(robot, dialog) {
 
-    fun disable() = robot().click(findEnableDisableButton("Disable"))
+    fun pluginVersion(): String =
+      waitUntilFound(target(), JTextField::class.java, defaultTimeout) { it.text.startsWith("v") || it.text == "bundled" }.text
 
-    fun enable() = robot().click(findEnableDisableButton("Enable"))
+    fun isPluginEnabled(): Boolean = findEnableDisableButton().text == "Disable"
+
+    fun isPluginInstalled(): Boolean {
+      val enableDisableButtonsCount: Int = robot().finder().findAll(GuiTestUtilKt.typeMatcher(JButton::class.java) {
+        it !is JBOptionButton && (it.text == "Disable" || it.text == "Enable")
+      }).size
+      return when (enableDisableButtonsCount) {
+        0 -> false
+        1 -> true
+        else -> throw ComponentLookupException("Found more than one enable-disable button")
+      }
+    }
+
+    fun disable() {
+      val enableDisableButton: JButton = findEnableDisableButton()
+      if (enableDisableButton.text == "Disable") robot().click(enableDisableButton)
+    }
+
+    fun enable() {
+      val enableDisableButton: JButton = findEnableDisableButton()
+      if (enableDisableButton.text == "Enable") robot().click(enableDisableButton)
+    }
 
     fun uninstall() {
       val arrowButton: ArrowButton = waitUntilFound(target(), ArrowButton::class.java, defaultTimeout) { true }
@@ -83,8 +122,8 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
       robot().click(backButton)
     }
 
-    private fun findEnableDisableButton(text: String): JButton =
-      waitUntilFound(target(), JButton::class.java, defaultTimeout) { it !is JBOptionButton && it.text == text }
+    private fun findEnableDisableButton(): JButton =
+      waitUntilFound(target(), JButton::class.java, defaultTimeout) { it !is JBOptionButton && (it.text == "Enable" || it.text == "Disable") }
 
     private fun getUninstallItemIndex(list: JList<*>): Int = list.getNextMatch("Uninstall", 0, Position.Bias.Forward)
   }
