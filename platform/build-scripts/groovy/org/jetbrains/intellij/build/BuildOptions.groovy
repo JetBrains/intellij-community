@@ -81,7 +81,7 @@ class BuildOptions {
   /**
    * If {@code true} the project modules will be compiled incrementally
    */
-  boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
+  boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", true)
 
   /**
    * By default some build steps are executed in parallel threads. Set this property to {@code false} to disable this.
