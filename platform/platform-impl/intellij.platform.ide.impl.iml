@@ -48,7 +48,7 @@
     <orderEntry type="library" exported="" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="RUNTIME" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="org.apache.httpcomponents:fluent-hc" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
