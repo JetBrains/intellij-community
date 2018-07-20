@@ -460,6 +460,16 @@ public class EditorTestUtil {
     });
   }
 
+  public static Inlay addBlockInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addBlockElement(offset, false, false, 0, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Editor editor) { return 0; }
+
+      @Override
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
+    });
+  }
+
   public static void waitForLoading(Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (editor == null) return;
