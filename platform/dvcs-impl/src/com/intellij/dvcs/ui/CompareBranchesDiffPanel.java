@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.ui.branch;
+package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.branch.DvcsCompareSettings;
+import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.dvcs.util.CommitCompareInfo;
+import com.intellij.dvcs.util.LocalCommitCompareInfo;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
@@ -22,78 +26,58 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
-import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.HorizontalLayout;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandler;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import git4idea.util.GitCommitCompareInfo;
-import git4idea.util.GitFileUtils;
-import git4idea.util.GitLocalCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
 /**
  * @author Kirill Likhodedov
  */
-class GitCompareBranchesDiffPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance(GitCompareBranchesDiffPanel.class);
-
+class CompareBranchesDiffPanel extends JPanel {
+  private final CompareBranchesHelper myHelper;
   private final String myBranchName;
   private final Project myProject;
   private final String myCurrentBranchName;
-  private final GitCommitCompareInfo myCompareInfo;
-  private final GitVcsSettings myVcsSettings;
+  private final CommitCompareInfo myCompareInfo;
+  private final DvcsCompareSettings myVcsSettings;
 
   private final JBLabel myLabel;
   private final MyChangesBrowser myChangesBrowser;
 
-  public GitCompareBranchesDiffPanel(Project project, String branchName, String currentBranchName, GitCommitCompareInfo compareInfo) {
-    myProject = project;
+  public CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
+    myHelper = helper;
+    myProject = helper.getProject();
     myCurrentBranchName = currentBranchName;
     myCompareInfo = compareInfo;
     myBranchName = branchName;
-    myVcsSettings = GitVcsSettings.getInstance(project);
+    myVcsSettings = helper.getDvcsCompareSettings();
 
     myLabel = new JBLabel();
-    myChangesBrowser = new MyChangesBrowser(project, emptyList());
+    myChangesBrowser = new MyChangesBrowser(helper.getProject(), emptyList());
 
     HyperlinkLabel swapSidesLabel = new HyperlinkLabel("Swap branches");
     swapSidesLabel.addHyperlinkListener(new HyperlinkAdapter() {
@@ -176,7 +160,7 @@ class GitCompareBranchesDiffPanel extends JPanel {
     @Override
     public void update(AnActionEvent e) {
       boolean isEnabled = !myChangesBrowser.getSelectedChanges().isEmpty();
-      boolean isVisible = myCompareInfo instanceof GitLocalCommitCompareInfo;
+      boolean isVisible = myCompareInfo instanceof LocalCommitCompareInfo;
       e.getPresentation().setEnabled(isEnabled && isVisible);
       e.getPresentation().setVisible(isVisible);
     }
@@ -196,63 +180,9 @@ class GitCompareBranchesDiffPanel extends JPanel {
       new Task.Modal(myProject, "Loading Content from Branch", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myProject);
-          MultiMap<GitRepository, FilePath> toCheckout = MultiMap.createSet();
-          MultiMap<GitRepository, FilePath> toDelete = MultiMap.createSet();
-
-          for (Change change : changes) {
-            FilePath currentPath = swapSides ? ChangesUtil.getAfterPath(change) : ChangesUtil.getBeforePath(change);
-            FilePath branchPath = !swapSides ? ChangesUtil.getAfterPath(change) : ChangesUtil.getBeforePath(change);
-            assert currentPath != null || branchPath != null;
-
-            GitRepository repository = repositoryManager.getRepositoryForFile(ObjectUtils.chooseNotNull(currentPath, branchPath));
-            if (currentPath != null && branchPath != null) {
-              if (Comparing.equal(currentPath, branchPath)) {
-                toCheckout.putValue(repository, branchPath);
-              }
-              else {
-                toDelete.putValue(repository, currentPath);
-                toCheckout.putValue(repository, branchPath);
-              }
-            }
-            else if (currentPath != null) {
-              toDelete.putValue(repository, currentPath);
-            }
-            else {
-              toCheckout.putValue(repository, branchPath);
-            }
-          }
-
+          RepositoryManager repositoryManager = myHelper.getRepositoryManager();
           try {
-            for (Map.Entry<GitRepository, Collection<FilePath>> entry : toDelete.entrySet()) {
-              GitRepository repository = entry.getKey();
-              Collection<FilePath> rootPaths = entry.getValue();
-              VirtualFile root = repository.getRoot();
-
-              GitFileUtils.delete(myProject, root, rootPaths);
-            }
-
-            for (Map.Entry<GitRepository, Collection<FilePath>> entry : toCheckout.entrySet()) {
-              GitRepository repository = entry.getKey();
-              Collection<FilePath> rootPaths = entry.getValue();
-              VirtualFile root = repository.getRoot();
-
-              for (List<String> paths : VcsFileUtil.chunkPaths(root, rootPaths)) {
-                GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
-                handler.addParameters(myBranchName);
-                handler.endOptions();
-                handler.addParameters(paths);
-                GitCommandResult result = Git.getInstance().runCommand(handler);
-                result.getOutputOrThrow();
-              }
-
-              GitFileUtils.addPaths(myProject, root, rootPaths);
-            }
-
-            RefreshVFsSynchronously.updateChanges(changes);
-            VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(changes), null);
-
-            ((GitLocalCommitCompareInfo)myCompareInfo).reloadTotalDiff();
+            ((LocalCommitCompareInfo) myCompareInfo).reloadContentFromBranch(myProject, myBranchName, changes, swapSides, repositoryManager);
           }
           catch (VcsException err) {
             ApplicationManager.getApplication().invokeLater(() -> {

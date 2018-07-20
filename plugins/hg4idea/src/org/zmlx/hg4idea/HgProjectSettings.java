@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.branch.DvcsBranchSettings;
+import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
   name = "hg4idea.settings",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings {
+public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings, DvcsCompareSettings {
 
   @NotNull private final Project myProject;
 
@@ -46,6 +47,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myIgnoreWhitespacesInAnnotations = true;
     public String RECENT_HG_ROOT_PATH = null;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
+    public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
     
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
@@ -108,8 +110,18 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     return myState.ROOT_SYNC;
   }
 
+  @Override
   public void setSyncSetting(@NotNull Value syncSetting) {
     myState.ROOT_SYNC = syncSetting;
+  }
+
+  @Override
+  public boolean shouldSwapSidesInCompareBranches() {
+    return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
+  }
+
+  public void setSwapSidesInCompareBranches(boolean value) {
+    myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
   }
 
   public boolean isWhitespacesIgnoredInAnnotations() {

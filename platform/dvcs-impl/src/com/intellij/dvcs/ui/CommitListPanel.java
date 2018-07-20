@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.ui;
+package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,8 +31,8 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsUserUtil;
-import git4idea.GitCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,12 +49,12 @@ import java.util.ListIterator;
  *
  * @author Kirill Likhodedov
  */
-public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
+public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel implements TypeSafeDataProvider {
 
-  private final List<GitCommit> myCommits;
-  private final TableView<GitCommit> myTable;
+  private final List<COMMIT> myCommits;
+  private final TableView<COMMIT> myTable;
 
-  public GitCommitListPanel(@NotNull List<GitCommit> commits, @Nullable String emptyText) {
+  public CommitListPanel(@NotNull List<COMMIT> commits, @Nullable String emptyText) {
     myCommits = commits;
 
     myTable = new TableView<>();
@@ -72,7 +72,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   /**
    * Adds a listener that would be called once user selects a commit in the table.
    */
-  public void addListSelectionListener(final @NotNull Consumer<GitCommit> listener) {
+  public void addListSelectionListener(final @NotNull Consumer<COMMIT> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         ListSelectionModel lsm = (ListSelectionModel)e.getSource();
@@ -88,11 +88,11 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   public void addListMultipleSelectionListener(final @NotNull Consumer<List<Change>> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        List<GitCommit> commits = myTable.getSelectedObjects();
+        List<COMMIT> commits = myTable.getSelectedObjects();
 
         final List<Change> changes = new ArrayList<>();
         // We need changes in asc order for zipChanges, and they are in desc order in Table
-        ListIterator<GitCommit> iterator = commits.listIterator(commits.size());
+        ListIterator<COMMIT> iterator = commits.listIterator(commits.size());
         while (iterator.hasPrevious()) {
           changes.addAll(iterator.previous().getChanges());
         }
@@ -117,10 +117,10 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
       if (rows.length != 1) return;
       int row = rows[0];
 
-      GitCommit gitCommit = myCommits.get(row);
+      COMMIT commit = myCommits.get(row);
       // suppressing: inherited API
       //noinspection unchecked
-      sink.put(key, ArrayUtil.toObjectArray(gitCommit.getChanges(), Change.class));
+      sink.put(key, ArrayUtil.toObjectArray(commit.getChanges(), Change.class));
     }
   }
 
@@ -133,7 +133,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
     myTable.clearSelection();
   }
 
-  public void setCommits(@NotNull List<GitCommit> commits) {
+  public void setCommits(@NotNull List<COMMIT> commits) {
     myCommits.clear();
     myCommits.addAll(commits);
     updateModel();
@@ -145,41 +145,41 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   @NotNull
-  private ColumnInfo[] generateColumnsInfo(@NotNull List<GitCommit> commits) {
+  private ColumnInfo[] generateColumnsInfo(@NotNull List<? extends COMMIT> commits) {
     ItemAndWidth hash = new ItemAndWidth("", 0);
     ItemAndWidth author = new ItemAndWidth("", 0);
     ItemAndWidth time = new ItemAndWidth("", 0);
-    for (GitCommit commit : commits) {
+    for (COMMIT commit : commits) {
       hash = getMax(hash, getHash(commit));
       author = getMax(author, getAuthor(commit));
       time = getMax(time, getTime(commit));
     }
 
     return new ColumnInfo[] {
-    new GitCommitColumnInfo("Hash", hash.myItem) {
-      @Override
-      public String valueOf(GitCommit commit) {
-        return getHash(commit);
+      new CommitColumnInfo("Hash", hash.myItem) {
+        @Override
+        public String valueOf(VcsFullCommitDetails commit) {
+          return getHash(commit);
+        }
+      },
+      new ColumnInfo<COMMIT, String>("Subject") {
+        @Override
+        public String valueOf(VcsFullCommitDetails commit) {
+          return commit.getSubject();
+        }
+      },
+      new CommitColumnInfo("Author", author.myItem) {
+        @Override
+        public String valueOf(VcsFullCommitDetails commit) {
+          return getAuthor(commit);
+        }
+      },
+      new CommitColumnInfo("Author time", time.myItem) {
+        @Override
+        public String valueOf(VcsFullCommitDetails commit) {
+          return getTime(commit);
+        }
       }
-    },
-    new ColumnInfo<GitCommit, String>("Subject") {
-      @Override
-      public String valueOf(GitCommit commit) {
-        return commit.getSubject();
-      }
-    },
-    new GitCommitColumnInfo("Author", author.myItem) {
-      @Override
-      public String valueOf(GitCommit commit) {
-        return getAuthor(commit);
-      }
-    },
-    new GitCommitColumnInfo("Author time", time.myItem) {
-      @Override
-      public String valueOf(GitCommit commit) {
-        return getTime(commit);
-      }
-    }
     };
   }
 
@@ -201,23 +201,23 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private static String getHash(GitCommit commit) {
+  private static String getHash(VcsFullCommitDetails commit) {
     return DvcsUtil.getShortHash(commit.getId().toString());
   }
 
-  private static String getAuthor(GitCommit commit) {
+  private static String getAuthor(VcsFullCommitDetails commit) {
     return VcsUserUtil.getShortPresentation(commit.getAuthor());
   }
 
-  private static String getTime(GitCommit commit) {
+  private static String getTime(VcsFullCommitDetails commit) {
     return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
   }
 
-  private abstract static class GitCommitColumnInfo extends ColumnInfo<GitCommit, String> {
+  private abstract static class CommitColumnInfo extends ColumnInfo<VcsFullCommitDetails, String> {
 
     @NotNull private final String myMaxString;
 
-    public GitCommitColumnInfo(@NotNull String name, @NotNull String maxString) {
+    public CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
       super(name);
       myMaxString = maxString;
     }
