@@ -104,15 +104,17 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   public static void imitateEvent(VirtualFile dir) {
-    final VirtualFile child = notNull(dir.findChild(".svn"));
-    final VirtualFile wcdb = notNull(child.findChild("wc.db"));
-    final BulkFileListener listener = getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-    final VFileContentChangeEvent event =
-      new VFileContentChangeEvent(null, wcdb, wcdb.getModificationStamp() - 1, wcdb.getModificationStamp(), true);
-    final List<VFileContentChangeEvent> events = singletonList(event);
+    runInEdtAndWait(() -> {
+      final VirtualFile child = notNull(dir.findChild(".svn"));
+      final VirtualFile wcdb = notNull(child.findChild("wc.db"));
+      final BulkFileListener listener = getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+      final VFileContentChangeEvent event =
+        new VFileContentChangeEvent(null, wcdb, wcdb.getModificationStamp() - 1, wcdb.getModificationStamp(), true);
+      final List<VFileContentChangeEvent> events = singletonList(event);
 
-    listener.before(events);
-    listener.after(events);
+      listener.before(events);
+      listener.after(events);
+    });
   }
 
   @NotNull
