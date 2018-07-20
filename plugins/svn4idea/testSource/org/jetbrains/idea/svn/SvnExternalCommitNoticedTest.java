@@ -97,9 +97,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     final String branchUrl = prepareBranchesStructure();
     final SubTree tree = new SubTree(myWorkingCopyDir);
 
-    vcs.invokeRefreshSvnRoots();
-    changeListManager.ensureUpToDate(false);
-    changeListManager.ensureUpToDate(false);
+    refreshSvnMappingsSynchronously();
     SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
     List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(1, infos.size());
@@ -108,11 +106,8 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl, myWorkingCopyDir.getPath());
 
     refreshVfs();
-    imitateEvent(myWorkingCopyDir);
-    sleep(300);
-    // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
-    changeListManager.ensureUpToDate(false);  //first run queries one more update
+    vcs.getCopiesRefreshManager().waitCurrentRequest();
 
     workingCopies = vcs.getSvnFileUrlMapping();
     infos = workingCopies.getAllWcInfos();
