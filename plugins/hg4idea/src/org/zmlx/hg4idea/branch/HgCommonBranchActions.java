@@ -126,6 +126,8 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
       HgRepository repository = myRepositories.get(0);
       new HgBrancher(myProject).compare(myBranchName, myRepositories, repository);
     }
