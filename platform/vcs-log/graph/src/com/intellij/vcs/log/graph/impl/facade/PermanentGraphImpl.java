@@ -35,10 +35,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
@@ -149,17 +146,20 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   @Override
   public List<GraphCommit<CommitId>> getAllCommits() {
-    List<GraphCommit<CommitId>> result = ContainerUtil.newArrayList();
-    for (int index = 0; index < myPermanentLinearGraph.nodesCount(); index++) {
-      CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
-      List<Integer> downNodes = LinearGraphUtils.getDownNodesIncludeNotLoad(myPermanentLinearGraph, index);
-      List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(downNodes);
-      GraphCommit<CommitId> graphCommit =
-        GraphCommitImpl.createCommit(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
-      result.add(graphCommit);
-    }
+    return new AbstractList<GraphCommit<CommitId>>() {
+      @Override
+      public GraphCommit<CommitId> get(int index) {
+        CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
+        List<Integer> downNodes = LinearGraphUtils.getDownNodesIncludeNotLoad(myPermanentLinearGraph, index);
+        List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(downNodes);
+        return GraphCommitImpl.createCommit(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
+      }
 
-    return result;
+      @Override
+      public int size() {
+        return myPermanentLinearGraph.nodesCount();
+      }
+    };
   }
 
   @NotNull
