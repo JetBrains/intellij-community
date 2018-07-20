@@ -41,6 +41,8 @@ public class PtyCommandLine extends GeneralCommandLine {
   private static final String WIN_PTY_COLUMNS = "win.pty.cols";
   private static final String WIN_PTY_ROWS = "win.pty.rows";
 
+  public static final int MAX_COLUMNS = 2500;
+
   public static boolean isEnabled() {
     return Registry.is(RUN_PROCESSES_WITH_PTY);
   }
