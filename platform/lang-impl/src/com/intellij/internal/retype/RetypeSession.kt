@@ -9,8 +9,9 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
+import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
-import com.intellij.internal.performance.latencyMap
+import com.intellij.internal.performance.currentLatencyRecordKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.util.Alarm
 
 class RetypeSession(
@@ -47,21 +49,29 @@ class RetypeSession(
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private var needSyncPosition = false
   private var editorLineBeforeAcceptingLookup = -1
+  var startNextCallback: (() -> Unit)? = null
 
   val currentLineText get() = lines[line]
 
   fun start() {
-    latencyMap.clear()
+    editor.putUserData(RETYPE_SESSION_KEY, this)
+    val vFile = FileDocumentManager.getInstance().getFile(document)
+    val keyName = "${vFile?.name ?: "Unknown file"} (${document.textLength} chars)"
+    currentLatencyRecordKey = LatencyDistributionRecordKey(keyName)
     WriteCommandAction.runWriteCommandAction(project) { document.deleteString(0, document.textLength) }
     CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     queueNext()
   }
 
-  fun stop() {
+  fun stop(startNext: Boolean) {
     WriteCommandAction.runWriteCommandAction(project) { document.replaceString(0, document.textLength, originalText) }
     Disposer.dispose(this)
     editor.putUserData(RETYPE_SESSION_KEY, null)
     CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = oldSelectAutopopup
+    currentLatencyRecordKey = null
+    if (startNext) {
+      startNextCallback?.invoke()
+    }
   }
 
   override fun dispose() {
@@ -137,7 +147,7 @@ class RetypeSession(
       queueNext()
     }
     else {
-      stop()
+      stop(true)
 
       val message = buildString {
         val file = FileDocumentManager.getInstance().getFile(document)
@@ -148,7 +158,9 @@ class RetypeSession(
         append("Typed $typedChars chars, completed $completedChars chars, backtracked $backtrackedChars chars")
       }
 
-      TypingLatencyReportDialog(project, message, threadDumps).show()
+      if (startNextCallback == null) {
+        TypingLatencyReportDialog(project, message, threadDumps).show()
+      }
     }
   }
 
@@ -168,7 +180,7 @@ class RetypeSession(
     if (prevLine.trimEnd() != currentLineText.trimEnd()) {
       Messages.showErrorDialog(project, "Text has diverged. Expected:\n$currentLineText\nActual:\n$prevLine",
                                "Retype File")
-      stop()
+      stop(false)
       return true
     }
     return false
@@ -229,3 +241,5 @@ class RetypeSession(
     val LOG = Logger.getInstance("#com.intellij.internal.retype.RetypeSession")
   }
 }
+
+val RETYPE_SESSION_KEY = Key.create<RetypeSession>("com.intellij.internal.retype.RetypeSession")

@@ -67,7 +67,7 @@ class TypingLatencyReportDialog(
 
   private fun createReportTree(): JBScrollPane {
     val root = DefaultMutableTreeNode()
-    for (row in latencyMap.values.sortedBy { it.fileType.name }) {
+    for (row in latencyMap.values.sortedBy { it.key.name }) {
       val rowNode = DefaultMutableTreeNode(row)
       root.add(rowNode)
       for (actionLatencyRecord in row.actionLatencyRecords.entries.sortedByDescending { it.value.averageLatency }) {
@@ -86,9 +86,8 @@ class TypingLatencyReportDialog(
                                          hasFocus: Boolean) {
         if (value == null) return
         val obj = (value as DefaultMutableTreeNode).userObject
-        if (obj is FileTypeLatencyRecord) {
-          icon = obj.fileType.icon
-          append(formatLatency(obj.fileType.name, obj.totalLatency))
+        if (obj is LatencyDistributionRecord) {
+          append(formatLatency(obj.key.name, obj.totalLatency))
         }
         else if (obj is Pair<*, *>) {
           val pair = obj as Pair<String, LatencyRecord>
@@ -146,8 +145,8 @@ class TypingLatencyReportDialog(
       if (message.isNotEmpty()) {
         append(message)
       }
-      for (row in latencyMap.values.sortedBy { it.fileType.name }) {
-        appendln(formatLatency(row.fileType.name, row.totalLatency))
+      for (row in latencyMap.values.sortedBy { it.key.name }) {
+        appendln(formatLatency(row.key.name, row.totalLatency))
         appendln("Actions:")
         for (actionLatencyRecord in row.actionLatencyRecords.entries.sortedByDescending { it.value.averageLatency }) {
           appendln("  ${formatLatency(actionLatencyRecord.key, actionLatencyRecord.value)}")

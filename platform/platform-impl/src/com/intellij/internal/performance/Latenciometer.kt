@@ -1,13 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.performance
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileType
 
 /**
  * @author yole
@@ -35,7 +32,9 @@ class LatencyRecord {
   val averageLatency: Long get() = totalLatency / totalKeysTyped
 }
 
-class FileTypeLatencyRecord(val fileType: FileType) {
+data class LatencyDistributionRecordKey(val name: String)
+
+class LatencyDistributionRecord(val key: LatencyDistributionRecordKey) {
   val totalLatency: LatencyRecord = LatencyRecord()
   val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf<String, LatencyRecord>()
 
@@ -45,12 +44,17 @@ class FileTypeLatencyRecord(val fileType: FileType) {
   }
 }
 
-val latencyMap: MutableMap<FileType, FileTypeLatencyRecord> = mutableMapOf()
+val latencyMap: MutableMap<LatencyDistributionRecordKey, LatencyDistributionRecord> = mutableMapOf()
+
+var currentLatencyRecordKey: LatencyDistributionRecordKey? = null
 
 fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
-  val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
-  val latencyRecord = latencyMap.getOrPut(fileType) {
-    FileTypeLatencyRecord(fileType)
+  val key = currentLatencyRecordKey ?: run {
+    val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
+    LatencyDistributionRecordKey(fileType.name)
+  }
+  val latencyRecord = latencyMap.getOrPut(key) {
+    LatencyDistributionRecord(key)
   }
   latencyRecord.update(getActionKey(action), latencyInMS)
 }
