@@ -36,8 +36,7 @@ public class UITheme {
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
-  private ClassLoader providerClassLoader = getClass().getClassLoader();
-  private String editorSchemeName;
+  private ClassLoader providerClassLoader;
 
   private UITheme() {
   }
@@ -96,7 +95,6 @@ public class UITheme {
     return patcher;
   }
 
-  @NotNull
   public ClassLoader getProviderClassLoader() {
     return providerClassLoader;
   }
@@ -204,14 +202,6 @@ public class UITheme {
   private static Dimension parseSize(String value) {
     final List<String> numbers = StringUtil.split(value, ",");
     return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
-  }
-
-  public String getEditorSchemeName() {
-    return editorSchemeName;
-  }
-
-  public void setEditorSchemeName(String editorSchemeName) {
-    this.editorSchemeName = editorSchemeName;
   }
 
   //
