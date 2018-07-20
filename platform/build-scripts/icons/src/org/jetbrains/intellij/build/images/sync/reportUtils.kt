@@ -44,19 +44,19 @@ internal fun report(
   log(report)
   if (doNotify) {
     val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
-    sendNotification(success, report)
+    sendNotification(success)
     if (!success) errorHandler.accept(report)
   }
 }
 
-private fun sendNotification(isSuccess: Boolean, report: String) {
+private fun sendNotification(isSuccess: Boolean) {
   if (BUILD_SERVER == null) {
     log("TeamCity url is unknown: unable to query last build status and send Slack channel notification")
   }
   else {
     callSafely {
       if (isNotificationRequired(isSuccess)) {
-        notifySlackChannel(isSuccess, report)
+        notifySlackChannel(isSuccess)
       }
     }
   }
@@ -91,10 +91,10 @@ private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel"
 private val BUILD_ID = System.getProperty("teamcity.build.id")
 private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 
-private fun notifySlackChannel(isSuccess: Boolean, report: String) {
+private fun notifySlackChannel(isSuccess: Boolean) {
   HttpClients.createDefault().use {
     val text = "*${System.getProperty("teamcity.buildConfName")}* " +
-               (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n$report\n" +
+               (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" +
                (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
                "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
     val post = HttpPost(CHANNEL_WEB_HOOK)
