@@ -126,10 +126,8 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      HgRepository myRepository = chooseRepository(myRepositories);
-      if (myRepository != null) {
-        new HgBrancher(myProject).compare(myBranchName, myRepositories, myRepository);
-      }
+      HgRepository repository = myRepositories.get(0);
+      new HgBrancher(myProject).compare(myBranchName, myRepositories, repository);
     }
   }
 }
