@@ -32,7 +32,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -45,8 +45,8 @@ class CompareBranchesLogPanel extends JPanel {
   private final CommitCompareInfo myCompareInfo;
   private final Repository myInitialRepo;
 
-  private CommitListPanel<VcsFullCommitDetails> myHeadToBranchListPanel;
-  private CommitListPanel<VcsFullCommitDetails> myBranchToHeadListPanel;
+  private CommitListPanel myHeadToBranchListPanel;
+  private CommitListPanel myBranchToHeadListPanel;
 
   public CompareBranchesLogPanel(@NotNull CompareBranchesHelper helper, @NotNull String branchName, @NotNull String currentBranchName,
                                  @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
@@ -64,10 +64,10 @@ class CompareBranchesLogPanel extends JPanel {
   private JComponent createCenterPanel() {
     final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(myHelper.getProject(), false, true);
 
-    myHeadToBranchListPanel = new CommitListPanel<>(getHeadToBranchCommits(myInitialRepo),
-                                                    String.format("Branch %s is fully merged to %s", myBranchName, myCurrentBranchName));
-    myBranchToHeadListPanel = new CommitListPanel<>(getBranchToHeadCommits(myInitialRepo),
-                                                    String.format("Branch %s is fully merged to %s", myCurrentBranchName, myBranchName));
+    myHeadToBranchListPanel = new CommitListPanel(getHeadToBranchCommits(myInitialRepo),
+                                                  String.format("Branch %s is fully merged to %s", myBranchName, myCurrentBranchName));
+    myBranchToHeadListPanel = new CommitListPanel(getBranchToHeadCommits(myInitialRepo),
+                                                  String.format("Branch %s is fully merged to %s", myCurrentBranchName, myBranchName));
 
     addSelectionListener(myHeadToBranchListPanel, myBranchToHeadListPanel, changesBrowser);
     addSelectionListener(myBranchToHeadListPanel, myHeadToBranchListPanel, changesBrowser);
@@ -126,19 +126,19 @@ class CompareBranchesLogPanel extends JPanel {
     return repoSelectorPanel;
   }
 
-  private ArrayList<VcsFullCommitDetails> getBranchToHeadCommits(Repository selectedRepo) {
-    return new ArrayList<>(myCompareInfo.getBranchToHeadCommits(selectedRepo));
+  private List<VcsFullCommitDetails> getBranchToHeadCommits(Repository selectedRepo) {
+    return myCompareInfo.getBranchToHeadCommits(selectedRepo);
   }
 
-  private ArrayList<VcsFullCommitDetails> getHeadToBranchCommits(Repository selectedRepo) {
-    return new ArrayList<>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
+  private List<VcsFullCommitDetails> getHeadToBranchCommits(Repository selectedRepo) {
+    return myCompareInfo.getHeadToBranchCommits(selectedRepo);
   }
 
   private CommitCompareInfo.InfoType getInfoType() {
     return myCompareInfo.getInfoType();
   }
 
-  private static void addSelectionListener(@NotNull CommitListPanel<VcsFullCommitDetails> sourcePanel,
+  private static void addSelectionListener(@NotNull CommitListPanel sourcePanel,
                                            @NotNull final CommitListPanel otherPanel,
                                            @NotNull final SimpleChangesBrowser changesBrowser) {
     sourcePanel.addListMultipleSelectionListener(changes -> {

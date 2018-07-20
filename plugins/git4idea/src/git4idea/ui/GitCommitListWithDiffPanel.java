@@ -37,12 +37,12 @@ import java.util.List;
 public class GitCommitListWithDiffPanel extends JPanel {
 
   private final SimpleChangesBrowser myChangesBrowser;
-  private final CommitListPanel<GitCommit> myCommitListPanel;
+  private final CommitListPanel myCommitListPanel;
 
   public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
     super(new BorderLayout());
 
-    myCommitListPanel = new CommitListPanel<>(commits, null);
+    myCommitListPanel = new CommitListPanel(commits, null);
     myCommitListPanel.addListMultipleSelectionListener(new Consumer<List<Change>>() {
       @Override
       public void consume(List<Change> changes) {

@@ -49,13 +49,13 @@ import java.util.ListIterator;
  *
  * @author Kirill Likhodedov
  */
-public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel implements TypeSafeDataProvider {
+public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
 
-  private final List<COMMIT> myCommits;
-  private final TableView<COMMIT> myTable;
+  private final List<VcsFullCommitDetails> myCommits;
+  private final TableView<VcsFullCommitDetails> myTable;
 
-  public CommitListPanel(@NotNull List<COMMIT> commits, @Nullable String emptyText) {
-    myCommits = commits;
+  public CommitListPanel(@NotNull List<? extends VcsFullCommitDetails> commits, @Nullable String emptyText) {
+    myCommits = new ArrayList<>(commits);
 
     myTable = new TableView<>();
     updateModel();
@@ -72,7 +72,7 @@ public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel
   /**
    * Adds a listener that would be called once user selects a commit in the table.
    */
-  public void addListSelectionListener(final @NotNull Consumer<COMMIT> listener) {
+  public void addListSelectionListener(final @NotNull Consumer<VcsFullCommitDetails> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         ListSelectionModel lsm = (ListSelectionModel)e.getSource();
@@ -88,11 +88,11 @@ public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel
   public void addListMultipleSelectionListener(final @NotNull Consumer<List<Change>> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        List<COMMIT> commits = myTable.getSelectedObjects();
+        List<VcsFullCommitDetails> commits = myTable.getSelectedObjects();
 
         final List<Change> changes = new ArrayList<>();
         // We need changes in asc order for zipChanges, and they are in desc order in Table
-        ListIterator<COMMIT> iterator = commits.listIterator(commits.size());
+        ListIterator<VcsFullCommitDetails> iterator = commits.listIterator(commits.size());
         while (iterator.hasPrevious()) {
           changes.addAll(iterator.previous().getChanges());
         }
@@ -117,7 +117,7 @@ public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel
       if (rows.length != 1) return;
       int row = rows[0];
 
-      COMMIT commit = myCommits.get(row);
+      VcsFullCommitDetails commit = myCommits.get(row);
       // suppressing: inherited API
       //noinspection unchecked
       sink.put(key, ArrayUtil.toObjectArray(commit.getChanges(), Change.class));
@@ -133,7 +133,7 @@ public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel
     myTable.clearSelection();
   }
 
-  public void setCommits(@NotNull List<COMMIT> commits) {
+  public void setCommits(@NotNull List<? extends VcsFullCommitDetails> commits) {
     myCommits.clear();
     myCommits.addAll(commits);
     updateModel();
@@ -145,11 +145,11 @@ public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel
   }
 
   @NotNull
-  private ColumnInfo[] generateColumnsInfo(@NotNull List<? extends COMMIT> commits) {
+  private ColumnInfo[] generateColumnsInfo(@NotNull List<? extends VcsFullCommitDetails> commits) {
     ItemAndWidth hash = new ItemAndWidth("", 0);
     ItemAndWidth author = new ItemAndWidth("", 0);
     ItemAndWidth time = new ItemAndWidth("", 0);
-    for (COMMIT commit : commits) {
+    for (VcsFullCommitDetails commit : commits) {
       hash = getMax(hash, getHash(commit));
       author = getMax(author, getAuthor(commit));
       time = getMax(time, getTime(commit));
@@ -162,7 +162,7 @@ public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel
           return getHash(commit);
         }
       },
-      new ColumnInfo<COMMIT, String>("Subject") {
+      new ColumnInfo<VcsFullCommitDetails, String>("Subject") {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return commit.getSubject();
