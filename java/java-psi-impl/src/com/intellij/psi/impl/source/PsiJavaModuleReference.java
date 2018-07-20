@@ -16,6 +16,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +99,22 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
 
   private static final Key<CachedValue<Collection<PsiJavaModule>>> K_COMPLETE = Key.create("java.module.ref.text.resolve.complete");
   private static final Key<CachedValue<Collection<PsiJavaModule>>> K_INCOMPLETE = Key.create("java.module.ref.text.resolve.incomplete");
+
+  @Nullable
+  @Contract("null -> null")
+  public static PsiJavaModule resolve(@Nullable PsiJavaModuleReferenceElement refElement) {
+    if (refElement != null) {
+      PsiPolyVariantReference ref = refElement.getReference();
+      if (ref != null) {
+        PsiElement result = ref.resolve();
+        if (result instanceof PsiJavaModule) {
+          return (PsiJavaModule)result;
+        }
+      }
+    }
+
+    return null;
+  }
 
   @Nullable
   public static PsiJavaModule resolve(@NotNull PsiElement refOwner, String refText, boolean incompleteCode) {
