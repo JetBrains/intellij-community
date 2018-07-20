@@ -52,20 +52,52 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   public PtyCommandLine() { }
 
+  /**
+   * @deprecated use {@link #withUseCygwinLaunch(boolean)}
+   */
   public void setUseCygwinLaunch(boolean useCygwinLaunch) {
-    myUseCygwinLaunch = useCygwinLaunch;
+    withUseCygwinLaunch(useCygwinLaunch);
   }
 
+  /**
+   * @deprecated use {@link #withConsoleMode(boolean)}
+   */
   public void setConsoleMode(boolean consoleMode) {
-    myConsoleMode = consoleMode;
+    withConsoleMode(consoleMode);
   }
 
+  /**
+   * @deprecated use {@link #withInitialColumns(int)}
+   */
   public void setInitialColumns(int initialColumns) {
-    myInitialColumns = initialColumns;
+    withInitialColumns(initialColumns);
   }
 
+  /**
+   * @deprecated use {@link #withInitialRows(int)}
+   */
   public void setInitialRows(int initialRows) {
+    withInitialRows(initialRows);
+  }
+
+  public PtyCommandLine withUseCygwinLaunch(boolean useCygwinLaunch) {
+    myUseCygwinLaunch = useCygwinLaunch;
+    return this;
+  }
+
+  public PtyCommandLine withConsoleMode(boolean consoleMode) {
+    myConsoleMode = consoleMode;
+    return this;
+  }
+
+  public PtyCommandLine withInitialColumns(int initialColumns) {
+    myInitialColumns = initialColumns;
+    return this;
+  }
+
+  public PtyCommandLine withInitialRows(int initialRows) {
     myInitialRows = initialRows;
+    return this;
   }
 
   public PtyCommandLine(@NotNull List<String> command) {
