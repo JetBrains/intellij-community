@@ -15,10 +15,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.delete
-import com.intellij.util.io.outputStream
-import com.intellij.util.write
-import org.jdom.Element
 
 private class ApplicationPathMacroManager : BasePathMacroManager(null)
 
@@ -78,19 +74,14 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
   override val isUseVfsForWrite: Boolean
     get() = false
 
-  override fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
+  override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
     if (storage.fileSpec != "path.macros.xml") {
       return
     }
 
     LOG.runAndLogException {
-      if (element == null) {
-        storage.file.delete()
-      }
-      else {
-        element.write(storage.file.outputStream())
-      }
+      writer.writeTo(storage.file)
     }
   }
 
