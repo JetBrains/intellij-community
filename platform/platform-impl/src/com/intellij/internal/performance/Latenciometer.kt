@@ -32,7 +32,9 @@ class LatencyRecord {
   val averageLatency: Long get() = totalLatency / totalKeysTyped
 }
 
-data class LatencyDistributionRecordKey(val name: String)
+data class LatencyDistributionRecordKey(val name: String) {
+  var details: String? = null
+}
 
 class LatencyDistributionRecord(val key: LatencyDistributionRecordKey) {
   val totalLatency: LatencyRecord = LatencyRecord()

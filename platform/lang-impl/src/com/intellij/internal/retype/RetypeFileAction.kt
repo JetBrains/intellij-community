@@ -95,16 +95,17 @@ interface RetypeFileAssistant {
   }
 }
 
-class RetypeQueue(private val project: Project, private val retypeDelay: Int, private val threadDumpDelay: Int) {
+private class RetypeQueue(private val project: Project, private val retypeDelay: Int, private val threadDumpDelay: Int) {
   val files = mutableListOf<VirtualFile>()
+  private val threadDumps = mutableListOf<String>()
 
   fun processNext() {
     if (files.isEmpty()) return
     val file = files[0]
     files.removeAt(0)
 
-    val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
-    val retypeSession = RetypeSession(project, editor as EditorImpl, retypeDelay, threadDumpDelay)
+    val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file, 0), true)
+    val retypeSession = RetypeSession(project, editor as EditorImpl, retypeDelay, threadDumpDelay, threadDumps)
     if (files.isNotEmpty()) {
       retypeSession.startNextCallback = {
         ApplicationManager.getApplication().invokeLater { processNext() }

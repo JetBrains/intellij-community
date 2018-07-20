@@ -36,7 +36,6 @@ class TypingLatencyReportAction : AnAction() {
 
 class TypingLatencyReportDialog(
   private val project: Project,
-  private val message: String = "",
   private val threadDumps: List<String> = emptyList()
 ) : DialogWrapper(project) {
   private var currentThreadDump = 0
@@ -51,16 +50,12 @@ class TypingLatencyReportDialog(
 
   override fun createCenterPanel(): JComponent {
     val jbScrollPane = createReportTree()
-    val topPane: JComponent = if (message.isNotEmpty())
-      JBUI.Panels.simplePanel().addToTop(JLabel(message)).addToCenter(jbScrollPane)
-    else
-      jbScrollPane
 
     if (threadDumps.isEmpty()) {
-      return topPane
+      return jbScrollPane
     }
     return JBSplitter(true).apply {
-      firstComponent = topPane
+      firstComponent = jbScrollPane
       secondComponent = createThreadDumpBrowser()
     }
   }
@@ -87,7 +82,7 @@ class TypingLatencyReportDialog(
         if (value == null) return
         val obj = (value as DefaultMutableTreeNode).userObject
         if (obj is LatencyDistributionRecord) {
-          append(formatLatency(obj.key.name, obj.totalLatency))
+          append(formatLatency(obj.key.name, obj.totalLatency, obj.key.details))
         }
         else if (obj is Pair<*, *>) {
           val pair = obj as Pair<String, LatencyRecord>
@@ -100,8 +95,12 @@ class TypingLatencyReportDialog(
     return JBScrollPane(reportList)
   }
 
-  private fun formatLatency(action: String, latencyRecord: LatencyRecord): String {
-    return "$action - avg ${latencyRecord.averageLatency} ms, max ${latencyRecord.maxLatency} ms"
+  private fun formatLatency(action: String, latencyRecord: LatencyRecord, details: String? = null): String {
+    val result = "$action - avg ${latencyRecord.averageLatency} ms, max ${latencyRecord.maxLatency} ms"
+    if (details != null) {
+      return "$result, $details"
+    }
+    return result
   }
 
   private fun createThreadDumpBrowser(): JComponent {
@@ -142,22 +141,19 @@ class TypingLatencyReportDialog(
 
   private fun formatReportAsText(): String {
     return buildString {
-      if (message.isNotEmpty()) {
-        append(message)
-      }
       for (row in latencyMap.values.sortedBy { it.key.name }) {
-        appendln(formatLatency(row.key.name, row.totalLatency))
+        appendln(formatLatency(row.key.name, row.totalLatency, row.key.details))
         appendln("Actions:")
         for (actionLatencyRecord in row.actionLatencyRecords.entries.sortedByDescending { it.value.averageLatency }) {
           appendln("  ${formatLatency(actionLatencyRecord.key, actionLatencyRecord.value)}")
         }
-        appendln()
-        if (threadDumps.isNotEmpty()) {
-          appendln("Thread dumps:")
-          for (threadDump in threadDumps) {
-            appendln(threadDump)
-            appendln("-".repeat(40))
-          }
+      }
+      appendln()
+      if (threadDumps.isNotEmpty()) {
+        appendln("Thread dumps:")
+        for (threadDump in threadDumps) {
+          appendln(threadDump)
+          appendln("-".repeat(40))
         }
       }
     }
