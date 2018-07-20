@@ -39,26 +39,46 @@ repositories {
 
 configurations {
   eduPlugin
+  scalaPlugin
 }
 
-def eduPluginId = "com.jetbrains.edu"
-def eduPluginName = "EduTools"
+def EduToolsPluginId = "com.jetbrains.edu"
+def EduToolsPluginName = "EduTools"
+
+def ScalaPluginId = "org.intellij.scala"
+def ScalaPluginName = "Scala"
 
 dependencies {
-  eduPlugin "com.jetbrains.plugins:$eduPluginId:$eduPluginVersion@zip"
+  eduPlugin "com.jetbrains.plugins:$EduToolsPluginId:$EduToolsPluginVersion@zip"
+  scalaPlugin "com.jetbrains.plugins:$ScalaPluginId:$ScalaPluginVersion@zip"
 }
 
-task setupEduPlugin(dependsOn: configurations.eduPlugin, type: Sync) {
+task setupEduToolsPlugin(dependsOn: configurations.eduPlugin, type: Sync) {
   from fileTree(configurations.eduPlugin.singleFile)
-  into "${project.buildDir}/edu/"
+  into "${project.buildDir}/$EduToolsPluginName/"
   rename { String fileName ->
-    fileName.replace(eduPluginId, eduPluginName) }
+    fileName.replace(EduToolsPluginId, EduToolsPluginName) }
 }
 
-task deployEduPlugin(dependsOn: setupEduPlugin, type: Sync) {
-  from zipTree("${project.buildDir}/edu/$eduPluginName-${eduPluginVersion}.zip")
+task deployEduToolsPlugin(dependsOn: setupEduToolsPlugin, type: Sync) {
+  from zipTree("${project.buildDir}/$EduToolsPluginName/$EduToolsPluginName-${EduToolsPluginVersion}.zip")
   into "${System.getProperty("idea.config.path")}/plugins/"
   preserve {
-    exclude "$eduPluginName/**"
+    exclude "$EduToolsPluginName/**"
+  }
+}
+
+task setupScalaPlugin(dependsOn: configurations.scalaPlugin, type: Sync) {
+  from fileTree(configurations.scalaPlugin.singleFile)
+  into "${project.buildDir}/$ScalaPluginName/"
+  rename { String fileName ->
+    fileName.replace(ScalaPluginId, ScalaPluginName) }
+}
+
+task deployScalaPlugin(dependsOn: setupScalaPlugin, type: Sync) {
+  from zipTree("${project.buildDir}/$ScalaPluginName/$ScalaPluginName-${ScalaPluginVersion}.zip")
+  into "${System.getProperty("idea.config.path")}/plugins/"
+  preserve {
+    exclude "$ScalaPluginName/**"
   }
 }
