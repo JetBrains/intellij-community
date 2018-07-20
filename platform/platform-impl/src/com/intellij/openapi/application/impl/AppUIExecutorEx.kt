@@ -43,7 +43,15 @@ interface AppUIExecutorEx : AppUIExecutor {
   }
 
   suspend fun <T> runCoroutine(block: suspend () -> T): T
+
+  fun inUndoTransparentAction(): AppUIExecutor
+  fun inWriteAction(): AppUIExecutor
 }
+
+fun AppUIExecutor.inUndoTransparentAction() =
+  (this as AppUIExecutorEx).inUndoTransparentAction()
+fun AppUIExecutor.inWriteAction() =
+  (this as AppUIExecutorEx).inWriteAction()
 
 suspend fun <T> AppUIExecutor.runCoroutine(block: suspend () -> T): T =
   (this as AppUIExecutorEx).runCoroutine(block)

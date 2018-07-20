@@ -7,6 +7,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -99,6 +100,32 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       }
 
       override fun toString() = "inTransaction"
+    })
+  }
+
+  override fun inUndoTransparentAction(): AppUIExecutor {
+    return withConstraint(object : SimpleContextConstraint() {
+      override val isCorrectContext: Boolean
+        get() = CommandProcessor.getInstance().isUndoTransparentActionInProgress
+
+      override fun schedule(runnable: Runnable) {
+        CommandProcessor.getInstance().runUndoTransparentAction(runnable)
+      }
+
+      override fun toString() = "inUndoTransparentAction"
+    })
+  }
+
+  override fun inWriteAction(): AppUIExecutor {
+    return withConstraint(object : SimpleContextConstraint() {
+      override val isCorrectContext: Boolean
+        get() = ApplicationManager.getApplication().isWriteAccessAllowed
+
+      override fun schedule(runnable: Runnable) {
+        ApplicationManager.getApplication().runWriteAction(runnable)
+      }
+
+      override fun toString() = "inWriteAction"
     })
   }
 
