@@ -19,7 +19,7 @@ class BuildOptions {
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  String targetOS = System.getProperty("intellij.build.target.os", OS_ALL)
+  String targetOS = System.getProperty("intellij.build.target.os", OS_LINUX)
   static final String OS_LINUX = "linux"
   static final String OS_WINDOWS = "windows"
   static final String OS_MAC = "mac"
