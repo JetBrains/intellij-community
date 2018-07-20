@@ -258,17 +258,22 @@ public class GradleExecutionHelper {
     try {
       settings.setRemoteProcessIdleTtlInMs(100);
       try {
-        final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
-        wrapperPropertyFileLocation.deleteOnExit();
+        final File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
+        final String fileName = "gradle-wrapper";
+        final File jarFile = new File(wrapperFilesLocation, fileName + ".jar");
+        final File propertiesFile = new File(wrapperFilesLocation, fileName + ".properties");
+        final File scriptFile = new File(wrapperFilesLocation, "gradlew");
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation)));
         final String[] lines = {
           "",
-          "gradle.taskGraph.afterTask { Task task ->",
-          "    if (task instanceof Wrapper) {",
-          "        def wrapperPropertyFileLocation = task.jarFile.getCanonicalPath() - '.jar' + '.properties'",
-          "        new File('" +
-          StringUtil.escapeBackSlashes(wrapperPropertyFileLocation.getCanonicalPath()) +
-          "').write wrapperPropertyFileLocation",
-          "}}",
+          "gradle.projectsEvaluated { gr ->",
+          "  def wrapper = gr.rootProject.tasks[\"wrapper\"]",
+          "  if (wrapper != null) {",
+          "    wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile.getCanonicalPath()) + "')",
+          "    wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile.getCanonicalPath()) + "')",
+          "  }",
+          "}",
           "",
         };
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
@@ -277,8 +282,7 @@ public class GradleExecutionHelper {
         launcher.withCancellationToken(cancellationToken);
         launcher.forTasks("wrapper");
         launcher.run();
-        String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);
-        settings.setWrapperPropertyFile(wrapperPropertyFile);
+        settings.setWrapperPropertyFile(propertiesFile.getCanonicalPath());
       }
       catch (IOException e) {
         LOG.warn("Can't update wrapper", e);
