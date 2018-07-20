@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.TimeoutUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,8 +38,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     refreshChanges();
     Assert.assertEquals(3, changeListManager.getChangesIn(myWorkingCopyDir).size());
 
-    TimeoutUtil.sleep(100);
-
     checkin();
 
     refreshVfs();
@@ -60,8 +57,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     refreshChanges();
     Assert.assertEquals(11, changeListManager.getChangesIn(myWorkingCopyDir).size());
 
-    TimeoutUtil.sleep(100);
-
     checkin();
 
     refreshVfs();
@@ -79,7 +74,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath());
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
-    sleep(50);
     refreshVfs();
     imitateEvent(myWorkingCopyDir);
     // no dirty scope externally provided! just VFS refresh
@@ -132,8 +126,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     refreshChanges();
     Assert.assertEquals(2, changeListManager.getChangesIn(myWorkingCopyDir).size());
-
-    TimeoutUtil.sleep(100);
 
     runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());
     runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath());
