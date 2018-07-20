@@ -14,12 +14,12 @@ import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTestFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
-  private val functionRef = fixture.function?.let { SmartPointerManager.createPointer(it) }
-  private val resolveRef = fixture.resolveTarget?.let { SmartPointerManager.createPointer(it) }
+  private val functionRef = SmartPointerManager.createPointer(fixture.function)
+  private val resolveRef = SmartPointerManager.createPointer(fixture.resolveTarget)
 
-  override fun resolve() = resolveRef?.element
+  override fun resolve() = resolveRef.element
 
-  fun getFunction() = functionRef?.element
+  fun getFunction() = functionRef.element
 
   override fun getVariants() = emptyArray<Any>()
 

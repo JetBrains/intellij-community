@@ -27,7 +27,12 @@ private const val decoratorName: String = "pytest.fixture"
 internal fun getFixture(element: PyNamedParameter, typeEvalContext: TypeEvalContext): PyTestFixture? {
   val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
   val func = PsiTreeUtil.getParentOfType(element, PyFunction::class.java) ?: return null
-  return getFixtures(module, func, typeEvalContext).firstOrNull { o -> o.name == element.name }
+  return getFixtures(module, func, typeEvalContext)
+    .filter { o -> o.name == element.name }
+    .sortedBy {
+      ModuleUtilCore.findModuleForPsiElement(it.function) != module
+    }
+    .firstOrNull()
 }
 
 /**
@@ -46,7 +51,7 @@ internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName
  * @property resolveTarget PyElement where this fixture is resolved
  * @property name String fixture name
  */
-data class PyTestFixture(val function: PyFunction? = null, val resolveTarget: PyElement? = function, val name: String)
+data class PyTestFixture(val function: PyFunction, val resolveTarget: PyElement, val name: String)
 
 
 fun findDecoratorsByName(module: Module, name: String): Iterable<PyDecorator> =
