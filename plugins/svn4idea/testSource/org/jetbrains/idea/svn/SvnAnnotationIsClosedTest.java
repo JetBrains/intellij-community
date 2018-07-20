@@ -3,22 +3,21 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.isEmpty;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
 public class SvnAnnotationIsClosedTest extends SvnTestCase {
@@ -29,6 +28,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     myIsClosed = false;
@@ -40,17 +40,17 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     final SubTree tree = setUpWorkingCopy();
     setUpAnnotation(tree.myS1File);
 
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
-    assertFalse(myIsClosed); // not closed on typing
+    editFileInCommand(tree.myS1File, "1\n2\n3**\n4++\n");
+    assertFalse(myIsClosed);
 
     refreshChanges();
+
     final Change change = changeListManager.getChange(tree.myS1File);
     assertNotNull(change);
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(singletonList(change), "commit");
+    assertTrue(isEmpty(exceptions));
 
-    final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    assertTrue(exceptions == null || exceptions.isEmpty());
     dirtyScopeManager.fileDirty(tree.myS1File);
-
     refreshChangesAndWait();
     assertTrue(myIsClosed);
   }
@@ -70,10 +70,10 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
   @Test
   public void testClosedChangedByUpdateInIdea() throws Exception {
     final SubTree tree = setUpWorkingCopy();
-    runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
+    runInAndVerifyIgnoreOutput("up", "-r", "2");
     setUpAnnotation(tree.myS1File);
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
+    editFileInCommand(tree.myS1File, "1+\n2\n3\n4\n");
     refreshChanges();
     assertFalse(myIsClosed);
 
@@ -84,10 +84,10 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
   @Test
   public void testClosedByExternalUpdate() throws Exception {
     final SubTree tree = setUpWorkingCopy();
-    runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
+    runInAndVerifyIgnoreOutput("up", "-r", "2");
     setUpAnnotation(tree.myS1File);
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
+    editFileInCommand(tree.myS1File, "1+\n2\n3\n4\n");
     refreshChanges();
     assertFalse(myIsClosed);
 
@@ -104,37 +104,33 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     final SubTree tree = setUpWorkingCopy();
     setUpAnnotation(tree.myS1File);
 
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
-    assertFalse(myIsClosed); // not closed on typing
-    VcsTestUtil.renameFileInCommand(myProject, tree.myS1File, "5364536");
-    assertFalse(myIsClosed); // not closed on typing
+    editFileInCommand(tree.myS1File, "1\n2\n3**\n4++\n");
+    assertFalse(myIsClosed);
+
+    renameFileInCommand(tree.myS1File, "5364536");
+    assertFalse(myIsClosed);
 
     refreshChanges();
-    final Change change = changeListManager.getChange(tree.myS1File);
-    assertNotNull(change);
+    assertNotNull(changeListManager.getChange(tree.myS1File));
   }
 
   @Test
   public void testAnnotateRenamed() throws Exception {
     final SubTree tree = setUpWorkingCopy();
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
-
+    editFileInCommand(tree.myS1File, "1\n2\n3**\n4++\n");
     setUpAnnotation(tree.myS1File);
-
-    assertFalse(myIsClosed); // not closed on typing
+    assertFalse(myIsClosed);
 
     refreshChanges();
-    final Change change = changeListManager.getChange(tree.myS1File);
-    assertNotNull(change);
+    assertNotNull(changeListManager.getChange(tree.myS1File));
   }
 
   @Test
   public void testClosedByExternalCommit() throws Exception {
     final SubTree tree = setUpWorkingCopy();
-
     setUpAnnotation(tree.myS1File);
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
+    editFileInCommand(tree.myS1File, "1+\n2\n3\n4\n");
     refreshChanges();
     assertFalse(myIsClosed);
 
@@ -150,48 +146,31 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
   public void testClosedByUpdateWithExternals() throws Exception {
     prepareExternal();
 
-    final File sourceFile = new File(myWorkingCopyDir.getPath(), "source" + File.separator + "s1.txt");
-    final File externalFile = new File(myWorkingCopyDir.getPath(), "source" + File.separator + "external" + File.separator + "t12.txt");
-
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final VirtualFile vf1 = lfs.refreshAndFindFileByIoFile(sourceFile);
-    final VirtualFile vf2 = lfs.refreshAndFindFileByIoFile(externalFile);
-
-    assertNotNull(vf1);
-    assertNotNull(vf2);
-
-    VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
-    VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
+    VirtualFile sourceDir = notNull(myWorkingCopyDir.findChild("source"));
+    VirtualFile externalDir = notNull(sourceDir.findChild("external"));
+    final VirtualFile vf1 = notNull(sourceDir.findChild("s1.txt"));
+    final VirtualFile vf2 = notNull(externalDir.findChild("t12.txt"));
+    editFileInCommand(vf1, "test externals 123" + System.currentTimeMillis());
+    editFileInCommand(vf2, "test externals 123" + System.currentTimeMillis());
 
     refreshChanges();
+    assertNotNull(changeListManager.getChange(vf1));
+    assertNotNull(changeListManager.getChange(vf2));
 
-    final Change change1 = changeListManager.getChange(vf1);
-    final Change change2 = changeListManager.getChange(vf2);
-    assertNotNull(change1);
-    assertNotNull(change2);
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath());
 
-    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    final File externalDir = new File(myWorkingCopyDir.getPath(), "source/external");
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());   // #3
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath()); // #4
-
-    VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 12344444" + System.currentTimeMillis());
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath()); // #5
-
-    final SvnDiffProvider diffProvider = (SvnDiffProvider)vcs.getDiffProvider();
-
-    assertRevision(vf1, diffProvider, 3);
-    assertRevision(vf2, diffProvider, 5);
+    editFileInCommand(vf2, "test externals 12344444" + System.currentTimeMillis());
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath());
+    assertRevision(vf1, 3);
+    assertRevision(vf2, 5);
 
     runInAndVerifyIgnoreOutput("up", "-r", "4", sourceDir.getPath());
     runInAndVerifyIgnoreOutput("up", "-r", "4", externalDir.getPath());
+    assertRevision(vf1, 3);
+    assertRevision(vf2, 4);
 
-    assertRevision(vf1, diffProvider, 3);
-    assertRevision(vf2, diffProvider, 4);
-
-    // then annotate both
     setUpAnnotation(vf1);
-
     final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation1 = createTestAnnotation(vcs.getAnnotationProvider(), vf2);
     annotation1.setCloser(() -> {
@@ -200,26 +179,24 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     });
     listener.registerAnnotation(vf1, annotation1);
 
-    //up
     runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
-    imitateEvent(lfs.refreshAndFindFileByIoFile(sourceDir));
-    imitateEvent(lfs.refreshAndFindFileByIoFile(externalDir));
+    imitateEvent(sourceDir);
+    imitateEvent(externalDir);
     refreshChangesAndWait();
-    //verify(runSvn("up", "-r", "3", externalDir.getPath()));
-    assertRevision(vf1, diffProvider, 3);
-    assertRevision(vf2, diffProvider, 5);
+    assertRevision(vf1, 3);
+    assertRevision(vf2, 5);
 
     assertTrue(myIsClosed1);
-    assertFalse(myIsClosed);  // in source is not closed..
+    assertFalse(myIsClosed);
   }
 
   @NotNull
   private SubTree setUpWorkingCopy() throws IOException {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    editFileInCommand(tree.myS1File, "1\n2\n3\n4\n");
     checkin();
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    editFileInCommand(tree.myS1File, "1\n2\n3**\n4\n");
     checkin();
     return tree;
   }
@@ -240,16 +217,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     sleep(100); // zipper updater
   }
 
-  private void assertRevision(VirtualFile vf1, SvnDiffProvider diffProvider, final long number) {
-    final VcsRevisionDescription vf1Rev = diffProvider.getCurrentRevisionDescription(vf1);
-    assertEquals(number, ((SvnRevisionNumber)vf1Rev.getRevisionNumber()).getLongRevisionNumber());
+  private void assertRevision(@NotNull VirtualFile file, final long number) {
+    final VcsRevisionDescription revision = ((SvnDiffProvider)vcs.getDiffProvider()).getCurrentRevisionDescription(file);
+    assertEquals(number, ((SvnRevisionNumber)revision.getRevisionNumber()).getLongRevisionNumber());
   }
-
-  // test is not closed by ext/int update to not-last-committed-rev (rev that changes another file) +
-  // test with externals +
-  // test closed by external commit +
-  // test closed by external update +
-  // test closed by internal update +
-  // test not closed by typing +
-  // test not closed by renaming +
 }
