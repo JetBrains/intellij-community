@@ -3,23 +3,27 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static org.hamcrest.Matchers.*;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class SvnExternalCommitNoticedTest extends SvnTestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-    //System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, "false");
     super.setUp();
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -31,20 +35,17 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "test1");
-    VcsTestUtil.editFileInCommand(myProject, tree.myS2File, "test2");
-    VcsTestUtil.editFileInCommand(myProject, tree.myTargetFiles.get(1), "target1");
-
+    editFileInCommand(tree.myS1File, "test1");
+    editFileInCommand(tree.myS2File, "test2");
+    editFileInCommand(tree.myTargetFiles.get(1), "target1");
     refreshChanges();
-    Assert.assertEquals(3, changeListManager.getChangesIn(myWorkingCopyDir).size());
+    assertChanges(3);
 
     checkin();
-
     refreshVfs();
     imitateEvent(myWorkingCopyDir);
-    // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
-    Assert.assertEquals(0, changeListManager.getChangesIn(myWorkingCopyDir).size());
+    assertNoChanges();
   }
 
   @Test
@@ -52,18 +53,16 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    VcsTestUtil.renameFileInCommand(myProject, tree.myTargetDir, "aabbcc");
-
+    renameFileInCommand(tree.myTargetDir, "aabbcc");
     refreshChanges();
-    Assert.assertEquals(11, changeListManager.getChangesIn(myWorkingCopyDir).size());
+    assertChanges(11);
 
     checkin();
 
     refreshVfs();
     imitateEvent(myWorkingCopyDir);
-    // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
-    Assert.assertEquals(0, changeListManager.getChangesIn(myWorkingCopyDir).size());
+    assertNoChanges();
   }
 
   @Test
@@ -76,56 +75,42 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     refreshVfs();
     imitateEvent(myWorkingCopyDir);
-    // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
-
-    Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myS1File));
-    Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
-    Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
-    Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
-    Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
+    assertStatus(tree.myS1File, FileStatus.SWITCHED);
+    assertStatus(tree.myS2File, FileStatus.NOT_CHANGED);
+    assertStatus(tree.mySourceDir, FileStatus.NOT_CHANGED);
+    assertStatus(tree.myTargetDir, FileStatus.SWITCHED);
+    assertStatus(tree.myTargetFiles.get(1), FileStatus.SWITCHED);
   }
 
   @Test
   public void testExternalRootSwitch() throws Exception {
     final String branchUrl = prepareBranchesStructure();
-    final SubTree tree = new SubTree(myWorkingCopyDir);
-
+    new SubTree(myWorkingCopyDir);
     refreshSvnMappingsSynchronously();
-    SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
-    List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
-    Assert.assertEquals(1, infos.size());
-    Assert.assertEquals(parseUrl(myRepoUrl + "/trunk", false), infos.get(0).getUrl());
+    List<RootUrlInfo> infos = vcs.getSvnFileUrlMapping().getAllWcInfos();
+    assertThat(map(infos, RootUrlInfo::getUrl), containsInAnyOrder(ar(parseUrl(myRepoUrl + "/trunk", false))));
 
     runInAndVerifyIgnoreOutput("switch", branchUrl, myWorkingCopyDir.getPath());
 
     refreshVfs();
     changeListManager.ensureUpToDate(false);
     vcs.getCopiesRefreshManager().waitCurrentRequest();
-
-    workingCopies = vcs.getSvnFileUrlMapping();
-    infos = workingCopies.getAllWcInfos();
-    Assert.assertEquals(1, infos.size());
-    Assert.assertEquals(parseUrl(branchUrl, false), infos.get(0).getUrl());
+    infos = vcs.getSvnFileUrlMapping().getAllWcInfos();
+    assertThat(map(infos, RootUrlInfo::getUrl), containsInAnyOrder(ar(parseUrl(branchUrl, false))));
   }
 
   @Test
   public void testExternalCommitInExternals() throws Exception {
     prepareExternal();
-
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File externalDir = new File(myWorkingCopyDir.getPath(), "source/external");
-    final File file = new File(externalDir, "t11.txt");
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-
-    final File mainFile = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
-    final VirtualFile vfMain = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mainFile);
-
+    final VirtualFile vf = notNull(myWorkingCopyDir.findFileByRelativePath("source/external/t11.txt"));
+    final VirtualFile vfMain = notNull(myWorkingCopyDir.findFileByRelativePath("source/s1.txt"));
     renameFileInCommand(vf, "tt11.txt");
     renameFileInCommand(vfMain, "ss11.txt");
-
     refreshChanges();
-    Assert.assertEquals(2, changeListManager.getChangesIn(myWorkingCopyDir).size());
+    assertChanges(2);
 
     runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());
     runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath());
@@ -134,8 +119,19 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     imitateEvent(lfs.refreshAndFindFileByIoFile(sourceDir));
     imitateEvent(lfs.refreshAndFindFileByIoFile(externalDir));
-    // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
-    Assert.assertEquals(0, changeListManager.getChangesIn(myWorkingCopyDir).size());
+    assertNoChanges();
+  }
+
+  private void assertNoChanges() {
+    assertThat(changeListManager.getChangesIn(myWorkingCopyDir), is(empty()));
+  }
+
+  private void assertChanges(int count) {
+    assertThat(changeListManager.getChangesIn(myWorkingCopyDir), hasSize(count));
+  }
+
+  private void assertStatus(@NotNull VirtualFile file, @NotNull FileStatus status) {
+    assertEquals(status, changeListManager.getStatus(file));
   }
 }
