@@ -20,7 +20,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
@@ -61,11 +60,13 @@ public abstract class AbstractTestNGPatternConfigurationProducer extends Abstrac
 
   @Override
   public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
-    final String type = testNGConfiguration.getPersistantData().TEST_OBJECT;
-    if (Comparing.equal(type, TestType.PATTERN.getType())) {
-      if (differentParamSet(testNGConfiguration, context.getLocation())) return false;
-      return isConfiguredFromContext(context, testNGConfiguration.getPersistantData().getPatterns());
-    }
-    return false;
+     if (!isApplicableTestType(testNGConfiguration.getTestType(), context)) return false;
+    if (differentParamSet(testNGConfiguration, context.getLocation())) return false;
+    return isConfiguredFromContext(context, testNGConfiguration.getPersistantData().getPatterns());
+  }
+
+  @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return TestType.PATTERN.getType().equals(type);
   }
 }

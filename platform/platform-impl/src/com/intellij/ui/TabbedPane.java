@@ -15,27 +15,29 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import java.awt.event.MouseListener;
 import java.awt.*;
+import java.awt.event.MouseListener;
 
 public interface TabbedPane {
   JComponent getComponent();
 
-  void putClientProperty(Object key, Object value);
+  void putClientProperty(@NotNull Object key, Object value);
 
-  void setKeyboardNavigation(PrevNextActionsDescriptor installKeyboardNavigation);
+  void setKeyboardNavigation(@NotNull PrevNextActionsDescriptor installKeyboardNavigation);
 
-  void addChangeListener(ChangeListener listener);
+  void addChangeListener(@NotNull ChangeListener listener);
 
   int getTabCount();
 
-  void insertTab(String title, Icon icon, Component c, String tip, int index);
+  void insertTab(@NotNull String title, Icon icon, @NotNull Component c, String tip, int index);
 
   void setTabPlacement(int tabPlacement);
 
-  void addMouseListener(MouseListener listener);
+  void addMouseListener(@NotNull MouseListener listener);
 
   int getSelectedIndex();
 
@@ -55,7 +57,7 @@ public interface TabbedPane {
 
   Component getTabComponentAt(int index);
 
-  void setTitleAt(int index, String title);
+  void setTitleAt(int index, @NotNull String title);
 
   void setToolTipTextAt(int index, String toolTipText);
 

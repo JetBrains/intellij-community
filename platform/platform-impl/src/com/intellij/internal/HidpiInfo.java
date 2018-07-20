@@ -32,29 +32,30 @@ import java.util.function.BiFunction;
 /**
  * @author tav
  */
+@SuppressWarnings("ConcatenationWithEmptyString")
 public class HidpiInfo extends AnAction implements DumbAware {
-  private final boolean ENABLED = UIUtil.isJreHiDPIEnabled();
+  private static final boolean ENABLED = UIUtil.isJreHiDPIEnabled();
 
-  private final String JRE_HIDPI_MODE_TEXT = "Per-monitor DPI-aware";
-  private final String JRE_HIDPI_MODE_DESC =
+  private static final String JRE_HIDPI_MODE_TEXT = "Per-monitor DPI-aware";
+  private static final String JRE_HIDPI_MODE_DESC =
     "<html><span style='font-size:x-small'>When enabled, the IDE UI scaling honors per-monitor DPI.<br>" +
     (SystemInfo.isWindows ?
     "To " + (ENABLED ? "disable" : "enable") + " set the JVM option <code>-Dsun.java2d.uiScale.enabled=" +
     (ENABLED ? "false" : "true") + "</code> and restart.</span></html>" :
     "The mode can not be changed on this platform.");
 
-  private final String SYS_SCALE_TEXT = "Monitor scale";
-  private final String SYS_SCALE_DESC =
+  private static final String SYS_SCALE_TEXT = "Monitor scale";
+  private static final String SYS_SCALE_DESC =
     "<html><span style='font-size:x-small'>" +
     (ENABLED ?
     "The current monitor scale factor" :
     "The main monitor scale factor") +
     ".</span></html>";
 
-  private final String USR_SCALE_TEXT = "User (IDE) scale";
-  private final String USR_SCALE_DESC =
+  private static final String USR_SCALE_TEXT = "User (IDE) scale";
+  private static final String USR_SCALE_DESC =
     "<html><span style='font-size:x-small'>The global IDE scale factor" +
-    (JBUI.DEBUG_USER_SCALE_FACTOR.isSet() ?
+    (JBUI.DEBUG_USER_SCALE_FACTOR.isNotNull() ?
     ", overridden by the debug property." :
     ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
     (ENABLED ? "pt" : "px") + "</code><br>" +
@@ -64,6 +65,9 @@ public class HidpiInfo extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent anActionEvent) {
+    Window activeFrame = IdeFrameImpl.getActiveFrame();
+    if (activeFrame == null) return;
+
     String _USR_SCALE_DESC = USR_SCALE_DESC.replace("$LABEL_FONT_SIZE", "" + UIUtil.getLabelFont().getSize());
 
     String[] columns = new String[] {
@@ -72,7 +76,7 @@ public class HidpiInfo extends AnAction implements DumbAware {
 
     String[][] data = new String[][] {
       {JRE_HIDPI_MODE_TEXT, ENABLED ? "enabled" : "disabled", JRE_HIDPI_MODE_DESC},
-      {SYS_SCALE_TEXT, "" + JBUI.sysScale(IdeFrameImpl.getActiveFrame()), SYS_SCALE_DESC},
+      {SYS_SCALE_TEXT, "" + JBUI.sysScale(activeFrame), SYS_SCALE_DESC},
       {USR_SCALE_TEXT, "" + JBUI.scale(1f), _USR_SCALE_DESC},
     };
 
@@ -107,10 +111,10 @@ public class HidpiInfo extends AnAction implements DumbAware {
 
     JBPopupFactory.getInstance().createComponentPopupBuilder(tablePanel, null).
       setTitle("HiDPI Info").
-      createPopup().showInCenterOf(IdeFrameImpl.getActiveFrame());
+      createPopup().showInCenterOf(activeFrame);
   }
 
-  private JLabel label(String text) {
+  private static JLabel label(String text) {
     JLabel label = new JLabel(text);
     label.setBorder(JBUI.Borders.empty(2));
     return label;

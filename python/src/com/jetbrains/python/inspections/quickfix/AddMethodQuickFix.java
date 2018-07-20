@@ -128,7 +128,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
           builder.parameter("param");
         }
       }
-      PyFunction method = builder.buildFunction(project, LanguageLevel.getDefault());
+      PyFunction method = builder.buildFunction();
       if (decoratorName != null) {
         PyElementGenerator generator = PyElementGenerator.getInstance(project);
         PyDecoratorList decoratorList = generator

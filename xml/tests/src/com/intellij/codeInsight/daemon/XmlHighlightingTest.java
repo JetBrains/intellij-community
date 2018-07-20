@@ -315,16 +315,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   private void doTestWithLocations(@Nullable String[][] resources, String ext) {
-    try {
-      doConfigureWithLocations(resources, ext);
-      doDoTest(true,false);
-    } finally {
-      unregisterResources(resources);
-    }
-  }
-
-  private static void unregisterResources(final String[][] resources) {
-    if (resources == null) return;
+    doConfigureWithLocations(resources, ext);
+    doDoTest(true,false);
   }
 
   private void doConfigureWithLocations(final String[][] resources, final String ext) {
@@ -389,7 +381,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       doDoTest(true,true);
     }
     finally {
-      unregisterResources(resources);
     }
   }
 
@@ -681,13 +672,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testComplexSchemaValidation() throws Exception {
-//    disableHtmlSupport();
-    try {
-      doTest(getFullRelativeTestName(), false, false);
-    }
-    finally {
-//      enableHtmlSupport();
-    }
+    doTest(getFullRelativeTestName(), false, false);
   }
 
   public void testComplexDtdValidation() throws Exception {
@@ -1275,37 +1260,32 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   private void doSchemaTestWithManyFilesFromSeparateDir(final String[][] urls, @Nullable Processor<List<VirtualFile>> additionalTestingProcessor) throws Exception {
-    try {
-      List<VirtualFile> files = new ArrayList<>(6);
-      files.add( getVirtualFile(BASE_PATH + getTestName(false) + ".xml"));
+    List<VirtualFile> files = new ArrayList<>(6);
+    files.add( getVirtualFile(BASE_PATH + getTestName(false) + ".xml"));
 
-      final Set<VirtualFile> usedFiles = new THashSet<>();
-      final String base = BASE_PATH + getTestName(false) + "Schemas/";
+    final Set<VirtualFile> usedFiles = new THashSet<>();
+    final String base = BASE_PATH + getTestName(false) + "Schemas/";
 
-      for(String[] pair:urls) {
-        final String url = pair[0];
-        final String filename = pair.length > 1 ? pair[1]:url.substring(url.lastIndexOf('/')+1) + (url.endsWith(".xsd")?"":".xsd");
+    for(String[] pair:urls) {
+      final String url = pair[0];
+      final String filename = pair.length > 1 ? pair[1]:url.substring(url.lastIndexOf('/')+1) + (url.endsWith(".xsd")?"":".xsd");
 
-        final VirtualFile virtualFile = getVirtualFile(base + filename);
-        usedFiles.add(virtualFile);
+      final VirtualFile virtualFile = getVirtualFile(base + filename);
+      usedFiles.add(virtualFile);
 
-        if (url != null) ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
-        files.add( virtualFile );
-      }
-
-      for(VirtualFile file: LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + base.substring(0, base.length() - 1)).getChildren()) {
-        if (!usedFiles.contains(file)) {
-          files.add(file);
-        }
-      }
-
-      doTest(VfsUtilCore.toVirtualFileArray(files), true, false);
-
-      if (additionalTestingProcessor != null) additionalTestingProcessor.process(files);
+      if (url != null) ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
+      files.add( virtualFile );
     }
-    finally {
-      unregisterResources(urls);
+
+    for(VirtualFile file: LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + base.substring(0, base.length() - 1)).getChildren()) {
+      if (!usedFiles.contains(file)) {
+        files.add(file);
+      }
     }
+
+    doTest(VfsUtilCore.toVirtualFileArray(files), true, false);
+
+    if (additionalTestingProcessor != null) additionalTestingProcessor.process(files);
   }
 
   enum HighlightingFlag {
@@ -1904,9 +1884,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(
       new VirtualFile[] {
         getVirtualFile(BASE_PATH + testName + ".xml"),
-        getVirtualFile(BASE_PATH + testName + "_TypesV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_ActivationRequestV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_GenericActivationRequestV1.00.xsd")
+        getVirtualFile(BASE_PATH + testName + "_Types.xsd"),
+        getVirtualFile(BASE_PATH + testName + "_Request.xsd"),
+        getVirtualFile(BASE_PATH + testName + "_Generic.xsd")
       },
       true,
       false

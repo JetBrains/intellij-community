@@ -21,8 +21,8 @@ class Java9 {
   }
 
   static void test(MyAutoCloseable m) throws FileNotFoundException {
-      m.foo();
       try (m; MyAutoCloseable m1 = new MyAutoCloseable()) {
+          m.foo();
           m.foo();
       }
   }

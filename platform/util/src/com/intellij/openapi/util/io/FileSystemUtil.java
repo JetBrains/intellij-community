@@ -104,7 +104,17 @@ public class FileSystemUtil {
   @Nullable
   public static FileAttributes getAttributes(@NotNull String path) {
     try {
-      return ourMediator.getAttributes(path);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("getAttributes(" + path + ")");
+        long t = System.nanoTime();
+        FileAttributes result = ourMediator.getAttributes(path);
+        t = (System.nanoTime() - t) / 1000;
+        LOG.trace("  " + t + " mks");
+        return result;
+      }
+      else {
+        return ourMediator.getAttributes(path);
+      }
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -127,7 +137,7 @@ public class FileSystemUtil {
    */
   public static boolean isSymLink(@NotNull String path) {
     if (SystemInfo.areSymLinksSupported) {
-      final FileAttributes attributes = getAttributes(path);
+      FileAttributes attributes = getAttributes(path);
       return attributes != null && attributes.isSymLink();
     }
     return false;
@@ -143,8 +153,18 @@ public class FileSystemUtil {
   @Nullable
   public static String resolveSymLink(@NotNull String path) {
     try {
-      final String realPath = ourMediator.resolveSymLink(path);
-      if (realPath != null && new File(realPath).exists()) {
+      String realPath;
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("resolveSymLink(" + path + ")");
+        long t = System.nanoTime();
+        realPath = ourMediator.resolveSymLink(path);
+        t = (System.nanoTime() - t) / 1000;
+        LOG.trace("  " + t + " mks");
+      }
+      else {
+        realPath = ourMediator.resolveSymLink(path);
+      }
+      if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || new File(realPath).exists())) {
         return realPath;
       }
     }
@@ -344,17 +364,38 @@ public class FileSystemUtil {
     private final IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
-    protected FileAttributes getAttributes(@NotNull final String path) {
-      final FileInfo fileInfo = myInstance.getInfo(path);
+    protected FileAttributes getAttributes(@NotNull String path) {
+      FileInfo fileInfo = myInstance.getInfo(path);
       return fileInfo != null ? fileInfo.toFileAttributes() : null;
     }
 
     @Override
-    protected String resolveSymLink(@NotNull final String path) {
-      return myInstance.resolveSymLink(path);
+    protected String resolveSymLink(@NotNull String path) {
+      path = new File(path).getAbsolutePath();
+
+      char drive = Character.toUpperCase(path.charAt(0));
+      if (!(path.length() > 3 && drive >= 'A' && drive <= 'Z' && path.charAt(1) == ':' && path.charAt(2) == '\\')) {
+        return path;  // unknown format
+      }
+
+      int remainder = 4;
+      while (remainder < path.length()) {
+        int next = path.indexOf('\\', remainder);
+        String subPath = next > 0 ? path.substring(0, next) : path;
+        FileAttributes attributes = getAttributes(subPath);
+        if (attributes == null) {
+          return null;
+        }
+        if (attributes.isSymLink()) {
+          return myInstance.resolveSymLink(path);
+        }
+
+        remainder = next > 0 ? next + 1 : path.length();
+      }
+
+      return path;
     }
   }
-
 
   // thanks to SVNKit for the idea of platform-specific offsets
   private static class JnaUnixMediatorImpl extends Mediator {
@@ -413,7 +454,7 @@ public class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
 
     private JnaUnixMediatorImpl() {
-           if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
+      if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
       else if ("linux-ppc".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC32;

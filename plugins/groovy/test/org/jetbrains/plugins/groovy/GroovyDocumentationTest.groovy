@@ -67,6 +67,39 @@ def docs() {}
 <table class='sections'><p></table>'''
   }
 
+  void 'test link to method'() {
+    doTest '''\
+class Main {
+  /**
+   * Link 1: {@link #foo(String[])} 
+   * <p>
+   * Link 2: {@link #bar(String[])}
+   * <p>
+   * Link 3: {@link #bar(String[], Integer)}
+   */
+  static void docs() {}
+  void foo(String[] args) {}
+  void bar(String[] args) {}
+  void bar(String[] args, Integer i) {}
+}
+Main.<caret>docs()
+''', '''\
+<div class='definition'><pre>\
+<a href="psi_element://Main"><code>Main</code></a><br>\
+static&nbsp;void&nbsp;<b>docs</b>()\
+</pre></div>\
+<div class='content'>
+     Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code>foo(String[])</code></a> 
+     <p>
+     Link 2: <a href="psi_element://Main#bar(java.lang.String[])"><code>bar(String[])</code></a>
+     <p>
+     Link 3: <a href="psi_element://Main#bar(java.lang.String[], java.lang.Integer)"><code>bar(String[], Integer)</code></a>
+   <p>\
+</div>\
+<table class='sections'><p></table>\
+'''
+  }
+
   void 'test untyped local variable'() {
     doTest '''\
 def aa = 1

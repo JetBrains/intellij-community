@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.maven.model.impl.MavenAnnotationProcessorTargetType;
 import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 
 import java.util.Arrays;
@@ -32,7 +33,8 @@ public class MavenBuilderService extends BuilderService{
   @NotNull
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
-    return Arrays.asList(MavenResourcesTargetType.PRODUCTION, MavenResourcesTargetType.TEST);
+    return Arrays.asList(MavenResourcesTargetType.PRODUCTION, MavenResourcesTargetType.TEST,
+                         MavenAnnotationProcessorTargetType.PRODUCTION, MavenAnnotationProcessorTargetType.TESTS);
   }
 
   @NotNull

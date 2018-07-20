@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -36,6 +36,17 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
 
     pattern = "   <td>  name  </td>   ";
     assertEquals("Ignore surrounding whitespace", 1, findMatchesCount(content, pattern, StdFileTypes.HTML));
+
+    String in = "<img src=\"foobar.jpg\" alt=\"alt\" width=\"108\" height=\"71\" style=\"display:block\" >";
+    assertEquals(1, findMatchesCount(in, "<img alt '_other+ >", StdFileTypes.HTML));
+    assertEquals(1, findMatchesCount(in, "<img '_alt:alt = \"'_value\" '_other+ >", StdFileTypes.HTML));
+    assertEquals(1, findMatchesCount(in, "<img '_name{2,100} = '_value >", StdFileTypes.HTML));
+
+    String in2 = "<input readonly>" +
+                 "<input readonly>" +
+                 "<input type=button>";
+    assertEquals("should find tags without any attributes without value", 1, findMatchesCount(in2, "<input '_name{0,0} = '_value{0,0} >", StdFileTypes.HTML));
+    assertEquals("should find tags with any attributes without value", 2, findMatchesCount(in2, "<input '_name{1,1}='_value{0,0} >", StdFileTypes.HTML));
   }
 
   public void testHtmlSearchCaseInsensitive() {
@@ -79,21 +90,44 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     String s3 = "<a> content </a>\n" +
                 "<b> another content </b>\n" +
                 "<c>another <aaa>zzz</aaa>content </c>";
-    String s4 = "<'_tag>'Content*</'_tag>";
+    String s4 = "<'_tag>'Content+</'_tag>";
     assertEquals("Content match", 6, findMatchesCount(s3, s4, StdFileTypes.HTML));
     assertEquals("Content match", 6, findMatchesCount(s3, s4, StdFileTypes.XML));
   }
 
   public void testNoUnexpectedException() {
     String source = "<html><title>title</title></html>";
-    String pattern = "<title>$A$$</title>";
-    MalformedPatternException ex = null;
+
     try {
-      findMatchesCount(source, pattern, StdFileTypes.HTML);
+      findMatchesCount(source, "<'_tag>", StdFileTypes.XML);
     } catch (MalformedPatternException e) {
-      ex = e;
+      fail();
     }
-    assertNotNull(ex);
+
+    try {
+      findMatchesCount(source, "<'_tag '_attr>", StdFileTypes.XML);
+    } catch (MalformedPatternException e) {
+      fail();
+    }
+  }
+
+  public void testInvalidPatternWarnings() {
+    String source = "<x>z</x>";
+
+    try {
+      findMatchesCount(source, "<title>$A$$</title>", StdFileTypes.HTML);
+      fail();
+    } catch (MalformedPatternException ignore) {}
+
+    try {
+      findMatchesCount(source, "<x>1<3</x>", StdFileTypes.XML);
+      fail();
+    } catch (MalformedPatternException ignore) {}
+
+    try {
+      findMatchesCount(source, "<x'_tag>", StdFileTypes.XML);
+      fail();
+    } catch (MalformedPatternException ignore) {}
   }
 
   public void testWithinPredicate() {
@@ -120,16 +154,25 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find tag with css content", 1, findMatchesCount(source, pattern, StdFileTypes.HTML));
   }
 
+  public void testSearchIgnoreComments() {
+    String source = "<user id=\"1\">\n" +
+                    "  <first_name>Max</first_name> <!-- asdf -->\n" +
+                    "  <last_name>Headroom</last_name>\n" +
+                    "</user>";
+      String pattern = "<first_name>$A$</first_name><last_name>$B$</last_name>";
+    assertEquals("find tag ignoring comments", 1, findMatchesCount(source, pattern, StdFileTypes.XML));
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/platform/structuralsearch/testData/html/";
   }
 
-  //public void testXmlSearch2() {
-  //  String s1 = "<body><p class=\"11\"> AAA </p><p class=\"22\"></p> <p> ZZZ </p> <p/> <p/> <p/> </body>";
-  //  String s2 = "<p '_a?=\"'_t:[ regex( 11 ) ]\"> 'content? </p>";
-  //
-  //  assertEquals(5,findMatchesCount(s1,s2,false,StdFileTypes.XML));
-  //}
+  public void testXmlSearch2() {
+    String s1 = "<body><p class=\"11\"> AAA </p><p class=\"22\"></p> <p> ZZZ </p> <p/> <p/> <p/> </body>";
+    String s2 = "<p '_a{0,0}=\"'_t:[ regex( 11 ) ]\"> '_content? </p>";
+
+    assertEquals(5, findMatchesCount(s1, s2, StdFileTypes.XML));
+  }
 }

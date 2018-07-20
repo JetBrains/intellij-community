@@ -517,9 +517,9 @@ public class PyCallExpressionHelper {
   @Nullable
   private static Ref<? extends PyType> getCallTargetReturnType(@NotNull PyCallExpression call, @NotNull PsiElement target,
                                                                @NotNull TypeEvalContext context) {
-    final PyType providedOverridingType = PyReferenceExpressionImpl.getReferenceTypeFromOverridingProviders(target, context, call);
-    if (providedOverridingType instanceof PyCallableType) {
-      return Ref.create(((PyCallableType)providedOverridingType).getCallType(context, call));
+    final Ref<PyType> providedOverridingType = PyReferenceExpressionImpl.getReferenceTypeFromOverridingProviders(target, context, call);
+    if (providedOverridingType != null && providedOverridingType.get() instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedOverridingType.get()).getCallType(context, call));
     }
 
     PyClass cls = null;
@@ -565,9 +565,9 @@ public class PyCallExpressionHelper {
     if (cls != null) {
       return Ref.create(new PyClassTypeImpl(cls, false));
     }
-    final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
-    if (providedType instanceof PyCallableType) {
-      return Ref.create(((PyCallableType)providedType).getCallType(context, call));
+    final Ref<PyType> providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
+    if (providedType != null && providedType.get() instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedType.get()).getCallType(context, call));
     }
     final Ref<PyType> propertyCallType = getPropertyCallType(call, target, context);
     if (propertyCallType != null) {
@@ -1001,7 +1001,7 @@ public class PyCallExpressionHelper {
 
     return StreamEx
       .of(elements)
-      .groupingBy(element -> ScopeUtil.getScopeOwner(mapper.apply(element)))
+      .groupingBy(element -> Optional.ofNullable(ScopeUtil.getScopeOwner(mapper.apply(element))))
       .values()
       .stream()
       .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context));
@@ -1035,7 +1035,14 @@ public class PyCallExpressionHelper {
       return elements.stream();
     }
 
-    return elements.stream().filter(element -> PyiUtil.isOverload(mapper.apply(element), context));
+    return elements
+      .stream()
+      .filter(
+        element -> {
+          final PsiElement mapped = mapper.apply(element);
+          return mapped != null && PyiUtil.isOverload(mapped, context);
+        }
+      );
   }
 
   public static class ArgumentMappingResults {

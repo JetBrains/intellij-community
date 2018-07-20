@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.meta;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
@@ -60,12 +59,9 @@ public class MetaRegistryTest extends LightPlatformTestCase {
     final XmlTag tag = ((XmlFile)LightPlatformTestCase.createFile("a.xml", "<a/>")).getDocument().getRootTag();
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyFalseMetaData.class);
     flag[0] = true;
-    new WriteCommandAction(LightPlatformTestCase.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        tag.setName("b");
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(LightPlatformTestCase.getProject(), () -> {
+      tag.setName("b");
+    });
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyTrueMetaData.class);
   }
 
@@ -79,7 +75,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
 
     @NotNull
     @Override
-    public Object[] getDependences() {
+    public Object[] getDependencies() {
       return new Object[]{myDeclaration};
     }
 

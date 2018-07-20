@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonProcessors;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,8 +78,13 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
     if (container != null && JUnitUtil.isJUnit5TestClass(container, false)) {
       return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
     }
+    
+    if (member instanceof PsiField && 
+        AnnotationUtil.isAnnotated(member, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION, 0)) {
+      return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
+    }
 
-    return -1;
+    return ACCESS_LEVEL_INVALID;
   }
 
   @Override

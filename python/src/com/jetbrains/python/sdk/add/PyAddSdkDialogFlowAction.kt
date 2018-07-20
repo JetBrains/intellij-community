@@ -4,6 +4,6 @@ package com.jetbrains.python.sdk.add
 enum class PyAddSdkDialogFlowAction {
   PREVIOUS, NEXT, FINISH, OK;
 
-  fun enabled() = this.to(that = true)
-  fun disabled() = this.to(that = false)
+  fun enabled(): Pair<PyAddSdkDialogFlowAction, Boolean> = this.to(that = true)
+  fun disabled(): Pair<PyAddSdkDialogFlowAction, Boolean> = this.to(that = false)
 }

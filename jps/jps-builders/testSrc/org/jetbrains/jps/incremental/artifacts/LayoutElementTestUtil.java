@@ -82,6 +82,10 @@ public class LayoutElementTestUtil {
       return element(JpsJavaExtensionService.getInstance().createProductionModuleOutput(module.createReference()));
     }
 
+    public LayoutElementCreator moduleSource(JpsModule module) {
+      return element(JpsJavaExtensionService.getInstance().createProductionModuleSource(module.createReference()));
+    }
+
     public LayoutElementCreator element(JpsPackagingElement element) {
       myElement.addChild(element);
       return this;

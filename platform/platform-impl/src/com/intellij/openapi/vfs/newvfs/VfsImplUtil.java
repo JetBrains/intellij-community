@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -27,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
@@ -171,18 +157,18 @@ public class VfsImplUtil {
   }
 
   /**
-   * Guru method for force synchronous file refresh. 
-   * 
-   * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed 
+   * Guru method for force synchronous file refresh.
+   *
+   * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed
    * twice in short time and content length wasn't changed (for example file modification timestamp for HFS+ works per seconds).
-   * 
+   *
    * If you're sure that a file is changed twice in a second and you have to get the latest file's state - use this method.
-   * 
+   *
    * Likely you need this method if you have following code:
-   * 
+   *
    * <code>
    *  FileDocumentManager.getInstance().saveDocument(document);
-   *  runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length 
+   *  runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
    *  VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replace with {@link #forceSyncRefresh(VirtualFile)}
    * </code>
    */
@@ -200,19 +186,13 @@ public class VfsImplUtil {
                                                         @NotNull VirtualFile entryFile,
                                                         @NotNull Function<String, T> producer) {
     String localPath = vfs.extractLocalPath(vfs.extractRootPath(entryFile.getPath()));
-    return getHandler(vfs, localPath, producer);
-  }
-
-  @NotNull
-  private static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
-                                                         @NotNull String localPath,
-                                                         @NotNull Function<String, T> producer) {
     checkSubscription();
 
-    ArchiveHandler handler;
+    T handler;
 
     synchronized (ourLock) {
       Pair<ArchiveFileSystem, ArchiveHandler> record = ourHandlers.get(localPath);
+
       if (record == null) {
         handler = producer.fun(localPath);
         record = Pair.create(vfs, handler);
@@ -223,18 +203,19 @@ public class VfsImplUtil {
           handlers.add(localPath);
         });
       }
-      handler = record.second;
+
+      @SuppressWarnings("unchecked") T t = (T)record.second;
+      handler = t;
     }
 
-    //noinspection unchecked
-    return (T)handler;
+    return handler;
   }
 
   private static void forEachDirectoryComponent(String rootPath, Consumer<String> consumer) {
     int index = rootPath.lastIndexOf('/');
     while (index > 0) {
       String containingDirectoryPath = rootPath.substring(0, index);
-      consumer.consume(containingDirectoryPath);
+      consumer.accept(containingDirectoryPath);
       index = rootPath.lastIndexOf('/', index - 1);
     }
   }
@@ -243,7 +224,7 @@ public class VfsImplUtil {
     if (ourSubscribed.getAndSet(true)) return;
 
     Application app = ApplicationManager.getApplication();
-    if (app.isDisposeInProgress()) return; // IDEA-181620 we might perform shutdown activity that includes visiting zip files
+    if (app.isDisposeInProgress()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
     app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -253,7 +234,7 @@ public class VfsImplUtil {
           for (VFileEvent event : events) {
             if (!(event.getFileSystem() instanceof LocalFileSystem)) continue;
 
-            if (event instanceof VFileCreateEvent) continue; // created file should not invalidate + getFile is costly
+            if (event instanceof VFileCreateEvent) continue;  // new files don't affect existing handlers (and getFile() is costly)
 
             if (event instanceof VFilePropertyChangeEvent &&
                 !VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName())) {
@@ -270,14 +251,14 @@ public class VfsImplUtil {
 
             VirtualFile file = event.getFile();
             if (file == null || !file.isDirectory()) {
-              state = InvalidationState.invalidate(state, path);
+              state = invalidate(state, path);
             }
             else {
               Collection<String> affectedPaths = ourDominatorsMap.get(path);
               if (affectedPaths != null) {
                 affectedPaths = ContainerUtil.newArrayList(affectedPaths);  // defensive copying; original may be updated on invalidation
                 for (String affectedPath : affectedPaths) {
-                  state = InvalidationState.invalidate(state, affectedPath);
+                  state = invalidate(state, affectedPath);
                 }
               }
             }
@@ -289,27 +270,28 @@ public class VfsImplUtil {
     });
   }
 
+  @Nullable
+  private static InvalidationState invalidate(@Nullable InvalidationState state, String path) {
+    Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
+    if (handlerPair != null) {
+      handlerPair.second.dispose();
+
+      forEachDirectoryComponent(path, containingDirectoryPath -> {
+        Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+        if (handlers != null && handlers.remove(path) && handlers.isEmpty()) {
+          ourDominatorsMap.remove(containingDirectoryPath);
+        }
+      });
+
+      if (state == null) state = new InvalidationState();
+      state.registerPathToRefresh(path, handlerPair.first);
+    }
+
+    return state;
+  }
+
   private static class InvalidationState {
     private Set<NewVirtualFile> myRootsToRefresh;
-
-    @Nullable
-    static InvalidationState invalidate(@Nullable InvalidationState state, final String path) {
-      Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
-      if (handlerPair != null) {
-        handlerPair.second.dispose();
-        forEachDirectoryComponent(path, containingDirectoryPath -> {
-          Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-          if (handlers != null && handlers.remove(path) && handlers.isEmpty()) {
-            ourDominatorsMap.remove(containingDirectoryPath);
-          }
-        });
-
-        if (state == null) state = new InvalidationState();
-        state.registerPathToRefresh(path, handlerPair.first);
-      }
-
-      return state;
-    }
 
     private void registerPathToRefresh(String path, ArchiveFileSystem vfs) {
       NewVirtualFile root = ManagingFS.getInstance().findRoot(vfs.composeRootPath(path), vfs);
@@ -319,7 +301,7 @@ public class VfsImplUtil {
       }
     }
 
-    void scheduleRefresh() {
+    private void scheduleRefresh() {
       if (myRootsToRefresh != null) {
         for (NewVirtualFile root : myRootsToRefresh) {
           root.markDirtyRecursively();

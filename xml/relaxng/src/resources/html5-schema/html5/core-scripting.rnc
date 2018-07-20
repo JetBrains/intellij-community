@@ -63,7 +63,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 		script.attrs.charset =
 			attribute charset {
-				common.data.charset
+				string
 			}
 		script.attrs.language =
 			attribute language {

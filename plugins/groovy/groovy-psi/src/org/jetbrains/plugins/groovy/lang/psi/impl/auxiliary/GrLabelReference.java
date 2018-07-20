@@ -49,6 +49,7 @@ public class GrLabelReference implements PsiReference {
     throw new IncorrectOperationException("Can't bind not to labeled statement");
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement identifier = myStatement.getLabelIdentifier();
@@ -104,6 +105,7 @@ public class GrLabelReference implements PsiReference {
     return false;
   }
 
+  @NotNull
   @Override
   public GrFlowInterruptingStatement getElement() {
     return myStatement;

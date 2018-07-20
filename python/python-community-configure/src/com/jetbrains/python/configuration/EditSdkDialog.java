@@ -70,7 +70,7 @@ public class EditSdkDialog extends DialogWrapper {
     if ((sdkFlavor instanceof VirtualEnvSdkFlavor) || (sdkFlavor instanceof CondaEnvSdkFlavor)) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData) sdk.getSdkAdditionalData();
       if (data != null) {
-        final String path = data.getAssociatedProjectPath();
+        final String path = data.getAssociatedModulePath();
         if (path != null) {
           myAssociateCheckbox.setSelected(true);
           final String basePath = project.getBasePath();

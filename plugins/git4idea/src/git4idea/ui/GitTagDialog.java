@@ -22,11 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitUtil;
+import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -34,7 +36,6 @@ import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -266,23 +267,17 @@ public class GitTagDialog extends DialogWrapper {
    */
   private void fetchTags() {
     myExistingTags.clear();
-    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.TAG);
-    h.setSilent(true);
-    GitCommandResult result = ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(() -> myGit.runCommand(h),
-                                           GitBundle.getString("tag.getting.existing.tags"),
-                                           false,
-                                           myProject);
-    if (!result.success()) {
-      GitUIUtil.showOperationError(myProject, GitBundle.getString("tag.getting.existing.tags"), result.getErrorOutputAsJoinedString());
-      throw new ProcessCanceledException();
+
+    try {
+      myExistingTags.addAll(ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> GitBranchUtil.getAllTags(myProject, getGitRoot()),
+        GitBundle.getString("tag.getting.existing.tags"),
+        false,
+        myProject));
     }
-    for (StringScanner s = new StringScanner(result.getOutputAsJoinedString()); s.hasMoreData(); ) {
-      String line = s.line();
-      if (line.length() == 0) {
-        continue;
-      }
-      myExistingTags.add(line);
+    catch (VcsException e) {
+      GitUIUtil.showOperationError(myProject, GitBundle.getString("tag.getting.existing.tags"), e.getMessage());
+      throw new ProcessCanceledException();
     }
   }
 

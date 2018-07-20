@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -32,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Two panel editor with three states: Editor, Preview and Editor with Preview.
+ * Based on SplitFileEditor by Valentin Fondaratov
+ *
  * @author Konstantin Bulenkov
  */
 public class TextEditorWithPreview extends UserDataHolderBase implements FileEditor {
@@ -159,7 +160,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myEditor.getPreferredFocusedComponent();
+    switch (myLayout) {
+      case SHOW_EDITOR_AND_PREVIEW:
+      case SHOW_EDITOR:
+        return myEditor.getPreferredFocusedComponent();
+      case SHOW_PREVIEW:
+        return myPreview.getPreferredFocusedComponent();
+      default:
+        throw new IllegalStateException(myLayout.myName);
+    }
   }
 
   @NotNull

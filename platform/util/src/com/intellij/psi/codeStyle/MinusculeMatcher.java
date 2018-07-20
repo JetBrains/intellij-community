@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -55,7 +41,7 @@ public class MinusculeMatcher implements Matcher {
    * @param options case sensitivity settings
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
-  */
+   */
   MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
@@ -116,6 +102,7 @@ public class MinusculeMatcher implements Matcher {
     return false;
   }
 
+  @NotNull
   private static FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, int from, int length) {
     TextRange head = ranges.getHead();
     if (head != null && head.getStartOffset() == from + length) {
@@ -181,7 +168,8 @@ public class MinusculeMatcher implements Matcher {
 
     return (wordStart ? 1000 : 0) +
            matchingCase +
-           (- fragments.size() - skippedHumps * 10) +
+           -fragments.size() +
+           -skippedHumps * 10 +
            (afterSeparator ? 0 : 2) +
            (startMatch ? 1 : 0) +
            (finalMatch ? 1 : 0);
@@ -281,9 +269,8 @@ public class MinusculeMatcher implements Matcher {
     } while (isWildcard(patternIndex));
 
     if (patternIndex == myPattern.length) {
-      boolean space = isPatternChar(patternIndex - 1, ' ');
       // the trailing space should match if the pattern ends with the last word part, or only its first hump character
-      if (space && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
+      if (isTrailingSpacePattern() && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
         int spaceIndex = name.indexOf(' ', nameIndex);
         if (spaceIndex >= 0) {
           return FList.<TextRange>emptyList().prepend(TextRange.from(spaceIndex, 1));
@@ -301,6 +288,10 @@ public class MinusculeMatcher implements Matcher {
     return matchSkippingWords(name, patternIndex, nameIndex, true, isAsciiName);
   }
 
+  private boolean isTrailingSpacePattern() {
+    return isPatternChar(myPattern.length - 1, ' ');
+  }
+
   private static boolean isUpperCaseOrDigit(char p) {
     return Character.isUpperCase(p) || Character.isDigit(p);
   }
@@ -316,7 +307,7 @@ public class MinusculeMatcher implements Matcher {
                                               boolean allowSpecialChars,
                                               boolean isAsciiName) {
     boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex];
-    
+
     int maxFoundLength = 0;
     while (true) {
       nameIndex = findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName, allowSpecialChars, wordStartsOnly);
@@ -328,7 +319,7 @@ public class MinusculeMatcher implements Matcher {
       // match the remaining pattern only if we haven't already seen fragment of the same (or bigger) length
       // because otherwise it means that we already tried to match remaining pattern letters after it with the remaining name and failed
       // but now we have the same remaining pattern letters and even less remaining name letters, and so will fail as well
-      if (fragmentLength > maxFoundLength) {
+      if (fragmentLength > maxFoundLength || nameIndex + fragmentLength == name.length() && isTrailingSpacePattern()) {
         if (!isMiddleMatch(name, patternIndex, nameIndex)) {
           maxFoundLength = fragmentLength;
         }
@@ -392,9 +383,13 @@ public class MinusculeMatcher implements Matcher {
 
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
-    while (nameIndex + i < name.length() &&
-           patternIndex + i < myPattern.length &&
-           charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
+    while (nameIndex + i < name.length() && patternIndex + i < myPattern.length) {
+      if (!charEquals(myPattern[patternIndex + i], patternIndex + i, name.charAt(nameIndex + i), ignoreCase)) {
+        if (Character.isDigit(myPattern[patternIndex + i]) && Character.isDigit(myPattern[patternIndex + i - 1])) {
+          return 0;
+        }
+        break;
+      }
       if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i) &&
           shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
         break;
@@ -425,7 +420,7 @@ public class MinusculeMatcher implements Matcher {
 
   private boolean isMiddleMatch(@NotNull String name, int patternIndex, int nameIndex) {
     return isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
-                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex);
+           Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex);
   }
 
   @Nullable
@@ -456,7 +451,7 @@ public class MinusculeMatcher implements Matcher {
   /**
    * When pattern is "CU" and the name is "CurrentUser", we already have a prefix "Cu" that matches,
    * but we try to find uppercase "U" later in name for better matching degree
-   */ 
+   */
   private FList<TextRange> improveCamelHumps(@NotNull String name,
                                              int patternIndex,
                                              int nameIndex,
@@ -525,6 +520,7 @@ public class MinusculeMatcher implements Matcher {
     }
     return false;
   }
+
   private boolean isPatternChar(int patternIndex, char c) {
     return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
   }
@@ -568,12 +564,14 @@ public class MinusculeMatcher implements Matcher {
     }
     return c;
   }
+
   private static char toLowerAscii(char c) {
     if (c >= 'A' && c <= 'Z') {
       return (char)(c - ('A' - 'a'));
     }
     return c;
   }
+
   @NonNls
   @Override
   public String toString() {

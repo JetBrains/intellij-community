@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.util.StringScanner;
@@ -73,7 +72,7 @@ class GitInteractiveRebaseFile {
   }
 
   private boolean isComment(@NotNull StringScanner s) {
-    String commentChar = GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(GitVcs.getInstance(myProject).getVersion()) ?
+    String commentChar = GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(myProject) ?
                          GitUtil.COMMENT_CHAR : "#";
     return s.startsWith(commentChar);
   }
@@ -93,7 +92,7 @@ class GitInteractiveRebaseFile {
     PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding));
     try {
       for (GitRebaseEntry e : entries) {
-        if (e.getAction() != GitRebaseEntry.Action.skip) {
+        if (e.getAction() != GitRebaseEntry.Action.SKIP) {
           out.println(e.getAction().toString() + " " + e.getCommit() + " " + e.getSubject());
         }
       }

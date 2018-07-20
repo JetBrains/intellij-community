@@ -105,7 +105,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
-        setLanguageLevel(modifiableRootModel, node.getData());
+
+        if(ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName())) {
+          // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+          setLanguageLevel(modifiableRootModel, node.getData());
+        }
         setSdk(modifiableRootModel, node.getData());
       }
     }
@@ -174,8 +178,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   private static void syncPaths(@NotNull Module module, @NotNull ModifiableRootModel modifiableModel, @NotNull ModuleData data) {
     CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
-      //modifiableModel.dispose();
-      LOG.warn(String.format("Can't sync paths for module '%s'. Reason: no compiler extension is found for it", module.getName()));
+      LOG.debug(String.format("No compiler extension is found for '%s', compiler output path will not be synced.", module.getName()));
       return;
     }
     String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
@@ -300,7 +303,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
       String buildSystem = projectData != null ? projectData.getOwner().getReadableName() : "build system";
       String content = ExternalSystemBundle.message("orphan.modules.text", buildSystem,
-                                                    StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 100, 0));
+                                                    StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 50, 0));
       Notification cleanUpNotification = ORPHAN_MODULE_NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION)
         .setListener((notification, event) -> {
           if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
@@ -359,7 +362,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         GridBagConstraints gbConstraints = new GridBagConstraints();
         JPanel panel = new JPanel(new GridBagLayout());
         gbConstraints.insets = JBUI.insets(4, 0, 10, 8);
-        panel.add(new JLabel(ExternalSystemBundle.message("orphan.modules.dialog.text", buildSystem)), gbConstraints);
+        panel.add(new JLabel(ExternalSystemBundle.message("orphan.modules.dialog.text")), gbConstraints);
         return panel;
       }
     };

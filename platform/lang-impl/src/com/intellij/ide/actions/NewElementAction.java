@@ -18,38 +18,42 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"MethodMayBeStatic"})
-public class NewElementAction extends AnAction  implements DumbAware, PopupAction {
+public class NewElementAction extends DumbAwareAction implements PopupAction {
+
   @Override
-  public void actionPerformed(final AnActionEvent event) {
-    showPopup(event.getDataContext());
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    createPopup(e.getDataContext())
+      .showInBestPositionFor(e.getDataContext());
   }
 
-  protected void showPopup(DataContext context) {
-    createPopup(context).showInBestPositionFor(context);
+  @NotNull
+  protected ListPopup createPopup(@NotNull DataContext dataContext) {
+    return JBPopupFactory.getInstance().createActionGroupPopup(
+      getPopupTitle(),
+      getGroup(dataContext),
+      dataContext,
+      getActionSelectionAid(),
+      isShowDisabledActions(),
+      getDisposeCallback(),
+      getMaxRowCount(),
+      getPreselectActionCondition(dataContext),
+      getPlace());
   }
 
-  protected ListPopup createPopup(DataContext dataContext) {
-    return JBPopupFactory.getInstance()
-      .createActionGroupPopup(getPopupTitle(),
-                              getGroup(dataContext),
-                              dataContext,
-                              isShowNumbers(),
-                              isShowDisabledActions(),
-                              isHonorActionMnemonics(),
-                              getDisposeCallback(),
-                              getMaxRowCount(),
-                              getPreselectActionCondition(dataContext));
+  @Nullable
+  protected JBPopupFactory.ActionSelectionAid getActionSelectionAid() {
+    return null;
   }
 
   protected int getMaxRowCount() {
@@ -66,15 +70,7 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
     return null;
   }
 
-  protected boolean isHonorActionMnemonics() {
-    return false;
-  }
-
   protected boolean isShowDisabledActions() {
-    return false;
-  }
-
-  protected boolean isShowNumbers() {
     return false;
   }
 
@@ -83,7 +79,7 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
   }
 
   @Override
-  public void update(AnActionEvent e){
+  public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {
@@ -107,5 +103,10 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
 
   protected ActionGroup getGroup(DataContext dataContext) {
     return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+  }
+
+  @NotNull
+  protected String getPlace() {
+    return ActionPlaces.getActionGroupPopupPlace(IdeActions.GROUP_WEIGHING_NEW);
   }
 }

@@ -80,7 +80,7 @@ public interface InspectionProfile extends Comparable {
   boolean isExecutable(@Nullable Project project);
 
   /**
-   * @see {@link InspectionProfileImpl#setSingleTool(String)}
+   * @see com.intellij.codeInspection.ex.InspectionProfileImpl#setSingleTool(String)
    *
    * @return tool short name when inspection profile corresponds to synthetic profile for single inspection run
    */

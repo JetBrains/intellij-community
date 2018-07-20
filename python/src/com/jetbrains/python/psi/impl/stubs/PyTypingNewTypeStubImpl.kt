@@ -48,19 +48,19 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String,
     @Throws(IOException::class)
     fun deserialize(stream: StubInputStream?): PyTypingNewTypeStub? {
       if (stream != null) {
-        val typeName = stream.readName()
-        val classType = stream.readName()
+        val typeName = stream.readNameString()
+        val classType = stream.readNameString()
         if (typeName != null && classType != null) {
-          return PyTypingNewTypeStubImpl(typeName.string, classType.string)
+          return PyTypingNewTypeStubImpl(typeName, classType)
         }
       }
       return null
     }
   }
 
-  override fun getName() = qualifiedName
+  override fun getName(): String = qualifiedName
 
-  override fun getClassType() = baseClassName
+  override fun getClassType(): String = baseClassName
 
 
 }

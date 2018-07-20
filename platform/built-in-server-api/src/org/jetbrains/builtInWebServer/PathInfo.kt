@@ -13,7 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class PathInfo(val ioFile: Path?, file: VirtualFile?, val root: VirtualFile, moduleName: String? = null, val isLibrary: Boolean = false, val isRootNameOptionalInPath: Boolean = false) {
-  var file = file
+  var file: VirtualFile? = file
     private set
   
   var moduleName: String? = moduleName

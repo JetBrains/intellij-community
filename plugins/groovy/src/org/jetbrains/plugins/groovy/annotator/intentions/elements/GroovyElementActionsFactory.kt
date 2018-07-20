@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.elements
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.actions.CreateConstructorRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
@@ -14,7 +15,7 @@ class GroovyElementActionsFactory : JvmElementActionsFactory() {
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val groovyClass = targetClass.toGroovyClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.constant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
       result += CreateFieldAction(groovyClass, request, true)
@@ -35,16 +36,25 @@ class GroovyElementActionsFactory : JvmElementActionsFactory() {
     val requestedModifiers = request.modifiers
     val staticMethodRequested = JvmModifier.STATIC in requestedModifiers
 
+    val result = ArrayList<IntentionAction>()
+
     if (groovyClass.isInterface) {
       return if (staticMethodRequested) emptyList() else listOf(CreateMethodAction(groovyClass, request, true))
+    } else {
+        result += CreatePropertyAction(groovyClass, request, true)
+        result += CreatePropertyAction(groovyClass, request, false)
     }
 
-    val result = ArrayList<IntentionAction>()
     result += CreateMethodAction(groovyClass, request, false)
     if (!staticMethodRequested && groovyClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       result += CreateMethodAction(groovyClass, request, true)
     }
     return result
+  }
+
+  override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+    val groovyClass = targetClass.toGroovyClassOrNull() ?: return emptyList()
+    return listOf(CreateConstructorAction(groovyClass, request))
   }
 }
 

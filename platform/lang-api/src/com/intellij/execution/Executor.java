@@ -17,6 +17,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -93,9 +94,16 @@ public abstract class Executor {
   }
 
   /**
+   * Return false to suppress action visibility for given project.
+   */
+  public boolean isApplicable(@NotNull Project project) {
+    return true;
+  }
+
+  /**
    * Too long names don't fit into UI controls and have to be trimmed
    */
   public static String shortenNameIfNeed(@NotNull String name) {
-    return StringUtil.first(name, Registry.intValue("run.configuration.max.name.length", 40), true);
+    return StringUtil.trimMiddle(name, Registry.intValue("run.configuration.max.name.length", 80));
   }
 }

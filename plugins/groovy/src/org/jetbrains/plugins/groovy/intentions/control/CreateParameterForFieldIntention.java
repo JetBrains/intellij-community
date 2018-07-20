@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.intentions.control;
 
+import com.google.common.collect.Lists;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +23,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +33,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
-import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,9 +58,7 @@ import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeInfoImpl
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureProcessor;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -95,18 +93,18 @@ public class CreateParameterForFieldIntention extends Intention {
       return;
     }
 
-    final JList list = new JBList(constructors.toArray(GrMethod.EMPTY_ARRAY));
-    list.setCellRenderer(new MethodCellRenderer(true));
-
-    new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(constructors)
+      .setRenderer(new MethodCellRenderer(true))
+      .setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
-      setItemChoosenCallback(() -> {
-        final Object[] selectedValues = list.getSelectedValues();
-        Arrays.sort(selectedValues, (o1, o2) -> ((GrMethod)o2).getParameterList().getParametersCount() - ((GrMethod)o1).getParameterList().getParametersCount());
+                    setItemsChosenCallback((values) -> {
+        ArrayList<GrMethod> selectedValues = Lists.newArrayList(values);
+        selectedValues.sort((o1, o2) -> ((GrMethod)o2).getParameterList().getParametersCount() - ((GrMethod)o1).getParameterList().getParametersCount());
         CommandProcessor.getInstance().executeCommand(project, () -> {
-          for (Object selectedValue : selectedValues) {
-            LOG.assertTrue(((GrMethod)selectedValue).isValid());
-            addParameter(field, ((GrMethod)selectedValue), project);
+          for (GrMethod selectedValue : selectedValues) {
+            LOG.assertTrue(selectedValue.isValid());
+            addParameter(field, selectedValue, project);
           }
         }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
       }).createPopup().showInBestPositionFor(editor);
@@ -121,15 +119,15 @@ public class CreateParameterForFieldIntention extends Intention {
       }
       return;
     }
-    final JList list = new JBList(candidates.toArray(GrField.EMPTY_ARRAY));
-    list.setCellRenderer(new DefaultPsiElementCellRenderer());
 
-    new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(candidates)
+      .setRenderer(new DefaultPsiElementCellRenderer())
+      .setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
-      setItemChoosenCallback(() -> {
-        final Object[] selectedValues = list.getSelectedValues();
+                    setItemsChosenCallback((selectedValues) -> {
         CommandProcessor.getInstance().executeCommand(project, () -> {
-          for (Object selectedValue : selectedValues) {
+          for (GrField selectedValue : selectedValues) {
             LOG.assertTrue(((GrField)selectedValue).isValid());
             addParameter(((GrField)selectedValue), constructor, project);
           }

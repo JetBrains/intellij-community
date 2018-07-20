@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,11 +19,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import java.io.File;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public abstract class ElementWithBranchComparer {
 
   private static final Logger LOG = Logger.getInstance(ElementWithBranchComparer.class);
@@ -31,13 +27,13 @@ public abstract class ElementWithBranchComparer {
   @NotNull protected final Project myProject;
   @NotNull protected final SvnVcs myVcs;
   @NotNull protected final VirtualFile myVirtualFile;
-  @NotNull protected final String myBranchUrl;
+  @NotNull protected final Url myBranchUrl;
   protected final long myBranchRevision;
   protected Url myElementUrl;
 
   ElementWithBranchComparer(@NotNull Project project,
                             @NotNull VirtualFile virtualFile,
-                            @NotNull String branchUrl,
+                            @NotNull Url branchUrl,
                             long branchRevision) {
     myProject = project;
     myVcs = SvnVcs.getInstance(myProject);
@@ -100,7 +96,7 @@ public abstract class ElementWithBranchComparer {
     }
 
     String relativePath = SvnUtil.getRelativeUrl(thisBranchForUrl, fileUrl);
-    return createUrl(Url.append(myBranchUrl, relativePath));
+    return myBranchUrl.appendPath(relativePath, false);
   }
 
   private void reportException(final SvnBindException e) {
@@ -126,7 +122,8 @@ public abstract class ElementWithBranchComparer {
 
   private void reportNotFound() {
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
-      .showMessageDialog(myProject, SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
+      .showMessageDialog(myProject, SvnBundle
+                           .message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl.toDecodedString()),
                          SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null, myProject);
   }
 }

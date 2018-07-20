@@ -33,21 +33,8 @@
         <include name="*.jar"/>
       </fileset>
       <fileset dir="${idea.lib}">
-        <include name="jdom.jar"/>
-        <include name="log4j.jar"/>
-        <include name="asm-all.jar"/>
-        <include name="jgoodies-forms.jar"/>
-        <include name="picocontainer.jar"/>
-        <include name="jna.jar"/>
-        <include name="jna-platform.jar"/>
+        <include name="asm-all*.jar"/>
         <include name="snappy-in-java-*.jar"/>
-        <include name="aether-*-all.jar"/>
-        <include name="maven-aether-provider-*-all.jar"/>
-        <include name="httpclient-*.jar"/>
-        <include name="httpcore-*.jar"/>
-        <include name="httpmime-*.jar"/>
-        <include name="slf4j-api-*.jar"/>
-        <include name="slf4j-log4j12-*.jar"/>
       </fileset>
     </path>
 

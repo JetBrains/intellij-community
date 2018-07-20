@@ -10,11 +10,12 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.internal.statistic.customUsageCollectors.actions.ActionIdProvider;
-import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
@@ -49,7 +50,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,6 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
@@ -112,9 +111,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final MultiMap<String,String> myId2GroupId = new MultiMap<>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final KeymapManagerEx myKeymapManager;
   private final DataManager myDataManager;
-  private final List<ActionPopupMenuImpl> myPopups = new ArrayList<>();
+  private final List<Object> myPopups = new ArrayList<>();
   private final Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<>();
   private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<>();
   private MyTimer myTimer;
@@ -123,6 +123,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
+  private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
 
   ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
@@ -139,21 +140,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       Class<?> aClass = Class.forName(className, true, stub.getLoader());
       obj = ReflectionUtil.newInstance(aClass);
     }
-    catch (ClassNotFoundException e) {
-      throw error(stub, e, "class with name ''{0}'' not found", className);
-    }
-    catch (NoClassDefFoundError e) {
-      throw error(stub, e, "class with name ''{0}'' cannot be loaded", className);
-    }
-    catch(UnsupportedClassVersionError e) {
-      throw error(stub, e, "error loading class ''{0}''", className);
-    }
-    catch (Exception e) {
-      throw error(stub, e, "cannot create class ''{0}''", className);
+    catch (Throwable e) {
+      LOG.error(new PluginException(e, stub.getPluginId()));
+      return null;
     }
 
     if (!(obj instanceof AnAction)) {
-      LOG.error("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj);
+      LOG.error(new PluginException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj, stub.getPluginId()));
       return null;
     }
 
@@ -168,17 +161,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       setIconFromClass(actionClass, actionClass.getClassLoader(), iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
     }
     return anAction;
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  private static RuntimeException error(@NotNull ActionStub stub, @NotNull Throwable original, @NotNull String template, @NotNull String className) {
-    PluginId pluginId = stub.getPluginId();
-    String text = MessageFormat.format(template, className);
-    if (pluginId == null) {
-      return new IllegalStateException(text);
-    }
-    return new PluginException(text, original, pluginId);
   }
 
   private static void processAbbreviationNode(Element e, String id) {
@@ -474,7 +456,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
     AnAction converted = convertStub((ActionStub)action);
-    if (converted == null) return null;
+    if (converted == null) {
+      unregisterAction(id);
+      return null;
+    }
 
     synchronized (myLock) {
       action = myId2Action.get(id);
@@ -503,7 +488,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public String getId(@NotNull AnAction action) {
-    LOG.assertTrue(!(action instanceof ActionStub));
+    if (action instanceof ActionStub) {
+      return ((ActionStub) action).getId();
+    }
     synchronized (myLock) {
       return myAction2Id.get(action);
     }
@@ -1064,12 +1051,22 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return ArrayUtilRt.toStringArray(myPlugin2Id.get(pluginName));
   }
 
-  public void addActionPopup(final ActionPopupMenuImpl menu) {
-    myPopups.add(menu);
+  public void addActionPopup(final Object menu) {
+    boolean added = myPopups.add(menu);
+    if (added && menu instanceof ActionPopupMenu) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.actionPopupMenuCreated((ActionPopupMenu)menu);
+      }
+    }
   }
 
-  public void removeActionPopup(final ActionPopupMenuImpl menu) {
+  public void removeActionPopup(final Object menu) {
     final boolean removed = myPopups.remove(menu);
+    if (removed && menu instanceof ActionPopupMenu) {
+      for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
+        listener.actionPopupMenuReleased((ActionPopupMenu)menu);
+      }
+    }
     if (removed && myPopups.isEmpty()) {
       flushActionPerformed();
     }
@@ -1079,17 +1076,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
     if (!myPopups.isEmpty()) {
       myQueuedNotifications.put(action, context);
-    } else {
+    }
+    else {
       fireAfterActionPerformed(action, context, event);
     }
   }
 
-  //@Override
-  //public AnAction replaceAction(String actionId, @NotNull AnAction newAction) {
-  //  synchronized (myLock) {
-  //    return replaceAction(actionId, newAction, null);
-  //  }
-  //}
+  public boolean isToolWindowContextMenuVisible() {
+    for (Object popup : myPopups) {
+      if (popup instanceof ActionPopupMenuImpl &&
+          ((ActionPopupMenuImpl)popup).isToolWindowContextMenu()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @Override
   public boolean isActionPopupStackEmpty() {
@@ -1101,9 +1102,23 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return myTransparentOnlyUpdate;
   }
 
+  @Override
+  public void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable) {
+    myActionPopupMenuListeners.add(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myActionPopupMenuListeners.remove(listener);
+      }
+    });
+  }
+
   private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
-    AnAction oldAction = getActionOrStub(actionId);
+    AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     if (oldAction != null) {
+      if (newAction instanceof OverridingAction) {
+        myBaseActions.put((OverridingAction) newAction, oldAction);
+      }
       boolean isGroup = oldAction instanceof ActionGroup;
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
@@ -1119,6 +1134,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     registerAction(actionId, newAction, pluginId);
     return oldAction;
+  }
+
+  /**
+   * Returns the action overridden by the specified overriding action (with overrides="true" in plugin.xml).
+   */
+  public AnAction getBaseAction(OverridingAction overridingAction) {
+    return myBaseActions.get(overridingAction);
   }
 
   private void flushActionPerformed() {
@@ -1162,7 +1184,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
-      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId);
+      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId, action.getClass());
     }
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
@@ -1229,17 +1251,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void preloadActions(ProgressIndicator indicator) {
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
 
     for (String id : getActionIds()) {
       indicator.checkCanceled();
-      if (application.isDisposed()) return;
+      if (application.isDisposeInProgress() || application.isDisposed()) return;
 
-      final AnAction action = getAction(id);
+      AnAction action = getAction(id);
       if (action instanceof PreloadableAction) {
         ((PreloadableAction)action).preload();
       }
-      // don't preload ActionGroup.getChildren() because that would unstub child actions
+      // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
     }
@@ -1292,7 +1314,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
 
         Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-        if (component != null && !component.isShowing()) {
+        if (component != null && !component.isShowing() && !ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
           result.setRejected();
           return;
         }
@@ -1305,7 +1327,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
             if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
               if (!result.isProcessed()) {
                 final WindowEvent we = (WindowEvent)event;
-                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable());
+                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable(),
+                                                                                               ModalityState.defaultModalityState());
               }
             }
           }
@@ -1315,7 +1338,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         result.setDone();
         queueActionPerformedEvent(action, context, event);
       }
-    ));
+    ), ModalityState.defaultModalityState());
   }
 
   private class MyTimer extends Timer implements ActionListener {

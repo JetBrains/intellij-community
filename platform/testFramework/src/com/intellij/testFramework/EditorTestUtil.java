@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.CurrentEditorProvider;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -275,12 +274,7 @@ public class EditorTestUtil {
    */
   @NotNull
   public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
-    return new WriteCommandAction<CaretAndSelectionState>(null) {
-      @Override
-      public void run(@NotNull Result<CaretAndSelectionState> actionResult) {
-        actionResult.setResult(extractCaretAndSelectionMarkersImpl(document, processBlockSelection));
-      }
-    }.execute().getResultObject();
+    return WriteCommandAction.writeCommandAction(null).compute(() -> extractCaretAndSelectionMarkersImpl(document, processBlockSelection));
   }
 
   @NotNull

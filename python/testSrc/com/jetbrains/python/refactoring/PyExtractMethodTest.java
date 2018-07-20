@@ -270,4 +270,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testCommentsPrecedingSourceStatement() {
     doTest("func");
   }
+
+  // PY-28972
+  public void testInterruptedOuterLoop() {
+    doFail("foo", "Cannot perform refactoring when execution flow is interrupted");
+  }
 }

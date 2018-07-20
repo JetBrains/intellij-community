@@ -1,7 +1,7 @@
 class X {
   void foo() {
       newMethod();
-      
+
   }
 
     private int newMethod() {

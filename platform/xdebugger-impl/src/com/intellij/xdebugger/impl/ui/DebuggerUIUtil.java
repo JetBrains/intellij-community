@@ -39,6 +39,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -161,7 +162,7 @@ public class DebuggerUIUtil {
     builder.setResizable(true)
       .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
-        .setRequestFocus(false);
+        .setRequestFocus(true);
       if (callback != null) {
         builder.setCancelCallback(() -> {
           callback.setObsolete();
@@ -224,7 +225,7 @@ public class DebuggerUIUtil {
       }
     };
 
-    balloon.addListener(new JBPopupListener.Adapter() {
+    balloon.addListener(new JBPopupListener() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         propertiesPanel.saveProperties();
@@ -380,6 +381,14 @@ public class DebuggerUIUtil {
     catch (ExecutionException | TimeoutException e) {
       return true;
     }
+  }
+
+  public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
+    node.getValueContainer().calculateEvaluationExpression().onSuccess(expression -> {
+      if (expression != null) {
+        invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
+      }
+    });
   }
 
   public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {

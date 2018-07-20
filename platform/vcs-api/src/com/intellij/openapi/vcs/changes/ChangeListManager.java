@@ -161,6 +161,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
 
+  public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently);
 
   @NotNull
   public abstract IgnoredFileBean[] getFilesToIgnore();

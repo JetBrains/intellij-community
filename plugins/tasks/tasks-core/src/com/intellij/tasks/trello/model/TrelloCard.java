@@ -39,7 +39,8 @@ public class TrelloCard extends TrelloModel {
 
   private String idBoard, idList, idShort;
   private List<String> idMembers;
-  private String name;
+  @NotNull
+  private String name = "";
   @SerializedName("desc")
   private String description;
   private String url;

@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -41,6 +42,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.*;
@@ -151,6 +153,13 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myAlarm.addRequest(new MySaveTask(myProject, myExternalRootProjects.values()), 0);
   }
 
+  @TestOnly
+  public synchronized void saveAndWait() throws Exception {
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "This method is available for tests only");
+    save();
+    myAlarm.waitForAllExecuted(1, TimeUnit.SECONDS);
+  }
+
   synchronized void update(@NotNull ExternalProjectInfo externalProjectInfo) {
     restoreInclusionSettings(externalProjectInfo.getExternalProjectStructure());
 
@@ -247,7 +256,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   synchronized void remove(@NotNull ProjectSystemId projectSystemId, @NotNull String externalProjectPath) {
     final InternalExternalProjectInfo removed = myExternalRootProjects.remove(Pair.create(projectSystemId, new File(externalProjectPath)));
-    if(removed != null) {
+    if (removed != null) {
       changed.set(true);
     }
   }

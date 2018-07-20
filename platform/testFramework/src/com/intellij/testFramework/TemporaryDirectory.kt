@@ -98,4 +98,4 @@ fun generateTemporaryPath(fileName: String?): Path {
   return path
 }
 
-fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)
+fun VirtualFile.writeChild(relativePath: String, data: String): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)

@@ -71,7 +71,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             highlightingPass.doApplyInformationToEditor();
         }
 
-        DaemonListeners.repaintErrorStripeRenderer(editor, project);
+        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
       }
     });
   }
@@ -97,7 +97,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
       if (editor != null) {
-        DaemonListeners.repaintErrorStripeRenderer(editor, project);
+        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
       }
     });
 
@@ -141,8 +141,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                               @NotNull TextRange priorityRange,
                               @NotNull TextRange restrictedRange,
                               int groupId) {
-    HighlightingSessionImpl impl = (HighlightingSessionImpl)session;
-    impl.queueHighlightInfo(info, restrictedRange, groupId);
+    ((HighlightingSessionImpl)session).queueHighlightInfo(info, restrictedRange, groupId);
   }
 
   @Override
@@ -168,7 +167,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         if (myeditor == null || myeditor.isDisposed()) return;
         EditorMarkupModelImpl markup = (EditorMarkupModelImpl)myeditor.getMarkupModel();
         markup.repaintTrafficLightIcon();
-        DaemonListeners.repaintErrorStripeRenderer(myeditor, myProject);
+        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(myeditor);
       }, 50, null);
     }
   }

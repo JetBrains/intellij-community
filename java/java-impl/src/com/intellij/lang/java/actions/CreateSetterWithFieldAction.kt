@@ -26,15 +26,15 @@ internal class CreateSetterWithFieldAction(target: PsiClass, request: CreateMeth
   }
 
   override fun getText(): String {
-    return message("create.write.only.property.from.usage.full.text", propertyInfo.first, getNameForClass(target, false))
+    return message("create.write.only.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
   }
 
   override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {
 
-    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression {
+    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression? {
       val prototypeField = generatePrototypeField()
       val prototype = generateSimpleSetterPrototype(prototypeField, target)
-      val accessor = insertAccessor(prototype)
+      val accessor = insertAccessor(prototype) ?: return null
       val data = accessor.extractSetterTemplateData()
       val typeExpression = builder.setupInput(data)
       builder.setupSetterParameter(data)

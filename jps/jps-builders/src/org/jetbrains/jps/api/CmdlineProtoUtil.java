@@ -166,6 +166,9 @@ public class CmdlineProtoUtil {
       case JPS_INFO:
         builder.setKind(BuilderMessage.CompileMessage.Kind.JPS_INFO);
         break;
+      case INTERNAL_BUILDER_ERROR:
+        builder.setKind(BuilderMessage.CompileMessage.Kind.INTERNAL_BUILDER_ERROR);
+        break;
       case OTHER:
         builder.setKind(BuilderMessage.CompileMessage.Kind.OTHER);
         break;

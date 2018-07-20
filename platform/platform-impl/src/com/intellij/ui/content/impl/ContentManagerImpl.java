@@ -150,11 +150,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     doAddContent(content, -1);
   }
 
-  @Override
-  public void addContent(@NotNull final Content content, final Object constraints) {
-    doAddContent(content, -1);
-  }
-
   private void doAddContent(@NotNull final Content content, final int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myContents.contains(content)) {
@@ -481,7 +476,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         addSelectedContent(content);
 
         if (requestFocus) {
-          content.getComponent().transferFocus();
+          requestFocus(content, forcedFocus);
         }
         return ActionCallback.DONE;
       }
@@ -491,7 +486,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     boolean enabledFocus = getFocusManager().isFocusTransferEnabled();
     if (focused || requestFocus) {
       if (enabledFocus) {
-        return getFocusManager().requestFocus(myComponent, true).doWhenProcessed(() -> selection.run().notify(result));
+        return getFocusManager().requestFocus(getComponent(), true).doWhenProcessed(() -> selection.run().notify(result));
       }
     }
     return selection.run().notify(result);

@@ -17,7 +17,6 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.openapi.util.Iconable;
 import com.intellij.util.PlatformIcons;
-import icons.XpathIcons;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 
 import javax.swing.*;
@@ -31,6 +30,6 @@ public class NodeLookup extends AbstractLookup implements Lookup, Iconable {
     }
 
     public Icon getIcon(int flags) {
-        return principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? PlatformIcons.ANNOTATION_TYPE_ICON : XpathIcons.Tag;
+        return principalType == XPathNodeTest.PrincipalType.ATTRIBUTE ? PlatformIcons.ANNOTATION_TYPE_ICON : PlatformIcons.XML_TAG_ICON;
     }
 }

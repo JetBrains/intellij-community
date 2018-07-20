@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -162,8 +167,28 @@ public class PyClassMROTest extends PyTestCase {
     });
   }
 
+  // PY-21837
+  public void testClassImportedFromUnstubbedFileAndSuperImportedWithAs() {
+    myFixture.copyDirectoryToProject("codeInsight/classMRO/" + getTestName(false), "");
+
+    final VirtualFile d = myFixture.findFileInTempDir("D.py");
+    final VirtualFile bc = myFixture.findFileInTempDir("BC.py");
+
+    final PyFile dPsi = (PyFile)myFixture.getPsiManager().findFile(d);
+    final PsiFile bPsi = myFixture.getPsiManager().findFile(bc);
+
+    //noinspection ResultOfMethodCallIgnored
+    bPsi.getNode(); // unstubbing is necessary
+
+    final PyClass dClass = dPsi.findTopLevelClass("D");
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), dPsi); // such context is necessary
+    final List<PyClass> ancestors = dClass.getAncestorClasses(context);
+
+    assertOrderedEquals(ContainerUtil.map(ancestors, PyClass::getName), Arrays.asList("C", "A", "B", PyNames.OBJECT));
+  }
+
   @NotNull
-  public PyClass getClass(@NotNull String name) {
+  private PyClass getClass(@NotNull String name) {
     myFixture.configureByFile(getPath(getTestName(false)));
     final PyClass cls = myFixture.findElementByText(name, PyClass.class);
     assertNotNull(cls);

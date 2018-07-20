@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl.vcs;
 
 import com.intellij.CommonBundle;
@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -26,15 +27,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,33 +56,15 @@ public class UnloadedModulesCompilationCheckinHandler extends CheckinHandler {
       return null;
     }
 
-    JCheckBox checkBox = new NonFocusableCheckBox(CompilerBundle.message("checkbox.text.compile.affected.unloaded.modules"));
-    return new RefreshableOnComponent() {
-      @Override
-      public JComponent getComponent() {
-        return JBUI.Panels.simplePanel().addToLeft(checkBox);
-      }
-
-      @Override
-      public void refresh() {
-      }
-
-      @Override
-      public void saveState() {
-        CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = checkBox.isSelected();
-      }
-
-      @Override
-      public void restoreState() {
-        checkBox.setSelected(CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT);
-      }
-    };
+    return new BooleanCommitOption(myCheckinPanel, CompilerBundle.message("checkbox.text.compile.affected.unloaded.modules"), false,
+                                   () -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT,
+                                   value -> getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = value);
   }
 
   @Override
   public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-    if (!CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT
-        || ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
+    if (!getSettings().COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT ||
+        ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
       return ReturnResult.COMMIT;
     }
 
@@ -140,6 +120,11 @@ public class UnloadedModulesCompilationCheckinHandler extends CheckinHandler {
       }, ModalityState.NON_MODAL);
       return ReturnResult.CLOSE_WINDOW;
     }
+  }
+
+  @NotNull
+  private CompilerWorkspaceConfiguration getSettings() {
+    return CompilerWorkspaceConfiguration.getInstance(myProject);
   }
 
   private enum BuildResult { SUCCESSFUL, FAILED, CANCELED }

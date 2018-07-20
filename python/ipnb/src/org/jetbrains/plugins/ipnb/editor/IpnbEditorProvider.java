@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -6,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +37,7 @@ public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     final IpnbEditorState state = new IpnbEditorState(-1, 0);
     final Element child = sourceElement.getChild(SELECTED_CELL);
-    state.setSelectedIndex(child == null ? 0 : Integer.parseInt(child.getAttributeValue(ID)));
+    state.setSelectedIndex(child == null ? 0 : StringUtil.parseInt(child.getAttributeValue(ID), 0));
     return state;
   }
 

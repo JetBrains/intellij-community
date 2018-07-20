@@ -24,15 +24,15 @@ import java.util.*;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * Adapted from java.util.concurrent.ConcurrentHashMap to int keys
+ * Adapted from Doug Lea ConcurrentHashMap (see http://gee.cs.oswego.edu/dl/concurrency-interest/index.html) to int keys
+ * with following additions/changes:
+ * - added hashing strategy argument
+ * - added cacheOrGet convenience method
+ * - Null values are NOT allowed
  * @author Doug Lea
  * @param <V> the type of mapped values
- * Use {@link ContainerUtil#createConcurrentIntObjectMap()} to create this
+ * Use {@link ContainerUtil#createConcurrentIntObjectMap()} to create this map
  */
-// added hashing strategy argument
-// added cacheOrGet convenience method
-// Null values are NOT allowed
-
 class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
    * The largest possible table capacity.  This value must be

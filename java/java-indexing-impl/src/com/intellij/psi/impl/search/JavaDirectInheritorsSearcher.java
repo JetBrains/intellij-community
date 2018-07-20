@@ -1,13 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,14 +28,10 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
@@ -47,7 +40,7 @@ import java.util.stream.Stream;
  */
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
+  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
     PsiClass baseClass = getClassToSearch(parameters);
     assert parameters.isCheckInheritance();
 
@@ -172,7 +165,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return true;
     }
     if (size > 100) {
-      return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(collection), ProgressIndicatorProvider.getGlobalProgressIndicator(), true, processor);
+      return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(collection), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
     }
     return ContainerUtil.process(collection, processor);
   }
@@ -184,20 +177,20 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                       @NotNull SearchScope useScope) {
     DumbService dumbService = DumbService.getInstance(project);
     GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(
-      () -> StubHierarchyInheritorSearcher.restrictScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
+      () -> StubHierarchyInheritorSearcher.restrictScope(new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project))));
     Collection<PsiReferenceList> candidates =
       dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
+    RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(baseClass));
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
     final Map<String, Object> classesWithFqn = new HashMap<>();
 
     processConcurrentlyIfTooMany(candidates,
        referenceList -> {
          ProgressManager.checkCanceled();
-         ApplicationManager.getApplication().runReadAction(() -> {
+         dumbService.runReadActionInSmartMode(() -> {
            final PsiClass candidate = (PsiClass)referenceList.getParent();
-           boolean isInheritor = candidate.isInheritor(baseClass, false);
-           if (isInheritor) {
+           if (checker.checkInheritance(candidate)) {
              String fqn = candidate.getQualifiedName();
              synchronized (classesWithFqn) {
                Object value = classesWithFqn.get(fqn);
@@ -237,16 +230,14 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     Collection<PsiAnonymousClass> anonymousCandidates =
       dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
-    processConcurrentlyIfTooMany(anonymousCandidates,
-       candidate-> {
-         boolean isInheritor = dumbService.runReadActionInSmartMode(() -> candidate.isInheritor(baseClass, false));
-         if (isInheritor) {
-           synchronized (result) {
-             result.add(candidate);
-           }
-         }
-         return true;
-       });
+    processConcurrentlyIfTooMany(anonymousCandidates, candidate-> {
+      if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
+        synchronized (result) {
+          result.add(candidate);
+        }
+      }
+      return true;
+    });
 
     boolean isEnum = ReadAction.compute(baseClass::isEnum);
     if (isEnum) {
@@ -286,7 +277,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   }
 
   private static boolean processInheritorCandidates(@NotNull Stream<PsiElement> classStream,
-                                                    @NotNull Processor<PsiClass> consumer,
+                                                    @NotNull Processor<? super PsiClass> consumer,
                                                     boolean acceptAnonymous) {
     if (!acceptAnonymous) {
       classStream = classStream.filter(c -> !(c instanceof PsiAnonymousClass));

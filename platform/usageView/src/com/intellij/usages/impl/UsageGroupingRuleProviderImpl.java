@@ -80,7 +80,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   @Override
   @NotNull
-  public AnAction[] createGroupingActions(UsageView view) {
+  public AnAction[] createGroupingActions(@NotNull UsageView view) {
     UsageViewImpl impl = (UsageViewImpl)view;
     JComponent component = impl.getComponent();
 

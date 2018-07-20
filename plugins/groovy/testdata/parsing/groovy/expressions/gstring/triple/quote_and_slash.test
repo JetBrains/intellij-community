@@ -3,7 +3,7 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(Gstring content)('"\\')
     GString injection
       PsiElement($)('$')
@@ -14,14 +14,8 @@ Groovy script
         Reference expression
           PsiElement(identifier)('href')
         PsiElement(})('}')
-    GrStringContentImpl(GString content element)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('x')
-    GrStringContentImpl(GString content element)
-      ASTWrapperPsiElement(Gstring content)
-        <empty list>
     PsiElement(Gstring end)('"""')

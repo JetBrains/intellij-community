@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ArrayUtil;
@@ -44,7 +42,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                          @NotNull List<XExpression> expressions,
                          @Nullable XStackFrame stackFrame,
                          boolean watchesInVariables) {
-    super(tree, null, new XValueContainer() {
+    super(tree, null, false, new XValueContainer() {
       @Override
       public void computeChildren(@NotNull XCompositeNode node) {
         if (stackFrame != null && watchesInVariables) {
@@ -55,7 +53,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
         }
       }
     });
-    setLeaf(false);
     myWatchesView = watchesView;
     myChildren = ContainerUtil.newArrayList();
     for (XExpression watchExpression : expressions) {
@@ -79,6 +76,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   /**
    * @deprecated use {@link #getWatchChildren()} instead
    */
+  @Deprecated
   @NotNull
   public List<? extends WatchNode> getAllChildren() {
     return getWatchChildren();

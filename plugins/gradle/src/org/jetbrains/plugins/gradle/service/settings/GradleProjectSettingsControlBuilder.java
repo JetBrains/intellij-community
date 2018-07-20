@@ -44,17 +44,17 @@ public interface GradleProjectSettingsControlBuilder {
   /**
    * Add Gradle home components to the panel
    */
-  IdeaGradleProjectSettingsControlBuilder addGradleHomeComponents(PaintAwarePanel content, int indentLevel);
+  GradleProjectSettingsControlBuilder addGradleHomeComponents(PaintAwarePanel content, int indentLevel);
 
   /**
    * Add Gradle JDK component to the panel
    */
-  IdeaGradleProjectSettingsControlBuilder addGradleJdkComponents(PaintAwarePanel content, int indentLevel);
+  GradleProjectSettingsControlBuilder addGradleJdkComponents(PaintAwarePanel content, int indentLevel);
 
   /**
    * Add Gradle distribution chooser component to the panel
    */
-  IdeaGradleProjectSettingsControlBuilder addGradleChooserComponents(PaintAwarePanel content, int indentLevel);
+  GradleProjectSettingsControlBuilder addGradleChooserComponents(PaintAwarePanel content, int indentLevel);
 
   boolean validate(GradleProjectSettings settings) throws ConfigurationException;
 

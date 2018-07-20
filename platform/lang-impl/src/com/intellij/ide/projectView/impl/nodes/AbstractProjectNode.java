@@ -19,8 +19,8 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchProjectViewPane;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -147,6 +147,6 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
            index.isInLibraryClasses(vFile) ||
            index.isInLibrarySource(vFile) ||
            Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && RootType.forFile(vFile) != null;
+           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(vFile);
   }
 }

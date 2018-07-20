@@ -42,17 +42,20 @@ import java.util.Set;
 public abstract class CreateFromSourcesMode extends WizardMode {
   protected ProjectFromSourcesBuilderImpl myProjectBuilder;
 
+  @Override
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName());
   }
 
+  @Override
   @NotNull
   public String getDescription(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.existent.sources.description",
                                  ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 
+  @Override
   @Nullable
   protected StepSequence createSteps(@NotNull final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     final StepSequence sequence = new StepSequence();
@@ -80,6 +83,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
 
     if (FrameworkDetectionStep.isEnabled()) {
       FrameworkDetectionStep frameworkDetectionStep = new FrameworkDetectionStep(icon, projectBuilder) {
+        @Override
         public List<ModuleDescriptor> getModuleDescriptors() {
           final List<ModuleDescriptor> moduleDescriptors = new ArrayList<>();
           for (ProjectDescriptor descriptor : projectBuilder.getSelectedDescriptors()) {
@@ -102,10 +106,12 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     }
   }
 
+  @Override
   public ProjectBuilder getModuleBuilder() {
     return myProjectBuilder;
   }
 
+  @Override
   public void onChosen(final boolean enabled) {
   }
 
@@ -114,6 +120,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     return "Create from Sources";
   }
 
+  @Override
   public void dispose() {
     myProjectBuilder = null;
     super.dispose();

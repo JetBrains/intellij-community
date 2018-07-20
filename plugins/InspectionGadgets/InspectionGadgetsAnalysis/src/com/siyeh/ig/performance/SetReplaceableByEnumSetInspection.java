@@ -16,14 +16,22 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class SetReplaceableByEnumSetInspection extends BaseInspection {
 
@@ -37,6 +45,21 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("set.replaceable.by.enum.set.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    if (infos.length != 1) return null;
+    PsiLocalVariable localVariable = tryCast(infos[0], PsiLocalVariable.class);
+    if (localVariable == null) return null;
+    PsiType[] parameters = CollectionReplaceableByEnumCollectionVisitor.extractParameterType(localVariable, 1);
+    if (parameters == null) return null;
+    PsiType enumParameter = parameters[0];
+    PsiClass probablyEnum = PsiUtil.resolveClassInClassTypeOnly(enumParameter);
+    if (probablyEnum == null || !probablyEnum.isEnum()) return null;
+    String text = "java.util.EnumSet.noneOf(" + enumParameter.getCanonicalText() + ".class)";
+    return new ReplaceExpressionWithTextFix(text, "Replace with EnumSet");
   }
 
   @Override

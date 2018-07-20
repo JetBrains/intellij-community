@@ -65,19 +65,6 @@ public class PathEnvironmentVariableUtil {
   }
 
   /**
-   * Finds an executable file with the specified base name, that is located in a directory
-   * listed in an original PATH environment variable.
-   * Original PATH environment variable value is a value returned by {@code System.getenv("PATH")}.
-   *
-   * @param fileBaseName file base name
-   * @return {@link File} instance or null if not found
-   */
-  private static File findInOriginalPath(@NotNull String fileBaseName) {
-    List<File> exeFiles = findExeFilesInPath(true, null, System.getenv(PATH), fileBaseName);
-    return ContainerUtil.getFirstItem(exeFiles);
-  }
-
-  /**
    * Finds all executable files with the specified base name, that are located in directories
    * from PATH environment variable.
    *
@@ -126,24 +113,6 @@ public class PathEnvironmentVariableUtil {
   @NotNull
   public static List<String> getPathDirs(@NotNull String pathEnvVarValue) {
     return StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
-  }
-
-  /** @deprecated obsolete; the behavior is incorporated in {@link GeneralCommandLine#createProcess()} (to be removed in IDEA 2019) */
-  @NotNull
-  public static String toLocatableExePath(@NotNull String exePath) {
-    if (SystemInfo.isMac) {
-      if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
-        File originalResolvedExeFile = findInOriginalPath(exePath);
-        // don't modify exePath if the absolute path can be found in the original PATH
-        if (originalResolvedExeFile == null) {
-          File resolvedExeFile = findInPath(exePath);
-          if (resolvedExeFile != null) {
-            exePath = resolvedExeFile.getAbsolutePath();
-          }
-        }
-      }
-    }
-    return exePath;
   }
 
   @NotNull

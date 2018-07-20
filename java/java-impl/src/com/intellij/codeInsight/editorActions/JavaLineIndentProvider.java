@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
@@ -25,9 +26,10 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider;
 import com.intellij.psi.tree.IElementType;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
 
 import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
@@ -50,6 +52,7 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
     SYNTAX_MAP.put(JavaTokenType.CASE_KEYWORD, SwitchCase);
     SYNTAX_MAP.put(JavaTokenType.DEFAULT_KEYWORD, SwitchDefault);
     SYNTAX_MAP.put(JavaTokenType.IF_KEYWORD, IfKeyword);
+    SYNTAX_MAP.put(JavaTokenType.WHILE_KEYWORD, IfKeyword);    
     SYNTAX_MAP.put(JavaTokenType.ELSE_KEYWORD, ElseKeyword);
     SYNTAX_MAP.put(JavaTokenType.FOR_KEYWORD, ForKeyword);
     SYNTAX_MAP.put(JavaTokenType.DO_KEYWORD, DoKeyword);
@@ -91,6 +94,16 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
   @Override
   protected boolean isInsideForLikeConstruction(SemanticEditorPosition position) {
     return position.isAfterOnSameLine(ForKeyword, TryKeyword);
+  }
+
+  @Override
+  protected boolean isInArray(@NotNull Editor editor, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    position.moveBefore();
+    if (position.isAt(JavaTokenType.LBRACE)) {
+      if (position.before().beforeOptional(Whitespace).isAt(JavaTokenType.RBRACKET)) return true;
+    }
+    return super.isInArray(editor, offset);
   }
 
   @Override

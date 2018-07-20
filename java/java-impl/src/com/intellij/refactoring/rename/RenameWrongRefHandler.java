@@ -52,12 +52,9 @@ public class RenameWrongRefHandler implements RenameHandler {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     if (reference instanceof PsiReferenceExpression) {
-      new WriteCommandAction(project){
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          new RenameWrongRefFix((PsiReferenceExpression)reference).invoke(project, editor, file);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project).run(() -> {
+        new RenameWrongRefFix((PsiReferenceExpression)reference).invoke(project, editor, file);
+      });
     }
   }
 

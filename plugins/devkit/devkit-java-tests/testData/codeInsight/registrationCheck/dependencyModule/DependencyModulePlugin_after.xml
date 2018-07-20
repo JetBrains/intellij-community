@@ -1,0 +1,8 @@
+<idea-plugin>
+    <extensionPoints>
+        <extensionPoint name="myDependencyModuleClassWithEpNameEp" interface="DependencyModuleClassWithEpName"/>
+    </extensionPoints>
+    <extensions defaultExtensionNs="com.intellij">
+        <myPlugin.myDependencyModuleClassEp implementation="DependencyModuleClass"/>
+    </extensions>
+</idea-plugin>

@@ -194,12 +194,8 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   public void checkIsSerializable() throws IOException {
     if (myRawData != null) return;
-    ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance());
-    try {
+    try (ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance())) {
       oOut.writeObject(myData);
-    }
-    finally {
-      oOut.close();
     }
   }
 

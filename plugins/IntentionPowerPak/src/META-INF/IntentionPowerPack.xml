@@ -96,12 +96,6 @@
       <categoryKey>intention.category.conditional.operator</categoryKey>
     </intentionAction>
 
-    <intentionAction>
-      <className>com.siyeh.ipp.trivialif.ReplaceIfWithConditionalIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.conditional.operator</categoryKey>
-    </intentionAction>
-
     <!-- Shift -->
     <intentionAction>
       <className>com.siyeh.ipp.shift.ReplaceMultiplyWithShiftIntention</className>
@@ -447,11 +441,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.increment.InlineIncrementIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.parenthesis.AddClarifyingParenthesesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

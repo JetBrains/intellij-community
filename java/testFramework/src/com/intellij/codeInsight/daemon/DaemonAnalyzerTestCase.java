@@ -403,36 +403,32 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected PsiClass createClass(final Module module, final String text) throws IOException {
-    return new WriteCommandAction<PsiClass>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<PsiClass> result) throws Throwable {
-        final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
-        final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
-        final String qname = javaFile.getClasses()[0].getQualifiedName();
-        assertNotNull(qname);
-        final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
-        File dir;
-        if (files.length > 0) {
-          dir = VfsUtilCore.virtualToIoFile(files[0]);
-        }
-        else {
-          dir = createTempDirectory();
-          VirtualFile vDir =
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-          addSourceContentToRoots(module, vDir);
-        }
-
-        File file = new File(dir, qname.replace('.', '/') + ".java");
-        FileUtil.createIfDoesntExist(file);
-        VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
-        assertNotNull(vFile);
-        VfsUtil.saveText(vFile, text);
-        PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(vFile);
-        assertNotNull(psiFile);
-        PsiClass psiClass = psiFile.getClasses()[0];
-        result.setResult(psiClass);
-
+    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
+      final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
+      final String qname = javaFile.getClasses()[0].getQualifiedName();
+      assertNotNull(qname);
+      final VirtualFile[] files = ModuleRootManager.getInstance(module).getSourceRoots();
+      File dir;
+      if (files.length > 0) {
+        dir = VfsUtilCore.virtualToIoFile(files[0]);
       }
-    }.execute().throwException().getResultObject();
+      else {
+        dir = createTempDirectory();
+        VirtualFile vDir =
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+        addSourceContentToRoots(module, vDir);
+      }
+
+      File file = new File(dir, qname.replace('.', '/') + ".java");
+      FileUtil.createIfDoesntExist(file);
+      VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
+      assertNotNull(vFile);
+      VfsUtil.saveText(vFile, text);
+      PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(vFile);
+      assertNotNull(psiFile);
+      PsiClass psiClass = psiFile.getClasses()[0];
+      return psiClass;
+    });
   }
 }

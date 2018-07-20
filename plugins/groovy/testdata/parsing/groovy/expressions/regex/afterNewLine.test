@@ -6,7 +6,7 @@ Groovy script
     PsiElement(identifier)('a')
   PsiElement(new line)('\n')
   Literal
-    GroovyASTPsiElementImpl(regex literal)
+    GroovyASTPsiElementImpl(SLASHY_LITERAL)
       PsiElement(regex begin)('/')
       PsiElement(regex content)('foo')
       PsiElement(regex end)('/')

@@ -36,6 +36,10 @@ public class CompilerMessage extends BuildMessage {
   private final long myLine;
   private final long myColumn;
 
+  /**
+   * @deprecated use either {@link #createInternalCompilationError(String, Throwable)} or {@link #createInternalBuilderError(String, Throwable)} instead
+   */
+  @Deprecated
   public CompilerMessage(@NotNull String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }
@@ -108,6 +112,22 @@ public class CompilerMessage extends BuildMessage {
       }
     }
     return builder.toString();
+  }
+
+
+  /**
+   * Return a message describing an exception in the underlying compiler. Such messages will be reported as compilation errors.
+   */
+  public static CompilerMessage createInternalCompilationError(@NotNull String compilerName, @NotNull Throwable t) {
+    return new CompilerMessage(compilerName, t);
+  }
+
+  /**
+   * Return a message describing an error in JPS builders code. Such messages will be reported as regular compilation errors and also will be logger
+   * as fatal errors of the IDE.
+   */
+  public static CompilerMessage createInternalBuilderError(@NotNull String compilerName, @NotNull Throwable t) {
+    return new CompilerMessage(compilerName, Kind.INTERNAL_BUILDER_ERROR, getTextFromThrowable(t));
   }
 
   public static String getTextFromThrowable(Throwable internalError) {

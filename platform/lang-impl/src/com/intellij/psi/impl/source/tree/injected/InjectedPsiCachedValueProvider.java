@@ -35,6 +35,7 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
     PsiFile hostPsiFile = element.getContainingFile();
     if (hostPsiFile == null) return null;
     FileViewProvider viewProvider = hostPsiFile.getViewProvider();
+    if (viewProvider instanceof InjectedFileViewProvider) return null; // no injection inside injection
     final DocumentEx hostDocument = (DocumentEx)viewProvider.getDocument();
     if (hostDocument == null) return null;
 

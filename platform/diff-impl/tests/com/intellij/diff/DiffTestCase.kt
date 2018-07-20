@@ -133,7 +133,7 @@ abstract class DiffTestCase : TestCase() {
 
   fun textToReadableFormat(text: CharSequence?): String {
     if (text == null) return "null"
-    return "'" + text.toString().replace('\n', '*').replace('\t', '+') + "'"
+    return "\"" + text.toString().replace('\n', '*').replace('\t', '+') + "\""
   }
 
   fun parseSource(string: CharSequence): String = string.toString().replace('_', '\n')

@@ -145,9 +145,9 @@ public class MagicCompletionContributor extends CompletionContributor {
     else if (IN_ASSIGNMENT.accepts(pos)) {
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(pos, PsiAssignmentExpression.class);
       PsiExpression l = assignment == null ? null : assignment.getLExpression();
-      PsiElement resolved = resolveExpression(l);
+      PsiModifierListOwner resolved = resolveExpression(l);
       if (resolved != null && PsiTreeUtil.isAncestor(assignment.getRExpression(), pos, false)) {
-        result.add(Pair.create((PsiModifierListOwner)resolved, l.getType()));
+        result.add(Pair.create(resolved, l.getType()));
       }
     }
     else if (IN_RETURN.accepts(pos)) {

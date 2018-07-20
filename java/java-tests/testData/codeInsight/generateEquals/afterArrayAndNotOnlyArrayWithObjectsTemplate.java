@@ -13,14 +13,13 @@ class A {
         if (o == null || getClass() != o.getClass()) return false;
         final A a = (A) o;
         return i == a.i &&
-                Objects.equals(s, a.s) &&
+                s.equals(a.s) &&
                 Arrays.equals(a1, a.a1) &&
                 Arrays.equals(a2, a.a2);
     }
 
     @Override
     public int hashCode() {
-
         int result = Objects.hash(i, s);
         result = 31 * result + Arrays.hashCode(a1);
         result = 31 * result + Arrays.hashCode(a2);

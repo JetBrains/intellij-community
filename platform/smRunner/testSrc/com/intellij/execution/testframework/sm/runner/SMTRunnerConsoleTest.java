@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
@@ -44,10 +29,10 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
-    private MyConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
+    private MyConsoleView(final TestConsoleProperties consoleProperties) {
       super(consoleProperties);
 
-      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
+      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(this, consoleProperties, null) {
         @Override
         public void print(final String text, final ConsoleViewContentType contentType) {
           myMockResettablePrinter.print(text, contentType);
@@ -66,10 +51,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     super.setUp();
 
     final TestConsoleProperties consoleProperties = createConsoleProperties();
-    final ExecutionEnvironment environment = new ExecutionEnvironment();
 
     myMockResettablePrinter = new MockPrinter(true);
-    myConsole = new MyConsoleView(consoleProperties, environment);
+    myConsole = new MyConsoleView(consoleProperties);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myRootSuite = myResultsViewer.getTestsRootNode();
@@ -80,10 +64,13 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myEventsProcessor);
-    Disposer.dispose(myConsole);
-
-    super.tearDown();
+    try {
+      Disposer.dispose(myEventsProcessor);
+      Disposer.dispose(myConsole);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testPrintTestProxy() {
@@ -102,14 +89,14 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testAddStdOut() {
     mySimpleTest.setPrinter(myMockResettablePrinter);
 
-    mySimpleTest.addStdOutput("one", ProcessOutputTypes.STDOUT);
+    mySimpleTest.addStdOutput("one");
     assertStdOutput(myMockResettablePrinter, "one");
 
     mySimpleTest.addStdErr("two");
     assertStdErr(myMockResettablePrinter, "two");
 
-    mySimpleTest.addStdOutput("one", ProcessOutputTypes.STDOUT);
-    mySimpleTest.addStdOutput("one", ProcessOutputTypes.STDOUT);
+    mySimpleTest.addStdOutput("one");
+    mySimpleTest.addStdOutput("one");
     mySimpleTest.addStdErr("two");
     mySimpleTest.addStdErr("two");
     assertAllOutputs(myMockResettablePrinter, "oneone", "twotwo", "");
@@ -343,7 +330,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                                                "method1:1\n" +
                                                "method2:2\n" +
                                                "stderr1 ", "");
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("my_test", 1l));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("my_test", 1L));
     myTest1.setFinished();
 
     //other output order
@@ -468,7 +455,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("my suite", null));
     final SMTestProxy mySuite = myEventsProcessor.getCurrentSuite();
-    assertTrue(mySuite != myRootSuite);
+    assertNotSame(mySuite, myRootSuite);
     mySuite.setPrinter(myMockResettablePrinter);
 
     assertOnUncapturedOutput();
@@ -613,10 +600,10 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
   public void testEnsureOrderedClearFlush() {
     StringBuffer buf = new StringBuffer();
-    String expected = "";
+    StringBuilder expected = new StringBuilder();
     for(int i = 0; i < 100; i++) {
-      expected += "1" ;
-      expected += "2" ;
+      expected.append("1");
+      expected.append("2");
       CompositePrintable.invokeInAlarm(() -> buf.append("1"), false);
       CompositePrintable.invokeInAlarm(() -> buf.append("2"), false);
     }
@@ -624,7 +611,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     s.down();
     CompositePrintable.invokeInAlarm(s::up, false);
     assertTrue(s.waitFor(1000));
-    assertEquals(expected, buf.toString());
+    assertEquals(expected.toString(), buf.toString());
   }
 
   @NotNull

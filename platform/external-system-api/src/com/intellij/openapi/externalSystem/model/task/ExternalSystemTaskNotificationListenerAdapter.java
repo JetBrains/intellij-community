@@ -25,6 +25,7 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Deprecated
   public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
     if (myDelegate != null) {
       myDelegate.onQueued(id, workingDir);
@@ -45,6 +46,7 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Deprecated
   public void onStart(@NotNull ExternalSystemTaskId id) {
     if (myDelegate != null) {
       myDelegate.onStart(id);

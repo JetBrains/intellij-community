@@ -16,41 +16,62 @@
 package com.intellij.usages;
 
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.rules.MergeableUsage;
+import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter implements ReadWriteAccessUsage{
-  private final boolean myAccessedForReading;
-  private final boolean myAccessedForWriting;
+  private final byte initialRwLevel; // 0,1,2 -> R, W, RW
+  private byte myRwLevel;
 
   public ReadWriteAccessUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, final boolean accessedForReading, final boolean accessedForWriting) {
     super(usageInfo);
-    myAccessedForReading = accessedForReading;
-    myAccessedForWriting = accessedForWriting;
-    if (myAccessedForReading && myAccessedForWriting) {
-      myIcon = PlatformIcons.VARIABLE_RW_ACCESS;
+    initialRwLevel = myRwLevel = (byte)((accessedForReading ? 1 : 0) | (accessedForWriting ? 2 : 0));
+    computeIcon();
+  }
+
+  private static class RW {
+    private static final Icon[] ICONS = {
+      PlatformIcons.VARIABLE_READ_ACCESS,
+      PlatformIcons.VARIABLE_READ_ACCESS,
+      PlatformIcons.VARIABLE_WRITE_ACCESS,
+      PlatformIcons.VARIABLE_RW_ACCESS};
+  }
+
+  private void computeIcon() {
+    myIcon = RW.ICONS[myRwLevel];
+  }
+
+  @Override
+  public boolean merge(@NotNull MergeableUsage other) {
+    boolean merged = super.merge(other);
+    if (merged && other instanceof ReadWriteAccessUsageInfo2UsageAdapter) {
+      myRwLevel |= ((ReadWriteAccessUsageInfo2UsageAdapter)other).myRwLevel;
+      computeIcon();
     }
-    else if (myAccessedForWriting) {
-      myIcon = PlatformIcons.VARIABLE_WRITE_ACCESS;           // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
-    }
-    else if (myAccessedForReading){
-      myIcon = PlatformIcons.VARIABLE_READ_ACCESS;            // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
-    }
+    return merged;
+  }
+
+  @Override
+  public void reset() {
+    super.reset();
+    myRwLevel = initialRwLevel;
+    computeIcon();
   }
 
   @Override
   public boolean isAccessedForWriting() {
-    return myAccessedForWriting;
+    return BitUtil.isSet(myRwLevel, 2);
   }
 
   @Override
   public boolean isAccessedForReading() {
-    return myAccessedForReading;
+    return BitUtil.isSet(myRwLevel, 1);
   }
-
-
-
 }

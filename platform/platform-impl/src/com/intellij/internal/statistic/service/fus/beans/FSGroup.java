@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.beans;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,22 +12,14 @@ import java.util.Set;
 
 public class FSGroup {
 
-  private static final String FORBIDDEN_PATTERN = "[,\\s\\n]+";
-  private static final String FORBIDDEN_PATTERN_REPLACEMENT = "[??]";
-
   public String id;
   public Map<String, Integer> metrics ;
 
   private FSGroup(String id, Set<UsageDescriptor> usages) {
     this.id = id;
     for (UsageDescriptor usage : usages) {
-      getMetrics().put(replaceForbiddenPattern(usage), usage.getValue());
+      getMetrics().put(UsageDescriptorKeyValidator.replaceForbiddenSymbols(usage.getKey()), usage.getValue());
     }
-  }
-
-  @NotNull
-  private static String replaceForbiddenPattern(@NotNull UsageDescriptor usage) {
-    return usage.getKey().replaceAll(FORBIDDEN_PATTERN, FORBIDDEN_PATTERN_REPLACEMENT);
   }
 
   @NotNull

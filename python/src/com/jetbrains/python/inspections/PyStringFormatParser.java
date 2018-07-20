@@ -18,7 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import java.util.HashMap;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -71,7 +72,7 @@ public class PyStringFormatParser {
     @Nullable private String myMappingKey;
     @Nullable private String myWidth;
     @Nullable private String myPrecision;
-    @Nullable private Integer myPosition;
+    @Nullable private Integer myManualPosition;
     @Nullable private Integer myAutoPosition;
 
     private char myConversionType;
@@ -85,12 +86,12 @@ public class PyStringFormatParser {
     }
 
     @Nullable
-    public Integer getPosition() {
-      return myPosition;
+    public Integer getManualPosition() {
+      return myManualPosition;
     }
 
-    protected void setPosition(@Nullable Integer position) {
-      myPosition = position;
+    protected void setManualPosition(@Nullable Integer position) {
+      myManualPosition = position;
     }
 
     /**
@@ -143,6 +144,19 @@ public class PyStringFormatParser {
 
     protected void setMappingKey(@Nullable String mappingKey) {
       myMappingKey = mappingKey;
+    }
+
+    /**
+     * Returns either manually specified position or the one automatically assigned unless mapping key was specified instead.
+     * In the latter key this method returns {@code null}.
+     *
+     * @see #getManualPosition()
+     * @see #getAutoPosition()
+     * @see #getMappingKey()
+     */
+    @Nullable
+    public Integer getPosition() {
+      return ObjectUtils.chooseNotNull(myManualPosition, myAutoPosition);
     }
   }
 
@@ -273,7 +287,7 @@ public class PyStringFormatParser {
   private static final char ZERO_PADDING_SYMBOL = '0';
 
 
-  private PyStringFormatParser(@NotNull String literal) {
+  public PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
   }
 
@@ -308,7 +322,7 @@ public class PyStringFormatParser {
     return myResult;
   }
 
-  private List<FormatStringChunk> parseNewStyle() {
+  public List<FormatStringChunk> parseNewStyle() {
     final List<FormatStringChunk> results = new ArrayList<>();
     final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(myLiteral);
     int autoPositionedFieldsCount = 0;
@@ -349,7 +363,7 @@ public class PyStringFormatParser {
       final String name = myLiteral.substring(myPos, nameEnd);
       try {
         final int number = Integer.parseInt(name);
-        chunk.setPosition(number);
+        chunk.setManualPosition(number);
       }
       catch (NumberFormatException e) {
         chunk.setMappingKey(name);
@@ -453,7 +467,7 @@ public class PyStringFormatParser {
       if (myPos < end - 1) {
         chunk.setConversionType(myLiteral.charAt(myPos));
       }
-    } 
+    }
 
 
     results.add(chunk);

@@ -351,7 +351,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       if (substitution.getMappingKey() != null) {
         hasKeywords = true;
       }
-      final Integer position = substitution.getPosition();
+      final Integer position = substitution.getManualPosition();
       if (position != null && position > maxPosition) {
         maxPosition = position;
       }

@@ -74,7 +74,8 @@ public class RepositoryLibrarySupport {
       libraryDescription.getGroupId(),
       libraryDescription.getArtifactId(),
       model.getVersion(),
-      model.isIncludeTransitiveDependencies());
+      model.isIncludeTransitiveDependencies(),
+      model.getExcludedDependencies());
     final LibraryEx library = (LibraryEx)modifiableModel.createLibrary(
       LibraryEditingUtil.suggestNewLibraryName(modifiableModel, RepositoryLibraryType.getInstance().getDescription(libraryProperties)),
       RepositoryLibraryType.REPOSITORY_LIBRARY_KIND);
@@ -82,7 +83,7 @@ public class RepositoryLibrarySupport {
     realLibraryProperties.setMavenId(libraryProperties.getMavenId());
 
     ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit());
-    RepositoryUtils.loadDependencies(
+    RepositoryUtils.loadDependenciesToLibrary(
       module.getProject(),
       library,
       model.isDownloadSources(),

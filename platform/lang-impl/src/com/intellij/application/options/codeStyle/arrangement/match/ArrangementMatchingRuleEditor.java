@@ -317,7 +317,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
    */
   private void refreshConditions() {
     Pair<ArrangementMatchCondition, ArrangementSettingsToken> pair = buildCondition();
-    ArrangementMatchCondition condition = pair == null ? null : pair.first;
+    ArrangementMatchCondition condition = Pair.getFirst(pair);
     for (ArrangementUiComponent component : myComponents.values()) {
       ArrangementSettingsToken token = component.getToken();
       if (token == null) {

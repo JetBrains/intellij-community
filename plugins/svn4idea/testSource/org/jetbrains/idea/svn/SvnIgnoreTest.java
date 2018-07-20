@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyValue;
@@ -33,16 +17,10 @@ import java.util.Random;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_IGNORE;
 
-public class SvnIgnoreTest extends Svn17TestCase {
-  private ChangeListManager clManager;
-  private SvnVcs myVcs;
-
+public class SvnIgnoreTest extends SvnTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    clManager = ChangeListManager.getInstance(myProject);
-    myVcs = SvnVcs.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -53,7 +31,7 @@ public class SvnIgnoreTest extends Svn17TestCase {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");
     final String name = "ign123";
     File file = virtualToIoFile(versionedParent);
-    myVcs.getFactory(file).createPropertyClient().setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n"), Depth.EMPTY, true);
+    vcs.getFactory(file).createPropertyClient().setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n"), Depth.EMPTY, true);
     checkin();
     update();
 
@@ -64,9 +42,8 @@ public class SvnIgnoreTest extends Svn17TestCase {
     for (int i = 0; i < 10; i++) {
       current = createDirInCommand(current, "dir" + i);
       ignored.add(current);
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      clManager.ensureUpToDate(false);
-      Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
+      refreshChanges();
+      Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
     }
     testOneFile(current, "file.txt");
 
@@ -83,8 +60,8 @@ public class SvnIgnoreTest extends Svn17TestCase {
     final String name = "ign123";
     final String name2 = "ign321";
     File file = virtualToIoFile(versionedParent);
-    myVcs.getFactory().createPropertyClient()
-      .setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n" + name2 + "\n"), Depth.EMPTY, true);
+    vcs.getFactory().createPropertyClient()
+       .setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n" + name2 + "\n"), Depth.EMPTY, true);
     checkin();
     update();
 
@@ -122,15 +99,14 @@ public class SvnIgnoreTest extends Svn17TestCase {
   }
 
   private void testImpl(VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
-    Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
+    refreshChanges();
+    Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
 
-    VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
-    clManager.ensureUpToDate(false);
+    dirtyScopeManager.fileDirty(file);
+    changeListManager.ensureUpToDate(false);
 
-    Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
-    final FileStatus status = clManager.getStatus(file);
+    Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+    final FileStatus status = changeListManager.getStatus(file);
     Assert.assertTrue(status.getText(), FileStatus.IGNORED.equals(status));
   }
 }

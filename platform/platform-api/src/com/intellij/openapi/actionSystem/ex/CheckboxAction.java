@@ -52,7 +52,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   public void update(final AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
-    Object property = presentation.getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    JComponent property = presentation.getClientProperty(COMPONENT_KEY);
     if (property instanceof JCheckBox) {
       JCheckBox checkBox = (JCheckBox)property;
 
@@ -79,7 +79,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     // this component cannot be stored right in AnAction because of action system architecture:
     // one action can be shown on multiple toolbars simultaneously
     checkBox.setOpaque(false);
-    checkBox.setBorder(JBUI.Borders.emptyLeft(9));
+    checkBox.setBorder(JBUI.Borders.emptyRight(9));
 
     checkBox.addActionListener(new ActionListener() {
       @Override

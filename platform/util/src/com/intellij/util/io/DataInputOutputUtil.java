@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * @author max
@@ -38,18 +39,16 @@ public class DataInputOutputUtil extends DataInputOutputUtilRt {
     return DataInputOutputUtilRt.readINT(record);
   }
 
+  public static int readINT(@NotNull ByteBuffer byteBuffer) {
+    return DataInputOutputUtilRt.readINT(byteBuffer);
+  }
+
   public static void writeINT(@NotNull DataOutput record, int val) throws IOException {
     DataInputOutputUtilRt.writeINT(record, val);
   }
 
-  @Nullable
-  public static StringRef readNAME(@NotNull DataInput record, @NotNull AbstractStringEnumerator nameStore) throws IOException {
-    return StringRef.fromStream(record, nameStore);
-  }
-
-  public static void writeNAME(@NotNull DataOutput record, @Nullable String name, @NotNull AbstractStringEnumerator nameStore) throws IOException {
-    final int nameId = name != null ? nameStore.enumerate(name) : 0;
-    writeINT(record, nameId);
+  public static void writeINT(@NotNull ByteBuffer byteBuffer, int val) {
+    DataInputOutputUtilRt.writeINT(byteBuffer, val);
   }
 
   public static long readLONG(@NotNull DataInput record) throws IOException {

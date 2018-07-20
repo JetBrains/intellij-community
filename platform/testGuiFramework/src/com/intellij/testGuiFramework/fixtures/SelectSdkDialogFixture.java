@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.File;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 
@@ -78,7 +77,7 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     return this;
   }
 
@@ -86,12 +85,12 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
     pause(new Condition("Waiting when ok button at SDK select dialog will be ready for a click") {
       @Override
       public boolean test() {
-        JButton button = GuiTestUtil.findButton(SelectSdkDialogFixture.this, "OK", myRobot);
+        JButton button = GuiTestUtil.INSTANCE.findButton(SelectSdkDialogFixture.this, "OK", myRobot);
         return button.isEnabled();
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
-    GuiTestUtil.findAndClickOkButton(this);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(this);
   }
 
   @Override

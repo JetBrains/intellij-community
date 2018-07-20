@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,6 +85,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private Runnable myCopyMethodToInner;
   private final UniqueNameGenerator myFieldNameGenerator = new UniqueNameGenerator();
   private String myResultFieldName = null;
+  private final CodeStyleSettings myStyleSettings;
 
   private static final Key<Boolean> GENERATED_RETURN = new Key<>("GENERATED_RETURN");
 
@@ -92,6 +94,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     myInnerClassName = innerClassName;
     myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
     myElementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
+                      CodeStyle.getSettings(elements[0].getContainingFile());
   }
 
   @NotNull
@@ -610,7 +614,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final String parameterName = parameter.getName();
       LOG.assertTrue(parameterName != null);
       PsiParameter parm = myElementFactory.createParameter(parameterName, parameter.getType());
-      if (CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+      if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         final PsiModifierList modifierList = parm.getModifierList();
         LOG.assertTrue(modifierList != null);
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
@@ -637,9 +641,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
       final PsiModifierList modifierList = field.getModifierList();
       LOG.assertTrue(modifierList != null);
-      final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-      if (manager.isNullable(parameter, false)) {
-        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), field), null);
+      if (NullableNotNullManager.isNullable(parameter)) {
+        final String annotationName = NullableNotNullManager.getInstance(myProject).getDefaultNullable();
+        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + annotationName, field), null);
       }
       modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
@@ -742,6 +746,18 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
                                         String helpId) {
       super(project, editor, elements, forcedReturnType, refactoringName, initialMethodName, helpId);
 
+    }
+
+    @Override
+    protected void initDuplicates() {
+      myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
+                             .map(finder -> finder.findDuplicates(myTargetClass))
+                             .orElse(new ArrayList<>());
+    }
+
+    @Override
+    public boolean initParametrizedDuplicates(boolean showDialog) {
+      return false;
     }
 
     @Override

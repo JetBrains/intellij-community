@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
@@ -33,7 +19,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testCreateAndAccess() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     int numEP = extensionsArea.getExtensionPoints().length;
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     assertEquals("Additional EP available", numEP + 1, extensionsArea.getExtensionPoints().length);
@@ -42,7 +28,7 @@ public class ExtensionsImplTest {
 
   @Test(expected = RuntimeException.class)
   public void testInvalidActions() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Boolean.class.getName());
     fail("Should not allow duplicate registration");
@@ -50,12 +36,12 @@ public class ExtensionsImplTest {
 
   @Test
   public void testUnregisterEP() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     int numEP = extensionsArea.getExtensionPoints().length;
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
 
     final boolean[] removed = {false};
-    extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1).addExtensionPointListener(new ExtensionPointListener.Adapter<Object>() {
+    extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1).addExtensionPointListener(new ExtensionPointListener<Object>() {
       @Override
       public void extensionRemoved(@NotNull Object extension, PluginDescriptor pluginDescriptor) {
         removed[0] = true;
@@ -69,7 +55,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testAvailabilityListener() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     MyListener.reset();
     extensionsArea.getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).registerExtension(
       new EPAvailabilityListenerExtension(EXTENSION_POINT_NAME_1, MyListener.class.getName()));
@@ -86,7 +72,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testAvailability2Listeners() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     MyListener.reset();
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     extensionsArea.getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).registerExtension(
@@ -103,7 +89,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testAvailabilityListenerAfter() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null, new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(null);
     extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName());
     MyListener.reset();
     extensionsArea.getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).registerExtension(
@@ -165,7 +151,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testExtensionsNamespaces() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("plugin", ExtensionComponentAdapterTest.readElement(
         "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>"));
@@ -183,7 +169,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testExtensionsWithOrdering() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>"));
@@ -201,7 +187,7 @@ public class ExtensionsImplTest {
 
   @Test
   public void testExtensionsWithOrderingUpdate() {
-    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new DefaultPicoContainer());
     extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
     extensionsArea.registerExtension("", ExtensionComponentAdapterTest.readElement(
         "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>"));

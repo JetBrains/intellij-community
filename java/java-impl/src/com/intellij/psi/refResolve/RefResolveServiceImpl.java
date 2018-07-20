@@ -815,11 +815,6 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       }
 
       @Override
-      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-        return 0;
-      }
-
-      @Override
       public boolean isSearchInModuleContent(@NotNull Module aModule) {
         return true;
       }

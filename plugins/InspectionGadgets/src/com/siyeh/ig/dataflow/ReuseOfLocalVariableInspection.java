@@ -24,6 +24,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -58,12 +59,13 @@ public class ReuseOfLocalVariableInspection extends ReuseOfLocalVariableInspecti
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiLocalVariable variable = (PsiLocalVariable)referenceExpression.resolve();
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)referenceExpression.getParent();
-      assert assignment != null;
+      if (variable == null) return;
+      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(referenceExpression.getParent());
+      if (assignment == null) return;
       final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)assignment.getParent();
-      final PsiExpression lExpression = assignment.getLExpression();
+      final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
+      if (lExpression == null) return;
       final String originalVariableName = lExpression.getText();
-      assert variable != null;
       final PsiType type = variable.getType();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final PsiCodeBlock variableBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
@@ -82,9 +84,6 @@ public class ReuseOfLocalVariableInspection extends ReuseOfLocalVariableInspecti
       List<PsiReferenceExpression> collectedReferences = new ArrayList<>();
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
-        if (referenceElement == null) {
-          continue;
-        }
         final TextRange textRange = assignmentStatement.getTextRange();
         if (referenceElement.getTextOffset() <= textRange.getEndOffset()) {
           continue;

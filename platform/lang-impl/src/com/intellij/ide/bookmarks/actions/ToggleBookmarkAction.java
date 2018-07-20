@@ -15,17 +15,16 @@
  */
 package com.intellij.ide.bookmarks.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
+public class ToggleBookmarkAction extends BookmarksAction implements DumbAware, Toggleable {
   public ToggleBookmarkAction() {
     getTemplatePresentation().setText(IdeBundle.message("action.bookmark.toggle"));
   }
@@ -40,6 +39,14 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
                                         CommonDataKeys.VIRTUAL_FILE.getData(dataContext) != null));
 
     event.getPresentation().setText(IdeBundle.message("action.bookmark.toggle"));
+
+    if (ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) {
+      event.getPresentation().setIcon(AllIcons.Actions.Checked);
+    }
+
+    final BookmarkInContextInfo info = getBookmarkInfo(event);
+    final boolean selected = info != null && info.getBookmarkAtPlace() != null;
+    event.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
   }
 
   @Override
@@ -47,14 +54,25 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
     Project project = e.getProject();
     if (project == null) return;
 
-    BookmarkInContextInfo info = new BookmarkInContextInfo(e.getDataContext(), project).invoke();
-    if (info.getFile() == null) return;
+    final BookmarkInContextInfo info = getBookmarkInfo(e);
+    if (info == null) return;
 
-    if (info.getBookmarkAtPlace() != null) {
+    final boolean selected = info.getBookmarkAtPlace() != null;
+    e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+
+    if (selected) {
       BookmarkManager.getInstance(project).removeBookmark(info.getBookmarkAtPlace());
     }
     else {
       BookmarkManager.getInstance(project).addTextBookmark(info.getFile(), info.getLine(), "");
     }
+  }
+
+  private BookmarkInContextInfo getBookmarkInfo(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return null;
+
+    final BookmarkInContextInfo info = new BookmarkInContextInfo(e.getDataContext(), project).invoke();
+    return info.getFile() == null ? null : info;
   }
 }

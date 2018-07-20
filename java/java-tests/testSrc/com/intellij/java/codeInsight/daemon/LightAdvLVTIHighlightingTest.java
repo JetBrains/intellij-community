@@ -2,10 +2,15 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
+import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IdeaTestUtil;
 
 public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -19,17 +24,47 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTest(false);
+  }
+
+  private void doTest(final boolean checkWarnings) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
   public void testSimpleAvailability() { doTest(); }
+
   public void testDisabledInspections() {
     enableInspectionTool(new AnonymousCanBeLambdaInspection());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+    doTest(true);
   }
+
+  public void testKeepSemanticCastForVars() {
+    enableInspectionTool(new RedundantCastInspection());
+    doTest(true);
+  }
+
   public void testVarClassNameConflicts() { doTest(); }
   public void testStandaloneInVarContext() { doTest(); }
+
   public void testUpwardProjection() { doTest(); }
+
+  public void testFailedInferenceWithLeftTypeVar() { doTest(); }
+
+  public void testVarInLambdaParameters() {
+    setLanguageLevel(LanguageLevel.JDK_11);
+    doTest();
+  }
+
+  public void testGotoDeclarationOnVar() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final int offset = getEditor().getCaretModel().getOffset();
+    final PsiElement[] elements =
+      GotoDeclarationAction.findAllTargetElements(getProject(), getEditor(), offset);
+    assertSize(1, elements);
+    PsiElement element = elements[0];
+    assertInstanceOf(element, PsiClass.class);
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, ((PsiClass)element).getQualifiedName());
+  }
 
   @Override
   protected Sdk getProjectJDK() {

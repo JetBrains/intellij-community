@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.google.common.collect.BiMap;
@@ -21,7 +7,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,6 +57,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private static final Logger LOG = Logger.getInstance(DirDiffTableModel.class);
 
   public static final Key<JBLoadingPanel> DECORATOR_KEY = Key.create("DIFF_TABLE_DECORATOR");
+  public static final String COLUMN_OPERATION = "*";
   public static final String COLUMN_NAME = "Name";
   public static final String COLUMN_SIZE = "Size";
   public static final String COLUMN_DATE = "Date";
@@ -97,7 +83,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private volatile boolean myDisposed;
 
   public DirDiffTableModel(@Nullable Project project, DiffElement source, DiffElement target, DirDiffSettings settings) {
-    UsageTrigger.trigger("diff.DirDiffTableModel");
     myProject = project;
     mySettings = settings;
     mySource = source;
@@ -430,6 +415,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final DiffElement[] children = element.getChildren();
       for (DiffElement child : children) {
         if (!myUpdating.get()) return;
+        text.set(prepareText(child.getPath()));
         BiMap<String, String> replacing = mySourceToReplacingTarget.get(root.getPath());
         String replacementName = replacing != null ? source ? replacing.get(child.getName()) : replacing.inverse().get(child.getName()) : null;
         final DTree el = root.addChild(child, source, replacementName);
@@ -538,7 +524,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   @Override
   public String getColumnName(int column) {
     final int count = (getColumnCount() - 1) / 2;
-    if (column == count) return "*";
+    if (column == count) return COLUMN_OPERATION;
     if (column > count) {
       column = getColumnCount() - 1 - column;
     }
@@ -620,8 +606,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
       if (source instanceof AsyncDiffElement) {
         ((AsyncDiffElement)source).copyToAsync(myTarget, element.getTarget(), path)
-          .rejected(error -> reportException(error == null ? null : error.getMessage()))
-          .done(newElement -> {
+          .onError(error -> reportException(error == null ? null : error.getMessage()))
+          .onSuccess(newElement -> {
             ApplicationManager.getApplication().assertIsDispatchThread();
             if (myDisposed) return;
             if (newElement == null && element.getTarget() != null) {
@@ -665,8 +651,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
       if (target instanceof AsyncDiffElement) {
         ((AsyncDiffElement)target).copyToAsync(mySource, element.getSource(), path)
-          .rejected(error -> reportException(error == null ? null : error.getMessage()))
-          .done(newElement -> {
+          .onError(error -> reportException(error == null ? null : error.getMessage()))
+          .onSuccess(newElement -> {
             if (myDisposed) return;
             ApplicationManager.getApplication().assertIsDispatchThread();
             refreshElementAfterCopyFrom(element, newElement);
@@ -728,8 +714,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     LOG.assertTrue(source == null || target == null);
     if (source instanceof AsyncDiffElement || target instanceof AsyncDiffElement) {
       ((AsyncDiffElement)(source != null ? source : target)).deleteAsync()
-        .rejected(error -> reportException(error != null ? error.getMessage() : null))
-        .done(result -> {
+        .onError(error -> reportException(error != null ? error.getMessage() : null))
+        .onSuccess(result -> {
           if (!myDisposed && myElements.indexOf(element) != -1) {
             removeElement(element, true);
           }

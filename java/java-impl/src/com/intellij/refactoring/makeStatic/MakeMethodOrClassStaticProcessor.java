@@ -328,7 +328,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       changeSelf(factory, usages);
     }
     catch (IncorrectOperationException ex) {
-      LOG.assertTrue(false);
+      LOG.error(ex);
     }
   }
 

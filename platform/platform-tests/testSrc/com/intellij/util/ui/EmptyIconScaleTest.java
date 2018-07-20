@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.ui.RestoreScaleRule;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 
@@ -11,7 +15,10 @@ import static junit.framework.TestCase.assertNotNull;
  *
  * @author tav
  */
-public class EmptyIconScaleTest extends TestScaleHelper {
+public class EmptyIconScaleTest {
+  @ClassRule
+  public static final ExternalResource manageState = new RestoreScaleRule();
+
 
   final static String MSG = "the icon size mismatch";
   final static int SIZE = 16;

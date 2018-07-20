@@ -18,14 +18,21 @@ package com.intellij.vcs.log.history;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
   @NotNull private final FilePath myFilePath;
@@ -37,10 +44,26 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
   }
 
   @Override
-  public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
+  public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
     FileHistoryUiProperties properties = ServiceManager.getService(project, FileHistoryUiProperties.class);
-    return new FileHistoryUi(logData, project, colorManager, properties,
-                             new VisiblePackRefresherImpl(project, logData, PermanentGraph.SortType.Normal,
-                                                    new FileHistoryFilterer(logData, myFilePath, myHash)), myFilePath, myHash);
+    VirtualFile root = ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(project, myFilePath));
+    VcsLogFilterCollection filters =
+      FileHistoryFilterer.createFilters(myFilePath, myHash, root, properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
+    return new FileHistoryUi(logData, new VcsLogColorManagerImpl(Collections.singleton(root)), properties,
+                             new VisiblePackRefresherImpl(project, logData,
+                                                          filters,
+                                                          PermanentGraph.SortType.Normal,
+                                                          new FileHistoryFilterer(logData),
+                                                          FileHistoryUi.getFileHistoryLogId(myFilePath, myHash)) {
+                               @Override
+                               public void onRefresh() {
+                                 // this is a hack here:
+                                 // file history for a file does not use non-full data packs
+                                 // so no reason to interrupt it with a new pack
+                                 DataPack pack = logData.getDataPack();
+                                 if (!myFilePath.isDirectory() && pack != DataPack.EMPTY && !pack.isFull()) return;
+                                 super.onRefresh();
+                               }
+                             }, myFilePath, myHash, root);
   }
 }

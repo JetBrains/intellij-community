@@ -10,9 +10,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -73,12 +71,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     myProject = project;
     myBus = project.getMessageBus();
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        colorsChanged();
-      }
-    });
+    connection.subscribe(EditorColorsManager.TOPIC, __ -> colorsChanged());
     EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
     multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
@@ -171,7 +164,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   @NotNull
-  public static String getAutoDescription(@NotNull final Editor editor, final int lineIndex) {
+  private static String getAutoDescription(@NotNull final Editor editor, final int lineIndex) {
     String autoDescription = editor.getSelectionModel().getSelectedText();
     if (autoDescription == null) {
       Document document = editor.getDocument();
@@ -405,7 +398,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
   }
 
-  public void colorsChanged() {
+  private void colorsChanged() {
     for (Bookmark bookmark : myBookmarks) {
       bookmark.updateHighlighter();
     }
@@ -443,10 +436,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
         Document doc = bookmark.getDocument();
         if (doc == null || doc != e.getDocument()) continue;
         if (bookmark.getLine() == -1) continue;
-        List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.get(doc);
-        if (list == null) {
-          myBeforeChangeData.put(doc, list = new ArrayList<>());
-        }
+        List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.computeIfAbsent(doc, k -> new ArrayList<>());
         list.add(new Trinity<>(bookmark,
                                bookmark.getLine(),
                                doc.getText(new TextRange(doc.getLineStartOffset(bookmark.getLine()),
@@ -483,6 +473,9 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
     @Override
     public void documentChanged(DocumentEvent e) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) {
+        return;// Changes in lightweight documents are irrelevant to bookmarks and have to be ignored
+      }
       List<Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
         if (!bookmark.isValid() || isDuplicate(bookmark, bookmarksToRemove)) {

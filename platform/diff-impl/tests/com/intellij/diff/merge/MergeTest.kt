@@ -735,4 +735,178 @@ class MergeTest : MergeTestBase() {
                     8 ======""".trimIndent())
     }
   }
+
+
+  fun testNoConflicts() {
+    test2("a_Ins1_b_ccc", "a_b_ccc", "a_b_dddd") {
+      0.assertRange(1, 2, 1, 1, 1, 1)
+      1.assertRange(3, 4, 2, 3, 2, 3)
+
+      0.apply(Side.LEFT)
+      0.assertRange(1, 2, 1, 2, 1, 1)
+      1.assertRange(3, 4, 3, 4, 2, 3)
+      assertContent("a_Ins1_b_ccc")
+
+      runApplyNonConflictsAction(ThreeSide.BASE)
+      0.assertRange(1, 2, 1, 2, 1, 1)
+      1.assertRange(3, 4, 3, 4, 2, 3)
+      assertContent("a_Ins1_b_dddd")
+
+      0.assertResolved(BOTH)
+      1.assertResolved(BOTH)
+    }
+  }
+
+  fun testConflictingChange() {
+    test("1_2_3_X_a_b_c_Y_Ver1_Ver12_Z",
+               "X_a_b_c_Y_" + "Ver12_Ver23_Z",
+               "X_" +  "Y_" + "Ver23_Ver3_Z", 3) {
+      0.assertType(INSERTED)
+      1.assertType(DELETED)
+      2.assertType(CONFLICT)
+
+      runApplyNonConflictsAction(ThreeSide.BASE)
+      0.assertResolved(BOTH)
+      1.assertResolved(BOTH)
+      2.assertResolved(NONE)
+
+      assertContent("1_2_3_X_Y_Ver12_Ver23_Z")
+    }
+  }
+
+  fun testApplyMergeThenUndo() {
+    test1("X_b_Y", "X_1_2_3_Y", "X_a_Y") {
+      0.assertRange(1, 2, 1, 4, 1, 2)
+
+      0.apply(Side.RIGHT)
+      0.assertRange(1, 2, 1, 2, 1, 2)
+      0.assertContent("a")
+
+      checkUndo(1) {
+        0.apply(Side.LEFT)
+        0.assertRange(1, 2, 1, 3, 1, 2)
+        0.assertContent("a_b")
+      }
+
+      assertContent("X_a_b_Y")
+    }
+  }
+
+  fun testApplyModifiedDeletedConflict() {
+    test1("X_Y", "X_1_2_3_Y", "X_a_Y") {
+      0.assertRange(1, 1, 1, 4, 1, 2)
+      0.assertContent("1_2_3")
+
+      runApplyNonConflictsAction(ThreeSide.BASE)
+      0.assertResolved(NONE)
+
+      0.apply(Side.RIGHT)
+      0.assertRange(1, 1, 1, 2, 1, 2)
+      0.assertResolved(BOTH)
+
+      assertContent("X_a_Y")
+    }
+  }
+
+  fun testInvalidatingChange() {
+    test1("X_1_2_Y", "X_1_Ins_2_Y", "X_1_2_Y") {
+      0.assertType(DELETED)
+      0.assertRange(2, 2, 2, 3, 2, 2)
+
+      deleteText("1_Ins_2_")
+      0.assertResolved(BOTH)
+      0.assertRange(2, 2, 2, 2, 2, 2)
+    }
+  }
+
+  fun testApplySeveralActions() {
+    test("X_1_Y_2_Z_3_4_U_W_",
+         "X_a_Y_b_Z_c_U_d_W_",
+         "X_a_Y_B_Z_C_U_D_W_", 4) {
+      0.assertType(MODIFIED)
+      1.assertType(CONFLICT)
+      2.assertType(CONFLICT)
+      3.assertType(CONFLICT)
+
+      0.apply(Side.LEFT)
+      0.assertResolved(BOTH)
+      0.assertResolved(BOTH)
+
+      3.apply(Side.RIGHT)
+      3.assertResolved(BOTH)
+      assertContent("X_1_Y_b_Z_c_U_D_W_")
+
+      1.apply(Side.RIGHT)
+      1.assertResolved(RIGHT)
+      assertContent("X_1_Y_B_Z_c_U_D_W_")
+
+      1.apply(Side.LEFT)
+      2.apply(Side.LEFT)
+      2.apply(Side.RIGHT)
+      1.assertResolved(BOTH)
+      2.assertResolved(BOTH)
+      assertContent("X_1_Y_B_2_Z_3_4_C_U_D_W_")
+    }
+  }
+
+  fun testIgnoreChangeAction() {
+    test2("X_1_Y_2_Z", "X_a_Y_b_Z", "X_a_Y_B_Z") {
+      0.assertType(MODIFIED)
+      1.assertType(CONFLICT)
+
+      0.ignore(Side.LEFT)
+      0.assertRange(1, 2, 1, 2, 1, 2)
+      assertContent("X_a_Y_b_Z")
+
+      0.ignore(Side.RIGHT)
+      0.assertResolved(BOTH)
+      0.assertRange(1, 2, 1, 2, 1, 2)
+      assertContent("X_a_Y_b_Z")
+
+    }
+  }
+
+  fun testLongBase() {
+    test1("X_1_2_3_Z", "X_1_b_3_d_e_f_Z", "X_a_b_c_Z") {
+      0.assertType(CONFLICT)
+      0.assertRange(1, 4, 1, 7, 1, 4)
+    }
+  }
+
+  fun testReplaceBaseWithBranch() {
+    test2("a_X_b_c", "A_X_B_c", "1_X_1_c") {
+      0.assertType(CONFLICT)
+      1.assertType(CONFLICT)
+
+      0.apply(Side.LEFT)
+      assertContent("a_X_B_c")
+
+      replaceText("a_X_B_c", "a_X_b_c")
+
+      0.assertRange(0, 1, 0, 1, 0, 1)
+      1.assertRange(2, 3, 2, 3, 2, 3)
+    }
+  }
+
+  fun testError1() {
+    testN("start_change_ a_ b",
+          "start_CHANGE_   a_   b",
+          "    }_    return new DiffFragment(notEmptyContent(buffer1), notEmptyContent(buffer2));_  }") {
+
+    }
+  }
+
+  fun testError2() {
+    test1("C_X", "C_", "C_") {
+      0.assertRange(1, 2, 1, 2, 1, 2)
+    }
+  }
+
+  fun testError3() {
+    testN("original_local_local_local_original_",
+          "original_original_original_original_original_",
+          "original_remote_remote_remote_original_") {
+
+    }
+  }
 }

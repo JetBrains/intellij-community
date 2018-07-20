@@ -29,6 +29,9 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   public static class State {
     public String myPathToGit = null;
     public SshExecutable SSH_EXECUTABLE = null;
+
+    public boolean ANNOTATE_IGNORE_SPACES = true;
+    public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -72,5 +75,29 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   @Nullable
   SshExecutable getIdeaSsh() {
     return myState.SSH_EXECUTABLE;
+  }
+
+
+  public boolean isIgnoreWhitespaces() {
+    return myState.ANNOTATE_IGNORE_SPACES;
+  }
+
+  public void setIgnoreWhitespaces(boolean value) {
+    myState.ANNOTATE_IGNORE_SPACES = value;
+  }
+
+  @NotNull
+  public AnnotateDetectMovementsOption getAnnotateDetectMovementsOption() {
+    return myState.ANNOTATE_DETECT_INNER_MOVEMENTS;
+  }
+
+  public void setAnnotateDetectMovementsOption(@NotNull AnnotateDetectMovementsOption value) {
+    myState.ANNOTATE_DETECT_INNER_MOVEMENTS = value;
+  }
+
+  public enum AnnotateDetectMovementsOption {
+    NONE,
+    INNER,
+    OUTER
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,7 +131,12 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     if (!file.isValid()) return null;
 
     int offset = myEditor.getCaretModel().getOffset();
-    return findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
+    Object o1 = findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
+    Object o2 = offset == 0 ? o1 : findAcceptableElement(file.getViewProvider().findElementAt(offset - 1, file.getLanguage()));
+    if (o1 != o2 && o1 instanceof PsiElement && o2 instanceof PsiElement) {
+      if (PsiTreeUtil.isAncestor((PsiElement)o1, (PsiElement)o2, false)) return o2;
+    }
+    return o1;
   }
 
   @Nullable

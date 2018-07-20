@@ -17,7 +17,6 @@ import net.jpountz.lz4.LZ4Factory;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.intellij.lang.annotations.Flow;
-import org.iq80.snappy.Snappy;
 import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +65,15 @@ public class PathManager {
 
   @NotNull
   public static String getHomePath() {
+    return getHomePath(true);
+  }
+
+  /**
+   * @param insideIde {@code true} if the calling code is working inside IDE and {@code false} if it isn't (e.g. if it's running in a build
+   *                              process or a script)
+   */
+  @Contract("true -> !null")
+  public static String getHomePath(boolean insideIde) {
     if (ourHomePath != null) return ourHomePath;
 
     String fromProperty = System.getProperty(PROPERTY_HOME_PATH, System.getProperty(PROPERTY_HOME));
@@ -75,7 +83,7 @@ public class PathManager {
         throw new RuntimeException("Invalid home path '" + ourHomePath + "'");
       }
     }
-    else {
+    else if (insideIde) {
       ourHomePath = getHomePathFor(PathManager.class);
       if (ourHomePath == null) {
         String advice = SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
@@ -83,11 +91,11 @@ public class PathManager {
       }
     }
 
-    if (SystemInfo.isWindows) {
+    if (ourHomePath != null && SystemInfo.isWindows) {
       ourHomePath = canonicalPath(ourHomePath);
     }
 
-    ourBinDirectories = getBinDirectories(new File(ourHomePath));
+    ourBinDirectories = ourHomePath != null ? getBinDirectories(new File(ourHomePath)) : ArrayUtil.EMPTY_STRING_ARRAY;
 
     return ourHomePath;
   }
@@ -186,7 +194,6 @@ public class PathManager {
     return getHomePath() + File.separator + LIB_FOLDER;
   }
 
-  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   @NotNull
   public static String getPreInstalledPluginsPath() {
     return getHomePath() + File.separatorChar + PLUGINS_FOLDER;
@@ -257,7 +264,7 @@ public class PathManager {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
     else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourPluginsPath = SystemProperties.getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
+      ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", "");
     }
     else {
       ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_FOLDER;
@@ -268,7 +275,12 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
+    if (SystemInfo.isMac) {
+      return platformPath(selector, "Library/Application Support", "");
+    }
+    else {
+      return getDefaultConfigPathFor(selector) + File.separatorChar + PLUGINS_FOLDER;
+    }
   }
 
   @Nullable
@@ -287,7 +299,7 @@ public class PathManager {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
     else if (PATHS_SELECTOR != null) {
-      ourSystemPath = platformPath(PATHS_SELECTOR, "Library/Caches", SYSTEM_FOLDER);
+      ourSystemPath = getDefaultSystemPathFor(PATHS_SELECTOR);
     }
     else {
       ourSystemPath = getHomePath() + File.separator + SYSTEM_FOLDER;
@@ -295,6 +307,11 @@ public class PathManager {
 
     FileUtil.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
+  }
+
+  @NotNull
+  public static String getDefaultSystemPathFor(@NotNull String selector) {
+    return platformPath(selector, "Library/Caches", SYSTEM_FOLDER);
   }
 
   @NotNull
@@ -350,7 +367,7 @@ public class PathManager {
    */
   @Nullable
   public static String getResourceRoot(@NotNull ClassLoader cl, String resourcePath) {
-    final URL url = cl.getResource(resourcePath);
+    URL url = cl.getResource(resourcePath);
     return url != null ? extractRoot(url, resourcePath) : null;
   }
 
@@ -380,9 +397,12 @@ public class PathManager {
         resultPath = FileUtil.toSystemDependentName(paths.first);
       }
     }
+    else if (URLUtil.JRT_PROTOCOL.equals(protocol)) {
+      return null;
+    }
 
     if (resultPath == null) {
-      log("cannot extract: " + resourcePath + " from " + resourceURL);
+      log("cannot extract '" + resourcePath + "' from '" + resourceURL + "'");
       return null;
     }
 
@@ -491,7 +511,7 @@ public class PathManager {
   public static Collection<String> getUtilClassPath() {
     final Class<?>[] classes = {
       PathManager.class,            // module 'intellij.platform.util'
-      Flow.class,                   // module 'intellij.platform.annotations.common'
+      Flow.class,                   // jetbrains-annotations-java5
       SystemInfoRt.class,           // module 'intellij.platform.util.rt'
       Document.class,               // jDOM
       Appender.class,               // log4j
@@ -499,8 +519,7 @@ public class PathManager {
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
-      Snappy.class,                 // Snappy
-      LZ4Factory.class,             // Snappy
+      LZ4Factory.class,             // lz4-java
     };
 
     final Set<String> classPath = new HashSet<String>();
@@ -508,16 +527,6 @@ public class PathManager {
       final String path = getJarPathForClass(aClass);
       if (path != null) {
         classPath.add(path);
-      }
-    }
-
-    final String annotationsRoot = getJarPathForClass(Flow.class);
-    if (annotationsRoot != null && !annotationsRoot.endsWith(".jar")) {
-      // We're running IDEA built from sources. Flow.class is under intellij.platform.annotations.common, and NotNull.class is under intellij.platform.annotations.java5. Add both
-      // roots to classpath.
-      final File notNullRoot = new File(new File(annotationsRoot).getParentFile(), "intellij.platform.annotations.java5");
-      if (notNullRoot.exists()) {
-        classPath.add(notNullRoot.getAbsolutePath());
       }
     }
 
@@ -562,8 +571,10 @@ public class PathManager {
                                      @Nullable String xdgVar,
                                      @Nullable String xdgDir,
                                      @NotNull String fallback) {
+    String userHome = SystemProperties.getUserHome();
+
     if (macPart != null && SystemInfo.isMac) {
-      return SystemProperties.getUserHome() + File.separator + macPart + File.separator + selector;
+      return userHome + File.separator + macPart + File.separator + selector;
     }
 
     if (winVar != null && SystemInfo.isWindows) {
@@ -575,11 +586,11 @@ public class PathManager {
 
     if (xdgVar != null && xdgDir != null && SystemInfo.hasXdgOpen()) {
       String dir = System.getenv(xdgVar);
-      if (dir == null) dir = SystemProperties.getUserHome() + File.separator + xdgDir;
+      if (dir == null) dir = userHome + File.separator + xdgDir;
       return dir + File.separator + selector;
     }
 
-    return SystemProperties.getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
+    return userHome + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
   private static String canonicalPath(String path) {

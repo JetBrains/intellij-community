@@ -44,8 +44,14 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
       if (toolName == null) {
         myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.message", app));
       }
+      else if (toolName == UpdateSettings.TOOLBOX_PM) {
+        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.toolbox.message", app));
+      }
+      else if (toolName == UpdateSettings.SNAP_PM) {
+        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.snaps.message", app));
+      }
       else {
-        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.plugins.message", app, toolName));
+        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.unknown.message", app, toolName));
       }
       configureMessageArea(myMessageArea);
     }

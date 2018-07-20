@@ -5,7 +5,7 @@ class Test {
     String a = "A";
       newMethod(a);
 
-    ArrayList<String> listB = new ArrayList<String>();
+      ArrayList<String> listB = new ArrayList<String>();
     ArrayList<String> listC = new ArrayList<String>();
     listB.add("B");
     listC.add("C");

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -20,6 +18,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -104,7 +103,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return null;
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+  public TestNGRunnableState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final TestData data = getPersistantData();
     if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
       return new TestNGTestDiscoveryRunnableState(env, this);
@@ -212,6 +211,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
+  public String getTestType() {
+    return getPersistantData().TEST_OBJECT;
+  }
+
+  @Override
   public String prepareParameterizedParameter(String paramSetName) {
     return TestNGConfigurationProducer.getInvocationNumber(paramSetName);
   }
@@ -219,6 +223,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @Override
   public TestSearchScope getTestSearchScope() {
     return getPersistantData().getScope();
+  }
+
+  @Override
+  public void setSearchScope(TestSearchScope searchScope) {
+    getPersistantData().setScope(searchScope);
   }
 
   public void setPackageConfiguration(Module module, PsiPackage pkg) {
@@ -333,8 +342,8 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);
+    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
+    DefaultJDOMExternalizer.writeExternal(getPersistantData(), element, new DifferenceFilter<>(getPersistantData(), new TestData()));
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());
 
     Element propertiesElement = element.getChild("properties");

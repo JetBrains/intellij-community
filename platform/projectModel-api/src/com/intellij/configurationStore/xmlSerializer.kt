@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
@@ -179,6 +177,19 @@ private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
       binding
     }
   }
+
+  fun clearBindingCache() {
+    cacheLock.write {
+      _bindingCache?.clear()
+    }
+  }
+}
+
+/**
+ * used by MPS. Do not use if not approved.
+ */
+fun clearBindingCache() {
+  serializer.clearBindingCache()
 }
 
 private data class BindingCacheKey(val type: Type, val accessor: MutableAccessor?)

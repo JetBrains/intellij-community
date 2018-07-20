@@ -19,7 +19,10 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
@@ -150,67 +153,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
   }
 
   /**
-   * Adds an argument to the end of argument list.
-   *
-   * @param expression what to add
-   * @deprecated Use {@link PyCallExpression#getArgumentList()} and {@link PyArgumentList#addArgument(PyExpression)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @Deprecated
-  default void addArgument(@NotNull PyExpression expression) {
-    final PyArgumentList argumentList = getArgumentList();
-    if (argumentList != null) {
-      argumentList.addArgument(expression);
-    }
-  }
-
-  /**
-   * Resolves the callee down to particular function (standalone, method, or constructor).
-   *
-   * @param resolveContext resolve context
-   * @return the resolved callee or null if it cannot be resolved
-   * @deprecated Use {@link PyCallExpression#multiResolveCalleeFunction(PyResolveContext)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @Nullable
-  @Deprecated
-  default PyCallable resolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
-    final PyMarkedCallee first = ContainerUtil.getFirstItem(multiResolveCallee(resolveContext, 0));
-    return first == null ? null : first.getElement();
-  }
-
-  /**
-   * Resolves the callee down to particular function (standalone, method, or constructor).
-   *
-   * @param resolveContext resolve context
-   * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
-   * Returns null if the callee cannot be resolved.
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @Nullable
-  @Deprecated
-  default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.getFirstItem(multiResolveCallee(resolveContext, 0));
-  }
-
-  /**
-   * Resolves the callee down to particular function (standalone, method, or constructor).
-   *
-   * @param resolveContext resolve context
-   * @param implicitOffset implicit offset which is known from the context
-   * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
-   * Returns null if the callee cannot be resolved.
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @Nullable
-  @Deprecated
-  default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return ContainerUtil.getFirstItem(multiResolveCallee(resolveContext, implicitOffset));
-  }
-
-  /**
    * Resolves the callee to possible functions.
    * Try to use {@link PyCallExpression#multiResolveCallee(PyResolveContext)}
    * because resolve result could contain {@code null} callable but {@code non-null} callable type.
@@ -246,93 +188,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @NotNull
   List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset);
-
-  /**
-   * Resolves the callee to possible functions.
-   *
-   * @param resolveContext resolve context
-   * @return the rated resolved callees or an empty list.
-   * <i>Note: the returned list does not contain null values.</i>
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @NotNull
-  @Deprecated
-  default List<PyRatedCallee> multiResolveRatedCalleeFunction(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.map(multiResolveCallee(resolveContext, 0),
-                             markedCallee -> new PyRatedCallee(markedCallee.getCallableType(),
-                                                               markedCallee.getElement(),
-                                                               markedCallee.getRate()));
-  }
-
-  /**
-   * Resolves the callee to possible functions.
-   *
-   * @param resolveContext resolve context
-   * @return rated objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
-   * <i>Note: the returned list does not contain null values.</i>
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @NotNull
-  @Deprecated
-  default List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext) {
-    return multiResolveRatedCallee(resolveContext, 0);
-  }
-
-  /**
-   * Resolves the callee to possible functions.
-   *
-   * @param resolveContext resolve context
-   * @param implicitOffset implicit offset which is known from the context
-   * @return rated objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
-   * <i>Note: the returned list does not contain null values.</i>
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @NotNull
-  @Deprecated
-  default List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return ContainerUtil.map(multiResolveCallee(resolveContext, implicitOffset),
-                             markedCallee -> new PyRatedMarkedCallee(markedCallee, markedCallee.getRate()));
-  }
-
-  /**
-   * Resolves the callee down to particular function (standalone, method, or constructor) and maps arguments to parameters.
-   *
-   * @param resolveContext resolve context
-   * @return an object which contains callable and mappings.
-   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallSiteExpression)} if the callee cannot be resolved.
-   * @deprecated Use {@link PyCallExpression#multiMapArguments(PyResolveContext)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @NotNull
-  @Deprecated
-  default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
-    return Optional
-      .of(multiMapArguments(resolveContext, 0))
-      .map(ContainerUtil::getFirstItem)
-      .orElseGet(() -> PyArgumentsMapping.empty(this));
-  }
-
-  /**
-   * Resolves the callee down to particular function (standalone, method, or constructor) and maps arguments to parameters.
-   *
-   * @param resolveContext resolve context
-   * @param implicitOffset implicit offset which is known from the context
-   * @return an object which contains callable and mappings.
-   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallSiteExpression)} if the callee cannot be resolved.
-   * @deprecated Use {@link PyCallExpression#multiMapArguments(PyResolveContext, int)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @NotNull
-  @Deprecated
-  default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return Optional
-      .of(multiMapArguments(resolveContext, implicitOffset))
-      .map(ContainerUtil::getFirstItem)
-      .orElseGet(() -> PyArgumentsMapping.empty(this));
-  }
 
   /**
    * Resolves the callee to possible functions and maps arguments to parameters for all of them.
@@ -416,24 +271,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
       myParametersMappedToVariadicPositionalArguments = parametersMappedToVariadicPositionalArguments;
       myParametersMappedToVariadicKeywordArguments = parametersMappedToVariadicKeywordArguments;
       myMappedTupleParameters = tupleMappedParameters;
-    }
-
-    /**
-     * @deprecated
-     * Use {@link #PyArgumentsMapping(PyCallSiteExpression, PyMarkedCallee, List, Map, List, List, List, List, Map)} that includes
-     * implicitly mapped parameters. This constructor will be removed in 2018.2.
-     */
-    @Deprecated
-    public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
-                              @Nullable PyMarkedCallee markedCallee,
-                              @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
-                              @NotNull List<PyCallableParameter> unmappedParameters,
-                              @NotNull List<PyExpression> unmappedArguments,
-                              @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
-                              @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
-                              @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
-      this(callSiteExpression, markedCallee, Collections.emptyList(), mappedParameters, unmappedParameters, unmappedArguments,
-           parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments, tupleMappedParameters);
     }
 
     @NotNull
@@ -532,17 +369,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
       return myCallableType;
     }
 
-    /**
-     * @return resolved callable
-     * @deprecated Use {@link PyMarkedCallee#getElement()} instead.
-     * This method will be removed in 2018.1.
-     */
-    @Nullable
-    @Deprecated
-    public PyCallable getCallable() {
-      return getElement();
-    }
-
     @Override
     @Nullable
     public PyCallable getElement() {
@@ -568,62 +394,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
      */
     public boolean isImplicitlyResolved() {
       return myImplicitlyResolved;
-    }
-  }
-
-  /**
-   * @deprecated Use {@link PyMarkedCallee} instead.
-   * This class will be removed in 2018.1.
-   */
-  @Deprecated
-  class PyRatedCallee extends RatedResolveResult {
-
-    @NotNull
-    private final PyCallableType myCallableType;
-
-    public PyRatedCallee(@NotNull PyCallableType callableType, @Nullable PyCallable callable, int rate) {
-      super(rate, callable);
-      myCallableType = callableType;
-    }
-
-    @NotNull
-    public PyCallableType getCallableType() {
-      return myCallableType;
-    }
-
-    @Override
-    @Nullable
-    public PyCallable getElement() {
-      //noinspection ConstantConditions
-      return (PyCallable)super.getElement();
-    }
-  }
-
-  /**
-   * @deprecated Use {@link PyMarkedCallee} instead.
-   * This class will be removed in 2018.1.
-   */
-  @Deprecated
-  class PyRatedMarkedCallee extends RatedResolveResult {
-
-    @NotNull
-    private final PyMarkedCallee myMarkedCallee;
-
-    public PyRatedMarkedCallee(@NotNull PyMarkedCallee markedCallee, int rate) {
-      super(rate, markedCallee.getElement());
-      myMarkedCallee = markedCallee;
-    }
-
-    @NotNull
-    public PyMarkedCallee getMarkedCallee() {
-      return myMarkedCallee;
-    }
-
-    @Override
-    @Nullable
-    public PyCallable getElement() {
-      //noinspection ConstantConditions
-      return (PyCallable)super.getElement();
     }
   }
 }

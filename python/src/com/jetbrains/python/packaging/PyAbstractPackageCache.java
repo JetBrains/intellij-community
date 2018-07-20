@@ -56,7 +56,7 @@ public abstract class PyAbstractPackageCache {
     }
     catch (NoSuchFileException exception) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.warn("Package cache " + cacheFilePath + " was not found");
+        LOG.info("Package cache " + cacheFilePath + " was not found");
       }
     }
     catch (IOException exception) {

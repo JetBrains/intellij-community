@@ -165,7 +165,7 @@ public class EnvironmentUtil {
     public Map<String, String> readShellEnv() throws Exception {
       return readShellEnv(null);
     }
-    
+
     protected Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws Exception {
       File reader = PathManager.findBinFileWithException("printenv.py");
 
@@ -190,7 +190,7 @@ public class EnvironmentUtil {
         FileUtil.delete(envFile);
       }
     }
-    
+
     @NotNull
     public Map<String, String> readBatEnv(@NotNull File batchFile, List<String> args) throws Exception {
       return readBatOutputAndEnv(batchFile, args).second;
@@ -273,12 +273,11 @@ public class EnvironmentUtil {
   }
 
   @NotNull
-  private static Map<String, String> parseEnv(String text) throws Exception {
+  public static Map<String, String> parseEnv(String... lines) throws Exception {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    String[] lines = text.split("\0");
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
@@ -295,6 +294,13 @@ public class EnvironmentUtil {
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
     return newEnv;
+  }
+
+  @NotNull
+  private static Map<String, String> parseEnv(String text) throws Exception {
+    String[] lines = text.split("\0");
+
+    return parseEnv(lines);
   }
 
   private static int waitAndTerminateAfter(@NotNull Process process, int timeoutMillis) {
@@ -341,13 +347,13 @@ public class EnvironmentUtil {
   }
 
   private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
-      Locale[] available = Locale.getAvailableLocales();
-      for (Locale l : available) {
-        if (StringUtil.equals(l.toString(), candidateLanguageTerritory)) {
-          return true;
-        }
+    Locale[] available = Locale.getAvailableLocales();
+    for (Locale l : available) {
+      if (StringUtil.equals(l.toString(), candidateLanguageTerritory)) {
+        return true;
       }
-      return false;
+    }
+    return false;
   }
 
   @NotNull

@@ -2,7 +2,6 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -189,23 +188,17 @@ public class PyStubsTest extends PyTestCase {
     assertEquals(1, children.length);
     assertSame(pyClass, children[0]);
 
-    new WriteCommandAction(myFixture.getProject(), fileImpl) {
-      @Override
-      protected void run(@NotNull final Result result) {
-        pyClass.setName("RenamedClass");
-        assertEquals("RenamedClass", pyClass.getName());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject(), fileImpl).run(() -> {
+      pyClass.setName("RenamedClass");
+      assertEquals("RenamedClass", pyClass.getName());
+    });
 
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
 
-    new WriteCommandAction(myFixture.getProject(), fileImpl) {
-      @Override
-      protected void run(@NotNull Result result) {
-        ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myFixture.getProject(), fileImpl).run(() -> {
+      ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
+    });
     assertNull(fileImpl.getTreeElement()); // Test unload succeeded.
 
     assertEquals("RenamedClass", fileImpl.getTopLevelClasses().get(0).getName());
@@ -361,18 +354,15 @@ public class PyStubsTest extends PyTestCase {
   public void testStubIndexMismatch() {
     VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.py");
     final Project project = myFixture.getProject();
-    PsiFileImpl fooPyFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile);
+    PsiFileImpl fooPyFile = (PsiFileImpl)PsiManager.getInstance(project).findFile(vFile);
     assertNotNull(fooPyFile);
     final Document fooDocument = fooPyFile.getViewProvider().getDocument();
     assertNotNull(fooDocument);
     final Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
     assertEquals(0, classes.size());
-    new WriteCommandAction.Simple(project, fooPyFile) {
-      @Override
-      public void run() {
-        fooDocument.setText("class Foo: pass");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> {
+      fooDocument.setText("class Foo: pass");
+    });
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(fooDocument);
     documentManager.performForCommittedDocument(fooDocument, () -> {
@@ -381,7 +371,7 @@ public class PyStubsTest extends PyTestCase {
       //fooPyFile.unloadContent();
       DumbServiceImpl.getInstance(project).setDumb(true);
       try {
-        assertEquals(1, ((PyFile) fooPyFile).getTopLevelClasses().size());
+        assertEquals(1, ((PyFile)fooPyFile).getTopLevelClasses().size());
         assertFalse(fooPyFile.isContentsLoaded());
       }
       finally {
@@ -924,28 +914,6 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-27398
   public void testDataclassField() {
-    class FieldChecker {
-
-      @NotNull
-      private final PyClass myClass;
-
-      private FieldChecker(@NotNull PyClass cls) {
-        myClass = cls;
-      }
-
-      private void check(@NotNull String name, boolean hasDefault, boolean hasDefaultFactory, boolean initValue) {
-        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
-        final PyTargetExpression field = myClass.findClassAttribute(name, false, context);
-
-        final PyDataclassFieldStub fieldStub = field.getStub().getCustomStub(PyDataclassFieldStub.class);
-        assertNotNull(fieldStub);
-
-        assertEquals(hasDefault, fieldStub.hasDefault());
-        assertEquals(hasDefaultFactory, fieldStub.hasDefaultFactory());
-        assertEquals(initValue, fieldStub.initValue());
-      }
-    }
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
@@ -953,7 +921,7 @@ public class PyStubsTest extends PyTestCase {
         final PyFile file2 = getTestFile("dataclassField/dataclasses.py");
         final PyFile file3 = getTestFile("dataclassField/b.py");
 
-        final FieldChecker checker = new FieldChecker(file1.findTopLevelClass("A"));
+        final DataclassFieldChecker checker = new DataclassFieldChecker(file1.findTopLevelClass("A"));
         checker.check("a", true, false, true);
         checker.check("b", false, true, true);
         checker.check("c", false, false, false);
@@ -962,10 +930,34 @@ public class PyStubsTest extends PyTestCase {
         checker.check("f", false, false, false);
         checker.check("g", false, false, true); // fallback `init` value
         checker.check("h", false, false, true);
+        checker.check("i", false, false, true);
 
         assertNotParsed(file1);
         assertNotParsed(file2);
         assertNotParsed(file3);
+      }
+    );
+  }
+
+  // PY-26354
+  public void testAttrsField() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyFile file = getTestFile();
+
+        final DataclassFieldChecker checker = new DataclassFieldChecker(file.findTopLevelClass("A"));
+        checker.check("a", true, false, true);
+        checker.check("b", false, true, true);
+        checker.check("c", false, false, true);
+        checker.check("d", false, false, false);
+        checker.check("e", false, false, false);
+        checker.check("f", false, false, false);
+        checker.check("g", false, false, true);
+        checker.check("h", false, true, true);
+        checker.check("i", false, false, true);
+
+        assertNotParsed(file);
       }
     );
   }
@@ -981,8 +973,8 @@ public class PyStubsTest extends PyTestCase {
         final PyTypingNewTypeStub stub = type.getStub().getCustomStub(PyTypingNewTypeStub.class);
 
         assertNotNull(stub);
-        assertTrue("UserId".equals(stub.getName()));
-        assertTrue("int".equals(stub.getClassType()));
+        assertEquals("UserId", stub.getName());
+        assertEquals("int", stub.getClassType());
 
         final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
         final PyType typeDef = context.getType(type);
@@ -991,5 +983,36 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file);
       }
     );
+  }
+
+  // PY-28879
+  public void testVariableTypeCommentWithTupleType() {
+    final PyFile file = getTestFile();
+    final PyTargetExpression target = file.findTopLevelAttribute("var");
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(target.getProject());
+    context.getType(target);
+    assertNotParsed(file);
+  }
+
+  private static class DataclassFieldChecker {
+
+    @NotNull
+    private final PyClass myClass;
+
+    private DataclassFieldChecker(@NotNull PyClass cls) {
+      myClass = cls;
+    }
+
+    private void check(@NotNull String name, boolean hasDefault, boolean hasDefaultFactory, boolean initValue) {
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myClass.getProject());
+      final PyTargetExpression field = myClass.findClassAttribute(name, false, context);
+
+      final PyDataclassFieldStub fieldStub = field.getStub().getCustomStub(PyDataclassFieldStub.class);
+      assertNotNull(fieldStub);
+
+      assertEquals(hasDefault, fieldStub.hasDefault());
+      assertEquals(hasDefaultFactory, fieldStub.hasDefaultFactory());
+      assertEquals(initValue, fieldStub.initValue());
+    }
   }
 }

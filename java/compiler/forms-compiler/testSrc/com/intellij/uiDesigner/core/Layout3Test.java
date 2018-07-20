@@ -20,13 +20,17 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
+
 public final class Layout3Test extends TestCase {
   public void test1() {
     final JPanel panel = new JPanel(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), 0, 0));
 
     final JButton button1 = new JButton();
+    setDefaults(button1);
     button1.setPreferredSize(new Dimension(100, 40));
     final JButton button2 = new JButton();
+    setDefaults(button2);
     button2.setPreferredSize(new Dimension(100, 100));
 
     panel.add(button1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
@@ -34,6 +38,8 @@ public final class Layout3Test extends TestCase {
 
     panel.add(button2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                            GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     assertEquals(140, panel.getPreferredSize().height);
   }

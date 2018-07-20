@@ -5,10 +5,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import com.intellij.util.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
@@ -19,6 +20,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_P
 fun PsiElement.contexts(): Sequence<PsiElement> = generateSequence(this) {
   ProgressManager.checkCanceled()
   it.context
+}
+
+fun PsiElement.backwardSiblings(): Sequence<PsiElement> = generateSequence(this) {
+  ProgressManager.checkCanceled()
+  it.prevSibling
+}
+
+inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> {
+  return PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
 }
 
 @JvmOverloads
@@ -39,11 +49,11 @@ fun <T : GroovyResolveResult> PsiElement.treeWalkUpAndGetSingleResult(processor:
   return treeWalkUpAndGet(processor).singleOrNull()
 }
 
-fun <T : PsiElement> PsiElement.treeWalkUpAndGetSingleElement(processor: GrResolverProcessor<ElementGroovyResult<T>>): T? {
+fun <T : PsiElement> PsiElement.treeWalkUpAndGetSingleElement(processor: GrResolverProcessor<ElementResolveResult<T>>): T? {
   return treeWalkUpAndGetSingleResult(processor)?.element
 }
 
-inline fun <reified T : PsiElement> PsiElement.skipParentsOfType() = skipParentsOfType(true, T::class.java)
+inline fun <reified T : PsiElement> PsiElement.skipParentsOfType(): Pair<PsiElement, PsiElement?>? = skipParentsOfType(true, T::class.java)
 
 fun PsiElement.skipParentsOfType(strict: Boolean = false, vararg types: Class<*>): Pair<PsiElement, PsiElement?>? {
   val seq = parents().withPrevious().drop(if (strict) 1 else 0)

@@ -58,29 +58,23 @@ public class BuildTargetTypeState {
       return false;
     }
 
-    try {
-      DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)));
-      try {
-        input.readInt();//reserved for version
-        int size = input.readInt();
-        BuildTargetLoader<?> loader = myTargetType.createLoader(myTargetsState.getModel());
-        while (size-- > 0) {
-          String stringId = IOUtil.readString(input);
-          int intId = input.readInt();
-          myTargetsState.markUsedId(intId);
-          BuildTarget<?> target = loader.createTarget(stringId);
-          if (target != null) {
-            myTargetIds.put(target, intId);
-          }
-          else {
-            myStaleTargetIds.add(Pair.create(stringId, intId));
-          }
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)))) {
+      input.readInt();//reserved for version
+      int size = input.readInt();
+      BuildTargetLoader<?> loader = myTargetType.createLoader(myTargetsState.getModel());
+      while (size-- > 0) {
+        String stringId = IOUtil.readString(input);
+        int intId = input.readInt();
+        myTargetsState.markUsedId(intId);
+        BuildTarget<?> target = loader.createTarget(stringId);
+        if (target != null) {
+          myTargetIds.put(target, intId);
         }
-        return true;
+        else {
+          myStaleTargetIds.add(Pair.create(stringId, intId));
+        }
       }
-      finally {
-        input.close();
-      }
+      return true;
     }
     catch (IOException e) {
       LOG.info("Cannot load " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);

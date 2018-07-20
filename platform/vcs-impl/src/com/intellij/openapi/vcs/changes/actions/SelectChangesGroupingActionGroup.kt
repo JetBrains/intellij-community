@@ -11,7 +11,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer
 import java.awt.Graphics
 
 class SelectChangesGroupingActionGroup : DefaultActionGroup(), DumbAware {
-  override fun canBePerformed(context: DataContext) = true
+  override fun canBePerformed(context: DataContext): Boolean = true
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.getData(ChangesGroupingSupport.KEY) != null
@@ -24,10 +24,10 @@ class SelectChangesGroupingActionGroup : DefaultActionGroup(), DumbAware {
     }
 
     val popup = SelectChangesGroupingActionPopup(group, e.dataContext)
-    val component = e.inputEvent.component
+    val component = e.inputEvent?.component
     when (component) {
       is ActionButtonComponent -> popup.showUnderneathOf(component)
-      else -> popup.showInCenterOf(component)
+      else -> popup.showInBestPositionFor(e.dataContext)
     }
   }
 }

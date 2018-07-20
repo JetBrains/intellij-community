@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -71,11 +72,9 @@ public final class ExecutionHandler {
     if (target == null) {
       return null;
     }
-    FutureResult<ProcessHandler> result = runBuildImpl((AntBuildFileBase)target.getModel().getBuildFile(),
-                                                       new String[]{target.getName()},
-                                                       null,
-                                                       dataContext,
-                                                       additionalProperties, antBuildListener, false);
+    FutureResult<ProcessHandler> result = runBuildImpl(
+      (AntBuildFileBase)target.getModel().getBuildFile(), target.getTargetNames(), null, dataContext, additionalProperties, antBuildListener, false
+    );
     if (result != null) {
       try {
         long l = System.currentTimeMillis();
@@ -92,11 +91,21 @@ public final class ExecutionHandler {
     return null;
   }
 
+
+  @Deprecated
+  public static void runBuild(final AntBuildFileBase buildFile,
+                              String[] targets,
+                              @Nullable final AntBuildMessageView buildMessageViewToReuse,
+                              final DataContext dataContext,
+                              List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
+    runBuild(buildFile, Arrays.asList(targets), buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener);
+  }
+
   /**
    * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
    */
   public static void runBuild(final AntBuildFileBase buildFile,
-                              String[] targets,
+                              List<String> targets,
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
@@ -108,7 +117,7 @@ public final class ExecutionHandler {
    */
   @Nullable
   private static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
-                                                          String[] targets,
+                                                          List<String> targets,
                                                           @Nullable final AntBuildMessageView buildMessageViewToReuse,
                                                           final DataContext dataContext,
                                                           List<BuildFileProperty> additionalProperties,
@@ -306,7 +315,7 @@ public final class ExecutionHandler {
 
   private static AntBuildMessageView prepareMessageView(@Nullable AntBuildMessageView buildMessageViewToReuse,
                                                         AntBuildFileBase buildFile,
-                                                        String[] targets, List<BuildFileProperty> additionalProperties) throws RunCanceledException {
+                                                        List<String> targets, List<BuildFileProperty> additionalProperties) throws RunCanceledException {
     AntBuildMessageView messageView;
     if (buildMessageViewToReuse != null) {
       messageView = buildMessageViewToReuse;

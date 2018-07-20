@@ -14,7 +14,7 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
 
   private val callFrame = if (scope.type == ScopeType.LOCAL) callFrame else null
 
-  override fun isAutoExpand() = scope.type == ScopeType.LOCAL || scope.type == ScopeType.CATCH
+  override fun isAutoExpand(): Boolean = scope.type == ScopeType.LOCAL || scope.type == ScopeType.CATCH
 
   override fun getComment(): String? {
     val className = scope.description

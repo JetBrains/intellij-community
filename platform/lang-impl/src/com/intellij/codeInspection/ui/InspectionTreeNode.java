@@ -82,7 +82,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return myProblemLevels.getValue();
   }
 
-  private void dropProblemCountCaches() {
+  void dropProblemCountCaches() {
     InspectionTreeNode current = this;
     while (current != null) {
       current.myProblemLevels.drop();
@@ -146,6 +146,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.excludeElement();
     }
+    dropProblemCountCaches();
   }
 
   public void amnestyElement() {
@@ -154,6 +155,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.amnestyElement();
     }
+    dropProblemCountCaches();
   }
 
   public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {

@@ -69,57 +69,51 @@ public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
   }
 
   private static void doInsert() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        Document document = myEditor.getDocument();
-        document.insertString(myEditor.getCaretModel().getOffset(), STRING6);
-        document.insertString(myEditor.getCaretModel().getOffset(), STRING5);
-        document.insertString(myEditor.getCaretModel().getOffset(), STRING4);
-        document.insertString(myEditor.getCaretModel().getOffset(), STRING3);
-        document.insertString(myEditor.getCaretModel().getOffset(), STRING2);
-        document.insertString(myEditor.getCaretModel().getOffset(), STRING1);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      Document document = myEditor.getDocument();
+      document.insertString(myEditor.getCaretModel().getOffset(), STRING6);
+      document.insertString(myEditor.getCaretModel().getOffset(), STRING5);
+      document.insertString(myEditor.getCaretModel().getOffset(), STRING4);
+      document.insertString(myEditor.getCaretModel().getOffset(), STRING3);
+      document.insertString(myEditor.getCaretModel().getOffset(), STRING2);
+      document.insertString(myEditor.getCaretModel().getOffset(), STRING1);
+    });
   }
 
   private static void doDelete() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        Document document = myEditor.getDocument();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      Document document = myEditor.getDocument();
 
-        document.deleteString(
-          myEditor.getCaretModel().getOffset(),
-          myEditor.getCaretModel().getOffset() + STRING1.length()
-        );
+      document.deleteString(
+        myEditor.getCaretModel().getOffset(),
+        myEditor.getCaretModel().getOffset() + STRING1.length()
+      );
 
-        document.deleteString(
-          myEditor.getCaretModel().getOffset(),
-          myEditor.getCaretModel().getOffset() + STRING2.length()
-        );
+      document.deleteString(
+        myEditor.getCaretModel().getOffset(),
+        myEditor.getCaretModel().getOffset() + STRING2.length()
+      );
 
-        document.deleteString(
-          myEditor.getCaretModel().getOffset(),
-          myEditor.getCaretModel().getOffset() + STRING3.length()
-        );
+      document.deleteString(
+        myEditor.getCaretModel().getOffset(),
+        myEditor.getCaretModel().getOffset() + STRING3.length()
+      );
 
-        document.deleteString(
-          myEditor.getCaretModel().getOffset(),
-          myEditor.getCaretModel().getOffset() + STRING4.length()
-        );
+      document.deleteString(
+        myEditor.getCaretModel().getOffset(),
+        myEditor.getCaretModel().getOffset() + STRING4.length()
+      );
 
-        document.deleteString(
-          myEditor.getCaretModel().getOffset(),
-          myEditor.getCaretModel().getOffset() + STRING5.length()
-        );
+      document.deleteString(
+        myEditor.getCaretModel().getOffset(),
+        myEditor.getCaretModel().getOffset() + STRING5.length()
+      );
 
-        document.deleteString(
-          myEditor.getCaretModel().getOffset(),
-          myEditor.getCaretModel().getOffset() + STRING6.length()
-        );
-      }
-    }.execute().throwException();
+      document.deleteString(
+        myEditor.getCaretModel().getOffset(),
+        myEditor.getCaretModel().getOffset() + STRING6.length()
+      );
+    });
   }
 
   public void testTypingInLongLinePerformance() {

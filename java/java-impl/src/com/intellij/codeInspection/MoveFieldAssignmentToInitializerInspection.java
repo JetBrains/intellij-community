@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -18,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -150,7 +150,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
 
   private static boolean isInitializedWithSameExpression(final PsiField field,
                                                          final PsiAssignmentExpression assignment,
-                                                         final Collection<PsiAssignmentExpression> initializingAssignments) {
+                                                         final Collection<? super PsiAssignmentExpression> initializingAssignments) {
     final PsiExpression expression = assignment.getRExpression();
     if (expression == null) return false;
     PsiClass containingClass = field.getContainingClass();
@@ -172,7 +172,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
         PsiMember member = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMember.class);
         if (member instanceof PsiClassInitializer || member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
           // ignore usages other than initializing
-          if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
+          if (rValue == null || !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);
           }
           initializingAssignments.add(assignmentExpression);
@@ -241,11 +241,12 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
             parent instanceof PsiWhileStatement ||
             parent instanceof PsiForStatement ||
             parent instanceof PsiForeachStatement) {
-          ct.replaceAndRestoreComments(statement, ";");
+          ct.replace(statement, ";");
         }
         else {
-          ct.deleteAndRestoreComments(statement);
+          ct.delete(statement);
         }
+        ct.insertCommentsBefore(field);
         // if we replace/delete several assignments we want to restore comments at each place separately
         ct = new CommentTracker();
       }
@@ -254,7 +255,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       if (owner instanceof PsiClassInitializer) {
         PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
         if(body.isEmpty() && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
-          owner.delete();
+          new CommentTracker().deleteAndRestoreComments(owner);
         }
       }
     }

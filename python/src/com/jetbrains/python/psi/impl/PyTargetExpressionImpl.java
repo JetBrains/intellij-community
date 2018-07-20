@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -37,6 +38,7 @@ import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -48,10 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -133,24 +132,24 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         // imported via __all__
         return null;
       }
-      final PyType pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, null);
+      final Ref<PyType> pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, null);
       if (pyType != null) {
-        return pyType;
+        return pyType.get();
       }
       PyType type = getTypeFromDocString();
       if (type != null) {
         return type;
       }
       if (!context.maySwitchToAST(this)) {
-        final PsiElement value = resolveAssignedValue(PyResolveContext.noImplicits().withTypeEvalContext(context));
-        if (value instanceof PyTypedElement) {
-          type = context.getType((PyTypedElement)value);
-          if (type instanceof PyNoneType) {
-            return null;
-          }
-          return type;
-        }
-        return null;
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+        final List<PyType> types = StreamEx
+          .of(multiResolveAssignedValue(resolveContext))
+          .select(PyTypedElement.class)
+          .map(context::getType)
+          .toList();
+
+        return PyUnionType.union(types);
       }
       type = getTypeFromComment(this);
       if (type != null) {
@@ -513,43 +512,31 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public PsiElement resolveAssignedValue(@NotNull PyResolveContext resolveContext) {
+    return ContainerUtil.getFirstItem(multiResolveAssignedValue(resolveContext));
+  }
+
+  @NotNull
+  @Override
+  public List<PsiElement> multiResolveAssignedValue(@NotNull PyResolveContext resolveContext) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
+
     if (context.maySwitchToAST(this)) {
       final PyExpression value = findAssignedValue();
-      if (value != null) {
-        final List<PsiElement> results = PyUtil.multiResolveTopPriority(value, resolveContext);
-        return !results.isEmpty() ? results.get(0) : null;
-      }
-      return null;
+      return value != null
+             ? ContainerUtil.filter(PyUtil.multiResolveTopPriority(value, resolveContext), Objects::nonNull)
+             : Collections.emptyList();
     }
     else {
       final QualifiedName qName = getAssignedQName();
-      if (qName != null) {
+
+      if (qName != null && qName.getComponentCount() != 0) {
         final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
-        if (owner instanceof PyTypedElement) {
-          final List<String> components = qName.getComponents();
-          if (!components.isEmpty()) {
-            PsiElement resolved = owner;
-            for (String component : components) {
-              if (!(resolved instanceof PyTypedElement)) {
-                return null;
-              }
-              final PyType qualifierType = context.getType((PyTypedElement)resolved);
-              if (qualifierType == null) {
-                return null;
-              }
-              final List<? extends RatedResolveResult> results = qualifierType.resolveMember(component, null, AccessDirection.READ,
-                                                                                             resolveContext);
-              if (results == null || results.isEmpty()) {
-                return null;
-              }
-              resolved = results.get(0).getElement();
-            }
-            return resolved;
-          }
+        if (owner != null) {
+          return PyResolveUtil.resolveQualifiedNameInScope(qName, owner, context);
         }
       }
-      return null;
+
+      return Collections.emptyList();
     }
   }
 
@@ -706,8 +693,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       @Override
       public String getLocationString() {
         final PyClass containingClass = getContainingClass();
-        if (containingClass != null) {
-          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        final String packageForFile = getPackageForFile(getContainingFile());
+        if (containingClass != null && packageForFile != null) {
+          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
         }
         return super.getLocationString();
       }

@@ -28,7 +28,7 @@ import java.util.ArrayList;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowShortenNames extends ActionGroup {
+public class ShowShortenNames extends ActionGroup implements DumbAware {
   private final AnAction[] myChildren;
 
   public ShowShortenNames() {

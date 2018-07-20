@@ -9,7 +9,7 @@ class Post {
   public void contextVarFree(int param) {
     int varFree = 1;
       int var = method(param, varFree);
-    int varPost = varFree;
+      int varPost = varFree;
   }
 
   public void contextVarIncapsulated(int param) {
@@ -22,18 +22,18 @@ class Post {
   public void contextParam(int param) {
     int varFree = 1;
       int var = method(param, varFree);
-    int varPost = param;
+      int varPost = param;
   }
 
   public void contextField(int param) {
     int varFree = 1;
       int var = method(param, varFree);
-    int varPost = myField;
+      int varPost = myField;
   }
 
   public void contextThis(int param) {
     int varFree = 1;
       int var = method(param, varFree);
-    int varPost = this.hashCode();
+      int varPost = this.hashCode();
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -126,7 +127,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     Map<String, PsiNamedElement> originalNamedElements = Collector.collectNamedElements(original);
     Map<String, PsiNamedElement> replacedNamedElements = Collector.collectNamedElements(replacement);
 
-    if (originalNamedElements.size() == 0 && replacedNamedElements.size() == 0) {
+    if (originalNamedElements.isEmpty() && replacedNamedElements.isEmpty()) {
       Replacer.handleComments(original, replacement, info);
       return;
     }
@@ -299,11 +300,16 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           copy.setModifierProperty(modifier, false);
         }
       }
-      for (PsiAnnotation copyAnnotation : copy.getAnnotations()) {
-        for (PsiAnnotation queryAnnotation : query.getAnnotations()) {
-          if (matches(queryAnnotation, copyAnnotation)) {
-            copyAnnotation.delete();
+      final List<? extends PsiElement> unmatchedAnnotations = originalModifierList.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
+      if (unmatchedAnnotations != null) {
+        outer:
+        for (PsiAnnotation copyAnnotation : copy.getAnnotations()) {
+          for (PsiElement unmatchedAnnotation : unmatchedAnnotations) {
+            if (AnnotationUtil.equal(copyAnnotation, (PsiAnnotation)unmatchedAnnotation)) {
+              continue outer;
+            }
           }
+          copyAnnotation.delete();
         }
       }
       for (PsiAnnotation annotation : replacementModifierList.getAnnotations()) {
@@ -311,20 +317,6 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       }
       replacementModifierList.replace(copy);
     }
-  }
-
-  private static boolean matches(PsiAnnotation queryAnnotation, PsiAnnotation originalAnnotation) {
-    final PsiJavaCodeReferenceElement queryReferenceElement = queryAnnotation.getNameReferenceElement();
-    if (queryReferenceElement == null) {
-      return false;
-    }
-    final PsiJavaCodeReferenceElement originalReferenceElement = originalAnnotation.getNameReferenceElement();
-    if (originalReferenceElement == null) {
-      return false;
-    }
-    final String queryQualifiedName = queryReferenceElement.getQualifiedName();
-    return queryQualifiedName.equals(originalReferenceElement.getQualifiedName()) ||
-           queryQualifiedName.equals(originalReferenceElement.getReferenceName());
   }
 
   private PsiElement handleSymbolReplacement(PsiElement replacement, final PsiElement el) {
@@ -583,7 +575,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         if (offset + reference.getTextLength() < finalStartOffset) {
           return;
         }
-        if (reference.getTypeParameters().length != 0) {
+        if (reference.getTypeParameters().length != 0 || reference instanceof PsiMethodReferenceExpression) {
           return;
         }
         final PsiElement target = reference.resolve();
@@ -628,10 +620,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
   }
 
-  @Nullable
   private static PsiElement createSemicolon(final PsiElement space) {
-    final PsiStatement text = JavaPsiFacade.getInstance(space.getProject()).getElementFactory().createStatementFromText(";", null);
-    return text.getFirstChild();
+    return JavaPsiFacade.getInstance(space.getProject()).getElementFactory().createStatementFromText(";", null).getFirstChild();
   }
 
   private static class Collector extends JavaRecursiveElementWalkingVisitor {

@@ -28,8 +28,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage;
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.exceptions.*;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
@@ -50,17 +50,14 @@ import static org.jetbrains.plugins.github.api.GithubApiUtil.fromJson;
 public class GithubConnection {
   private static final Logger LOG = GithubUtil.LOG;
 
+  // nullable for backwards compatibility
+  @Nullable private GithubAccount myAccount;
   @NotNull private final String myApiURL;
   @NotNull private final CloseableHttpClient myClient;
   private final boolean myReusable;
 
   private volatile HttpUriRequest myRequest;
   private volatile boolean myAborted;
-
-  @TestOnly
-  public GithubConnection(@NotNull GithubAuthData auth) {
-    this(auth, false);
-  }
 
   public GithubConnection(@NotNull GithubAuthData auth, boolean reusable) {
     myApiURL = GithubUrlUtil.getApiUrl(auth.getHost());
@@ -102,6 +99,15 @@ public class GithubConnection {
   public Header[] headRequest(@NotNull String path,
                               @NotNull Header... headers) throws IOException {
     return request(path, null, Arrays.asList(headers), HttpVerb.HEAD).getHeaders();
+  }
+
+  @Nullable
+  public GithubAccount getAccount() {
+    return myAccount;
+  }
+
+  public void setAccount(@NotNull GithubAccount account) {
+    myAccount = account;
   }
 
   @NotNull

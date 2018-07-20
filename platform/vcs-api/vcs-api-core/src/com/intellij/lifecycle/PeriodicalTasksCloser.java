@@ -26,7 +26,7 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use plain {@link ServiceManager#getService(Project, Class)} and {@link Project#getComponent(Class)}.
+ * @deprecated Use {@link ServiceManager#getService(Project, Class)} and {@link Project#getComponent(Class)}.
  * <br/><br/>
  * To avoid "Already Disposed" exceptions and NPEs the calls to getService/getComponent should happen either from a Read Action
  * with a dispose check, or from a background task with a proper dispose-aware ProgressIndicator,

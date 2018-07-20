@@ -62,7 +62,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     final String propertyValue = property.getValue();
     if (propertyValue == null) return;
 
-    final List<PsiElement> occurrences = Collections.synchronizedList(ContainerUtil.<PsiElement>newArrayList());
+    final List<PsiElement> occurrences = Collections.synchronizedList(ContainerUtil.newArrayList());
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiElement.getContainingFile());
     boolean result = ReferencesSearch.search(psiElement).forEach(
@@ -102,17 +102,14 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(psiElement.copy());
 
-    new WriteCommandAction.Simple(project, REFACTORING_NAME, containingFiles.toArray(PsiFile.EMPTY_ARRAY)) {
-      @Override
-      protected void run() throws Throwable {
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
-        PsiLiteral stringLiteral = (PsiLiteral)JavaPsiFacade.getInstance(getProject()).getElementFactory().
-          createExpressionFromText("\"" + StringUtil.escapeStringCharacters(propertyValue) + "\"", null);
-        for (PsiElement occurrence : occurrences) {
-          occurrence.replace(stringLiteral.copy());
-        }
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
+    WriteCommandAction.writeCommandAction(project, containingFiles.toArray(PsiFile.EMPTY_ARRAY)).withName(REFACTORING_NAME).run(() -> {
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
+      PsiLiteral stringLiteral = (PsiLiteral)JavaPsiFacade.getInstance(project).getElementFactory().
+        createExpressionFromText("\"" + StringUtil.escapeStringCharacters(propertyValue) + "\"", null);
+      for (PsiElement occurrence : occurrences) {
+        occurrence.replace(stringLiteral.copy());
       }
-    }.execute();
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
+    });
   }
 }

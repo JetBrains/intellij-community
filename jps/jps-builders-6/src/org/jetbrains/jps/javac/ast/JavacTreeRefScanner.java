@@ -1,33 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.containers.Stack;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
+import gnu.trove.THashSet;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacNameTable;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import javax.lang.model.element.*;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.*;
+import javax.lang.model.util.Types;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -68,8 +53,21 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       if (element != null) {
         collector.sinkReference(collector.asJavacRef(element));
       }
+      return super.visitNewClass(node, collector);
+    } else {
+      //anonymous class
+      myCurrentAnonymousTree.add(node);
+      try {
+        scan(node.getEnclosingExpression(), collector);
+        scan(node.getIdentifier(), collector);
+        scan(node.getTypeArguments(), collector);
+        //scan(node.getArguments(), collector);
+        scan(node.getClassBody(), collector);
+        return null;
+      } finally {
+        myCurrentAnonymousTree.pop();
+      }
     }
-    return super.visitNewClass(node, collector);
   }
 
   @Override
@@ -115,6 +113,25 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       }
     }
     return super.visitMethod(node, refCollector);
+  }
+
+  @Override
+  public Tree visitBinary(BinaryTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    Tree.Kind kind = node.getKind();
+    if (kind == Tree.Kind.PLUS) {
+      ExpressionTree lOp = node.getLeftOperand();
+      ExpressionTree rOp = node.getRightOperand();
+      Set<TypeElement> typeElements = extractImplicitToStringCalls(lOp, rOp, collector);
+      if (typeElements != null) {
+        for (TypeElement element : typeElements) {
+          JavacRef.JavacElementRefBase ref = collector.asJavacRef(element);
+          if (ref != null) {
+            collector.sinkImplicitToString(ref);
+          }
+        }
+      }
+    }
+    return super.visitBinary(node, collector);
   }
 
   private void processMemberDefinition(JavacReferenceCollectorListener.ReferenceCollector refCollector,
@@ -165,6 +182,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
 
   private final Stack<TypeElement> myCurrentEnclosingElement = new Stack<TypeElement>(1);
   private final Stack<Long> myCurrentEnclosingElementOffset = new Stack<Long>(1);
+  private final Stack<NewClassTree> myCurrentAnonymousTree = new Stack<NewClassTree>(1);
 
   @Override
   public Tree visitClass(ClassTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
@@ -199,6 +217,9 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       if (aClass == null) return null;
       refCollector.sinkReference(aClass);
       refCollector.sinkDeclaration(new JavacDef.JavacClassDef(aClass, supers));
+      if (((JavacRef.JavacClass)aClass).isAnonymous()) {
+        scan(myCurrentAnonymousTree.peek().getArguments(), refCollector);
+      }
       super.visitClass(node, refCollector);
     } finally {
       myCurrentEnclosingElement.pop();
@@ -335,5 +356,59 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       if (superClassElement == baseClass) return true;
     }
     return false;
+  }
+
+  private static Set<TypeElement> extractImplicitToStringCalls(Tree lOp,
+                                                               Tree rOp,
+                                                               JavacReferenceCollectorListener.ReferenceCollector collector) {
+    TypeMirror lTypeMirror = collector.getType(lOp);
+    if (lTypeMirror == null) return null;
+    TypeElement lType = asTypeElement(lTypeMirror, collector.getTypeUtility());
+    if (lType == null) return null;
+    TypeMirror rTypeMirror = collector.getType(rOp);
+    if (rTypeMirror == null) return null;
+    TypeElement rType = asTypeElement(rTypeMirror, collector.getTypeUtility());
+    if (rType == null) return null;
+
+    if (isToStringImplicitCall(lType, rType, collector)) {
+      Set<TypeElement> result = new THashSet<TypeElement>();
+      visitTypeHierarchy(rType, result, collector.getTypeUtility());
+      return result;
+    }
+    if (isToStringImplicitCall(rType, lType, collector)) {
+      Set<TypeElement> result = new THashSet<TypeElement>();
+      visitTypeHierarchy(lType, result, collector.getTypeUtility());
+      return result;
+    }
+    return null;
+  }
+
+  private static TypeElement asTypeElement(TypeMirror typeMirror, Types typeUtility) {
+    // in jdk6 the line above isn't equivalent to <code>typeMirror instanceof PrimitiveType</code>
+    if (typeMirror.getKind().isPrimitive()) {
+      return typeUtility.boxedClass((PrimitiveType)typeMirror);
+    }
+    Element element = typeUtility.asElement(typeMirror);
+    return element instanceof TypeElement ? (TypeElement)element : null;
+  }
+
+  private static boolean isToStringImplicitCall(TypeElement strElement, TypeElement element, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    TypeElement stringEthalone = collector.getNameTable().getStringElement();
+    return strElement == stringEthalone && element != stringEthalone;
+  }
+
+  private static void visitTypeHierarchy(TypeElement element, Set<TypeElement> collector, Types typeUtility) {
+    if (collector.add(element)) {
+      TypeMirror superclass = element.getSuperclass();
+      Element superClass = typeUtility.asElement(superclass);
+      if (superClass instanceof TypeElement) {
+        visitTypeHierarchy((TypeElement)superClass, collector, typeUtility);
+      }
+      for (TypeMirror mirror : element.getInterfaces()) {
+        if (mirror instanceof TypeElement) {
+          visitTypeHierarchy((TypeElement)mirror, collector, typeUtility);
+        }
+      }
+    }
   }
 }

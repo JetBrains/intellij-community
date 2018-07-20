@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public final class PyDebugValueExecutionService {
   @Nullable private ExecutorService myAsyncValuesExecutorService;
@@ -53,13 +54,15 @@ public final class PyDebugValueExecutionService {
 
   public synchronized void cancelSubmittedTasks(@NotNull PyFrameAccessor frameAccessor) {
     int i = myFrameAccessors.indexOf(frameAccessor);
-    List<Future> submittedTasks = mySubmittedTasks.get(i);
-    for (Future task : submittedTasks) {
-      if (!task.isDone()) {
-        task.cancel(true);
+    if (i != -1) {
+      List<Future> submittedTasks = mySubmittedTasks.get(i);
+      for (Future task : submittedTasks) {
+        if (!task.isDone()) {
+          task.cancel(true);
+        }
       }
+      submittedTasks.clear();
     }
-    submittedTasks.clear();
   }
 
   public synchronized void sessionStopped(@NotNull PyFrameAccessor frameAccessor) {
@@ -75,9 +78,10 @@ public final class PyDebugValueExecutionService {
   }
 
   @TestOnly
-  public synchronized void shutDownNow() {
+  public synchronized void shutDownNow(long timeout) throws InterruptedException {
     if (myAsyncValuesExecutorService != null) {
       myAsyncValuesExecutorService.shutdownNow();
+      myAsyncValuesExecutorService.awaitTermination(timeout, TimeUnit.MILLISECONDS);
     }
   }
 }

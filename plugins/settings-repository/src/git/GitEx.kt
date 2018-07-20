@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -35,7 +21,6 @@ import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.jetbrains.settingsRepository.AuthenticationException
 import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.LOG
@@ -183,7 +168,7 @@ fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore
     config.save()
   }
 
-  val commit = RevWalk(repository).use { it.parseCommit(head!!.objectId) }
+  val commit = RevWalk(repository).use { it.parseCommit(head.objectId) }
   val u = repository.updateRef(Constants.HEAD, !head.name.startsWith(Constants.R_HEADS))
   u.setNewObjectId(commit.id)
   u.forceUpdate()
@@ -205,16 +190,17 @@ fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)
   val lastCommitId = resolve(Constants.FETCH_HEAD) ?: return
   val reader = newObjectReader()
   reader.use {
-    val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return
-    if (!treeWalk.isSubtree) {
+    val rootTreeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return
+    if (!rootTreeWalk.isSubtree) {
       // not a directory
       LOG.warn("File $path is not a directory")
       return
     }
 
-    treeWalk.filter = TreeFilter.ALL
-    treeWalk.enterSubtree()
-
+    // https://github.com/centic9/jgit-cookbook/blob/master/src/main/java/org/dstadler/jgit/api/ListFilesOfCommitAndTag.java
+    val treeWalk = TreeWalk(this)
+    treeWalk.addTree(rootTreeWalk.getObjectId(0))
+    treeWalk.isRecursive = false
     while (treeWalk.next()) {
       val fileMode = treeWalk.getFileMode(0)
       if (fileMode == FileMode.REGULAR_FILE || fileMode == FileMode.SYMLINK || fileMode == FileMode.EXECUTABLE_FILE) {
@@ -376,7 +362,7 @@ fun buildRepository(workTree: Path? = null, bare: Boolean = false, gitDir: Path?
   }
 }
 
-fun buildBareRepository(gitDir: Path) = buildRepository(bare = true, gitDir = gitDir)
+fun buildBareRepository(gitDir: Path): Repository = buildRepository(bare = true, gitDir = gitDir)
 
 fun createBareRepository(dir: Path): Repository {
   val repository = buildRepository(bare = true, gitDir = dir)

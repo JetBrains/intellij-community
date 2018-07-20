@@ -7,7 +7,6 @@ import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -41,7 +40,6 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +47,7 @@ import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -145,8 +140,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
     else {
       panel.createActionLabel(ProjectBundle.message("class.file.open.source.action"), () -> {
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
-        FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        if (sourceFile.isValid()) {
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
+          FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        }
       });
     }
 
@@ -231,14 +228,11 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         modelsToCommit.add(model);
       }
       if (modelsToCommit.isEmpty()) return ActionCallback.REJECTED;
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull final Result result) {
-          for (Library.ModifiableModel model : modelsToCommit) {
-            model.commit();
-          }
+      WriteAction.runAndWait(() -> {
+        for (Library.ModifiableModel model : modelsToCommit) {
+          model.commit();
         }
-      }.execute();
+      });
 
       return ActionCallback.DONE;
     }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaDat
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +27,15 @@ public abstract class PostfixTemplate {
   @NotNull private final String myId;
   @NotNull private final String myPresentableName;
   @NotNull private final String myKey;
-  @NotNull private final String myDescription;
+  @NotNull private final NotNullLazyValue<String> myLazyDescription = NotNullLazyValue.createValue(() -> calcDescription());
+
   @NotNull private final String myExample;
   @Nullable private final PostfixTemplateProvider myProvider;
 
   /**
    * @deprecated use {@link #PostfixTemplate(String, String, String, PostfixTemplateProvider)}
    */
+  @Deprecated
   protected PostfixTemplate(@NotNull String name, @NotNull String example) {
     this(null, name, "." + name, example, null);
   }
@@ -47,6 +50,7 @@ public abstract class PostfixTemplate {
   /**
    * @deprecated use {@link #PostfixTemplate(String, String, String, String, PostfixTemplateProvider)}
    */
+  @Deprecated
   protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
     this(null, name, key, example, null);
   }
@@ -57,20 +61,25 @@ public abstract class PostfixTemplate {
                             @NotNull String example,
                             @Nullable PostfixTemplateProvider provider) {
     myId = id != null ? id : getClass().getName() + "#" + key;
-    String tempDescription;
     myPresentableName = name;
     myKey = key;
     myExample = example;
-
-    try {
-      tempDescription = PostfixTemplateMetaData.createMetaData(this).getDescription().getText();
-    }
-    catch (IOException e) {
-      tempDescription = "Under construction";
-    }
-    myDescription = tempDescription;
     myProvider = provider;
   }
+
+  @NotNull
+  protected String calcDescription() {
+    String defaultDescription = "Under construction";
+    try {
+      return PostfixTemplateMetaData.createMetaData(this).getDescription().getText();
+    }
+    catch (IOException e) {
+      //ignore
+    }
+
+    return defaultDescription;
+  }
+
 
   /**
    * Template's identifier. Used for saving the settings related to this templates.
@@ -97,7 +106,7 @@ public abstract class PostfixTemplate {
 
   @NotNull
   public String getDescription() {
-    return myDescription;
+    return myLazyDescription.getValue();
   }
 
   @NotNull
@@ -146,13 +155,13 @@ public abstract class PostfixTemplate {
     return Objects.equals(myId, template.myId) &&
            Objects.equals(myPresentableName, template.myPresentableName) &&
            Objects.equals(myKey, template.myKey) &&
-           Objects.equals(myDescription, template.myDescription) &&
+           Objects.equals(getDescription(), template.getDescription()) &&
            Objects.equals(myExample, template.myExample) &&
            Objects.equals(myProvider, template.myProvider);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myId, myPresentableName, myKey, myDescription, myExample, myProvider);
+    return Objects.hash(myId, myPresentableName, myKey, getDescription(), myExample, myProvider);
   }
 }

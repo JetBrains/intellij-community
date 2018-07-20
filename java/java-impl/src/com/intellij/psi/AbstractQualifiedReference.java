@@ -27,13 +27,8 @@ import java.util.Set;
  */
 public abstract class AbstractQualifiedReference<T extends AbstractQualifiedReference<T>> extends ASTWrapperPsiElement
   implements PsiPolyVariantReference, PsiQualifiedReferenceElement {
-  private static final ResolveCache.PolyVariantResolver<AbstractQualifiedReference> MY_RESOLVER = new ResolveCache.PolyVariantResolver<AbstractQualifiedReference>() {
-    @NotNull
-    @Override
-    public ResolveResult[] resolve(@NotNull final AbstractQualifiedReference expression, final boolean incompleteCode) {
-      return expression.resolveInner();
-    }
-  };
+  private static final ResolveCache.PolyVariantResolver<AbstractQualifiedReference> MY_RESOLVER =
+    (expression, incompleteCode) -> expression.resolveInner();
 
   protected AbstractQualifiedReference(@NotNull final ASTNode node) {
     super(node);
@@ -44,6 +39,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return this;
   }
 
+  @NotNull
   @Override
   public final PsiElement getElement() {
     return this;
@@ -210,6 +206,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   @Nullable
   protected abstract PsiElement getReferenceNameElement();
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement element = getSeparator();

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 
-/**
- * @author Tagir Valeev
- */
 class SumMigration extends BaseStreamApiMigration {
 
   SumMigration(boolean shouldWarn) {super(shouldWarn, "sum()");}

@@ -138,11 +138,11 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
   private int createRecord(int size) throws IOException {
     int r = myStorage.createNextRecord();
-    AbstractStorage.StorageDataOutput s = myStorage.writeStream(r, true);
-    for (int i = 0; i < size; i++) {
-      s.writeInt(r);
+    try (AbstractStorage.StorageDataOutput s = myStorage.writeStream(r, true)) {
+      for (int i = 0; i < size; i++) {
+        s.writeInt(r);
+      }
     }
-    s.close();
     return r;
   }
 
@@ -154,14 +154,10 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
   private void assertRecord(int id, int prev, int next) throws IOException {
     assertEquals(prev, myStorage.getPrevRecord(id));
     assertEquals(next, myStorage.getNextRecord(id));
-    DataInputStream s = myStorage.readStream(id);
-    try {
+    try (DataInputStream s = myStorage.readStream(id)) {
       for (int i = 0; i < 1000; i++) {
         assertEquals(id, s.readInt());
       }
-    }
-    finally {
-      s.close();
     }
   }
 }

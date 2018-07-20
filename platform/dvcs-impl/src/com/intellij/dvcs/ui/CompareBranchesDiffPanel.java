@@ -16,10 +16,27 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.branch.DvcsCompareSettings;
+import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.util.CommitCompareInfo;
+import com.intellij.dvcs.util.LocalCommitCompareInfo;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.components.JBLabel;
@@ -41,8 +58,9 @@ import static java.util.Collections.emptyList;
  * @author Kirill Likhodedov
  */
 class CompareBranchesDiffPanel extends JPanel {
-
+  private final CompareBranchesHelper myHelper;
   private final String myBranchName;
+  private final Project myProject;
   private final String myCurrentBranchName;
   private final CommitCompareInfo myCompareInfo;
   private final DvcsCompareSettings myVcsSettings;
@@ -51,6 +69,8 @@ class CompareBranchesDiffPanel extends JPanel {
   private final MyChangesBrowser myChangesBrowser;
 
   public CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
+    myHelper = helper;
+    myProject = helper.getProject();
     myCurrentBranchName = currentBranchName;
     myCompareInfo = compareInfo;
     myBranchName = branchName;
@@ -99,7 +119,7 @@ class CompareBranchesDiffPanel extends JPanel {
     return ContainerUtil.map(changes, change -> new Change(change.getAfterRevision(), change.getBeforeRevision()));
   }
 
-  private static class MyChangesBrowser extends SimpleChangesBrowser {
+  private class MyChangesBrowser extends SimpleChangesBrowser {
     public MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
       super(project, false, true);
       setChangesToDisplay(changes);
@@ -110,6 +130,65 @@ class CompareBranchesDiffPanel extends JPanel {
       List<Change> oldSelection = getSelectedChanges();
       super.setChangesToDisplay(changes);
       myViewer.setSelectedChanges(swapRevisions(oldSelection));
+    }
+
+    @NotNull
+    @Override
+    protected List<AnAction> createPopupMenuActions() {
+      return ContainerUtil.append(
+        super.createPopupMenuActions(),
+        new MyCopyChangesAction()
+      );
+    }
+  }
+
+  private class MyCopyChangesAction extends DumbAwareAction {
+    public MyCopyChangesAction() {
+      super("Get from Branch", "Replace file content with its version from branch " + myBranchName, AllIcons.Actions.Download);
+      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      boolean isEnabled = !myChangesBrowser.getSelectedChanges().isEmpty();
+      boolean isVisible = myCompareInfo instanceof LocalCommitCompareInfo;
+      e.getPresentation().setEnabled(isEnabled && isVisible);
+      e.getPresentation().setVisible(isVisible);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      String title = String.format("Get from Branch '%s'", myBranchName);
+      List<Change> changes = myChangesBrowser.getSelectedChanges();
+      boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+
+      ReplaceFileConfirmationDialog confirmationDialog = new ReplaceFileConfirmationDialog(myProject, title);
+      if (!confirmationDialog.confirmFor(ChangesUtil.getFilesFromChanges(changes))) return;
+
+      FileDocumentManager.getInstance().saveAllDocuments();
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(title);
+
+      new Task.Modal(myProject, "Loading Content from Branch", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          RepositoryManager repositoryManager = myHelper.getRepositoryManager();
+          try {
+            ((LocalCommitCompareInfo) myCompareInfo).reloadContentFromBranch(myProject, myBranchName, changes, swapSides, repositoryManager);
+          }
+          catch (VcsException err) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              Messages.showErrorDialog(myProject, err.getMessage(), "Can't Copy Changes");
+            });
+          }
+        }
+
+        @Override
+        public void onFinished() {
+          action.finish();
+
+          refreshView();
+        }
+      }.queue();
     }
   }
 }

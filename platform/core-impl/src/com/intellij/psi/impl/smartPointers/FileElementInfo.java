@@ -32,9 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class FileElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final VirtualFile myVirtualFile;
+  @NotNull
   private final Project myProject;
+  @NotNull
   private final Language myLanguage;
+  @NotNull
   private final Class<? extends PsiFile> myFileClass;
 
   FileElementInfo(@NotNull final PsiFile file) {
@@ -45,14 +49,14 @@ class FileElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement() {
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
     return myFileClass.isInstance(file) ? file : null;
   }
 
   @Override
-  PsiFile restoreFile() {
-    PsiElement element = restoreElement();
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
+    PsiElement element = restoreElement(manager);
     return element == null ? null : element.getContainingFile(); // can be directory
   }
 
@@ -62,36 +66,32 @@ class FileElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
+                                   @NotNull SmartPointerManagerImpl manager) {
     return other instanceof FileElementInfo && Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
   }
 
+  @NotNull
   @Override
   VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
   @Override
-  Segment getRange() {
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     if (!myVirtualFile.isValid()) return null;
 
     Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
     return document == null ? null : TextRange.from(0, document.getTextLength());
   }
 
-  @NotNull
-  @Override
-  Project getProject() {
-    return myProject;
-  }
-
   @Nullable
   @Override
-  Segment getPsiRange() {
+  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     Document currentDoc = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
     Document committedDoc = currentDoc == null ? null :
                                   ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getLastCommittedDocument(currentDoc);
-    return committedDoc == null ? getRange() : new TextRange(0, committedDoc.getTextLength());
+    return committedDoc == null ? getRange(manager) : new TextRange(0, committedDoc.getTextLength());
   }
 
   @Override

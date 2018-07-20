@@ -16,8 +16,10 @@
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -94,7 +96,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
         .map(b -> createLocalBranchActions(allRepositories, b, false))
         .filter(Objects::nonNull).sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
     int topShownBranches = getNumOfTopShownBranches(branchActions);
-    String commonBranch = myMultiRootBranchConfig.getCommonName(HgRepository::getCurrentBranch);
+    String commonBranch = MultiRootBranches.getCommonName(myRepositoryManager.getRepositories(), Repository::getCurrentBranchName);
     if (commonBranch != null) {
       branchActions.add(0, new HgBranchPopupActions.CurrentBranch(myProject, allRepositories, commonBranch));
       topShownBranches++;
@@ -106,7 +108,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
       .map(bm -> createLocalBranchActions(allRepositories, bm, true))
       .filter(Objects::nonNull).sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
     int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
-    String commonBookmark = myMultiRootBranchConfig.getCommonName(HgRepository::getCurrentBookmark);
+    String commonBookmark = MultiRootBranches.getCommonName(repositoryManager.getRepositories(), HgRepository::getCurrentBookmark);
     if (commonBookmark != null) {
       bookmarkActions.add(0, new HgBranchPopupActions.CurrentActiveBookmark(myProject, allRepositories, commonBookmark));
       topShownBookmarks++;

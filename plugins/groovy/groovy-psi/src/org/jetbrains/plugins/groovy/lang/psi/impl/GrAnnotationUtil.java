@@ -123,15 +123,7 @@ public class GrAnnotationUtil {
   public static List<PsiClass> getClassArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {
     PsiAnnotationMemberValue value =
       declared ? annotation.findDeclaredAttributeValue(attributeName) : annotation.findAttributeValue(attributeName);
-    if (value instanceof PsiArrayInitializerMemberValue) {
-      return ContainerUtil.mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), GrAnnotationUtil::getPsiClass);
-    }
-    else if (value instanceof PsiReference) {
-      PsiClass psiClass = getPsiClass(value);
-      if (psiClass != null) return Collections.singletonList(psiClass);
-    }
-
-    return Collections.emptyList();
+    return ContainerUtil.mapNotNull(AnnotationUtil.arrayAttributeValues(value), GrAnnotationUtil::getPsiClass);
   }
 
   public static List<String> getStringArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {

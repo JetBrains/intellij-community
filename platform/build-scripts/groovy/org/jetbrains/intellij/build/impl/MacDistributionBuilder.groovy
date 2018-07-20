@@ -15,7 +15,7 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.PathUtilRt
+
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -29,33 +29,55 @@ import java.time.LocalDate
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
-  private final String icnsPath
+  private final String targetIcnsFileName
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
     super(BuildOptions.OS_MAC, "macOS", buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
-    icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
+    targetIcnsFileName = "${buildContext.productProperties.baseFileName}.icns"
   }
 
-  @Override
-  String copyFilesForOsDistribution() {
-    buildContext.messages.progress("Building distributions for macOS")
-    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
-    def docTypes = (customizer.associateIpr ? """
+  String getDocTypes() {
+    def iprAssociation = (customizer.associateIpr ? """
       <dict>
         <key>CFBundleTypeExtensions</key>
         <array>
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${PathUtilRt.getFileName(icnsPath)}</string>
+        <string>$targetIcnsFileName</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>
-""" : "") + customizer.additionalDocTypes
+""" : "")
+    def associations = ""
+    if (!customizer.fileAssociations.empty) {
+      associations = """<dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+"""
+      customizer.fileAssociations.each {
+        associations += "          <string>${it}</string>\n"
+      }
+      associations +=  """        </array>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleTypeIconFile</key>
+        <string>$targetIcnsFileName</string>        
+      </dict>
+"""
+    }
+    return iprAssociation + associations + customizer.additionalDocTypes;
+  }
+
+  @Override
+  String copyFilesForOsDistribution() {
+    buildContext.messages.progress("Building distributions for macOS")
+    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
+    def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
     if (buildContext.productProperties.toolsJarRequired) {
       customIdeaProperties["idea.jre.check"] = "true"
@@ -130,7 +152,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String executable = buildContext.productProperties.baseFileName
     buildContext.ant.move(file: "$target/MacOS/executable", tofile: "$target/MacOS/$executable")
 
-    buildContext.ant.copy(file: icnsPath, todir: "$target/Resources")
+    String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
+    buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
     String helpId = macCustomizer.helpId
     if (helpId != null) {
       String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
@@ -217,7 +240,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@build@@", value: buildContext.fullBuildNumber)
       replacefilter(token: "@@doc_types@@", value: docTypes ?: "")
       replacefilter(token: "@@executable@@", value: executable)
-      replacefilter(token: "@@icns@@", value: PathUtilRt.getFileName(icnsPath))
+      replacefilter(token: "@@icns@@", value: targetIcnsFileName)
       replacefilter(token: "@@bundle_name@@", value: fullName)
       replacefilter(token: "@@product_state@@", value: EAP)
       replacefilter(token: "@@bundle_identifier@@", value: macCustomizer.bundleIdentifier)

@@ -49,6 +49,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     myProject = project;
     myCompilerSettings = options;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+    myAdditionalOptionsField.setDescriptor(null, false);
     myPathToEcjField.addBrowseFolderListener(
       "Path to ecj compiler tool", null, project,
       new FileChooserDescriptor(true, false, true, true, false, false).withFileFilter(file -> file.getFileType() == StdFileTypes.ARCHIVE)

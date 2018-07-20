@@ -148,16 +148,8 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           // Check to see if current copyright comment matches new one.
           String newComment = getCommentText("", "");
           resetCommentText();
-          String oldComment = doc.getCharsSequence()
-            .subSequence(range.getFirst().getTextRange().getStartOffset(), range.getLast().getTextRange().getEndOffset()).toString().trim();
-          final String replaceRegexp = myOptions.getAllowReplaceRegexp();
-          if (!StringUtil.isEmptyOrSpaces(replaceRegexp)) {
-            final Pattern pattern = Pattern.compile(replaceRegexp);
-            final Matcher matcher = pattern.matcher(oldComment);
-            if (!matcher.find()) {
-              return;
-            }
-          }
+          String oldComment = getCommentText(doc, range);
+          if (!allowToReplaceRegexp(oldComment)) return;
           if (newComment.trim().equals(oldComment)) {
             if (!getLanguageOptions().isAddBlankAfter()) {
               // TODO - do we need option to remove blank line after?
@@ -208,17 +200,12 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
             end = getNextSibling(range.getLast()).getTextRange().getEndOffset();
           }
         }
-        // If this is the last comment then remove the whitespace before the comment
-        else if (range.getLast() == comments.get(comments.size() - 1)) {
-          if (getPreviousSibling(range.getFirst()) instanceof PsiWhiteSpace &&
-              countNewline(getPreviousSibling(range.getFirst()).getText()) > 1) {
-            start = getPreviousSibling(range.getFirst()).getTextRange().getStartOffset();
-          }
-        }
         // If this is the first or middle comment then remove the whitespace after the comment
         else if (getNextSibling(range.getLast()) instanceof PsiWhiteSpace) {
           end = getNextSibling(range.getLast()).getTextRange().getEndOffset();
         }
+
+        if (!allowToReplaceRegexp(getCommentText(doc, range))) continue;
 
         addAction(new CommentAction(CommentAction.ACTION_DELETE, start, end));
       }
@@ -269,6 +256,23 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     catch (Exception e) {
       logger.error(e);
     }
+  }
+
+  private static String getCommentText(Document doc, CommentRange range) {
+    return doc.getCharsSequence()
+      .subSequence(range.getFirst().getTextRange().getStartOffset(), range.getLast().getTextRange().getEndOffset()).toString().trim();
+  }
+
+  private boolean allowToReplaceRegexp(String oldComment) {
+    final String replaceRegexp = myOptions.getAllowReplaceRegexp();
+    if (!StringUtil.isEmptyOrSpaces(replaceRegexp)) {
+      final Pattern pattern = Pattern.compile(replaceRegexp);
+      final Matcher matcher = pattern.matcher(oldComment);
+      if (!matcher.find()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static CommentRange getLineCopyrightComments(List<PsiComment> comments, Document doc, int i, PsiComment comment) {
@@ -333,35 +337,32 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   protected void processActions(final boolean allowReplacement) throws IncorrectOperationException {
-    new WriteCommandAction.Simple(file.getProject(), "Update copyright") {
-      @Override
-      protected void run() throws Throwable {
-        Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
-        if (doc != null) {
-          PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
-          for (CommentAction action : actions) {
-            int start = action.getStart();
-            int end = action.getEnd();
-  
-            switch (action.getType()) {
-              case CommentAction.ACTION_INSERT:
-                String comment = getCommentText(action.getPrefix(), action.getSuffix());
-                if (!comment.isEmpty()) {
-                  doc.insertString(start, comment);
-                }
-                break;
-              case CommentAction.ACTION_REPLACE:
-                if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
-                break;
-              case CommentAction.ACTION_DELETE:
-                if (allowReplacement) doc.deleteString(start, end);
-                break;
-            }
+    WriteCommandAction.writeCommandAction(file.getProject()).withName("Update copyright").run(() -> {
+      Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
+      if (doc != null) {
+        PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
+        for (CommentAction action : actions) {
+          int start = action.getStart();
+          int end = action.getEnd();
+
+          switch (action.getType()) {
+            case CommentAction.ACTION_INSERT:
+              String comment = getCommentText(action.getPrefix(), action.getSuffix());
+              if (!comment.isEmpty()) {
+                doc.insertString(start, comment);
+              }
+              break;
+            case CommentAction.ACTION_REPLACE:
+              if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
+              break;
+            case CommentAction.ACTION_DELETE:
+              if (allowReplacement) doc.deleteString(start, end);
+              break;
           }
-          PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
         }
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
       }
-    }.execute();
+    });
   }
 
   public boolean hasUpdates() {

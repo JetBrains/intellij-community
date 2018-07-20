@@ -1,8 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +18,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
@@ -34,6 +35,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -217,7 +219,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private static class CloseAction extends AnAction {
+  private static class CloseAction extends DumbAwareAction {
 
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Close");
@@ -231,7 +233,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class RefreshAction extends AnAction {
+  private class RefreshAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Refresh");
       e.getPresentation().setDescription("Reload properties");
@@ -245,7 +247,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private abstract class BasePropertyAction extends AnAction {
+  private abstract class BasePropertyAction extends DumbAwareAction {
 
     protected void setProperty(@Nullable String property, @Nullable String value, boolean recursive, boolean force) {
       if (!StringUtil.isEmpty(property)) {
@@ -351,7 +353,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class FollowSelectionAction extends ToggleAction {
+  private class FollowSelectionAction extends DumbAwareToggleAction {
 
     public boolean isSelected(AnActionEvent e) {
       return myIsFollowSelection;

@@ -14,7 +14,7 @@
     <option name="VM_PARAMETERS" value="-ea -Xmx192m -Didea.is.internal=true -Didea.platform.prefix=PyCharmEdu -Didea.config.path=../config/pycharmEdu -Didea.system.path=../system/pycharmEdu" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
     <method>
-      <option name="Gradle.BeforeRunTask" enabled="true" tasks="deployEduPlugin" externalProjectPath="$PROJECT_DIR$/python/educational-python/build/dependencies" vmOptions="-Didea.config.path=../../../../config/pycharmEdu" scriptParameters="" />
+      <option name="Gradle.BeforeRunTask" enabled="true" tasks="deployEduPlugin" externalProjectPath="$PROJECT_DIR$/edu/dependencies" vmOptions="-Didea.config.path=../../config/pycharmEdu" scriptParameters="" />
     </method>
   </configuration>
 </component>

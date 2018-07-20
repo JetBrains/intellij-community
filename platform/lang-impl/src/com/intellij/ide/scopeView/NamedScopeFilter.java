@@ -14,8 +14,8 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 import static com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx.getAllScope;
@@ -24,16 +24,28 @@ public final class NamedScopeFilter implements VirtualFileFilter {
   private static final Logger LOG = Logger.getInstance(NamedScopeFilter.class);
   private final NamedScopesHolder holder;
   private final NamedScope scope;
+  private final String string;
 
   public NamedScopeFilter(@NotNull NamedScopesHolder holder, @NotNull NamedScope scope) {
     this.holder = holder;
     this.scope = scope;
+    this.string = scope + "; " + scope.getClass();
+  }
+
+  @NotNull
+  public NamedScopesHolder getHolder() {
+    return holder;
+  }
+
+  @NotNull
+  public NamedScope getScope() {
+    return scope;
   }
 
   @NotNull
   @Override
   public String toString() {
-    return scope.getName();
+    return string;
   }
 
   @Override
@@ -57,13 +69,13 @@ public final class NamedScopeFilter implements VirtualFileFilter {
   }
 
   @NotNull
-  static Map<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
-    return map(NamedScopeFilter::isVisible, holders);
+  static List<NamedScopeFilter> list(NamedScopesHolder... holders) {
+    return list(NamedScopeFilter::isVisible, holders);
   }
 
   @NotNull
-  static Map<String, NamedScopeFilter> map(@NotNull Predicate<NamedScope> visible, @NotNull NamedScopesHolder... holders) {
-    Map<String, NamedScopeFilter> map = new LinkedHashMap<>();
+  static List<NamedScopeFilter> list(@NotNull Predicate<NamedScope> visible, @NotNull NamedScopesHolder... holders) {
+    List<NamedScopeFilter> list = new ArrayList<>();
     for (NamedScopesHolder holder : holders) {
       for (NamedScope scope : holder.getScopes()) {
         String name = scope.getName();
@@ -73,14 +85,11 @@ public final class NamedScopeFilter implements VirtualFileFilter {
         else if (!visible.test(scope)) {
           LOG.debug("ignore hidden scope: ", name, "; holder: ", holder);
         }
-        else if (map.containsKey(name)) {
-          LOG.warn("ignore duplicated scope: " + name + "; holder: " + holder);
-        }
         else {
-          map.put(name, new NamedScopeFilter(holder, scope));
+          list.add(new NamedScopeFilter(holder, scope));
         }
       }
     }
-    return map;
+    return list;
   }
 }

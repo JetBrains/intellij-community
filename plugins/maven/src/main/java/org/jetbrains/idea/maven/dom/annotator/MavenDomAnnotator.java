@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.dom.annotator;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -91,7 +91,7 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      new OpenFileDescriptor(project, myFile).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, myFile, -1).navigate(true);
     }
   }
 }

@@ -46,11 +46,13 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
     myRangeInElement = rangeInElement;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myRangeInElement;

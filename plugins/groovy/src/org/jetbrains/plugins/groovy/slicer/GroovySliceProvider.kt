@@ -30,13 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 class GroovySliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
   object GroovySliceLeafEquality : SliceLeafEquality() {
-    override fun substituteElement(element: PsiElement) = element.getGroovyReferenceTargetOrThis()
+    override fun substituteElement(element: PsiElement): PsiElement = element.getGroovyReferenceTargetOrThis()
   }
 
   companion object {
     private fun PsiElement.getGroovyReferenceTargetOrThis() = (this as? GrReferenceElement<*>)?.resolve() ?: this
 
-    fun getInstance() = LanguageSlicing.INSTANCE.forLanguage(GroovyLanguage) as GroovySliceProvider
+    fun getInstance(): GroovySliceProvider = LanguageSlicing.INSTANCE.forLanguage(GroovyLanguage) as GroovySliceProvider
   }
 
   override fun getExpressionAtCaret(atCaret: PsiElement?, dataFlowToThis: Boolean): PsiElement? {
@@ -45,9 +45,9 @@ class GroovySliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
     return element
   }
 
-  override fun getElementForDescription(element: PsiElement) = (element as? GrReferenceElement<*>)?.resolve() ?: element
+  override fun getElementForDescription(element: PsiElement): PsiElement = (element as? GrReferenceElement<*>)?.resolve() ?: element
 
-  override fun getRenderer() = GroovySliceUsageCellRenderer()
+  override fun getRenderer(): GroovySliceUsageCellRenderer = GroovySliceUsageCellRenderer()
 
   override fun createRootUsage(element: PsiElement, params: SliceAnalysisParams): SliceUsage {
     return GroovySliceUsage(element, params)
@@ -71,7 +71,7 @@ class GroovySliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
     return listOf(newUsage)
   }
 
-  fun createLeafAnalyzer() = SliceLeafAnalyzer(GroovySliceLeafEquality, this)
+  fun createLeafAnalyzer(): SliceLeafAnalyzer = SliceLeafAnalyzer(GroovySliceLeafEquality, this)
 
   override fun startAnalyzeLeafValues(structure: AbstractTreeStructure, finalRunnable: Runnable) {
     createLeafAnalyzer().startAnalyzeValues(structure, finalRunnable)

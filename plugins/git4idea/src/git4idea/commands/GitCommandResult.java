@@ -173,4 +173,8 @@ public class GitCommandResult {
   private static Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
     return ContainerUtil.map(errorOutput, errorMessage -> GitUtil.cleanupErrorPrefixes(errorMessage));
   }
+
+  protected boolean hasStartFailed() {
+    return myStartFailed;
+  }
 }

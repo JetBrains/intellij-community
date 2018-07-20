@@ -47,8 +47,29 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    assertLastMessage("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
+    assertLastMessage("fix #1")
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
+    changeListManager.assertNoChanges()
+    changeListManager.waitScheduledChangelistDeletions()
+    changeListManager.assertOnlyDefaultChangelist()
+  }
+
+  fun `test cherry-pick from protected branch should add suffix by default`() {
+    branch("feature")
+    val commit = file("f.txt").create().addCommit("fix #1").hash()
+    git("update-ref refs/remotes/origin/master HEAD")
+    checkout("feature")
+    vcsHelper.onCommit { msg ->
+      git("commit -am '$msg'")
+      true
+    }
+
+    cherryPick(commit)
+
+    assertLastMessage("fix #1\n\n(cherry picked from commit $commit)")
+    assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
+    changeListManager.assertNoChanges()
+    changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
 
@@ -60,7 +81,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    val list = changeListManager.assertChangeListExists("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
+    val list = changeListManager.assertChangeListExists("fix #1")
     assertNoNotification()
     updateChangeListManager()
     assertChanges(list, "f.txt")
@@ -79,13 +100,9 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commits)
 
-    assertLogMessages("""
-      fix #2
-
-      (cherry picked from commit ${shortHash(commits[1])})""","""
-      fix #1
-
-      (cherry picked from commit ${shortHash(commits[0])})""")
+    assertLogMessages("fix #2", "fix #1")
+    changeListManager.assertNoChanges()
+    changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
 
@@ -105,12 +122,12 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, commit2)
 
-    assertLastMessage("fix #1\n\n(cherry picked from commit ${shortHash(commit1)})")
+    assertLastMessage("fix #1")
     assertWarningNotification("Cherry-pick cancelled", """
       ${shortHash(commit2)} fix #2
       However cherry-pick succeeded for the following commit:
       ${shortHash(commit1)} fix #1""".trimIndent())
-    val list = changeListManager.assertChangeListExists("fix #2\n\n(cherry picked from commit ${shortHash(commit2)})")
+    val list = changeListManager.assertChangeListExists("fix #2")
     assertChanges(list, "2.txt")
   }
 
@@ -149,10 +166,11 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} Modify the file")
-    assertLastMessage("Modify the file\n\n(cherry picked from commit ${shortHash(commit)})")
+    assertLastMessage("Modify the file")
     repo.assertCommitted {
       modified(initialName)
     }
+    changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
 

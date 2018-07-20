@@ -105,8 +105,13 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null ||
-        !element.getManager().isInProject(element) ||
-        CreateFromUsageUtils.isValidReference(element, true)) return false;
+        !element.getManager().isInProject(element)) {
+      return false;
+    }
+    JavaResolveResult[] results = element.multiResolve(true);
+    if (results.length > 0 && results[0].getElement() instanceof PsiClass) {
+      return false;
+    }
     final String refName = element.getReferenceName();
     if (refName == null || !checkClassName(refName)) return false;
     PsiElement nameElement = element.getReferenceNameElement();

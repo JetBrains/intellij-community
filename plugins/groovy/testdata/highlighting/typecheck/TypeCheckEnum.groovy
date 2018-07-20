@@ -15,16 +15,16 @@ class FooEnum {
 
   def enumCast() {
     (E) null
-    <error descr="Cannot cast 'char' to 'E'">(E) 1 as char</error>
-    <error descr="Cannot cast 'BigDecimal' to 'E'">(E) 1 as BigDecimal</error>
-    <error descr="Cannot cast 'BigInteger' to 'E'">(E) 1 as BigInteger</error>
-    <error descr="Cannot cast 'double' to 'E'">(E) 1 as double</error>
-    <error descr="Cannot cast 'float' to 'E'">(E) 1 as float</error>
-    <error descr="Cannot cast 'int' to 'E'">(E) 1 as int</error>
-    <error descr="Cannot cast 'short' to 'E'">(E) 1 as short</error>
-    <error descr="Cannot cast 'long' to 'E'">(E) 1 as long</error>
-    <error descr="Cannot cast 'boolean' to 'E'">(E) 1 as boolean</error>
-    <error descr="Cannot cast 'void' to 'E'">(E) 1 as void</error>
+    <error descr="Cannot cast 'char' to 'E'">(E) (1 as char)</error>
+    <error descr="Cannot cast 'BigDecimal' to 'E'">(E) (1 as BigDecimal)</error>
+    <error descr="Cannot cast 'BigInteger' to 'E'">(E) (1 as BigInteger)</error>
+    <error descr="Cannot cast 'double' to 'E'">(E) (1 as double)</error>
+    <error descr="Cannot cast 'float' to 'E'">(E) (1 as float)</error>
+    <error descr="Cannot cast 'int' to 'E'">(E) (1 as int)</error>
+    <error descr="Cannot cast 'short' to 'E'">(E) (1 as short)</error>
+    <error descr="Cannot cast 'long' to 'E'">(E) (1 as long)</error>
+    <error descr="Cannot cast 'boolean' to 'E'">(E) (1 as boolean)</error>
+    <error descr="Cannot cast 'void' to 'E'">(E) (1 as void)</error>
     <error descr="Cannot cast 'void' to 'E'">(E) explicitVoid()</error>
     <error descr="Cannot cast 'Date' to 'E'">(E) new Date()</error>
     <error descr="Cannot cast 'String' to 'E'">(E) "a"</error>
@@ -33,7 +33,7 @@ class FooEnum {
     <error descr="Cannot cast 'Object[]' to 'E'">(E) new Object[0]</error>
     <error descr="Cannot cast 'Closure<Integer>' to 'E'">(E) { int a, int b -> a + b }</error>
     (E) s
-    <error descr="Cannot cast 'Matcher' to 'E'">(E) "aaa" =~ /aaa/</error>
+    <error descr="Cannot cast 'Matcher' to 'E'">(E) ("aaa" =~ /aaa/)</error>
     <error descr="Cannot cast 'List' to 'E'">(E) []</error>
     <error descr="Cannot cast 'String' to 'E'">(E) "F"</error>
   }

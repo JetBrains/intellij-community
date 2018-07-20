@@ -26,6 +26,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -54,7 +55,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -461,20 +461,22 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (result != Messages.YES) {
       return false;
     }
-    for (ModuleEditor editor : selectedEditors) {
-      myModuleEditors.remove(editor.getModule());
+    WriteAction.run(() -> {
+      for (ModuleEditor editor : selectedEditors) {
+        myModuleEditors.remove(editor.getModule());
 
-      final Module moduleToRemove = editor.getModule();
-      // remove all dependencies on the module which is about to be removed
-      List<ModifiableRootModel> modifiableRootModels = new ArrayList<>();
-      for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-        final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
-        ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
+        final Module moduleToRemove = editor.getModule();
+        // remove all dependencies on the module which is about to be removed
+        List<ModifiableRootModel> modifiableRootModels = new ArrayList<>();
+        for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
+          final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
+          ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
+        }
+
+        ModuleDeleteProvider.removeModule(moduleToRemove, modifiableRootModels, myModuleModel);
+        Disposer.dispose(editor);
       }
-
-      ModuleDeleteProvider.removeModule(moduleToRemove, modifiableRootModels, myModuleModel);
-      Disposer.dispose(editor);
-    }
+    });
     processModuleCountChanged();
 
     return true;

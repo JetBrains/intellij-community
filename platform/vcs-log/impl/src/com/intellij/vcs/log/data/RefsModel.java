@@ -43,7 +43,7 @@ public class RefsModel implements VcsLogRefs {
           myBestRefForHead.put(head, bestRef.get());
         }
         else {
-          LOG.warn("No references at head " + commitId);
+          LOG.debug("No references at head " + commitId);
         }
       }
     }

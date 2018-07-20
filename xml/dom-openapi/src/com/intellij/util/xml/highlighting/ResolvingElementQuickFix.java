@@ -104,12 +104,10 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   private void applyFix() {
-    chooseParent(myParents, parent -> new WriteCommandAction.Simple(parent.getManager().getProject(), DomUtil.getFile(parent)) {
-      @Override
-      protected void run() throws Throwable {
-        doFix(parent, myChildDescription, myNewName);
-      }
-    }.execute());
+    chooseParent(myParents,
+                 parent -> WriteCommandAction.writeCommandAction(parent.getManager().getProject(), DomUtil.getFile(parent)).run(() -> {
+                   doFix(parent, myChildDescription, myNewName);
+                 }));
   }
 
   protected DomElement doFix(DomElement parent, final DomCollectionChildDescription childDescription, String newName) {

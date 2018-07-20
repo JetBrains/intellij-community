@@ -36,7 +36,16 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
                                  @NotNull TemplateImpl liveTemplate,
                                  @NotNull String example,
                                  @NotNull PostfixTemplateProvider provider) {
-    super(templateId, templateName, example, provider);
+    this(templateId, templateName, "." + templateName, liveTemplate, example, provider);
+  }
+
+  public EditablePostfixTemplate(@NotNull String templateId,
+                                 @NotNull String templateName,
+                                 @NotNull String templateKey,
+                                 @NotNull TemplateImpl liveTemplate,
+                                 @NotNull String example,
+                                 @NotNull PostfixTemplateProvider provider) {
+    super(templateId, templateName, templateKey, example, provider);
     assert StringUtil.isNotEmpty(liveTemplate.getKey());
     myLiveTemplate = liveTemplate;
   }
@@ -61,7 +70,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      PsiElement item = ContainerUtil.getLastItem(expressions);
+      PsiElement item = ContainerUtil.getFirstItem(expressions);
       assert item != null;
       prepareAndExpandForChooseExpression(item, editor);
       return;
@@ -111,6 +120,14 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   @NotNull
   protected Function<PsiElement, String> getElementRenderer() {
     return element -> element.getText();
+  }
+
+  @NotNull
+  @Override
+  public PostfixTemplateProvider getProvider() {
+    PostfixTemplateProvider provider = super.getProvider();
+    assert provider != null;
+    return provider;
   }
 
   private void prepareAndExpandForChooseExpression(@NotNull PsiElement element, @NotNull Editor editor) {

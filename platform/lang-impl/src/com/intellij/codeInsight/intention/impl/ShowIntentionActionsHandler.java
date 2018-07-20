@@ -1,14 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -21,7 +18,7 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -65,17 +62,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     letAutoImportComplete(editor, file, codeAnalyzer);
 
-    ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
-    ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
-    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
-    if (hintComponent != null) {
-      IntentionHintComponent.PopupUpdateResult result = hintComponent.isForEditor(editor)
-                                                        ? hintComponent.updateActions(intentions)
-                                                        : IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE;
-      if (result == IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE) {
-        hintComponent.hide();
-      }
-    }
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
+    IntentionsUI.getInstance(project).hide();
 
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
@@ -93,7 +81,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   @SuppressWarnings("WeakerAccess")
   protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (!intentions.isEmpty()) {
-      IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
+      CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
+      IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
     }
   }
 
@@ -193,7 +182,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {
-    if (Registry.is("ide.check.psi.text.consistency") ||
+    if (Registry.is("ide.check.stub.text.consistency") ||
         ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
       if (hostFile.isValid()) {
         StubTextInconsistencyException.checkStubTextConsistency(hostFile);

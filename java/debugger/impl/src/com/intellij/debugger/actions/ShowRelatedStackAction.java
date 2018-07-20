@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -14,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -47,9 +46,12 @@ public class ShowRelatedStackAction extends AnAction {
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
       ValueDescriptorImpl descriptor = values.get(0).getDescriptor();
-      if (descriptor.canMark()) {
-        DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-        return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)descriptor.getValue(), debuggerContext.getDebugProcess());
+      if (descriptor.isValueReady()) {
+        Value value = descriptor.getValue();
+        if (value instanceof ObjectReference) {
+          DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+          return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)value, debuggerContext.getDebugProcess());
+        }
       }
     }
 

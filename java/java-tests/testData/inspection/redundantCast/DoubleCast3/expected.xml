@@ -8,7 +8,7 @@
   <problem>
     <file>DoubleCast3.java</file>
     <line>6</line>
-    <description>Casting '(String) s' to String is redundant</description>
+    <description>Casting '(String)s' to String is redundant</description>
   </problem>
   <problem>
     <file>DoubleCast3.java</file>

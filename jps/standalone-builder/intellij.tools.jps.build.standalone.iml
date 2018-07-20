@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" exported="" />
     <orderEntry type="library" scope="PROVIDED" name="gant-groovy" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" name="protobuf" level="project" />
   </component>
 </module>

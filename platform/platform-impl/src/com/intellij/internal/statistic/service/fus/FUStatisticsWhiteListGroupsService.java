@@ -12,18 +12,27 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// 1. Statistics service (FUStatisticsService) collects data ONLY from approved  usages collectors(FeatureUsagesCollector)
-// 2. Approved collectors could be requested online.
-// 3. This service (FUStatisticsWhiteListGroupsService) connects to online JB service  and requests  "approved" UsagesCollectors(groups)
-// 4. Online JB service  returns  result in json file format:
-//   {
-//    "groups" : [{
-//      "id" : "statistics.Productivity",
-//      "builds" : [{ "from" : "173.4127.37" }]
-//    }, {
-//      "id" : "spring-example"
-//    }]
-//  }
+/**
+ * <ol>
+ * <li> Statistics service ({@link FUStatisticsService}) collects data ONLY from approved  usages collectors ({@link com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector})
+ * <li> Approved collectors could be requested online.
+ * <li> This service ({@link FUStatisticsWhiteListGroupsService}) connects to online JB service and requests "approved" UsagesCollectors(groups).
+ * <li> Online JB service  returns  result in json file format:
+ * <pre>{@code
+ * {
+ * "groups" : [
+ *   {
+ *    "id" : "statistics.Productivity",
+ *    "builds" : [{ "from" : "173.4127.37" }]
+ *   },
+ *   {
+ *    "id" : "spring-example"
+ *   }
+ *  ]
+ * }
+ * }</pre>
+ * </ol>
+ */
 public class FUStatisticsWhiteListGroupsService {
   private static final Logger LOG =
     Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsWhiteListGroupsService");

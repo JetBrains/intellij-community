@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -40,7 +41,7 @@ object UpdateInstaller {
     val patchName = "${product}-${from}-${to}-patch${jdk}-${patch.osSuffix}.jar"
 
     val baseUrl = patchesUrl
-    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else baseUrl + '/'), patchName)
+    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else "${baseUrl}/"), patchName)
     val patchFile = File(getTempDir(), "patch.jar")
     HttpRequests.request(url.toString()).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
     return patchFile
@@ -56,7 +57,7 @@ object UpdateInstaller {
     val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {
-        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator) && downloader.descriptor != null) {
+        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
           readyToInstall += downloader
         }
         indicator.checkCanceled()
@@ -69,8 +70,8 @@ object UpdateInstaller {
 
     var installed = false
 
-    try {
-      indicator.startNonCancelableSection()
+
+    ProgressManager.getInstance().executeNonCancelableSection {
       for (downloader in readyToInstall) {
         try {
           downloader.install()
@@ -81,10 +82,6 @@ object UpdateInstaller {
         }
       }
     }
-    finally {
-      indicator.finishNonCancelableSection()
-    }
-
     return installed
   }
 

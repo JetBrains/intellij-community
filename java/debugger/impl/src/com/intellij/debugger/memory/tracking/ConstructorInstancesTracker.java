@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.tracking;
 
 import com.intellij.debugger.DebuggerManager;
@@ -11,9 +9,10 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.debugger.memory.event.InstancesTrackerListener;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
@@ -69,7 +68,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
           myIsBackgroundTrackingEnabled = newState;
           debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
-            protected void action() throws Exception {
+            protected void action() {
               if (newState) {
                 myBreakpoint.enable();
               }
@@ -88,7 +87,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   public void obsolete() {
     if (myNewObjects != null) {
-      myNewObjects.forEach(ObjectReference::enableCollection);
+      myNewObjects.forEach(DebuggerUtilsEx::enableCollection);
     }
 
     myNewObjects = null;
@@ -208,8 +207,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     @Override
-    public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event)
-      throws EventProcessingException {
+    public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) {
       if (myIsDeleted) {
         event.request().disable();
       }
@@ -241,7 +239,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
           final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
           ObjectReference thisRef = getThisObject(suspendContext, event);
           if (thisRef != null && thisRef.referenceType().name().equals(myClassName) && data != null) {
-            thisRef.disableCollection();
+            DebuggerUtilsEx.disableCollection(thisRef);
             myTrackedObjects.add(thisRef);
             data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
           }

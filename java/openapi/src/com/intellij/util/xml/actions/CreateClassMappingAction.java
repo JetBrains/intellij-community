@@ -76,14 +76,11 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
                                      final PsiFile file,
                                      final Project project,
                                      PsiClass selectedClass) {
-    final Map<String,String> map = new HashMap<>();
+    final Map<String, String> map = new HashMap<>();
     map.put("CLASS_NAME", selectedClass.getQualifiedName());
-    new WriteCommandAction.Simple(project, file) {
-      @Override
-      protected void run() throws Throwable {
-        DomTemplateRunner.getInstance(project).runTemplate(createElement(context), myTemplate, editor, map);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      DomTemplateRunner.getInstance(project).runTemplate(createElement(context), myTemplate, editor, map);
+    });
     return null;
   }
 

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.GlobalOptions;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Eugene Zhuravlev
@@ -48,7 +49,7 @@ public class LogSetup {
       String text = FileUtil.loadFile(configFile);
       final String logFile = logDir != null? new File(logDir, LOG_FILE_NAME).getAbsolutePath() : LOG_FILE_NAME;
       text = StringUtil.replace(text, LOG_FILE_MACRO, StringUtil.replace(logFile, "\\", "\\\\"));
-      PropertyConfigurator.configure(new ByteArrayInputStream(text.getBytes("UTF-8")));
+      PropertyConfigurator.configure(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
     }
     catch (IOException e) {
       //noinspection UseOfSystemOutOrSystemErr
@@ -63,20 +64,11 @@ public class LogSetup {
   private static void ensureLogConfigExists(final File logConfig) throws IOException {
     if (!logConfig.exists()) {
       FileUtil.createIfDoesntExist(logConfig);
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      final InputStream in = LogSetup.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
-      if (in != null) {
-        try {
-          final FileOutputStream out = new FileOutputStream(logConfig);
-          try {
+      try(InputStream in = LogSetup.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG)) {
+        if (in != null) {
+          try (FileOutputStream out = new FileOutputStream(logConfig)) {
             FileUtil.copy(in, out);
           }
-          finally {
-            out.close();
-          }
-        }
-        finally {
-          in.close();
         }
       }
     }

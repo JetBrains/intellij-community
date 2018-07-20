@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -202,5 +204,45 @@ public class BoolUtils {
       return false;
     }
     return PsiKeyword.FALSE.equals(expression.getText());
+  }
+
+  /**
+   * Checks whether two supplied boolean expressions are opposite to each other (e.g. "a == null" and "a != null")
+   *
+   * @param expression1 first expression
+   * @param expression2 second expression
+   * @return true if it's determined that the expressions are opposite to each other.
+   */
+  @Contract(value = "null, _ -> false; _, null -> false", pure = true)
+  public static boolean areExpressionsOpposite(@Nullable PsiExpression expression1, @Nullable PsiExpression expression2) {
+    expression1 = PsiUtil.skipParenthesizedExprDown(expression1);
+    expression2 = PsiUtil.skipParenthesizedExprDown(expression2);
+    if (expression1 == null || expression2 == null) return false;
+    EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+    if (isNegation(expression1)) {
+      return equivalence.expressionsAreEquivalent(getNegated(expression1), expression2);
+    }
+    if (isNegation(expression2)) {
+      return equivalence.expressionsAreEquivalent(getNegated(expression2), expression1);
+    }
+    if (expression1 instanceof PsiBinaryExpression && expression2 instanceof PsiBinaryExpression) {
+      PsiBinaryExpression binOp1 = (PsiBinaryExpression)expression1;
+      PsiBinaryExpression binOp2 = (PsiBinaryExpression)expression2;
+      DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(binOp1.getOperationTokenType());
+      DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(binOp2.getOperationTokenType());
+      if (rel1 == null || rel2 == null) return false;
+      PsiType type = binOp1.getLOperand().getType();
+      // a > b and a <= b are not strictly opposite due to NaN semantics
+      if (type == null || type.equals(PsiType.FLOAT) || type.equals(PsiType.DOUBLE)) return false;
+      if (rel1 == rel2.getNegated()) {
+        return equivalence.expressionsAreEquivalent(binOp1.getLOperand(), binOp2.getLOperand()) &&
+               equivalence.expressionsAreEquivalent(binOp1.getROperand(), binOp2.getROperand());
+      }
+      if (rel1.getFlipped() == rel2.getNegated()) {
+        return equivalence.expressionsAreEquivalent(binOp1.getLOperand(), binOp2.getROperand()) &&
+               equivalence.expressionsAreEquivalent(binOp1.getROperand(), binOp2.getLOperand());
+      }
+    }
+    return false;
   }
 }

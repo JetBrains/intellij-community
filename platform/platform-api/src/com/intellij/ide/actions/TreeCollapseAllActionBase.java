@@ -42,6 +42,7 @@ public abstract class TreeCollapseAllActionBase extends AnAction implements Dumb
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     TreeExpander expander = getExpander(event.getDataContext());
+    presentation.setVisible(expander == null || expander.isVisible(event));
     presentation.setEnabled(expander != null && expander.canCollapse());
   }
 }

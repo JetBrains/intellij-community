@@ -21,7 +21,7 @@ import kotlin.reflect.jvm.javaGetter
 
 inline fun <reified T : Any> logger(): Logger = Logger.getInstance(T::class.java)
 
-fun logger(category: String) = Logger.getInstance(category)
+fun logger(category: String): Logger = Logger.getInstance(category)
 
 /**
  * Get logger instance to be used in Kotlin package methods. Usage:
@@ -34,7 +34,7 @@ fun logger(category: String) = Logger.getInstance(category)
  * ```
  * Notice explicit type declaration which can't be skipped in this case.
  */
-fun logger(field: KProperty<Logger>) = Logger.getInstance(field.javaGetter!!.declaringClass)
+fun logger(field: KProperty<Logger>): Logger = Logger.getInstance(field.javaGetter!!.declaringClass)
 
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   if (isDebugEnabled) {

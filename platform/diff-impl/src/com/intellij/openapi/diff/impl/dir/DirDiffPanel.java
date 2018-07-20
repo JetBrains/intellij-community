@@ -124,6 +124,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer();
     myTable.setExpandableItemsEnabled(false);
+    myTable.getTableHeader().setReorderingAllowed(false);
+    myTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
     myTable.setDefaultRenderer(Object.class, renderer);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     final Project project = myModel.getProject();
@@ -154,7 +156,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     if (model.isOperationsEnabled()) {
-      new AnAction("Change diff operation") {
+      new DumbAwareAction("Change diff operation") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           changeOperationForSelection();
@@ -199,21 +201,27 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     final TableColumnModel columnModel = myTable.getColumnModel();
-    final TableColumn operationColumn = columnModel.getColumn((columnModel.getColumnCount() - 1) / 2);
-    operationColumn.setMaxWidth(JBUI.scale(25));
-    operationColumn.setMinWidth(JBUI.scale(25));
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
       final String name = myModel.getColumnName(i);
       final TableColumn column = columnModel.getColumn(i);
       if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
-        column.setMaxWidth(JBUI.scale(90));
+        column.setPreferredWidth(JBUI.scale(90));
         column.setMinWidth(JBUI.scale(90));
       }
       else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
-        column.setMaxWidth(JBUI.scale(120));
+        column.setPreferredWidth(JBUI.scale(120));
+        column.setMinWidth(JBUI.scale(90));
+      }
+      else if (DirDiffTableModel.COLUMN_NAME.equals(name)) {
+        column.setPreferredWidth(JBUI.scale(800));
         column.setMinWidth(JBUI.scale(120));
       }
+      else if (DirDiffTableModel.COLUMN_OPERATION.equals(name)) {
+        column.setMaxWidth(JBUI.scale(25));
+        column.setMinWidth(JBUI.scale(25));
+      }
     }
+
     final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
@@ -462,6 +470,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private void createUIComponents() {
+    myTable = new MyJBTable();
+
     mySourceDirField = new TextFieldWithBrowseButton(null, this);
     myTargetDirField = new TextFieldWithBrowseButton(null, this);
 
@@ -517,6 +527,45 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (navigatable2 != null) navigatables.add(navigatable2);
     }
     return toObjectArray(navigatables, Navigatable.class);
+  }
+
+  private static class MyJBTable extends JBTable {
+    @Override
+    public void doLayout() {
+      super.doLayout();
+
+      int totalWidth1 = 0;
+      int totalWidth2 = 0;
+      for (int i = 0; i < (columnModel.getColumnCount() - 1) / 2; i++) {
+        TableColumn column1 = columnModel.getColumn(i);
+        TableColumn column2 = columnModel.getColumn(columnModel.getColumnCount() - i - 1);
+        int delta = (column2.getWidth() - column1.getWidth()) / 2;
+        if (Math.abs(delta) > 0) {
+          column1.setWidth(column1.getWidth() + delta);
+          column2.setWidth(column2.getWidth() - delta);
+        }
+
+        totalWidth1 += column1.getWidth();
+        totalWidth2 += column2.getWidth();
+      }
+
+
+      TableColumn column1 = columnModel.getColumn(0);
+      TableColumn column2 = columnModel.getColumn(columnModel.getColumnCount() - 1);
+
+      int delta = (totalWidth2 - totalWidth1) / 2;
+      if (Math.abs(delta) > 0) {
+        column1.setWidth(column1.getWidth() + delta);
+        column2.setWidth(column2.getWidth() - delta);
+        totalWidth1 += delta;
+        totalWidth2 -= delta;
+      }
+
+      if (totalWidth1 != totalWidth2 && totalWidth1 % 2 != 0) {
+        column1.setWidth(column1.getWidth() - 1);
+        column2.setWidth(column2.getWidth() + 1);
+      }
+    }
   }
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {

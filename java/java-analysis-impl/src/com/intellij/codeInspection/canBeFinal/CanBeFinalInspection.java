@@ -155,7 +155,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
                                                 @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor problemsProcessor) {
-    for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
+    for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints(manager)) {
       problemsProcessor.ignoreElement(entryPoint);
     }
 

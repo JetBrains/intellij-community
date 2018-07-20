@@ -99,6 +99,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   /**
    * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
+  @Deprecated
   public synchronized void addSubtreeToUpdate(@NotNull DefaultMutableTreeNode rootNode) {
     addSubtreeToUpdate(new TreeUpdatePass(rootNode).setUpdateStamp(-1));
   }
@@ -106,14 +107,16 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   /**
    * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
-  public synchronized void requeue(@NotNull TreeUpdatePass toAdd) {
+  @Deprecated
+  synchronized void requeue(@NotNull TreeUpdatePass toAdd) {
     addSubtreeToUpdate(toAdd.setUpdateStamp(-1));
   }
 
   /**
    * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
-  public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
+  @Deprecated
+  synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
     if (myReleaseRequested) return;
 
     assert !toAdd.isExpired();
@@ -233,14 +236,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateQueue.queue(update);
   }
 
-  /**
-   * @param node
-   * @deprecated use addSubtreeToUpdate instead
-   */
-  protected void updateSubtree(DefaultMutableTreeNode node) {
-    myTreeBuilder.updateSubtree(node);
-  }
-
   public synchronized void performUpdate() {
     if (myRunBeforeUpdate != null) {
       myRunBeforeUpdate.run();
@@ -310,19 +305,14 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   /**
    * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
+  @Deprecated
   public boolean addSubtreeToUpdateByElement(Object element) {
-    return addSubtreeToUpdateByElement(element, false);
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.ide.util.treeView.AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
-   */
-  public boolean addSubtreeToUpdateByElement(Object element, boolean forceResort) {
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
     if (node != null) {
-      myTreeBuilder.queueUpdateFrom(element, forceResort);
+      myTreeBuilder.queueUpdateFrom(element, false);
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }

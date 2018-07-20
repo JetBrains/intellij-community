@@ -20,6 +20,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.jetbrains.extensions.getQName
+import com.jetbrains.extensions.python.toPsi
 import com.jetbrains.extenstions.ContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.resolveToElement
@@ -36,9 +37,19 @@ import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
+
+/**
+ * Python module is file or package with init.py.
+ * Only source based packages are supported.
+ * [PySymbolFieldWithBrowseButton] use this function to get list of root names
+ */
+fun isPythonModule(element: PsiElement): Boolean = element is PyFile || (element as? PsiDirectory)?.let {
+  it.findFile(PyNames.INIT_DOT_PY) != null
+} ?: false
+
 /**
  * Text field to enter python symbols and browse button (from [PyGotoSymbolContributor]).
- * Supports auto-completion for symbol fully qualified names inside of textbox (except first symbol).
+ * Supports auto-completion for symbol fully qualified names inside of textbox
  * @param filter lambda to filter symbols
  * @param startFromDirectory symbols resolved against module, but may additionally be resolved against this folder if provided like in [QNameResolveContext.folderToStart]
  *
@@ -46,7 +57,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
                                     filter: ((PsiElement) -> Boolean)? = null,
                                     startFromDirectory: (() -> VirtualFile)? = null) : TextAccessor, ComponentWithBrowseButton<TextFieldWithCompletion>(
-  TextFieldWithCompletion(contextAnchor.project, PyNameCompletionProvider(contextAnchor, filter, startFromDirectory), "", true, true, true), null) {
+  TextFieldWithCompletion(contextAnchor.project, PyNameCompletionProvider(contextAnchor, filter, startFromDirectory), "", true, true, true),
+  null) {
   init {
     addActionListener {
       val dialog = PySymbolChooserDialog(contextAnchor.project, contextAnchor.scope, filter)
@@ -65,7 +77,7 @@ class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
     childComponent.setText(text)
   }
 
-  override fun getText() = childComponent.text
+  override fun getText(): String = childComponent.text
 }
 
 private fun PyType.getVariants(element: PsiElement): Array<LookupElement> =
@@ -76,39 +88,54 @@ private class PyNameCompletionProvider(private val contextAnchor: ContextAnchor,
                                        private val startFromDirectory: (() -> VirtualFile)? = null) : TextFieldCompletionProvider() {
   override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
 
-    val evalContext = TypeEvalContext.userInitiated(contextAnchor.project, null)
-    var name = QualifiedName.fromDottedString(text)
-    val resolveContext = QNameResolveContext(contextAnchor, evalContext = evalContext, allowInaccurateResult = false,
-                                             folderToStart = startFromDirectory?.invoke())
-    var element = name.resolveToElement(resolveContext, stopOnFirstFail = true)
-
-    if (element == null && name.componentCount > 1) {
-      name = name.removeLastComponent()
-      element = name.resolveToElement(resolveContext, stopOnFirstFail = true)
+    val lookups: Array<LookupElement>
+    var name: QualifiedName? = null
+    if ('.' !in text) {
+      lookups = contextAnchor.getRoots()
+        .map { rootFolder -> rootFolder.children.map { it.toPsi(contextAnchor.project) } }
+        .flatten()
+        .filterNotNull()
+        .filter { isPythonModule(it) }
+        .map { LookupElementBuilder.create(it, it.virtualFile.nameWithoutExtension) }
+        .distinctBy { it.lookupString }
+        .toTypedArray()
     }
-    if (element == null) {
-      return
-    }
+    else {
 
-    val lookups: Array<LookupElement> = when (element) {
-      is PyFile -> PyModuleType(element).getVariants(element)
-      is PsiDirectory -> {
-        val init = PyUtil.turnDirIntoInit(element) as? PyFile ?: return
-        PyModuleType(init).getVariants(element) +
-        element.children.filterIsInstance(PsiFileSystemItem::class.java)
-          // For package we need all symbols in initpy and all filesystem children of this folder except initpy itself
-          .filterNot { it.name == PyNames.INIT_DOT_PY }
-          .map { LookupElementBuilder.create(it, it.virtualFile.nameWithoutExtension) }
+      val evalContext = TypeEvalContext.userInitiated(contextAnchor.project, null)
+      name = QualifiedName.fromDottedString(text)
+      val resolveContext = QNameResolveContext(contextAnchor, evalContext = evalContext, allowInaccurateResult = false,
+                                               folderToStart = startFromDirectory?.invoke())
+      var element = name.resolveToElement(resolveContext, stopOnFirstFail = true)
+
+      if (element == null && name.componentCount > 1) {
+        name = name.removeLastComponent()
+        element = name.resolveToElement(resolveContext, stopOnFirstFail = true)
       }
-      is PyTypedElement -> {
-        evalContext.getType(element)?.getVariants(element) ?: return
+      if (element == null) {
+        return
       }
-      else -> return
+
+      lookups = when (element) {
+        is PyFile -> PyModuleType(element).getVariants(element)
+        is PsiDirectory -> {
+          val init = PyUtil.turnDirIntoInit(element) as? PyFile ?: return
+          PyModuleType(init).getVariants(element) +
+          element.children.filterIsInstance(PsiFileSystemItem::class.java)
+            // For package we need all symbols in initpy and all filesystem children of this folder except initpy itself
+            .filterNot { it.name == PyNames.INIT_DOT_PY }
+            .map { LookupElementBuilder.create(it, it.virtualFile.nameWithoutExtension) }
+        }
+        is PyTypedElement -> {
+          evalContext.getType(element)?.getVariants(element) ?: return
+        }
+        else -> return
+      }
     }
     result.addAllElements(lookups
                             .filter { it.psiElement != null }
                             .filter { filter?.invoke(it.psiElement!!) ?: true }
-                            .map { LookupElementBuilder.create("$name.${it.lookupString}") })
+                            .map { if (name != null) LookupElementBuilder.create("$name.${it.lookupString}") else it })
   }
 }
 

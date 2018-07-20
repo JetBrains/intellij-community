@@ -68,6 +68,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   /**
    * @deprecated use {@link LookupElementBuilder}
    */
+  @Deprecated
   public LookupItem(T o, @NotNull @NonNls String lookupString) {
     setObject(o);
     setLookupString(lookupString);
@@ -76,6 +77,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   /**
    * @deprecated use {@link LookupElementBuilder}
    */
+  @Deprecated
   public static LookupItem fromString(String s) {
     return new LookupItem<>(s, s);
   }

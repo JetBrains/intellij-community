@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -208,6 +209,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
+    TouchBarsManager.registerEditor(editor);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editors after create: " + myEditors.size());
@@ -232,6 +234,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
         }
       }
     }
+    TouchBarsManager.releaseEditor(editor);
   }
 
   @Override

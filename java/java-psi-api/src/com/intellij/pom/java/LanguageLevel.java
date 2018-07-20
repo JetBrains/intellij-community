@@ -21,28 +21,32 @@ import org.jetbrains.annotations.Nullable;
  * @see JavaSdkVersion
  */
 public enum LanguageLevel {
-  JDK_1_3(JavaCoreBundle.message("jdk.1.3.language.level.description")),
-  JDK_1_4(JavaCoreBundle.message("jdk.1.4.language.level.description")),
-  JDK_1_5(JavaCoreBundle.message("jdk.1.5.language.level.description")),
-  JDK_1_6(JavaCoreBundle.message("jdk.1.6.language.level.description")),
-  JDK_1_7(JavaCoreBundle.message("jdk.1.7.language.level.description")),
-  JDK_1_8(JavaCoreBundle.message("jdk.1.8.language.level.description")),
-  JDK_1_9(JavaCoreBundle.message("jdk.1.9.language.level.description")),
-  JDK_10(JavaCoreBundle.message("jdk.10.language.level.description")),
-  JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"));
+  JDK_1_3(JavaCoreBundle.message("jdk.1.3.language.level.description"), 3),
+  JDK_1_4(JavaCoreBundle.message("jdk.1.4.language.level.description"), 4),
+  JDK_1_5(JavaCoreBundle.message("jdk.1.5.language.level.description"), 5),
+  JDK_1_6(JavaCoreBundle.message("jdk.1.6.language.level.description"), 6),
+  JDK_1_7(JavaCoreBundle.message("jdk.1.7.language.level.description"), 7),
+  JDK_1_8(JavaCoreBundle.message("jdk.1.8.language.level.description"), 8),
+  JDK_1_9(JavaCoreBundle.message("jdk.1.9.language.level.description"), 9),
+  JDK_10(JavaCoreBundle.message("jdk.10.language.level.description"), 10),
+  JDK_11(JavaCoreBundle.message("jdk.11.language.level.description"), 11),
+  JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"), 12);
 
-  public static final LanguageLevel HIGHEST = JDK_1_9;
+  public static final LanguageLevel HIGHEST = JDK_10;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final String myPresentableText;
+  private final JavaVersion myVersion;
+  private final boolean myPreview;
 
-  LanguageLevel(@Nls String presentableText) {
+  LanguageLevel(@Nls String presentableText, int major) {
     myPresentableText = presentableText;
+    myVersion = JavaVersion.compose(major);
+    myPreview = name().endsWith("_PREVIEW");
   }
 
-  /** @deprecated use {@link JavaSdkVersion#getDescription()} (to be removed in IDEA 2019) */
-  public String getName() {
-    return this == JDK_X ? "Java X" :  "Java " + JavaSdkVersion.fromLanguageLevel(this).getDescription();
+  public boolean isPreview() {
+    return myPreview;
   }
 
   @NotNull
@@ -61,13 +65,13 @@ public enum LanguageLevel {
 
   @NotNull
   public JavaVersion toJavaVersion() {
-    return JavaVersion.compose(ordinal() + 3);
+    return myVersion;
   }
 
-  /** @deprecated use {@code org.jetbrains.jps.model.java.JpsJavaSdkType.complianceOption()} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link org.jetbrains.jps.model.java.JpsJavaSdkType#complianceOption()} (to be removed in IDEA 2019) */
+  @Deprecated
   public String getCompilerComplianceDefaultOption() {
-    int major = toJavaVersion().feature;
-    return major <= 8 ? "1." + major : String.valueOf(major);
+    return myVersion.feature <= 8 ? "1." + myVersion.feature : String.valueOf(myVersion.feature);
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */

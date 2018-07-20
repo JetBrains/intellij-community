@@ -19,6 +19,10 @@ import com.google.common.base.MoreObjects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated {@link org.jetbrains.plugins.github.authentication.GithubAuthenticationManager}
+ */
+@Deprecated
 public class AuthLevel {
   public static final AuthLevel ANY = new AuthLevel(null, null);
   public static final AuthLevel TOKEN = new AuthLevel(null, GithubAuthData.AuthType.TOKEN);

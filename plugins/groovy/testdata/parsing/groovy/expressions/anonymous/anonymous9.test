@@ -1,0 +1,28 @@
+(new Foo()
+{
+}) + 444
+-----
+Groovy script
+  Additive expression
+    Parenthesized expression
+      PsiElement(()('(')
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Anonymous class
+          Reference element
+            PsiElement(identifier)('Foo')
+          Arguments
+            PsiElement(()('(')
+            PsiElement())(')')
+          PsiWhiteSpace('\n')
+          Type definition body
+            PsiElement({)('{')
+            PsiWhiteSpace('\n')
+            PsiElement(})('}')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(+)('+')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('444')

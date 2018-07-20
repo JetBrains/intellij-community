@@ -14,9 +14,8 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.python.pydev" />
-    <orderEntry type="library" exported="" name="XmlRPC" level="project" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
-    <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />

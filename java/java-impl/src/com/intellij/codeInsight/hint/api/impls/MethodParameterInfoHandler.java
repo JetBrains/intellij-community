@@ -16,11 +16,11 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -57,7 +57,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
   private static final Set<Class> ourStopSearch = Collections.singleton(PsiMethod.class);
-  private static final String WHITESPACE = " \t";
+  private static final String WHITESPACE_OR_LINE_BREAKS = " \t\n";
   private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
 
@@ -172,6 +172,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                   document != null && psiDocumentManager.isCommitted(document) &&
                   isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
                 JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
+                ParameterHintsPass.syncUpdate(parent, context.getEditor()); // make sure the statement above takes effect
                 highlightHints(context.getEditor(), null, -1, context.getCustomContext());
               }
               else {
@@ -249,10 +250,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {
+    int limit = JavaMethodCallElement.getCompletionHintsLimit();
     int originalNumberOfParameters = method.getParameterList().getParametersCount();
-    return PsiImplUtil.isVarArgs(method) 
-           ? originalNumberOfParameters > 2 && numberOfParameters < originalNumberOfParameters - 1 
-           : originalNumberOfParameters != numberOfParameters && !(originalNumberOfParameters == 1 && numberOfParameters == 0);
+    return Registry.is("editor.completion.hints.virtual.comma")
+           ? !PsiImplUtil.isVarArgs(method) && numberOfParameters > originalNumberOfParameters
+           : PsiImplUtil.isVarArgs(method)
+             ? originalNumberOfParameters > 2 &&
+               numberOfParameters < Math.min(limit, originalNumberOfParameters) - 1 && !(limit == 1 && numberOfParameters == 0)
+             : (originalNumberOfParameters < numberOfParameters || numberOfParameters < Math.min(limit, originalNumberOfParameters)) &&
+               !(Math.min(limit, originalNumberOfParameters) == 1 && numberOfParameters == 0);
   }
 
   @Override
@@ -354,7 +360,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
 
-    context.setHighlightedParameter(args.length == 0 && chosenInfo != null ? chosenInfo : ObjectUtils.coalesce(completeMatch, chosenInfo));
+    context.setHighlightedParameter((Registry.is("editor.completion.hints.virtual.comma") || args.length == 0) && chosenInfo != null
+                                    ? chosenInfo : ObjectUtils.coalesce(completeMatch, chosenInfo));
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
@@ -397,7 +404,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           if (prevDelimiter != null && nextDelimiter != null) {
             CharSequence text = editor.getDocument().getImmutableCharSequence();
             int firstRangeStartOffset = prevDelimiter.getTextRange().getEndOffset();
-            int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE);
+            int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE_OR_LINE_BREAKS);
             for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(firstRangeStartOffset, firstRangeEndOffset)) {
               if (presentationManager.isParameterHint(inlay)) {
                 highlightedHints.add(inlay);
@@ -406,7 +413,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             }
             int secondRangeEndOffset = nextDelimiter.getTextRange().getStartOffset();
             if (secondRangeEndOffset > firstRangeEndOffset) {
-              int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE) + 1;
+              int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE_OR_LINE_BREAKS) + 1;
               for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(secondRangeStartOffset, secondRangeEndOffset)) {
                 if (presentationManager.isParameterHint(inlay)) {
                   highlightedHints.add(inlay);
@@ -773,8 +780,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.setUIComponentEnabled(false);
         return;
       }
+      PsiElement parameterOwner = context.getParameterOwner();
+      PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(context.getParameterOwner(), info, false), context);
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(parameterOwner, info, call != null && call.resolveMethod() == method), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);
@@ -784,5 +793,39 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @Override
   public boolean supportsOverloadSwitching() {
     return CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+  }
+
+  @Override
+  public void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {
+    if (!Registry.is("editor.completion.hints.virtual.comma")) return;
+
+    Editor editor = context.getEditor();
+    Caret caret = editor.getCaretModel().getCurrentCaret();
+    int caretOffset = caret.getOffset();
+    List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(caretOffset, caretOffset);
+    if (inlays.isEmpty()) return;
+
+    VisualPosition caretPosition = caret.getVisualPosition();
+    ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
+    int inlaysBeforeCaretWithComma = ContainerUtil.count(inlays, inlay -> pm.isParameterHint(inlay) &&
+                                                                          StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
+                                                                          caretPosition.after(inlay.getVisualPosition()));
+    if (inlaysBeforeCaretWithComma == 0) return;
+
+    Project project = context.getProject();
+    String textToInsert = StringUtil.repeat(", ", inlaysBeforeCaretWithComma);
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      editor.getDocument().insertString(caretOffset, textToInsert);
+      caret.moveToOffset(caretOffset + textToInsert.length());
+    });
+
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    PsiElement exprList = context.getParameterOwner();
+    if (!(exprList instanceof PsiExpressionList) || !exprList.isValid()) return;
+    PsiElement call = exprList.getParent();
+    if (call == null || !call.isValid()) return;
+    ParameterHintsPass.syncUpdate(call, editor);
+    int index = ParameterInfoUtils.getCurrentParameterIndex(exprList.getNode(), editor.getCaretModel().getOffset(), JavaTokenType.COMMA);
+    highlightHints(editor, (PsiExpressionList)exprList, index, context.getCustomContext());
   }
 }

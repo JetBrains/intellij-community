@@ -82,7 +82,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (node == null) return;
 
       myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
-      myDetails.setText(node.getConfigurable().getBannerSlogan());
+      NamedConfigurable configurable = node.getConfigurable();
+      if (configurable != null) {
+        myDetails.setText(configurable.getBannerSlogan());
+      }
       node.reloadNode((DefaultTreeModel)myTree.getModel());
       fireItemsChangedExternally();
     }
@@ -656,15 +659,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myInitializedConfigurables.add(configurable);
   }
 
-  /**
-   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class)} instead
-   */
-  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
-    for (MyNode rootNode : rootNodes) {
-      checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);
-    }
-  }
-
   protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,
                                                        Class<? extends NamedConfigurable> configurableClass) throws ConfigurationException {
     checkForEmptyAndDuplicatedNames(myRoot, prefix, title, configurableClass, true);
@@ -926,11 +920,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final DataContext dataContext = e.getDataContext();
-      final ListPopupStep step = popupFactory.createActionsStep(myActionGroup, dataContext, false, false,
-                                                                myActionGroup.getTemplatePresentation().getText(), myTree, true,
-                                                                myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
+      JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+      DataContext dataContext = e.getDataContext();
+      ListPopupStep step = popupFactory.createActionsStep(
+        myActionGroup, dataContext, ActionPlaces.UNKNOWN, false,
+        false, myActionGroup.getTemplatePresentation().getText(), myTree,
+        true, myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);
       listPopup.setHandleAutoSelectionBeforeShow(true);
       if (e instanceof AnActionButton.AnActionEventWrapper) {

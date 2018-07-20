@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -34,6 +33,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
@@ -63,6 +63,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     }
   };
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -89,7 +90,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
-  @NotNull private final VcsLogIndex myIndex;
+  @NotNull private final VcsLogModifiableIndex myIndex;
 
   @NotNull private final Object myLock = new Object();
   @NotNull private State myState = State.CREATED;
@@ -106,8 +107,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogProgress progress = new VcsLogProgress(project, this);
 
-    VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
-    if (invalidator.isValid()) {
+    if (VcsLogCachesInvalidator.getInstance().isValid()) {
       myStorage = createStorage();
       if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
         myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
@@ -130,7 +130,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     }
 
     myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
-    myMiniDetailsGetter = new MiniDetailsGetter(myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
+    myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
     myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, myIndex, this);
 
     myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
@@ -198,6 +198,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           @Override
           public void onThrowable(@NotNull Throwable error) {
             synchronized (myLock) {
+              LOG.error(error);
               if (myState.equals(State.INITIALIZED)) {
                 myState = State.CREATED;
                 myInitialization = null;
@@ -215,7 +216,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           }
         };
         CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
-        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator();
+        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator(DATA_PACK_REFRESH);
         Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
       }
@@ -386,6 +387,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public VcsLogIndex getIndex() {
+    return getModifiableIndex();
+  }
+
+  @NotNull
+  VcsLogModifiableIndex getModifiableIndex() {
     return myIndex;
   }
 

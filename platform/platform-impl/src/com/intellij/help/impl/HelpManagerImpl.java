@@ -21,7 +21,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -32,6 +31,7 @@ import com.intellij.openapi.help.WebHelpProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +52,6 @@ public class HelpManagerImpl extends HelpManager {
 
   public void invokeHelp(@Nullable String id) {
     id = StringUtil.notNullize(id, "top");
-    
-    UsageTrigger.trigger("ide.help." + id);
 
     for (WebHelpProvider provider : WEB_HELP_PROVIDER_EP_NAME.getExtensions()) {
       if (id.startsWith(provider.getHelpTopicPrefix())) {
@@ -84,7 +82,7 @@ public class HelpManagerImpl extends HelpManager {
 
       String url = info.getWebHelpUrl();
       if (!url.endsWith("/")) url += "/";
-      url += productVersion + "/?" + id;
+      url += productVersion + "/?" + URLUtil.encodeURIComponent(id);
 
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
       return;

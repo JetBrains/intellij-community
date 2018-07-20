@@ -7,7 +7,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -441,9 +440,10 @@ public abstract class XDebuggerEditorBase implements Expandable {
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK))))
       .setCancelCallback(() -> {
+        setExpression(expressionEditor.getExpression());
+        requestFocusInEditor();
         Editor baseEditor = getEditor();
         if (baseEditor != null) {
-          WriteAction.run(() -> baseEditor.getDocument().setText(expressionEditor.getExpression().getExpression()));
           foldNewLines((EditorEx)baseEditor);
           Editor newEditor = expressionEditor.getEditor();
           if (newEditor != null) {

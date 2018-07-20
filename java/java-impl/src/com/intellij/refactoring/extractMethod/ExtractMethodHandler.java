@@ -35,7 +35,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -57,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ExtractMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
@@ -147,7 +147,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
+  public static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
     getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
       @Override
       public void pass(ExtractMethodProcessor processor) {
@@ -162,7 +162,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     processor.setPreviewSupported(true);
     if (processor.showDialog(directTypes)) {
       if (processor.isPreviewDuplicates()) {
-        return previewExtractMethod(processor);
+        previewExtractMethod(processor);
+        return true;
       }
       extractMethod(project, processor);
       DuplicatesImpl.processDuplicates(processor, project, editor);
@@ -171,16 +172,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return false;
   }
 
-  private static boolean previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
+  private static void previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
     processor.previewRefactoring();
-    boolean showToolWindow = Registry.is("extract.method.duplicates.tool.window");
-    if (showToolWindow) {
-      ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
-    }
-    else {
-      new ExtractDuplicatesProcessor(processor).run();
-    }
-    return true;
+    ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
   }
 
   public static void extractMethod(@NotNull final Project project, final ExtractMethodProcessor processor) {
@@ -235,8 +229,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       }
     }
 
+    String initialMethodName = Optional.ofNullable(ExtractMethodSnapshot.SNAPSHOT_KEY.get(file)).map(s -> s.myMethodName).orElse("");
     final ExtractMethodProcessor processor =
-      new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, "", HelpID.EXTRACT_METHOD);
+      new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, initialMethodName, HelpID.EXTRACT_METHOD);
     processor.setShowErrorDialogs(showErrorMessages);
     try {
       if (!processor.prepare(pass)) return null;

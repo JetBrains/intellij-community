@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +37,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
@@ -95,17 +95,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     if (!isValid()) {
       return DebuggerBundle.message("status.breakpoint.invalid");
     }
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buffer.append(getClassPattern());
-      buffer.append(".");
-      buffer.append(getMethodName());
-      buffer.append("()");
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    return getClassPattern() + "." + getMethodName() + "()";
   }
 
   public Icon getIcon() {
@@ -129,13 +119,18 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
       return;
     }
     if (isEmulated()) {
+      VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+      if (!virtualMachineProxy.canGetBytecodes() || !virtualMachineProxy.canGetConstantPool()) {
+        disableEmulation();
+        return;
+      }
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 
       Pattern pattern = PatternUtil.fromMask(getClassPattern());
-      debugProcess.getVirtualMachineProxy().allClasses().stream()
-        .filter(c -> pattern.matcher(c.name()).matches())
-        .filter(ReferenceType::isPrepared)
-        .forEach(aList -> processClassPrepare(debugProcess, aList));
+      virtualMachineProxy.allClasses().stream()
+                  .filter(c -> pattern.matcher(c.name()).matches())
+                  .filter(ReferenceType::isPrepared)
+                  .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
     else {
       try {

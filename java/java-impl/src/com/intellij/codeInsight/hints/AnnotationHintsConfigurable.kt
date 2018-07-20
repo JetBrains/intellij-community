@@ -23,6 +23,6 @@ class AnnotationHintsConfigurable : BeanConfigurable<CodeInsightSettings>(CodeIn
 
   override fun apply() {
     super.apply()
-    AnnotationHintsPassFactory.forceHintsUpdateOnNextPass()
+    AnnotationHintsPassFactory.modificationStampHolder.forceHintsUpdateOnNextPass()
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -280,8 +280,8 @@ public abstract class AbstractExternalFilter {
   }
 
   private static boolean skipBlockList(String read) {
-    return StringUtil.toUpperCase(read).contains(HR) || 
-           StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") || 
+    return StringUtil.toUpperCase(read).contains(HR) ||
+           StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") ||
            StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }
 
@@ -361,14 +361,14 @@ public abstract class AbstractExternalFilter {
         else {
           URL parsedUrl = BrowserUtil.getURL(url);
           if (parsedUrl != null) {
+            // gzip is disabled because in any case compressed JAR is downloaded
             HttpRequests.request(parsedUrl.toString()).gzip(false).connect(new HttpRequests.RequestProcessor<Void>() {
               @Override
               public Void process(@NotNull HttpRequests.Request request) throws IOException {
                 byte[] bytes = request.readBytes(null);
                 String contentEncoding = null;
                 ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                try {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
                   for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
                     contentEncoding = parseContentEncoding(htmlLine);
                     if (contentEncoding != null) {
@@ -377,7 +377,6 @@ public abstract class AbstractExternalFilter {
                   }
                 }
                 finally {
-                  reader.close();
                   stream.reset();
                 }
 

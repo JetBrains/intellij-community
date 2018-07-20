@@ -14,4 +14,20 @@ class ParameterizedTestsDemo {
   @ParameterizedTest
   @ValueSource(strings = {"1"})
   void testStrToPrimitive(int i) { }
+  
+  @ParameterizedTest
+  @ValueSource(strings = "title")
+  void testConstructor(Book book) { }
+
+  static  class Book {
+    public Book(String title) {}
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = "title")
+  void testFactoryMethod(BookWithFactory book) { }
+
+  static  class BookWithFactory {
+    public static BookWithFactory create(String title) { return null;}
+  }
 }

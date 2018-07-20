@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -85,7 +86,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   @Override
   public void chunkBuildStarted(CompileContext context, ModuleChunk chunk) {
     try {
-      resolveMissingDependencies(context, chunk.getModules());
+      resolveMissingDependencies(context, chunk.getModules(), BuildTargetChunk.forModulesChunk(chunk));
     }
     catch (Exception e) {
       context.putUserData(RESOLVE_ERROR_KEY, e);
@@ -128,7 +129,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return ExitCode.ABORT;
   }
 
-  static void resolveMissingDependencies(CompileContext context, Collection<JpsModule> modules) throws Exception {
+  static void resolveMissingDependencies(CompileContext context, Collection<JpsModule> modules,
+                                         BuildTargetChunk currentTargets) throws Exception {
     Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(modules);
     if (!libs.isEmpty()) {
       final ArtifactRepositoryManager repoManager = getRepositoryManager(context);
@@ -144,10 +146,11 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
               }
             }
             if (!required.isEmpty()) {
-              context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library..."));
+              context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library...", currentTargets));
               LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
               final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
-                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies());
+                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies(),
+                                                                              descriptor.getExcludedDependencies());
               if (!resolved.isEmpty()) {
                 syncPaths(required, resolved);
               }

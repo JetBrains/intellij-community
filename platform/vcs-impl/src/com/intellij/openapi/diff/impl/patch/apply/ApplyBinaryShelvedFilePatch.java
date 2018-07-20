@@ -22,6 +22,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -43,7 +45,10 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinar
       fileToPatch.delete(this);
     }
     else {
-      fileToPatch.setBinaryContent(FileUtil.loadFileBytes(new File(shelvedBinaryFile.SHELVED_PATH)));
+      File fromFile = new File(shelvedBinaryFile.SHELVED_PATH);
+      File toFile = VfsUtilCore.virtualToIoFile(fileToPatch);
+      FileUtil.copyContent(fromFile, toFile);
+      VfsUtil.markDirty(false, false, fileToPatch);
     }
     return SUCCESS;
   }

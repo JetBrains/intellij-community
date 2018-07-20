@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -18,6 +17,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 class UndoRedoStacksHolder {
+  private static final Logger LOG = Logger.getInstance(UndoRedoStacksHolder.class);
+
   private final Key<LinkedList<UndoableGroup>> STACK_IN_DOCUMENT_KEY = Key.create("STACK_IN_DOCUMENT_KEY");
 
   private final boolean myUndo;
@@ -131,8 +132,16 @@ class UndoRedoStacksHolder {
     return result;
   }
 
+  private String getStacksDescription() {
+    return myUndo ? "undo stacks" : "redo stacks";
+  }
+
   void addToStacks(@NotNull UndoableGroup group) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Adding to " + getStacksDescription() + ": " + group.dumpState());
+    }
     for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
+      if (myUndo && !group.isTemporary()) convertTemporaryActionsToPermanent(each);
       doAddToStack(each, group, each == myGlobalStack ? UndoManagerImpl.getGlobalUndoLimit() : UndoManagerImpl.getDocumentUndoLimit());
     }
   }
@@ -147,6 +156,9 @@ class UndoRedoStacksHolder {
   }
 
   void removeFromStacks(@NotNull UndoableGroup group) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Removing from " + getStacksDescription() + ": " + group.dumpState());
+    }
     for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
       assert each.getLast() == group;
       each.removeLast();
@@ -167,13 +179,14 @@ class UndoRedoStacksHolder {
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
   }
 
-  void convertTemporaryActionsToPermanent(boolean global, @NotNull Set<DocumentReference> affectedRefs) {
-    for (LinkedList<UndoableGroup> stack : getAffectedStacks(global, affectedRefs)) {
-      for (int i = stack.size() - 1; i >= 0; i--) {
-        UndoableGroup group = stack.get(i);
-        if (!group.isTemporary()) break;
-        group.makePermanent();
+  private static void convertTemporaryActionsToPermanent(LinkedList<UndoableGroup> each) {
+    for (int i = each.size() - 1; i >= 0; i--) {
+      UndoableGroup group1 = each.get(i);
+      if (!group1.isTemporary()) break;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Converting to permanent: " + group1);
       }
+      group1.makePermanent();
     }
   }
 
@@ -190,6 +203,9 @@ class UndoRedoStacksHolder {
   }
 
   private void clearStacksFrom(@NotNull UndoableGroup from) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Clearing " + getStacksDescription() + " from " + from.dumpState());
+    }
     for (LinkedList<UndoableGroup> each : getAffectedStacks(from)) {
       int pos = each.indexOf(from);
       if (pos == -1) continue;
@@ -260,6 +276,9 @@ class UndoRedoStacksHolder {
   }
 
   void invalidateActionsFor(@NotNull DocumentReference ref) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Invalidating actions in " + getStacksDescription() + " for " + ref);
+    }
     for (List<UndoableGroup> eachStack : getAffectedStacks(true, Collections.singleton(ref))) {
       for (UndoableGroup eachGroup : eachStack) {
         eachGroup.invalidateActionsFor(ref);

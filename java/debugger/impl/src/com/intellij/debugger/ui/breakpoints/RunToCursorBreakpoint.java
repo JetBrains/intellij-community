@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -39,6 +37,11 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint {
   @Override
   public int getLineIndex() {
     return myCustomPosition.getLine();
+  }
+
+  @Override
+  protected String getFileName() {
+    return myCustomPosition.getFile().getName();
   }
 
   public boolean isRestoreBreakpoints() {

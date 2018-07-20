@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -34,10 +32,10 @@ public class RefusedBequestInspectionBase extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods;
 
-  @SuppressWarnings("PublicField") final ExternalizableStringSet annotations =
+  @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations =
     new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
 
-  @SuppressWarnings("PublicField") boolean onlyReportWhenAnnotated = true;
+  @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
 
   @Override
   @NotNull
@@ -46,35 +44,16 @@ public class RefusedBequestInspectionBase extends BaseInspection {
   }
 
   @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
-    if (onlyReportWhenAnnotated) {
-      node.addContent(new Element("option").setAttribute("name", "onlyReportWhenAnnotated").
-        setAttribute("value", String.valueOf(onlyReportWhenAnnotated)));
-    }
-    if (!annotations.hasDefaultValues()) {
-      final Element element = new Element("option").setAttribute("name", "annotations");
-      final Element valueElement = new Element("value");
-      annotations.writeExternal(valueElement);
-      node.addContent(element.addContent(valueElement));
-    }
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "onlyReportWhenAnnotated", "annotations");
+    writeBooleanOption(node, "onlyReportWhenAnnotated", false);
+    annotations.writeSettings(node, "annotations");
   }
 
   @Override
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
-    super.readSettings(node);
+  public void readSettings(@NotNull Element node) {
     onlyReportWhenAnnotated = false;
-    for (Element option : node.getChildren("option")) {
-      if ("onlyReportWhenAnnotated".equals(option.getAttributeValue("name"))) {
-        onlyReportWhenAnnotated = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
-      else if ("annotations".equals(option.getAttributeValue("name"))) {
-        final Element value = option.getChild("value");
-        if (value != null) {
-          annotations.readExternal(value);
-        }
-      }
-    }
+    super.readSettings(node);
   }
 
   @Override

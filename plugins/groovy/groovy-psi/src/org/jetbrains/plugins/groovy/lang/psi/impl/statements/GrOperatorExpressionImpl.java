@@ -17,6 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionTypeCalculators;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorResolver;
 
+import java.util.Collection;
+
 abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implements GrOperatorExpression {
 
   protected GrOperatorExpressionImpl(@NotNull ASTNode node) {
@@ -25,8 +27,8 @@ abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implemen
 
   @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, GrOperatorResolver.INSTANCE);
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrOperatorResolver.INSTANCE);
   }
 
   @Nullable
@@ -43,11 +45,13 @@ abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implemen
     return getOperationToken().getNode().getElementType();
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement token = getOperationToken();

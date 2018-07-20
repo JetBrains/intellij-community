@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -49,7 +50,7 @@ public class IOUtil {
     return new String(bytes, 0, length*2, CharsetToolkit.UTF_16BE_CHARSET);
   }
 
-  public static void writeString(String s, @NotNull DataOutput stream) throws IOException {
+  public static void writeString(@Nullable String s, @NotNull DataOutput stream) throws IOException {
     if (s == null) {
       stream.writeInt(-1);
       return;
@@ -192,7 +193,7 @@ public class IOUtil {
     return ok;
   }
 
-  public static void syncStream(OutputStream stream) throws IOException {
+  public static void syncStream(@NotNull OutputStream stream) throws IOException {
     stream.flush();
 
     try {
@@ -218,7 +219,7 @@ public class IOUtil {
     }
   }
 
-  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, final File file) throws IOException {
+  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, @NotNull final File file) throws IOException {
     return openCleanOrResetBroken(factoryComputable, new Runnable() {
       @Override
       public void run() {
@@ -227,7 +228,7 @@ public class IOUtil {
     });
   }
 
-  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, Runnable cleanupCallback) throws IOException {
+  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, @NotNull Runnable cleanupCallback) throws IOException {
     for(int i = 0; i < 2; ++i) {
       try {
         return factoryComputable.compute();
@@ -240,14 +241,15 @@ public class IOUtil {
     return null;
   }
 
-  public static void writeStringList(final DataOutput out, final Collection<String> list) throws IOException {
+  public static void writeStringList(@NotNull DataOutput out, @NotNull Collection<String> list) throws IOException {
     DataInputOutputUtil.writeINT(out, list.size());
     for (final String s : list) {
       writeUTF(out, s);
     }
   }
 
-  public static List<String> readStringList(final DataInput in) throws IOException {
+  @NotNull
+  public static List<String> readStringList(@NotNull DataInput in) throws IOException {
     final int size = DataInputOutputUtil.readINT(in);
     final ArrayList<String> strings = new ArrayList<String>(size);
     for (int i = 0; i < size; i++) {

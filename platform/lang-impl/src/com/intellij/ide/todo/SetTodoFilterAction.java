@@ -47,7 +47,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
   @Override
   public void actionPerformed(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    JComponent button = (JComponent)presentation.getClientProperty("button");
+    JComponent button = presentation.getClientProperty(COMPONENT_KEY);
     DefaultActionGroup group = createPopupActionGroup(myProject, myToDoSettings, myTodoFilterConsumer);
     ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TODO_VIEW_TOOLBAR,
                                                                                   group);
@@ -56,14 +56,12 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    ActionButton button = new ActionButton(
+    return new ActionButton(
       this,
       presentation,
       ActionPlaces.TODO_VIEW_TOOLBAR,
       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
     );
-    presentation.putClientProperty("button", button);
-    return button;
   }
 
   public static DefaultActionGroup createPopupActionGroup(final Project project,

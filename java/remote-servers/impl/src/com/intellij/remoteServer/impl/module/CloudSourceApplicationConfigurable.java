@@ -134,7 +134,7 @@ public abstract class CloudSourceApplicationConfigurable<
     JComboBox existingComboBox = getExistingComboBox();
     existingComboBox.removeAllItems();
     for (Deployment deployment : deployments) {
-      existingComboBox.addItem(deployment.getName());
+      existingComboBox.addItem(deployment.getPresentableName());
     }
   }
 

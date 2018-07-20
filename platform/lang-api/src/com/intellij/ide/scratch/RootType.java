@@ -99,6 +99,7 @@ public abstract class RootType {
 
   @Nullable
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.isDirectory()) return null;
     Language language = substituteLanguage(project, file);
     FileType fileType = LanguageUtil.getLanguageFileType(language);
     if (fileType == null) {

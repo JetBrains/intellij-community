@@ -16,11 +16,14 @@
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.debugger.memory.event.InstancesTrackerListener;
-import com.intellij.debugger.memory.tracking.TrackingType;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
+import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -30,10 +33,16 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -109,7 +118,7 @@ class InstancesWithStackFrameView {
       DebuggerManager.getInstance(project).getDebugProcess(debugSession.getDebugProcess().getProcessHandler())
         .getUserData(MemoryViewDebugProcessData.KEY);
     tree.addTreeSelectionListener(e -> {
-      ObjectReference ref = tree.getSelectedReference();
+      ObjectReference ref = getSelectedReference(tree);
       if (ref != null && data != null) {
         List<StackFrameItem> stack = data.getTrackedStacks().getStack(ref);
         if (stack != null) {
@@ -127,6 +136,27 @@ class InstancesWithStackFrameView {
 
       list.setFrameItems(Collections.emptyList());
     });
+  }
+  @Nullable
+  private static ObjectReference getSelectedReference(InstancesTree tree) {
+    TreePath selectionPath = tree.getSelectionPath();
+    Object selectedItem = selectionPath != null ? selectionPath.getLastPathComponent() : null;
+    if (selectedItem instanceof XValueNodeImpl) {
+      XValueNodeImpl xValueNode = (XValueNodeImpl)selectedItem;
+      XValue valueContainer = xValueNode.getValueContainer();
+
+      if (valueContainer instanceof NodeDescriptorProvider) {
+        NodeDescriptor descriptor = ((NodeDescriptorProvider)valueContainer).getDescriptor();
+
+        if (descriptor instanceof ValueDescriptor) {
+          Value value = ((ValueDescriptor)descriptor).getValue();
+
+          if (value instanceof ObjectReference) return (ObjectReference)value;
+        }
+      }
+    }
+
+    return null;
   }
 
   JComponent getComponent() {

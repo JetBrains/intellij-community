@@ -7,17 +7,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
-import com.jetbrains.python.packaging.requirement.PyRequirementVersion;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static com.jetbrains.python.packaging.PyPackageUtil.fix;
+import static com.jetbrains.python.packaging.PyRequirementParser.fromLine;
+import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirement;
+import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirementVersionSpec;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 /**
  * @author vlan
@@ -1901,50 +1904,37 @@ public class PyRequirementTest extends PyTestCase {
   public void testMinusInRequirementEggName() {
     final String line = "git://github.com/toastdriven/django-haystack.git#egg=django-haystack";
 
-    assertEquals(new PyRequirement("django-haystack", Collections.emptyList(), Collections.singletonList(line)),
-                 PyRequirement.fromLine(line));
+    assertEquals(new PyRequirementImpl("django-haystack", emptyList(), singletonList(line), ""), fromLine(line));
   }
 
   public void testDevInRequirementEggName() {
     doTest("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git#egg=django_haystack-dev");
-    doTest("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev");
+    doTest("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git#egg=django_haystack-dev");
   }
 
   // PY-26844
   public void testExtrasInRequirementEggName() {
     final String line1 = "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect]";
-    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line1), "[openidconnect]"),
-                 PyRequirement.fromLine(line1));
+    assertEquals(new PyRequirementImpl("social-auth-core", emptyList(), singletonList(line1), "[openidconnect]"), fromLine(line1));
 
     final String line2 = "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect,security]";
-    assertEquals(
-      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line2), "[openidconnect,security]"),
-      PyRequirement.fromLine(line2)
-    );
+    assertEquals(new PyRequirementImpl("social-auth-core", emptyList(), singletonList(line2), "[openidconnect,security]"), fromLine(line2));
 
     final String line3 =
       "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect]&subdirectory=clients/python";
-    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line3), "[openidconnect]"),
-                 PyRequirement.fromLine(line3));
+    assertEquals(new PyRequirementImpl("social-auth-core", emptyList(), singletonList(line3), "[openidconnect]"), fromLine(line3));
 
     final String line4 =
       "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect,security]&subdirectory=clients/python";
-    assertEquals(
-      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line4), "[openidconnect,security]"),
-      PyRequirement.fromLine(line4)
-    );
+    assertEquals(new PyRequirementImpl("social-auth-core", emptyList(), singletonList(line4), "[openidconnect,security]"), fromLine(line4));
 
     final String line5 =
       "git://github.com/python-social-auth/social-core.git#subdirectory=clients/python&egg=social-auth-core[openidconnect]";
-    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line5), "[openidconnect]"),
-                 PyRequirement.fromLine(line5));
+    assertEquals(new PyRequirementImpl("social-auth-core", emptyList(), singletonList(line5), "[openidconnect]"), fromLine(line5));
 
     final String line6 =
       "git://github.com/python-social-auth/social-core.git#subdirectory=clients/python&egg=social-auth-core[openidconnect,security]";
-    assertEquals(
-      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line6), "[openidconnect,security]"),
-      PyRequirement.fromLine(line6)
-    );
+    assertEquals(new PyRequirementImpl("social-auth-core", emptyList(), singletonList(line6), "[openidconnect,security]"), fromLine(line6));
   }
 
   // LOCAL DIR
@@ -1958,29 +1948,28 @@ public class PyRequirementTest extends PyTestCase {
   // TODO: hashes
   // https://www.python.org/dev/peps/pep-0508/#names
   public void testRequirement() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics"), PyRequirement.fromLine("Orange-Bioinformatics"));
-    assertEquals(new PyRequirement("MOCPy"), PyRequirement.fromLine("MOCPy"));
-    assertEquals(new PyRequirement("score.webassets"), PyRequirement.fromLine("score.webassets"));
-    assertEquals(new PyRequirement("pip_helpers"), PyRequirement.fromLine("pip_helpers"));
-    assertEquals(new PyRequirement("Django"), PyRequirement.fromLine("Django"));
-    assertEquals(new PyRequirement("django"), PyRequirement.fromLine("django"));
-    assertEquals(new PyRequirement("pinax-utils"), PyRequirement.fromLine("pinax-utils"));
-    assertEquals(new PyRequirement("no_limit_nester"), PyRequirement.fromLine("no_limit_nester"));
-    assertEquals(new PyRequirement("Flask-Celery-py3"), PyRequirement.fromLine("Flask-Celery-py3"));
+    assertEquals(pyRequirement("Orange-Bioinformatics"), fromLine("Orange-Bioinformatics"));
+    assertEquals(pyRequirement("MOCPy"), fromLine("MOCPy"));
+    assertEquals(pyRequirement("score.webassets"), fromLine("score.webassets"));
+    assertEquals(pyRequirement("pip_helpers"), fromLine("pip_helpers"));
+    assertEquals(pyRequirement("Django"), fromLine("Django"));
+    assertEquals(pyRequirement("django"), fromLine("django"));
+    assertEquals(pyRequirement("pinax-utils"), fromLine("pinax-utils"));
+    assertEquals(pyRequirement("no_limit_nester"), fromLine("no_limit_nester"));
+    assertEquals(pyRequirement("Flask-Celery-py3"), fromLine("Flask-Celery-py3"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/
   public void testRequirementVersion() {
-    assertEquals(new PyRequirement("Orange-Bioinformatics", "2.5a20"), PyRequirement.fromLine("Orange-Bioinformatics==2.5a20"));
-    assertEquals(new PyRequirement("MOCPy", "0.1.0.dev0"), PyRequirement.fromLine("MOCPy==0.1.0.dev0"));
-    assertEquals(new PyRequirement("score.webassets", "0.2.3"), PyRequirement.fromLine("score.webassets==0.2.3"));
-    assertEquals(new PyRequirement("pip_helpers", "0.5.post6"), PyRequirement.fromLine("pip_helpers==0.5.post6"));
-    assertEquals(new PyRequirement("Django", "1.9rc1"), PyRequirement.fromLine("Django==1.9rc1"));
-    assertEquals(new PyRequirement("django", "1!1"), PyRequirement.fromLine("django==1!1"));
-    assertEquals(new PyRequirement("pinax-utils", "1.0b1.dev3"), PyRequirement.fromLine("pinax-utils==1.0b1.dev3"));
-    assertEquals(new PyRequirement("Flask-Celery-py3", "0.1.*"), PyRequirement.fromLine("Flask-Celery-py3==0.1.*"));
-    assertEquals(new PyRequirement("no_limit_nester", "1.0+local.version.10"),
-                 PyRequirement.fromLine("no_limit_nester==1.0+local.version.10"));
+    assertEquals(pyRequirement("Orange-Bioinformatics", EQ, "2.5a20"), fromLine("Orange-Bioinformatics==2.5a20"));
+    assertEquals(pyRequirement("MOCPy", EQ, "0.1.0.dev0"), fromLine("MOCPy==0.1.0.dev0"));
+    assertEquals(pyRequirement("score.webassets", EQ, "0.2.3"), fromLine("score.webassets==0.2.3"));
+    assertEquals(pyRequirement("pip_helpers", EQ, "0.5.post6"), fromLine("pip_helpers==0.5.post6"));
+    assertEquals(pyRequirement("Django", EQ, "1.9rc1"), fromLine("Django==1.9rc1"));
+    assertEquals(pyRequirement("django", EQ, "1!1"), fromLine("django==1!1"));
+    assertEquals(pyRequirement("pinax-utils", EQ, "1.0b1.dev3"), fromLine("pinax-utils==1.0b1.dev3"));
+    assertEquals(pyRequirement("Flask-Celery-py3", EQ, "0.1.*"), fromLine("Flask-Celery-py3==0.1.*"));
+    assertEquals(pyRequirement("no_limit_nester", EQ, "1.0+local.version.10"), fromLine("no_limit_nester==1.0+local.version.10"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
@@ -2116,7 +2105,7 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-20223
   public void testRequirementVersionWithBigInteger() {
-    assertEquals(new PyRequirement("pkg-name", "3.4.201607251407"), PyRequirement.fromLine("pkg-name==3.4.201607251407"));
+    assertEquals(pyRequirement("pkg-name", EQ, "3.4.201607251407"), fromLine("pkg-name==3.4.201607251407"));
   }
 
   // PY-11835
@@ -2124,55 +2113,44 @@ public class PyRequirementTest extends PyTestCase {
     final String name = "django_compressor";
     final String version = "dev";
     final String line = name + "==" + version;
-    final List<PyRequirementVersionSpec> versionSpecs = Collections.singletonList(new PyRequirementVersionSpec(version));
+    final List<PyRequirementVersionSpec> versionSpecs = singletonList(pyRequirementVersionSpec(STR_EQ, version));
 
-    assertEquals(new PyRequirement(name, versionSpecs, Collections.singletonList(line)), PyRequirement.fromLine(line));
+    assertEquals(new PyRequirementImpl(name, versionSpecs, singletonList(line), ""), fromLine(line));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#version-specifiers
   public void testRequirementRelation() {
-    doRequirementRelationTest(PyRequirementRelation.LT, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(PyRequirementRelation.LTE, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(PyRequirementRelation.NE, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(PyRequirementRelation.EQ, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(PyRequirementRelation.GT, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(PyRequirementRelation.GTE, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(PyRequirementRelation.COMPATIBLE, PyRequirementVersion.release("1.*"));
-    doRequirementRelationTest(PyRequirementRelation.STR_EQ, PyRequirementVersion.release("version"));
+    doRequirementRelationTest(LT, release("1.4"));
+    doRequirementRelationTest(LTE, release("1.4"));
+    doRequirementRelationTest(NE, release("1.4"));
+    doRequirementRelationTest(EQ, release("1.4"));
+    doRequirementRelationTest(GT, release("1.4"));
+    doRequirementRelationTest(GTE, release("1.4"));
+    doRequirementRelationTest(COMPATIBLE, release("1.*"));
 
-    doRequirementRelationTest(Arrays.asList(PyRequirementRelation.GTE, PyRequirementRelation.EQ),
-                              Arrays.asList(PyRequirementVersion.release("2.8.1"), PyRequirementVersion.release("2.8.*")));
-    doRequirementRelationTest(Arrays.asList(PyRequirementRelation.LT, PyRequirementRelation.GTE),
-                              Arrays.asList(PyRequirementVersion.release("1.4"), PyRequirementVersion.release("1.3.1")));
+    assertEquals(pyRequirement("name", STR_EQ, "version"), fromLine("name===version"));
 
-    doRequirementRelationTest(Arrays.asList(PyRequirementRelation.LT,
-                                            PyRequirementRelation.GT,
-                                            PyRequirementRelation.NE,
-                                            PyRequirementRelation.LT,
-                                            PyRequirementRelation.EQ),
-                              Arrays.asList(PyRequirementVersion.release("1.6"),
-                                            PyRequirementVersion.release("1.9"),
-                                            PyRequirementVersion.release("1.9.6"),
-                                            new PyRequirementVersion(null, "2.0", "a0", null, null, null),
-                                            new PyRequirementVersion(null, "2.4", "rc1", null, null, null)));
+    doRequirementRelationTest(Arrays.asList(GTE, EQ), Arrays.asList(release("2.8.1"), release("2.8.*")));
+    doRequirementRelationTest(Arrays.asList(LT, GTE), Arrays.asList(release("1.4"), release("1.3.1")));
+
+    doRequirementRelationTest(Arrays.asList(LT, GT, NE, LT, EQ),
+                              Arrays.asList(release("1.6"),
+                                            release("1.9"),
+                                            release("1.9.6"),
+                                            new PyPackageVersion(null, "2.0", "a0", null, null, null),
+                                            new PyPackageVersion(null, "2.4", "rc1", null, null, null)));
 
     // PY-14583
-    doRequirementRelationTest(Arrays.asList(PyRequirementRelation.GTE,
-                                            PyRequirementRelation.LTE,
-                                            PyRequirementRelation.GTE,
-                                            PyRequirementRelation.LTE),
-                              Arrays.asList(PyRequirementVersion.release("0.8.4"),
-                                            PyRequirementVersion.release("0.8.99"),
-                                            PyRequirementVersion.release("0.9.7"),
-                                            PyRequirementVersion.release("0.9.99")));
+    doRequirementRelationTest(Arrays.asList(GTE, LTE, GTE, LTE),
+                              Arrays.asList(release("0.8.4"), release("0.8.99"), release("0.9.7"), release("0.9.99")));
   }
 
   // https://www.python.org/dev/peps/pep-0508/#extras
   // PY-15674
   public void testRequirementExtras() {
     final String name = "MyProject1";
-    final List<PyRequirementRelation> relations = Collections.emptyList();
-    final List<PyRequirementVersion> versions = Collections.emptyList();
+    final List<PyRequirementRelation> relations = emptyList();
+    final List<PyPackageVersion> versions = emptyList();
 
     doRequirementRelationTest(name, "[PDF]", relations, versions);
     doRequirementRelationTest(name, " [extra1, extra2]", relations, versions);
@@ -2191,49 +2169,42 @@ public class PyRequirementTest extends PyTestCase {
     final String extras3 = " [security,tests]";
     final String name3 = "requests";
 
-    doRequirementRelationTest(name1, extras1, PyRequirementRelation.LT, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(name2, extras2, PyRequirementRelation.LTE, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(name3, extras3, PyRequirementRelation.NE, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(name1, extras1, PyRequirementRelation.EQ, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(name2, extras2, PyRequirementRelation.GT, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(name3, extras3, PyRequirementRelation.GTE, PyRequirementVersion.release("1.4"));
-    doRequirementRelationTest(name1, extras1, PyRequirementRelation.COMPATIBLE, PyRequirementVersion.release("1.*"));
-    doRequirementRelationTest(name2, extras2, PyRequirementRelation.STR_EQ, PyRequirementVersion.release("version"));
+    doRequirementRelationTest(name1, extras1, LT, release("1.4"));
+    doRequirementRelationTest(name2, extras2, LTE, release("1.4"));
+    doRequirementRelationTest(name3, extras3, NE, release("1.4"));
+    doRequirementRelationTest(name1, extras1, EQ, release("1.4"));
+    doRequirementRelationTest(name2, extras2, GT, release("1.4"));
+    doRequirementRelationTest(name3, extras3, GTE, release("1.4"));
+    doRequirementRelationTest(name1, extras1, COMPATIBLE, release("1.*"));
 
-    doRequirementRelationTest(name3,
-                              extras3,
-                              Arrays.asList(PyRequirementRelation.GTE, PyRequirementRelation.EQ),
-                              Arrays.asList(PyRequirementVersion.release("2.8.1"), PyRequirementVersion.release("2.8.*")));
+    final String line1 = name2 + extras2 + STR_EQ.getPresentableText() + "version";
+    assertEquals(
+      new PyRequirementImpl(
+        name2,
+        singletonList(pyRequirementVersionSpec(STR_EQ, "version")),
+        singletonList(line1),
+        StringUtil.trimLeading(extras2)
+      ),
+      fromLine(line1)
+    );
 
-    doRequirementRelationTest(name1,
-                              extras1,
-                              Arrays.asList(PyRequirementRelation.LT, PyRequirementRelation.GTE),
-                              Arrays.asList(PyRequirementVersion.release("1.4"), PyRequirementVersion.release("1.3.1")));
+    doRequirementRelationTest(name3, extras3, Arrays.asList(GTE, EQ), Arrays.asList(release("2.8.1"), release("2.8.*")));
+    doRequirementRelationTest(name1, extras1, Arrays.asList(LT, GTE), Arrays.asList(release("1.4"), release("1.3.1")));
 
     doRequirementRelationTest(name2,
                               extras2,
-                              Arrays.asList(PyRequirementRelation.LT,
-                                            PyRequirementRelation.GT,
-                                            PyRequirementRelation.NE,
-                                            PyRequirementRelation.LT,
-                                            PyRequirementRelation.EQ),
-                              Arrays.asList(PyRequirementVersion.release("1.6"),
-                                            PyRequirementVersion.release("1.9"),
-                                            PyRequirementVersion.release("1.9.6"),
-                                            new PyRequirementVersion(null, "2.0", "a0", null, null, null),
-                                            new PyRequirementVersion(null, "2.4", "rc1", null, null, null)));
+                              Arrays.asList(LT, GT, NE, LT, EQ),
+                              Arrays.asList(release("1.6"),
+                                            release("1.9"),
+                                            release("1.9.6"),
+                                            new PyPackageVersion(null, "2.0", "a0", null, null, null),
+                                            new PyPackageVersion(null, "2.4", "rc1", null, null, null)));
 
     // PY-14583
     doRequirementRelationTest(name3,
                               extras3,
-                              Arrays.asList(PyRequirementRelation.GTE,
-                                            PyRequirementRelation.LTE,
-                                            PyRequirementRelation.GTE,
-                                            PyRequirementRelation.LTE),
-                              Arrays.asList(PyRequirementVersion.release("0.8.4"),
-                                            PyRequirementVersion.release("0.8.99"),
-                                            PyRequirementVersion.release("0.9.7"),
-                                            PyRequirementVersion.release("0.9.99")));
+                              Arrays.asList(GTE, LTE, GTE, LTE),
+                              Arrays.asList(release("0.8.4"), release("0.8.99"), release("0.9.7"), release("0.9.99")));
   }
 
   // https://pip.pypa.io/en/stable/reference/pip_install/#per-requirement-overrides
@@ -2242,8 +2213,7 @@ public class PyRequirementTest extends PyTestCase {
     final String version = "1.2";
     final String linePrefix = name + " >= " + version;
 
-    final List<PyRequirementVersionSpec> versionSpecs =
-      Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.GTE, PyRequirementVersion.release(version)));
+    final List<PyRequirementVersionSpec> versionSpecs = singletonList(pyRequirementVersionSpec(GTE, release(version)));
 
     final List<String> installOptions1 = Arrays.asList(linePrefix,
                                                        "--global-option", "--no-user-cfg",
@@ -2253,11 +2223,11 @@ public class PyRequirementTest extends PyTestCase {
                          "--global-option=\"--no-user-cfg\" " +
                          "--install-option=\"--prefix='/usr/local'\" " +
                          "--install-option=\"--no-compile\"";
-    assertEquals(new PyRequirement(name, versionSpecs, installOptions1), PyRequirement.fromLine(line1));
+    assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions1, ""), fromLine(line1));
 
     final List<String> installOptions2 = Arrays.asList(linePrefix, "--install-option", "--install-scripts=/usr/local/bin");
     final String line2 = linePrefix + " --install-option=\"--install-scripts=/usr/local/bin\"";
-    assertEquals(new PyRequirement(name, versionSpecs, installOptions2), PyRequirement.fromLine(line2));
+    assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions2, ""), fromLine(line2));
   }
 
   public void testMultilineRequirement() {
@@ -2265,8 +2235,7 @@ public class PyRequirementTest extends PyTestCase {
     final String version = "1.2";
     final String textPrefix = name + " >= " + version;
 
-    final List<PyRequirementVersionSpec> versionSpecs =
-      Collections.singletonList(new PyRequirementVersionSpec(PyRequirementRelation.GTE, PyRequirementVersion.release(version)));
+    final List<PyRequirementVersionSpec> versionSpecs = singletonList(pyRequirementVersionSpec(GTE, release(version)));
 
     final String text = textPrefix + " " +
                         "--global-option=\"--no-user-cfg\" \\\n" +
@@ -2278,133 +2247,133 @@ public class PyRequirementTest extends PyTestCase {
                                                       "--install-option", "--prefix='/usr/local'",
                                                       "--install-option", "--no-compile");
 
-    assertEquals(Collections.singletonList(new PyRequirement(name, versionSpecs, installOptions)), PyRequirement.fromText(text));
+    assertEquals(singletonList(new PyRequirementImpl(name, versionSpecs, installOptions, "")), PyRequirementParser.fromText(text));
   }
 
   // PY-6355
   public void testTrailingZeroesInVersion() {
-    final PyRequirement req = fix(PyRequirement.fromLine("foo==0.8.0"));
-    final PyPackage pkg = new PyPackage("foo", "0.8", null, Collections.emptyList());
+    final PyRequirement req = fromLine("foo==0.8.0");
+    final PyPackage pkg = new PyPackage("foo", "0.8", null, emptyList());
     assertNotNull(req);
-    assertEquals(pkg, req.match(Collections.singletonList(pkg)));
+    assertEquals(pkg, req.match(singletonList(pkg)));
   }
 
   // PY-6438
   public void testUnderscoreMatchesDash() {
-    final PyRequirement req = fix(PyRequirement.fromLine("pyramid_zcml"));
-    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, Collections.emptyList());
+    final PyRequirement req = fromLine("pyramid_zcml");
+    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, emptyList());
     assertNotNull(req);
-    assertEquals(pkg, req.match(Collections.singletonList(pkg)));
+    assertEquals(pkg, req.match(singletonList(pkg)));
   }
 
   // PY-20242
   public void testVersionInterpretedAsString() {
-    final PyRequirement req = fix(PyRequirement.fromLine("foo===version"));
-    final PyPackage pkg = new PyPackage("foo", "version", null, Collections.emptyList());
+    final PyRequirement req = fromLine("foo===version");
+    final PyPackage pkg = new PyPackage("foo", "version", null, emptyList());
     assertNotNull(req);
-    assertEquals(pkg, req.match(Collections.singletonList(pkg)));
+    assertEquals(pkg, req.match(singletonList(pkg)));
   }
 
   // PY-20880
   public void testMatchingLocalVersions() {
-    final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100", null, Collections.emptyList());
-    final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101", null, Collections.emptyList());
+    final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100", null, emptyList());
+    final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101", null, emptyList());
 
-    final PyRequirement requirement = fix(PyRequirement.fromLine("foo==1.0"));
-    assertEquals(firstPackageWithLocalVersion, requirement.match(Collections.singletonList(firstPackageWithLocalVersion)));
-    assertEquals(secondPackageWithLocalVersion, requirement.match(Collections.singletonList(secondPackageWithLocalVersion)));
+    final PyRequirement requirement = fromLine("foo==1.0");
+    assertEquals(firstPackageWithLocalVersion, requirement.match(singletonList(firstPackageWithLocalVersion)));
+    assertEquals(secondPackageWithLocalVersion, requirement.match(singletonList(secondPackageWithLocalVersion)));
 
-    final PyRequirement requirementWithLocalVersion = fix(PyRequirement.fromLine("foo==1.0+foo0100"));
-    assertEquals(firstPackageWithLocalVersion, requirementWithLocalVersion.match(Collections.singletonList(firstPackageWithLocalVersion)));
-    assertNull(requirementWithLocalVersion.match(Collections.singletonList(secondPackageWithLocalVersion)));
+    final PyRequirement requirementWithLocalVersion = fromLine("foo==1.0+foo0100");
+    assertEquals(firstPackageWithLocalVersion, requirementWithLocalVersion.match(singletonList(firstPackageWithLocalVersion)));
+    assertNull(requirementWithLocalVersion.match(singletonList(secondPackageWithLocalVersion)));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#version-matching
   // PY-22275
   public void testMatchingStar() {
-    final PyRequirement requirement = fix(PyRequirement.fromLine("foo==1.1.*"));
-    final PyPackage release = new PyPackage("foo", "1.1.2", null, Collections.emptyList());
-    final PyPackage pre = new PyPackage("foo", "1.1.2a1", null, Collections.emptyList());
-    final PyPackage post = new PyPackage("foo", "1.1.2.post1", null, Collections.emptyList());
-    final PyPackage dev = new PyPackage("foo", "1.1.2.dev1", null, Collections.emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "1.1.2+local.version", null, Collections.emptyList());
+    final PyRequirement requirement = fromLine("foo==1.1.*");
+    final PyPackage release = new PyPackage("foo", "1.1.2", null, emptyList());
+    final PyPackage pre = new PyPackage("foo", "1.1.2a1", null, emptyList());
+    final PyPackage post = new PyPackage("foo", "1.1.2.post1", null, emptyList());
+    final PyPackage dev = new PyPackage("foo", "1.1.2.dev1", null, emptyList());
+    final PyPackage localVersion = new PyPackage("foo", "1.1.2+local.version", null, emptyList());
 
-    assertEquals(release, requirement.match(Collections.singletonList(release)));
-    assertEquals(pre, requirement.match(Collections.singletonList(pre)));
-    assertEquals(post, requirement.match(Collections.singletonList(post)));
-    assertEquals(dev, requirement.match(Collections.singletonList(dev)));
-    assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
+    assertEquals(release, requirement.match(singletonList(release)));
+    assertEquals(pre, requirement.match(singletonList(pre)));
+    assertEquals(post, requirement.match(singletonList(post)));
+    assertEquals(dev, requirement.match(singletonList(dev)));
+    assertEquals(localVersion, requirement.match(singletonList(localVersion)));
 
-    final PyRequirement negativeRequirement = fix(PyRequirement.fromLine("foo!=1.1.*"));
-    final PyPackage negativeRelease = new PyPackage("foo", "1.2.2", null, Collections.emptyList());
-    final PyPackage negativePre = new PyPackage("foo", "1.2.2a1", null, Collections.emptyList());
-    final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1", null, Collections.emptyList());
-    final PyPackage negativeDev = new PyPackage("foo", "1.2.2.dev1", null, Collections.emptyList());
-    final PyPackage negativeLocalVersion = new PyPackage("foo", "1.2.2+local.version", null, Collections.emptyList());
+    final PyRequirement negativeRequirement = fromLine("foo!=1.1.*");
+    final PyPackage negativeRelease = new PyPackage("foo", "1.2.2", null, emptyList());
+    final PyPackage negativePre = new PyPackage("foo", "1.2.2a1", null, emptyList());
+    final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1", null, emptyList());
+    final PyPackage negativeDev = new PyPackage("foo", "1.2.2.dev1", null, emptyList());
+    final PyPackage negativeLocalVersion = new PyPackage("foo", "1.2.2+local.version", null, emptyList());
 
     assertNull(negativeRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
-    assertEquals(negativeRelease, negativeRequirement.match(Collections.singletonList(negativeRelease)));
-    assertEquals(negativePre, negativeRequirement.match(Collections.singletonList(negativePre)));
-    assertEquals(negativePost, negativeRequirement.match(Collections.singletonList(negativePost)));
-    assertEquals(negativeDev, negativeRequirement.match(Collections.singletonList(negativeDev)));
-    assertEquals(negativeLocalVersion, negativeRequirement.match(Collections.singletonList(negativeLocalVersion)));
+    assertEquals(negativeRelease, negativeRequirement.match(singletonList(negativeRelease)));
+    assertEquals(negativePre, negativeRequirement.match(singletonList(negativePre)));
+    assertEquals(negativePost, negativeRequirement.match(singletonList(negativePost)));
+    assertEquals(negativeDev, negativeRequirement.match(singletonList(negativeDev)));
+    assertEquals(negativeLocalVersion, negativeRequirement.match(singletonList(negativeLocalVersion)));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#compatible-release
   // PY-20522
   public void testMatchingCompatible() {
-    final PyRequirement requirement = fix(PyRequirement.fromLine("foo~=2.2"));
-    final PyPackage release = new PyPackage("foo", "2.3", null, Collections.emptyList());
-    final PyPackage pre = new PyPackage("foo", "2.3a1", null, Collections.emptyList());
-    final PyPackage post = new PyPackage("foo", "2.3.post1", null, Collections.emptyList());
-    final PyPackage dev = new PyPackage("foo", "2.3.dev1", null, Collections.emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "2.3+local.version", null, Collections.emptyList());
+    final PyRequirement requirement = fromLine("foo~=2.2");
+    final PyPackage release = new PyPackage("foo", "2.3", null, emptyList());
+    final PyPackage pre = new PyPackage("foo", "2.3a1", null, emptyList());
+    final PyPackage post = new PyPackage("foo", "2.3.post1", null, emptyList());
+    final PyPackage dev = new PyPackage("foo", "2.3.dev1", null, emptyList());
+    final PyPackage localVersion = new PyPackage("foo", "2.3+local.version", null, emptyList());
 
-    assertEquals(release, requirement.match(Collections.singletonList(release)));
-    assertEquals(pre, requirement.match(Collections.singletonList(pre)));
-    assertEquals(post, requirement.match(Collections.singletonList(post)));
-    assertEquals(dev, requirement.match(Collections.singletonList(dev)));
-    assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
+    assertEquals(release, requirement.match(singletonList(release)));
+    assertEquals(pre, requirement.match(singletonList(pre)));
+    assertEquals(post, requirement.match(singletonList(post)));
+    assertEquals(dev, requirement.match(singletonList(dev)));
+    assertEquals(localVersion, requirement.match(singletonList(localVersion)));
 
-    final PyRequirement moreModernRequirement = fix(PyRequirement.fromLine("foo~=2.4"));
+    final PyRequirement moreModernRequirement = fromLine("foo~=2.4");
     assertNull(moreModernRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#compatible-release
   // PY-20522
   public void testMatchingCompatibleWithTrailingZero() {
-    final PyRequirement requirement = fix(PyRequirement.fromLine("foo~=2.20.0"));
-    final PyPackage release = new PyPackage("foo", "2.20.3", null, Collections.emptyList());
-    final PyPackage pre = new PyPackage("foo", "2.20.3a1", null, Collections.emptyList());
-    final PyPackage post = new PyPackage("foo", "2.20.3.post1", null, Collections.emptyList());
-    final PyPackage dev = new PyPackage("foo", "2.20.3.dev1", null, Collections.emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "2.20.3+local.version", null, Collections.emptyList());
+    final PyRequirement requirement = fromLine("foo~=2.20.0");
+    final PyPackage release = new PyPackage("foo", "2.20.3", null, emptyList());
+    final PyPackage pre = new PyPackage("foo", "2.20.3a1", null, emptyList());
+    final PyPackage post = new PyPackage("foo", "2.20.3.post1", null, emptyList());
+    final PyPackage dev = new PyPackage("foo", "2.20.3.dev1", null, emptyList());
+    final PyPackage localVersion = new PyPackage("foo", "2.20.3+local.version", null, emptyList());
 
-    assertEquals(release, requirement.match(Collections.singletonList(release)));
-    assertEquals(pre, requirement.match(Collections.singletonList(pre)));
-    assertEquals(post, requirement.match(Collections.singletonList(post)));
-    assertEquals(dev, requirement.match(Collections.singletonList(dev)));
-    assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
+    assertEquals(release, requirement.match(singletonList(release)));
+    assertEquals(pre, requirement.match(singletonList(pre)));
+    assertEquals(post, requirement.match(singletonList(post)));
+    assertEquals(dev, requirement.match(singletonList(dev)));
+    assertEquals(localVersion, requirement.match(singletonList(localVersion)));
 
-    final PyRequirement moreModernRequirement = fix(PyRequirement.fromLine("foo~=2.21.0"));
+    final PyRequirement moreModernRequirement = fromLine("foo~=2.21.0");
     assertNull(moreModernRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
   }
 
   // PY-27076
   public void testMatchingAsteriskAndCompatibleWithTwoTrailingZeros() {
-    final PyRequirement requirement1 = fix(PyRequirement.fromLine("social-auth-app-django==2.0.*"));
-    final PyRequirement requirement2 = fix(PyRequirement.fromLine("social-auth-app-django~=2.0.0"));
+    final PyRequirement requirement1 = fromLine("social-auth-app-django==2.0.*");
+    final PyRequirement requirement2 = fromLine("social-auth-app-django~=2.0.0");
 
-    final PyPackage pkg = new PyPackage("social-auth-app-django", "2.0.0", null, Collections.emptyList());
+    final PyPackage pkg = new PyPackage("social-auth-app-django", "2.0.0", null, emptyList());
 
-    assertEquals(pkg, requirement1.match(Collections.singletonList(pkg)));
-    assertEquals(pkg, requirement2.match(Collections.singletonList(pkg)));
+    assertEquals(pkg, requirement1.match(singletonList(pkg)));
+    assertEquals(pkg, requirement2.match(singletonList(pkg)));
   }
 
   // OPTIONS
   public void testOptions() {
     assertEmpty(
-      PyRequirement.fromText(
+      PyRequirementParser.fromText(
         "-i URL\n" +
         "--index-url URL\n" +
         "--extra-index-url URL\n" +
@@ -2425,13 +2394,13 @@ public class PyRequirementTest extends PyTestCase {
     final VirtualFile requirementsFile = getVirtualFileByName(getTestDataPath() + "/requirement/recursive/requirements.txt");
     assertNotNull(requirementsFile);
 
-    assertEquals(Arrays.asList(new PyRequirement("bitly_api"), new PyRequirement("numpy"), new PyRequirement("SomeProject")),
-                 PyRequirement.fromFile(requirementsFile));
+    assertEquals(Arrays.asList(pyRequirement("bitly_api"), pyRequirement("numpy"), pyRequirement("SomeProject")),
+                 PyRequirementParser.fromFile(requirementsFile));
   }
 
   // COMMENTS
   public void testComment() {
-    assertNull(PyRequirement.fromLine("# comment"));
+    assertNull(fromLine("# comment"));
   }
 
   public void testCommentAtTheEnd() {
@@ -2463,29 +2432,28 @@ public class PyRequirementTest extends PyTestCase {
     doCommentAtTheEndTest(name + " # comment");
     doCommentAtTheEndTest(name, version, name + "==" + version + " # comment");
 
-    assertEquals(new PyRequirement(name, Collections.emptyList(), Collections.singletonList(name + "[PDF]"), "[PDF]"),
-                 PyRequirement.fromLine(name + "[PDF] # comment"));
+    assertEquals(new PyRequirementImpl(name, emptyList(), singletonList(name + "[PDF]"), "[PDF]"),
+                 fromLine(name + "[PDF] # comment"));
 
-    final PyRequirement requirement = new PyRequirement(name, Collections.emptyList(), Arrays.asList(name, "--install-option", "option"));
+    final PyRequirement requirement = new PyRequirementImpl(name, emptyList(), Arrays.asList(name, "--install-option", "option"), "");
 
-    assertEquals(requirement, PyRequirement.fromLine(name + " --install-option=\"option\" # comment"));
-    assertEquals(Collections.singletonList(requirement),
-                 PyRequirement.fromText(name + " \\\n--install-option=\"option\" # comment"));
+    assertEquals(requirement, fromLine(name + " --install-option=\"option\" # comment"));
+    assertEquals(singletonList(requirement), PyRequirementParser.fromText(name + " \\\n--install-option=\"option\" # comment"));
   }
 
   // ENV MARKERS
   // TODO: https://www.python.org/dev/peps/pep-0426/#environment-markers, https://www.python.org/dev/peps/pep-0508/#environment-markers
 
   private static void doTest(@NotNull String line) {
-    assertEquals(new PyRequirement("MyProject1", Collections.emptyList(), Arrays.asList(line.split("\\s+"))), PyRequirement.fromLine(line));
+    assertEquals(new PyRequirementImpl("MyProject1", emptyList(), Arrays.asList(line.split("\\s+")), ""), fromLine(line));
   }
 
   private static void doTest(@NotNull String name, @NotNull String version, @NotNull String line) {
-    assertEquals(new PyRequirement(name, version, Collections.singletonList(line)), PyRequirement.fromLine(line));
+    final PyRequirementVersionSpec versionSpec = pyRequirementVersionSpec(EQ, version);
+    assertEquals(new PyRequirementImpl(name, singletonList(versionSpec), singletonList(line), ""), fromLine(line));
   }
 
-  private static void doRequirementVersionNormalizationTest(@NotNull String expectedVersion,
-                                                            @NotNull String actualVersion) {
+  private static void doRequirementVersionNormalizationTest(@NotNull String expectedVersion, @NotNull String actualVersion) {
     final String name = "name";
     doTest(name, expectedVersion, name + "==" + actualVersion);
   }
@@ -2498,26 +2466,25 @@ public class PyRequirementTest extends PyTestCase {
     doTest(name, version, line.substring(0, line.lastIndexOf('#') - 1));
   }
 
-  private static void doRequirementRelationTest(@NotNull PyRequirementRelation relation, @NotNull PyRequirementVersion version) {
-    doRequirementRelationTest("Django", null, Collections.singletonList(relation), Collections.singletonList(version));
+  private static void doRequirementRelationTest(@NotNull PyRequirementRelation relation, @NotNull PyPackageVersion version) {
+    doRequirementRelationTest("Django", null, singletonList(relation), singletonList(version));
   }
 
-  private static void doRequirementRelationTest(@NotNull List<PyRequirementRelation> relations,
-                                                @NotNull List<PyRequirementVersion> versions) {
+  private static void doRequirementRelationTest(@NotNull List<PyRequirementRelation> relations, @NotNull List<PyPackageVersion> versions) {
     doRequirementRelationTest("Django", null, relations, versions);
   }
 
   private static void doRequirementRelationTest(@NotNull String name,
                                                 @Nullable String extras,
                                                 @NotNull PyRequirementRelation relation,
-                                                @NotNull PyRequirementVersion version) {
-    doRequirementRelationTest(name, extras, Collections.singletonList(relation), Collections.singletonList(version));
+                                                @NotNull PyPackageVersion version) {
+    doRequirementRelationTest(name, extras, singletonList(relation), singletonList(version));
   }
 
   private static void doRequirementRelationTest(@NotNull String name,
                                                 @Nullable String extras,
                                                 @NotNull List<PyRequirementRelation> relations,
-                                                @NotNull List<PyRequirementVersion> versions) {
+                                                @NotNull List<PyPackageVersion> versions) {
     assertEquals(versions.size(), relations.size());
 
     final StringBuilder sb = new StringBuilder(name);
@@ -2525,23 +2492,28 @@ public class PyRequirementTest extends PyTestCase {
 
     if (extras != null) sb.append(extras);
 
-    for (Pair<PyRequirementRelation, PyRequirementVersion> pair : ContainerUtil.zip(relations, versions)) {
+    for (Pair<PyRequirementRelation, PyPackageVersion> pair : ContainerUtil.zip(relations, versions)) {
       final PyRequirementRelation relation = pair.getFirst();
-      final PyRequirementVersion version = pair.getSecond();
+      final PyPackageVersion version = pair.getSecond();
 
-      expectedVersionSpecs.add(new PyRequirementVersionSpec(relation, version));
+      expectedVersionSpecs.add(pyRequirementVersionSpec(relation, version));
     }
 
-    sb.append(StringUtil.join(expectedVersionSpecs, ","));
+    sb.append(StringUtil.join(expectedVersionSpecs, PyRequirementVersionSpec::getPresentableText, ","));
 
     final String options = sb.toString();
 
     if (extras == null) {
-      assertEquals(new PyRequirement(name, expectedVersionSpecs, Collections.singletonList(options)), PyRequirement.fromLine(options));
+      assertEquals(new PyRequirementImpl(name, expectedVersionSpecs, singletonList(options), ""), fromLine(options));
     }
     else {
-      assertEquals(new PyRequirement(name, expectedVersionSpecs, Collections.singletonList(options), StringUtil.trimLeading(extras)),
-                   PyRequirement.fromLine(options));
+      assertEquals(new PyRequirementImpl(name, expectedVersionSpecs, singletonList(options), StringUtil.trimLeading(extras)),
+                   fromLine(options));
     }
+  }
+
+  @NotNull
+  private static PyPackageVersion release(@NotNull String version) {
+    return new PyPackageVersion(null, version, null, null, null, null);
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.codeInsight.ImportFilter;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +41,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -65,6 +67,15 @@ public class ImportHelper{
   private final JavaCodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
+  public ImportHelper(@NotNull JavaCodeStyleSettings settings) {
+    mySettings = settings;
+  }
+
+  /**
+   * @deprecated Use {@link #ImportHelper(JavaCodeStyleSettings)} instead. The instance of JavaCodeStyleSettings
+   *             can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
+   */
+  @Deprecated
   public ImportHelper(@NotNull CodeStyleSettings settings){
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
@@ -288,7 +299,7 @@ public class ImportHelper{
   private static void calcClassesConflictingViaOnDemandImports(@NotNull PsiJavaFile file,
                                                                @NotNull Map<String, Boolean> onDemandImports,
                                                                @NotNull GlobalSearchScope resolveScope,
-                                                               @NotNull Set<String> outNamesToUseSingle) {
+                                                               @NotNull Set<? super String> outNamesToUseSingle) {
     List<String> onDemands = new ArrayList<>(Arrays.asList(file.getImplicitlyImportedPackages()));
     for (String onDemand : onDemandImports.keySet()) {
       if (!onDemands.contains(onDemand)) {
@@ -339,6 +350,7 @@ public class ImportHelper{
       }
     }
     if (!conflicts.isEmpty() && !(file instanceof PsiCompiledElement)) {
+      String packageName = file.getPackageName();
       file.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -346,7 +358,11 @@ public class ImportHelper{
           PsiElement element = reference.resolve();
           if (element instanceof PsiClass && conflicts.contains(((PsiClass)element).getName())) {
             String fqn = ((PsiClass)element).getQualifiedName();
-            outNamesToUseSingle.add(fqn);
+            if (fqn != null && 
+                !PsiTreeUtil.isAncestor(file, element, true) && 
+                !packageName.equals(StringUtil.getPackageName(fqn))) {
+              outNamesToUseSingle.add(fqn);
+            }
           }
         }
       });
@@ -414,6 +430,7 @@ public class ImportHelper{
     String packageName = getPackageOrClassName(className);
     String shortName = PsiNameHelper.getShortClassName(className);
 
+    findUnusedSingleImport(file, shortName).ifPresent(PsiElement::delete);
     PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
     if (conflictSingleRef != null && !forceReimport){
       return className.equals(conflictSingleRef.getQualifiedName());
@@ -506,6 +523,25 @@ public class ImportHelper{
     return true;
   }
 
+  private static Optional<PsiImportStatement> findUnusedSingleImport(PsiJavaFile file, String name) {
+    PsiImportList importList = file.getImportList();
+    if (importList != null) {
+      for (PsiImportStatement statement : importList.getImportStatements()) {
+        PsiJavaCodeReferenceElement ref = statement.getImportReference();
+        if (!statement.isOnDemand() && ref != null && name.equals(ref.getReferenceName())) {
+          PsiElement target = statement.resolve();
+          if (target instanceof PsiClass) {
+            Collection<PsiReference> all = ReferencesSearch.search(target, new LocalSearchScope(file)).findAll();
+            if (all.size() == 1 && PsiTreeUtil.isAncestor(statement, all.iterator().next().getElement(), true)) {
+              return Optional.of(statement);
+            }
+          }
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
   private static boolean containsInCurrentPackage(@NotNull PsiJavaFile file, PsiClass curRefClass) {
     if (curRefClass != null) {
       final String curRefClassQualifiedName = curRefClass.getQualifiedName();
@@ -522,7 +558,7 @@ public class ImportHelper{
                                             @NotNull PsiResolveHelper helper,
                                             @NotNull String packageName,
                                             @NotNull Collection<String> onDemandRefs,
-                                            @NotNull List<PsiClass> outClassesToReimport) {
+                                            @NotNull List<? super PsiClass> outClassesToReimport) {
     if (onDemandRefs.isEmpty()) {
       return;
     }
@@ -804,7 +840,7 @@ public class ImportHelper{
 
   @NotNull
   // returns list of (name, isImportStatic) pairs
-  private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<PsiElement> comments){
+  private static Collection<Pair<String,Boolean>> collectNamesToImport(@NotNull PsiJavaFile file, List<? super PsiElement> comments){
     Set<Pair<String,Boolean>> names = new THashSet<>();
 
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
@@ -824,8 +860,8 @@ public class ImportHelper{
     return names;
   }
 
-  private static void collectNamesToImport(@NotNull final Set<Pair<String, Boolean>> names,
-                                           @NotNull List<PsiElement> comments,
+  private static void collectNamesToImport(@NotNull final Set<? super Pair<String, Boolean>> names,
+                                           @NotNull List<? super PsiElement> comments,
                                            @NotNull final PsiJavaFile file,
                                            PsiFile context) {
     String packageName = file.getPackageName();
@@ -836,8 +872,8 @@ public class ImportHelper{
     }
   }
 
-  private static void addNamesToImport(@NotNull Set<Pair<String, Boolean>> names,
-                                       @NotNull List<PsiElement> comments,
+  private static void addNamesToImport(@NotNull Set<? super Pair<String, Boolean>> names,
+                                       @NotNull List<? super PsiElement> comments,
                                        @NotNull PsiElement scope,
                                        @NotNull String thisPackageName,
                                        PsiFile context){
@@ -869,22 +905,26 @@ public class ImportHelper{
       ContainerUtil.addAll(stack, child.getChildren());
 
       for (final PsiReference reference : child.getReferences()) {
-        if (!(reference instanceof PsiJavaReference)) continue;
-        final PsiJavaReference javaReference = (PsiJavaReference)reference;
-        if (javaReference instanceof JavaClassReference && ((JavaClassReference)javaReference).getContextReference() != null) continue;
+        JavaResolveResult resolveResult = HighlightVisitorImpl.resolveJavaReference(reference);
+        if (resolveResult == null) continue;
+
         PsiJavaCodeReferenceElement referenceElement = null;
-        if (reference instanceof PsiJavaCodeReferenceElement) {
-          referenceElement = (PsiJavaCodeReferenceElement)child;
-          if (referenceElement.getQualifier() != null) {
-            continue;
-          }
-          if (reference instanceof PsiJavaCodeReferenceElementImpl
-              && ((PsiJavaCodeReferenceElementImpl)reference).getKind(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
-            continue;
+        if (reference instanceof PsiJavaReference) {
+          final PsiJavaReference javaReference = (PsiJavaReference)reference;
+          if (javaReference instanceof JavaClassReference && ((JavaClassReference)javaReference).getContextReference() != null) continue;
+          referenceElement = null;
+          if (reference instanceof PsiJavaCodeReferenceElement) {
+            referenceElement = (PsiJavaCodeReferenceElement)child;
+            if (referenceElement.getQualifier() != null) {
+              continue;
+            }
+            if (reference instanceof PsiJavaCodeReferenceElementImpl
+                && ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.CLASS_IN_QUALIFIED_NEW_KIND) {
+              continue;
+            }
           }
         }
 
-        final JavaResolveResult resolveResult = javaReference.advancedResolve(true);
         PsiElement refElement = resolveResult.getElement();
         if (refElement == null && referenceElement != null) {
           refElement = ResolveClassUtil.resolveClass(referenceElement, referenceElement.getContainingFile()); // might be uncomplete code
@@ -922,7 +962,7 @@ public class ImportHelper{
     }
   }
 
-  private static void addUnresolvedImportNames(@NotNull final Set<Pair<String, Boolean>> namesToImport, @NotNull PsiJavaFile file) {
+  private static void addUnresolvedImportNames(@NotNull final Set<? super Pair<String, Boolean>> namesToImport, @NotNull PsiJavaFile file) {
     final PsiImportList importList = file.getImportList();
     PsiImportStatementBase[] imports = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
     final Map<String, Pair<String, Boolean>> unresolvedNames = new THashMap<>();

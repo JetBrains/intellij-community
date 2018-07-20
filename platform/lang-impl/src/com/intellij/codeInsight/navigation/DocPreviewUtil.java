@@ -293,7 +293,7 @@ public class DocPreviewUtil {
     }
 
     if (dataStartOffset < text.length()) {
-      callback.onText(text.substring(dataStartOffset, text.length()).replace("&nbsp;", " "));
+      callback.onText(text.substring(dataStartOffset).replace("&nbsp;", " "));
     }
     
     return i;

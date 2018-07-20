@@ -8,8 +8,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
   private static final Logger LOG = Logger.getInstance(IdeaTestDiscoveryProtocolReader.class);
 
@@ -42,8 +40,38 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   public MetadataReader createMetadataReader() {
     return new MetadataReader() {
       @Override
-      public void processMetadataEntry(String s, String s1) {
+      public void processMetadataEntry(String k, String v) {
         // do nothing
+      }
+    };
+  }
+
+  @Override
+  public ClassMetadataReader createClassMetadataReader() {
+    return new ClassMetadataReader() {
+      @Override
+      public void classStarted(int i) {
+
+      }
+
+      @Override
+      public void file(int i) {
+
+      }
+
+      @Override
+      public void method(int i, byte[] bytes) {
+
+      }
+
+      @Override
+      public void classFinished(int i) {
+
+      }
+
+      @Override
+      public void finished() {
+
       }
     };
   }
@@ -85,12 +113,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
 
       @Override
       public void testDataProcessed() {
-        try {
-          myIndex.updateFromData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkId);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+        myIndex.updateTestData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkId);
       }
     };
   }

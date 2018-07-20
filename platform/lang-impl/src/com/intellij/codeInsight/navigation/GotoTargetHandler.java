@@ -33,22 +33,19 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +84,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<GotoData> successCallback) { }
-  
+
   @NonNls
   protected abstract String getFeatureUsedKey();
 
@@ -127,61 +124,49 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final JBList list = new JBList(new CollectionListModel<>(allElements));
-    HintUpdateSupply.installSimpleHintUpdateSupply(list);
-
-    list.setFont(EditorUtil.getEditorFont());
-    
-    list.setCellRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof AdditionalAction) {
-          return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        }
-        PsiElementListCellRenderer renderer = getRenderer(value, gotoData);
-        return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
-    });
-
-    final Runnable runnable = () -> {
-      int[] ids = list.getSelectedIndices();
-      if (ids == null || ids.length == 0) return;
-      Object[] selectedElements = list.getSelectedValues();
-      for (Object element : selectedElements) {
-        if (element instanceof AdditionalAction) {
-          ((AdditionalAction)element).execute();
-        }
-        else {
-          Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
-          try {
-            if (nav != null && nav.canNavigate()) {
-              navigateToElement(nav);
-            }
-          }
-          catch (IndexNotReadyException e) {
-            DumbService.getInstance(project).showDumbModeNotification("Navigation is not available while indexing");
-          }
-        }
-      }
-    };
-
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setFilteringEnabled(o -> {
+    final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
+    final Ref<UsageView> usageView = new Ref<>();
+    final JBPopup popup = builder.setNamerForFiltering(o -> {
       if (o instanceof AdditionalAction) {
         return ((AdditionalAction)o).getText();
       }
       return getRenderer(o, gotoData).getElementText((PsiElement)o);
-    });
-
-    final Ref<UsageView> usageView = new Ref<>();
-    final JBPopup popup = builder.
+    }).
       setTitle(title).
-      setItemChoosenCallback(runnable).
+      setFont(EditorUtil.getEditorFont()).
+      setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          if (value == null) return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          if (value instanceof AdditionalAction) {
+            return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          }
+          PsiElementListCellRenderer renderer = getRenderer(value, gotoData);
+          return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        }
+      }).
+      setItemsChosenCallback(selectedElements -> {
+        for (Object element : selectedElements) {
+          if (element instanceof AdditionalAction) {
+            ((AdditionalAction)element).execute();
+          }
+          else {
+            Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
+            try {
+              if (nav != null && nav.canNavigate()) {
+                navigateToElement(nav);
+              }
+            }
+            catch (IndexNotReadyException e) {
+              DumbService.getInstance(project).showDumbModeNotification("Navigation is not available while indexing");
+            }
+          }
+        }
+      }).
+      withHintUpdateSupply().
       setMovable(true).
       setCancelCallback(() -> {
-        HintUpdateSupply.hideHint(list);
-        final ListBackgroundUpdaterTask task = gotoData.listUpdaterTask;
+        final BackgroundUpdaterTask task = gotoData.listUpdaterTask;
         if (task != null) {
           task.cancelTask();
         }
@@ -195,13 +180,20 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();
 
-    builder.getScrollPane().setBorder(null);
-    builder.getScrollPane().setViewportBorder(null);
+    JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder)builder).getScrollPane() : null;
+    if (pane != null) {
+        pane.setBorder(null);
+        pane.setViewportBorder(null);
+    }
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> popup.showInBestPositionFor(editor), 300);
-      gotoData.listUpdaterTask.init((AbstractPopup)popup, list, usageView);
+      alarm.addRequest(() -> {
+        if (!editor.isDisposed()) {
+          popup.showInBestPositionFor(editor);
+        }
+      }, 300);
+      gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     else {
@@ -258,6 +250,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   /**
    * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
    */
+  @Deprecated
   @NotNull
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");
@@ -297,7 +290,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public final List<AdditionalAction> additionalActions;
 
     private boolean hasDifferentNames;
-    public ListBackgroundUpdaterTask listUpdaterTask;
+    public BackgroundUpdaterTask listUpdaterTask;
     protected final Set<String> myNames;
     public Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
 

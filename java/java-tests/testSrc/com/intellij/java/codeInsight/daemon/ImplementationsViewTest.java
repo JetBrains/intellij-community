@@ -213,6 +213,12 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
   }
 
+  public void testOnVarKeyword() {
+    myFixture.configureByText("a.java", "class a {{ v<caret>ar s = \"\";}}");
+    PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    assertInstanceOf(element, PsiClass.class);
+  }
+  
   public void testDefaultMethodOfFunctionalInterface() {
     myFixture.configureByText("a.java", "interface AFoo{\n" +
                                         "    default boolean a<caret>aa(){}\n" +

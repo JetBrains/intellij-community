@@ -28,6 +28,7 @@ import java.io.IOException;
 
 public interface ApplyFilePatch {
   Result SUCCESS = new Result(ApplyPatchStatus.SUCCESS);
+  Result FAILURE = new Result(ApplyPatchStatus.FAILURE);
 
   Result apply(VirtualFile fileToPatch,
                ApplyPatchContext context,
@@ -38,15 +39,9 @@ public interface ApplyFilePatch {
 
   class Result {
     private final ApplyPatchStatus myStatus;
-    private IOException myException;
 
     protected Result(ApplyPatchStatus status) {
       myStatus = status;
-    }
-
-    protected Result(ApplyPatchStatus status, final IOException e) {
-      myStatus = status;
-      myException = e;
     }
 
     public ApplyPatchForBaseRevisionTexts getMergeData() {
@@ -55,10 +50,6 @@ public interface ApplyFilePatch {
 
     public ApplyPatchStatus getStatus() {
       return myStatus;
-    }
-
-    public static Result createThrow(final IOException e) {
-      return new Result(ApplyPatchStatus.FAILURE, e);
     }
   }
 }

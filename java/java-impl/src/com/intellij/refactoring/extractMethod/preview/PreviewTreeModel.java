@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.ParametrizedDuplicates;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -21,39 +22,56 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 class PreviewTreeModel extends DefaultTreeModel {
-  private DefaultMutableTreeNode myDuplicatesGroup;
+  private final DefaultMutableTreeNode myDuplicatesGroup;
   private final DefaultMutableTreeNode myMethodGroup;
+  private final PatternNode myPatternNode;
+  private boolean myValid;
 
   public PreviewTreeModel(@NotNull ExtractMethodProcessor processor) {
     super(new DefaultMutableTreeNode(""));
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)getRoot();
+    setValidImpl(true);
+    DefaultMutableTreeNode root = getRoot();
 
-    myMethodGroup = new DefaultMutableTreeNode("Method to extract");
+    myMethodGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.method"));
     root.add(myMethodGroup);
     PsiMethod emptyMethod = processor.generateEmptyMethod(processor.getMethodName(), processor.getTargetClass());
     myMethodGroup.add(new MethodNode(emptyMethod)); // will be replaced in updateMethod()
 
-    DefaultMutableTreeNode originalGroup = new DefaultMutableTreeNode("Original code fragment");
+    DefaultMutableTreeNode originalGroup =
+      new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.original"));
     root.add(originalGroup);
     PsiElement[] elements = processor.getElements();
-    originalGroup.add(new OriginalNode(elements));
+    myPatternNode = new PatternNode(elements);
+    originalGroup.add(myPatternNode);
 
     List<Match> duplicates = getDuplicates(processor);
     if (!ContainerUtil.isEmpty(duplicates)) {
-      myDuplicatesGroup = new DefaultMutableTreeNode("Duplicate code fragments");
+      myDuplicatesGroup = new DefaultMutableTreeNode(RefactoringBundle.message("refactoring.extract.method.preview.group.duplicates"));
       root.add(myDuplicatesGroup);
       for (Match duplicate : duplicates) {
         myDuplicatesGroup.add(new DuplicateNode(duplicate));
       }
     }
+    else {
+      myDuplicatesGroup = null;
+    }
   }
 
-  void updateMethod(PsiMethod method) {
+  @Override
+  public DefaultMutableTreeNode getRoot() {
+    return (DefaultMutableTreeNode)super.getRoot();
+  }
+
+  @NotNull
+  MethodNode updateMethod(PsiMethod method) {
     myMethodGroup.removeAllChildren();
-    myMethodGroup.add(new MethodNode(method));
+    MethodNode methodNode = new MethodNode(method);
+    myMethodGroup.add(methodNode);
     reload(myMethodGroup);
+    return methodNode;
   }
 
+  @NotNull
   public List<DuplicateNode> getEnabledDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
@@ -71,6 +89,7 @@ class PreviewTreeModel extends DefaultTreeModel {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<DuplicateNode> getAllDuplicates() {
     if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
       List<DuplicateNode> duplicates = new ArrayList<>();
@@ -85,6 +104,19 @@ class PreviewTreeModel extends DefaultTreeModel {
     return Collections.emptyList();
   }
 
+  @NotNull
+  public PatternNode getPatternNode() {
+    return myPatternNode;
+  }
+
+  public synchronized boolean isValid() {
+    return myValid;
+  }
+
+  private synchronized void setValidImpl(boolean valid) {
+    myValid = valid;
+  }
+
   @Nullable
   public static List<Match> getDuplicates(@NotNull ExtractMethodProcessor processor) {
     List<Match> duplicates = processor.getDuplicates();
@@ -95,5 +127,22 @@ class PreviewTreeModel extends DefaultTreeModel {
       }
     }
     return duplicates;
+  }
+
+  public void setValid(boolean valid) {
+    setValidImpl(valid);
+    setValid(getRoot(), valid);
+  }
+
+  private void setValid(TreeNode node, boolean valid) {
+    if (node instanceof FragmentNode) {
+      ((FragmentNode)node).setValid(valid);
+      reload(node);
+    }
+    if (!node.isLeaf()) {
+      for (int i = 0; i < node.getChildCount(); i++) {
+        setValid(node.getChildAt(i), valid);
+      }
+    }
   }
 }

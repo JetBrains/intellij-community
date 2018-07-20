@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -304,6 +303,10 @@ public class GenericsUtil {
   @Contract("null, _ -> null")
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type, final boolean openCaptured) {
     if (type == null) return null;
+    PsiClass refClass = PsiUtil.resolveClassInType(type);
+    if (refClass instanceof PsiAnonymousClass) {
+      type = ((PsiAnonymousClass)refClass).getBaseClassType();
+    }
     if (type instanceof PsiCapturedWildcardType) {
       type = ((PsiCapturedWildcardType)type).getUpperBound();
     }
@@ -399,6 +402,9 @@ public class GenericsUtil {
     if (componentType instanceof PsiWildcardType) {
       componentType = ((PsiWildcardType)componentType).getExtendsBound();
       return PsiTypesUtil.createArrayType(componentType, transformed.getArrayDimensions());
+    }
+    if (transformed instanceof PsiEllipsisType) {
+      return ((PsiEllipsisType)transformed).toArrayType();
     }
 
     return transformed;
@@ -608,5 +614,23 @@ public class GenericsUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isGenericReference(PsiJavaCodeReferenceElement referenceElement, PsiJavaCodeReferenceElement qualifierElement) {
+    final PsiReferenceParameterList qualifierParameterList = qualifierElement.getParameterList();
+    if (qualifierParameterList != null) {
+      final PsiTypeElement[] typeParameterElements = qualifierParameterList.getTypeParameterElements();
+      if (typeParameterElements.length > 0) {
+        return true;
+      }
+    }
+    final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+    if (parameterList != null) {
+      final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+      if (typeParameterElements.length > 0) {
+        return true;
+      }
+    }
+    return false;
   }
 }

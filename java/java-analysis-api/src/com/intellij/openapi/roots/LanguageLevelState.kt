@@ -9,5 +9,5 @@ import com.intellij.util.xmlb.annotations.Attribute
 
 class LanguageLevelState : BaseState() {
   @get:Attribute("LANGUAGE_LEVEL")
-  var languageLevel by property<LanguageLevel?>()
+  var languageLevel: LanguageLevel? by property<LanguageLevel?>()
 }

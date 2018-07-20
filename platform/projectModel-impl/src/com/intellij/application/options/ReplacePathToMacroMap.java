@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
@@ -140,14 +126,14 @@ public class ReplacePathToMacroMap extends PathMacroMap {
             text.charAt(endOfOccurrence) != '\"' &&
             text.charAt(endOfOccurrence) != ' ' &&
             !text.substring(endOfOccurrence).startsWith("!/")) {
-          newText.append(text.substring(i, endOfOccurrence));
+          newText.append(text, i, endOfOccurrence);
           i = endOfOccurrence;
           continue;
         }
         if (occurrenceOfPath > 0) {
           char prev = text.charAt(occurrenceOfPath - 1);
           if (Character.isLetterOrDigit(prev) || prev == '_') {
-            newText.append(text.substring(i, endOfOccurrence));
+            newText.append(text, i, endOfOccurrence);
             i = endOfOccurrence;
             continue;
           }
@@ -161,7 +147,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         break;
       }
       else {
-        newText.append(text.substring(i, occurrenceOfPath));
+        newText.append(text, i, occurrenceOfPath);
         newText.append(myMacroMap.get(path));
         i = occurrenceOfPath + path.length();
       }
@@ -174,7 +160,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     if (replacement.contains("..")) return 1;
     if (replacement.contains("$" + PathMacroUtil.USER_HOME_NAME + "$")) return 1;
     if (replacement.contains("$" + PathMacroUtil.APPLICATION_HOME_DIR + "$")) return 1;
-    if (replacement.contains("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$")) return 3;
+    if (replacement.contains(PathMacroUtil.DEPRECATED_MODULE_DIR)) return 3;
     if (replacement.contains("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$")) return 3;
     return 2;
   }

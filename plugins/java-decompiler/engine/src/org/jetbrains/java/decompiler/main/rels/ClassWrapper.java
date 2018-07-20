@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -62,7 +62,7 @@ public class ClassWrapper {
             root = MethodProcessorRunnable.codeToJava(mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc);
+            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc, DecompilerContext.getCurrentContext());
 
             Thread mtThread = new Thread(mtProc, "Java decompiler");
             long stopAt = System.currentTimeMillis() + maxSec * 1000;
@@ -122,9 +122,9 @@ public class ClassWrapper {
           }
         }
       }
-      catch (Throwable ex) {
+      catch (Throwable t) {
         String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
-        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, ex);
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
         isError = true;
       }
 

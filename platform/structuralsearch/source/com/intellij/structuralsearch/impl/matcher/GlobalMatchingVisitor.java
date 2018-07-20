@@ -7,6 +7,7 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.MatchResult;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
 /**
  * Visitor class to manage pattern matching
@@ -69,6 +72,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       elements2,
       matchContext
     );
+  }
+
+  @Override
+  public boolean matchOptionally(@Nullable PsiElement patternNode, @Nullable PsiElement matchNode) {
+    return patternNode == null && isLeftLooseMatching() ||
+           matchSequentially(newSingleNodeIterator(patternNode), newSingleNodeIterator(matchNode));
   }
 
   @NotNull
@@ -159,17 +168,18 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   /**
    * Matches tree segments starting with given elements to find equality
    *
-   * @param nodes the pattern element for matching
-   * @param nodes2 the tree element for matching
+   * @param patternNodes the pattern element for matching
+   * @param matchNodes the tree element for matching
    * @return if they are equal and false otherwise
    */
   @Override
-  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
-    if (!nodes.hasNext()) {
-      return !nodes2.hasNext();
+  public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes) {
+    final PsiElement current = patternNodes.current();
+    if (!patternNodes.hasNext()) {
+      while (matchNodes.current() instanceof PsiComment) matchNodes.advance();
+      return !matchNodes.hasNext();
     }
-
-    return matchContext.getPattern().getHandler(nodes.current()).matchSequentially(nodes, nodes2, matchContext);
+    return matchContext.getPattern().getHandler(current).matchSequentially(patternNodes, matchNodes, matchContext);
   }
 
   /**
@@ -227,7 +237,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   private void dispatchMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
-    if (!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result, result)) return;
+    if (doDispatch(result)) return;
 
     // There is no substitutions so show the context
 
@@ -235,15 +245,14 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     matchContext.getSink().newMatch(result);
   }
 
-  private boolean doDispatch(final MatchResult result, MatchResultImpl context) {
+  private boolean doDispatch(final MatchResult result) {
     boolean ret = false;
 
-    for (MatchResult r : result.getAllSons()) {
+    for (MatchResult r : result.getChildren()) {
       if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
-        ret |= doDispatch(r, context);
+        ret |= doDispatch(r);
       }
       else if (r.isTarget()) {
-        ((MatchResultImpl)r).setContext(context);
         matchContext.getSink().newMatch(r);
         ret = true;
       }
@@ -260,23 +269,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       result.setMatchImage(match.getText());
     }
     else {
-
       for (final PsiElement matchStatement : matchedNodes) {
-        result.getMatches().add(new MatchResultImpl(
-            MatchResult.LINE_MATCH,
-            matchStatement.getText(),
-            new SmartPsiPointer(matchStatement),
-            true
-          )
-        );
+        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
       }
 
-      result.setMatchRef(
-        new SmartPsiPointer(match)
-      );
-      result.setMatchImage(
-        match.getText()
-      );
+      result.setMatchRef(new SmartPsiPointer(match));
+      result.setMatchImage(match.getText());
       result.setName(MatchResult.MULTI_LINE_MATCH);
     }
   }
@@ -302,5 +300,33 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   public boolean matchText(String left, String right) {
     return matchContext.getOptions().isCaseSensitiveMatch() ? left.equals(right) : left.equalsIgnoreCase(right);
+  }
+
+  public void scopeMatch(PsiElement patternNode, boolean typedVar, PsiElement matchNode) {
+    final MatchResultImpl ourResult = matchContext.hasResult() ? matchContext.getResult() : null;
+    matchContext.popResult();
+
+    if (myResult) {
+      if (typedVar) {
+        final SubstitutionHandler handler = (SubstitutionHandler)matchContext.getPattern().getHandler(patternNode);
+        if (ourResult != null) ourResult.setScopeMatch(true);
+        handler.setNestedResult(ourResult);
+        setResult(handler.handle(matchNode, matchContext));
+
+        final MatchResultImpl nestedResult = handler.getNestedResult();
+        if (nestedResult != null) { // some constraint prevent from adding
+          copyResults(nestedResult);
+          handler.setNestedResult(null);
+        }
+      }
+      else if (ourResult != null) {
+        copyResults(ourResult);
+      }
+    }
+  }
+
+  private void copyResults(MatchResult ourResult) {
+    final MatchResultImpl result = matchContext.getResult();
+    for (MatchResult son : ourResult.getChildren()) result.addChild(son);
   }
 }

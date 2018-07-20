@@ -19,7 +19,6 @@ package com.maddyhome.idea.copyright.actions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -37,7 +36,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -269,13 +267,12 @@ public abstract class AbstractFileProcessor {
   }
 
   private void execute(final Runnable readAction, final Runnable writeAction) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(readAction), title, true, myProject);
-    new WriteCommandAction(myProject, title) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        writeAction.run();
-      }
-    }.execute();
+    ProgressManager.getInstance()
+                   .runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(readAction), title, true,
+                                                        myProject);
+    WriteCommandAction.writeCommandAction(myProject).withName(title).run(() -> {
+      writeAction.run();
+    });
   }
 
   private static final Logger logger = Logger.getInstance(AbstractFileProcessor.class.getName());

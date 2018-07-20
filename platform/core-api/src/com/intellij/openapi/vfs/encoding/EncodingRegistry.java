@@ -44,7 +44,7 @@ public abstract class EncodingRegistry {
   }
 
   public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore,
-                                                                             @NotNull ThrowableComputable<VirtualFile, E> action) throws E {
+                                                                             @NotNull ThrowableComputable<? extends VirtualFile, E> action) throws E {
     EncodingRegistry registry = getInstance();
     Charset charsetBefore = registry.getEncoding(fileBefore, true);
     VirtualFile fileAfter = null;

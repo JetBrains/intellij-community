@@ -24,6 +24,9 @@ import java.util.Set;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"))
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
+  @NonNls
+  public static String PROP_VIRTUAL_SPACE = "VirtualSpace";
+
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
@@ -87,7 +90,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
 
-    @SuppressWarnings("unused")
     public Map<String, Boolean> getLanguageBreadcrumbsMap() {
       return mapLanguageBreadcrumbs;
     }
@@ -374,7 +376,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setVirtualSpace(boolean val) {
+    boolean oldValue = myOptions.IS_VIRTUAL_SPACE;
     myOptions.IS_VIRTUAL_SPACE = val;
+    myPropertyChangeSupport.firePropertyChange(PROP_VIRTUAL_SPACE, oldValue, val);
   }
 
   public boolean isCaretInsideTabs() {

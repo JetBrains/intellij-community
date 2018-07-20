@@ -1,6 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -12,6 +14,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -45,7 +49,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
 
     @Override
     public void visitExpression(PsiExpression expression) {
-      if (!ExpressionUtils.isAutoBoxed(expression) || !isInsideEqualsOrHashCode(expression)) {
+      if (!ExpressionUtils.isAutoBoxed(expression) || isAutoBoxingFromCache(expression) || !isInsideEqualsOrHashCode(expression)) {
         return;
       }
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
@@ -67,24 +71,29 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
       }
-      if (method.isVarArgs()) {
+      List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
+      ContractReturnValue contractValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
+      if (ContractReturnValue.returnNew().equals(contractValue)) {
         if (!isInsideEqualsOrHashCode(expression)) {
           return;
         }
-        registerError(expression, expression, "varargs call");
+        registerMethodCallError(expression, expression);
       }
-      else {
-        final String name = methodExpression.getReferenceName();
-        if (!"valueOf".equals(name)) {
+      else if (method.isVarArgs()) {
+        if (!isInsideEqualsOrHashCode(expression)) {
           return;
         }
-        final PsiExpressionList argumentList = expression.getArgumentList();
-        final PsiExpression[] expressions = argumentList.getExpressions();
+        registerMethodCallError(expression, expression, "varargs call");
+      }
+      else {
+        if (!"valueOf".equals(method.getName())) {
+          return;
+        }
+        final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
         if (expressions.length != 1) {
           return;
         }
@@ -93,16 +102,39 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
           return;
         }
         final String qualifiedName = aClass.getQualifiedName();
-        if (!CommonClassNames.JAVA_LANG_SHORT.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_INTEGER.equals(qualifiedName) &&
-            !CommonClassNames.JAVA_LANG_LONG.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_DOUBLE.equals(qualifiedName) &&
-            !CommonClassNames.JAVA_LANG_FLOAT.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_CHARACTER.equals(qualifiedName)) {
-          return;
+        if (CommonClassNames.JAVA_LANG_SHORT.equals(qualifiedName) ||
+            CommonClassNames.JAVA_LANG_INTEGER.equals(qualifiedName) ||
+            CommonClassNames.JAVA_LANG_LONG.equals(qualifiedName) ||
+            CommonClassNames.JAVA_LANG_CHARACTER.equals(qualifiedName)) {
+          if (isAutoBoxingFromCache(expressions[0]) || !isInsideEqualsOrHashCode(expression)) {
+            return;
+          }
+          registerError(expression, expression);
         }
-        if (!isInsideEqualsOrHashCode(expression)) {
-          return;
-        }
-        registerError(expression, expression);
       }
+    }
+
+    private static boolean isAutoBoxingFromCache(PsiExpression expression) {
+      final LongRangeSet range = CommonDataflow.getExpressionFact(expression, DfaFactType.RANGE);
+      if (range != null && !range.isEmpty() && range.min() >= -128 && range.max() <= 127) {
+        return true;
+      }
+      final Object value = ExpressionUtils.computeConstantExpression(expression);
+      if (value instanceof Number) {
+        final Number number = (Number)value;
+        final int l = number.intValue();
+        if (l >= -128 && l <= 127) {
+          return true;
+        }
+      }
+      else if (value instanceof Character) {
+        final Character character = (Character)value;
+        final char c = character.charValue();
+        if (c <= 127) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override

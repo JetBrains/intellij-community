@@ -167,7 +167,7 @@ public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInsp
               newMethodCall.append('"');
               inStringLiteral = true;
             }
-            newMethodCall.append(text.substring(1, text.length() - 1));
+            newMethodCall.append(text, 1, text.length() - 1);
           }
           else {
             if (inStringLiteral) {

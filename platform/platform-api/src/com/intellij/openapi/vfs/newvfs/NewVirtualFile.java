@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -68,6 +67,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public abstract void setTimeStamp(final long time) throws IOException;
   
+  @Override
   @NotNull
   public abstract CharSequence getNameSequence();
 
@@ -77,14 +77,12 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Nullable @Deprecated
   public NewVirtualFile findChildById(int id) {return null;}
 
-  @Nullable @Deprecated
-  public NewVirtualFile findChildByIdIfCached(int id) {return null;}
-
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
   }
 
+  @Override
   public abstract void setWritable(boolean writable) throws IOException;
 
   public abstract void markDirty();

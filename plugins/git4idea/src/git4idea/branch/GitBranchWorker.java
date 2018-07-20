@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.CompareBranchesDialog;
 import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,14 +28,13 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
 import git4idea.GitExecutionException;
 import git4idea.GitLocalBranch;
-import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.config.GitVcsSettings;
 import git4idea.history.GitHistoryUtils;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitCompareBranchesHelper;
+import git4idea.util.GitLocalCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -103,6 +103,16 @@ public final class GitBranchWorker {
     new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branchName).execute();
   }
 
+  public void deleteTag(@NotNull final String tagName, @NotNull final List<GitRepository> repositories) {
+    updateInfo(repositories);
+    new GitDeleteTagOperation(myProject, myGit, myUiHandler, repositories, tagName).execute();
+  }
+
+  public void deleteRemoteTag(@NotNull final String tagName, @NotNull final Map<GitRepository, String> repositories) {
+    updateInfo(repositories.keySet());
+    new GitDeleteRemoteTagOperation(myProject, myGit, myUiHandler, repositories, tagName).execute();
+  }
+
   public void deleteRemoteBranch(@NotNull final String branchName, @NotNull final List<GitRepository> repositories) {
     updateInfo(repositories);
     new GitDeleteRemoteBranchOperation(myProject, myGit, myUiHandler, repositories, branchName).execute();
@@ -142,24 +152,24 @@ public final class GitBranchWorker {
   }
 
   private CommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) {
-    CommitCompareInfo compareInfo = new CommitCompareInfo();
-    for (GitRepository repository : repositories) {
+    CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo();
+    for (GitRepository repository: repositories) {
       loadCommitsToCompare(repository, branchName, compareInfo);
-      compareInfo.put(repository, loadTotalDiff(repository, branchName));
+      try {
+        compareInfo.put(repository, loadTotalDiff(repository, branchName));
+      }
+      catch (VcsException e) {
+        // we treat it as critical and report an error
+        throw new GitExecutionException("Couldn't get [git diff " + branchName + "] on repository [" + repository.getRoot() + "]", e);
+      }
     }
     return compareInfo;
   }
 
   @NotNull
-  private static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) {
-    try {
-      // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
-      return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
-    }
-    catch (VcsException e) {
-      // we treat it as critical and report an error
-      throw new GitExecutionException("Couldn't get [git diff " + branchName + "] on repository [" + repository.getRoot() + "]", e);
-    }
+  public static Collection<Change> loadTotalDiff(@NotNull Repository repository, @NotNull String branchName) throws VcsException {
+    // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
+    return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
   }
 
   private void loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName,

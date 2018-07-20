@@ -7,5 +7,5 @@ Groovy script
     PsiElement(.)('.')
     PsiElement(identifier)('b')
   PsiElement(.)('.')
-  PsiErrorElement:Property selector expected
+  PsiErrorElement:<property selector> expected
     <empty list>

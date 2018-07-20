@@ -3,10 +3,8 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.extensions.Extensions;
@@ -36,6 +34,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +42,8 @@ import javax.swing.*;
 import java.util.Collection;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText {
+  // the chain from a parent directory to this one usually contains only one virtual file
+  private final SmartHashSet<VirtualFile> chain = new SmartHashSet<>();
 
   private final PsiFileSystemItemFilter myFilter;
 
@@ -76,6 +77,17 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     assert psiDirectory != null : this;
     VirtualFile directoryFile = psiDirectory.getVirtualFile();
     Object parentValue = getParentValue();
+    synchronized (chain) {
+      if (chain.isEmpty()) {
+        VirtualFile ancestor = getVirtualFile(parentValue);
+        if (ancestor != null) {
+          for (VirtualFile file = directoryFile; file != null && VfsUtilCore.isAncestor(ancestor, file, true); file = file.getParent()) {
+            chain.add(file);
+          }
+        }
+        if (chain.isEmpty()) chain.add(directoryFile);
+      }
+    }
 
     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project)) {
       ProjectFileIndex fi = ProjectRootManager.getInstance(project).getFileIndex();
@@ -222,8 +234,26 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return directory.getVirtualFile();
   }
 
+  /**
+   * @return a virtual file that identifies the given element
+   */
+  @Nullable
+  private static VirtualFile getVirtualFile(Object element) {
+    if (element instanceof PsiDirectory) {
+      PsiDirectory directory = (PsiDirectory)element;
+      return directory.getVirtualFile();
+    }
+    return element instanceof VirtualFile ? (VirtualFile)element : null;
+  }
+
   @Override
   public boolean canRepresent(final Object element) {
+    VirtualFile file = getVirtualFile(element);
+    if (file != null) {
+      synchronized (chain) {
+        if (chain.contains(file)) return true;
+      }
+    }
     if (super.canRepresent(element)) return true;
     return ProjectViewDirectoryHelper.getInstance(getProject())
       .canRepresent(element, getValue(), getParentValue(), getSettings());
@@ -293,8 +323,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public int getWeight() {
-    final ProjectView projectView = ProjectView.getInstance(myProject);
-    if (projectView instanceof ProjectViewImpl && !((ProjectViewImpl)projectView).isFoldersAlwaysOnTop()) {
+    ViewSettings settings = getSettings();
+    if (settings == null || settings.isFoldersAlwaysOnTop()) {
       return 20;
     }
     return isFQNameShown() ? 70 : 0;

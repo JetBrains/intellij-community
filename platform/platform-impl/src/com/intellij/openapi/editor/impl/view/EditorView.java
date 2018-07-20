@@ -497,6 +497,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     float verticalScalingFactor = getVerticalScalingFactor();
 
     int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
+    int lineHeight;
     if (Registry.is("editor.text.xcode.vertical.spacing")) {
       //Here we approximate line calculation to the variant used in Xcode 9 editor
       LineMetrics metrics = font.getLineMetrics("", myFontRenderContext);
@@ -510,11 +511,12 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       else {
         spacing = ((int)Math.ceil((height * delta) / 2)) * 2;
       }
-      myLineHeight = (int)Math.ceil(height) + spacing;
+      lineHeight = (int)Math.ceil(height) + spacing;
     }
     else {
-      myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
+      lineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
     }
+    myLineHeight = Math.max(1, lineHeight);
     int descent = FontLayoutService.getInstance().getDescent(fm);
     myDescent = descent + (myLineHeight - fontMetricsHeight) / 2;
     myTopOverhang = fontMetricsHeight - myLineHeight + myDescent - descent;

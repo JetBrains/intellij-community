@@ -33,6 +33,29 @@ public class Py3NoneFunctionAssignmentInspectionTest extends PyInspectionTestCas
     doMultiFileTest();
   }
 
+  // PY-28729
+  public void testGenericSubstitutedWithNone() {
+    doTestByText(
+      "test1 = max([])\n" +
+      "test2 = max([], default=None)\n" +
+      "test3 = max([], default=0)"
+    );
+  }
+
+  // PY-30467
+  public void testAssigningAbstractMethodResult() {
+    doTestByText("from abc import ABC, abstractmethod\n" +
+                 "\n" +
+                 "class A(ABC):\n" +
+                 "    def get_something(self):\n" +
+                 "        something = self.get_another_thing()\n" +
+                 "        return something\n" +
+                 "\n" +
+                 "    @abstractmethod\n" +
+                 "    def get_another_thing(self):\n" +
+                 "        pass\n");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

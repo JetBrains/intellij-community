@@ -51,7 +51,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     if (TextAttributesKey.isTemp(key)) {
       myAttributesTempMap.put(key, attributes);
     }
-    else if (attributes == INHERITED_ATTRS_MARKER || !Comparing.equal(attributes, getAttributes(key))) {
+    else if (attributes == INHERITED_ATTRS_MARKER || !Comparing.equal(attributes, getDirectlyDefinedAttributes(key))) {
       myAttributesMap.put(key, attributes);
       myAttributesTempMap.clear();
     }
@@ -59,7 +59,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setColor(ColorKey key, Color color) {
-    if (color == INHERITED_COLOR_MARKER || !Comparing.equal(color, getColor(key))) {
+    if (color == INHERITED_COLOR_MARKER || !colorsEqual(color, getDirectlyDefinedColor(key))) {
       myColorsMap.put(key, ObjectUtils.notNull(color, NULL_COLOR_MARKER));
     }
   }

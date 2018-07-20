@@ -37,6 +37,7 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
     }
   }
 
+  @Override
   protected void selectElement(Object element, String selectedText) {
     myComponent.setSelectedItem(element);
     myComponent.repaint();
@@ -46,6 +47,8 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
     return myComponent.getSelectedIndex();
   }
 
+  @NotNull
+  @Override
   protected Object[] getAllElements() {
     ListModel model = myComponent.getModel();
     Object[] elements = new Object[model.getSize()];

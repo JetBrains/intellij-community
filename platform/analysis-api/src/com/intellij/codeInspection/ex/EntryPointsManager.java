@@ -27,8 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public abstract class EntryPointsManager implements Disposable {
   public static EntryPointsManager getInstance(Project project) {
     return ServiceManager.getService(project, EntryPointsManager.class);
@@ -41,19 +39,13 @@ public abstract class EntryPointsManager implements Disposable {
   public abstract void removeEntryPoint(@NotNull RefElement anEntryPoint);
 
   @NotNull
-  public abstract RefElement[] getEntryPoints();
+  public abstract RefElement[] getEntryPoints(RefManager refManager);
 
   public abstract void cleanup();
 
   public abstract boolean isAddNonJavaEntries();
 
   public abstract void configureAnnotations();
-
-  /**
-   * {@link com.intellij.codeInspection.ex.EntryPointsManagerImpl#createConfigureAnnotationsButton()} should be used instead
-   */
-  @Deprecated
-  public abstract JButton createConfigureAnnotationsBtn();
 
   public abstract boolean isEntryPoint(@NotNull PsiElement element);
 

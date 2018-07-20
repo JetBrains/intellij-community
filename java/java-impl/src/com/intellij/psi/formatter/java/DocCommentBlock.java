@@ -33,9 +33,10 @@ public class DocCommentBlock extends AbstractJavaBlock{
                          Alignment alignment,
                          Indent indent,
                          CommonCodeStyleSettings settings,
-                         JavaCodeStyleSettings javaSettings)
+                         JavaCodeStyleSettings javaSettings,
+                         @NotNull FormattingMode formattingMode)
   {
-    super(node, wrap, alignment, indent, settings, javaSettings);
+    super(node, wrap, alignment, indent, settings, javaSettings, formattingMode);
   }
 
   @Override
@@ -45,9 +46,9 @@ public class DocCommentBlock extends AbstractJavaBlock{
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
       if (child.getElementType() == JavaDocTokenType.DOC_COMMENT_START) {
-        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy(), getFormattingMode()));
       } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && !child.getText().trim().isEmpty()){
-        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getSpaceIndent(1), null, AlignmentStrategy.getNullStrategy()));
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getSpaceIndent(1), null, AlignmentStrategy.getNullStrategy(), getFormattingMode()));
       }
       child = child.getTreeNext();
     }

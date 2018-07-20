@@ -31,12 +31,9 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.formatting.Indent.Type.NORMAL;
 import static com.intellij.formatting.Indent.Type.SPACES;
-import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.getDefaultIndentFromType;
 
 public class IndentCalculator {
   
@@ -44,16 +41,6 @@ public class IndentCalculator {
   private @NotNull final Editor myEditor;
   private @NotNull final BaseLineOffsetCalculator myBaseLineOffsetCalculator;
   private @NotNull final Indent myIndent;
-
-  /**
-   * @deprecated Please, use IndentCalculator(Project, Editor, BaseLineOffsetCalculator, Indent) instead.
-   */
-  public IndentCalculator(@NotNull Project project,
-                          @NotNull Editor editor,
-                          @NotNull BaseLineOffsetCalculator baseLineOffsetCalculator,
-                          @NotNull Indent.Type type) {
-    this(project, editor, baseLineOffsetCalculator, Objects.requireNonNull(getDefaultIndentFromType(type)));
-  }
 
   public IndentCalculator(@NotNull Project project,
                           @NotNull Editor editor,
@@ -90,15 +77,17 @@ public class IndentCalculator {
         !fileOptions.isOverrideLanguageOptions() && language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
         CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
         fileOptions;
-      return
-        baseIndent + new IndentInfo(0, indentToSize(myIndent, options), 0, false).generateNewWhiteSpace(options);
+      if (options != null) {
+        return baseIndent 
+               + new IndentInfo(0, indentToSize(myIndent, options), 0, false)
+                 .generateNewWhiteSpace(options);
+      }
     }
     return null;
   }
 
-
   @NotNull
-  private String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
+  protected String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
     CharSequence docChars = myEditor.getDocument().getCharsSequence();
     int offset = currPosition.getStartOffset();
     if (offset > 0) {

@@ -36,6 +36,22 @@ public class PyPropertyAccessInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28206
+  public void testSlotOverridesProperty() {
+    doTestByText(
+      "class A(object):\n" +
+      "    @property\n" +
+      "    def name(self):\n" +
+      "        return 'a'\n" +
+      "\n" +
+      "class B(A):\n" +
+      "    __slots__ = ('name',)\n" +
+      "\n" +
+      "    def __init__(self, name):\n" +
+      "        self.name = name"
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

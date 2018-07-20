@@ -53,9 +53,8 @@
     <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
     <stacktrace.fold substring="at org.junit.Assert.failSame("/>
     <stacktrace.fold substring="at junit.framework.Assert.assert"/>
-    <stacktrace.fold substring="at junit.framework.Assert.fail("/>
-    <stacktrace.fold substring="at junit.framework.Assert.failNotSame("/>
-    <stacktrace.fold substring="at junit.framework.Assert.failSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.fail"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.assert"/>
     <stacktrace.fold substring="at org.junit.Assert.internalArrayEquals("/>
     <stacktrace.fold substring="at org.junit.internal.ComparisonCriteria.arrayEquals("/>
     <stacktrace.fold substring="at org.junit.Assert.assert"/>
@@ -91,6 +90,11 @@
                      key="junit5.malformed.repeated.test.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
+
+    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedNestedClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.nested.test.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
 
     <runDashboardContributor implementation="com.intellij.execution.junit.JUnitRunDashboardContributor"/>
   </extensions>

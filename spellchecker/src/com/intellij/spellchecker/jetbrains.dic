@@ -1,6 +1,7 @@
 Liskov
 accessor
 accessors
+additivity
 agentmain
 aggregator
 ajax
@@ -26,6 +27,7 @@ asyncable
 atomikos
 attr
 attlist
+attrs
 auth
 authid
 autoboxing
@@ -42,6 +44,7 @@ backtrace
 barcode
 basedir
 basename
+bashrc
 basicfile
 batis
 bfile
@@ -56,6 +59,7 @@ bootstrapper
 boxable
 breakpoint
 breakpoints
+bson
 btree
 buffered
 buffering
@@ -84,6 +88,7 @@ checkboxes
 checkstyle
 checksum
 chmod
+clangd
 classloader
 classloading
 classpath
@@ -230,6 +235,7 @@ github
 gitlab
 globals
 google
+goto
 grapheme
 gruntfile
 gruntfiles
@@ -245,6 +251,7 @@ hardlink
 hardlinks
 hashbang
 hashcode
+hashtable
 hateoas
 haxe
 hazelcast
@@ -290,6 +297,8 @@ iphone
 iphoneos
 isnan
 isnull
+iterable
+iterables
 jacoco
 javabean
 javabeans
@@ -303,6 +312,7 @@ jaxb
 jaxen
 jetbrains
 jibx
+jira
 jndi
 jnilib
 jooq
@@ -317,6 +327,7 @@ json
 jsonb
 junit
 keepduplicates
+kerberos
 keychain
 keychains
 keyframe
@@ -394,6 +405,7 @@ minimizable
 minvalue
 miny
 mixin
+mkdir
 mlslabel
 mockito
 mojo
@@ -401,6 +413,8 @@ monad
 monoidal
 mongodb
 monospaced
+msql
+mssql
 msvc
 multi
 multilinestring
@@ -421,6 +435,7 @@ nchar
 nclob
 ndbcluster
 netflix
+ngram
 nmake
 nmtoken
 noarchivelog
@@ -474,6 +489,7 @@ nvarchar
 oauth
 objc
 objenesis
+odbc
 oidindex
 onchange
 onclick
@@ -504,6 +520,8 @@ pctversion
 permalink
 petersburg
 pipelined
+pipenv
+pipfile
 plaintext
 playlist
 plist
@@ -542,6 +560,7 @@ preprocessor
 preprocessors
 println
 processlist
+profileable
 profiler
 progressbar
 proto
@@ -552,6 +571,7 @@ pycharm
 queryable
 radiobutton
 reactivestreams
+reactivex
 readme
 readonly
 readwrite
@@ -568,6 +588,7 @@ refactor
 refactored
 refactoring
 refactorings
+referencable
 referer
 regex
 regexp
@@ -596,8 +617,10 @@ rethrowing
 rethrown
 rethrows
 rlike
+rmdir
 rollup
 rowdependencies
+rsync
 rtree
 rtti
 rubymine
@@ -606,6 +629,7 @@ rvalue
 rvalues
 samskivert
 savepoint
+sbin
 scala
 schemas
 screenshots
@@ -614,6 +638,7 @@ scriptlets
 scrollbar
 scrollbars
 securefile
+sendmail
 serializable
 serializer
 serializers
@@ -624,6 +649,7 @@ severities
 sfinae
 sftp
 shader
+sharding
 sigabrt
 sigaio
 sigalrm
@@ -664,11 +690,14 @@ sizeof
 slru
 smallfile
 smallint
+snmp
+solr
 soname
 sourcecode
 sourceforge
 spellchecker
 spellchecking
+sql
 sqlcode
 sqlerror
 sqlexception
@@ -710,6 +739,7 @@ subtree
 subtrees
 subview
 subviews
+sudo
 superclass
 superclasses
 superinterface
@@ -720,6 +750,7 @@ sybase
 symlink
 symlinks
 sysdate
+syslog
 sysroot
 systimestamp
 tablespace
@@ -732,6 +763,7 @@ thiscall
 throwable
 thymeleaf
 thymes
+timeline
 timestamp
 tinyblob
 tinyint
@@ -810,6 +842,7 @@ vtlvariable
 wakeup
 watchlist
 wchar
+wddx
 webapp
 webjar
 webjars
@@ -828,6 +861,7 @@ wordwrap
 workflow
 writeln
 wsdl
+yaml
 xcode
 xcodeproj
 xctest

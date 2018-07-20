@@ -33,9 +33,9 @@ import java.util.*;
 
 public class PackageUtil {
   @NotNull
-  public static PsiPackage[] getSubpackages(@NotNull PsiPackage aPackage,
-                                            @Nullable Module module,
-                                            final boolean searchInLibraries) {
+  static PsiPackage[] getSubpackages(@NotNull PsiPackage aPackage,
+                                     @Nullable Module module,
+                                     final boolean searchInLibraries) {
     final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, searchInLibraries);
     List<PsiPackage> result = new ArrayList<>();
     for (PsiPackage psiPackage : aPackage.getSubPackages(scopeToShow)) {
@@ -49,11 +49,11 @@ public class PackageUtil {
     return result.toArray(PsiPackage.EMPTY_ARRAY);
   }
 
-  public static void addPackageAsChild(@NotNull Collection<AbstractTreeNode> children,
-                                       @NotNull PsiPackage aPackage,
-                                       @Nullable Module module,
-                                       @NotNull ViewSettings settings,
-                                       final boolean inLibrary) {
+  static void addPackageAsChild(@NotNull Collection<? super AbstractTreeNode> children,
+                                @NotNull PsiPackage aPackage,
+                                @Nullable Module module,
+                                @NotNull ViewSettings settings,
+                                final boolean inLibrary) {
     final boolean shouldSkipPackage = settings.isHideEmptyMiddlePackages() && isPackageEmpty(aPackage, module, !settings.isFlattenPackages(), inLibrary);
     final Project project = aPackage.getProject();
     if (!shouldSkipPackage) {
@@ -93,7 +93,7 @@ public class PackageUtil {
   }
 
   @NotNull
-  public static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
+  static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
     if (module == null) {
       if (forLibraries) {
         return new ProjectLibrariesSearchScope(project);
@@ -115,11 +115,11 @@ public class PackageUtil {
   }
 
   @NotNull
-  public static Collection<AbstractTreeNode> createPackageViewChildrenOnFiles(@NotNull List<VirtualFile> sourceRoots,
-                                                                              @NotNull Project project,
-                                                                              @NotNull ViewSettings settings,
-                                                                              @Nullable Module module,
-                                                                              final boolean inLibrary) {
+  static Collection<AbstractTreeNode> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
+                                                                       @NotNull Project project,
+                                                                       @NotNull ViewSettings settings,
+                                                                       @Nullable Module module,
+                                                                       final boolean inLibrary) {
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final List<AbstractTreeNode> children = new ArrayList<>();
@@ -169,10 +169,22 @@ public class PackageUtil {
              aPackage == null ? defaultShortName : aPackage.getQualifiedName();
     }
     else if (parentPackageInTree != null || aPackage != null && aPackage.getParentPackage() != null) {
+      if (parentPackageInTree != null && aPackage != null) {
+        String prefix = parentPackageInTree.getQualifiedName();
+        String string = aPackage.getQualifiedName();
+        int length = prefix.length();
+        if (length == 0) {
+          if (!string.isEmpty()) return string;
+        }
+        else if (string.startsWith(prefix)) {
+          if (length < string.length() && '.' == string.charAt(length)) length++;
+          if (length < string.length()) return string.substring(length);
+        }
+      }
       PsiPackage parentPackage = aPackage.getParentPackage();
       final StringBuilder buf = new StringBuilder();
       buf.append(aPackage.getName());
-      while (parentPackage != null && (parentPackageInTree == null || !parentPackage.equals(parentPackageInTree))) {
+      while (parentPackage != null && !parentPackage.equals(parentPackageInTree)) {
         final String parentPackageName = parentPackage.getName();
         if (parentPackageName == null || parentPackageName.isEmpty()) {
           break; // reached default package
@@ -192,7 +204,7 @@ public class PackageUtil {
   private static class ModuleLibrariesSearchScope extends GlobalSearchScope {
     private final Module myModule;
 
-    public ModuleLibrariesSearchScope(@NotNull Module module) {
+    ModuleLibrariesSearchScope(@NotNull Module module) {
       super(module.getProject());
       myModule = module;
     }
@@ -223,7 +235,7 @@ public class PackageUtil {
   private static class ProjectLibrariesSearchScope extends GlobalSearchScope {
     private final ProjectFileIndex myFileIndex;
 
-    public ProjectLibrariesSearchScope(@NotNull Project project) {
+    ProjectLibrariesSearchScope(@NotNull Project project) {
       super(project);
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
@@ -231,11 +243,6 @@ public class PackageUtil {
     @Override
     public boolean contains(@NotNull VirtualFile file) {
       return myFileIndex.isInLibraryClasses(file);
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
     }
 
     @Override

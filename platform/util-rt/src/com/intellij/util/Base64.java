@@ -16,7 +16,7 @@
 package com.intellij.util;
 
 /**
- * DEPRECATED, please use java.util.Base64
+ * DEPRECATED, please use {@link java.util.Base64} instead
  */
 public class Base64 {
   private Base64() { }

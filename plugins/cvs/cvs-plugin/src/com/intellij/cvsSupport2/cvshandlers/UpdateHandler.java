@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.Options;
+import com.intellij.cvsSupport2.Options;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

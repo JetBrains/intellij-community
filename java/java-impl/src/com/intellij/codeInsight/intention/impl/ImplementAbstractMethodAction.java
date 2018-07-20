@@ -41,7 +41,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     int offset = editor.getCaretModel().getOffset();
     final PsiMethod method = findMethod(file, offset);
 
-    if (method == null || !method.isValid()) return false;
+    if (method == null || !method.isValid() || method.isConstructor()) return false;
     setText(getIntentionName(method));
 
     if (!method.getManager().isInProject(method)) return false;
@@ -155,8 +155,9 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-    invokeHandler(project, editor, method);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getContentComponent().isShowing()) {
+      invokeHandler(project, editor, method);
+    }
   }
 
   protected void invokeHandler(final Project project, final Editor editor, final PsiMethod method) {

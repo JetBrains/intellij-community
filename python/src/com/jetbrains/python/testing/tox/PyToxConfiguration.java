@@ -36,10 +36,10 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
   @NotNull
   private final Project myProject;
 
-  @Tag
+  @Tag("arguments")
   @Nullable
   private String[] myArguments;
-  @Tag
+  @Tag("runOnlyEnvs")
   @Nullable
   private String[] myRunOnlyEnvs;
 

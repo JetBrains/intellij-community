@@ -637,6 +637,25 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-27518
+  public void testAsyncFunctionReturnTypeInNumpyDocstring() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Coroutine[Any, Any, int]",
+                   "async def f():\n" +
+                   "    \"\"\"\n" +
+                   "    An integer.\n" +
+                   "\n" +
+                   "    Returns\n" +
+                   "    -------\n" +
+                   "    int\n" +
+                   "        A number\n" +
+                   "    \"\"\"\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
   // PY-26847
   public void testAwaitOnImportedCoroutine() {
     runWithLanguageLevel(
@@ -932,6 +951,39 @@ public class Py3TypeTest extends PyTestCase {
                             "    def __post_init__(self, d):\n" +
                             "        expr = d")
     );
+  }
+
+  // PY-27783
+  public void testApplyingSuperSubstituionToGenericClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Dict[T, int]",
+                   "from typing import TypeVar, Generic, Dict, List\n" +
+                   "\n" +
+                   "T = TypeVar('T')\n" +
+                   "\n" +
+                   "class A(Generic[T]):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "class B(A[List[T]], Generic[T]):\n" +
+                   "    def __init__(self) -> None:\n" +
+                   "        self.value_set: Dict[T, int] = {}\n" +
+                   "\n" +
+                   "    def foo(self) -> None:\n" +
+                   "        expr = self.value_set")
+    );
+  }
+
+  // PY-13750
+  public void testBuiltinRound() {
+    doTest("int", "expr = round(1)");
+    doTest("Union[float, int]", "expr = round(1, 1)");
+
+    doTest("int", "expr = round(1.1)");
+    doTest("Union[float, int]", "expr = round(1.1, 1)");
+
+    doTest("int", "expr = round(True)");
+    doTest("Union[float, int]", "expr = round(True, 1)");
   }
 
   private void doTest(final String expectedType, final String text) {

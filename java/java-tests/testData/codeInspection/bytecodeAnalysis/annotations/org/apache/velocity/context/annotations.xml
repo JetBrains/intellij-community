@@ -63,6 +63,7 @@
     </item>
     <item name='org.apache.velocity.context.InternalContextAdapterImpl org.apache.velocity.context.InternalContextAdapter getBaseContext()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;this&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

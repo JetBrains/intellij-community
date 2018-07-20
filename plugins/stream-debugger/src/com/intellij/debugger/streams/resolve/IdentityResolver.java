@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.resolve;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.wrapper.TraceUtil;
+import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,7 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class IdentityResolver implements ValuesOrderResolver {
-  private static final Object NULL_MARKER = new Object();
+  private static final Object NULL_MARKER = ObjectUtils.sentinel("IdentityResolver.NULL_MARKER");
   @NotNull
   @Override
   public Result resolve(@NotNull TraceInfo info) {

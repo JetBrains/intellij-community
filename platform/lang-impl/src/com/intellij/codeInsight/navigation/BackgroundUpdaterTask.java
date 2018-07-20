@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -33,13 +35,14 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
 
-public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
-  protected AbstractPopup myPopup;
-  protected T myComponent;
+public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
+  protected JBPopup myPopup;
+  private ListComponentUpdater myUpdater;
   private Ref<UsageView> myUsageView;
   private final Collection<PsiElement> myData;
 
@@ -50,27 +53,31 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   private volatile boolean myFinished;
   private volatile ProgressIndicator myIndicator;
 
-  /**
-   * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} instead
-   */
-  @Deprecated
-  public BackgroundUpdaterTask(Project project, @NotNull String title) {
-    this(project, title, null);
-  }
-  
   public BackgroundUpdaterTask(@Nullable Project project, @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title);
     myData = comparator == null ? ContainerUtil.newSmartList() : new TreeSet<>(comparator);
   }
 
-  public void init(@NotNull AbstractPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {
+  @TestOnly
+  public ListComponentUpdater getUpdater() {
+    return myUpdater;
+  }
+
+  public void init(@NotNull JBPopup popup, @NotNull ListComponentUpdater updater, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
-    myComponent = component;
+    myUpdater = updater;
     myUsageView = usageView;
   }
 
   public abstract String getCaption(int size);
-  protected abstract void replaceModel(@NotNull List<PsiElement> data);
+
+  protected void replaceModel(@NotNull List<PsiElement> data) {
+    myUpdater.replaceModel(data);
+  }
+
+  protected void paintBusy(boolean paintBusy) {
+    myUpdater.paintBusy(paintBusy);
+  }
 
   protected static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator comparator) {
     return (o1, o2) -> {
@@ -81,8 +88,6 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       return diff;
     };
   }
-
-  protected abstract void paintBusy(boolean paintBusy);
 
   private boolean setCanceled() {
     boolean canceled = myCanceled;
@@ -97,6 +102,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   /**
    * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} and {@link #updateComponent(PsiElement)} instead
    */
+  @Deprecated
   public boolean updateComponent(@NotNull PsiElement element, @Nullable Comparator comparator) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
@@ -105,8 +111,10 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     }
 
     if (myCanceled) return false;
+
     final JComponent content = myPopup.getContent();
-    if (content == null || myPopup.isDisposed()) return false;
+    if ((myPopup instanceof AbstractPopup && content == null) || myPopup.isDisposed()) return false;
+    ModalityState modalityState = content == null ? null : ModalityState.stateForComponent(content);
 
     synchronized (lock) {
       if (myData.contains(element)) return true;
@@ -119,7 +127,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     myAlarm.addRequest(() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
-    }, 200, ModalityState.stateForComponent(content));
+    }, 200, modalityState);
     return true;
   }
   

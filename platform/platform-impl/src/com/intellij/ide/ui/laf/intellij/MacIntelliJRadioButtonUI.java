@@ -37,4 +37,8 @@ public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
   }
+
+  protected int textIconGap() {
+    return JBUI.scale(3);
+  }
 }

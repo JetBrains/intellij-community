@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -22,6 +20,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -61,8 +60,14 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public List<IProperty> getProperties() {
-    final PropertiesList propertiesList = PsiTreeUtil.getStubChildOfType(this, PropertiesList.class);
-    if (propertiesList == null) return Collections.emptyList();
+    PropertiesList propertiesList;
+    final StubElement<?> stub = getGreenStub();
+    if (stub != null) {
+      PropertiesListStub propertiesListStub = stub.findChildStubByType(PropertiesElementTypes.PROPERTIES_LIST);
+      propertiesList = propertiesListStub == null ? null : propertiesListStub.getPsi();
+    } else {
+      propertiesList = PsiTreeUtil.findChildOfType(this, PropertiesList.class);
+    }
     return Collections.unmodifiableList(PsiTreeUtil.getStubChildrenOfTypeAsList(propertiesList, Property.class));
   }
 

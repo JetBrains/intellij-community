@@ -38,7 +38,7 @@ public class XHTMLParserDefinition extends XMLParserDefinition {
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final Lexer lexer = createLexer(left.getPsi().getProject());
     return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
   }

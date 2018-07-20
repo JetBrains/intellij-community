@@ -140,4 +140,10 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
   }
 
+  public void testSpaceBeforeSuperTypeGenerics() {
+    myFixture.addFileToProject("A.java", "interface A<T> {}");
+    myFixture.addFileToProject("B.java", "class B implements A <T> {}");
+    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
+  }
+
 }

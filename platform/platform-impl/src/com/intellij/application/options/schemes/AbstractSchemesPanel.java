@@ -127,7 +127,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.getComponent().setMaximumSize(mySchemesCombo.getComponent().getPreferredSize());
 
     int height = mySchemesCombo.getComponent().getPreferredSize().height;
-    height += JBUI.scale(2) * 2;
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
   }
@@ -138,6 +137,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
+    toolbarComponent.setBorder(JBUI.Borders.empty(3));
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     return toolbarComponent;
   }
@@ -284,6 +284,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     private final Component myParentComponent;
 
     ShowSchemesActionsListAction(Collection<AnAction> actions, Component component) {
+      super("Show Scheme Actions", "Show Scheme Actions", AllIcons.General.Gear);
       myParentComponent = component;
       myActionGroup = new DefaultActionGroup(actions.toArray(AnAction.EMPTY_ARRAY));
     }
@@ -291,7 +292,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      p.setIcon(AllIcons.General.Gear);
       p.setEnabledAndVisible(isEnabledAndVisible(e));
     }
 

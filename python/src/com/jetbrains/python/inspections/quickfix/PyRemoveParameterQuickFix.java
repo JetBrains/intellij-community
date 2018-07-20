@@ -36,13 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
-  @NotNull
-  private final TypeEvalContext myContext;
-
-  public PyRemoveParameterQuickFix(@NotNull TypeEvalContext context) {
-    myContext = context;
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
@@ -54,10 +47,11 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
     final PyParameter psi = PyUtil.as(descriptor.getPsiElement(), PyParameter.class);
     assert psi != null;
     final PyCallableParameter parameter = PyCallableParameterImpl.psi(psi);
+    final TypeEvalContext ctx = TypeEvalContext.codeAnalysis(project, psi.getContainingFile());
 
     final PyFunction function = PsiTreeUtil.getParentOfType(psi, PyFunction.class);
     if (function != null) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myContext);
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(ctx);
 
       StreamEx
         .of(PyRefactoringUtil.findUsages(function, false))
@@ -78,7 +72,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
       if (parameterName != null) {
         StreamEx
-          .of(PyiUtil.getOverloads(function, myContext))
+          .of(PyiUtil.getOverloads(function, ctx))
           .map(overload -> overload.getParameterList().getParameters())
           .map(parameters -> ContainerUtil.find(parameters, overloadParameter -> parameterName.equals(overloadParameter.getName())))
           .nonNull()

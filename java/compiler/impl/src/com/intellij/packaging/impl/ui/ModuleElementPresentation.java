@@ -16,16 +16,14 @@
 package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.packaging.impl.elements.ModuleElementTypeBase;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,12 +33,14 @@ import org.jetbrains.annotations.Nullable;
 public class ModuleElementPresentation extends TreeNodePresentation {
   private final ModulePointer myModulePointer;
   private final ArtifactEditorContext myContext;
-  private final boolean myTestOutput;
+  private final ModuleElementTypeBase myElementType;
 
-  public ModuleElementPresentation(@Nullable ModulePointer modulePointer, @NotNull ArtifactEditorContext context, final boolean testOutput) {
+  public ModuleElementPresentation(@Nullable ModulePointer modulePointer,
+                                   @NotNull ArtifactEditorContext context,
+                                   @NotNull ModuleElementTypeBase elementType) {
     myModulePointer = modulePointer;
     myContext = context;
-    myTestOutput = testOutput;
+    myElementType = elementType;
   }
 
   public String getPresentableName() {
@@ -65,14 +65,12 @@ public class ModuleElementPresentation extends TreeNodePresentation {
     }
   }
 
-  public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
+  public void render(@NotNull PresentationData presentationData,
+                     SimpleTextAttributes mainAttributes,
+                     SimpleTextAttributes commentAttributes) {
     final Module module = findModule();
-    if (myTestOutput) {
-      presentationData.setIcon(PlatformIcons.TEST_SOURCE_FOLDER);
-    }
-    else if (module != null) {
-      presentationData.setIcon(ModuleType.get(module).getIcon());
-    }
+    presentationData.setIcon(myElementType.getElementIcon(module));
+
     String moduleName;
     if (module != null) {
       ModifiableModuleModel moduleModel = myContext.getModifiableModuleModel();
@@ -90,8 +88,7 @@ public class ModuleElementPresentation extends TreeNodePresentation {
       moduleName = "<unknown>";
     }
 
-    String text = myTestOutput ? CompilerBundle.message("node.text.0.test.compile.output", moduleName)
-                               : CompilerBundle.message("node.text.0.compile.output", moduleName);
+    String text = myElementType.getElementText(moduleName);
     presentationData.addText(text, module != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 

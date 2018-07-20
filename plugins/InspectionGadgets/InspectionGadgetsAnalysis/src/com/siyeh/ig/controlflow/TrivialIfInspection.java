@@ -28,10 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,10 +142,10 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (condition == null) {
       return;
     }
-    final String conditionText = condition.getText();
+    CommentTracker tr = new CommentTracker();
     PsiReturnStatement nextStatement = ControlFlowUtils.getNextReturnStatement(statement);
-    @NonNls final String newStatement = "return " + conditionText + ';';
-    PsiReplacementUtil.replaceStatement(statement, newStatement);
+    @NonNls final String newStatement = "return " + tr.text(condition) + ';';
+    PsiReplacementUtil.replaceStatement(statement, newStatement, tr);
     assert nextStatement != null;
     if (!ControlFlowUtils.isReachable(nextStatement)) {
       nextStatement.delete();

@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -126,12 +125,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     configureSoftWraps(7);
     Inlay inlay = addInlay(1);
     assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(5));
-    new WriteCommandAction.Simple<Void>(ourProject) {
-      @Override
-      protected void run() {
-        myEditor.getDocument().setText(" ");
-      }
-    }.execute();
+    runWriteCommand(() -> myEditor.getDocument().setText(" "));
     assertFalse(inlay.isValid());
   }
 
@@ -305,7 +299,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     initText("abc");
     Inlay i1 = addInlay(1, false);
     Inlay i2 = addInlay(2, true);
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
+    runWriteCommand(() -> {
       myEditor.getDocument().insertString(2, " ");
       myEditor.getDocument().insertString(1, " ");
     });
@@ -318,9 +312,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     addInlay(2);
     right();
     right();
-    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
-      myEditor.getDocument().replaceString(1, 2, "b");
-    });
+    runWriteCommand(() -> myEditor.getDocument().replaceString(1, 2, "b"));
     checkCaretPosition(2, 2, 2);
   }
 
@@ -329,6 +321,26 @@ public class EditorInlayTest extends AbstractEditorTest {
     addInlay(2);
     myEditor.getCaretModel().moveToOffset(2);
     checkCaretPosition(2, 2, 3);
+  }
+
+  public void testInlayOrderAfterMerge() {
+    initText("ab");
+    Inlay i0 = addInlay(0);
+    Inlay i1 = addInlay(1);
+    Inlay i2 = addInlay(2);
+    runWriteCommand(() -> {
+      myEditor.getDocument().deleteString(0, 1);
+      myEditor.getDocument().deleteString(0, 1);
+    });
+    assertEquals(Arrays.asList(i0, i1, i2), myEditor.getInlayModel().getInlineElementsInRange(0, 0));
+  }
+
+  public void testInlayOrderAfterDocumentModification() {
+    initText("abc");
+    Inlay i1 = addInlay(2);
+    runWriteCommand(() -> myEditor.getDocument().deleteString(1, 2));
+    Inlay i2 = addInlay(1);
+    assertEquals(Arrays.asList(i1, i2), myEditor.getInlayModel().getInlineElementsInRange(1, 1));
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

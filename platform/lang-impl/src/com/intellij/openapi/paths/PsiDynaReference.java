@@ -64,6 +64,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     if (!reference.isSoft()) mySoft = false;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
 

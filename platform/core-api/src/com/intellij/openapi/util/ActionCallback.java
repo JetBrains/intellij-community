@@ -264,15 +264,6 @@ public class ActionCallback implements Disposable {
     return () -> setDone();
   }
 
-  /**
-   * @deprecated use {@link #notifyWhenRejected(ActionCallback)}
-   */
-  @NotNull
-  @Deprecated
-  public Runnable createSetRejectedRunnable() {
-    return () -> setRejected();
-  }
-
   public boolean waitFor(long msTimeout) {
     if (isProcessed()) {
       return true;

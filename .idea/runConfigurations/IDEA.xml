@@ -31,7 +31,6 @@
     <method>
       <option name="BuildArtifacts" enabled="true">
         <artifact name="debugger-agent" />
-        <artifact name="debugger-agent-storage" />
       </option>
     </method>
   </configuration>

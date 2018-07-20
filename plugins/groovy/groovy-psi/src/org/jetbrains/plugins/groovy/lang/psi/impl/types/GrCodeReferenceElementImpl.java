@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
@@ -24,7 +22,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferencePolyVariantResolver;
+import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferenceResolver;
+
+import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
 
@@ -66,7 +66,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitCodeReferenceElement(this);
   }
 
@@ -184,10 +184,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return false;
   }
 
-  @Override
   @NotNull
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, GrCodeReferencePolyVariantResolver.INSTANCE);
+  @Override
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 
   @NotNull

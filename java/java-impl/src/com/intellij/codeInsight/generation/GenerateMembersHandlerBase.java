@@ -25,13 +25,11 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -46,6 +44,7 @@ import org.jetbrains.java.generate.exception.GenerateCodeException;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
@@ -119,7 +118,6 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     final PsiElement lBrace = aClass.getLBrace();
     if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) &&
         (lBrace == null || lBrace.getTextOffset() < offset) && !editor.getSelectionModel().hasSelection()) {
-      WriteAction.run(() -> EnterAction.insertNewLineAtCaret(editor));
       PsiDocumentManager.getInstance(project).commitDocument(document);
       offset = editor.getCaretModel().getOffset();
       col = editor.getCaretModel().getLogicalPosition().column;
@@ -144,10 +142,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       final List<PsiElement> elements = new ArrayList<>();
       for (GenerationInfo member : newMembers) {
         if (!(member instanceof TemplateGenerationInfo)) {
-          final PsiMember psiMember = member.getPsiMember();
-          if (psiMember != null) {
-            elements.add(psiMember);
-          }
+          ContainerUtil.addIfNotNull(elements, member.getPsiMember());
         }
       }
 
@@ -177,7 +172,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     TemplateGenerationInfo info = templates.get(index);
     final Template template = info.getTemplate();
 
-    final PsiElement element = info.getPsiMember();
+    PsiElement element = Objects.requireNonNull(info.getPsiMember());
     final TextRange range = element.getTextRange();
     WriteAction.run(() -> editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
     int offset = range.getStartOffset();
@@ -187,12 +182,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
         if (index + 1 < templates.size()){
-          ApplicationManager.getApplication().invokeLater(() -> new WriteCommandAction(myProject) {
-            @Override
-            protected void run(@NotNull Result result) throws Throwable {
-              runTemplates(myProject, editor, templates, index + 1);
-            }
-          }.execute());
+          ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.runWriteCommandAction(myProject, ()->
+              runTemplates(myProject, editor, templates, index + 1)
+          ));
         }
       }
     });

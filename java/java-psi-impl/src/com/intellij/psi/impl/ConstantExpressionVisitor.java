@@ -16,16 +16,18 @@
 package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -507,7 +509,14 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
 
   @Override
   public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
-    myResult = expression.getOperand().getType();
+    PsiType type = expression.getOperand().getType();
+    if (type instanceof PsiClassReferenceType) {
+      PsiClass aClass = ((PsiClassReferenceType)type).resolve();
+      if (aClass != null) {
+        type = JavaPsiFacade.getElementFactory(expression.getProject()).createType(aClass, ((PsiClassReferenceType)type).getParameters());
+      }
+    }
+    myResult = type;
   }
 
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -605,10 +614,11 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
   }
 
   @Override
-  public Object computeExpression(final PsiExpression expression, final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+  public Object computeExpression(@NotNull final PsiExpression expression, @NotNull final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     return JavaConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
   }
 
+  @NotNull
   @Override
   public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
     throw new AssertionError("should not be called");

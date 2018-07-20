@@ -4,6 +4,20 @@ import java.util.*;
 
 public class TooBroadScope
 {
+
+    void noClassCastException() {
+        <error descr="Cannot resolve symbol 'a'">a</error> b;
+        <error descr="Unknown class: 'b'">b</error> renderer = new <error descr="Cannot resolve symbol 'b'">b</error>();
+    }
+
+    void looseThreads() {
+        Map before = Thread.getAllStackTraces();
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println(before);
+    }
+
     // Option "Only report variables that can be moved to inner blocks" is OFF
     public void test() {
         // Example #1
@@ -240,5 +254,8 @@ class TryWithResources {
             System.out.println(closeable3);
         }
         System.out.println(closeable3);
+
+        String s = "file.name";
+        try (java.io.FileInputStream in = new java.io.FileInputStream(s)) {}
     }
 }

@@ -180,4 +180,26 @@ public class LongRangeBasics {
   private int getState() {
     return (int)(Math.random() * 100);
   }
+
+  String extract(String line) {
+    int i = line.lastIndexOf(' ');
+    int j = line.lastIndexOf(' ', i - 1);
+    i = (j >= 0) ? j : 0;
+    if (<warning descr="Condition 'i < 0' is always 'false'">i < 0</warning> || i == line.length() - 1){
+      throw new RuntimeException();
+    }
+    return line.substring(i + 1);
+  }
+
+  void testNPE(String s1, String s2) {
+    int code = (s1 == null ? 0 : 1) + (s2 == null ? 0 : 1);
+    if(code == 2) {
+      System.out.println(s1.trim());
+      System.out.println(s2.trim());
+    }
+    if(code == 0) {
+      System.out.println(s1.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+      System.out.println(s2.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    }
+  }
 }

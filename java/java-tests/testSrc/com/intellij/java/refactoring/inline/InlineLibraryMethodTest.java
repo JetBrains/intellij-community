@@ -18,9 +18,7 @@ package com.intellij.java.refactoring.inline;
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringTestCase;
@@ -54,14 +52,14 @@ public class InlineLibraryMethodTest extends RefactoringTestCase {
     final PsiFile file = fileClass.getContainingFile();
     WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
-        ((VirtualFileSystemEntry)file.getVirtualFile()).setWritable(false);
+        file.getVirtualFile().setWritable(false);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     });
 
-    PsiElement element = null;
+    PsiMethod element = null;
     PsiMethod[] createTempFiles = fileClass.findMethodsByName("createTempFile", false);
     for (PsiMethod createTempFile : createTempFiles) {
       if (createTempFile.getParameterList().getParametersCount() == 2) {
@@ -70,7 +68,7 @@ public class InlineLibraryMethodTest extends RefactoringTestCase {
       }
     }
     assertNotNull(element);
-    PsiMethod method = (PsiMethod)element;
+    PsiMethod method = element;
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
     assertFalse("Bad returns found", condition);
     final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), method, null, myEditor, false);

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.junit;
 
+import com.intellij.testFramework.PsiTestUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.junit.UseOfObsoleteAssertInspection;
@@ -59,10 +60,12 @@ public class UseOfObsoleteAssertInspectionTest extends IGQuickFixesTestCase {
   }
 
   public void testSingleStaticImport() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doFixTest();
   }
 
   public void testAddingDeltaToAvoidFailure() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doFixTest();
   }
 

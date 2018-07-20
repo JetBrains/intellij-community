@@ -2,8 +2,6 @@
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -160,15 +158,6 @@ public class CoreApplicationEnvironment {
             return false;
         }
         return true;
-      }
-
-      @NotNull
-      @Override
-      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
-                                                                           ProgressIndicator progress,
-                                                                           boolean failFastOnAcquireReadAction,
-                                                                           @NotNull Processor<? super T> thingProcessor) {
-        return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
       }
 
       @NotNull

@@ -61,4 +61,8 @@ public class PyiResolveTest extends PyMultiFileResolveTestCase {
   public void testGenericAttribute() {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
+
+  public void testForwardReference() {
+    assertResolvesTo(PyClass.class, "C");
+  }
 }

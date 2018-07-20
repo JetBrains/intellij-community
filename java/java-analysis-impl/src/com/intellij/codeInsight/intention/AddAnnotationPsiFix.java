@@ -137,7 +137,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiModifierList modifierList = myModifierListOwner.getModifierList();
-    if (modifierList == null || modifierList.findAnnotation(myAnnotation) != null) return;
+    if (modifierList == null || modifierList.hasAnnotation(myAnnotation)) return;
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(myAnnotation, myModifierListOwner.getResolveScope());
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace;
     if (aClass != null && aClass.getManager().isInProject(aClass) && AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {

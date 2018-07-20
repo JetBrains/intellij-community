@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -44,6 +45,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -69,7 +71,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if(vm != null) {
       vmAttached();
       myEventThread = new DebuggerEventThread();
-      ApplicationManager.getApplication().executeOnPooledThread(myEventThread);
+      ApplicationManager.getApplication().executeOnPooledThread(ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", myEventThread));
     }
   }
 
@@ -129,9 +131,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     @Override
     public void run() {
-      String oldThreadName = Thread.currentThread().getName();
-      Thread.currentThread().setName("DebugProcessEvents");
-
       try {
         EventQueue eventQueue = myVmProxy.eventQueue();
         while (!isStopped()) {
@@ -145,7 +144,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
 
               @Override
-              protected void action() throws Exception {
+              protected void action() {
                 int processed = 0;
                 for (Event event : eventSet) {
                   if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
@@ -266,14 +265,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       finally {
         Thread.interrupted(); // reset interrupted status
-        Thread.currentThread().setName(oldThreadName);
       }
     }
 
     private void invokeVMDeathEvent() {
       getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
         @Override
-        protected void action() throws Exception {
+        protected void action() {
           SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_NONE, 1);
           processVMDeathEvent(suspendContext, null);
         }
@@ -423,7 +421,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     preprocessEvent(suspendContext, thread);
 
     //noinspection HardCodedStringLiteral
-    RequestHint hint = (RequestHint)event.request().getProperty("hint");
+    RequestHint hint = getRequestHint(event);
 
     deleteStepRequests(event.thread());
 
@@ -469,6 +467,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
+  private static RequestHint getRequestHint(Event event) {
+    return (RequestHint)event.request().getProperty("hint");
+  }
+
   private void processLocatableEvent(final SuspendContextImpl suspendContext, final LocatableEvent event) {
     ThreadReference thread = event.thread();
     //LOG.assertTrue(thread.isSuspended());
@@ -478,7 +480,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //this is especially necessary if a method is breakpoint condition
     getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
 
@@ -529,6 +531,24 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
             }
           });
+        }
+
+        // special check for smart step into with this breakpoint inside the expressions
+        EventSet eventSet = suspendContext.getEventSet();
+        if (eventSet != null && eventSet.size() > 1) {
+          List<StepEvent> stepEvents = StreamEx.of(eventSet).select(StepEvent.class).toList();
+          if (!stepEvents.isEmpty()) {
+            resumePreferred = resumePreferred ||
+                              stepEvents.stream()
+                                        .map(DebugProcessEvents::getRequestHint)
+                                        .allMatch(h -> {
+                                          if (h != null) {
+                                            Integer depth = h.checkCurrentPosition(suspendContext);
+                                            return depth != null && depth != RequestHint.STOP;
+                                          }
+                                          return false;
+                                        });
+          }
         }
 
         if(!requestHit || resumePreferred) {

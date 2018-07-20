@@ -70,7 +70,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
  * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
  *
- * 5. The file with removed data is marked as "dead" (see {@link #ourDeadMarker}, any access to it will throw {@link InvalidVirtualFileAccessException}
+ * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}, any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE.
  *
  * @author peter
@@ -80,14 +80,15 @@ public class VfsData {
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
-  private static final Object ourDeadMarker = new String("dead file");
+  
+  private final Object myDeadMarker = new String("dead file");
 
-  private static final ConcurrentIntObjectMap<Segment> ourSegments = ContainerUtil.createConcurrentIntObjectMap();
-  private static final ConcurrentBitSet ourInvalidatedIds = new ConcurrentBitSet();
-  private static TIntHashSet ourDyingIds = new TIntHashSet();
-  private static final IntObjectMap<VirtualDirectoryImpl> ourChangedParents = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
+  private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
+  private TIntHashSet myDyingIds = new TIntHashSet();
+  private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
-  static {
+  public VfsData() {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
       public void writeActionFinished(@NotNull Object action) {
@@ -100,20 +101,20 @@ public class VfsData {
     });
   }
 
-  private static void killInvalidatedFiles() {
-    synchronized (ourDeadMarker) {
-      if (!ourDyingIds.isEmpty()) {
-        for (int id : ourDyingIds.toArray()) {
-          assertNotNull(getSegment(id, false)).myObjectArray.set(getOffset(id), ourDeadMarker);
-          ourChangedParents.remove(id);
+  private void killInvalidatedFiles() {
+    synchronized (myDeadMarker) {
+      if (!myDyingIds.isEmpty()) {
+        for (int id : myDyingIds.toArray()) {
+          assertNotNull(getSegment(id, false)).myObjectArray.set(getOffset(id), myDeadMarker);
+          myChangedParents.remove(id);
         }
-        ourDyingIds = new TIntHashSet();
+        myDyingIds = new TIntHashSet();
       }
     }
   }
 
   @Nullable
-  static VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent) {
+  VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent) {
     PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
     VirtualFileSystemEntry dir = persistentFS.getCachedDir(id);
     if (dir != null) return dir;
@@ -125,7 +126,7 @@ public class VfsData {
     Object o = segment.myObjectArray.get(offset);
     if (o == null) return null;
 
-    if (o == ourDeadMarker) {
+    if (o == myDeadMarker) {
       throw reportDeadFileAccess(new VirtualFileImpl(id, segment, parent));
     }
     final int nameId = segment.getNameId(id);
@@ -147,13 +148,18 @@ public class VfsData {
   }
 
   @Nullable @Contract("_,true->!null")
-  public static Segment getSegment(int id, boolean create) {
+  public Segment getSegment(int id, boolean create) {
     int key = id >>> SEGMENT_BITS;
-    Segment segment = ourSegments.get(key);
+    Segment segment = mySegments.get(key);
     if (segment != null || !create) return segment;
-    return ourSegments.cacheOrGet(key, new Segment());
+    return mySegments.cacheOrGet(key, new Segment(this));
   }
-  
+
+  public boolean hasLoadedFile(int id) {
+    Segment segment = getSegment(id, false);
+    return segment != null && segment.myObjectArray.get(getOffset(id)) != null;
+  }
+
   public static class FileAlreadyCreatedException extends Exception {
     private FileAlreadyCreatedException(String message) {
       super(message);
@@ -180,27 +186,27 @@ public class VfsData {
     segment.myObjectArray.set(offset, data);
   }
 
-  static CharSequence getNameByFileId(int id) {
+  CharSequence getNameByFileId(int id) {
     return FileNameCache.getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
   }
 
-  static boolean isFileValid(int id) {
-    return !ourInvalidatedIds.get(id);
+  boolean isFileValid(int id) {
+    return !myInvalidatedIds.get(id);
   }
 
   @Nullable
-  static VirtualDirectoryImpl getChangedParent(int id) {
-    return ourChangedParents.get(id);
+  VirtualDirectoryImpl getChangedParent(int id) {
+    return myChangedParents.get(id);
   }
 
-  static void changeParent(int id, VirtualDirectoryImpl parent) {
-    ourChangedParents.put(id, parent);
+  void changeParent(int id, VirtualDirectoryImpl parent) {
+    myChangedParents.put(id, parent);
   }
 
-  static void invalidateFile(int id) {
-    ourInvalidatedIds.set(id);
-    synchronized (ourDeadMarker) {
-      ourDyingIds.add(id);
+  void invalidateFile(int id) {
+    myInvalidatedIds.set(id);
+    synchronized (myDeadMarker) {
+      myDyingIds.add(id);
     }
   }
 
@@ -210,6 +216,12 @@ public class VfsData {
 
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
+    
+    final VfsData vfsData;
+
+    Segment(VfsData vfsData) {
+      this.vfsData = vfsData;
+    }
 
     int getNameId(int fileId) {
       return myIntArray.get(getOffset(fileId) * 2);
@@ -284,7 +296,7 @@ public class VfsData {
       assert fileId > 0;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[myChildrenIds.length];
       for (int i = 0; i < myChildrenIds.length; i++) {
-        children[i] = assertNotNull(getFileById(myChildrenIds[i], parent));
+        children[i] = assertNotNull(parent.mySegment.vfsData.getFileById(myChildrenIds[i], parent));
       }
       return children;
     }

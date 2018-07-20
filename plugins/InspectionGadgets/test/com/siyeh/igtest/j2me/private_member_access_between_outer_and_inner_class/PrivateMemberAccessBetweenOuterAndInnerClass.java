@@ -58,3 +58,18 @@ class Y {
         private static String s = "";
     }
 }
+class AnonymousArgTest {
+    private int m() {return 0;}
+
+    void test() {
+        new Inner(m());
+        new Inner(m()) {};
+        new Inner(m()) {
+            int x = <warning descr="Access to private member of class 'AnonymousArgTest' requires synthetic accessor">m</warning>();
+        };
+    }
+
+    static class Inner {
+        Inner(int x) {}
+    }
+}

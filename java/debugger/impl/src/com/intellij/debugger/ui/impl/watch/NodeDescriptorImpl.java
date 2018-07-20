@@ -1,38 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import java.util.HashMap;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.sun.jdi.InconsistentDebugInfoException;
-import com.sun.jdi.InvalidStackFrameException;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class NodeDescriptorImpl implements NodeDescriptor {
@@ -89,6 +73,9 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
       }
       catch (InvalidStackFrameException e) {
         throw new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"));
+      }
+      catch (ObjectCollectedException e) {
+        throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
       }
       catch (VMDisconnectedException e) {
         throw e;

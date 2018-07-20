@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -40,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
@@ -48,7 +49,8 @@ import java.util.stream.Stream;
  */
 public class JpsProjectLoader extends JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
-  private static final BoundedTaskExecutor ourThreadPool = new BoundedTaskExecutor("JpsProjectLoader pool",SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
+  private static final ExecutorService
+    ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsProjectLoader Pool", SharedThreadPool.getInstance(), Runtime.getRuntime().availableProcessors());
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
   private final JpsProject myProject;
@@ -433,7 +435,19 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"));
+    Element facetsTag = JDomSerializationUtil.findComponent(moduleRoot, "FacetManager");
+    Element externalFacetsTag = JDomSerializationUtil.findComponent(moduleRoot, "ExternalFacetManager");
+    Element mergedFacetsTag;
+    if (facetsTag == null) {
+      mergedFacetsTag = externalFacetsTag;
+    }
+    else if (externalFacetsTag != null) {
+      mergedFacetsTag = JDOMUtil.deepMerge(facetsTag, externalFacetsTag);
+    }
+    else {
+      mergedFacetsTag = facetsTag;
+    }
+    JpsFacetSerializer.loadFacets(module, mergedFacetsTag);
     return module;
   }
 

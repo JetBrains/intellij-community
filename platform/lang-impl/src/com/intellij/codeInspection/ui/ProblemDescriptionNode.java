@@ -1,18 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -31,7 +34,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected final RefEntity myElement;
 
   public ProblemDescriptionNode(RefEntity element,
-                                CommonProblemDescriptor descriptor,
+                                @NotNull CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolPresentation presentation) {
     this(element, descriptor, presentation, null);
   }
@@ -43,14 +46,35 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     super(descriptor, presentation);
     myElement = element;
     myDescriptor = descriptor;
-    final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
-    String shortName = presentation.getToolWrapper().getShortName();
-    myLevel = descriptor instanceof ProblemDescriptor
-              ? profile.getErrorLevel(HighlightDisplayKey.find(shortName), ((ProblemDescriptor)descriptor).getStartElement())
-              : profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    myLevel = ObjectUtils.notNull(calculatePreciseLevel(element, descriptor, presentation), () -> {
+      String shortName = presentation.getToolWrapper().getShortName();
+      final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    });
     myLineNumber = myDescriptor instanceof ProblemDescriptor
                    ? ((ProblemDescriptor)myDescriptor).getLineNumber()
                    : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
+  }
+
+  private static HighlightDisplayLevel calculatePreciseLevel(@Nullable RefEntity element,
+                                                             @Nullable CommonProblemDescriptor descriptor,
+                                                             @NotNull InspectionToolPresentation presentation) {
+    if (element == null) return null;
+    final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+    String shortName = presentation.getToolWrapper().getShortName();
+    if (descriptor instanceof ProblemDescriptor) {
+      InspectionProfileManager inspectionProfileManager = profile.getProfileManager();
+      RefElement refElement = (RefElement)element;
+      SeverityRegistrar severityRegistrar = inspectionProfileManager.getSeverityRegistrar();
+      HighlightSeverity severity = presentation.getSeverity(refElement);
+      if (severity == null) return null;
+      HighlightInfoType highlightInfoType = ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar);
+      HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(refElement.getElement());
+      return HighlightDisplayLevel.find(highlightSeverity);
+    }
+    else {
+      return profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    }
   }
 
   @Nullable

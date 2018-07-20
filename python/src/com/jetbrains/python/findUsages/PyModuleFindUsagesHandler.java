@@ -80,7 +80,9 @@ public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
     if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile)target).getName())) {
       List<PsiReference> result = new ArrayList<>(super.findReferencesToHighlight(target, searchScope));
       PsiElement targetDir = PyUtil.turnInitIntoDir(target);
-      result.addAll(ReferencesSearch.search(targetDir, searchScope, false).findAll());
+      if (targetDir != null) {
+        result.addAll(ReferencesSearch.search(targetDir, searchScope, false).findAll());
+      }
       return result;
     }
     return super.findReferencesToHighlight(target, searchScope);

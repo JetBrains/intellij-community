@@ -46,7 +46,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
-  private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
+  private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<? super FoldingDescriptor> descriptors) {
     final Queue<ASTNode> toProcess = new LinkedList<>();
     toProcess.add(node);
     while (!toProcess.isEmpty()) {
@@ -79,7 +79,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
         builder.append(text);
       }
       else if (builder.length() > 0) {
-        builder.append(text.substring(0, text.indexOf('\n')));
+        builder.append(text, 0, text.indexOf('\n'));
         break;
       }
       else {

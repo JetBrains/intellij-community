@@ -5,7 +5,7 @@ class X {
     for (Object o : l) {
         Object x = newMethod(o);
         if (x == null) continue;
-      System.out.println(x);
+        System.out.println(x);
     }
   }
 

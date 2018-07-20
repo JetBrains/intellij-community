@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -84,11 +84,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       Disposer.register(manager.getProject(), dockable);
       dockManager.register(dockable);
     }
-    KeymapManagerListener keymapListener = keymap -> {
-      invalidate();
-      repaint();
-    };
-    KeymapManager.getInstance().addKeymapManagerListener(keymapListener, this);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        invalidate();
+        repaint();
+      }
+    });
   }
 
   public FileEditorManagerImpl getManager() {
@@ -274,23 +277,19 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     mySplittersElement = element;
   }
 
-  @NotNull public VirtualFile[] getOpenFiles() {
-    final Set<VirtualFile> files = new ArrayListSet<>();
-    for (final EditorWindow myWindow : myWindows) {
-      final EditorWithProviderComposite[] editors = myWindow.getEditors();
-      for (final EditorWithProviderComposite editor : editors) {
-        VirtualFile file = editor.getFile();
-        // background thread may call this method when invalid file is being removed
-        // do not return it here as it will quietly drop out soon
-        if (file.isValid()) {
-          files.add(file);
-        }
+  @NotNull
+  public VirtualFile[] getOpenFiles() {
+    Set<VirtualFile> files = new ArrayListSet<>();
+    for (EditorWindow myWindow : myWindows) {
+      for (EditorWithProviderComposite editor : myWindow.getEditors()) {
+        files.add(editor.getFile());
       }
     }
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
-  @NotNull public VirtualFile[] getSelectedFiles() {
+  @NotNull
+  public VirtualFile[] getSelectedFiles() {
     final Set<VirtualFile> files = new ArrayListSet<>();
     for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();
@@ -842,7 +841,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
-          fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i);
+          fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i, false);
           if (isCurrentInTab) {
             focusedFile = virtualFile;
           }

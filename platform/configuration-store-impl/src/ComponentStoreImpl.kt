@@ -23,10 +23,10 @@ import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.project.isDirectoryBased
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
@@ -34,7 +34,6 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
 import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
-import io.netty.util.internal.SystemPropertyUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -74,7 +73,6 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
 
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
-  private val settingsSavingComponents = com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>()
 
   internal open val project: Project?
     get() = null
@@ -84,11 +82,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override abstract val storageManager: StateStorageManager
 
-  override final fun initComponent(component: Any, isService: Boolean) {
-    if (component is SettingsSavingComponent) {
-      settingsSavingComponents.add(component)
-    }
-
+  override fun initComponent(component: Any, isService: Boolean) {
     var componentName = ""
     try {
       @Suppress("DEPRECATION")
@@ -130,54 +124,43 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
-    var errors: MutableList<Throwable>? = null
+  override final fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
+    val errors: MutableList<Throwable> = SmartList<Throwable>()
 
-    // component state uses scheme manager in an ipr project, so, we must save it before
-    val isIprProject = project?.let { !it.isDirectoryBased } ?: false
-    if (isIprProject) {
-      settingsSavingComponents.firstOrNull { it is SchemeManagerFactoryBase }?.let {
-        try {
-          it.save()
-        }
-        catch (e: Throwable) {
-          if (errors == null) {
-            errors = SmartList<Throwable>()
-          }
-          errors!!.add(e)
-        }
-      }
-    }
+    beforeSaveComponents(errors)
 
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
-      errors = doSaveComponents(isForce, externalizationSession, errors)
+      doSaveComponents(isForce, externalizationSession, errors)
     }
 
-    for (settingsSavingComponent in settingsSavingComponents) {
-      try {
-        if (!isIprProject || settingsSavingComponent !is SchemeManagerFactoryBase) {
-          settingsSavingComponent.save()
-        }
-      }
-      catch (e: Throwable) {
-        if (errors == null) {
-          errors = SmartList<Throwable>()
-        }
-        errors!!.add(e)
-      }
+    afterSaveComponents(errors)
+
+    try {
+      saveAdditionalComponents(isForce)
+    }
+    catch (e: Throwable) {
+      errors.add(e)
     }
 
     if (externalizationSession != null) {
-      errors = doSave(externalizationSession.createSaveSessions(), readonlyFiles, errors)
+      doSave(externalizationSession.createSaveSessions(), readonlyFiles, errors)
     }
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  private fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {
+  protected open fun saveAdditionalComponents(isForce: Boolean) {
+  }
+
+  protected open fun beforeSaveComponents(errors: MutableList<Throwable>) {
+  }
+
+  protected open fun afterSaveComponents(errors: MutableList<Throwable>) {
+  }
+
+  protected  open fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, errors: MutableList<Throwable>): MutableList<Throwable>? {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
-    var errors = _errors
     val names = ArrayUtilRt.toStringArray(components.keys)
     Arrays.sort(names)
     val timeLogPrefix = "Saving"
@@ -216,9 +199,6 @@ abstract class ComponentStoreImpl : IComponentStore {
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
-        if (errors == null) {
-          errors = SmartList<Throwable>()
-        }
         errors.add(Exception("Cannot get $name component state", e))
       }
 
@@ -252,7 +232,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     runUndoTransparentWriteAction {
       try {
         VfsRootAccess.allowRootAccess(absolutePath)
-        CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))
+        val errors: MutableList<Throwable> = SmartList<Throwable>()
+        doSave(sessions, errors = errors)
+        CompoundRuntimeException.throwIfNotEmpty(errors)
       }
       finally {
         VfsRootAccess.disallowRootAccess(absolutePath)
@@ -276,12 +258,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   protected open fun doSave(saveSessions: List<SaveSession>,
                             readonlyFiles: MutableList<SaveSessionAndFile> = arrayListOf(),
-                            prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
-    var errors = prevErrors
+                            errors: MutableList<Throwable>) {
     for (session in saveSessions) {
-      errors = executeSave(session, readonlyFiles, prevErrors)
+      executeSave(session, readonlyFiles, errors)
     }
-    return errors
+    return
   }
 
   private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {
@@ -401,7 +382,7 @@ abstract class ComponentStoreImpl : IComponentStore {
            name != "ProjectRunConfigurationManager" && /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */
            name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
            name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
-           SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)
+           SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
@@ -438,7 +419,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return storages.sortByDeprecated()
   }
 
-  final override fun isReloadPossible(componentNames: Set<String>) = !componentNames.any { isNotReloadable(it) }
+  final override fun isReloadPossible(componentNames: Set<String>): Boolean = !componentNames.any { isNotReloadable(it) }
 
   private fun isNotReloadable(name: String): Boolean {
     val component = components.get(name)?.component ?: return false
@@ -534,10 +515,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 }
 
-internal fun executeSave(session: SaveSession,
-                         readonlyFiles: MutableList<SaveSessionAndFile>,
-                         previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
-  var errors = previousErrors
+internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
   try {
     session.save()
   }
@@ -546,13 +524,8 @@ internal fun executeSave(session: SaveSession,
     readonlyFiles.add(SaveSessionAndFile(e.session ?: session, e.file))
   }
   catch (e: Exception) {
-    if (errors == null) {
-      errors = SmartList<Throwable>()
-    }
     errors.add(e)
   }
-
-  return errors
 }
 
 private fun findNonDeprecated(storages: Array<Storage>) = storages.firstOrNull { !it.deprecated } ?: throw AssertionError(

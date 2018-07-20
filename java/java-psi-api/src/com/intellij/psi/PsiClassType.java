@@ -42,7 +42,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
 
   protected final LanguageLevel myLanguageLevel;
 
-  protected PsiClassType(LanguageLevel languageLevel) {
+  protected PsiClassType(@NotNull LanguageLevel languageLevel) {
     this(languageLevel, PsiAnnotation.EMPTY_ARRAY);
   }
 
@@ -67,6 +67,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
    *
    * @return the class instance, or null if the reference resolve failed.
    */
+  @Override
   @Nullable
   public abstract PsiClass resolve();
 
@@ -114,8 +115,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
       return aClass == otherClass;
     }
     return aClass.getManager().areElementsEquivalent(aClass, otherClass) &&
-           (PsiUtil.isRawSubstitutor(aClass, result.getSubstitutor()) ||
-            PsiUtil.equalOnEquivalentClasses(this, aClass, otherClassType, otherClass));
+           PsiUtil.equalOnEquivalentClasses(this, aClass, otherClassType, otherClass);
   }
 
   /**

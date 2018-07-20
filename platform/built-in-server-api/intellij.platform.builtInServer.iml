@@ -8,9 +8,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
 </module>

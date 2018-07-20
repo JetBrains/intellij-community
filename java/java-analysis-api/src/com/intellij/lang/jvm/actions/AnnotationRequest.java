@@ -3,8 +3,17 @@ package com.intellij.lang.jvm.actions;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface AnnotationRequest {
+import java.util.Collections;
+import java.util.List;
+
+public interface AnnotationRequest extends ActionRequest {
 
   @NotNull
   String getQualifiedName();
+
+  @NotNull
+  default List<AnnotationAttributeRequest> getAttributes() {
+    return Collections.emptyList();
+  }
+
 }

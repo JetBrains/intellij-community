@@ -26,15 +26,15 @@ internal class CreateGetterWithFieldAction(target: PsiClass, request: CreateMeth
   }
 
   override fun getText(): String {
-    return message("create.read.only.property.from.usage.full.text", propertyInfo.first, getNameForClass(target, false))
+    return message("create.read.only.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
   }
 
   override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {
 
-    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression {
+    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression? {
       val prototypeField = generatePrototypeField()
       val prototype = generateSimpleGetterPrototype(prototypeField)
-      val accessor = insertAccessor(prototype)
+      val accessor = insertAccessor(prototype) ?: return null
       val data = accessor.extractGetterTemplateData()
       return builder.setupInput(data)
     }

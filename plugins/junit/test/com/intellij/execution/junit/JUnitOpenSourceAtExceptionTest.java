@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
@@ -47,7 +33,7 @@ public class JUnitOpenSourceAtExceptionTest extends LightCodeInsightFixtureTestC
                        "}");
     myFixture.addClass("public class ChildTest extends ATest {}");
 
-    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest.testMe");
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest/testMe");
     testProxy.setTestFailed("failure", "\tat junit.framework.Assert.fail(Assert.java:57)\n" +
                                        "\tat junit.framework.Assert.failNotEquals(Assert.java:329)\n" +
                                        "\tat junit.framework.Assert.assertEquals(Assert.java:78)\n" +
@@ -63,8 +49,7 @@ public class JUnitOpenSourceAtExceptionTest extends LightCodeInsightFixtureTestC
     assertNotNull(location);
     assertInstanceOf(location, MethodLocation.class);
 
-    final JUnitConfiguration configuration =
-      new JUnitConfiguration("p", getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
     final Navigatable descriptor =
       testProxy.getDescriptor(location, new JUnitConsoleProperties(configuration, DefaultRunExecutor.getRunExecutorInstance()));
     assertInstanceOf(descriptor, OpenFileDescriptor.class);

@@ -70,6 +70,21 @@ public class PyAttributeOutsideInitInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-25263
+  public void testProperty() {
+    doTest();
+  }
+
+  // PY-25263
+  public void testPropertyAnnotation() {
+    doTest();
+  }
+
+  // PY-25263
+  public void testPropertyNotSetInInit() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

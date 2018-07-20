@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.actions.JavaQualifiedNameProvider;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
@@ -23,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -191,18 +194,19 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   }
 
   private static Condition<PsiMember> getQualifiedNameMatcher(String completePattern) {
-    final Condition<PsiMember> qualifiedMatcher;
-    if (completePattern.contains(".")) {
-      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + StringUtil.replace(completePattern, ".", ".*")).build();
-      qualifiedMatcher = member -> {
+    if (completePattern.contains("#") && completePattern.endsWith(")")) {
+      return member -> member instanceof PsiMethod && JavaQualifiedNameProvider.hasQualifiedName(completePattern, (PsiMethod)member);
+    }
+    
+    if (completePattern.contains(".") || completePattern.contains("#")) {
+      String normalized = StringUtil.replace(StringUtil.replace(completePattern, "#", ".*"), ".", ".*");
+      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + normalized).build();
+      return member -> {
         String qualifiedName = PsiUtil.getMemberQualifiedName(member);
         return qualifiedName != null && matcher.matches(qualifiedName);
       };
-    } else {
-      //noinspection unchecked
-      qualifiedMatcher = Condition.TRUE;
     }
-    return qualifiedMatcher;
+    return Conditions.alwaysTrue();
   }
 
   private static class MyComparator implements Comparator<PsiModifierListOwner>{
@@ -258,6 +262,32 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         LOG.error(element);
         return 0;
       }
+    }
+  }
+  
+  public static class JavadocSeparatorContributor implements ChooseByNameContributor, GotoClassContributor {
+    @Nullable
+    @Override
+    public String getQualifiedName(NavigationItem item) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public String getQualifiedNameSeparator() {
+      return "#";
+    }
+
+    @NotNull
+    @Override
+    public String[] getNames(Project project, boolean includeNonProjectItems) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
+      return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
     }
   }
 

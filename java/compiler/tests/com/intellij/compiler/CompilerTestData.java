@@ -1,16 +1,14 @@
-/**
- * created at Jan 22, 2002
- * @author Jeka
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CompilerTestData implements JDOMExternalizable {
   private final Set<String> myPathsToDelete = new HashSet<>();
@@ -18,8 +16,7 @@ public class CompilerTestData implements JDOMExternalizable {
   private String[] myToRecompile;
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-
+  public void readExternal(Element element) {
     // read paths to be deleted
     myPathsToDelete.clear();
     for (Object o3 : element.getChildren("delete")) {
@@ -43,8 +40,7 @@ public class CompilerTestData implements JDOMExternalizable {
 
     // read paths that are expected to be found by dependencies
     data.clear();
-    for (Object o1 : element.getChildren("recompile")) {
-      Element elem = (Element)o1;
+    for (Element elem : element.getChildren("recompile")) {
       for (Object o : elem.getChildren()) {
         Element pathElement = (Element)o;
         data.add(pathElement.getAttributeValue("path"));
@@ -54,8 +50,7 @@ public class CompilerTestData implements JDOMExternalizable {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    throw new WriteExternalException("Save not supported");
+  public void writeExternal(Element element) {
   }
 
   public String[] getDeletedByMake() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -79,7 +65,7 @@ class SearchForUsagesRunnable implements Runnable {
   private final AtomicReference<Usage> myFirstUsage = new AtomicReference<>();
   @NotNull
   private final Project myProject;
-  private final AtomicReference<UsageViewImpl> myUsageViewRef;
+  private final AtomicReference<UsageViewEx> myUsageViewRef;
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] mySearchFor;
   private final Factory<UsageSearcher> mySearcherFactory;
@@ -91,7 +77,7 @@ class SearchForUsagesRunnable implements Runnable {
 
   SearchForUsagesRunnable(@NotNull UsageViewManagerImpl usageViewManager,
                           @NotNull Project project,
-                          @NotNull AtomicReference<UsageViewImpl> usageViewRef,
+                          @NotNull AtomicReference<UsageViewEx> usageViewRef,
                           @NotNull UsageViewPresentation presentation,
                           @NotNull UsageTarget[] searchFor,
                           @NotNull Factory<UsageSearcher> searcherFactory,
@@ -110,7 +96,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String createOptionsHtml(@NonNls UsageTarget[] searchFor) {
+  private static String createOptionsHtml(@NonNls @NotNull UsageTarget[] searchFor) {
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut(searchFor);
     String shortcutText = "";
     if (shortcut != null) {
@@ -166,6 +152,7 @@ class SearchForUsagesRunnable implements Runnable {
     ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, actualType, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
   }
 
+  @NotNull
   private Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return ReadAction.compute(() -> {
       if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
@@ -195,6 +182,7 @@ class SearchForUsagesRunnable implements Runnable {
     return resolveScope;
   }
 
+  @NotNull
   private static HyperlinkListener addHrefHandling(@Nullable final HyperlinkListener listener,
                                                    @NotNull final String hrefTarget, @NotNull final Runnable handler) {
     return new HyperlinkAdapter() {
@@ -216,7 +204,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String detailedLargeFilesMessage(@NotNull Collection<VirtualFile> largeFiles) {
+  private static String detailedLargeFilesMessage(@NotNull Collection<? extends VirtualFile> largeFiles) {
     String message = "";
     if (largeFiles.size() == 1) {
       final VirtualFile vFile = largeFiles.iterator().next();
@@ -303,34 +291,38 @@ class SearchForUsagesRunnable implements Runnable {
     rangeBlinker.startBlinking();
   }
 
-  private UsageViewImpl getUsageView(@NotNull ProgressIndicator indicator) {
-    UsageViewImpl usageView = myUsageViewRef.get();
+  private UsageViewEx getUsageView(@NotNull ProgressIndicator indicator) {
+    UsageViewEx usageView = myUsageViewRef.get();
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      usageView = new UsageViewImpl(myProject, myPresentation, mySearchFor, mySearcherFactory);
-      usageView.associateProgress(indicator);
+      usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
+        // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
+        usageView.associateProgress(indicator);
         if (myProcessPresentation.isShowFindOptionsPrompt()) {
           openView(usageView);
         }
         else {
-          UsageViewImpl finalView = usageView;
-          SwingUtilities.invokeLater(() -> {
-            if (myProject.isDisposed()) return;
-            if (myListener != null) {
-              myListener.usageViewCreated(finalView);
-            }
-          });
+          if (myListener != null) {
+            SwingUtilities.invokeLater(() -> {
+              if (!myProject.isDisposed()) {
+                UsageViewEx uv = myUsageViewRef.get();
+                if (uv != null) {
+                  myListener.usageViewCreated(uv);
+                }
+              }
+            });
+          }
         }
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
-          final UsageViewImpl finalUsageView = usageView;
+          final UsageViewEx finalUsageView = usageView;
           ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
         }
       }
       else {
-        UsageViewImpl finalUsageView = usageView;
+        UsageViewEx finalUsageView = usageView;
         // later because dispose does some sort of swing magic e.g. AnAction.unregisterCustomShortcutSet()
         UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(finalUsageView));
       }
@@ -339,10 +331,10 @@ class SearchForUsagesRunnable implements Runnable {
     return null;
   }
 
-  private void openView(@NotNull final UsageViewImpl usageView) {
+  private void openView(@NotNull final UsageViewEx usageView) {
     SwingUtilities.invokeLater(() -> {
       if (myProject.isDisposed()) return;
-      myUsageViewManager.addContent(usageView, myPresentation);
+      myUsageViewManager.showUsageView(usageView, myPresentation);
       if (myListener != null) {
         myListener.usageViewCreated(usageView);
       }
@@ -394,7 +386,7 @@ class SearchForUsagesRunnable implements Runnable {
           myFirstUsage.compareAndSet(null, usage);
         }
 
-        final UsageViewImpl usageView = getUsageView(indicator1);
+        final UsageViewEx usageView = getUsageView(indicator1);
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(indicator1);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
@@ -424,32 +416,34 @@ class SearchForUsagesRunnable implements Runnable {
   private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     int usageCount = myUsageCountWithoutDefinition.get();
-    if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myProcessPresentation.isCanceled()) {
-          notifyByFindBalloon(null, MessageType.WARNING, Collections.singletonList("Usage search was canceled"));
+    if (usageCount == 0) {
+      if (myProcessPresentation.isShowNotFoundMessage()) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myProcessPresentation.isCanceled()) {
+            notifyByFindBalloon(null, MessageType.WARNING, Collections.singletonList("Usage search was canceled"));
+            findStartedBalloonShown.set(false);
+            return;
+          }
+
+          final String message = UsageViewBundle.message("dialog.no.usages.found.in",
+                                                         StringUtil.decapitalize(myPresentation.getUsagesString()),
+                                                         myPresentation.getScopeText(),
+                                                         myPresentation.getContextText()
+          );
+
+          List<String> lines = new ArrayList<>();
+          lines.add(StringUtil.escapeXml(message));
+          if (myOutOfScopeUsages.get() != 0) {
+            lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
+          }
+          if (myProcessPresentation.isShowFindOptionsPrompt()) {
+            lines.add(createOptionsHtml(mySearchFor));
+          }
+          MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
+          notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
           findStartedBalloonShown.set(false);
-          return;
-        }
-
-        final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                       StringUtil.decapitalize(myPresentation.getUsagesString()),
-                                                       myPresentation.getScopeText(),
-                                                       myPresentation.getContextText()
-                                                       );
-
-        List<String> lines = new ArrayList<>();
-        lines.add(StringUtil.escapeXml(message));
-        if (myOutOfScopeUsages.get() != 0) {
-          lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
-        }
-        if (myProcessPresentation.isShowFindOptionsPrompt()) {
-          lines.add(createOptionsHtml(mySearchFor));
-        }
-        MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-        notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
-        findStartedBalloonShown.set(false);
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }
     }
     else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -470,12 +464,8 @@ class SearchForUsagesRunnable implements Runnable {
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
     else {
-      final UsageViewImpl usageView = myUsageViewRef.get();
-      if (usageView != null) {
-        usageView.drainQueuedUsageNodes();
-        usageView.setSearchInProgress(false);
-      }
-
+      final UsageViewEx usageView = myUsageViewRef.get();
+      usageView.searchFinished();
       final List<String> lines;
       final HyperlinkListener hyperlinkListener;
       if (myOutOfScopeUsages.get() == 0 || getPsiElement(mySearchFor)==null) {
@@ -498,7 +488,7 @@ class SearchForUsagesRunnable implements Runnable {
       }
     }
 
-    UsageViewImpl usageView = myUsageViewRef.get();
+    UsageViewEx usageView = myUsageViewRef.get();
     if (usageView != null) {
       usageView.waitForUpdateRequestsCompletion();
     }
@@ -508,7 +498,7 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+  private static String mayHaveUsagesInUnloadedModulesMessage(@NotNull Collection<? extends UnloadedModuleDescription> unloadedModules) {
     String modulesText = unloadedModules.size() > 1 ? unloadedModules.size() + " unloaded modules"
                                                     : "unloaded module '" + ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(unloadedModules)).getName() + "'";
     return "Occurrences in " + modulesText + " may be skipped. Load all modules and repeat the search to get complete results.";

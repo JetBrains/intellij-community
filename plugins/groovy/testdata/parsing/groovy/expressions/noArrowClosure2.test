@@ -10,15 +10,13 @@ Groovy script
       <empty list>
     Reference expression
       PsiElement(identifier)('a')
-    PsiErrorElement:';', '}' or new line expected
-      <empty list>
-    PsiElement(,)(',')
+    PsiErrorElement:',' unexpected
+      PsiElement(,)(',')
     PsiWhiteSpace(' ')
     Reference expression
       PsiElement(identifier)('b')
-    PsiErrorElement:';', '}' or new line expected
-      <empty list>
-    PsiElement(,)(',')
+    PsiErrorElement:',' unexpected
+      PsiElement(,)(',')
     PsiWhiteSpace(' ')
     Reference expression
       PsiElement(identifier)('c')

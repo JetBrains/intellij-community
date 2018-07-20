@@ -32,7 +32,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   /**
    * @deprecated use myProviderToDisabledTemplates
    */
-  private Map<String, Set<String>> myLangToDisabledTemplates = ContainerUtil.newHashMap();
+  @Deprecated private Map<String, Set<String>> myLangToDisabledTemplates = ContainerUtil.newHashMap();
 
   private boolean postfixTemplatesEnabled = true;
   private boolean templatesCompletionEnabled = true;
@@ -71,6 +71,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   /**
    * @deprecated use getProviderToDisabledTemplates
    */
+  @Deprecated
   @NotNull
   @MapAnnotation(entryTagName = "disabled-postfix-templates", keyAttributeName = "lang", surroundWithTag = false)
   public Map<String, Set<String>> getLangDisabledTemplates() {
@@ -80,6 +81,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   /**
    * @deprecated use setProviderToDisabledTemplates
    */
+  @Deprecated
   public void setLangDisabledTemplates(@NotNull Map<String, Set<String>> templatesState) {
     myLangToDisabledTemplates = templatesState;
   }

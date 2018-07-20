@@ -10,19 +10,19 @@ Groovy script
       PsiElement(()('(')
       Compound regular expression
         PsiElement($/ regex begin)('$/')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)('cde ')
         GString injection
           PsiElement($)('$')
           Reference expression
             PsiElement(this)('this')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)(' abc ')
         GString injection
           PsiElement($)('$')
           Reference expression
             PsiElement(this)('this')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)(' $+')
         PsiElement($/ regex end)('/$')
       PsiElement())(')')
@@ -35,13 +35,13 @@ Groovy script
       PsiElement(()('(')
       Compound regular expression
         PsiElement($/ regex begin)('$/')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)('cde ')
         GString injection
           PsiElement($)('$')
           PsiErrorElement:Identifier or code block expected
             PsiElement(package)('package')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)(' pack')
         PsiElement($/ regex end)('/$')
       PsiElement())(')')

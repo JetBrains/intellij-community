@@ -20,17 +20,21 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -292,8 +296,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     if (toCatchExceptions) {
+      PsiStatement statement;
       if (!(ref instanceof PsiReferenceExpression &&
-            JavaHighlightUtil.isSuperOrThisCall(PsiTreeUtil.getParentOfType(ref, PsiStatement.class), true, false))) {
+            (statement = PsiTreeUtil.getParentOfType(ref, PsiStatement.class)) != null &&
+            JavaHighlightUtil.isSuperOrThisCall(statement, true, false))) {
         if (needToCatchExceptions(changeInfo, caller)) {
           PsiClassType[] newExceptions =
             callee != null ? getCalleeChangedExceptionInfo(callee) : getPrimaryChangedExceptionInfo(changeInfo);
@@ -799,6 +805,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       fixPrimaryThrowsLists(method, newExceptions);
     }
 
+    tryUpdateContracts(method, changeInfo);
+
     if (baseMethod == null && method.findSuperMethods().length == 0) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, Override.class.getName());
       if (annotation != null) {
@@ -846,7 +854,14 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
       else {
-        newParms[i] = createNewParameter(changeInfo, info, substitutor);
+        PsiElement parent = list.getParent();
+        if (parent instanceof PsiLambdaExpression && !((PsiLambdaExpression)parent).hasFormalParameterTypes()) {
+          PsiExpression dummyLambdaParam = factory.createExpressionFromText(info.getName() + "-> {}", list);
+          newParms[i] = ((PsiLambdaExpression)dummyLambdaParam).getParameterList().getParameters()[0];
+        }
+        else {
+          newParms[i] = createNewParameter(changeInfo, info, substitutor);
+        }
       }
     }
 
@@ -959,7 +974,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       type = psiSubstitutor.substitute(type);
     }
     PsiParameter parameter = factory.createParameter(newParm.getName(), type, list);
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+    if (JavaCodeStyleSettings.getInstance(list.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
       PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
     }
     return parameter;
@@ -1089,10 +1104,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    private static void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
-      PsiAnnotation contract = ControlFlowAnalyzer.findContractAnnotation(method);
-      if (contract != null && !AnnotationUtil.isInferredAnnotation(contract)) {
-        conflictDescriptions.putValue(method, "@Contract annotation will have to be changed manually");
+    private void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
+      try {
+        ContractConverter.convertContract(method, myChangeInfo);
+      }
+      catch (ContractConverter.ContractConversionException e) {
+        conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());
       }
     }
 
@@ -1139,31 +1156,37 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, String> conflicts, final String modifier) {
-      SuperMethodsSearch.search(method, ReadAction.compute(() -> method.getContainingClass()), true, false).forEach(
-        methodSignature -> {
-          final PsiMethod superMethod = methodSignature.getMethod();
-          if (!hasCompatibleVisibility(superMethod, true, modifier)) {
-            conflicts.putValue(superMethod, IntentionPowerPackBundle.message(
-              "0.will.have.incompatible.access.privileges.with.super.1",
+      SuperMethodsSearch.search(method, ReadAction.compute(method::getContainingClass), true, false).forEach(
+        new ReadActionProcessor<MethodSignatureBackedByPsiMethod>() {
+          @Override
+          public boolean processInReadAction(MethodSignatureBackedByPsiMethod methodSignature) {
+            final PsiMethod superMethod = methodSignature.getMethod();
+            if (!hasCompatibleVisibility(superMethod, true, modifier)) {
+              conflicts.putValue(superMethod, IntentionPowerPackBundle.message(
+                "0.will.have.incompatible.access.privileges.with.super.1",
+                RefactoringUIUtil.getDescription(method, false),
+                RefactoringUIUtil.getDescription(superMethod, true)));
+            }
+            return true;
+          }
+        });
+      OverridingMethodsSearch.search(method).forEach(new ReadActionProcessor<PsiMethod>() {
+        @Override
+        public boolean processInReadAction(PsiMethod overridingMethod) {
+          if (!isVisibleFromOverridingMethod(method, overridingMethod, modifier)) {
+            conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
+              "0.will.no.longer.be.visible.from.overriding.1",
               RefactoringUIUtil.getDescription(method, false),
-              RefactoringUIUtil.getDescription(superMethod, true)));
+              RefactoringUIUtil.getDescription(overridingMethod, true)));
+          }
+          else if (!hasCompatibleVisibility(overridingMethod, false, modifier)) {
+            conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
+              "0.will.have.incompatible.access.privileges.with.overriding.1",
+              RefactoringUIUtil.getDescription(method, false),
+              RefactoringUIUtil.getDescription(overridingMethod, true)));
           }
           return true;
-        });
-      OverridingMethodsSearch.search(method).forEach(overridingMethod -> {
-        if (!isVisibleFromOverridingMethod(method, overridingMethod, modifier)) {
-          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
-            "0.will.no.longer.be.visible.from.overriding.1",
-            RefactoringUIUtil.getDescription(method, false),
-            RefactoringUIUtil.getDescription(overridingMethod, true)));
         }
-        else if (!hasCompatibleVisibility(overridingMethod, false, modifier)) {
-          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
-            "0.will.have.incompatible.access.privileges.with.overriding.1",
-            RefactoringUIUtil.getDescription(method, false),
-            RefactoringUIUtil.getDescription(overridingMethod, true)));
-        }
-        return false;
       });
     }
 
@@ -1227,8 +1250,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
           PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
-          if (CodeStyleSettingsManager.getSettings(manager.getProject())
-            .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+          if (JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
             PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
           }
           prototype.getParameterList().add(param);
@@ -1253,4 +1275,16 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
+  private static void tryUpdateContracts(PsiMethod method, JavaChangeInfo info) {
+    PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
+    if (annotation == null) return;
+    try {
+      PsiAnnotation newAnnotation = ContractConverter.convertContract(method, info);
+      if (newAnnotation != null && !newAnnotation.isPhysical()) {
+        annotation.replace(newAnnotation);
+      }
+    }
+    catch (ContractConverter.ContractConversionException ignored) {
+    }
+  }
 }

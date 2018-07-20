@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.fixes
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -15,6 +15,7 @@ class CreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
     return TestUtils.testDataPath + 'fixes/createConstantFromJava/' + getTestName(true) + '/'
   }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_LATEST_REAL_JDK
@@ -46,9 +47,7 @@ class CreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void testSuperInterfaceInheritor() {
-    doTest( "Create constant field 'bar' in 'I'", 0)
+  void testUppercaseInSuperInterface() {
+    doTest( "Create constant field 'BAR' in 'I'", 0)
   }
 }
-
-

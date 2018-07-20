@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public abstract class DiffRequestFactory {
   //
 
   @NotNull
-  public abstract ContentDiffRequest createFromFiles(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2);
+  public abstract ContentDiffRequest createFromFiles(@Nullable Project project, @Nullable VirtualFile file1, @Nullable VirtualFile file2);
 
   @NotNull
   public abstract ContentDiffRequest createFromFiles(@Nullable Project project,
@@ -59,8 +60,9 @@ public abstract class DiffRequestFactory {
   // Titles
   //
 
-  @NotNull
-  public abstract String getContentTitle(@NotNull VirtualFile file);
+  @Nullable
+  @Contract("null->null; !null->!null")
+  public abstract String getContentTitle(@Nullable VirtualFile file);
 
   @NotNull
   public abstract String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2);

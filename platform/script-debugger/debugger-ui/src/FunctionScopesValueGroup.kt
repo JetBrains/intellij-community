@@ -24,7 +24,7 @@ internal class FunctionScopesValueGroup(private val functionValue: FunctionValue
             createAndAddScopeList(node, Arrays.asList(*scopes), variableContext, null)
           }
         }
-      .rejected {
+      .onError {
         LOG.errorIfNotMessage(it)
         node.setErrorMessage(it.message!!)
       }

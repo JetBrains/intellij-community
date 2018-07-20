@@ -16,11 +16,13 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
@@ -35,6 +37,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 /**
  * @author nik
@@ -72,6 +75,7 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
+    logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
@@ -90,6 +94,7 @@ class CompilationContextImpl implements CompilationContext {
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
+    messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
     return context
   }
 
@@ -339,16 +344,38 @@ class CompilationContextImpl implements CompilationContext {
     return enumerator.classes().roots.collect { it.absolutePath }
   }
 
+  private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
-    def baseDir = new File(paths.projectHome)
     def artifactsDir = new File(paths.artifacts)
-    if (!FileUtil.isAncestor(baseDir, file, true)) {
-      messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
-      return
+
+    if (file.isFile()) {
+      //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
+      def fileSize = file.size()
+      if (fileSize > 1000000) {
+        def producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
+        def willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir, file, true)
+
+        long oneGb = 1024L * 1024 * 1024
+        long requiredAdditionalSpace = oneGb * 6
+        long requiredSpaceForArtifacts = oneGb * 9
+        long availableSpace = file.freeSpace
+        //heuristics: a build publishes at most 9Gb of artifacts and requires some additional space for compiled classes, dependencies, temp files, etc.
+        // So we'll publish an artifact earlier only if there will be enough space for its copy.
+        def skipPublishing = willBePublishedWhenBuildFinishes && availableSpace < (requiredSpaceForArtifacts - producedSize) + requiredAdditionalSpace + fileSize
+        messages.debug("Checking free space before publishing $artifactPath (${StringUtil.formatFileSize(fileSize)}): ")
+        messages.debug(" total produced: ${StringUtil.formatFileSize(producedSize)}")
+        messages.debug(" available space: ${StringUtil.formatFileSize(availableSpace)}")
+        messages.debug(" ${skipPublishing ? "will be" : "won't be"} skipped")
+        if (skipPublishing) {
+          messages.info("Artifact $artifactPath won't be published early to avoid caching on agent (workaround for TW-54541)")
+          return
+        }
+      }
     }
-    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+
+    def pathToReport = file.absolutePath
 
     def targetDirectoryPath = ""
     if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
@@ -359,13 +386,18 @@ class CompilationContextImpl implements CompilationContext {
       targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
     }
     if (targetDirectoryPath) {
-      relativePath += "=>" + targetDirectoryPath
+      pathToReport += "=>" + targetDirectoryPath
     }
-    messages.artifactBuilt(relativePath)
+    messages.artifactBuilt(pathToReport)
   }
 
   private static String toCanonicalPath(String path) {
     FileUtil.toSystemIndependentName(new File(path).canonicalPath)
+  }
+
+  static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
+    def dir = new File(directoryPath)
+    buildMessages.debug("Free disk space $phase: ${StringUtil.formatFileSize(dir.freeSpace)} (on disk containing $dir)")
   }
 }
 

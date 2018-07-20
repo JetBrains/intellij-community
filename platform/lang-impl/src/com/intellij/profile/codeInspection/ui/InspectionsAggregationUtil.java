@@ -1,13 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,6 +29,7 @@ public class InspectionsAggregationUtil {
   }
 
   public static List<InspectionConfigTreeNode.Tool> getInspectionsNodes(final TreePath[] paths) {
+    if (paths == null) return Collections.emptyList();
     final Queue<InspectionConfigTreeNode> q = new Queue<>(paths.length);
     for (final TreePath path : paths) {
       if (path != null) {

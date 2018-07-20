@@ -3,10 +3,8 @@ package com.intellij.notification;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationsConfigurable;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -93,32 +91,14 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
 
   private static ActionToolbar createToolbar(Project project, Editor editor, EventLogConsole console) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new EditNotificationSettings(project));
-    group.add(new DisplayBalloons());
-    group.add(new ToggleSoftWraps(editor));
-    group.add(new ScrollToTheEndToolbarAction(editor));
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_MARK_ALL_NOTIFICATIONS_AS_READ));
     group.add(new EventLogConsole.ClearLogAction(console));
+    group.addSeparator();
+    group.add(new EditNotificationSettings(project));
 
     return ActionManager.getInstance().createActionToolbar("EventLog", group, false);
   }
   
-  private static class DisplayBalloons extends ToggleAction implements DumbAware {
-    public DisplayBalloons() {
-      super("Show balloons", "Enable or suppress notification balloons", AllIcons.General.Balloon);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS = state;
-    }
-  }
-
   private static class EditNotificationSettings extends DumbAwareAction {
     private final Project myProject;
 
@@ -133,7 +113,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
   }
 
-  private static class ToggleSoftWraps extends ToggleUseSoftWrapsToolbarAction {
+  protected static class ToggleSoftWraps extends ToggleUseSoftWrapsToolbarAction {
     private final Editor myEditor;
 
     public ToggleSoftWraps(Editor editor) {

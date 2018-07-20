@@ -34,7 +34,7 @@ class ExtendedTableFixture(private val myRobot: Robot, val myTable: JTable) : JT
 
 class RowFixture(private val myRobot: Robot, val rowNumber: Int, val tableFixture: ExtendedTableFixture) {
 
-  val myTable = tableFixture.myTable
+  val myTable: JTable = tableFixture.myTable
 
   fun hasCheck(): Boolean =
     (0 until myTable.columnCount)

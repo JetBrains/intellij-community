@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework;
 
 import com.intellij.ide.BootstrapClassLoaderUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.WindowsCommandLineProcessor;
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.*;
@@ -44,10 +28,7 @@ import static com.intellij.openapi.application.PathManager.PROPERTY_CONFIG_PATH;
 import static com.intellij.openapi.application.PathManager.PROPERTY_SYSTEM_PATH;
 import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.getProjectCreationDirPath;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.getSystemPropertyOrEnvironmentVariable;
 import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
-import static com.intellij.util.ui.UIUtil.initDefaultLAF;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
 import static org.junit.Assert.assertNotNull;
@@ -103,8 +84,8 @@ public class IdeTestApplication {
 
   @NotNull
   public static synchronized IdeTestApplication getInstance() throws Exception {
-    String customConfigPath = getSystemPropertyOrEnvironmentVariable(CUSTOM_CONFIG_PATH);
-    String customSystemPath = getSystemPropertyOrEnvironmentVariable(CUSTOM_SYSTEM_PATH);
+    String customConfigPath = GuiTestUtil.INSTANCE.getSystemPropertyOrEnvironmentVariable(CUSTOM_CONFIG_PATH);
+    String customSystemPath = GuiTestUtil.INSTANCE.getSystemPropertyOrEnvironmentVariable(CUSTOM_SYSTEM_PATH);
     File configDirPath = null;
     boolean isDefaultConfig = true;
     if (StringUtil.isEmpty(customConfigPath)) {
@@ -128,7 +109,7 @@ public class IdeTestApplication {
       ourInstance = new IdeTestApplication();
       if (isDefaultConfig) recreateDirectory(configDirPath);
 
-      File newProjectsRootDirPath = getProjectCreationDirPath();
+      File newProjectsRootDirPath = GuiTestUtil.INSTANCE.getProjectCreationDirPath();
       recreateDirectory(newProjectsRootDirPath);
 
       ClassLoader ideClassLoader = ourInstance.getIdeClassLoader();
@@ -160,6 +141,7 @@ public class IdeTestApplication {
     pluginManagerStart(args);
 
     myIdeClassLoader = createClassLoader();
+    Thread.currentThread().setContextClassLoader(myIdeClassLoader);
 
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, myIdeClassLoader);
 
@@ -176,7 +158,7 @@ public class IdeTestApplication {
   // containing the URLs for the plugin jars is loaded by a different ClassLoader and it gets ignored. The result is test failing because
   // classes like AndroidPlugin cannot be found.
   @NotNull
-  private static ClassLoader createClassLoader() throws MalformedURLException, URISyntaxException {
+  private static ClassLoader createClassLoader() throws MalformedURLException {
     Collection<URL> classpath = new LinkedHashSet<>();
     addIdeaLibraries(classpath);
     addAdditionalClassPath(classpath);
@@ -190,18 +172,7 @@ public class IdeTestApplication {
       builder.allowBootstrapResources();
     }
 
-    UrlClassLoader newClassLoader = builder.get();
-
-    // prepare plugins
-    try {
-      StartupActionScriptManager.executeActionScript();
-    }
-    catch (IOException e) {
-      Main.showMessage("Plugin Installation Error", e);
-    }
-
-    Thread.currentThread().setContextClassLoader(newClassLoader);
-    return newClassLoader;
+    return builder.get();
   }
 
   private static void addIdeaLibraries(@NotNull Collection<URL> classpath) throws MalformedURLException {
@@ -255,7 +226,6 @@ public class IdeTestApplication {
   private static void pluginManagerStart(@NotNull String[] args) {
     // Duplicates what PluginManager#start does.
     Main.setFlags(args);
-    initDefaultLAF();
   }
 
   public void dispose() {

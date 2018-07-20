@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -10,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -27,11 +27,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
@@ -42,12 +38,7 @@ public class ResolveImportUtil {
   private ResolveImportUtil() {
   }
 
-  private static final ThreadLocal<Set<String>> ourBeingImported = new ThreadLocal<Set<String>>() {
-    @Override
-    protected Set<String> initialValue() {
-      return new HashSet<>();
-    }
-  };
+  private static final ThreadLocal<Set<String>> ourBeingImported = ThreadLocal.withInitial(() -> new HashSet<>());
 
   public static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
     if (foothold != null) {
@@ -201,7 +192,7 @@ public class ResolveImportUtil {
   }
 
   /**
-   * @deprecated {@link use {@link #multiResolveModuleInRoots(QualifiedName, PsiElement)}}
+   * @deprecated use {@link #multiResolveModuleInRoots(QualifiedName, PsiElement)}
    */
   @Deprecated
   @Nullable
@@ -246,13 +237,14 @@ public class ResolveImportUtil {
   /**
    * Tries to find referencedName under the parent element.
    *
-   * @param parent          element under which to look for referenced name; if null, null is returned.
+   * @param parent          element under which to look for referenced name; if null empty list is returned
    * @param referencedName  which name to look for.
    * @param containingFile  where we're in.
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
    * @param withoutStubs
-   * @return the element the referencedName resolves to, or null.
+   * @param withoutForeign  if {@code true} do not use {@link PyReferenceResolveProvider} instances for resolving
+   * @return the element the referencedName resolves to
    */
   @NotNull
   public static List<RatedResolveResult> resolveChildren(@Nullable PsiElement parent,
@@ -364,9 +356,9 @@ public class ResolveImportUtil {
   private static List<RatedResolveResult> resolveMemberFromReferenceTypeProviders(@NotNull PsiElement parent,
                                                                                   @NotNull String referencedName) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext();
-    final PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
-    if (refType != null) {
-      final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
+    final Ref<PyType> refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
+    if (refType != null && !refType.isNull()) {
+      final List<? extends RatedResolveResult> result = refType.get().resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
       if (result != null) {
         return Lists.newArrayList(result);
       }
@@ -385,27 +377,27 @@ public class ResolveImportUtil {
                                                              boolean isFileOnly,
                                                              boolean checkForPackage,
                                                              boolean withoutStubs) {
+    final ResolveResultList result = new ResolveResultList();
+
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
-    if (subdir != null && (!checkForPackage || PyUtil.isPackage(subdir, containingFile)) && subdir.getName().equals(referencedName)) {
-      return ResolveResultList.to(subdir);
+    if (subdir != null && subdir.getName().equals(referencedName) && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, subdir));
     }
 
     final PsiFile module = findPyFileInDir(dir, referencedName, withoutStubs);
     if (module != null) {
-      return ResolveResultList.to(module);
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, module));
     }
 
     if (!isFileOnly) {
       final PsiElement packageElement = PyUtil.getPackageElement(dir, containingFile);
-      if (packageElement == containingFile) {
-        return Collections.emptyList(); // don't dive into the file we're in
-      }
-      if (packageElement instanceof PyFile) {
-        return ((PyFile)packageElement).multiResolveName(referencedName);
+      if (packageElement != containingFile && packageElement instanceof PyFile) {
+        result.addAll(((PyFile)packageElement).multiResolveName(referencedName));
       }
     }
-    return Collections.emptyList();
+
+    return result;
   }
 
   @Nullable

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.Producer;
@@ -40,7 +39,7 @@ import java.awt.event.MouseEvent;
 public class OnePixelDivider extends Divider {
   public static final Color BACKGROUND = new JBColor(() -> {
     final Color bg = UIManager.getColor("OnePixelDivider.background");
-    return bg != null ? bg : new JBColor(Gray.xC5, Gray.x51);
+    return bg != null ? bg : JBColor.border();
   });
 
   private boolean myVertical;

@@ -28,7 +28,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -45,13 +44,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiTreeDebugBuilder;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Function;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.TextRangeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -181,7 +180,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         for (final ASTNode node : changeSet.getChangedElements()) {
           final TreeChange treeChange = changeSet.getChangesByElement(node);
           for (final ASTNode affectedChild : treeChange.getAffectedChildren()) {
-            checkForOuters(containingFile, (TreeElement)affectedChild);
+            scheduleReparseIfNeeded(containingFile, affectedChild);
 
             final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
             switch (childChange.getChangeType()) {
@@ -208,10 +207,26 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         }
       }
 
-      private void checkForOuters(PsiFile containingFile, TreeElement affectedChild) {
-        if (TreeUtil.containsOuterLanguageElements(affectedChild)) {
+      private void scheduleReparseIfNeeded(PsiFile containingFile, ASTNode affectedChild) {
+        if (changeMightBreakPsiTextConsistency(affectedChild)) {
           containingFile.putUserData(REPARSE_PENDING, true);
         }
+      }
+
+      private boolean changeMightBreakPsiTextConsistency(ASTNode node) {
+        return TreeUtil.containsOuterLanguageElements(node) || isRightAfterErrorElement(node);
+      }
+
+      private boolean isRightAfterErrorElement(ASTNode _node) {
+        Function<ASTNode, ASTNode> prevNode = node -> {
+          ASTNode prev = node.getTreePrev();
+          return prev != null ? TreeUtil.getLastChild(prev) : node.getTreeParent();
+        };
+        return JBIterable.generate(_node, prevNode)
+                         .skip(1)
+                         .takeWhile(e -> e instanceof PsiWhiteSpace || e.getTextLength() == 0)
+                         .filter(PsiErrorElement.class)
+                         .isNotEmpty();
       }
     });
   }
@@ -334,8 +349,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
     }
 
-    reparseByTextIfNeeded(key, document);
-
     Collection<Disposable> toDispose = Collections.emptyList();
     try {
       // process all roots in viewProvider to find marked for reformat before elements and create appropriate range markers
@@ -345,10 +358,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
       // then we create ranges by changed nodes. One per node. There ranges can intersect. Ranges are sorted by end offset.
       if (astNodes != null) createActionsMap(astNodes, key, postProcessTasks);
-
-      if (Boolean.getBoolean("check.psi.is.valid") && ApplicationManager.getApplication().isUnitTestMode()) {
-        checkPsiIsCorrect(key);
-      }
 
       while (!postProcessTasks.isEmpty()) {
         // now we have to normalize actions so that they not intersect and ordered in most appropriate way
@@ -362,6 +371,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myPsiManager.getProject());
           codeStyleManager.runWithDocCommentFormattingDisabled(
             viewProvider.getPsi(viewProvider.getBaseLanguage()), () -> normalizedAction.execute(viewProvider));
+          reparseByTextIfNeeded(key, document);
         }
       }
     }
@@ -380,28 +390,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
           ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).reparseFileFromText((PsiFileImpl)file);
           file.putUserData(REPARSE_PENDING, null);
         }
-      }
-    }
-  }
-
-  private void checkPsiIsCorrect(@NotNull FileViewProvider key) {
-    PsiFile actualPsi = key.getPsi(key.getBaseLanguage());
-
-    PsiTreeDebugBuilder treeDebugBuilder = new PsiTreeDebugBuilder().setShowErrorElements(false).setShowWhiteSpaces(false);
-
-    String actualPsiTree = treeDebugBuilder.psiToString(actualPsi);
-
-    String fileName = key.getVirtualFile().getName();
-    PsiFile psi = PsiFileFactory.getInstance(myProject)
-      .createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName), actualPsi.getNode().getText(),
-                          LocalTimeCounter.currentTime(), false);
-
-    if (actualPsi.getClass().equals(psi.getClass())) {
-      String expectedPsi = treeDebugBuilder.psiToString(psi);
-
-      if (!expectedPsi.equals(actualPsiTree)) {
-        getContext().myReformatElements.clear();
-        assert expectedPsi.equals(actualPsiTree) : "Refactored psi should be the same as result of parsing";
       }
     }
   }
@@ -634,7 +622,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     final CharSequence charsSequence = document.getCharsSequence();
     for (final TextRange indent : indents) {
       final String oldIndentStr = charsSequence.subSequence(indent.getStartOffset() + 1, indent.getEndOffset()).toString();
-      final int oldIndent = IndentHelperImpl.getIndent(file.getProject(), file.getFileType(), oldIndentStr, true);
+      final int oldIndent = IndentHelperImpl.getIndent(file, oldIndentStr, true);
       final String newIndentStr = IndentHelperImpl
         .fillIndent(CodeStyle.getIndentOptions(file), Math.max(oldIndent + indentAdjustment, 0));
       document.replaceString(indent.getStartOffset() + 1, indent.getEndOffset(), newIndentStr);
@@ -650,7 +638,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     //noinspection StatementWithEmptyBody
     while (Character.isWhitespace(charsSequence.charAt(endOffset++))) ;
     final String newIndentStr = charsSequence.subSequence(startOffset, endOffset - 1).toString();
-    return IndentHelperImpl.getIndent(psiFile.getProject(), psiFile.getFileType(), newIndentStr, true);
+    return IndentHelperImpl.getIndent(psiFile, newIndentStr, true);
   }
 
   public boolean isDisabled() {

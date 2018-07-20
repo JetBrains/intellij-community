@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,10 +44,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   @Override
   protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
     final Project project = panel.getProject();
-    final Collection<VirtualFile> commitRoots = panel.getRoots();
     return new CheckinHandler() {
-      private Collection<Change> myChanges = panel.getSelectedChanges();
-
       @Override
       public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
         return null;
@@ -57,7 +54,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
         if (executor instanceof LocalCommitExecutor) return ReturnResult.COMMIT;
         final SvnVcs vcs = SvnVcs.getInstance(project);
-        MultiMap<Url, WorkingCopyFormat> copiesInfo = splitIntoCopies(vcs, myChanges);
+        MultiMap<Url, WorkingCopyFormat> copiesInfo = splitIntoCopies(vcs, panel.getSelectedChanges());
         List<Url> repoUrls = newArrayList();
         for (Map.Entry<Url, Collection<WorkingCopyFormat>> entry : copiesInfo.entrySet()) {
           if (entry.getValue().size() > 1) {
@@ -76,18 +73,13 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
 
       @Override
-      public void includedChangesChanged() {
-        myChanges = panel.getSelectedChanges();
-      }
-
-      @Override
       public void checkinSuccessful() {
         if (SvnConfiguration.getInstance(project).isAutoUpdateAfterCommit()) {
           final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
           final List<FilePath> paths = new ArrayList<>();
           for (VirtualFile root : roots) {
             boolean take = false;
-            for (VirtualFile commitRoot : commitRoots) {
+            for (VirtualFile commitRoot : panel.getRoots()) {
               if (VfsUtilCore.isAncestor(root, commitRoot, false)) {
                 take = true;
                 break;

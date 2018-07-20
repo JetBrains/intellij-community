@@ -163,36 +163,30 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Override
   public Element getState() {
-    try {
-      final Element state = new Element("state");
-      getProperties().writeExternal(state);
-      ApplicationManager.getApplication().runReadAction(() -> {
-        for (final AntBuildFileBase buildFile : myBuildFiles) {
-          final Element element = new Element(BUILD_FILE);
-          //noinspection ConstantConditions
-          element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
-          buildFile.writeProperties(element);
-          saveEvents(element, buildFile);
-          state.addContent(element);
-        }
+    final Element state = new Element("state");
+    getProperties().writeExternal(state);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (final AntBuildFileBase buildFile : myBuildFiles) {
+        final Element element = new Element(BUILD_FILE);
+        //noinspection ConstantConditions
+        element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
+        buildFile.writeProperties(element);
+        saveEvents(element, buildFile);
+        state.addContent(element);
+      }
 
-        final List<VirtualFile> files = new ArrayList<>(myAntFileToContextFileMap.keySet());
-        // sort in order to minimize changes
-        Collections.sort(files, Comparator.comparing(VirtualFile::getUrl));
-        for (VirtualFile file : files) {
-          final Element element = new Element(CONTEXT_MAPPING);
-          final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
-          element.setAttribute(URL, file.getUrl());
-          element.setAttribute(CONTEXT, contextFile.getUrl());
-          state.addContent(element);
-        }
-      });
-      return state;
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-      return null;
-    }
+      final List<VirtualFile> files = new ArrayList<>(myAntFileToContextFileMap.keySet());
+      // sort in order to minimize changes
+      Collections.sort(files, Comparator.comparing(VirtualFile::getUrl));
+      for (VirtualFile file : files) {
+        final Element element = new Element(CONTEXT_MAPPING);
+        final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
+        element.setAttribute(URL, file.getUrl());
+        element.setAttribute(CONTEXT, contextFile.getUrl());
+        state.addContent(element);
+      }
+    });
+    return state;
   }
 
   @Override
@@ -623,8 +617,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
       String defaultTargetActionId = model.getDefaultTargetActionId();
       if (defaultTargetActionId != null) {
-        final TargetAction action =
-          new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null);
+        final TargetAction action = new TargetAction(
+          buildFile, TargetAction.DEFAULT_TARGET_NAME, Collections.singletonList(TargetAction.DEFAULT_TARGET_NAME), null
+        );
         actionList.add(new Pair<>(defaultTargetActionId, action));
       }
 
@@ -665,8 +660,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     for (final AntBuildTarget target : targets) {
       final String actionId = ((AntBuildTargetBase)target).getActionId();
       if (actionId != null) {
-        final TargetAction action =
-          new TargetAction(buildFile, target.getName(), new String[]{target.getName()}, target.getNotEmptyDescription());
+        final TargetAction action = new TargetAction(
+          buildFile, target.getName(), target.getTargetNames(), target.getNotEmptyDescription()
+        );
         actionList.add(new Pair<>(actionId, action));
       }
     }

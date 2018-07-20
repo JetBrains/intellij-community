@@ -16,6 +16,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
@@ -26,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,10 +46,15 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private int myRecursiveUsageCount; // EDT only access
   private final List<Node> myChildren = new SmartList<>(); // guarded by this
 
-  GroupNode(Node parent, @Nullable UsageGroup group, int ruleIndex) {
+  private GroupNode(@NotNull Node parent, @NotNull UsageGroup group, int ruleIndex) {
     setUserObject(group);
     setParent(parent);
     myRuleIndex = ruleIndex;
+  }
+
+  // only for root fake node
+  private GroupNode() {
+    myRuleIndex = 0;
   }
 
   @Override
@@ -77,13 +84,16 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Node> edtInsertedUnderQueue) {
-    GroupNode newNode = new GroupNode(this, group, ruleIndex);
+  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
+    GroupNode newNode;
     synchronized (this) {
-      int insertionIndex = getNodeIndex(newNode, myChildren);
-      if (insertionIndex >= 0) return (GroupNode)myChildren.get(insertionIndex);
-      int i = -insertionIndex - 1;
-      myChildren.add(i, newNode);
+      newNode = new GroupNode(this, group, ruleIndex);
+      int i = getNodeIndex(newNode, myChildren);
+      if (i >= 0) {
+        return (GroupNode)myChildren.get(i);
+      }
+      int insertionIndex = -i - 1;
+      myChildren.add(insertionIndex, newNode);
     }
     edtInsertedUnderQueue.consume(this);
     return newNode;
@@ -91,24 +101,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   // >= 0 if found, < 0 if not found
   private static int getNodeIndex(@NotNull Node newNode, @NotNull List<Node> children) {
-    int low = 0;
-    int high = children.size() - 1;
-    while (low <= high) {
-      int mid = (low + high) / 2;
-      Node child = children.get(mid);
-      int cmp = COMPARATOR.compare(child, newNode);
-      if (cmp < 0) {
-        low = mid + 1;
-      }
-      else if (cmp > 0) {
-        high = mid - 1;
-      }
-      else {
-        return mid;
-      }
-    }
-
-    return -(low + 1);
+    return Collections.binarySearch(children, newNode, COMPARATOR);
   }
 
   // always >= 0
@@ -222,8 +215,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  UsageNode addUsage(@NotNull Usage usage, @NotNull Consumer<Node> edtInsertedUnderQueue, boolean filterDuplicateLines) {
-    final UsageNode newNode;
+  UsageNode addOrGetUsage(@NotNull Usage usage,
+                          boolean filterDuplicateLines,
+                          @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
+    UsageNode newNode;
     synchronized (this) {
       if (filterDuplicateLines) {
         UsageNode mergedWith = tryMerge(usage);
@@ -232,8 +227,15 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
         }
       }
       newNode = new UsageNode(this, usage);
-      int index = getNodeInsertionIndex(newNode, myChildren);
-      myChildren.add(index, newNode);
+      int i = getNodeIndex(newNode, myChildren);
+      // i>=0 means the usage already there (might happen when e.g. find usages was interrupted by typing and resumed with the same file)
+      if (i >= 0) {
+        newNode = (UsageNode)myChildren.get(i);
+      }
+      else {
+        int insertionIndex = -i-1;
+        myChildren.add(insertionIndex, newNode);
+      }
     }
     edtInsertedUnderQueue.consume(this);
     return newNode;
@@ -273,7 +275,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   protected boolean isDataValid() {
-    return getGroup() == null || getGroup().isValid();
+    UsageGroup group = getGroup();
+    return group == null || group.isValid();
   }
 
   @Override
@@ -300,10 +303,21 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       ClassIndex classIdx1 = getClassIndex(n1);
       ClassIndex classIdx2 = getClassIndex(n2);
       if (classIdx1 != classIdx2) return classIdx1.compareTo(classIdx2);
-      if (classIdx1 == ClassIndex.GROUP) return ((GroupNode)n1).compareTo((GroupNode)n2);
-      if (classIdx1 == ClassIndex.USAGE) return ((UsageNode)n1).compareTo((UsageNode)n2);
+      if (classIdx1 == ClassIndex.GROUP) {
+        int c = ((GroupNode)n1).compareTo((GroupNode)n2);
+        if (c != 0) return c;
+      }
+      else if (classIdx1 == ClassIndex.USAGE) {
+        int c = ((UsageNode)n1).compareTo((UsageNode)n2);
+        if (c != 0) return c;
+      }
 
-      return 0;
+      // return 0 only for the same Usages inside
+      // (e.g. when tried to insert the UsageNode for the same Usage when interrupted by write action and resumed)
+      Object u1 = n1.getUserObject();
+      Object u2 = n2.getUserObject();
+      if (Comparing.equal(u1, u2)) return 0;
+      return System.identityHashCode(u1) - System.identityHashCode(u2);
     }
   }
 
@@ -377,5 +391,23 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
       }
     }
     return list;
+  }
+
+  @NotNull
+  static Root createRoot() {
+    return new Root();
+  }
+
+  static class Root extends GroupNode {
+    @NonNls
+    public String toString() {
+      return "Root "+super.toString();
+    }
+
+    @NotNull
+    @Override
+    protected String getText(@NotNull UsageView view) {
+      return "";
+    }
   }
 }

@@ -176,13 +176,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
-  }
-
-  @Override
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    //noinspection deprecation
     return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 

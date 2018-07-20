@@ -217,6 +217,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
+    if (getProperty() == null && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator(this, context)) {
+      inferredType = PyUnionType.createWeakType(inferredType);
+    }
+
     return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
   }
 
@@ -297,8 +301,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       @Override
       public String getLocationString() {
         final PyClass containingClass = getContainingClass();
-        if (containingClass != null) {
-          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        final String packageForFile = getPackageForFile(getContainingFile());
+        if (containingClass != null && packageForFile != null) {
+          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
         }
         return super.getLocationString();
       }
@@ -365,7 +370,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   private Ref<? extends PyType> getYieldStatementType(@NotNull final TypeEvalContext context) {
-    Ref<PyType> elementType = null;
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyStatementList statements = getStatementList();
     final Set<PyType> types = new LinkedHashSet<>();
@@ -396,29 +400,21 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         // Ignore nested functions
       }
     });
-    final int n = types.size();
-    if (n == 1) {
-      elementType = Ref.create(types.iterator().next());
-    }
-    else if (n > 0) {
-      elementType = Ref.create(PyUnionType.union(types));
-    }
-    if (elementType != null) {
-      return Ref.create(PyTypingTypeProvider.wrapInGeneratorType(elementType.get(), getReturnStatementType(context), this));
-    }
     if (!types.isEmpty()) {
-      return Ref.create(null);
+      final PyType elementType = PyUnionType.union(types);
+      final PyType returnType = getReturnStatementType(context);
+      return Ref.create(PyTypingTypeProvider.wrapInGeneratorType(elementType, returnType, this));
     }
     return null;
   }
 
   @Override
   @Nullable
-  public PyType getReturnStatementType(TypeEvalContext typeEvalContext) {
-    final ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
+  public PyType getReturnStatementType(@NotNull TypeEvalContext context) {
+    final ReturnVisitor visitor = new ReturnVisitor(this, context);
     final PyStatementList statements = getStatementList();
     statements.accept(visitor);
-    if (isGeneratedStub() && !visitor.myHasReturns) {
+    if ((isGeneratedStub() || PyKnownDecoratorUtil.hasAbstractDecorator(this, context)) && !visitor.myHasReturns) {
       if (PyNames.INIT.equals(getName())) {
         return PyNoneType.INSTANCE;
       }
@@ -521,7 +517,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     private boolean myHasReturns = false;
     private boolean myHasRaises = false;
 
-    public ReturnVisitor(PyFunction function, final TypeEvalContext context) {
+    private ReturnVisitor(PyFunction function, final TypeEvalContext context) {
       myFunction = function;
       myContext = context;
     }

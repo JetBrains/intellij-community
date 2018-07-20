@@ -108,8 +108,8 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   public PsiJavaFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
     int level = dataStream.readByte();
-    StringRef packageName = dataStream.readName();
-    return new PsiJavaFileStubImpl(null, StringRef.toString(packageName), level >= 0 ? LanguageLevel.values()[level] : null, compiled);
+    String packageName = dataStream.readNameString();
+    return new PsiJavaFileStubImpl(null, packageName, level >= 0 ? LanguageLevel.values()[level] : null, compiled);
   }
 
   @Override

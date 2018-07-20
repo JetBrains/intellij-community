@@ -98,7 +98,7 @@ public class DomStubBuilderTest extends DomStubTest {
     VirtualFile file = psiFile.getVirtualFile();
     assertTrue(loader.canHaveStub(file));
     ObjectStubTree stubTree = loader.readFromVFile(getProject(), file);
-    assertNull(stubTree); // no stubs for invalid XML
+    assertNotNull(stubTree);
   }
 
   public void testInclusion() {

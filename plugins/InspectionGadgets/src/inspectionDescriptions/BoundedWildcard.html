@@ -1,0 +1,26 @@
+<html>
+<body>
+Reports generic method parameters that can use <a href="https://en.wikipedia.org/wiki/Wildcard_(Java)">bounded wildcards</a> in your API.
+<!-- tooltip end -->
+<p>
+To quote <a href="https://en.wikipedia.org/wiki/Joshua_Bloch#Effective_Java">Josh Bloch</a> in "<b>Effective Java</b>" third Edition item 31:
+<hr>
+<h4>Use bounded wildcards to increase API flexibility.</h4>
+<i>
+Using wildcard types in your APIs, while tricky, makes the APIs far more flexible.
+Remember the basic rule: producer-extends, consumer-super (PECS).
+And remember that all Comparables and Comparators are consumers.
+</i>
+<hr>
+<p>Example:
+  <code><pre>void process(Consumer&lt;Number&gt; consumer);</pre></code> should be replaced with:
+  <code><pre>void process(Consumer&lt;? super Number&gt; consumer);</pre></code>
+  This method signature is more flexible because it accepts more types (not only Consumer&lt;Number&gt; but also Consumer&lt;Object&gt;).
+<p>
+  Likewise, type parameters in covariant position:
+  <code><pre>T produce(Producer&lt;T&gt; p);</pre></code>should be replaced with:
+  <code><pre>T produce(Producer&lt;? extends T&gt; p);</pre></code>
+<p>
+
+</body>
+</html>

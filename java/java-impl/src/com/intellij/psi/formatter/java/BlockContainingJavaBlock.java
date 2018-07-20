@@ -18,7 +18,9 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -50,12 +52,18 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
                                   Alignment alignment,
                                   Indent indent,
                                   CommonCodeStyleSettings settings,
-                                  JavaCodeStyleSettings javaSettings) {
-    super(node, wrap, alignment, indent, settings, javaSettings);
+                                  JavaCodeStyleSettings javaSettings,
+                                  @NotNull FormattingMode formattingMode) {
+    super(node, wrap, alignment, indent, settings, javaSettings, formattingMode);
   }
 
-  public BlockContainingJavaBlock(ASTNode child, Indent indent, AlignmentStrategy strategy, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
-    super(child, null, strategy, indent, settings, javaSettings);
+  public BlockContainingJavaBlock(ASTNode child,
+                                  Indent indent,
+                                  AlignmentStrategy strategy,
+                                  CommonCodeStyleSettings settings,
+                                  JavaCodeStyleSettings javaSettings,
+                                  @NotNull FormattingMode formattingMode) {
+    super(child, null, strategy, indent, settings, javaSettings, formattingMode);
   }
 
   @Override
@@ -172,6 +180,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
                 || child.getElementType() == JavaTokenType.IDENTIFIER
                 || child.getElementType() == JavaElementType.THROWS_LIST
                 || child.getElementType() == JavaElementType.TYPE_PARAMETER_LIST)) {
+        return Indent.getNoneIndent();
+      }
+      else if (child.getElementType() == JavaTokenType.LPARENTH || child.getElementType() == JavaTokenType.RPARENTH) {
         return Indent.getNoneIndent();
       }
       else {

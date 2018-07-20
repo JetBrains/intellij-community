@@ -44,7 +44,7 @@ public class VcsLinkedTextComponent extends JLabel {
     if (aMatcher.find()) {
       myTextBefore = text.substring(0, aMatcher.start());
       myHandledLink = aMatcher.group(2);
-      myTextAfter = text.substring(aMatcher.end(), text.length());
+      myTextAfter = text.substring(aMatcher.end());
     }
     else {
       myTextBefore = text;

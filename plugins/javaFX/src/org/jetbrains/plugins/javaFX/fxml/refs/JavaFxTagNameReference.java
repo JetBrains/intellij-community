@@ -21,6 +21,7 @@ public class JavaFxTagNameReference extends TagNameReference{
     super(element, startTagFlag);
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final TextRange rangeInElement = super.getRangeInElement();

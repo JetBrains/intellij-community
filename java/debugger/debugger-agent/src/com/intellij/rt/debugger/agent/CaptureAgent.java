@@ -1,15 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.capture.org.objectweb.asm.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
@@ -28,26 +26,9 @@ public class CaptureAgent {
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
     try {
-      String asmPath = readSettings(args);
+      appendStorageJar(instrumentation);
 
-      if (asmPath == null) {
-        return;
-      }
-
-      try {
-        instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
-      }
-      catch (Exception e) {
-        String report = "Capture agent: unable to use the provided asm lib";
-        try {
-          Class.forName("org.jetbrains.org.objectweb.asm.MethodVisitor");
-          System.out.println(report + ", will use asm from the classpath");
-        }
-        catch (ClassNotFoundException e1) {
-          System.out.println(report + ", exiting");
-          return;
-        }
-      }
+      readSettings(args);
 
       instrumentation.addTransformer(new CaptureTransformer());
 
@@ -72,8 +53,32 @@ public class CaptureAgent {
       }
     }
     catch (Throwable e) {
-      System.out.println("Capture agent: unknown exception");
+      System.err.println("Critical error in IDEA Async Stack Traces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
       e.printStackTrace();
+    }
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  private static void appendStorageJar(Instrumentation instrumentation) throws IOException {
+    InputStream inputStream = CaptureAgent.class.getResourceAsStream("/debugger-agent-storage.jar");
+    try {
+      File storageJar = File.createTempFile("debugger-agent-storage", "jar");
+      storageJar.deleteOnExit();
+      OutputStream outStream = new FileOutputStream(storageJar);
+      try {
+        byte[] buffer = new byte[10 * 1024];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+          outStream.write(buffer, 0, bytesRead);
+        }
+      }
+      finally {
+        outStream.close();
+      }
+      instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
+    }
+    finally {
+      inputStream.close();
     }
   }
 
@@ -87,62 +92,57 @@ public class CaptureAgent {
     System.setProperty(modulesKey, property);
   }
 
-  private static String readSettings(String path) {
-    FileReader reader = null;
+  private static void readSettings(String uri) {
+    if (uri == null || uri.isEmpty()) {
+      return;
+    }
+
+    Properties properties = new Properties();
+    File file;
     try {
-      reader = new FileReader(path);
-      Properties properties = new Properties();
-      properties.load(reader);
-
-      DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
-      if (DEBUG) {
-        CaptureStorage.setDebug(true);
+      FileReader reader = null;
+      try {
+        file = new File(new URI(uri));
+        reader = new FileReader(file);
+        properties.load(reader);
       }
-
-      if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
-        CaptureStorage.setEnabled(false);
-      }
-
-      boolean deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
-
-      String asmPath = properties.getProperty("asm-lib");
-      if (asmPath == null) {
-        System.out.println("Capture agent: asm path is not specified, exiting");
-        return null;
-      }
-
-      Enumeration<?> propNames = properties.propertyNames();
-      while (propNames.hasMoreElements()) {
-        String propName = (String)propNames.nextElement();
-        if (propName.startsWith("capture")) {
-          addPoint(true, properties.getProperty(propName));
-        }
-        else if (propName.startsWith("insert")) {
-          addPoint(false, properties.getProperty(propName));
-        }
-      }
-
-      // delete settings file only if it was read correctly
-      if (deleteSettings) {
-        new File(path).delete();
-      }
-      return asmPath;
-    }
-    catch (IOException e) {
-      System.out.println("Capture agent: unable to read settings");
-      e.printStackTrace();
-    }
-    finally {
-      if (reader != null) {
-        try {
+      finally {
+        if (reader != null) {
           reader.close();
         }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
       }
     }
-    return null;
+    catch (Exception e) {
+      System.out.println("Capture agent: unable to read settings");
+      e.printStackTrace();
+      return;
+    }
+
+    DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
+    if (DEBUG) {
+      CaptureStorage.setDebug(true);
+    }
+
+    if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
+      CaptureStorage.setEnabled(false);
+    }
+
+    Enumeration<?> propNames = properties.propertyNames();
+    while (propNames.hasMoreElements()) {
+      String propName = (String)propNames.nextElement();
+      if (propName.startsWith("capture")) {
+        addPoint(true, properties.getProperty(propName));
+      }
+      else if (propName.startsWith("insert")) {
+        addPoint(false, properties.getProperty(propName));
+      }
+    }
+
+    // delete settings file only if it was read correctly
+    if (Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"))) {
+      //noinspection ResultOfMethodCallIgnored
+      file.delete();
+    }
   }
 
   private static <T> List<T> getNotNull(List<T> list) {
@@ -185,6 +185,7 @@ public class CaptureAgent {
             return bytes;
           }
           catch (Exception e) {
+            System.out.println("Capture agent: failed to instrument " + className);
             e.printStackTrace();
           }
         }
@@ -206,7 +207,7 @@ public class CaptureAgent {
     }
 
     private static String getNewName(String name) {
-      return name + "$$$capture";
+      return name + CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX;
     }
 
     private static String getMethodDisplayName(String className, String methodName, String desc) {
@@ -362,7 +363,7 @@ public class CaptureAgent {
   }
 
   private static class InstrumentPoint {
-    final static String ANY = "*";
+    final static String ANY_DESC = "*";
 
     final String myClassName;
     final String myMethodName;
@@ -380,7 +381,7 @@ public class CaptureAgent {
       if (!myMethodName.equals(name)) {
         return false;
       }
-      return myMethodDesc.equals(ANY) || myMethodDesc.equals(desc);
+      return myMethodDesc.equals(ANY_DESC) || myMethodDesc.equals(desc);
     }
   }
 
@@ -430,6 +431,8 @@ public class CaptureAgent {
     }
     points.add(new InstrumentPoint(className, methodName, methodDesc, keyProvider));
   }
+
+  private static final KeyProvider FIRST_PARAM = param(0);
 
   static final KeyProvider THIS_KEY_PROVIDER = new KeyProvider() {
     @Override
@@ -513,10 +516,74 @@ public class CaptureAgent {
         throw new IllegalStateException(
           "Argument with id " + myIdx + " is not available, method " + methodDisplayName + " has only " + argumentTypes.length);
       }
+      int sort = argumentTypes[myIdx].getSort();
+      if (sort != Type.OBJECT && sort != Type.ARRAY) {
+        throw new IllegalStateException(
+          "Argument with id " + myIdx + " in method " + methodDisplayName + " must be an object");
+      }
       for (int i = 0; i < myIdx; i++) {
         index += argumentTypes[i].getSize();
       }
       mv.visitVarInsn(Opcodes.ALOAD, index);
     }
+  }
+
+  private static void addCapture(String className, String methodName, KeyProvider key) {
+    addCapturePoint(true, className, methodName, InstrumentPoint.ANY_DESC, key);
+  }
+
+  private static void addInsert(String className, String methodName, KeyProvider key) {
+    addCapturePoint(false, className, methodName, InstrumentPoint.ANY_DESC, key);
+  }
+
+  private static KeyProvider param(int idx) {
+    return new ParamKeyProvider(idx);
+  }
+
+  // predefined points
+  static {
+    addCapture("java/awt/event/InvocationEvent", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/awt/event/InvocationEvent", "dispatch", THIS_KEY_PROVIDER);
+
+    addCapture("java/lang/Thread", "start", THIS_KEY_PROVIDER);
+    addInsert("java/lang/Thread", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/FutureTask", "runAndReset", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$AsyncSupply", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$AsyncSupply", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$AsyncRun", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$AsyncRun", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$UniAccept", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$UniAccept", "tryFire", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$UniRun", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$UniRun", "tryFire", THIS_KEY_PROVIDER);
+
+    // netty
+    addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
+    addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", FIRST_PARAM);
+
+    // scala
+    addCapture("scala/concurrent/impl/Future$PromiseCompletingRunnable", "<init>", THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/Future$PromiseCompletingRunnable", "run", THIS_KEY_PROVIDER);
+
+    addCapture("scala/concurrent/impl/CallbackRunnable", "<init>", THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY_PROVIDER);
+
+    // akka-scala
+    addCapture("akka/actor/ScalaActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/RepointableActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/LocalActorRef", "$bang", FIRST_PARAM);
+    addInsert("akka/actor/Actor$class", "aroundReceive", param(2));
+
+    // JavaFX
+    addCapture("com/sun/glass/ui/InvokeLaterDispatcher", "invokeLater", FIRST_PARAM);
+    addInsert("com/sun/glass/ui/InvokeLaterDispatcher$Future", "run",
+              new FieldKeyProvider("com/sun/glass/ui/InvokeLaterDispatcher$Future", "runnable"));
   }
 }

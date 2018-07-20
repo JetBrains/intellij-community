@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -146,7 +146,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     showPanel.add(myCbShowObjectId, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsTop(4), 0, 0));
     showPanel.add(myCbShowSyntheticFields, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
     showPanel.add(myCbShowStatic, new GridBagConstraints(1, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
-    showPanel.add(myCbShowValFieldsAsLocalVariables, new GridBagConstraints(2, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
+    showPanel.add(myCbShowValFieldsAsLocalVariables, new GridBagConstraints(2, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
     showPanel.add(myCbShowStaticFinalFields, new GridBagConstraints(2, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 10, 0, 0), 0, 0));
     showPanel.add(myCbShowFQNames, new GridBagConstraints(3, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsLeft(10), 0, 0));
 

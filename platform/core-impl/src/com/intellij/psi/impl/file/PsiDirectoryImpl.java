@@ -529,7 +529,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   protected Icon getElementIcon(final int flags) {
-    return PlatformIcons.DIRECTORY_CLOSED_ICON;
+    return PlatformIcons.FOLDER_ICON;
   }
 
   @Override

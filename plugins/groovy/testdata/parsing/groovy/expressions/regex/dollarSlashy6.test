@@ -2,7 +2,7 @@ $/abc/$
 -----
 Groovy script
   Literal
-    GroovyASTPsiElementImpl($/ regex literal)
+    GroovyASTPsiElementImpl(DOLLAR_SLASHY_LITERAL)
       PsiElement($/ regex begin)('$/')
       PsiElement($/ regex content)('abc')
       PsiElement($/ regex end)('/$')

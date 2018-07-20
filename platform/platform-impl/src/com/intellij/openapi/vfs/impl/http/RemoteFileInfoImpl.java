@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -141,16 +140,13 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
       localIOFile = myLocalFile;
     }
 
-    VirtualFile localFile = new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull final Result<VirtualFile> result) {
-        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localIOFile);
-        if (file != null) {
-          file.refresh(false, false);
-        }
-        result.setResult(file);
+    VirtualFile localFile = WriteAction.computeAndWait(() -> {
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localIOFile);
+      if (file != null) {
+        file.refresh(false, false);
       }
-    }.execute().getResultObject();
+      return file;
+    });
     LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
     LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
     synchronized (myLock) {

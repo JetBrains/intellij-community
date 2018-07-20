@@ -7,14 +7,15 @@ import org.jetbrains.concurrency.createError
 import org.jetbrains.jsonProtocol.Request
 import java.util.concurrent.atomic.AtomicInteger
 
-val LOG = Logger.getInstance(CommandProcessor::class.java)
+val LOG: Logger = Logger.getInstance(CommandProcessor::class.java)
 
 abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPONSE : Any?> : CommandSenderBase<SUCCESS_RESPONSE>(),
                                                                                               MessageManager.Handler<Request<*>, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>,
                                                                                               ResultReader<SUCCESS_RESPONSE>,
                                                                                               MessageProcessor {
   private val currentSequence = AtomicInteger()
-  protected val messageManager = MessageManager(this)
+  @Suppress("LeakingThis")
+  protected val messageManager: MessageManager<Request<*>, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE> = MessageManager(this)
 
   override fun cancelWaitingRequests() {
     messageManager.cancelWaitingRequests()
@@ -52,5 +53,5 @@ interface RequestCallback<SUCCESS_RESPONSE> {
 
   fun onError(error: Throwable)
 
-  fun onError(error: String) = onError(createError(error))
+  fun onError(error: String): Unit = onError(createError(error))
 }

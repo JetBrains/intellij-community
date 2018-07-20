@@ -4,6 +4,7 @@ package com.jetbrains.python.intentions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -248,6 +249,16 @@ public class  PyIntentionTest extends PyTestCase {
   // PY-26285
   public void testConvertVariadicParamNotOverriddenInNested() {
     doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-2264
+  public void testConvertVariadicParamKwargsReused() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-2264
+  public void testConvertVariadicParamUnpackedKwargsReused() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
   public void testConvertTripleQuotedString() { //PY-2697

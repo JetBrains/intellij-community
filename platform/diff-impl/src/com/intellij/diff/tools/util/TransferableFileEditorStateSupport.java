@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -157,6 +158,9 @@ public class TransferableFileEditorStateSupport {
       if (!(evt.getSource() instanceof FileEditor)) return;
 
       FileEditor editor = (FileEditor)evt.getSource();
+      if (!editor.getComponent().isShowing()) return;
+      Dimension size = editor.getComponent().getSize();
+      if (size.width <= 0 || size.height <= 0) return;
 
       int holderIndex = ContainerUtil.indexOf(myHolders, (Condition<BinaryEditorHolder>)holder -> editor.equals(holder.getEditor()));
       if (holderIndex != -1) myMasterIndex = holderIndex;

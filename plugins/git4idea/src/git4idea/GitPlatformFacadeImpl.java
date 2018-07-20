@@ -15,19 +15,13 @@
  */
 package git4idea;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public class GitPlatformFacadeImpl implements GitPlatformFacade {
-
-  @Override
-  public ChangeListManagerEx getChangeListManager(@NotNull Project project) {
-    return (ChangeListManagerEx)ChangeListManager.getInstance(project);
-  }
 
   @Override
   public void hardRefresh(@NotNull VirtualFile root) {

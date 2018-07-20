@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +43,6 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public AsyncResult<T> doWhenDone(@NotNull final Consumer<T> consumer) {
     doWhenDone(() -> consumer.consume(myResult));
-    return this;
-  }
-
-  @NotNull
-  public AsyncResult<T> doWhenRejected(@NotNull final PairConsumer<T, String> consumer) {
-    doWhenRejected(() -> consumer.consume(myResult, myError));
     return this;
   }
 

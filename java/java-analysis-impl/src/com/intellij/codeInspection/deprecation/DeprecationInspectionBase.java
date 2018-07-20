@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -17,6 +17,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -332,6 +333,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static PsiMethod findReplacementInJavaDoc(@NotNull PsiMethod method, @NotNull PsiMethodCallExpression call) {
     if (method instanceof PsiConstructorCall) return null;
+    if (method instanceof ClsMethodImpl) {
+      PsiMethod sourceMethod = ((ClsMethodImpl)method).getSourceMirrorMethod();
+      return sourceMethod == null ? null : findReplacementInJavaDoc(sourceMethod, call);
+    }
     PsiDocComment doc = method.getDocComment();
     if (doc == null) return null;
 

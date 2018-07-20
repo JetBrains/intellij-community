@@ -3,14 +3,14 @@ class Foo {
 
   public void main(boolean b) {
     if (!b) {
-      System.out.println(<warning descr="Value 'b' is always 'false'">b</warning>);
+      System.out.println(<weak_warning descr="Value 'b' is always 'false'">b</weak_warning>);
 
     }
     if (field) {
       System.out.println(b);
     }
     if (b) {
-      System.out.println(<warning descr="Value 'b' is always 'true'">b</warning>);
+      System.out.println(<weak_warning descr="Value 'b' is always 'true'">b</weak_warning>);
     }
   }
 

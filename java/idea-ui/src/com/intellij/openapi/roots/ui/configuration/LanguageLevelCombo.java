@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.Project;
@@ -22,8 +8,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,23 +19,23 @@ import javax.swing.*;
 /**
  * @author ven
  */
-@SuppressWarnings("unchecked")
-public abstract class LanguageLevelCombo extends ComboBox {
-  private boolean myDefaultWasSelectedBeforeRemoving;
+public abstract class LanguageLevelCombo extends ComboBox<Object> {
   private final String myDefaultItem;
 
   public LanguageLevelCombo(String defaultItem) {
     myDefaultItem = defaultItem;
+    insertItemAt(myDefaultItem, 0);
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
-    setRenderer(new ColoredListCellRendererWrapper() {
+
+    setRenderer(new ColoredListCellRenderer<Object>() {
       @Override
-      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LanguageLevel) {
           append(((LanguageLevel)value).getPresentableText());
         }
-        else if (value instanceof String) {    // default for SDK or project
+        else if (value instanceof String) {  // default for SDK or project
           append((String)value);
           LanguageLevel defaultLevel = getDefaultLevel();
           if (defaultLevel != null) {
@@ -59,11 +46,16 @@ public abstract class LanguageLevelCombo extends ComboBox {
     });
   }
 
-  public void reset(@NotNull Project project) {
-    removeAllItems();
-    for (LanguageLevel level : LanguageLevel.values()) {
-      addItem(level);
+  private void checkAcceptedLevel(LanguageLevel selectedLevel) {
+    if (selectedLevel == null)
+      return;
+    LanguageLevel level = AcceptedLanguageLevelsSettings.checkAccepted(this, selectedLevel);
+    if (level == null) {
+      setSelectedItem(AcceptedLanguageLevelsSettings.getHighestAcceptedLevel());
     }
+  }
+
+  public void reset(@NotNull Project project) {
     Sdk sdk = ProjectRootManagerEx.getInstanceEx(project).getProjectSdk();
     sdkUpdated(sdk, project.isDefault());
 
@@ -87,34 +79,18 @@ public abstract class LanguageLevelCombo extends ComboBox {
       }
     }
     updateDefaultLevel(newLevel, isDefaultProject);
+    if (getSelectedItem() == myDefaultItem) {
+      checkAcceptedLevel(newLevel);
+    }
   }
 
   private void updateDefaultLevel(LanguageLevel newLevel, boolean isDefaultProject) {
     if (newLevel == null && !isDefaultProject) {
-      if (isDefaultItemAdded()) {
-        boolean defaultSelected = getSelectedItem() == myDefaultItem;
-        if (defaultSelected) {
-          setSelectedItem(getDefaultLevel());
-        }
-        myDefaultWasSelectedBeforeRemoving = defaultSelected;
-        removeItem(myDefaultItem);
-      }
-    }
-    else if (!(isDefaultItemAdded())) {
-      addDefaultItem();
-      if (myDefaultWasSelectedBeforeRemoving) {
-        setSelectedIndex(0);
+      if (getSelectedItem() == myDefaultItem) {
+        setSelectedItem(getDefaultLevel());
       }
     }
     repaint();
-  }
-
-  private boolean isDefaultItemAdded() {
-    return getItemAt(0) instanceof String;
-  }
-
-  void addDefaultItem() {
-    insertItemAt(myDefaultItem, 0);
   }
 
   public LanguageLevel getSelectedLevel() {
@@ -129,5 +105,6 @@ public abstract class LanguageLevelCombo extends ComboBox {
   @Override
   public void setSelectedItem(Object anObject) {
     super.setSelectedItem(anObject == null ? myDefaultItem : anObject);
+    checkAcceptedLevel(getSelectedLevel());
   }
 }

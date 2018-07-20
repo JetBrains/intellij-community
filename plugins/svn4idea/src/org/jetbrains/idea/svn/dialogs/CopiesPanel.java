@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.ide.DataManager;
@@ -62,8 +62,6 @@ import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
-import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class CopiesPanel {
 
@@ -323,12 +321,12 @@ public class CopiesPanel {
     SelectBranchPopup.showForBranchRoot(myProject, root, (project, configuration, branchUrl, revision) -> {
       try {
         Url workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
-        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, Url.tail(branchUrl), root);
+        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, branchUrl.getTail(), root);
 
         new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
       }
       catch (SvnBindException e) {
-        AbstractVcsHelper.getInstance(myProject).showError(e, "Merge from " + Url.tail(branchUrl));
+        AbstractVcsHelper.getInstance(myProject).showError(e, "Merge from " + branchUrl.getTail());
       }
     }, "Select branch", mergeLabel);
   }
@@ -336,8 +334,8 @@ public class CopiesPanel {
   @NotNull
   private static Url getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
                                                       @NotNull Url url,
-                                                      @NotNull String otherBranchUrl) throws SvnBindException {
-    return append(createUrl(otherBranchUrl), notNullize(configuration.getRelativeUrl(url.toDecodedString())));
+                                                      @NotNull Url otherBranchUrl) throws SvnBindException {
+    return otherBranchUrl.appendPath(notNullize(configuration.getRelativeUrl(url)), false);
   }
 
   @SuppressWarnings("MethodMayBeStatic")

@@ -181,14 +181,6 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return filePath;
   }
 
-  @Nullable
-  public String getOutputDirectoryPathToCleanOnRebuild() {
-    if (myRootElement instanceof ArchivePackagingElement || StringUtil.isEmpty(myOutputPath)) {
-      return null;
-    }
-    return myOutputPath;
-  }
-
   public void copyFrom(ArtifactImpl modified) {
     myName = modified.getName();
     myOutputPath = modified.getOutputPath();

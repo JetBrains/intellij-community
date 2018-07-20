@@ -31,7 +31,7 @@ class CompositeRefactoringElementListener(private vararg val listeners: UndoRefa
   /**
    * Creates new listener adding provided one
    */
-  operator fun plus(listener: UndoRefactoringCompletionListener) = CompositeRefactoringElementListener(*arrayOf(listener) + listeners)
+  operator fun plus(listener: UndoRefactoringCompletionListener): CompositeRefactoringElementListener = CompositeRefactoringElementListener(*arrayOf(listener) + listeners)
 }
 
 

@@ -17,6 +17,7 @@ package com.intellij.execution.junit.codeInsight.references;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -41,11 +42,29 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     return super.bindToElement(element);
   }
 
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    String methodName = getValue();
+    String className = StringUtil.getPackageName(methodName, '#');
+    boolean selfClassReference = className.isEmpty() ||
+                JavaPsiFacade.getInstance(getElement().getProject()).findClass(className, getElement().getResolveScope()) == null;
+    return super.handleElementRename(selfClassReference ? newElementName : className + '#' + newElementName);
+  }
+
   @Nullable
   public PsiElement resolve() {
-    final PsiClass cls = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
+    PsiClass cls = PsiTreeUtil.getParentOfType(getElement(), PsiClass.class);
     if (cls != null) {
-      PsiMethod[] methods = cls.findMethodsByName(getValue(), false);
+      String methodName = getValue();
+      String className = StringUtil.getPackageName(methodName, '#');
+      if (!className.isEmpty()) {
+        PsiClass aClass = JavaPsiFacade.getInstance(cls.getProject()).findClass(className, cls.getResolveScope());
+        if (aClass != null) {
+          cls = aClass;
+          methodName = StringUtil.getShortName(methodName, '#');
+        }
+      }
+      PsiMethod[] methods = cls.findMethodsByName(methodName, false);
       return Arrays.stream(methods)
         .filter(MethodSourceReference::staticNoParams)
         .findFirst()

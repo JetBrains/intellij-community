@@ -15,46 +15,27 @@
  */
 package com.intellij.execution.junit;
 
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDescriptor {
-  public static final ExternalLibraryDescriptor JUNIT3 = new JUnitExternalLibraryDescriptor("3") {
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      return Collections.singletonList(JavaSdkUtil.getJunit3JarPath());
-    }
-  };
-  public static final ExternalLibraryDescriptor JUNIT4 = new JUnitExternalLibraryDescriptor("4") {
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      return JavaSdkUtil.getJUnit4JarPaths();
-    }
-  };
-  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.0") {
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      return Collections.emptyList();
-    }
-  };
+public class JUnitExternalLibraryDescriptor extends ExternalLibraryDescriptor {
+  public static final ExternalLibraryDescriptor JUNIT3 = new JUnitExternalLibraryDescriptor("3", "3.8.2");
+  public static final ExternalLibraryDescriptor JUNIT4 = new JUnitExternalLibraryDescriptor("4", "4.12");
+  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.2",
+                                                                                            null);
   private final String myVersion;
 
-  private JUnitExternalLibraryDescriptor(String version) {
-    this("junit", "junit", version);
+  private JUnitExternalLibraryDescriptor(String baseVersion, String preferredVersion) {
+    this("junit", "junit", baseVersion, preferredVersion);
   }
 
-  private JUnitExternalLibraryDescriptor(final String groupId, final String artifactId, final String version) {
-    super(groupId, artifactId, version + ".0", version + ".999");
+  private JUnitExternalLibraryDescriptor(final String groupId,
+                                         final String artifactId,
+                                         final String version,
+                                         String preferredVersion) {
+    super(groupId, artifactId, version + ".0", version + ".999", preferredVersion);
     myVersion = version;
   }
 

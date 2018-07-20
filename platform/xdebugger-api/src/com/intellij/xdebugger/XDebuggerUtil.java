@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
@@ -124,7 +122,7 @@ public abstract class XDebuggerUtil {
   public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
 
   @NotNull
-  public abstract XExpression createExpression(@NotNull String text, Language language, String custom, EvaluationMode mode);
+  public abstract XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode);
 
   public abstract void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session);
 }

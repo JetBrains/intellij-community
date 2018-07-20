@@ -176,7 +176,8 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       Project project = memberFile.getProject();
 
       int minLevel = PsiUtil.ACCESS_LEVEL_PRIVATE;
-      boolean entryPoint = myDeadCodeInspection.isEntryPoint(member);
+      boolean entryPoint = myDeadCodeInspection.isEntryPoint(member) || 
+                           member instanceof PsiField && (UnusedSymbolUtil.isImplicitWrite((PsiVariable)member) || UnusedSymbolUtil.isImplicitRead((PsiVariable)member));
       if (entryPoint) {
         int level = myVisibilityInspection.getMinVisibilityLevel(member);
         if (level <= 0) {

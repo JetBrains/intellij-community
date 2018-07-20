@@ -26,7 +26,7 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   }
 }
 
-fun Collection<*>?.isNullOrEmpty() = this == null || isEmpty()
+fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
 inline fun <T, R> Iterator<T>.computeIfAny(processor: (T) -> R): R? {
   for (item in this) {
@@ -58,7 +58,7 @@ inline fun <T, R> List<T>.computeIfAny(processor: (T) -> R): R? {
   return null
 }
 
-fun <T> List<T>?.nullize() = if (isNullOrEmpty()) null else this
+fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
   var errors: MutableList<Throwable>? = null

@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="memoryfilesystem" type="repository">
-    <properties maven-id="com.github.marschall:memoryfilesystem:1.2.0" />
+    <properties maven-id="com.github.marschall:memoryfilesystem:1.2.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/1.2.0/memoryfilesystem-1.2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/1.2.1/memoryfilesystem-1.2.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/1.2.0/memoryfilesystem-1.2.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/1.2.1/memoryfilesystem-1.2.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

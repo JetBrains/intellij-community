@@ -17,10 +17,11 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
@@ -521,7 +522,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
     AnAction action = item.getAnAction();
-    if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace())) {
+    if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
       MainMenuCollector.getInstance().record(action);
     }
     msm.clearSelectedPath();

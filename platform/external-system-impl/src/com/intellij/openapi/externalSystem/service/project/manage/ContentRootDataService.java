@@ -39,12 +39,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
@@ -58,8 +60,11 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
 /**
  * @author Denis Zhdanov
@@ -69,6 +74,8 @@ import java.util.Set;
 public class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
   public static final com.intellij.openapi.util.Key<Boolean> CREATE_EMPTY_DIRECTORIES =
     com.intellij.openapi.util.Key.create("createEmptyDirectories");
+  private static final com.intellij.openapi.util.Key<Set<AddSourceFolderListener>> LISTENERS_KEY =
+    com.intellij.openapi.util.Key.create("postponedSourceFolderCreationListeners");
 
   private static final Logger LOG = Logger.getInstance(ContentRootDataService.class);
 
@@ -154,6 +161,8 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
     }
 
+    cleanPostponedSourceFolderCreationListeners(module);
+
     final Set<ContentEntry> importedContentEntries = ContainerUtil.newIdentityTroveSet();
     for (final DataNode<ContentRootData> node : data) {
       final ContentRootData contentRoot = node.getData();
@@ -167,30 +176,17 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
       }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, false, createEmptyContentRootDirectories);
+
+      for (ExternalSystemSourceType externalSrcType : ExternalSystemSourceType.values()) {
+        final JpsModuleSourceRootType<?> type = getJavaSourceRootType(externalSrcType);
+        if (type != null) {
+          for (SourceRoot path : contentRoot.getPaths(externalSrcType)) {
+            createSourceRootIfAbsent(
+              contentEntry, path, module, type, externalSrcType.isGenerated(), createEmptyContentRootDirectories);
+          }
+        }
       }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, false, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE_GENERATED)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.SOURCE, true, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_GENERATED)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaSourceRootType.TEST_SOURCE, true, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.RESOURCE)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaResourceRootType.RESOURCE, false, createEmptyContentRootDirectories);
-      }
-      for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.TEST_RESOURCE)) {
-        createSourceRootIfAbsent(
-          contentEntry, path, module.getName(), JavaResourceRootType.TEST_RESOURCE, false, createEmptyContentRootDirectories);
-      }
+
       for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
         createExcludedRootIfAbsent(contentEntry, path, module.getName(), module.getProject());
       }
@@ -199,6 +195,47 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     for (ContentEntry contentEntry : contentEntriesMap.values()) {
       modifiableRootModel.removeContentEntry(contentEntry);
     }
+  }
+
+  private static void cleanPostponedSourceFolderCreationListeners(@NotNull Module module) {
+    final Set<AddSourceFolderListener> listeners = module.getUserData(LISTENERS_KEY);
+    final VirtualFileManager vfManager = VirtualFileManager.getInstance();
+    if (listeners != null) {
+      for (AddSourceFolderListener listener : listeners) {
+        vfManager.removeVirtualFileListener(listener);
+      }
+      listeners.clear();
+    }
+  }
+
+  private static void saveSourceFolderCreationListener(@NotNull Module module, @NotNull AddSourceFolderListener listener) {
+    Set<AddSourceFolderListener> listeners = module.getUserData(LISTENERS_KEY);
+    if (listeners == null) {
+      listeners = new HashSet<>();
+      module.putUserData(LISTENERS_KEY, listeners);
+    }
+    listeners.add(listener);
+  }
+
+  @Nullable
+  private static JpsModuleSourceRootType<?> getJavaSourceRootType(ExternalSystemSourceType type) {
+    switch (type) {
+      case SOURCE:
+        return JavaSourceRootType.SOURCE;
+      case TEST:
+        return JavaSourceRootType.TEST_SOURCE;
+      case EXCLUDED:
+        return null;
+      case SOURCE_GENERATED:
+        return JavaSourceRootType.SOURCE;
+      case TEST_GENERATED:
+        return JavaSourceRootType.TEST_SOURCE;
+      case RESOURCE:
+        return JavaResourceRootType.RESOURCE;
+      case TEST_RESOURCE:
+        return JavaResourceRootType.TEST_RESOURCE;
+    }
+    return null;
   }
 
   @NotNull
@@ -214,11 +251,11 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         return entry;
       }
     }
-    return model.addContentEntry(toVfsUrl(path));
+    return model.addContentEntry(pathToUrl(path));
   }
 
   private static void createSourceRootIfAbsent(
-    @NotNull ContentEntry entry, @NotNull final SourceRoot root, @NotNull String moduleName,
+    @NotNull ContentEntry entry, @NotNull final SourceRoot root, @NotNull Module module,
     @NotNull JpsModuleSourceRootType<?> sourceRootType, boolean generated, boolean createEmptyContentRootDirectories) {
     SourceFolder[] folders = entry.getSourceFolders();
     for (SourceFolder folder : folders) {
@@ -238,9 +275,25 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
+      LOG.debug(String.format("Importing %s for content root '%s' of module '%s'", root, entry.getUrl(), module.getName()));
     }
-    SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(root.getPath()), sourceRootType);
+
+    if (!createEmptyContentRootDirectories && !generated) {
+      final Ref<VirtualFile> ref = Ref.create();
+      ExternalSystemApiUtil.doWriteAction(() -> ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getPath())));
+      final VirtualFile sourceFolderFile = ref.get();
+      if (sourceFolderFile == null || !sourceFolderFile.isValid()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will add when dir is created");
+        }
+        final AddSourceFolderListener listener = new AddSourceFolderListener(root, module, sourceRootType);
+        saveSourceFolderCreationListener(module, listener);
+        VirtualFileManager.getInstance().addVirtualFileListener(listener, module);
+        return;
+      }
+    }
+
+    SourceFolder sourceFolder = entry.addSourceFolder(pathToUrl(root.getPath()), sourceRootType);
     if (!StringUtil.isEmpty(root.getPackagePrefix())) {
       sourceFolder.setPackagePrefix(root.getPackagePrefix());
     }
@@ -272,14 +325,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName));
     }
-    entry.addExcludeFolder(toVfsUrl(rootPath));
+    entry.addExcludeFolder(pathToUrl(rootPath));
     if (!Registry.is("ide.hide.excluded.files")) {
       ChangeListManager.getInstance(project).addDirectoryToIgnoreImplicitly(rootPath);
     }
-  }
-
-
-  private static String toVfsUrl(@NotNull String path) {
-    return LocalFileSystem.PROTOCOL_PREFIX + path;
   }
 }

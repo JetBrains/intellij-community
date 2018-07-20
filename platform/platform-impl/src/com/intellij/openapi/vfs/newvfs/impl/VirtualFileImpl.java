@@ -20,13 +20,13 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -147,7 +147,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
         // and that other thread asks JspManager for encoding which requires read action for PSI
         ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
       }
-      catch (ApplicationUtil.CannotRunReadActionException ignored) {
+      catch (ProcessCanceledException ignored) {
       }
     }
     return bytes;

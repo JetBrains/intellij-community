@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -38,9 +39,13 @@ public class GitSimplePathsBrowser extends JPanel {
     super(new BorderLayout());
 
     ChangesTree browser = createBrowser(project, absolutePaths);
-    ActionToolbar toolbar = createToolbar(browser);
 
-    add(toolbar.getComponent(), BorderLayout.NORTH);
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("GitPathBrowser", group, true);
+    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, browser);
+
+    add(toolbarPanel, BorderLayout.NORTH);
     add(ScrollPaneFactory.createScrollPane(browser));
   }
 
@@ -48,12 +53,6 @@ public class GitSimplePathsBrowser extends JPanel {
   private static ChangesTree createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     List<FilePath> filePaths = toFilePaths(absolutePaths);
     return new ChangesTreeImpl.FilePaths(project, false, false, filePaths);
-  }
-
-  @NotNull
-  private static ActionToolbar createToolbar(@NotNull ChangesTree browser) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup(browser.getTreeActions());
-    return ActionManager.getInstance().createActionToolbar("GitPathBrowser", actionGroup, true);
   }
 
   @NotNull

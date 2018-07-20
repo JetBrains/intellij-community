@@ -79,8 +79,8 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
 
   @NotNull
   @Override
-  public Object[] getDependences() {
-    return myDescriptors.stream().flatMap(descriptor -> Arrays.stream(descriptor.getDependences())).toArray();
+  public Object[] getDependencies() {
+    return myDescriptors.stream().flatMap(descriptor -> Arrays.stream(descriptor.getDependencies())).toArray();
   }
 
   @Nullable

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -39,7 +24,6 @@ public interface AutomaticRenamerFactory {
    * Checks if this factory can provide additional elements to be renamed for the given element being renamed.
    *
    * @param element the element being renamed.
-   * @return
    */
   boolean isApplicable(@NotNull PsiElement element);
 
@@ -49,14 +33,11 @@ public interface AutomaticRenamerFactory {
    *
    * @return the checkbox title.
    */
-  @Nullable
-  @Nls
-  String getOptionName();
+  @Nullable @Nls String getOptionName();
 
   /**
    * Returns true if this renamer factory is enabled (and the checkbox representing its state should be checked.)
    * Normally, the implementation of this method needs to load the persisted state of the checkbox.
-   * @return
    */
   boolean isEnabled();
 
@@ -75,6 +56,5 @@ public interface AutomaticRenamerFactory {
    * @param usages  the list of usages of the primary element.
    * @return the renamer instance.
    */
-  @NotNull
-  AutomaticRenamer createRenamer(final PsiElement element, final String newName, final Collection<UsageInfo> usages);
+  @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages);
 }

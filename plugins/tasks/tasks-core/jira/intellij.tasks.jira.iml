@@ -11,5 +11,7 @@
     <orderEntry type="module" module-name="intellij.tasks.core" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="library" name="http-client-3.1" level="project" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
   </component>
 </module>

@@ -41,7 +41,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +100,7 @@ public class PythonPathEditor extends SdkPathEditor {
   @Override
   protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
     for (int i = 0, filesLength = files.length; i < filesLength; i++) {
-      if (files[i].getFileType() == FileTypes.ARCHIVE) {
+      if (!files[i].isDirectory() && files[i].getFileType() == FileTypes.ARCHIVE) {
         files[i] = JarFileSystem.getInstance().getJarRootForLocalFile(files[i]);
       }
     }
@@ -213,7 +212,7 @@ public class PythonPathEditor extends SdkPathEditor {
     private SdkAdditionalData collectSdkAdditionalData(SdkModificator sdkModificator) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdkModificator.getSdkAdditionalData();
       if (data == null) {
-        data = new PythonSdkAdditionalData((PythonSdkFlavor)null);
+        data = new PythonSdkAdditionalData(null);
       }
       data.setAddedPathsFromVirtualFiles(myAdded);
       data.setExcludedPathsFromVirtualFiles(myExcluded);

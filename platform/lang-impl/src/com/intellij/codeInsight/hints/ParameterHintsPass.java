@@ -103,9 +103,26 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
       else {
         List<HintData> hintList = myHints.get(offset);
         if (hintList == null) myHints.put(offset, hintList = new ArrayList<>());
-        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText()));
+        HintWidthAdjustment widthAdjustment = convertHintPresentation(hint.getWidthAdjustment(), provider);
+        hintList.add(new HintData(presentation, hint.getRelatesToPrecedingText(), widthAdjustment));
       }
     });
+  }
+
+  private static HintWidthAdjustment convertHintPresentation(HintWidthAdjustment widthAdjustment,
+                                                             InlayParameterHintsProvider provider) {
+    if (widthAdjustment != null) {
+      String hintText = widthAdjustment.getHintTextToMatch();
+      if (hintText != null) {
+        String adjusterHintPresentation = provider.getInlayPresentation(hintText);
+        if (!hintText.equals(adjusterHintPresentation)) {
+          widthAdjustment = new HintWidthAdjustment(widthAdjustment.getEditorTextToMatch(),
+                                                  adjusterHintPresentation,
+                                                  widthAdjustment.getAdjustmentPosition());
+        }
+      }
+    }
+    return widthAdjustment;
   }
 
   @Override
@@ -157,10 +174,12 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   public static class HintData {
     public final String presentationText;
     public final boolean relatesToPrecedingText;
+    public final HintWidthAdjustment widthAdjustment;
 
-    public HintData(String text, boolean relatesToPrecedingText) {
+    public HintData(String text, boolean relatesToPrecedingText, HintWidthAdjustment widthAdjustment) {
       presentationText = text;
       this.relatesToPrecedingText = relatesToPrecedingText;
+      this.widthAdjustment = widthAdjustment;
     }
   }
 }

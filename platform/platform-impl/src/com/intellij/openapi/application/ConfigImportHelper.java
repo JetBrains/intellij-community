@@ -1,20 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
+import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -23,6 +29,8 @@ import java.util.PropertyResourceBundle;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -75,6 +83,31 @@ public class ConfigImportHelper {
   }
 
   /**
+   * Simple check by file type, content is not checked.
+   */
+  public static boolean isSettingsFile(@NotNull VirtualFile file) {
+    return ArchiveFileType.INSTANCE.equals(file.getFileType());
+  }
+
+  public static boolean isValidSettingsFile(@NotNull File file) {
+    try (ZipInputStream zipStream = new ZipInputStream(new FileInputStream(file))) {
+      while (true) {
+        ZipEntry entry = zipStream.getNextEntry();
+        if (entry == null) {
+          break;
+        }
+
+        if (entry.getName().equals(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
+          return true;
+        }
+      }
+    }
+    catch (IOException ignore) {
+    }
+    return false;
+  }
+
+  /**
    * Returns {@code true} when the IDE is launched for the first time, and configs were imported from another installation.
    */
   public static boolean isConfigImported() {
@@ -96,7 +129,7 @@ public class ConfigImportHelper {
   @Nullable
   private static File findRecentConfigDirectory(File newConfigDir) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
-    // ("~/Library/<selector><version>" on macOS, "~/.<selector><version>/config" on other OSes)
+    // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
     File configsHome = (SystemInfo.isMac ? newConfigDir : newConfigDir.getParentFile()).getParentFile();
     if (configsHome == null || !configsHome.isDirectory()) {
@@ -137,7 +170,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static Pair<File, File> findConfigDirectoryByPath(File selectedDir) {
+  private static Pair<File, File> findConfigDirectoryByPath(@NotNull File selectedDir) {
     // tries to map a user selection into a valid config directory
     // returns a pair of a config directory and an IDE home (when a user pointed to it; null otherwise)
 
@@ -287,6 +320,11 @@ public class ConfigImportHelper {
     }
 
     try {
+      if (oldConfigDir.isFile()) {
+        ZipUtil.extract(oldConfigDir, newConfigDir, null);
+        return;
+      }
+
       // copy everything including plugins (the plugin manager will sort out incompatible ones)
       FileUtil.copyDir(oldConfigDir, newConfigDir);
 
@@ -295,8 +333,9 @@ public class ConfigImportHelper {
       FileUtil.delete(new File(newConfigDir, "user.web.token"));
 
       // on macOS, plugins are normally not under the config directory
-      if (SystemInfo.isMac && !new File(oldConfigDir, PLUGINS).isDirectory()) {
-        File oldPluginsDir = null;
+      File oldPluginsDir = new File(oldConfigDir, PLUGINS);
+      if (SystemInfo.isMac && !oldPluginsDir.isDirectory()) {
+        oldPluginsDir = null;
         if (oldIdeHome != null) {
           oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
         }
@@ -306,6 +345,23 @@ public class ConfigImportHelper {
         if (oldPluginsDir.isDirectory()) {
           File newPluginsDir = new File(PathManager.getPluginsPath());
           FileUtil.copyDir(oldPluginsDir, newPluginsDir);
+        }
+      }
+
+      // apply stale plugin updates
+      if (oldPluginsDir.isDirectory()) {
+        File oldSystemDir = null;
+        if (oldIdeHome != null) {
+          oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
+        }
+        if (oldSystemDir == null) {
+          String selector = SystemInfo.isMac ? oldConfigDir.getName() : StringUtil.trimLeading(oldConfigDir.getParentFile().getName(), '.');
+          oldSystemDir = new File(PathManager.getDefaultSystemPathFor(selector));
+        }
+        File script = new File(oldSystemDir, PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
+        if (script.isFile()) {
+          File newPluginsDir = new File(PathManager.getPluginsPath());
+          StartupActionScriptManager.executeActionScript(script, oldPluginsDir, newPluginsDir);
         }
       }
     }

@@ -3,3 +3,4 @@ foo: bar
 'asd': def
 'dsad
 asd': restricted
+'space after' : def

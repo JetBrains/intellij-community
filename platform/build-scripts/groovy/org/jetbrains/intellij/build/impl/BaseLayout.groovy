@@ -37,14 +37,15 @@ abstract class BaseLayout {
   final List<ModuleLibraryData> includedModuleLibraries = []
   /** JAR name -> name of project library which content should be unpacked */
   final MultiValuesMap<String, String> projectLibrariesToUnpack = new MultiValuesMap<>()
-  protected final Map<String, String>  modulesWithLocalizableResourcesInCommonJar = new LinkedHashMap<>()
+  /** module name -> name of JAR (or path relative to 'lib' directory) where localizable resources will be placed*/
+  protected final Map<String, String> localizableResourcesJars = new LinkedHashMap<>()
   final List<String> modulesWithExcludedModuleLibraries = []
   final List<Pair<ResourcesGenerator, String>> resourceGenerators = []
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
   final Set<String> explicitlySetJarPaths = new LinkedHashSet<>()
 
   String localizableResourcesJarName(String moduleName) {
-    return modulesWithLocalizableResourcesInCommonJar.get(moduleName)
+    return localizableResourcesJars.get(moduleName)
   }
 
   static String convertModuleNameToFileName(String moduleName) {

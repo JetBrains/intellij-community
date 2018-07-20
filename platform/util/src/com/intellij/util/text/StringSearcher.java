@@ -15,9 +15,9 @@
  */
 package com.intellij.util.text;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,14 +25,12 @@ import java.util.Arrays;
 import java.util.Locale;
 
 public class StringSearcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.text.StringSearcher");
-
   private final String myPattern;
   private final char[] myPatternArray;
   private final int myPatternLength;
   private final int[] mySearchTable = new int[128];
   private final boolean myCaseSensitive;
-  private final boolean myLowecaseTransform;
+  private final boolean myLowercaseTransform;
   private final boolean myForwardDirection;
   private final boolean myJavaIdentifier;
   private final boolean myHandleEscapeSequences;
@@ -55,24 +53,23 @@ public class StringSearcher {
                         boolean handleEscapeSequences,
                         boolean lookForJavaIdentifiersOnlyIfPossible) {
     myHandleEscapeSequences = handleEscapeSequences;
-    LOG.assertTrue(!pattern.isEmpty());
+    if (pattern.isEmpty()) throw new IllegalArgumentException("pattern is empty");
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
     myForwardDirection = forwardDirection;
     char[] chars = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
     if (chars.length != myPattern.length()) {
-      myLowecaseTransform = false;
+      myLowercaseTransform = false;
       chars = myPattern.toUpperCase(Locale.US).toCharArray();
     } else {
-      myLowecaseTransform = true;
+      myLowercaseTransform = true;
     }
     myPatternArray = chars;
     myPatternLength = myPatternArray.length;
     Arrays.fill(mySearchTable, -1);
     myJavaIdentifier = lookForJavaIdentifiersOnlyIfPossible &&
-                       (pattern.isEmpty() ||
                        Character.isJavaIdentifierPart(pattern.charAt(0)) &&
-                       Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1)));
+                       Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1));
   }
 
   @NotNull
@@ -86,10 +83,6 @@ public class StringSearcher {
 
   public boolean isJavaIdentifier() {
     return myJavaIdentifier;
-  }
-
-  public boolean isForwardDirection() {
-    return myForwardDirection;
   }
 
   public boolean isHandleEscapeSequences() {
@@ -115,6 +108,19 @@ public class StringSearcher {
       result.add(index);
     }
     return result.toNativeArray();
+  }
+
+
+  public boolean processOccurrences(@NotNull CharSequence text, @NotNull TIntProcedure consumer) {
+    int end = text.length();
+
+    for (int index = 0; index < end; index++) {
+      //noinspection AssignmentToForLoopParameter
+      index = scan(text, index, end);
+      if (index < 0) break;
+      if (!consumer.execute(index)) return false;
+    }
+    return true;
   }
 
   public int scan(@NotNull CharSequence text, @Nullable char[] textArray, int _start, int _end) {
@@ -162,7 +168,6 @@ public class StringSearcher {
 
         start += step;
       }
-      return -1;
     }
     else {
       int start = 1;
@@ -194,8 +199,8 @@ public class StringSearcher {
 
         start += step;
       }
-      return -1;
     }
+    return -1;
   }
 
   private char normalizedCharAt(@NotNull CharSequence text, @Nullable char[] textArray, int index) {
@@ -203,7 +208,7 @@ public class StringSearcher {
     if (myCaseSensitive) {
       return lastChar;
     }
-    return myLowecaseTransform ? StringUtil.toLowerCase(lastChar) : StringUtil.toUpperCase(lastChar);
+    return myLowercaseTransform ? StringUtil.toLowerCase(lastChar) : StringUtil.toUpperCase(lastChar);
   }
 
   private boolean isSameChar(char charInPattern, char charInText) {
@@ -212,14 +217,6 @@ public class StringSearcher {
       return StringUtil.charsEqualIgnoreCase(charInPattern, charInText);
     }
     return sameChar;
-  }
-
-  /**
-   * @deprecated Use {@link #scan(CharSequence)} instead
-   */
-  public int scan(char[] text, int startOffset, int endOffset){
-    final int res = scan(new CharArrayCharSequence(text),text, startOffset, endOffset);
-    return res >= 0 ? res: -1;
   }
 
   @Override
@@ -235,7 +232,7 @@ public class StringSearcher {
     StringSearcher searcher = (StringSearcher)o;
 
     if (myCaseSensitive != searcher.myCaseSensitive) return false;
-    if (myLowecaseTransform != searcher.myLowecaseTransform) return false;
+    if (myLowercaseTransform != searcher.myLowercaseTransform) return false;
     if (myForwardDirection != searcher.myForwardDirection) return false;
     if (myJavaIdentifier != searcher.myJavaIdentifier) return false;
     if (myHandleEscapeSequences != searcher.myHandleEscapeSequences) return false;
@@ -246,7 +243,7 @@ public class StringSearcher {
   public int hashCode() {
     int result = myPattern.hashCode();
     result = 31 * result + (myCaseSensitive ? 1 : 0);
-    result = 31 * result + (myLowecaseTransform ? 1 : 0);
+    result = 31 * result + (myLowercaseTransform ? 1 : 0);
     result = 31 * result + (myForwardDirection ? 1 : 0);
     result = 31 * result + (myJavaIdentifier ? 1 : 0);
     result = 31 * result + (myHandleEscapeSequences ? 1 : 0);

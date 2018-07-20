@@ -20,7 +20,7 @@ import java.io.File
 
 class PathUtils(idePath: String) {
 
-  val myIdeDir = File(idePath)
+  val myIdeDir: File = File(idePath)
 
   companion object {
     fun getJreBinPath(): String {

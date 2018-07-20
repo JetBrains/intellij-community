@@ -465,7 +465,7 @@ public class SearchUtil {
                                                                                                style |
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
-      final String after = text.substring(idx, text.length());
+      final String after = text.substring(idx);
       if (after.length() > 0) textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
     }
   }

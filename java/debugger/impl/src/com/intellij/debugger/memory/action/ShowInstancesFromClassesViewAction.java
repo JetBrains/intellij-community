@@ -15,12 +15,12 @@
  */
 package com.intellij.debugger.memory.action;
 
+import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.sun.jdi.ReferenceType;
-import com.intellij.debugger.memory.ui.ClassesTable;
+import com.intellij.xdebugger.memory.ui.ClassesTable;
 import com.intellij.debugger.memory.ui.InstancesWindow;
 
 public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
@@ -29,11 +29,11 @@ public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
   @Override
   protected void perform(AnActionEvent e) {
     final Project project = e.getProject();
-    final ReferenceType selectedClass = getSelectedClass(e);
+    final TypeInfo selectedClass = getSelectedClass(e);
     if (project != null && selectedClass != null) {
       final XDebugSession debugSession = XDebuggerManager.getInstance(project).getCurrentSession();
       if (debugSession != null) {
-        new InstancesWindow(debugSession, limit -> selectedClass.instances(limit), selectedClass.name()).show();
+        new InstancesWindow(debugSession, selectedClass::getInstances, selectedClass.name()).show();
       }
     }
   }
@@ -46,7 +46,7 @@ public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
   @Override
   protected int getInstancesCount(AnActionEvent e) {
     ClassesTable.ReferenceCountProvider countProvider = e.getData(ClassesTable.REF_COUNT_PROVIDER_KEY);
-    ReferenceType selectedClass = getSelectedClass(e);
+    TypeInfo selectedClass = getSelectedClass(e);
     if (countProvider == null || selectedClass == null) {
       return -1;
     }

@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * <p>Receives notifications about changes in the virtual file system, just as {@link BulkFileListener} and {@link VirtualFileListener},
- * but on a pooled thread, which allows to off-load the EDT, but requires more care in the listener code due to asynchronousness and
+ * but on a pooled thread, which allows to off-load the EDT, but requires more care in the listener code due to asynchrony and
  * the absence of read action.</p>
  *
  * <p>Use the {@link AsyncVfsEventsPostProcessor#addListener(AsyncVfsEventsListener, Disposable)} to subscribe.</p>

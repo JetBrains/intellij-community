@@ -74,7 +74,7 @@ public class MergeIfOrIntention extends Intention {
     statement.append(parentThenBranchText);
     final PsiStatement childElseBranch = childStatement.getElseBranch();
     if (childElseBranch != null) {
-      statement.append("else ");
+      statement.append("\nelse ");
       statement.append(tracker.text(childElseBranch));
     }
     PsiReplacementUtil.replaceStatement(parentStatement, statement.toString(), tracker);
@@ -109,7 +109,7 @@ public class MergeIfOrIntention extends Intention {
     newStatement.append(parentTracker.text(parentThenBranch));
     final PsiStatement childElseBranch = childStatement.getElseBranch();
     if (childElseBranch != null) {
-      newStatement.append("else ");
+      newStatement.append("\nelse ");
       newStatement.append(childTracker.text(childElseBranch));
     }
     PsiReplacementUtil.replaceStatement(parentStatement, newStatement.toString(), parentTracker);

@@ -1,0 +1,5 @@
+void m(Object o) {
+    if (o instanceof String) {
+        String o = (String)o;<spot></spot>
+    }        
+}

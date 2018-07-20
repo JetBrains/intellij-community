@@ -78,4 +78,18 @@ public class MutabilityJdk {
     // list3 size is flushed (UNMODIFIABLE_VIEW)
     if(!list3.isEmpty()) return;
   }
+
+  static class IncompleteCode {
+    <error descr="Variable 'list' might not have been initialized">final List<String> list</error>;
+
+    IncompleteCode() {
+      list = ((IncompleteCode)((<error descr="Expression expected">)</error><error descr="')' expected"><error descr="')' expected"><error descr="';' expected">b</error></error></error>ar()<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">.</error><error descr="Cannot resolve method 'baz()'">baz</error>()<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">.</error><error descr="Cannot resolve symbol 'qux'">qux</error>;
+    }
+
+    static native Object bar();
+
+    void test() {
+      list.add("foo");
+    }
+  }
 }

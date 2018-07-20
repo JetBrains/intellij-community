@@ -20,8 +20,11 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.spellchecker.inspections.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
@@ -41,7 +44,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   public void testLargeTextFileWithManyTypos() {
-    final int typoCount = 50000;
+    final int typoCount = 5000;
     @SuppressWarnings("SpellCheckingInspection") String text = StringUtil.repeat("aaaaaaaaa ", typoCount);  // about 0.5M
 
     long start = System.currentTimeMillis();
@@ -85,6 +88,51 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertEmpty(runLocalInspections());
     }).assertTiming();
+  }
+
+  public void testVeryLongEmail(){
+    final String text = "\\LONG_EMAIL: " + StringUtil.repeat("ivan.ivanov", 1000000) + "@mail.com\n";
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 8000);
+  }
+
+  public void testVeryLongURL(){
+    final String text = "\\LONG_URL:  http://" + StringUtil.repeat("ivan.ivanov", 1000000) + ".com\n";
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 8000);
+  }
+
+  public void testVeryLongHTML(){
+    final String text = "\\ LONG_HTML <!--<li>something go here</li>" + StringUtil.repeat("<li>next content</li>", 1000000) + "foooo barrrr <p> text -->";
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 4000);
+  }
+
+  public void testVeryLongIdentifier(){
+    final String text = StringUtil.repeat("identifier1", 1000000);
+    doSplitterPerformanceTest(text, IdentifierSplitter.getInstance(), 3000);
+  }
+
+  public void testVeryLongSpecialCharacters(){
+    final String text = "word" + StringUtil.repeat("\n\t\r\t\n", 1000000);
+    doSplitterPerformanceTest(text, TextSplitter.getInstance(), 2000);
+  }
+
+  public void testVeryLongProperty(){
+    final String text = StringUtil.repeat("properties.test.properties", 1000000);
+    doSplitterPerformanceTest(text, PropertiesSplitter.getInstance(), 4000);
+  }
+
+  public void testVeryLongList(){
+    final String text = StringUtil.repeat("properties,test,properties", 1000000);
+    doSplitterPerformanceTest(text, PlainTextSplitter.getInstance(), 2000);
+  }
+
+  private static void doSplitterPerformanceTest(String text, Splitter splitter, int expectedTime) {
+    PlatformTestUtil.startPerformanceTest("long word for spelling", expectedTime, () -> {
+      try{
+        splitter.split(text, TextRange.allOf(text), (textRange) -> {});
+      }catch(ProcessCanceledException pce){
+        System.out.println("pce is thrown");
+      }
+    }).attempts(1).assertTiming();
   }
 
   @NotNull

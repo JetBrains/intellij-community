@@ -192,6 +192,8 @@ public abstract class XmlExtension {
     return false;
   }
 
+  public boolean isSingleTagException(@NotNull XmlTag tag) { return false; }
+
   public static boolean shouldIgnoreSelfClosingTag(@NotNull XmlTag tag) {
     final XmlExtension extension = getExtensionByElement(tag);
     return extension != null && extension.isSelfClosingTagAllowed(tag);

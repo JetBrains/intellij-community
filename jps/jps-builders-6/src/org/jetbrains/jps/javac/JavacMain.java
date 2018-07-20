@@ -200,13 +200,21 @@ public class JavacMain {
     catch(IllegalArgumentException e) {
       diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
     }
+    catch(IllegalStateException e) {
+      diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+    }
     catch (CompilationCanceledException ignored) {
       handleCancelException(diagnosticConsumer);
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof CompilationCanceledException) {
-        handleCancelException(diagnosticConsumer);
+      if (cause != null) {
+        if (cause instanceof CompilationCanceledException) {
+          handleCancelException(diagnosticConsumer);
+        }
+        else {
+          diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+        }
       }
       else {
         throw e;
@@ -282,6 +290,7 @@ public class JavacMain {
       }
       skip = false;
     }
+    compilingTool.preprocessOptions(result);
     return result;
   }
 

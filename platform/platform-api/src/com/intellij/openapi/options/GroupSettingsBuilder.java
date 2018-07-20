@@ -62,6 +62,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
       tabs.add(pair.getFirst(), panel);
     }
 
+    tabs.putClientProperty("JTabbedPane.hasFullBorder", Boolean.TRUE);
     return tabs;
   }
 

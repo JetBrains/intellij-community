@@ -3,9 +3,6 @@
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.ide.gdpr.ConsentOptions;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.beans.GroupDescriptor;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -15,9 +12,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
-import java.util.Set;
 
 @State(
   name = "UsagesStatistic",
@@ -30,15 +24,9 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   @NonNls private boolean isShowNotification = true;
   @NotNull private SendPeriod myPeriod = SendPeriod.DAILY;
 
-  @NonNls private static final String DATA_ATTR = "data";
-  @NonNls private static final String GROUP_TAG = "group";
-  @NonNls private static final String GROUP_ID_ATTR = "id";
-  @NonNls private static final String GROUP_PRIORITY_ATTR = "priority";
-
   @NonNls private static final String LAST_TIME_ATTR = "time";
   @NonNls private static final String EVENT_LOG_LAST_TIME_ATTR = "event-log-time";
   @NonNls private static final String IS_ALLOWED_ATTR = "allowed";
-  @NonNls private static final String PERIOD_ATTR = "period";
   @NonNls private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
 
   public static UsageStatisticsPersistenceComponent getInstance() {
@@ -53,21 +41,6 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
   @Override
   public void loadState(@NotNull final Element element) {
-    for (Element groupElement : element.getChildren(GROUP_TAG)) {
-      String groupId = groupElement.getAttributeValue(GROUP_ID_ATTR);
-      double groupPriority = getPriority(groupElement.getAttributeValue(GROUP_PRIORITY_ATTR));
-
-      String valueData = groupElement.getAttributeValue(DATA_ATTR);
-      if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(valueData)) {
-        try {
-          getSentUsages().putAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
-        }
-        catch (AssertionError e) {
-          //don't load incorrect groups
-        }
-      }
-    }
-
     try {
       setSentTime(Long.parseLong(element.getAttributeValue(LAST_TIME_ATTR, "0")));
     }
@@ -90,22 +63,11 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
     setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) || Boolean.parseBoolean(isShowNotificationValue));
-
-    //setPeriod(parsePeriod(element.getAttributeValue(PERIOD_ATTR)));
   }
 
   @Override
   public Element getState() {
     Element element = new Element("state");
-
-    for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : ConvertUsagesUtil.sortDescriptorsByPriority(getSentUsages()).entrySet()) {
-      Element projectElement = new Element(GROUP_TAG);
-      projectElement.setAttribute(GROUP_ID_ATTR, entry.getKey().getId());
-      projectElement.setAttribute(GROUP_PRIORITY_ATTR, Double.toString(entry.getKey().getPriority()));
-      projectElement.setAttribute(DATA_ATTR, ConvertUsagesUtil.convertValueMap(entry.getValue()));
-
-      element.addContent(projectElement);
-    }
 
     long lastTimeSent = getLastTimeSent();
     if (lastTimeSent > 0) {
@@ -116,17 +78,9 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     if (lastEventLogTimeSent > 0) {
       element.setAttribute(EVENT_LOG_LAST_TIME_ATTR, String.valueOf(lastEventLogTimeSent));
     }
-
-    //if (isAllowed()) {
-    //  element.setAttribute(IS_ALLOWED_ATTR, "true");
-    //}
     if (!isShowNotification()) {
       element.setAttribute(SHOW_NOTIFICATION_ATTR, "false");
     }
-    //if (myPeriod != SendPeriod.WEEKLY) {
-    //  element.setAttribute(PERIOD_ATTR, myPeriod.getName());
-    //}
-
     return element;
   }
 
@@ -163,12 +117,6 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   @Override
   public boolean isShowNotification() {
     return isShowNotification;
-  }
-
-  private static double getPriority(String priority) {
-    if (StringUtil.isEmptyOrSpaces(priority)) return GroupDescriptor.DEFAULT_PRIORITY;
-
-    return Double.parseDouble(priority);
   }
 
   @Override

@@ -21,15 +21,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.util.VcsLogUtil;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
-    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.General.Add);
+    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.ToolbarDecorator.Export);
   }
 
   @Override
@@ -49,7 +48,7 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     VcsLogUtil.triggerUsage(e);
 
-    VcsLogContentUtil
-      .openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER), e.getRequiredData(CommonDataKeys.PROJECT));
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER));
   }
 }

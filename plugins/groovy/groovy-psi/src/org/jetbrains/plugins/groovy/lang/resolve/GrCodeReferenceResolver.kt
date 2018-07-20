@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.contextOfType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind.*
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.util.contexts
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
@@ -46,9 +46,8 @@ internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement>
 }
 
 private fun GrCodeReferenceElement.resolveAsPackageReference(): Collection<GroovyResolveResult> {
-  val fqn = qualifiedReferenceName ?: return emptyList()
-  val pckg = JavaPsiFacade.getInstance(project).findPackage(fqn) ?: return emptyList()
-  return listOf(ElementGroovyResult(pckg))
+  val aPackage = resolvePackageFqn() ?: return emptyList()
+  return listOf(ElementResolveResult(aPackage))
 }
 
 private fun GrCodeReferenceElement.resolveAsImportReference(): Collection<GroovyResolveResult> {
@@ -83,12 +82,12 @@ private fun GrCodeReferenceElement.resolveAsImportReference(): Collection<Groovy
 private fun resolveStaticImportReference(file: GroovyFile, import: StaticImport): Collection<GroovyResolveResult> {
   val processor = CollectElementsProcessor()
   import.processDeclarations(processor, ResolveState.initial(), file, file)
-  return processor.results.collapseReflectedMethods().collapseAccessors().map(::ElementGroovyResult)
+  return processor.results.collapseReflectedMethods().collapseAccessors().map(::ElementResolveResult)
 }
 
 private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Collection<GroovyResolveResult> {
   val resolved = import.resolveImport(file) ?: return emptyList()
-  return listOf(ElementGroovyResult(resolved))
+  return listOf(ElementResolveResult(resolved))
 }
 
 private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveResult> {
@@ -180,7 +179,7 @@ fun GrCodeReferenceElement.processClasses(processor: PsiScopeProcessor, state: R
   }
 }
 
-private fun GrCodeReferenceElement.processUnqualified(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+fun PsiElement.processUnqualified(processor: PsiScopeProcessor, state: ResolveState): Boolean {
   return processInnerClasses(processor, state) &&
          processFileLevelDeclarations(processor, state)
 }
@@ -188,10 +187,10 @@ private fun GrCodeReferenceElement.processUnqualified(processor: PsiScopeProcess
 /**
  * @see org.codehaus.groovy.control.ResolveVisitor.resolveNestedClass
  */
-private fun GrCodeReferenceElement.processInnerClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
-  val currentClass = contextOfType<GrTypeDefinition>() ?: return true
+private fun PsiElement.processInnerClasses(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+  val currentClass = getCurrentClass() ?: return true
 
-  if (canResolveToInnerClassOfCurrentClass()) {
+  if (this !is GrCodeReferenceElement || canResolveToInnerClassOfCurrentClass()) {
     if (!currentClass.processInnerInHierarchy(processor, state, this)) return false
   }
 
@@ -202,7 +201,7 @@ private fun GrCodeReferenceElement.processInnerClasses(processor: PsiScopeProces
  * @see org.codehaus.groovy.control.ResolveVisitor.resolveFromModule
  * @see org.codehaus.groovy.control.ResolveVisitor.resolveFromDefaultImports
  */
-private fun GrCodeReferenceElement.processFileLevelDeclarations(processor: PsiScopeProcessor, state: ResolveState): Boolean {
+private fun PsiElement.processFileLevelDeclarations(processor: PsiScopeProcessor, state: ResolveState): Boolean {
   // There is no point in processing imports in dummy files.
   val file = containingFile.skipDummies() ?: return true
   return file.treeWalkUp(processor, state, this)
@@ -222,14 +221,31 @@ private fun GrCodeReferenceElement.canResolveToInnerClassOfCurrentClass(): Boole
   val parent = getActualParent()
   return parent !is GrExtendsClause &&
          parent !is GrImplementsClause &&
-         (parent !is GrAnnotation || parent.classReference != this) && // annotation's can't be inner classes of current class
-         (parent !is GrAnonymousClassDefinition || parent.baseClassReferenceGroovy != this)
+         (parent !is GrAnnotation || parent.classReference != this) // annotation's can't be inner classes of current class
 }
 
 /**
  * Reference element may be created from stub. In this case containing file will be dummy, and its context will be reference parent
  */
 private fun GrCodeReferenceElement.getActualParent(): PsiElement? = containingFile.context ?: parent
+
+/**
+ * @see org.codehaus.groovy.control.ResolveVisitor.currentClass
+ */
+private fun PsiElement.getCurrentClass(): GrTypeDefinition? {
+  for (context in contexts()) {
+    if (context !is GrTypeDefinition) {
+      continue
+    }
+    else if (context is GrAnonymousClassDefinition && this === context.baseClassReferenceGroovy) {
+      continue
+    }
+    else {
+      return context
+    }
+  }
+  return null
+}
 
 private fun PsiFile?.skipDummies(): PsiFile? {
   var file: PsiFile? = this

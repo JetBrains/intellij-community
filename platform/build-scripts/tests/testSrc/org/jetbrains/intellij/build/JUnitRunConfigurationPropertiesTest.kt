@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.io.URLUtil
+import junit.framework.AssertionFailedError
 import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -38,6 +39,11 @@ class JUnitRunConfigurationPropertiesTest {
     assertEquals(listOf("com.example.Test", "com.example.package..*"), properties.testClassPatterns)
     assertEquals(listOf("-ea"), properties.vmParameters)
     assertEquals(emptyList<String>(), properties.requiredArtifacts)
+  }
+
+  @Test(expected = AssertionFailedError::class)
+  fun `load test with method fork mode`() {
+    loadRunConfiguration("test_method_fork_mode.xml")
   }
 
   private fun loadRunConfiguration(fileName: String): JUnitRunConfigurationProperties {

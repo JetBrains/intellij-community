@@ -48,7 +48,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -57,6 +57,7 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +210,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
         MultiMap<String, CommitId> resolvedHashes = MultiMap.createSmart();
 
         Set<String> fullHashes =
-          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == HashImpl.FULL_HASH_LENGTH));
+          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
         for (String fullHash : fullHashes) {
           Hash hash = HashImpl.build(fullHash);
           for (VirtualFile root : myLogData.getRoots()) {
@@ -277,13 +278,13 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     cancelResolve();
   }
 
-  private class CommitSelectionListenerForDetails extends CommitSelectionListener {
+  private class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> {
     public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
-      super(DetailsPanel.this.myLogData, graphTable);
+      super(graphTable, DetailsPanel.this.myLogData.getMiniDetailsGetter());
     }
 
     @Override
-    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+    protected void onDetailsLoaded(@NotNull List<VcsCommitMetadata> detailsList) {
       List<CommitId> ids = ContainerUtil.map(detailsList,
                                              detail -> new CommitId(detail.getId(), detail.getRoot()));
       Set<String> unResolvedHashes = ContainerUtil.newHashSet();
@@ -292,11 +293,11 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
                                                                                              unResolvedHashes));
       setPresentations(ids, presentations);
 
-      TIntHashSet newCommitDetails = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
-      if (!TroveUtil.intersects(myCommitIds, newCommitDetails)) {
+      TIntHashSet newCommitIds = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
+      if (!TroveUtil.intersects(myCommitIds, newCommitIds)) {
         myScrollPane.getVerticalScrollBar().setValue(0);
       }
-      myCommitIds = newCommitDetails;
+      myCommitIds = newCommitIds;
 
       List<Integer> currentSelection = mySelection;
       resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
@@ -306,7 +307,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     protected void onSelection(@NotNull int[] selection) {
       cancelResolve();
       rebuildCommitPanels(selection);
-      final List<Integer> currentSelection = mySelection;
+      List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
         for (Integer row : currentSelection) {

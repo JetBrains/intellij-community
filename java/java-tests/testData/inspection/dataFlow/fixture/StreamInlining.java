@@ -126,7 +126,8 @@ public class StreamInlining {
   boolean flatMap(List<String> list, List<List<String>> ll) {
     System.out.println(ll.stream().flatMap(l -> l.stream()).count());
     return list.stream().map(s -> s.isEmpty() ? null : s)
-      .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>()).filter(r -> r != null))
+               .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>())
+                    .filter(r -> <warning descr="Condition 'r != null' is always 'true'">r != null</warning>))
       .anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>);
   }
 
@@ -140,7 +141,7 @@ public class StreamInlining {
   static class MyClass {
     @Nullable
     static String nullableFunction(String s) {
-      return s;
+      return s.isEmpty() ? null : s;
     }
 
     static String functionThatDoesNotAcceptNull(@NotNull String s) {
@@ -183,5 +184,58 @@ public class StreamInlining {
     if(res == null) { // not always null
       System.out.println("possible");
     }
+  }
+
+  // IDEA-190591
+  void testReduce() {
+    List<Double> input = new ArrayList<>();
+    input.add(0.0);
+    Optional<Double> result = input.stream().reduce((a, b) -> {
+      throw new IllegalStateException("Multiple entries found: " + a + " and " + b);
+    });
+    Double res = result.orElse(null);
+    if (res != null) {
+      System.out.println(res);
+    } else {
+      System.out.println("Huh?");
+    }
+  }
+
+  void testReduceNullability() {
+    Optional<String> res1 = Stream.of("foo", "bar", null).reduce((a, b) -> a); // a is never null - ok
+    Optional<String> res2 = Stream.of("foo", null, "bar").reduce((a, b) -> a); // wrong, but not supported yet
+    Optional<String> res3 = Stream.of("foo", "bar", null).reduce((a, b) -> <warning descr="Function may return null, but it's not allowed here">b</warning>);
+    Optional<String> res4 = Stream.of(null, "foo", "bar").reduce((a, b) -> b); // b is never null - ok
+  }
+
+  public void testStreamTryFinally() {
+    try {
+
+    } finally {
+      Stream.of("x").map(a -> {
+        if(<warning descr="Condition 'a.equals(\"baz\")' is always 'false'">a.equals("baz")</warning>) {
+          System.out.println("impossible");
+        }
+        testStreamTryFinally();
+        return "bar";
+      }).count();
+    }
+  }
+
+  void testTryFinally2() {
+    try {
+    } finally {
+      try {
+        List<String> list = Stream.of("xyz").map(a -> {
+          testTryFinally2();
+          return "foo";
+        }).collect(Collectors.toList());
+      } catch (Exception e) {
+      }
+    }
+  }
+
+  void testToArray(List<String> list) {
+    list.stream().toArray(size -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
   }
 }

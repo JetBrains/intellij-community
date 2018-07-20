@@ -55,8 +55,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public void dispose() {
-    myHighlighterTree.dispose();
-    myHighlighterTreeForLines.dispose();
+    myHighlighterTree.dispose(myDocument);
+    myHighlighterTreeForLines.dispose(myDocument);
   }
 
   @Override

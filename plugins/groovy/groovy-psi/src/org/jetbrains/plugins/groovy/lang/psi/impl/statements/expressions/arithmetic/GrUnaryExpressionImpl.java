@@ -78,18 +78,14 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     }
   };
 
-  private static final ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl> OUR_RESOLVER = new ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl>() {
-    @NotNull
-    @Override
-    public GroovyResolveResult[] resolve(@NotNull GrUnaryExpressionImpl unary, boolean incompleteCode) {
-      final GrExpression operand = unary.getOperand();
-      if (operand == null) return GroovyResolveResult.EMPTY_ARRAY;
+  private static final ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl> OUR_RESOLVER = (unary, incompleteCode) -> {
+    final GrExpression operand = unary.getOperand();
+    if (operand == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-      final PsiType type = operand.getType();
-      if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
+    final PsiType type = operand.getType();
+    if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-      return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), operand, PsiType.EMPTY_ARRAY);
-    }
+    return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), operand, PsiType.EMPTY_ARRAY);
   };
 
   public GrUnaryExpressionImpl(@NotNull ASTNode node) {
@@ -128,7 +124,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitUnaryExpression(this);
   }
 
@@ -143,11 +139,13 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     return getFirstChild() instanceof GrExpression;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement opToken = getOperationToken();

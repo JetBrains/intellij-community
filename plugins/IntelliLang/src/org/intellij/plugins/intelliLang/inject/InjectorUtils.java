@@ -75,7 +75,7 @@ public class InjectorUtils {
   }
 
   @Nullable
-  public static Language getLanguageByString(String languageId) {
+  public static Language getLanguageByString(@NotNull String languageId) {
     Language language = InjectedLanguage.findLanguageById(languageId);
     if (language != null) return language;
     ReferenceInjector injector = ReferenceInjector.findById(languageId);
@@ -100,9 +100,6 @@ public class InjectorUtils {
     for (TextRange range : ranges) {
       list.add(Trinity.create(host, injectedLanguage, range));
     }
-    //if (host.getChildren().length > 0) {
-    //  host.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, Boolean.TRUE);
-    //}
     registerInjection(language, list, host.getContainingFile(), registrar);
     if (support != null) {
       registerSupport(support, true, host, language);
@@ -110,10 +107,10 @@ public class InjectorUtils {
     return !ranges.isEmpty();
   }
 
-  public static void registerInjection(Language language,
-                                       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
-                                       PsiFile containingFile,
-                                       MultiHostRegistrar registrar) {
+  public static void registerInjection(@Nullable Language language,
+                                       @NotNull List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                       @NotNull PsiFile containingFile,
+                                       @NotNull MultiHostRegistrar registrar) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
     // Maybe IDEA core is caching a bit too aggressively here?
     if (language == null/* && (pair.second.getLength() > 0*/) {
@@ -157,7 +154,7 @@ public class InjectorUtils {
   private static final Map<String, LanguageInjectionSupport> ourSupports;
   static {
     ourSupports = new LinkedHashMap<>();
-    for (LanguageInjectionSupport support : Arrays.asList(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME))) {
+    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       ourSupports.put(support.getId(), support);
     }
   }
@@ -166,28 +163,30 @@ public class InjectorUtils {
   public static Collection<String> getActiveInjectionSupportIds() {
     return ourSupports.keySet();
   }
+  @NotNull
   public static Collection<LanguageInjectionSupport> getActiveInjectionSupports() {
     return ourSupports.values();
   }
 
   @Nullable
-  public static LanguageInjectionSupport findInjectionSupport(final String id) {
+  public static LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
     return ourSupports.get(id);
   }
 
   @NotNull
-  public static Class[] getPatternClasses(final String supportId) {
+  public static Class[] getPatternClasses(@NotNull String supportId) {
     final LanguageInjectionSupport support = findInjectionSupport(supportId);
     return support == null ? ArrayUtil.EMPTY_CLASS_ARRAY : support.getPatternClasses();
   }
 
   @NotNull
-  public static LanguageInjectionSupport findNotNullInjectionSupport(final String id) {
+  public static LanguageInjectionSupport findNotNullInjectionSupport(@NotNull String id) {
     final LanguageInjectionSupport result = findInjectionSupport(id);
     assert result != null: id+" injector not found";
     return result;
   }
 
+  @NotNull
   public static StringBuilder appendStringPattern(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String text, @NotNull String suffix) {
     sb.append(prefix).append("string().");
     final String[] parts = text.split("[,|\\s]+");
@@ -218,7 +217,7 @@ public class InjectorUtils {
     return sb;
   }
 
-  public static boolean isRegexp(final String s) {
+  public static boolean isRegexp(@NotNull String s) {
     boolean hasReChars = false;
     for (int i = 0, len = s.length(); i < len; i++) {
       final char c = s.charAt(i);
@@ -237,7 +236,10 @@ public class InjectorUtils {
     return false;
   }
 
-  public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull PsiElement element, @NotNull Language language) {
+  public static void registerSupport(@NotNull LanguageInjectionSupport support,
+                                     boolean settingsAvailable,
+                                     @NotNull PsiElement element,
+                                     @NotNull Language language) {
     putInjectedFileUserData(element, language, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
     if (settingsAvailable) {
       putInjectedFileUserData(element, language, LanguageInjectionSupport.SETTINGS_EDITOR, support);
@@ -245,8 +247,9 @@ public class InjectorUtils {
   }
 
   /**
-   * @deprecated use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead
+   * @deprecated use {@link InjectorUtils#registerSupport(LanguageInjectionSupport, boolean, PsiElement, Language)} instead
    */
+  @Deprecated
   public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
     LOG.warn("use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead");
     putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
@@ -255,23 +258,24 @@ public class InjectorUtils {
     }
   }
 
-  public static <T> void putInjectedFileUserData(@NotNull PsiElement element, @NotNull Language language, Key<T> key, T value) {
+  public static <T> void putInjectedFileUserData(@NotNull PsiElement element, @NotNull Language language, @NotNull Key<T> key, @Nullable T value) {
     InjectedLanguageUtil.putInjectedFileUserData(element, language, key, value);
   }
 
   /**
-   * @deprecated use {@link InjectorUtils#putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead
+   * @deprecated use {@link InjectorUtils#putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
    */
-  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
+  @Deprecated
+  public static <T> void putInjectedFileUserData(@NotNull MultiHostRegistrar registrar, @NotNull Key<T> key, T value) {
     InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
   }
 
   @SuppressWarnings("UnusedParameters")
-  public static Configuration getEditableInstance(Project project) {
+  public static Configuration getEditableInstance(@NotNull Project project) {
     return Configuration.getInstance();
   }
 
-  public static boolean canBeRemoved(BaseInjection injection) {
+  public static boolean canBeRemoved(@NotNull BaseInjection injection) {
     if (injection.isEnabled()) return false;
     if (StringUtil.isNotEmpty(injection.getPrefix()) || StringUtil.isNotEmpty(injection.getSuffix())) return false;
     if (StringUtil.isNotEmpty(injection.getValuePattern())) return false;
@@ -279,7 +283,7 @@ public class InjectorUtils {
   }
 
   @Nullable
-  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<PsiElement> causeRef) {
+  private static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<PsiElement> causeRef) {
     return findCommentInjectionData(context, true, causeRef);
   }
 
@@ -313,7 +317,7 @@ public class InjectorUtils {
     if (off2 - off1 > 120) {
       return null;
     }
-    else if (off2 - off1 > 2) {
+    if (off2 - off1 > 2) {
       // ... there's no non-empty valid host in between comment and topmostElement
       Producer<PsiElement> producer = prevWalker(topmostElement, commonParent);
       PsiElement e;
@@ -354,7 +358,7 @@ public class InjectorUtils {
   }
 
   @NotNull
-  protected static TreeMap<TextRange,CommentInjectionData> calcInjections(PsiFile file) {
+  private static TreeMap<TextRange,CommentInjectionData> calcInjections(@NotNull PsiFile file) {
     final TreeMap<TextRange, CommentInjectionData> injectionMap = new TreeMap<>(RANGE_COMPARATOR);
 
     TIntArrayList ints = new TIntArrayList();
@@ -362,7 +366,8 @@ public class InjectorUtils {
     CharSequence contents = file.getViewProvider().getContents();
     final char[] contentsArray = CharArrayUtil.fromSequenceWithoutCopying(contents);
 
-    int s0 = 0, s1 = contents.length();
+    int s0 = 0;
+    int s1 = contents.length();
     for (int idx = searcher.scan(contents, contentsArray, s0, s1);
          idx != -1;
          idx = searcher.scan(contents, contentsArray, idx + 1, s1)) {
@@ -380,7 +385,8 @@ public class InjectorUtils {
   }
 
   private static final Pattern MAP_ENTRY_PATTERN = Pattern.compile("([\\S&&[^=]]+)=(\"(?:[^\"]|\\\\\")*\"|\\S*)");
-  private static Map<String, String> decodeMap(CharSequence charSequence) {
+  @NotNull
+  private static Map<String, String> decodeMap(@NotNull CharSequence charSequence) {
     if (StringUtil.isEmpty(charSequence)) return Collections.emptyMap();
     final Matcher matcher = MAP_ENTRY_PATTERN.matcher(charSequence);
     final LinkedHashMap<String, String> map = new LinkedHashMap<>();
@@ -391,7 +397,8 @@ public class InjectorUtils {
     return map;
   }
 
-  private static Producer<PsiElement> prevWalker(final PsiElement element, final PsiElement scope) {
+  @NotNull
+  private static Producer<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
     return new Producer<PsiElement>() {
       PsiElement e = element;
 
@@ -415,7 +422,7 @@ public class InjectorUtils {
     private final String myDisplayName;
     private final Map<String, String> myMap;
 
-    public CommentInjectionData(@NotNull Map<String, String> map, String displayName) {
+    CommentInjectionData(@NotNull Map<String, String> map, @NotNull String displayName) {
       myMap = Collections.unmodifiableMap(map);
       myDisplayName = displayName;
     }
@@ -435,10 +442,12 @@ public class InjectorUtils {
       return ObjectUtils.notNull(myMap.get("language"), "");
     }
 
+    @NotNull
     public String getDisplayName() {
       return myDisplayName;
     }
-    
+
+    @NotNull
     public Map<String, String> getValues() {
       return myMap;
     }

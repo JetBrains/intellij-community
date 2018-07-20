@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
@@ -24,6 +25,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -35,8 +37,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vladimir Kondratyev
@@ -72,6 +76,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private boolean myShowDividerControls;
   private int myDividerZone;
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.ThreeComponentsSplitter");
 
   private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
 
@@ -115,9 +121,21 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     Component findChildToFocus (Component component) {
       final Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
       if (ancestor != null) {
-        final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
-        if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
-          return mostRecentFocusOwner;
+        //KeyboardFocusManager.getMostRecentFocusOwner(this)
+        try {
+          final Component mostRecentFocusOwner;
+
+          mostRecentFocusOwner = (Component)
+            Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class,
+            "getMostRecentFocusOwner", Window.class)).invoke(null, ancestor);
+
+          if (mostRecentFocusOwner != null &&
+              SwingUtilities.isDescendingFrom(mostRecentFocusOwner, component) &&
+              mostRecentFocusOwner.isShowing()) {
+            return mostRecentFocusOwner;
+          }
+        }  catch (InvocationTargetException|IllegalAccessException e) {
+          LOG.debug(e);
         }
       }
       if (component instanceof JPanel) {
@@ -236,12 +254,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         return new Dimension(width, height);
       }
       else {
-        int heigth = Math.max(firstSize.height, Math.max(lastSize.height, innerSize.height));
+        int height = Math.max(firstSize.height, Math.max(lastSize.height, innerSize.height));
         int width = visibleDividersCount() * dividerWidth;
         width += firstSize.width;
         width += lastSize.width;
         width += innerSize.width;
-        return new Dimension(width, heigth);
+        return new Dimension(width, height);
       }
     }
     return super.getMinimumSize();
@@ -260,25 +278,25 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     int dividerWidth = getDividerWidth();
     int dividersCount = visibleDividersCount();
 
-    int firstCompontSize;
+    int firstComponentSize;
     int lastComponentSize;
     int innerComponentSize;
     if(componentSize <= dividersCount * dividerWidth) {
-      firstCompontSize = 0;
+      firstComponentSize = 0;
       lastComponentSize = 0;
       innerComponentSize = 0;
       dividerWidth = componentSize;
     }
     else {
-      firstCompontSize = getFirstSize();
+      firstComponentSize = getFirstSize();
       lastComponentSize = getLastSize();
-      int sizeLack = firstCompontSize + lastComponentSize - (componentSize - dividersCount * dividerWidth - myMinSize);
+      int sizeLack = firstComponentSize + lastComponentSize - (componentSize - dividersCount * dividerWidth - myMinSize);
       if (sizeLack > 0) {
         // Lacking size. Reduce first & last component's size, inner -> MIN_SIZE
-        double firstSizeRatio = (double)firstCompontSize / (firstCompontSize + lastComponentSize);
-        if (firstCompontSize > 0) {
-          firstCompontSize -= sizeLack * firstSizeRatio;
-          firstCompontSize = Math.max(myMinSize, firstCompontSize);
+        double firstSizeRatio = (double)firstComponentSize / (firstComponentSize + lastComponentSize);
+        if (firstComponentSize > 0) {
+          firstComponentSize -= sizeLack * firstSizeRatio;
+          firstComponentSize = Math.max(myMinSize, firstComponentSize);
         }
         if (lastComponentSize > 0) {
           lastComponentSize -= sizeLack * (1 - firstSizeRatio);
@@ -294,14 +312,14 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         lastComponentSize += innerComponentSize;
         innerComponentSize = 0;
         if (!lastVisible()) {
-          firstCompontSize = componentSize;
+          firstComponentSize = componentSize;
         }
       }
     }
 
     if (getOrientation()) {
-      int space = firstCompontSize;
-      firstRect.setBounds(0, 0, width, firstCompontSize);
+      int space = firstComponentSize;
+      firstRect.setBounds(0, 0, width, firstComponentSize);
       if (firstDividerVisible()) {
         firstDividerRect.setBounds(0, space, width, dividerWidth);
         space += dividerWidth;
@@ -318,8 +336,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       lastRect.setBounds(0, space, width, lastComponentSize);
     }
     else {
-      int space = firstCompontSize;
-      firstRect.setBounds(0, 0, firstCompontSize, height);
+      int space = firstComponentSize;
+      firstRect.setBounds(0, 0, firstComponentSize, height);
 
       if (firstDividerVisible()) {
         firstDividerRect.setBounds(space, 0, dividerWidth, height);
@@ -401,8 +419,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   /**
-   * Sets component which is located as the "first" splitted area. The method doesn't validate and
-   * repaint the splitter. If there is already
+   * Sets component which is located as the "first" split area. The method doesn't validate and
+   * repaint the splitter if there is one already.
    *
    */
   public void setFirstComponent(@Nullable JComponent component) {
@@ -425,7 +443,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
 
   /**
-   * Sets component which is located as the "secont" splitted area. The method doesn't validate and
+   * Sets component which is located as the "second" split area. The method doesn't validate and
    * repaint the splitter.
    *
    */
@@ -847,9 +865,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           break;
       }
     }
-  }
-
-  private Cursor getResizeCursor() {
-    return getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+    private Cursor getResizeCursor() {
+      return getOrientation()
+             ? Cursor.getPredefinedCursor(myIsFirst ? Cursor.S_RESIZE_CURSOR : Cursor.N_RESIZE_CURSOR)
+             : Cursor.getPredefinedCursor(myIsFirst ? Cursor.W_RESIZE_CURSOR : Cursor.E_RESIZE_CURSOR);
+    }
   }
 }

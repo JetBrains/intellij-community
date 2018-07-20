@@ -170,7 +170,7 @@ class MarkerCache {
                                  boolean isSegmentGreedy,
                                  @NotNull FrozenDocument frozen,
                                  @NotNull List<DocumentEvent> events) {
-    SelfElementInfo info = new SelfElementInfo(containingFile.getProject(), ProperTextRange.create(segment), new Identikit() {
+    SelfElementInfo info = new SelfElementInfo(ProperTextRange.create(segment), new Identikit() {
       @Nullable
       @Override
       public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {

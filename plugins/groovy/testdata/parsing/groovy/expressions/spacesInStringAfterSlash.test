@@ -1,0 +1,12 @@
+
+print 'abc \\ \ncde'
+-----
+Groovy script
+  PsiElement(new line)('\n')
+  Call expression
+    Reference expression
+      PsiElement(identifier)('print')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Literal
+        PsiElement(string)(''abc \\ \ncde'')

@@ -15,6 +15,7 @@ import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -84,12 +85,6 @@ public class CompilerTask extends Task.Backgroundable {
   private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
   private Runnable myRestartWork;
   private final boolean myCompilationStartedAutomatically;
-
-  @Deprecated
-  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
-                      boolean waitForPreviousSession) {
-    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false);
-  }
 
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession, boolean compilationStartedAutomatically) {
@@ -330,7 +325,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      informWolf(message);
+      ReadAction.run(() -> informWolf(message));
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {

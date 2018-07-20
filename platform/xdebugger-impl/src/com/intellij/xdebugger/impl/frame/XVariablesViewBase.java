@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
@@ -65,6 +63,10 @@ public abstract class XVariablesViewBase extends XDebugView {
     DnDManager.getInstance().registerSource(myTreePanel, getTree());
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myTreePanel.getTree();
+  }
+
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
@@ -101,7 +103,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
     XValueContainerNode root;
     if (stackFrame == null) {
-      root = new XValueContainerNode<XValueContainer>(getTree(), null, new XValueContainer() {}) {};
+      root = new XValueContainerNode<XValueContainer>(getTree(), null, true, new XValueContainer() {}) {};
     }
     else {
       root = new XStackFrameNode(getTree(), stackFrame);

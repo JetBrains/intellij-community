@@ -49,6 +49,10 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin"/>
+    <extensionPoint qualifiedName="com.intellij.jvm.declarationSearcher" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.jvm.source.JvmDeclarationSearcher"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.java.languageFeatureProvider" interface="com.intellij.pom.java.LanguageFeatureProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
@@ -56,6 +60,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
     <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"
@@ -122,4 +127,7 @@
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.jvm">
+    <declarationSearcher language="JAVA" implementationClass="com.intellij.lang.java.source.JavaDeclarationSearcher"/>
+  </extensions>
 </idea-plugin>

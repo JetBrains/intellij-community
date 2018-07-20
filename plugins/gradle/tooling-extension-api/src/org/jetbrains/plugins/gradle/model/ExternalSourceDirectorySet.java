@@ -40,6 +40,7 @@ public interface ExternalSourceDirectorySet extends Serializable {
   /**
    * @deprecated use {@link #getGradleOutputDirs()}
    */
+  @Deprecated
   @NotNull
   File getGradleOutputDir();
 
@@ -56,6 +57,9 @@ public interface ExternalSourceDirectorySet extends Serializable {
   Set<String> getExcludes();
   @NotNull
   Set<String> getIncludes();
+
+  @NotNull
+  FilePatternSet getPatterns();
 
   @NotNull
   List<ExternalFilter> getFilters();

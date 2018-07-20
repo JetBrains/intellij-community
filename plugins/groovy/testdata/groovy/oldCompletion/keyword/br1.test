@@ -7,3 +7,4 @@ while (true) {
 boolean
 break
 byte
+double

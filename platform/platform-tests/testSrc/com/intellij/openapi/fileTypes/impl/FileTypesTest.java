@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.editor.Document;
@@ -95,7 +96,7 @@ public class FileTypesTest extends PlatformTestCase {
       String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
       names[i] = name + name + name + name;
     }
-    PlatformTestUtil.startPerformanceTest("isFileIgnored", 17_000, () -> {
+    PlatformTestUtil.startPerformanceTest("isFileIgnored", 19_000, () -> {
       for (int i = 0; i < 100_000; i++) {
         for (String name : names) {
           myFileTypeManager.isFileIgnored(name);
@@ -336,23 +337,73 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testReassignedPredefinedFileType() {
-    final FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
-    assertEquals("Perl", perlFileType.getName());
+    final FileType fileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
+    assertEquals("Perl", fileType.getName());
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
-    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(perlFileType, "*.cgi"));
+    doReassignTest(fileType, "cgi");
+  }
 
-    assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+  public void testReassignTextFileType() {
+    doReassignTest(PlainTextFileType.INSTANCE, "dtd");
+  }
 
-    Element element = myFileTypeManager.getState();
-    myFileTypeManager.loadState(element);
-    myFileTypeManager.initComponent();
-    assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+  private void doReassignTest(FileType fileType, String extension) {
+    try {
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(fileType, "*." + extension));
 
-    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi"));
+      assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
 
-    myFileTypeManager.clearForTests();
+      Element element = myFileTypeManager.getState();
+
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.loadState(element);
+      myFileTypeManager.initComponent();
+
+      assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
+    }
+    finally {
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(fileType, "*." + extension));
+
+      myFileTypeManager.clearForTests();
+      myFileTypeManager.initStandardFileTypes();
+      myFileTypeManager.initComponent();
+    }
+  }
+
+  public void testRemovedMappingsSerialization() {
+    HashSet<FileType> fileTypes = new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
+    //noinspection unchecked
+    FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
+
+    ArchiveFileType fileType = ArchiveFileType.INSTANCE;
+    FileNameMatcher matcher = table.getAssociations(fileType).get(0);
+
+    table.removeAssociation(matcher, fileType);
+
+    WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
+    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+
+    Element state = myFileTypeManager.getState();
+
+    myFileTypeManager.getRemovedMappings().clear();
     myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.loadState(state);
     myFileTypeManager.initComponent();
+
+    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    Pair<FileType, Boolean> pair = mappings.get(matcher);
+    assertNotNull(pair);
+    assertTrue(pair.second);
+  }
+
+  public void testGetRemovedMappings() {
+    FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
+    ArchiveFileType fileType = ArchiveFileType.INSTANCE;
+    FileNameMatcher matcher = table.getAssociations(fileType).get(0);
+    table.removeAssociation(matcher, fileType);
+    Map<FileNameMatcher, FileType> reassigned =
+      myFileTypeManager.getExtensionMap().getRemovedMappings(table, Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
+    assertEquals(1, reassigned.size());
   }
 
   public void testRenamedPropertiesToUnknownAndBack() throws Exception {
@@ -615,21 +666,19 @@ public class FileTypesTest extends PlatformTestCase {
           });
 
           if (random.nextInt(3) == 0) {
-            new WriteCommandAction.Simple(getProject()) {
-              @Override
-              protected void run() throws Throwable {
-                byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
-                Arrays.fill(bytes, (byte)' ');
-                virtualFile.setBinaryContent(bytes);
-              }
-            }.execute().throwException();
+            WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+              byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
+              Arrays.fill(bytes, (byte)' ');
+              virtualFile.setBinaryContent(bytes);
+            });
 
 
             //RandomAccessFile ra = new RandomAccessFile(f, "rw");
             //ra.setLength(ra.length()+(isText ? 1 : -1));
             //ra.close();
             //LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
-            System.out.println(i+"; f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; type="+virtualFile.getFileType());
+            System.out
+              .println(i + "; f = " + f.length() + "; virtualFile=" + virtualFile.getLength() + "; type=" + virtualFile.getFileType());
             //Thread.sleep(random.nextInt(100));
           }
         }

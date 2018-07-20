@@ -1,0 +1,6 @@
+- > some invalid symbols # comment
+   hello
+   world
+- | some invalid symbols # comment
+   forever
+   young

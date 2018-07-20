@@ -421,7 +421,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("put/remove", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("put/remove", 9000, () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {

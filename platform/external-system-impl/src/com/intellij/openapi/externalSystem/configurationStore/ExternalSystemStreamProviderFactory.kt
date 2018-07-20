@@ -9,6 +9,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -70,7 +71,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
-    val componentManager = storageManager.componentManager
+    val componentManager = storageManager.componentManager ?: return null
     val project = componentManager as? Project ?: (componentManager as Module).project
     // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
     if ((storages.size == 1 && storages.first().value == StoragePathMacros.WORKSPACE_FILE) || !project.isExternalStorageEnabled) {
@@ -134,11 +135,16 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 
   fun readModuleData(name: String): Element? {
-    if (!moduleStorage.hasSomeData && isReimportOnMissedExternalStorageScheduled.compareAndSet(false, true) && !project.isInitialized) {
+    if (!moduleStorage.hasSomeData &&
+        isReimportOnMissedExternalStorageScheduled.compareAndSet(false, true) &&
+        !project.isInitialized &&
+        !ExternalSystemUtil.isNewProject(project)) {
       StartupManager.getInstance(project).runWhenProjectIsInitialized {
         val externalProjectsManager = ExternalProjectsManager.getInstance(project)
         externalProjectsManager.runWhenInitialized {
-          externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+          if (!ExternalSystemUtil.isNewProject(project)) {
+            externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+          }
         }
       }
     }

@@ -73,6 +73,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   /**
    * @deprecated override {@link #createServerConfigurable(com.intellij.remoteServer.configuration.ServerConfiguration)} instead
    */
+  @Deprecated
   @NotNull
   public UnnamedConfigurable createConfigurable(@NotNull C configuration) {
     return createServerConfigurable(configuration);

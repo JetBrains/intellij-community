@@ -72,8 +72,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     mySearchForTextOccurrencesAvailable = searchForTextOccurrencesAvailable;
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
 
-    setButtonsMargin(null);
-
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
   }

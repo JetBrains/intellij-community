@@ -26,7 +26,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -336,17 +335,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     // don't use createFile here because it creates PsiFile and runs file type autodetection
     // in real life some files might not be autodetected as plain text until the search starts 
-    VirtualFile custom = new WriteCommandAction<VirtualFile>(myProject) {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        File dir = createTempDirectory();
-        File file = new File(dir.getPath(), "A.test1234");
-        file.createNewFile();
-        FileUtil.writeToFile(file, "foo fo foo");
-        addSourceContentToRoots(myModule, VfsUtil.findFileByIoFile(dir, true));
-        result.setResult(VfsUtil.findFileByIoFile(file, true));
-      }
-    }.execute().getResultObject();
+    VirtualFile custom = WriteCommandAction.writeCommandAction(myProject).compute(() -> {
+      File dir = createTempDirectory();
+      File file = new File(dir.getPath(), "A.test1234");
+      file.createNewFile();
+      FileUtil.writeToFile(file, "foo fo foo");
+      addSourceContentToRoots(myModule, VfsUtil.findFileByIoFile(dir, true));
+      return VfsUtil.findFileByIoFile(file, true);
+    });
     
     assertNull(FileDocumentManager.getInstance().getCachedDocument(custom));
     assertEquals(PlainTextFileType.INSTANCE, custom.getFileType());
@@ -599,10 +595,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       ThrowableRunnable test = () -> assertSize(lineCount, findUsages(findModel));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in global", 400, test).attempts(2).usesAllCPUCores().assertTiming();
+      int timeout = 400;
+      PlatformTestUtil.startPerformanceTest("find usages in global", timeout, test).attempts(2).assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in local", 200, test).attempts(2).usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("find usages in local", timeout, test).attempts(2).assertTiming();
     }
     finally {
       fixture.tearDown();
@@ -1103,4 +1100,24 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(expectedModuleName, model.getModuleName());
     assertEquals(shouldBeCustomScope, model.isCustomScope());
   }
+
+  public void testSearchInImlsIfRequestedExplicitly() throws Exception {
+    createFile("a.iml", "foo");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+    assertEmpty(findUsages(findModel)); // skipped by default
+
+    findModel.setFileFilter("*.iml");
+    assertSize(1, findUsages(findModel));
+  }
+
+  public void testSearchInDotIdeaIfRequestedExplicitly() throws Exception {
+    VirtualFile dotIdea = createChildDirectory(createTempVfsDirectory(), Project.DIRECTORY_STORE_FOLDER);
+    createFile(myModule, dotIdea, "a.iml", "foo");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+    assertEmpty(findUsages(findModel)); // skipped by default
+
+    findModel.setDirectoryName(dotIdea.getPath());
+    assertSize(1, findUsages(findModel));
+  }
+
 }

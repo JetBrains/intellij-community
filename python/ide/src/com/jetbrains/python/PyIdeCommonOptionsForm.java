@@ -372,10 +372,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     public void sdkChanged(Sdk sdk, String previousName) {
       update();
     }
-
-    @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
-    }
   }
 
   @Override

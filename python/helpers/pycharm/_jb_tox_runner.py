@@ -91,7 +91,7 @@ class _Unit2(object):
 
 class _PyTest(object):
     def fix(self, command, bin):
-        if command[0] != "py.test":
+        if command[0] != "pytest":
             return None
         return [bin, os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity"] + command[1:]
 
@@ -105,7 +105,8 @@ class _Nose(object):
 
 _RUNNERS = [_Unit2(), _PyTest(), _Nose()]
 
-config = tox_config.parseconfig()
+import sys
+config = tox_config.parseconfig(args=sys.argv[1:])
 for env, tmp_config in config.envconfigs.items():
     if not tmp_config.setenv:
         tmp_config.setenv = dict()

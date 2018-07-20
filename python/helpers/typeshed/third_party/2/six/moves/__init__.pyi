@@ -22,27 +22,27 @@ from __builtin__ import xrange as xrange
 from itertools import izip as zip
 from itertools import izip_longest as zip_longest
 import __builtin__ as builtins
-import ConfigParser as configparser
+from . import configparser
 # import copy_reg as copyreg
 # import gdbm as dbm_gnu
-# import dummy_thread as _dummy_thread
-import cookielib as http_cookiejar
-import Cookie as http_cookies
-import htmlentitydefs as html_entities
-import HTMLParser as html_parser
-import httplib as http_client
+from . import _dummy_thread
+from . import http_cookiejar
+from . import http_cookies
+from . import html_entities
+from . import html_parser
+from . import http_client
 # import email.MIMEMultipart as email_mime_multipart
 # import email.MIMENonMultipart as email_mime_nonmultipart
-import email.MIMEText as email_mime_text
+from . import email_mime_text
 # import email.MIMEBase as email_mime_base
-import BaseHTTPServer as BaseHTTPServer
+from . import BaseHTTPServer
 # import CGIHTTPServer as CGIHTTPServer
-# import SimpleHTTPServer as SimpleHTTPServer
-import cPickle as cPickle
-import Queue as queue
-import repr as reprlib
-import SocketServer as socketserver
-import thread as _thread
+from . import SimpleHTTPServer
+from . import cPickle
+from . import queue
+from . import reprlib
+from . import socketserver
+from . import _thread
 # import Tkinter as tkinter
 # import Dialog as tkinter_dialog
 # import FileDialog as tkinter_filedialog
@@ -58,9 +58,9 @@ import thread as _thread
 # import tkFont as tkinter_font
 # import tkMessageBox as tkinter_messagebox
 # import tkSimpleDialog as tkinter_tksimpledialog
-import six.moves.urllib.parse as urllib_parse
-import six.moves.urllib.error as urllib_error
-import six.moves.urllib as urllib
-import robotparser as urllib_robotparser
-# import xmlrpclib as xmlrpc_client
+from . import urllib_parse
+from . import urllib_error
+from . import urllib
+from . import urllib_robotparser
+from . import xmlrpc_client
 # import SimpleXMLRPCServer as xmlrpc_server

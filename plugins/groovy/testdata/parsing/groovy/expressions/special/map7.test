@@ -14,6 +14,6 @@ Groovy script
       Argument label
         PsiElement(identifier)('b')
       PsiElement(:)(':')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:<expression> expected, got ']'
         <empty list>
     PsiElement(])(']')

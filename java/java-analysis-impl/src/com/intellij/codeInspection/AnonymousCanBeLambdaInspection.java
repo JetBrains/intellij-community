@@ -97,8 +97,10 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  static boolean hasRuntimeAnnotations(PsiMethod method, @NotNull Set<String> runtimeAnnotationsToIgnore) {
-    PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
+  public static boolean hasRuntimeAnnotations(PsiModifierListOwner listOwner, @NotNull Set<String> runtimeAnnotationsToIgnore) {
+    PsiModifierList modifierList = listOwner.getModifierList();
+    if (modifierList == null) return false;
+    PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       PsiElement target = ref != null ? ref.resolve() : null;
@@ -197,7 +199,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                boolean reportNotAnnotatedInterfaces,
                                                @NotNull Set<String> ignoredRuntimeAnnotations) {
     PsiElement parent = aClass.getParent();
-    final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
+    final PsiElement lambdaContext = parent != null ? PsiUtil.skipParenthesizedExprUp(parent.getParent()) : null;
     if (lambdaContext == null || !LambdaUtil.isValidLambdaContext(lambdaContext) && !(lambdaContext instanceof PsiReferenceExpression)) return false;
     return isLambdaForm(aClass, acceptParameterizedFunctionTypes, reportNotAnnotatedInterfaces, ignoredRuntimeAnnotations);
   }

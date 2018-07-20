@@ -84,7 +84,7 @@ public class PyImportedModuleType implements PyType {
     final List<LookupElement> result = new ArrayList<>();
     for (PsiElement resolveResult : ResolveResultList.getElements(myImportedModule.multiResolve())) {
       if (resolveResult instanceof PyFile) {
-        final PyModuleType moduleType = new PyModuleType((PyFile)resolveResult, myImportedModule);
+        final PyModuleType moduleType = new PyModuleType((PyFile)resolveResult);
         final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
 
         result.addAll(moduleType.getCompletionVariantsAsLookupElements(location, context, false, false, typeEvalContext));

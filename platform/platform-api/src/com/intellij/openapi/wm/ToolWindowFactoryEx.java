@@ -19,5 +19,6 @@ package com.intellij.openapi.wm;
  * @author Dennis.Ushakov
  * @deprecated use {@link ToolWindowFactory}
  */
+@Deprecated
 public interface ToolWindowFactoryEx extends ToolWindowFactory {
 }

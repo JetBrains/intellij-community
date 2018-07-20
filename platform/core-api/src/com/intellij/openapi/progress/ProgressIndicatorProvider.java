@@ -35,14 +35,11 @@ public abstract class ProgressIndicatorProvider {
     return getInstance().getProgressIndicator();
   }
 
+  /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead */
   @NotNull
-  @Deprecated // use ProgressManager.executeNonCancelableSection() instead
-  public abstract NonCancelableSection startNonCancelableSection();
-
-  @NotNull
-  @Deprecated // use ProgressManager.executeNonCancelableSection() instead
+  @Deprecated
   public static NonCancelableSection startNonCancelableSectionIfSupported() {
-    return getInstance().startNonCancelableSection();
+    throw new UnsupportedOperationException();
   }
 
   public static void checkCanceled() throws ProcessCanceledException {

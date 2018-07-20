@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
@@ -59,6 +45,13 @@ public class VisualLinesIterator {
     }
   }
 
+  private void setNextLocation() {
+    if (myNextLocation == null) {
+      myNextLocation = myLocation.clone();
+      myNextLocation.advance();
+    }
+  }
+
   public int getVisualLine() {
     checkEnd();
     return myLocation.visualLine;
@@ -68,23 +61,27 @@ public class VisualLinesIterator {
     checkEnd();
     return myLocation.offset;
   }
-  
+
   public int getVisualLineEndOffset() {
     checkEnd();
-    if (myNextLocation == null) {
-      myNextLocation = myLocation.clone();
-      myNextLocation.advance();
-    }
-    return myNextLocation.atEnd() ? myDocument.getTextLength() : 
-           myNextLocation.softWrap == myLocation.softWrap ? myDocument.getLineEndOffset(myNextLocation.logicalLine - 2) : 
+    setNextLocation();
+    return myNextLocation.atEnd() ? myDocument.getTextLength() :
+           myNextLocation.softWrap == myLocation.softWrap ? myDocument.getLineEndOffset(myNextLocation.logicalLine - 2) :
            myNextLocation.offset;
   }
-  
+
   public int getStartLogicalLine() {
     checkEnd();
     return myLocation.logicalLine - 1;
-  }  
-  
+  }
+
+  public int getEndLogicalLine() {
+    checkEnd();
+    setNextLocation();
+    return myNextLocation.atEnd() ? myDocument.getLineCount() - 1
+                                  : myNextLocation.logicalLine - (myNextLocation.softWrap == myLocation.softWrap ? 2 : 1);
+  }
+
   public int getStartOrPrevWrapIndex() {
     checkEnd();
     return myLocation.softWrap - 1;
@@ -98,6 +95,17 @@ public class VisualLinesIterator {
   public int getY() {
     checkEnd();
     return myLocation.y;
+  }
+
+  public boolean startsWithSoftWrap() {
+    checkEnd();
+    return myLocation.softWrap > 0 && myLocation.softWrap <= mySoftWraps.size() &&
+           mySoftWraps.get(myLocation.softWrap - 1).getStart() == myLocation.offset;
+  }
+
+  public boolean endsWithSoftWrap() {
+    checkEnd();
+    return myLocation.softWrap < mySoftWraps.size() && mySoftWraps.get(myLocation.softWrap).getStart() == getVisualLineEndOffset();
   }
 
   private void checkEnd() {

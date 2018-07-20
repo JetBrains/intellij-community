@@ -164,7 +164,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     for (Runnable action : actions) {
       myTasks.offer(action);
     }
-    final DumbModeTask task = new DumbModeTask() {
+    DumbModeTask task = new DumbModeTask(this) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         performPushTasks();

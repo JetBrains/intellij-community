@@ -10,14 +10,25 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public enum LanguageLevel {
-  JDK_1_3, JDK_1_4, JDK_1_5, JDK_1_6, JDK_1_7, JDK_1_8, JDK_1_9, JDK_10, JDK_X;
+  JDK_1_3(3), JDK_1_4(4), JDK_1_5(5), JDK_1_6(6), JDK_1_7(7), JDK_1_8(8), JDK_1_9(9), JDK_10(10), JDK_11(11), JDK_X(12);
+
+  private final JavaVersion myVersion;
+
+  LanguageLevel(int major) {
+    myVersion = JavaVersion.compose(major);
+  }
 
   @NotNull
   public JavaVersion toJavaVersion() {
-    return JavaVersion.compose(ordinal() + 3);
+    return myVersion;
+  }
+
+  public boolean isPreview() {
+    return name().endsWith("_PREVIEW");
   }
 
   /** @deprecated use {@link JpsJavaSdkType#complianceOption} (to be removed in IDEA 2019) */
+  @Deprecated
   public String getComplianceOption() {
     return JpsJavaSdkType.complianceOption(toJavaVersion());
   }

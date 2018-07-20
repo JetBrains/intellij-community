@@ -73,15 +73,14 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     cherryPick(commit)
 
     `assert commit dialog was shown`()
-    assertLastMessage("""
-      on_master
-
-      (cherry picked from commit ${shortHash(commit)})""".trimIndent())
+    assertLastMessage("on_master")
     repo.assertCommitted {
       modified("c.txt")
     }
     assertSuccessfulNotification("Cherry-pick successful",
                                  "${shortHash(commit)} on_master")
+    changeListManager.assertNoChanges()
+    changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
 

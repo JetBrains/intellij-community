@@ -99,7 +99,8 @@ public class PullUpConflictsUtil {
         }
       }
 
-      if (newAbstractMethodInSuper(infos)) {
+      List<PsiMethod> newAbstractMethods = newAbstractMethodInSuper(infos);
+      if (!newAbstractMethods.isEmpty()) {
         final PsiAnnotation annotation = AnnotationUtil.findAnnotation(superClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
         if (annotation != null) {
           conflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
@@ -108,6 +109,17 @@ public class PullUpConflictsUtil {
           if (functionalExpression != null) {
             conflicts.putValue(functionalExpression, RefactoringBundle.message("functional.interface.broken"));
           }
+          ClassInheritorsSearch.search(superClass).forEach(sClass -> {
+            if (!sClass.isInheritor(subclass, true) && !sClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              for (PsiMethod aMethod : newAbstractMethods) {
+                if (MethodSignatureUtil.findMethodBySignature(sClass, aMethod, true) == null) {
+                  conflicts.putValue(sClass, "Concrete '" + RefactoringUIUtil.getDescription(sClass, true) + "' would inherit a new abstract method");
+                  return false;
+                }
+              }
+            }
+            return true;
+          });
         }
       }
     }
@@ -148,9 +160,9 @@ public class PullUpConflictsUtil {
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, targetDirectory, conflicts);
 
-    final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
+    final PsiClassOwner psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
     final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(),
-                                                           psiFile != null ? ((PsiClassOwner)psiFile).getPackageName() : null);
+                                                           psiFile != null ? psiFile.getPackageName() : null);
     for (final PsiMethod abstractMethod : abstractMethods) {
       abstractMethod.accept(new ClassMemberReferencesVisitor(subclass) {
         @Override
@@ -187,23 +199,26 @@ public class PullUpConflictsUtil {
     return conflicts;
   }
 
-  private static boolean newAbstractMethodInSuper(MemberInfoBase<? extends PsiMember>[] infos) {
-    boolean toAbstract = false;
+  private static List<PsiMethod> newAbstractMethodInSuper(MemberInfoBase<? extends PsiMember>[] infos) {
+    List<PsiMethod> result = new ArrayList<>();
     for (MemberInfoBase<? extends PsiMember> info : infos) {
-      if (info.isToAbstract()) {
-        toAbstract = true;
+      PsiMember member = info.getMember();
+      if (member instanceof PsiMethod) {
+        if (info.isToAbstract() || member.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          result.add((PsiMethod)member);
+        }
       }
     }
-    return toAbstract;
+    return result;
   }
 
   private static void checkInterfaceTarget(MemberInfoBase<? extends PsiMember>[] infos, MultiMap<PsiElement, String> conflictsList) {
     for (MemberInfoBase<? extends PsiMember> info : infos) {
-      PsiElement member = info.getMember();
+      PsiModifierListOwner member = info.getMember();
 
       if (member instanceof PsiField || member instanceof PsiClass) {
 
-        if (!((PsiModifierListOwner)member).hasModifierProperty(PsiModifier.STATIC)
+        if (!member.hasModifierProperty(PsiModifier.STATIC)
             && !(member instanceof PsiClass && ((PsiClass)member).isInterface())) {
           String message =
             RefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));

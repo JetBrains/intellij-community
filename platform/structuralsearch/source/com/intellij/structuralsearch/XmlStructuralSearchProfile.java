@@ -3,6 +3,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -46,8 +47,14 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public boolean isIdentifier(PsiElement element) {
+  public boolean isIdentifier(@Nullable PsiElement element) {
     return element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME;
+  }
+
+  @NotNull
+  @Override
+  public String getTypedVarString(PsiElement element) {
+    return element instanceof XmlText ? element.getText().trim() : super.getTypedVarString(element);
   }
 
   @NotNull
@@ -84,8 +91,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
                                         boolean physical) {
     final String ext = extension != null ? extension : fileType.getDefaultExtension();
     String text1 = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
-    final PsiFile fileFromText = PsiFileFactory.getInstance(project)
-      .createFileFromText("dummy." + ext, fileType, text1, LocalTimeCounter.currentTime(), physical, true);
+    final PsiFile fileFromText =
+      PsiFileFactory.getInstance(project).createFileFromText("dummy." + ext, fileType, text1, LocalTimeCounter.currentTime(), physical, true);
 
     final XmlDocument document = HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument());
     if (context == PatternTreeContext.File) {
@@ -113,94 +120,108 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
+  public void checkSearchPattern(CompiledPattern pattern) {
+    final ValidatingVisitor visitor = new ValidatingVisitor();
+    final NodeIterator nodes = pattern.getNodes();
+    while (nodes.hasNext()) {
+      nodes.current().accept(visitor);
+      nodes.advance();
+    }
+    nodes.reset();
+  }
+
+  static class ValidatingVisitor extends PsiRecursiveElementWalkingVisitor {
+
+    @Override
+    public void visitErrorElement(PsiErrorElement element) {
+      super.visitErrorElement(element);
+      final String errorDescription = element.getErrorDescription();
+      final PsiElement parent = element.getParent();
+      if (parent instanceof XmlAttribute && "'=' expected".equals(errorDescription)) {
+        return;
+      }
+      else if (parent instanceof XmlTag && errorDescription.startsWith("Element") && errorDescription.endsWith(" is not closed")) {
+        return;
+      }
+      throw new MalformedPatternException(errorDescription);
+    }
+  }
+
+  @Override
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
   }
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new MyReplaceHandler(context);
+    return new XmlReplaceHandler(context);
   }
 
-  private static class MyReplaceHandler extends StructuralReplaceHandler {
+  private static class XmlReplaceHandler extends StructuralReplaceHandler {
     private final ReplacementContext myContext;
 
-    private MyReplaceHandler(ReplacementContext context) {
+    XmlReplaceHandler(ReplacementContext context) {
       myContext = context;
     }
 
     public void replace(ReplacementInfo info, ReplaceOptions options) {
-      PsiElement elementToReplace = info.getMatch(0);
+      final PsiElement elementToReplace = StructuralSearchUtil.getPresentableElement(info.getMatch(0));
       assert elementToReplace != null;
-      PsiElement elementParent = elementToReplace.getParent();
-      String replacementToMake = info.getReplacement();
-      boolean listContext = elementToReplace.getParent() instanceof XmlTag;
+      final String replacementToMake = info.getReplacement();
+      final PsiElement elementParent = elementToReplace.getParent();
+      final boolean listContext = elementParent instanceof XmlTag;
 
       if (listContext) {
         doReplaceInContext(info, elementToReplace, replacementToMake, elementParent, myContext);
       }
-
-      PsiElement[] statements = ReplacerUtil.createTreeForReplacement(replacementToMake, PatternTreeContext.Block, myContext);
-
-      if (statements.length > 0) {
-        PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, statements, replacementToMake, elementParent);
-
-        // preserve comments
-        Replacer.handleComments(elementToReplace, replacement, info);
-        elementToReplace.replace(replacement);
-      }
       else {
-        elementToReplace.delete();
-      }
-    }
-  }
+        final PsiElement[] statements = ReplacerUtil.createTreeForReplacement(replacementToMake, PatternTreeContext.Block, myContext);
+        if (statements.length > 0) {
+          PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, statements, replacementToMake, elementParent);
 
-  private static void doReplaceInContext(ReplacementInfo info,
-                                         PsiElement elementToReplace,
-                                         String replacementToMake,
-                                         PsiElement elementParent,
-                                         ReplacementContext context) {
-    PsiElement[] statements = ReplacerUtil.createTreeForReplacement(replacementToMake, PatternTreeContext.Block, context);
-
-    if (statements.length > 1) {
-      elementParent.addRangeBefore(statements[0], statements[statements.length - 1], elementToReplace);
-    }
-    else if (statements.length == 1) {
-      PsiElement replacement = statements[0];
-
-      Replacer.handleComments(elementToReplace, replacement, info);
-
-      try {
-        elementParent.addBefore(replacement, elementToReplace);
-      }
-      catch (IncorrectOperationException e) {
-        elementToReplace.replace(replacement);
-      }
-    }
-
-    final int matchSize = info.getMatchesCount();
-
-    for (int i = 0; i < matchSize; ++i) {
-      PsiElement element = info.getMatch(i);
-
-      if (element == null) continue;
-      PsiElement firstToDelete = element;
-      PsiElement lastToDelete = element;
-      PsiElement prevSibling = element.getPrevSibling();
-      PsiElement nextSibling = element.getNextSibling();
-
-      if (prevSibling instanceof PsiWhiteSpace) {
-        firstToDelete = prevSibling;
-      }
-      else if (prevSibling == null && nextSibling instanceof PsiWhiteSpace) {
-        lastToDelete = nextSibling;
-      }
-      if (nextSibling instanceof XmlText && i + 1 < matchSize) {
-        final PsiElement next = info.getMatch(i + 1);
-        if (next != null && next == nextSibling.getNextSibling()) {
-          lastToDelete = nextSibling;
+          // preserve comments
+          Replacer.handleComments(elementToReplace, replacement, info);
+          elementToReplace.replace(replacement);
+        }
+        else {
+          elementToReplace.delete();
         }
       }
-      element.getParent().deleteChildRange(firstToDelete, lastToDelete);
+    }
+
+    private static void doReplaceInContext(ReplacementInfo info,
+                                           PsiElement elementToReplace,
+                                           String replacementToMake,
+                                           PsiElement elementParent,
+                                           ReplacementContext context) {
+      final PsiElement[] statements = ReplacerUtil.createTreeForReplacement(replacementToMake, PatternTreeContext.Block, context);
+
+      if (statements.length > 1) {
+        elementParent.addRangeBefore(statements[0], statements[statements.length - 1], elementToReplace);
+      }
+      else if (statements.length == 1) {
+        Replacer.handleComments(elementToReplace, statements[0], info);
+        try {
+          elementParent.addBefore(statements[0], elementToReplace);
+        }
+        catch (IncorrectOperationException e) {
+          elementToReplace.replace(statements[0]);
+        }
+      }
+
+      final int matchSize = info.getMatchesCount();
+      for (int i = 0; i < matchSize; ++i) {
+        final PsiElement element = StructuralSearchUtil.getPresentableElement(info.getMatch(i));
+        final PsiElement prevSibling = element.getPrevSibling();
+        element.getParent().deleteChildRange(isWhitespace(prevSibling) ? prevSibling : element, element);
+      }
+    }
+
+    private static boolean isWhitespace(PsiElement element) {
+      if (element instanceof PsiWhiteSpace) return true;
+      if (!(element instanceof XmlText)) return false;
+      final PsiElement firstChild = element.getFirstChild();
+      final PsiElement lastChild = element.getLastChild();
+      return firstChild == lastChild && firstChild instanceof PsiWhiteSpace;
     }
   }
 
@@ -212,7 +233,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   private static class XmlPredefinedConfigurations {
     private static final String HTML_XML = SSRBundle.message("xml_html.category");
 
-    private static Configuration[] createPredefinedTemplates() {
+    static Configuration[] createPredefinedTemplates() {
       return new Configuration[]{
         createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),

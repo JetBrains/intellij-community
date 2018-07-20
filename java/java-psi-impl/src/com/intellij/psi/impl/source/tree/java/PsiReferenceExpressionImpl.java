@@ -808,11 +808,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return PsiJavaCodeReferenceElementImpl.calcRangeInElement(this);

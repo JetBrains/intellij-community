@@ -1,6 +1,7 @@
 import java.util.*;
 class Test {
   {
-    Comparator.comparing(String::tr<caret>im);
+    Comparator.comparing(String//end of line comment
+                           ::tr<caret>im);
   }
 }

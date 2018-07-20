@@ -114,9 +114,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   ConcurrentRefHashMap(int initialCapacity,
-                              float loadFactor,
-                              int concurrencyLevel,
-                              @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+                       float loadFactor,
+                       int concurrencyLevel,
+                       @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
     myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
   }

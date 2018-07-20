@@ -51,7 +51,7 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
   @NotNull
   public static JDialogFixture find(@NotNull Robot robot, String title) {
-    return find(robot, title, GuiTestUtil.SHORT_TIMEOUT);
+    return find(robot, title, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   @NotNull

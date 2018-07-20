@@ -55,8 +55,14 @@
   <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='java.lang.ClassLoader java.io.InputStream getSystemResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Nullable" />
@@ -81,6 +87,12 @@
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
+  </item>
+  <item name='java.lang.Enum java.lang.Class&lt;E&gt; getDeclaringClass()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Enum java.lang.String name()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Integer int bitCount(int)'>
     <annotation name='org.jetbrains.annotations.Range'>
@@ -721,7 +733,7 @@
   </item>
   <item name='java.lang.Thread int enumerate(java.lang.Thread[])'>
     <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;arg&quot;"/>
+      <val name="mutates" val="&quot;param&quot;"/>
     </annotation>
   </item>
   <item name='java.lang.Thread java.lang.StackTraceElement[] getStackTrace()'>

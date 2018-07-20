@@ -16,9 +16,14 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
+import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.ui.HintHint;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,12 +44,21 @@ public class DaemonTooltipUtil {
     TooltipController.getInstance().cancelTooltip(DAEMON_INFO_GROUP, null, true);
   }
 
-  public static void showInfoTooltip(@NotNull final HighlightInfo info, @NotNull Editor editor, final int defaultOffset, final int currentWidth) {
+  private static void showInfoTooltip(@NotNull final HighlightInfo info,
+                                      @NotNull Editor editor,
+                                      final int defaultOffset,
+                                      final int currentWidth) {
     showInfoTooltip(info, editor, defaultOffset, currentWidth, false);
   }
+  
 
-  public static void showInfoTooltip(@NotNull final HighlightInfo info, @NotNull Editor editor, final int defaultOffset, final int currentWidth, final boolean requestFocus) {
-    if (info.getToolTip() == null) return;
+  static void showInfoTooltip(@NotNull final HighlightInfo info,
+                              @NotNull Editor editor,
+                              final int defaultOffset,
+                              final int currentWidth,
+                              final boolean requestFocus) {
+    String text = info.getToolTip();
+    if (text == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
 
     Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
@@ -72,6 +86,12 @@ public class DaemonTooltipUtil {
       .setHighlighterType(true)
       .setRequestFocus(requestFocus)
       .setCalloutShift(editor.getLineHeight() / 2 - 1);
-    TooltipController.getInstance().showTooltip(editor, p, info.getToolTip(), currentWidth, false, DAEMON_INFO_GROUP, hintHint);
+
+
+    TooltipAction action = TooltipActionProvider.calcTooltipAction(info, editor);
+    ErrorStripTooltipRendererProvider provider = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider();
+    TooltipRenderer tooltipRenderer = provider.calcTooltipRenderer(text, action, currentWidth);
+    
+    TooltipController.getInstance().showTooltip(editor, p, tooltipRenderer, false, DAEMON_INFO_GROUP, hintHint);
   }
 }

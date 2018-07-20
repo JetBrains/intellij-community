@@ -124,16 +124,13 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
   public void testBulkUpdate() {
     final Listener listener = addPomListener();
     final PsiFile file = createFile("a.xml", "<a/>");
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-        DocumentUtil.executeInBulk(document, true, ()-> {
-          document.insertString(0, " ");
-          commitDocument(document);
-        });
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+      DocumentUtil.executeInBulk(document, true, () -> {
+        document.insertString(0, " ");
+        commitDocument(document);
+      });
+    });
     assertEquals("(Xml document changed)", listener.getEventString().trim());
   }
 

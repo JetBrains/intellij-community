@@ -15,9 +15,7 @@
  */
 package org.jetbrains.uast
 
-import com.intellij.psi.PsiAnnotationMethod
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -28,6 +26,8 @@ import org.jetbrains.uast.visitor.UastVisitor
  */
 interface UMethod : UDeclaration, PsiMethod {
   override val psi: PsiMethod
+
+  override val javaPsi: PsiMethod
 
   /**
    * Returns the body expression (which can be also a [UBlockExpression]).
@@ -51,7 +51,7 @@ interface UMethod : UDeclaration, PsiMethod {
   override fun isConstructor(): Boolean
 
   @Deprecated("Use uastBody instead.", ReplaceWith("uastBody"))
-  override fun getBody() = psi.body
+  override fun getBody(): PsiCodeBlock? = psi.body
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return
@@ -61,7 +61,7 @@ interface UMethod : UDeclaration, PsiMethod {
     visitor.afterVisitMethod(this)
   }
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     if (annotations.isNotEmpty()) {
       annotations.joinTo(buffer = this, separator = "\n", postfix = "\n", transform = UAnnotation::asRenderString)
     }
@@ -86,10 +86,10 @@ interface UMethod : UDeclaration, PsiMethod {
            })
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitMethod(this, data)
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
@@ -100,7 +100,7 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
    */
   val uastDefaultValue: UExpression?
 
-  override fun getDefaultValue() = psi.defaultValue
+  override fun getDefaultValue(): PsiAnnotationMemberValue? = psi.defaultValue
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitMethod(this)) return
@@ -111,10 +111,8 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
     visitor.afterVisitMethod(this)
   }
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 }
 
-@Deprecated("transitional interface, don't rely on it", ReplaceWith("UMethod"))
-interface UMethodTypeSpecific : UMethod {
-  override val javaPsi: PsiMethod
-}
+@Deprecated("no more needed, use UMethod", ReplaceWith("UMethod"))
+interface UMethodTypeSpecific : UMethod

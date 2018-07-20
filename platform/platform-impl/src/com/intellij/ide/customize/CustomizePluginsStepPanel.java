@@ -16,7 +16,6 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -36,7 +35,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -234,7 +232,6 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   public boolean beforeOkAction() {
     try {
       PluginManager.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
-      IdeInitialConfigButtonUsages.setPredefinedDisabledPlugins(new HashSet<>(myPluginGroups.getDisabledPluginIds()));
     }
     catch (IOException ignored) {
     }

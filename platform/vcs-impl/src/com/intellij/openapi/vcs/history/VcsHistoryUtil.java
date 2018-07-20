@@ -23,8 +23,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -42,7 +40,6 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 
 public class VcsHistoryUtil {
@@ -90,9 +87,6 @@ public class VcsHistoryUtil {
   public static void showDiff(@NotNull final Project project, @NotNull FilePath path,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
                               @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
-    final byte[] content1 = loadRevisionContent(revision1);
-    final byte[] content2 = loadRevisionContent(revision2);
-
     FilePath path1 = getRevisionPath(revision1);
     FilePath path2 = getRevisionPath(revision2);
 
@@ -104,8 +98,8 @@ public class VcsHistoryUtil {
       title = DiffRequestFactoryImpl.getContentTitle(path);
     }
 
-    DiffContent diffContent1 = createContent(project, content1, revision1, path);
-    DiffContent diffContent2 = createContent(project, content2, revision2, path);
+    DiffContent diffContent1 = loadContentForDiff(project, path, revision1);
+    DiffContent diffContent2 = loadContentForDiff(project, path, revision2);
 
     final DiffRequest request = new SimpleDiffRequest(title, diffContent1, diffContent2, title1, title2);
 
@@ -113,6 +107,11 @@ public class VcsHistoryUtil {
     diffContent2.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision2));
 
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> DiffManager.getInstance().showDiff(project, request), null, project);
+  }
+
+  @NotNull
+  public static DiffContent loadContentForDiff(@NotNull Project project, @NotNull FilePath path, @NotNull VcsFileRevision revision) throws IOException, VcsException {
+    return createContent(project, loadRevisionContent(revision), revision, path);
   }
 
   @Nullable
@@ -167,7 +166,7 @@ public class VcsHistoryUtil {
     if (isEmpty(revision)) {
       return contentFactory.createEmpty();
     }
-    return contentFactory.createFromBytes(project, content, filePath);
+    return contentFactory.createFromBytes(project, content, filePath, revision.getDefaultCharset());
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {

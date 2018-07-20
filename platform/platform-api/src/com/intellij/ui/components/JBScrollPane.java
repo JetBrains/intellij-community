@@ -691,9 +691,7 @@ public class JBScrollPane extends JScrollPane {
           Dimension viewPreferredSize = view.getPreferredSize();
           if (viewPreferredSize == null) viewPreferredSize = new Dimension();
           if (view instanceof JComponent && !view.isPreferredSizeSet()) {
-            Insets insets = JBViewport.getViewInsets((JComponent)view);
-            JBInsets.removeFrom(viewportExtentSize, insets);
-            JBInsets.removeFrom(viewPreferredSize, insets);
+            JBInsets.removeFrom(viewPreferredSize, JBViewport.getViewInsets((JComponent)view));
           }
           result.width += viewportExtentSize.width;
           result.height += viewportExtentSize.height;
@@ -702,9 +700,9 @@ public class JBScrollPane extends JScrollPane {
               vsbPolicy = VERTICAL_SCROLLBAR_ALWAYS;
             }
           }
-          if (!viewTracksViewportWidth && vsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+          if (!viewTracksViewportWidth && hsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
             if (viewPreferredSize.width > viewportExtentSize.width || 0 != view.getX()) {
-              vsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
+              hsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
             }
           }
         }

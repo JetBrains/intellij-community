@@ -77,8 +77,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
       public void process(@NotNull final String currentUri, final String url) {
         if (currentUri.equals(uri) && url != null) schemaLocations.add(url);
       }
-
-    }, true);
+    });
 
     CreateNSDeclarationIntentionFix.runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       ArrayUtil.toStringArray(schemaLocations), file.getProject(), new CreateNSDeclarationIntentionFix.StringToAttributeProcessor() {

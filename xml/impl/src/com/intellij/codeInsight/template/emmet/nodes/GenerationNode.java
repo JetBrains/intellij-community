@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.google.common.base.Strings;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
@@ -41,14 +42,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +154,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
     }
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(callback.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(callback.getFile());
     String indentStr;
     if (callback.isInInjectedFragment()) {
       Editor editor = callback.getEditor();

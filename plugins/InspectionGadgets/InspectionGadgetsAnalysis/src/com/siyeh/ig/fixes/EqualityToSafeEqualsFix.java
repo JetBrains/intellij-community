@@ -15,10 +15,14 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -41,17 +45,7 @@ public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
 
   @Nullable
   public static EqualityToSafeEqualsFix buildFix(PsiBinaryExpression expression) {
-    final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
-    if ((lhs instanceof PsiReferenceExpression)) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
-      final PsiElement target = referenceExpression.resolve();
-      if ((target instanceof PsiModifierListOwner)) {
-        NullableNotNullManager.getInstance(expression.getProject());
-        if (NullableNotNullManager.isNotNull((PsiModifierListOwner)target)) {
-          return null;
-        }
-      }
-    }
+    if (NullabilityUtil.getExpressionNullability(expression.getLOperand()) == Nullability.NOT_NULL) return null;
     return new EqualityToSafeEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()));
   }
 

@@ -32,7 +32,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -87,7 +86,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     int len = dataStream.readVarInt();
     String[] names = ArrayUtil.newStringArray(len);
     for (int i = 0; i < names.length; i++) {
-      names[i] = StringRef.toString(dataStream.readName());
+      names[i] = dataStream.readNameString();
     }
     return new PsiClassReferenceListStubImpl(this, parentStub, names);
   }

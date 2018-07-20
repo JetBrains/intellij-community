@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -23,9 +24,18 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
   @Override
   public void tokenize(@NotNull PsiLiteralExpression element, TokenConsumer consumer) {
     PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl)element;
-    if (literalExpression.getLiteralElementType() != JavaTokenType.STRING_LITERAL) return;  // not a string literal
-
-    String text = literalExpression.getInnerText();
+    IElementType literalElementType = literalExpression.getLiteralElementType();
+    String text;
+    if (literalElementType == JavaTokenType.STRING_LITERAL) {
+      text = literalExpression.getInnerText();
+    }
+    else if (literalElementType == JavaTokenType.RAW_STRING_LITERAL) {
+      text = literalExpression.getRawString();
+    }
+    else {
+      text = null;
+    }
+    
     if (StringUtil.isEmpty(text) || text.length() <= 2) { // optimisation to avoid expensive injection check
       return;
     }

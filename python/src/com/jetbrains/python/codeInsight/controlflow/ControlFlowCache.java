@@ -37,14 +37,20 @@ public class ControlFlowCache {
     scopeOwner.putUserData(SCOPE_KEY, null);
   }
 
-  public static ControlFlow getControlFlow(@NotNull ScopeOwner element) {
+  @NotNull
+  public static ControlFlow getControlFlow(@NotNull ScopeOwner element,
+                                           @NotNull PyControlFlowBuilder controlFlowBuilder) {
     SoftReference<ControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
     ControlFlow flow = SoftReference.dereference(ref);
     if (flow == null) {
-      flow = new PyControlFlowBuilder().buildControlFlow(element);
+      flow = controlFlowBuilder.buildControlFlow(element);
       element.putUserData(CONTROL_FLOW_KEY, new SoftReference<>(flow));
     }
     return flow;
+  }
+
+  public static ControlFlow getControlFlow(@NotNull ScopeOwner element) {
+    return getControlFlow(element, new PyControlFlowBuilder());
   }
 
   @NotNull

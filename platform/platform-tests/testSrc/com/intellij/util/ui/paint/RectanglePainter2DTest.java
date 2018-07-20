@@ -13,6 +13,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 import static com.intellij.util.ui.JBUI.scale;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests the {@link RectanglePainter2D} and {@link LinePainter2D} painting.
@@ -110,27 +111,28 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
     JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : (float)scale);
 
     BufferedImage rect = supplyGraphics(scale, 15, 15,
-                                    strokeType == StrokeType.INSIDE ? this::paintRectInside : this::paintRectCentered);
+                                    strokeType == StrokeType.INSIDE ? RectanglePainter2DTest::paintRectInside : RectanglePainter2DTest::paintRectCentered);
     BufferedImage outline = supplyGraphics(scale, 15, 15,
-                                       strokeType == StrokeType.INSIDE ? this::outlineRectInside : this::outlineRectCentered);
+                                       strokeType == StrokeType.INSIDE ? RectanglePainter2DTest::outlineRectInside : RectanglePainter2DTest::outlineRectCentered);
     compare(rect, outline, comparator, scale);
   }
 
-  private Rectangle2D rectBounds(Graphics2D g) {
-    double x = PaintUtil.alignToInt(scale(3f), g), y = x;
-    double w = PaintUtil.alignToInt(scale(10f), g), h = w;
-    return new Rectangle2D.Double(x, y, w, h);
+  private static Rectangle2D rectBounds(Graphics2D g) {
+    double x = PaintUtil.alignToInt(scale(3f), g);
+    double w = PaintUtil.alignToInt(scale(10f), g);
+    //noinspection SuspiciousNameCombination
+    return new Rectangle2D.Double(x, x, w, w);
   }
 
-  private Void paintRectInside(Graphics2D g) {
+  private static Void paintRectInside(Graphics2D g) {
     return _paintRect(g, true);
   }
 
-  private Void paintRectCentered(Graphics2D g) {
+  private static Void paintRectCentered(Graphics2D g) {
     return _paintRect(g, false);
   }
 
-  private Void _paintRect(Graphics2D g, boolean inside) {
+  private static Void _paintRect(Graphics2D g, boolean inside) {
     Rectangle2D b = rectBounds(g);
     RectanglePainter2D.DRAW.paint(g, b.getX(), b.getY(), b.getWidth(), b.getHeight(),
                                   inside ? StrokeType.INSIDE : StrokeType.CENTERED,
@@ -138,7 +140,7 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
     return null;
   }
 
-  private Void outlineRectInside(Graphics2D g) {
+  private static Void outlineRectInside(Graphics2D g) {
     Rectangle2D b = rectBounds(g);
     double x = b.getX();
     double y = b.getY();
@@ -156,7 +158,7 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
     return null;
   }
 
-  private Void outlineRectCentered(Graphics2D g) {
+  private static Void outlineRectCentered(Graphics2D g) {
     Rectangle2D b = rectBounds(g);
     double x = b.getX();
     double y = b.getY();
@@ -176,7 +178,7 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
 
   @Override
   protected String getGoldenImageName() {
-    return "RectanglePainter2D";
+    return "gold_RectanglePainter2D";
   }
 
   @Override

@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * Represents a <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward index data structure</>:
- * an index indented to hold a mappings of inputId-s to contained keys.
+ * an index intended to hold a mappings of inputId-s to contained keys.
  */
 @ApiStatus.Experimental
 public interface ForwardIndex<Key, Value> {

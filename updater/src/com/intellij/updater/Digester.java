@@ -16,6 +16,7 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -48,7 +49,7 @@ public class Digester {
     if (attrs.isSymbolicLink()) {
       Path target = Files.readSymbolicLink(path);
       if (target.isAbsolute()) throw new IOException("Absolute link: " + file + " -> " + target);
-      return digestStream(new ByteArrayInputStream(target.toString().getBytes("UTF-8"))) | LINK_MASK;
+      return digestStream(new ByteArrayInputStream(target.toString().getBytes(StandardCharsets.UTF_8))) | LINK_MASK;
     }
 
     if (attrs.isDirectory()) return DIRECTORY;

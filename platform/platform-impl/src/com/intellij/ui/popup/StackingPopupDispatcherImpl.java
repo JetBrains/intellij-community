@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -94,8 +96,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     dispatchMouseEvent(event);
   }
 
-  @Override
-  protected boolean dispatchMouseEvent(AWTEvent event) {
+  private boolean dispatchMouseEvent(AWTEvent event) {
     if (event.getID() != MouseEvent.MOUSE_PRESSED) {
       return false;
     }
@@ -113,6 +114,10 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
     while (true) {
       if (popup != null && !popup.isDisposed()) {
+        Window window = UIUtil.getWindow(mouseEvent.getComponent());
+        if (window != null && window != popup.getPopupWindow() && SwingUtilities.isDescendingFrom(window, popup.getPopupWindow())) {
+          return false;
+        }
         final Component content = popup.getContent();
         if (!content.isShowing()) {
           popup.cancel();
@@ -147,8 +152,8 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     }
   }
 
-  @Override
-  protected JBPopup findPopup() {
+  @Nullable
+  private JBPopup findPopup() {
     while(true) {
       if (myStack.isEmpty()) break;
       final AbstractPopup each = (AbstractPopup)myStack.peek();
@@ -177,7 +182,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     return myStack.isEmpty() ? null : myStack.peek().getContent();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Stream<JBPopup> getPopupStream() {
     return myStack.stream();
@@ -210,7 +215,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   }
 
   @Override
-  public void setRestoreFocusSilentely() {
+  public void setRestoreFocusSilently() {
     if (myStack.isEmpty()) return;
 
     for (JBPopup each : myAllPopups) {

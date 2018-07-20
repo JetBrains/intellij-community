@@ -17,7 +17,10 @@ package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -37,12 +40,14 @@ abstract class SimpleAttributeReference implements PsiReference {
         return getTextRange().substring(myAttribute.getValue());
     }
 
+    @NotNull
     public PsiElement getElement() {
         final XmlAttributeValue value = myAttribute.getValueElement();
         assert value != null;
         return value;
     }
 
+    @NotNull
     public TextRange getRangeInElement() {
         return getTextRange().shiftRight(1);
     }
@@ -73,12 +78,8 @@ abstract class SimpleAttributeReference implements PsiReference {
 
     @Nullable
     public final PsiElement resolve() {
-        return ResolveCache.getInstance(myAttribute.getProject()).resolveWithCaching(this, new ResolveCache.Resolver() {
-            @Nullable
-            public PsiElement resolve(@NotNull PsiReference psiReference, boolean b) {
-                return resolveImpl();
-            }
-        }, false, false);
+        return ResolveCache.getInstance(myAttribute.getProject()).resolveWithCaching(this,
+                                                                                     (ResolveCache.Resolver)(psiReference, b) -> resolveImpl(), false, false);
     }
 
     @Nullable

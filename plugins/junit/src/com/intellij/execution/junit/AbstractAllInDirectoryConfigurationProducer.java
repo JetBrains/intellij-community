@@ -24,6 +24,11 @@ public abstract class AbstractAllInDirectoryConfigurationProducer extends JUnitC
   }
 
   @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return JUnitConfiguration.TEST_DIRECTORY.equals(type);
+  }
+
+  @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {

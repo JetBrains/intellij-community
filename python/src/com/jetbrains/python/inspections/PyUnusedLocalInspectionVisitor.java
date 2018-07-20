@@ -62,6 +62,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final boolean myIgnoreTupleUnpacking;
   private final boolean myIgnoreLambdaParameters;
   private final boolean myIgnoreRangeIterationVariables;
+  private final boolean myIgnoreVariablesStartingWithUnderscore;
   private final HashSet<PsiElement> myUnusedElements;
   private final HashSet<PsiElement> myUsedElements;
 
@@ -69,11 +70,13 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                                         @NotNull LocalInspectionToolSession session,
                                         boolean ignoreTupleUnpacking,
                                         boolean ignoreLambdaParameters,
-                                        boolean ignoreRangeIterationVariables) {
+                                        boolean ignoreRangeIterationVariables,
+                                        boolean ignoreVariablesStartingWithUnderscore) {
     super(holder, session);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myIgnoreLambdaParameters = ignoreLambdaParameters;
     myIgnoreRangeIterationVariables = ignoreRangeIterationVariables;
+    myIgnoreVariablesStartingWithUnderscore = ignoreVariablesStartingWithUnderscore;
     myUnusedElements = new HashSet<>();
     myUsedElements = new HashSet<>();
   }
@@ -314,7 +317,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     for (PsiElement element : myUnusedElements) {
       boolean ignoreUnused = false;
       for (PyInspectionExtension filter : filters) {
-        if (filter.ignoreUnused(element)) {
+        if (filter.ignoreUnused(element, myTypeEvalContext)) {
           ignoreUnused = true;
         }
       }
@@ -380,7 +383,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }
           if (canRemove) {
-            fixes.add(new PyRemoveParameterQuickFix(myTypeEvalContext));
+            fixes.add(new PyRemoveParameterQuickFix());
           }
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
@@ -395,7 +398,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
             }
           }
-          else {
+          else if (!myIgnoreVariablesStartingWithUnderscore || !name.startsWith(PyNames.UNDERSCORE)) {
             registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
           }
         }

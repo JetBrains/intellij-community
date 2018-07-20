@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,11 @@ public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> im
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, 100);
     comboBox.setEditable(true);
     comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
+      {
+        setIpad(JBUI.insets(1, 0));
+        setMyBorder(null);
+      }
+
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends JreComboBoxItem> list,
                                            JreComboBoxItem value,

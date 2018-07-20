@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
@@ -47,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +46,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
 
   @TestOnly
-  public static boolean ourNeverAskUser = false;
+  public static boolean ourNeverAskUser;
 
   private static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
   private static final int COMMAND_TO_RUN_COMPACT = 20;
@@ -126,19 +111,28 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   private void runStartupActivity() {
+    myUndoProviders = myProject == null
+                      ? Extensions.getExtensions(UndoProvider.EP_NAME)
+                      : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
+    for (UndoProvider undoProvider : myUndoProviders) {
+      if (undoProvider instanceof Disposable) {
+        Disposer.register(this, (Disposable)undoProvider);
+      }
+    }
+
     myEditorProvider = new FocusBasedCurrentEditorProvider();
     myCommandProcessor.addCommandListener(new CommandListener() {
       private boolean myStarted;
 
       @Override
       public void commandStarted(CommandEvent event) {
-        if (myProject != null && myProject.isDisposed()) return;
+        if (myProject != null && myProject.isDisposed() || myStarted) return;
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
       }
 
       @Override
       public void commandFinished(CommandEvent event) {
-        if (myProject != null && myProject.isDisposed()) return;
+        if (myProject != null && myProject.isDisposed() || myStarted) return;
         onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
       }
 
@@ -162,19 +156,10 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     }, this);
 
     Disposer.register(this, new DocumentUndoProvider(myProject));
-
-    myUndoProviders = myProject == null
-                      ? Extensions.getExtensions(UndoProvider.EP_NAME)
-                      : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
-    for (UndoProvider undoProvider : myUndoProviders) {
-      if (undoProvider instanceof Disposable) {
-        Disposer.register(this, (Disposable)undoProvider);
-      }
-    }
   }
 
   public boolean isActive() {
-    return Comparing.equal(myProject, myCurrentActionProject);
+    return Comparing.equal(myProject, myCurrentActionProject) || myProject == null && myCurrentActionProject.isDefault();
   }
 
   private boolean isInsideCommand() {

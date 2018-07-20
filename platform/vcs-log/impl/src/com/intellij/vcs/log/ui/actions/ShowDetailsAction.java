@@ -16,28 +16,17 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import org.jetbrains.annotations.NotNull;
 
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
-    super("Show Details", "Display details panel", AllIcons.Actions.Preview);
+    super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
   }
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return CommonUiProperties.SHOW_DETAILS;
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-
-    if (e.isFromContextMenu()) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
   }
 }

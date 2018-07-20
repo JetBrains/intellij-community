@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -29,7 +15,10 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
-import com.intellij.spellchecker.quickfixes.*;
+import com.intellij.spellchecker.quickfixes.ChangeTo;
+import com.intellij.spellchecker.quickfixes.RenameTo;
+import com.intellij.spellchecker.quickfixes.SaveTo;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +31,11 @@ public class SpellcheckingStrategy {
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer() {
     @Override
     public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+    }
+
+    @Override
+    public String toString() {
+      return "EMPTY_TOKENIZER";
     }
   };
 
@@ -58,7 +52,7 @@ public class SpellcheckingStrategy {
     if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
       return EMPTY_TOKENIZER;
     }
-    if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
+    if (element instanceof PsiNameIdentifierOwner) return PsiIdentifierOwnerTokenizer.INSTANCE;
     if (element instanceof PsiComment) {
       if (SuppressionUtil.isSuppressionComment(element)) {
         return EMPTY_TOKENIZER;
@@ -97,6 +91,7 @@ public class SpellcheckingStrategy {
   /**
    * @deprecated will be removed in 2018.X, use @link {@link SpellcheckingStrategy#getDefaultRegularFixes(boolean, String, PsiElement)} instead
    */
+  @Deprecated
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
     return getDefaultRegularFixes(useRename, wordWithTypo, null);
   }

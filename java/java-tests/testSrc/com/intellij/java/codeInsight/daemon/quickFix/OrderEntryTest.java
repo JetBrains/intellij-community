@@ -21,8 +21,10 @@ import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -72,7 +74,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void doTest(String fileName) {
+  private void doTest(String fileName, boolean performAction) {
     String testFullPath = BASE_PATH + fileName;
 
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
@@ -82,7 +84,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infosBefore = highlightErrors();
     final IntentionAction action = findActionAndCheck(actionHint, infosBefore);
 
-    if(action != null) {
+    if(action != null && performAction) {
       String text = action.getText();
       WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
 
@@ -93,7 +95,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       if (afterAction != null) {
         fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
       }
-      assertEquals(infosBefore.size() - 1, infosAfter.size());
+      assertTrue(infosBefore.size() > infosAfter.size());
     }
   }
 
@@ -108,20 +110,33 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddDependency() {
-    doTest("B/src/y/AddDependency.java");
+    removeModule();
+    doTest("B/src/y/AddDependency.java", true);
+  }
+
+  public void testAddAmbiguousDependency() {
+    doTest("B/src/y/AddAmbiguous.java", true);
+  }
+
+  private void removeModule() {
+    ModuleManager manager = ModuleManager.getInstance(getProject());
+    ModifiableModuleModel model = manager.getModifiableModel();
+    model.disposeModule(manager.findModuleByName("C"));
+    WriteAction.run(() -> model.commit());
   }
 
   public void testAddLibrary() {
-    doTest("B/src/y/AddLibrary.java");
+    doTest("B/src/y/AddLibrary.java", true);
   }
 
   public void testAddCircularDependency() {
     final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
     final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
     ModuleRootModificationUtil.addDependency(a, b);
+    removeModule();
 
     try {
-      doTest("B/src/y/AddDependency.java");
+      doTest("B/src/y/AddDependency.java", true);
       fail("user should have been warned");
     }
     catch (RuntimeException e) {
@@ -134,19 +149,19 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddJunit() {
-    doTest("A/src/x/DoTest.java");
+    doTest("A/src/x/DoTest.java", false);
   }
 
   public void testAddJunit4() {
-    doTest("A/src/x/DoTest4.java");
+    doTest("A/src/x/DoTest4.java", false);
   }
 
   public void testAddJunit4inJunit() {
-    doTest("A/src/x/DoTest4junit.java");
+    doTest("A/src/x/DoTest4junit.java", false);
   }
 
   public void testExistingJunit() {
-    doTest("B/src/y/AddExistingJunit.java");
+    doTest("B/src/y/AddExistingJunit.java", true);
   }
 
   private void removeLibs() {

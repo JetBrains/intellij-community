@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
@@ -46,13 +46,11 @@ public class StructuralSearchUtil {
     return !isIdentifier(element) ? element : element.getParent();
   }
 
-  @NotNull
-  public static PsiElement getPresentableElement(@NotNull PsiElement element) {
+  @Contract("!null -> !null")
+  public static PsiElement getPresentableElement(PsiElement element) {
+    if (element == null) return null;
     final StructuralSearchProfile profile = getProfileByPsiElement(element);
-    if (profile == null) {
-      return element;
-    }
-    return profile.getPresentableElement(element);
+    return profile == null ? element : profile.getPresentableElement(element);
   }
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {
@@ -145,21 +143,24 @@ public class StructuralSearchUtil {
     return s.chars().anyMatch(StructuralSearchUtil::isRegExpMetaChar);
   }
 
-  private static boolean isRegExpMetaChar(int ch) {
+  public static boolean isRegExpMetaChar(int ch) {
     return REG_EXP_META_CHARS.indexOf(ch) >= 0;
   }
 
   public static String shieldRegExpMetaChars(String word) {
-    final StringBuilder buf = new StringBuilder(word.length());
+    return shieldRegExpMetaChars(word, new StringBuilder(word.length())).toString();
+  }
 
-    for (int i = 0; i < word.length(); ++i) {
+  @NotNull
+  public static StringBuilder shieldRegExpMetaChars(String word, StringBuilder out) {
+    for (int i = 0, length = word.length(); i < length; ++i) {
       if (isRegExpMetaChar(word.charAt(i))) {
-        buf.append("\\");
+        out.append("\\");
       }
-      buf.append(word.charAt(i));
+      out.append(word.charAt(i));
     }
 
-    return buf.toString();
+    return out;
   }
 
   public static List<Configuration> getPredefinedTemplates() {
@@ -177,13 +178,5 @@ public class StructuralSearchUtil {
   public static boolean isDocCommentOwner(PsiElement match) {
     final StructuralSearchProfile profile = getProfileByPsiElement(match);
     return profile != null && profile.isDocCommentOwner(match);
-  }
-
-  public static Class getElementContextByPsi(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    final StructuralSearchProfile profile = getProfileByPsiElement(element);
-    return profile == null ? element.getClass() : profile.getElementContextByPsi(element);
   }
 }

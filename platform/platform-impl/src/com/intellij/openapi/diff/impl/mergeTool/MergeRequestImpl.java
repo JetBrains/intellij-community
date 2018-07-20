@@ -15,19 +15,20 @@
  */
 package com.intellij.openapi.diff.impl.mergeTool;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,24 +56,6 @@ public class MergeRequestImpl extends MergeRequest {
                           @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     this(new SimpleContent(left), new MergeContent(base, project), new SimpleContent(right), project, okButtonPresentation,
          cancelButtonPresentation);
-  }
-
-  public MergeRequestImpl(@NotNull DiffContent left,
-                          @NotNull MergeVersion base,
-                          @NotNull DiffContent right,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(left, new MergeContent(base, project), right, project, okButtonPresentation, cancelButtonPresentation);
-  }
-
-  public MergeRequestImpl(@NotNull String left,
-                          @NotNull String base,
-                          @NotNull String right,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(left, base, right, null, project, okButtonPresentation, cancelButtonPresentation);
   }
 
   public MergeRequestImpl(@NotNull String left,
@@ -153,14 +136,13 @@ public class MergeRequestImpl extends MergeRequest {
   }
 
   @Nullable
-  private MergeContent getMergeContent() {
+  public MergeContent getMergeContent() {
     if (myDiffContents[1] instanceof MergeContent) {
       return (MergeContent)myDiffContents[1];
     }
     return null;
   }
 
-  @Override
   @Nullable
   public DiffContent getResultContent() {
     return getMergeContent();
@@ -259,10 +241,10 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     @Override
-    public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+    public Navigatable getOpenFileDescriptor(int offset) {
       VirtualFile file = getFile();
       if (file == null) return null;
-      return new OpenFileDescriptor(myProject, file, offset);
+      return PsiNavigationSupport.getInstance().createNavigatable(myProject, file, offset);
     }
 
     @Override
@@ -283,6 +265,11 @@ public class MergeRequestImpl extends MergeRequest {
 
     public void restoreOriginalContent() {
       myTarget.restoreOriginalContent(myProject);
+    }
+
+    @NotNull
+    public MergeVersion getMergeVersion() {
+      return myTarget;
     }
   }
 

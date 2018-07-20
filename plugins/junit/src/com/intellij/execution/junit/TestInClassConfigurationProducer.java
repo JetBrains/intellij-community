@@ -42,9 +42,26 @@ public class TestInClassConfigurationProducer extends JUnitConfigurationProducer
     myDelegate.onFirstRun(configuration, fromContext, performRunnable);
   }
 
+  @Override
+  public boolean isConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context) {
+    String[] nodeIds = UniqueIdConfigurationProducer.getNodeIds(context);
+    if (nodeIds != null && nodeIds.length > 0) return false;
+    return super.isConfigurationFromContext(configuration, context);
+  }
+
+  @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return myDelegate.isApplicableTestType(type, context);
+  }
+
   private static class JUnitInClassConfigurationProducerDelegate
     extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
     public JUnitInClassConfigurationProducerDelegate() {super(JUnitConfigurationType.getInstance());}
+
+    @Override
+    protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+      return JUnitConfiguration.TEST_CLASS.equals(type) || JUnitConfiguration.TEST_METHOD.equals(type);
+    }
 
     @Override
     protected boolean setupConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {

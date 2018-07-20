@@ -58,11 +58,6 @@ class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("field2/A.groovy")
   }
 
-  void testForVariable1() throws Exception {
-    disableTransformations testRootDisposable
-    resolve "ForVariable.groovy", GrParameter
-  }
-
   void testArrayLength() throws Exception {
     doTest("arrayLength/A.groovy")
   }
@@ -85,10 +80,6 @@ class ResolvePropertyTest extends GroovyResolveTestCase {
   void testFromSetter() throws Exception {
     PsiReference ref = configureByFile("fromSetter/A.groovy")
     assertTrue(ref.resolve() instanceof GrAccessorMethod)
-  }
-
-  void _testForVariable2() throws Exception {
-    doTest("forVariable2/ForVariable.groovy")
   }
 
   void testCatchParameter() throws Exception {
@@ -1504,5 +1495,26 @@ class Foo {
   void 'test prefer local over map key'() {
     disableTransformations testRootDisposable
     resolveByText 'def abc = 42; [:].with { <caret>abc }', GrVariable
+  }
+
+  void 'test Class property vs instance property'() {
+    def property = resolveByText '''\
+class A {
+  int getName() { 42 }
+}
+
+println A.<caret>name
+''', PsiMethod
+    assert property.containingClass.qualifiedName == 'java.lang.Class'
+  }
+
+  void "test don't resolve to field in method call"() {
+    resolveByText '''\
+class Fff {
+  List<String> testThis = [""]
+  def usage() { <caret>testThis(1) }
+  def testThis(a) {}
+}
+''', GrMethod
   }
 }

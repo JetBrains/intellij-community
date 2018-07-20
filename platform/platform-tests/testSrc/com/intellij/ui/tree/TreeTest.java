@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -123,8 +123,7 @@ public class TreeTest implements Disposable {
     }
     if (invoker != null) {
       model = new Wrapper.WithInvoker(model, invoker);
-      model = new AsyncTreeModel(model, showLoadingNode);
-      Disposer.register(invoker, (Disposable)model);
+      model = new AsyncTreeModel(model, showLoadingNode, invoker);
     }
     return model;
   }

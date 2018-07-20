@@ -3,8 +3,10 @@
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData;
+import com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,8 +29,14 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   private static final String DESCRIPTION_FOLDER = "postfixTemplates";
 
   @NotNull
-  public static PostfixTemplateMetaData createMetaData(@Nullable PostfixTemplate template) {
-    if (template == null || template instanceof PostfixTemplateWrapper || !template.isBuiltin()) return EMPTY_METADATA;
+  public static BeforeAfterMetaData createMetaData(@Nullable PostfixTemplate template) {
+    if (template == null) return EMPTY_METADATA;
+    if (template instanceof PostfixTemplateWrapper) {
+      return new PostfixTemplateWrapperMetaData((PostfixTemplateWrapper)template);
+    }
+    if (template instanceof EditablePostfixTemplate && !template.isBuiltin()) {
+      return new EditablePostfixTemplateMetaData((EditablePostfixTemplate)template);
+    }
     return new PostfixTemplateMetaData(template);
   }
 
@@ -47,18 +55,28 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   @NotNull
   @Override
   public TextDescriptor[] getExampleUsagesBefore() {
+    return decorateTextDescriptor(getRawExampleUsagesBefore());
+  }
 
-    return decorateTextDescriptor(super.getExampleUsagesBefore());
+  @NotNull
+  TextDescriptor[] getRawExampleUsagesBefore() {
+    return super.getExampleUsagesBefore();
   }
 
   @NotNull
   private TextDescriptor[] decorateTextDescriptor(TextDescriptor[] before) {
-    List<TextDescriptor> list = ContainerUtil.newArrayList();
+    String key = myTemplate.getKey();
+    return decorateTextDescriptorWithKey(before, key);
+  }
+
+  @NotNull
+  static TextDescriptor[] decorateTextDescriptorWithKey(TextDescriptor[] before, @NotNull String key) {
+    List<TextDescriptor> list = ContainerUtil.newArrayListWithCapacity(before.length);
     for (final TextDescriptor descriptor : before) {
       list.add(new TextDescriptor() {
         @Override
         public String getText() throws IOException {
-          return StringUtil.replace(descriptor.getText(), KEY, myTemplate.getKey());
+          return StringUtil.replace(descriptor.getText(), KEY, key);
         }
 
         @Override
@@ -73,7 +91,12 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   @NotNull
   @Override
   public TextDescriptor[] getExampleUsagesAfter() {
-    return decorateTextDescriptor(super.getExampleUsagesAfter());
+    return decorateTextDescriptor(getRawExampleUsagesAfter());
+  }
+
+  @NotNull
+  TextDescriptor[] getRawExampleUsagesAfter() {
+    return super.getExampleUsagesAfter();
   }
 
   @NotNull

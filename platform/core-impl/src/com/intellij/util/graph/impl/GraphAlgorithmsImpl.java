@@ -3,6 +3,7 @@ package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,14 +35,20 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> Graph<Node> invertEdgeDirections(@NotNull final Graph<Node> graph) {
     return new Graph<Node>() {
+      @Override
+      @NotNull
       public Collection<Node> getNodes() {
         return graph.getNodes();
       }
 
+      @Override
+      @NotNull
       public Iterator<Node> getIn(final Node n) {
         return graph.getOut(n);
       }
 
+      @Override
+      @NotNull
       public Iterator<Node> getOut(final Node n) {
         return graph.getIn(n);
       }
@@ -69,11 +76,13 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
     }
 
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Chunk<Node>>() {
+      @NotNull
       @Override
       public Collection<Chunk<Node>> getNodes() {
         return chunks;
       }
 
+      @NotNull
       @Override
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();
@@ -96,10 +105,17 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
     if (!set.add(start)) {
       return;
     }
-    Iterator<Node> iterator = graph.getOut(start);
-    while (iterator.hasNext()) {
-      Node node = iterator.next();
-      collectOutsRecursively(graph, node, set);
+    final Stack<Node> stack = new Stack<>();
+    stack.push(start);
+    while (!stack.empty()) {
+      final Node currentNode = stack.pop();
+      final Iterator<Node> successorIterator = graph.getOut(currentNode);
+      while (successorIterator.hasNext()) {
+        Node successor = successorIterator.next();
+        if (set.add(successor)) {
+          stack.push(successor);
+        }
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
@@ -14,6 +14,8 @@ import java.util.List;
  * Global context of matching process
  */
 public class MatchContext {
+  private final Stack<MatchedElementsListener> myMatchedElementsListenerStack = new Stack<>(2);
+
   private MatchResultSink sink;
   private final Stack<MatchResultImpl> previousResults = new Stack<>();
   private MatchResultImpl result;
@@ -37,8 +39,6 @@ public class MatchContext {
     void matchedElements(@NotNull Collection<PsiElement> matchedElements);
   }
 
-  private MatchedElementsListener myMatchedElementsListener;
-
   public void setMatcher(GlobalMatchingVisitor matcher) {
     this.matcher = matcher;
   }
@@ -56,7 +56,18 @@ public class MatchContext {
   }
 
   public MatchResultImpl getPreviousResult() {
-    return previousResults.isEmpty() ? null : previousResults.peek();
+    if (previousResults.isEmpty()) {
+      return null;
+    }
+    else {
+      int index = previousResults.size() - 1;
+      MatchResultImpl result = previousResults.get(index); // may contain nulls
+      while (result == null && index > 0) {
+        index--;
+        result = previousResults.get(index);
+      }
+      return result;
+    }
   }
 
   public MatchResultImpl getResult() {
@@ -113,11 +124,17 @@ public class MatchContext {
     this.shouldRecursivelyMatch = shouldRecursivelyMatch;
   }
 
-  public void setMatchedElementsListener(MatchedElementsListener _matchedElementsListener) {
-    myMatchedElementsListener = _matchedElementsListener;
+  public void pushMatchedElementsListener(MatchedElementsListener matchedElementsListener) {
+    myMatchedElementsListenerStack.push(matchedElementsListener);
   }
 
-  public MatchedElementsListener getMatchedElementsListener() {
-    return myMatchedElementsListener;
+  public void popMatchedElementsListener() {
+    myMatchedElementsListenerStack.pop();
+  }
+
+  public void notifyMatchedElements(Collection<PsiElement> matchedElements) {
+    if (!myMatchedElementsListenerStack.isEmpty()) {
+      myMatchedElementsListenerStack.peek().matchedElements(matchedElements);
+    }
   }
 }

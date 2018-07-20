@@ -32,7 +32,7 @@ public abstract class AsyncValueLoader<T> {
   public final T getResultIfFullFilled() {
     Promise<T> result = ref.get();
     try {
-      return (result != null && result.getState() == Promise.State.FULFILLED) ? result.blockingGet(0) : null;
+      return (result != null && result.isSucceeded()) ? result.blockingGet(0) : null;
     }
     catch (TimeoutException | ExecutionException e) {
       return null;
@@ -87,7 +87,7 @@ public abstract class AsyncValueLoader<T> {
         // if current promise is not processed, so, we don't need to check cache state
         return promise;
       }
-      else if (state == Promise.State.FULFILLED) {
+      else if (state == Promise.State.SUCCEEDED) {
         //noinspection unchecked
         if (!checkFreshness || isUpToDate()) {
           return promise;
@@ -137,7 +137,7 @@ public abstract class AsyncValueLoader<T> {
 
     effectivePromise.onSuccess(doneHandler);
     if (isCancelOnReject()) {
-      effectivePromise.rejected(throwable -> ref.compareAndSet(effectivePromise, null));
+      effectivePromise.onError(throwable -> ref.compareAndSet(effectivePromise, null));
     }
 
     if (effectivePromise != promise) {

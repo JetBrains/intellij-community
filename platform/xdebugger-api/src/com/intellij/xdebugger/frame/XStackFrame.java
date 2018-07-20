@@ -61,6 +61,12 @@ public abstract class XStackFrame extends XValueContainer {
   }
 
   /**
+   * Update info about stack frame
+   */
+  public void refresh() {
+  }
+
+  /**
    * Customize presentation of the stack frame in frames list
    * @param component component
    */

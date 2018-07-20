@@ -4,6 +4,7 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
@@ -89,5 +90,10 @@ public abstract class ActionManagerEx extends ActionManager {
       fireBeforeActionPerformed(action, DataManager.getInstance().getDataContext(), e);
     }
   }
+
+  /**
+   * Allows to receive notifications when popup menus created from action groups are shown and hidden.
+   */
+  public abstract void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable);
 }
 

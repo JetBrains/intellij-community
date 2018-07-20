@@ -17,7 +17,7 @@ internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
 
   override fun loadState(state: OldState) {
     if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
-      PasswordSafe.getInstance().set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
+      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
     }
   }
 
@@ -26,7 +26,7 @@ internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
     val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
     @JvmStatic
-    fun getCredentials() = PasswordSafe.getInstance().get(CredentialAttributes(SERVICE_NAME))
+    fun getCredentials() = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
   }
 }
 

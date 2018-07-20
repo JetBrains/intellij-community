@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.ide.DataManager;
@@ -5,9 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -41,7 +40,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("unchecked")
-public class TaskRepositoriesConfigurable extends BaseConfigurable implements Configurable.NoScroll, SearchableConfigurable {
+public class TaskRepositoriesConfigurable implements Configurable.NoScroll, SearchableConfigurable {
 
   public static final String ID = "tasks.servers";
   private static final String EMPTY_PANEL = "empty.panel";
@@ -217,7 +216,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     return !myRepositories.equals(getReps());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> taskRepository.clone());
     myManager.setRepositories(newRepositories);
     myManager.updateIssues(null);

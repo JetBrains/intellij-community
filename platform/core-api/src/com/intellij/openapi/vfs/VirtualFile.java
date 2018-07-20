@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
@@ -288,7 +274,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this {@code VirtualFile} is valid. File can be invalidated either by deleting it or one of its
    * parents with {@link #delete} method or by an external change.
-   * If file is not valid only {@link #equals}, {@link #hashCode} and methods from
+   * If file is not valid only {@link #equals}, {@link #hashCode}, 
+   * {@link #getName()}, {@link #getPath()}, {@link #getUrl()}, {@link #getPresentableUrl()} and methods from
    * {@link UserDataHolder} can be called for it. Using any other methods for an invalid {@link VirtualFile} instance
    * produce unpredictable results.
    *
@@ -482,8 +469,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
-      getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
-      return VirtualFile.this;
+      getFileSystem().moveFile(requestor, this, newParent);
+      return this;
     });
   }
 
@@ -498,7 +485,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
 
     return EncodingRegistry.doActionAndRestoreEncoding(this,
-                                                       () -> getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName));
+                                                       () -> getFileSystem().copyFile(requestor, this, newParent, copyName));
   }
 
   /**
@@ -576,7 +563,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if {@code requestor} is {@code null}.
-   *                  See {@link VirtualFileEvent#getRequestor}
+   *                  See {@link VirtualFileEvent#getRequestor} and {@link com.intellij.openapi.vfs.SafeWriteRequestor}.
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
@@ -594,7 +581,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @param requestor            any object to control who called this method. Note that
    *                             it is considered to be an external change if {@code requestor} is {@code null}.
-   *                             See {@link VirtualFileEvent#getRequestor}
+   *                             See {@link VirtualFileEvent#getRequestor} and {@link com.intellij.openapi.vfs.SafeWriteRequestor}.
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
    * @param newTimeStamp         new time stamp or -1 if no special value should be set
    * @return {@code OutputStream}
@@ -733,6 +720,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /** @deprecated use {@link VirtualFileSystem#isValidName(String)} (to be removed in IDEA 18) */
+  @Deprecated
   public static boolean isValidName(@NotNull String name) {
     return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }

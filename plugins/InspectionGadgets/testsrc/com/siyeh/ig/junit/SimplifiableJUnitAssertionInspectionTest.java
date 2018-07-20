@@ -16,7 +16,9 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,6 +34,12 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightInspectionTes
     doTest();
   }
 
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
@@ -42,7 +50,7 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightInspectionTes
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package junit.framework;" +
-      "public abstract class TestCase extends Assert {" +
+      " /** @noinspection ALL*/ public abstract class TestCase extends Assert {" +
       "    protected void setUp() throws Exception {}" +
       "    protected void tearDown() throws Exception {}" +
       "    public static void assertTrue(boolean condition) {" +

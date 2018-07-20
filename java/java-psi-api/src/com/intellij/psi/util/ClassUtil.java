@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -23,6 +24,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public class ClassUtil {
   private ClassUtil() { }
@@ -94,10 +97,6 @@ public class ClassUtil {
       });
 
     return indices.get(psiClass);
-  }
-
-  public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName, @NotNull PsiClass containingClass) {
-    return findNonQualifiedClassByIndex(indexName, containingClass, false);
   }
 
   public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName,
@@ -272,6 +271,17 @@ public class ClassUtil {
     return parentFile != null && parentFile.getLanguage() == JavaLanguage.INSTANCE;  // do not select JspClass
   }
 
+  public static String getAsmMethodSignature(PsiMethod method) {
+    StringBuilder signature = new StringBuilder();
+    signature.append("(");
+    for (PsiParameter param : method.getParameterList().getParameters()) {
+      signature.append(toAsm(param.getType()));
+    }
+    signature.append(")");
+    signature.append(toAsm(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
+    return signature.toString();
+  }
+
   public static String getVMParametersMethodSignature(PsiMethod method) {
     return StringUtil.join(method.getParameterList().getParameters(),
                            param -> {
@@ -301,10 +311,48 @@ public class ClassUtil {
       public String visitArrayType(PsiArrayType arrayType) {
         PsiType componentType = arrayType.getComponentType();
         String typePresentation = componentType.accept(this);
+        if (arrayType.getDeepComponentType() instanceof PsiPrimitiveType) {
+          return typePresentation + "[]";
+        }
         if (componentType instanceof PsiClassType) {
           typePresentation = "L" + typePresentation + ";";
         }
         return "[" + typePresentation;
+      }
+    };
+  }
+
+  @NotNull
+  private static String toAsm(@NotNull PsiType psiType) {
+    return Optional.of(psiType)
+                   .map(type -> TypeConversionUtil.erasure(type))
+                   .map(type -> type.accept(createAsmSignatureVisitor()))
+                   .orElseGet(() -> psiType.getPresentableText());
+  }
+
+  private static PsiTypeVisitor<String> createAsmSignatureVisitor() {
+    return new PsiTypeVisitor<String>() {
+      @Override
+      public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+        return primitiveType.getKind().getBinaryName();
+      }
+
+      @Override
+      public String visitClassType(PsiClassType classType) {
+        PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+          return "";
+        }
+        String jvmClassName = getJVMClassName(aClass);
+        if (jvmClassName != null) {
+          jvmClassName = "L" + jvmClassName.replace(".", "/") + ";";
+        }
+        return jvmClassName;
+      }
+
+      @Override
+      public String visitArrayType(PsiArrayType arrayType) {
+        return "[" + arrayType.getComponentType().accept(this);
       }
     };
   }

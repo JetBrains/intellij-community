@@ -46,6 +46,7 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -579,12 +580,57 @@ public class InjectedLanguageUtil {
     InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(project);
     if (!languageManager.isInjectedFragment(injectedFile)) return false;
     TextRange elementRange = element.getTextRange();
-    List<TextRange> editables = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
-    int combinedEditablesLength = editables.stream().mapToInt(TextRange::getLength).sum();
+    List<TextRange> edibles = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
+    int combinedEdiblesLength = edibles.stream().mapToInt(TextRange::getLength).sum();
 
-    return combinedEditablesLength != elementRange.getLength();
+    return combinedEdiblesLength != elementRange.getLength();
   }
 
+
+  public static int hostToInjectedUnescaped(DocumentWindow window, int hostOffset) {
+    Place shreds = ((DocumentWindowImpl)window).getShreds();
+    Segment hostRangeMarker = shreds.get(0).getHostRangeMarker();
+    if (hostRangeMarker == null || hostOffset < hostRangeMarker.getStartOffset()) {
+      return shreds.get(0).getPrefix().length();
+    }
+    StringBuilder chars = new StringBuilder();
+    int unescaped = 0;
+    for (int i = 0; i < shreds.size(); i++, chars.setLength(0)) {
+      PsiLanguageInjectionHost.Shred shred = shreds.get(i);
+      int prefixLength = shred.getPrefix().length();
+      int suffixLength = shred.getSuffix().length();
+      PsiLanguageInjectionHost host = shred.getHost();
+      TextRange rangeInsideHost = shred.getRangeInsideHost();
+      LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = host == null ? null : host.createLiteralTextEscaper();
+      unescaped += prefixLength;
+      Segment currentRange = shred.getHostRangeMarker();
+      if (currentRange == null) continue;
+      Segment nextRange = i == shreds.size() - 1 ? null : shreds.get(i + 1).getHostRangeMarker();
+      if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
+        hostOffset = Math.min(hostOffset, currentRange.getEndOffset());
+        int inHost = hostOffset - currentRange.getStartOffset();
+        if (escaper != null && escaper.decode(rangeInsideHost, chars)) {
+          int found = ObjectUtils.binarySearch(
+            0, inHost, index -> Comparing.compare(escaper.getOffsetInHost(index, TextRange.create(0, host.getTextLength())), inHost));
+          return unescaped + (found >= 0 ? found : -found - 1);
+        }
+        return unescaped + inHost;
+      }
+      if (escaper != null && escaper.decode(rangeInsideHost, chars)) {
+        unescaped += chars.length();
+      }
+      else {
+        unescaped += currentRange.getEndOffset() - currentRange.getStartOffset();
+      }
+      unescaped += suffixLength;
+    }
+    return unescaped - shreds.get(shreds.size() - 1).getSuffix().length();
+  }
+
+  /**
+   * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
+   */
+  @Deprecated
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
@@ -686,7 +732,7 @@ public class InjectedLanguageUtil {
   public static <T> void putInjectedFileUserData(@NotNull PsiElement element,
                                                  @NotNull Language language,
                                                  @NotNull Key<T> key,
-                                                 T value) {
+                                                 @Nullable T value) {
     PsiFile file = getCachedInjectedFileWithLanguage(element, language);
     if (file != null) {
       file.putUserData(key, value);
@@ -696,6 +742,7 @@ public class InjectedLanguageUtil {
   /**
    * @deprecated use {@link #putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
    */
+  @Deprecated
   public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
     LOG.warn("use #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead");
     InjectionResult result = ((InjectionRegistrarImpl)registrar).getInjectedResult();
@@ -715,7 +762,8 @@ public class InjectedLanguageUtil {
       .getCachedInjectedDocumentsInRange(containingFile, element.getTextRange())
       .stream()
       .map(documentWindow -> PsiDocumentManager.getInstance(containingFile.getProject()).getPsiFile(documentWindow))
-      .filter(file -> file != null && file.getLanguage() == language)
+      .filter(file -> file != null && file.getLanguage() == LanguageSubstitutors.INSTANCE.substituteLanguage(language, file.getVirtualFile(),
+                                                                                                             file.getProject()))
       .findFirst()
       .orElse(null);
   }

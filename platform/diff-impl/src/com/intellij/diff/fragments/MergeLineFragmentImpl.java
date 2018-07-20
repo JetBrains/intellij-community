@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.fragments;
 
+import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.ThreeSide;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,10 @@ public class MergeLineFragmentImpl implements MergeLineFragment {
     this(fragment.getStartLine(ThreeSide.LEFT), fragment.getEndLine(ThreeSide.LEFT),
          fragment.getStartLine(ThreeSide.BASE), fragment.getEndLine(ThreeSide.BASE),
          fragment.getStartLine(ThreeSide.RIGHT), fragment.getEndLine(ThreeSide.RIGHT));
+  }
+
+  public MergeLineFragmentImpl(@NotNull MergeRange range) {
+    this(range.start1, range.end1, range.start2, range.end2, range.start3, range.end3);
   }
 
   @Override

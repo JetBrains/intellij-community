@@ -128,9 +128,10 @@ public class Patches {
   }
 
   /**
-   * Some HTTP connections lock the context class loader: https://bugs.openjdk.java.net/browse/JDK-8032832
+   * Some HTTP connections lock class loaders: https://bugs.openjdk.java.net/browse/JDK-8032832
+   * The issue claims to be fixed in 8u20, but the fix just replaces one lock with another (on a context class loader).
    */
-  public static final boolean JDK_BUG_ID_8032832 = SystemInfo.isJavaVersionAtLeast(8, 0, 20);
+  public static final boolean JDK_BUG_ID_8032832 = true;
 
   /**
    * Since 8u102, AWT supports Shift-scroll on all platforms (before, it only worked on macOS).

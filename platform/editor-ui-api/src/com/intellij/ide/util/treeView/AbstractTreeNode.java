@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -36,6 +21,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<AbstractTreeNode<T>> implements NavigationItem, Queryable.Contributor {
+  private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
   private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
   private AbstractTreeNode myParent;
   private Object myValue;
@@ -76,7 +62,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @Override
   protected void postprocess(@NotNull PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
-      presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
+      presentation.setAttributesKey(FILESTATUS_ERRORS);
     }
 
     setForcedForeground(presentation);
@@ -194,6 +180,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    * @deprecated use toTestString
    * @return
    */
+  @Deprecated
   @Nullable
   @NonNls public String getTestPresentation() {
     if (myName != null) {
@@ -209,7 +196,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     if (FileStatus.NOT_CHANGED.equals(status)) {
       final VirtualFile vf = getVirtualFile();
       if (vf != null && vf.isDirectory()) {
-        return FileStatusManager.getInstance(myProject).getNotChangedDirectoryColor(vf);
+        return FileStatusManager.getInstance(myProject).getRecursiveStatus(vf).getColor();
       }
     }
     return status.getColor();
@@ -256,25 +243,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
+  @Deprecated
   protected String getToolTip() {
     return getPresentation().getTooltip();
   }
-
-  /**
-   * @deprecated use {@link #getPresentation()} instead
-   */
-  @Nullable
-  public TextAttributesKey getAttributesKey() {
-    return getPresentation().getTextAttributesKey();
-  }
-
-  /**
-   * @deprecated use {@link #getPresentation()} instead
-   */
-  @Nullable
-  public String getLocationString() {
-    return getPresentation().getLocationString();
-  }
-
-
 }

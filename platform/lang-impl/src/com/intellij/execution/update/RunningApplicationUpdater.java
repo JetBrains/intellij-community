@@ -21,7 +21,7 @@ public interface RunningApplicationUpdater {
   }
 
   /**
-   * Performs an update of running application. The method is called on performing update running application action.
+   * The method is called on performing update running application action.
    */
   void performUpdate();
 }

@@ -33,6 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,7 +224,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       if (element instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression)element);
       }
-      else if (element.getParent() instanceof PsiNewExpression) {
+      else if (element != null && element.getParent() instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression) element.getParent());
       }
       else {
@@ -267,7 +268,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   private void replaceNewOrType(final PsiNewExpression psiNewExpression, final PsiClassType superType) {
     try {
-      if (psiNewExpression.getArrayDimensions().length == 0 && psiNewExpression.getArrayInitializer() == null) {
+      if (!ExpressionUtils.isArrayCreationExpression(psiNewExpression)) {
         new InlineToAnonymousConstructorProcessor(myClass, psiNewExpression, superType).run();
       }
       else {

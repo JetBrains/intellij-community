@@ -42,8 +42,8 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
       }
     });
     ActionListener updateModelListener = e -> {
-      Object item = getSelectedItem();
-      initModel((ShortenCommandLine)item, pathEditor, component.getSelectedModule());
+      ShortenCommandLine item = getSelectedItem();
+      initModel(item, pathEditor, component.getSelectedModule());
     };
     pathEditor.addActionListener(updateModelListener);
     component.addActionListener(updateModelListener);

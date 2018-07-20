@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.DataManager;
@@ -11,6 +9,7 @@ import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -218,6 +217,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     XDebugSession session = getSession(getTree());
     myRootNode.addWatchExpression(session != null ? session.getCurrentStackFrame() : null, expression, index, navigateToWatchNode);
     updateSessionData();
@@ -276,6 +276,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void removeWatches(List<? extends XDebuggerTreeNode> nodes) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     List<? extends WatchNode> children = myRootNode.getWatchChildren();
     int minIndex = Integer.MAX_VALUE;
     List<XDebuggerTreeNode> toRemove = new ArrayList<>();
@@ -299,6 +300,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   public void removeAllWatches() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myRootNode.removeAllChildren();
     updateSessionData();
   }
@@ -362,20 +364,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   public void drop(DnDEvent aEvent) {
     Object object = aEvent.getAttachedObject();
     if (object instanceof XValueNodeImpl[]) {
-      final XValueNodeImpl[] nodes = (XValueNodeImpl[])object;
-      for (XValueNodeImpl node : nodes) {
-        node.getValueContainer().calculateEvaluationExpression().done(expression -> {
-          if (expression != null) {
-            //noinspection ConstantConditions
-            addWatchExpression(expression, -1, false);
-          }
-        });
+      for (XValueNodeImpl node : (XValueNodeImpl[])object) {
+        DebuggerUIUtil.addToWatches(this, node);
       }
     }
     else if (object instanceof EventInfo) {
       String text = ((EventInfo)object).getTextForFlavor(DataFlavor.stringFlavor);
       if (text != null) {
-        //noinspection ConstantConditions
         addWatchExpression(XExpressionImpl.fromText(text), -1, false);
       }
     }

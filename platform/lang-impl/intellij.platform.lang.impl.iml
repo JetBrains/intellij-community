@@ -16,10 +16,9 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.usageView" exported="" />
-    <orderEntry type="library" exported="" name="cli-parser" level="project" />
+    <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
-    <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
@@ -32,5 +31,8 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="XStream" level="project" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" name="lz4-java" level="project" />
   </component>
 </module>

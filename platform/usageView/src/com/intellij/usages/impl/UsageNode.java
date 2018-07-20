@@ -93,4 +93,9 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   protected String getText(@NotNull final UsageView view) {
     return getUsage().getPresentation().getPlainText();
   }
+
+  @Override
+  protected void updateCachedPresentation() {
+    getUsage().getPresentation().updateCachedText();
+  }
 }

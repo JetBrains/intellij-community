@@ -169,7 +169,8 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   @Nullable
   private static Stub buildStubForElement(Project project, PsiElement rootElement, @NotNull String textToParse) {
     Stub stub = null;
-    StubTree tree = ((PsiFileWithStubSupport)rootElement).getStubTree();
+    PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)rootElement;
+    StubTree tree = psiFile.getStubTree();
     if (tree != null) {
       stub = tree.getRoot();
     }
@@ -183,6 +184,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       try {
         fc = new FileContentImpl(file, file.contentsToByteArray());
         fc.putUserData(IndexingDataKeys.PROJECT, project);
+        fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
         stub = StubTreeBuilder.buildStubTree(fc);
       }
       catch (IOException e) {

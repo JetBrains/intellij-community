@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
@@ -33,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public interface ChainCallExtractor {
   ExtensionPointName<ChainCallExtractor> KEY = ExtensionPointName.create("com.intellij.java.refactoring.chainCallExtractor");
 
@@ -95,7 +93,7 @@ public interface ChainCallExtractor {
     if (lambda == null) return null;
     PsiParameterList parameters = lambda.getParameterList();
     if (parameters.getParametersCount() != 1) return null;
-    PsiExpressionList args = tryCast(lambda.getParent(), PsiExpressionList.class);
+    PsiExpressionList args = tryCast(PsiUtil.skipParenthesizedExprUp(lambda.getParent()), PsiExpressionList.class);
     if (args == null || args.getExpressionCount() != 1) return null;
     PsiParameter parameter = parameters.getParameters()[0];
     if (ExpressionUtils.isReferenceTo(expression, parameter) && parameter.getType().equals(targetType)) {

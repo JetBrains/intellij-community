@@ -31,7 +31,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -39,16 +41,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.NotNullList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class UnwrapHandler implements CodeInsightActionHandler {
   public static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
@@ -107,48 +108,36 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private static void showPopup(final List<AnAction> options, Editor editor) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
-    DefaultListModel<String> m = new DefaultListModel<>();
-    for (AnAction a : options) {
-      m.addElement(((MyUnwrapAction)a).getName());
-    }
+    List<String> model = options.stream().map(a -> ((MyUnwrapAction)a).getName()).collect(Collectors.toList());
 
-    final JList list = new JBList(m);
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setVisibleRowCount(options.size());
+    Function<String, MyUnwrapAction> optionByName = s -> (MyUnwrapAction)options.stream()
+      .filter((it) -> ((MyUnwrapAction)it).getName().equals(s))
+      .findFirst().get();
 
-    list.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(model)
 
-        MyUnwrapAction a = (MyUnwrapAction)options.get(index);
-
-        List<PsiElement> toExtract = new NotNullList<>();
-        PsiElement wholeRange = a.collectAffectedElements(toExtract);
-        highlighter.highlight(wholeRange, toExtract);
-      }
-    });
-
-    PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
-    builder
-        .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
-        .setMovable(false)
-        .setResizable(false)
-        .setRequestFocus(true)
-        .setItemChoosenCallback(() -> {
-          MyUnwrapAction a = (MyUnwrapAction)options.get(list.getSelectedIndex());
-          a.actionPerformed(null);
-        })
-        .addListener(new JBPopupAdapter() {
-          @Override
-          public void onClosed(LightweightWindowEvent event) {
-            highlighter.dropHighlight();
-          }
-        });
-
-    JBPopup popup = builder.createPopup();
-    popup.showInBestPositionFor(editor);
+      .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
+      .setMovable(false)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setResizable(false)
+      .setRequestFocus(true)
+      .setItemChosenCallback((selectedValue) -> optionByName.apply(selectedValue).actionPerformed(null))
+      .setItemSelectedCallback(s -> {
+        if (s != null) {
+          MyUnwrapAction a = optionByName.apply(s);
+          List<PsiElement> toExtract = new NotNullList<>();
+          PsiElement wholeRange = a.collectAffectedElements(toExtract);
+          highlighter.highlight(wholeRange, toExtract);
+        }
+      })
+      .addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          highlighter.dropHighlight();
+        }
+      })
+      .createPopup().showInBestPositionFor(editor);
   }
 
   public static TextAttributes getTestAttributesForExtract() {

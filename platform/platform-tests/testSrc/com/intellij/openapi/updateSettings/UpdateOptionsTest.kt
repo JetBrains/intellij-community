@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings
 import com.intellij.configurationStore.deserialize
 import com.intellij.openapi.updateSettings.impl.UpdateOptions
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.loadElement
 import org.junit.ClassRule
 import org.junit.Test
@@ -13,6 +14,12 @@ class UpdateOptionsTest {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
+  }
+
+  @Test
+  fun `auto check is enabled`() {
+    // it is quite important default value (true), so, ensure that it is not modified without changing test expectation (as an additional check)
+    assertThat(UpdateOptions().isCheckNeeded).isTrue()
   }
 
   @Test

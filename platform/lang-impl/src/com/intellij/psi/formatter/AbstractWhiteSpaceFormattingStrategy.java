@@ -81,7 +81,7 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
         buffer.append(text);
       }
       else {
-        buffer.append(text.substring(start, end));
+        buffer.append(text, start, end);
       } 
     }
     

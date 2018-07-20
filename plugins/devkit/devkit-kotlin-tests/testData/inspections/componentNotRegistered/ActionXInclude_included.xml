@@ -1,0 +1,5 @@
+<idea-plugin>
+  <actions>
+    <action id="smth" class="ActionXInclude"/>
+  </actions>
+</idea-plugin>

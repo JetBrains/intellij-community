@@ -59,7 +59,7 @@ public class IDEATestNGRemoteListener {
               }
             }
             if (!found) {
-              final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "." + method.getMethodName());
+              final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "/" + method.getMethodName());
               myPrintStream.println("##teamcity[testStarted name=\'" + fullEscapedMethodName + "\']");
               myPrintStream.println("##teamcity[testIgnored name=\'" + fullEscapedMethodName + "\']");
               myPrintStream.println("##teamcity[testFinished name=\'" + fullEscapedMethodName + "\']");
@@ -208,7 +208,7 @@ public class IDEATestNGRemoteListener {
     onSuiteStart(result.getTestHierarchy(), result, true);
     final String className = result.getClassName();
     final String methodName = result.getDisplayMethodName();
-    final String location = className + "." + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
+    final String location = className + "/" + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
     myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
                           "\' locationHint=\'java:test://" + escapeName(location) + (config ? "\' config=\'true" : "") + "\']");
   }
@@ -225,10 +225,19 @@ public class IDEATestNGRemoteListener {
     if (ex != null) {
       ComparisonFailureData notification;
       try {
-        notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+        notification = ComparisonFailureData.create(ex);
       }
       catch (Throwable e) {
         notification = null;
+      }
+
+      if (notification == null) {
+        try {
+          notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+        }
+        catch (Throwable e) {
+          notification = null;
+        }
       }
       ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     }

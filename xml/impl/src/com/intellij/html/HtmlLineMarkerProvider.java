@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,8 @@ import java.util.Map;
  * @author Maxim.Mossienko
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
-  private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<>();
+
+  private final Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders = ContainerUtil.newConcurrentMap();
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
@@ -42,29 +44,34 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
     final Language language = element.getLanguage();
 
     if (!(language instanceof XMLLanguage)) {
-      final LineMarkerProvider markerProvider = getLineMarkerProviderFromLanguage(language, embeddedLanguagesLineMarkerProviders);
-
-      if (markerProvider != null) return markerProvider.getLineMarkerInfo(element);
+      List<LineMarkerProvider> markerProviders = getAllLineMarkerProvidersForLanguage(language, embeddedLanguagesLineMarkerProviders);
+      for (LineMarkerProvider provider : markerProviders) {
+        if (provider instanceof HtmlLineMarkerProvider) continue;
+        LineMarkerInfo info = provider.getLineMarkerInfo(element);
+        if (info != null) {
+          return info;
+        }
+      }
     }
     return null;
   }
 
-  private static LineMarkerProvider getLineMarkerProviderFromLanguage(final Language language,
-                                                               final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders) {
-    final LineMarkerProvider markerProvider;
-
-    if (!embeddedLanguagesLineMarkerProviders.containsKey(language)) {
-      embeddedLanguagesLineMarkerProviders.put(language, markerProvider = LineMarkerProviders.INSTANCE.forLanguage(language));
+  @NotNull
+  private static List<LineMarkerProvider> getAllLineMarkerProvidersForLanguage(
+    @NotNull Language language,
+    @NotNull Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders
+  ) {
+    List<LineMarkerProvider> markerProviders = embeddedLanguagesLineMarkerProviders.get(language);
+    if (markerProviders == null) {
+      markerProviders = LineMarkerProviders.INSTANCE.allForLanguage(language);
+      embeddedLanguagesLineMarkerProviders.put(language, markerProviders);
     }
-    else {
-      markerProvider = embeddedLanguagesLineMarkerProviders.get(language);
-    }
-    return markerProvider;
+    return markerProviders;
   }
 
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
-    Map<Language, LineMarkerProvider> localEmbeddedLanguagesLineMarkerProviders = null;
+    Map<Language, List<LineMarkerProvider>> localEmbeddedLanguagesLineMarkerProviders = null;
     Map<LineMarkerProvider, List<PsiElement>> embeddedLineMarkersWorkItems = null;
 
     for(PsiElement element:elements) {
@@ -76,11 +83,12 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
           localEmbeddedLanguagesLineMarkerProviders = new THashMap<>();
         }
 
-        final LineMarkerProvider lineMarkerProvider = getLineMarkerProviderFromLanguage(language, localEmbeddedLanguagesLineMarkerProviders);
-
-        if (lineMarkerProvider != null) {
+        List<LineMarkerProvider> lineMarkerProviders = getAllLineMarkerProvidersForLanguage(language,
+                                                                                            localEmbeddedLanguagesLineMarkerProviders);
+        for (LineMarkerProvider provider : lineMarkerProviders) {
+          if (provider instanceof HtmlLineMarkerProvider) continue;
           if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<>();
-          List<PsiElement> elementList = embeddedLineMarkersWorkItems.computeIfAbsent(lineMarkerProvider, k -> new ArrayList<>(5));
+          List<PsiElement> elementList = embeddedLineMarkersWorkItems.computeIfAbsent(provider, k -> new ArrayList<>(5));
 
           elementList.add(element);
         }

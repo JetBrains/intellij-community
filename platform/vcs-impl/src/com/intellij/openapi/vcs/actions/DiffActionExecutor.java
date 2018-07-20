@@ -40,14 +40,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,15 +60,11 @@ public abstract class DiffActionExecutor {
   protected final VirtualFile mySelectedFile;
   protected final Project myProject;
   private final Integer mySelectedLine;
-  private final BackgroundableActionEnabledHandler myHandler;
 
   protected DiffActionExecutor(@NotNull DiffProvider diffProvider,
                                @NotNull VirtualFile selectedFile,
                                @NotNull Project project,
-                               @Nullable Editor editor,
-                               @NotNull VcsBackgroundableActions actionKey) {
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
-    myHandler = vcsManager.getBackgroundableActionHandler(actionKey);
+                               @Nullable Editor editor) {
     myDiffProvider = diffProvider;
     mySelectedFile = selectedFile;
     myProject = project;
@@ -118,6 +115,9 @@ public abstract class DiffActionExecutor {
     final Ref<VcsException> exceptionRef = new Ref<>();
     final Ref<DiffRequest> requestRef = new Ref<>();
 
+    FilePath filePath = VcsUtil.getFilePath(mySelectedFile);
+    BackgroundableActionLock lock = BackgroundableActionLock.getLock(myProject, VcsBackgroundableActions.COMPARE_WITH, filePath);
+
     final Task.Backgroundable task = new Task.Backgroundable(myProject,
                                                              VcsBundle.message("show.diff.progress.title.detailed",
                                                                                mySelectedFile.getPresentableUrl()),
@@ -138,9 +138,8 @@ public abstract class DiffActionExecutor {
           boolean inverted = false;
           String title1;
           String title2;
-          final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(mySelectedFile);
-          if (status == null || FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) ||
-              FileStatus.IGNORED.equals(status)) {
+          final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(mySelectedFile);
+          if (FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status)) {
             final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
 
             inverted = revisionNumber.compareTo(currentRevision) > 0;
@@ -183,8 +182,6 @@ public abstract class DiffActionExecutor {
 
       @Override
       public void onSuccess() {
-        myHandler.completed(VcsBackgroundableActions.keyFrom(mySelectedFile));
-
         if (!exceptionRef.isNull()) {
           AbstractVcsHelper.getInstance(myProject).showError(exceptionRef.get(), VcsBundle.message("message.title.diff"));
           return;
@@ -193,15 +190,26 @@ public abstract class DiffActionExecutor {
           DiffManager.getInstance().showDiff(myProject, requestRef.get());
         }
       }
+
+      @Override
+      public void onFinished() {
+        lock.unlock();
+      }
     };
 
-    myHandler.register(VcsBackgroundableActions.keyFrom(mySelectedFile));
+    lock.lock();
     ProgressManager.getInstance().run(task);
   }
 
+  @Deprecated
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
                               final Project project, final VcsBackgroundableActions actionKey) {
-    final DiffActionExecutor executor = new CompareToFixedExecutor(diffProvider, selectedFile, project, null, revisionNumber, actionKey);
+    showDiff(diffProvider, revisionNumber, selectedFile, project);
+  }
+
+  public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
+                              final Project project) {
+    final DiffActionExecutor executor = new CompareToFixedExecutor(diffProvider, selectedFile, project, null, revisionNumber);
     executor.showDiff();
   }
 
@@ -215,9 +223,8 @@ public abstract class DiffActionExecutor {
                                   @NotNull VirtualFile selectedFile,
                                   @NotNull Project project,
                                   @Nullable Editor editor,
-                                  @NotNull VcsRevisionNumber number,
-                                  @NotNull VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, editor, actionKey);
+                                  @NotNull VcsRevisionNumber number) {
+      super(diffProvider, selectedFile, project, editor);
       myNumber = number;
     }
 
@@ -230,9 +237,8 @@ public abstract class DiffActionExecutor {
     public CompareToCurrentExecutor(@NotNull DiffProvider diffProvider,
                                     @NotNull VirtualFile selectedFile,
                                     @NotNull Project project,
-                                    @Nullable Editor editor,
-                                    @NotNull VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, editor, actionKey);
+                                    @Nullable Editor editor) {
+      super(diffProvider, selectedFile, project, editor);
     }
 
     @Nullable
@@ -247,9 +253,8 @@ public abstract class DiffActionExecutor {
     public DeletionAwareExecutor(@NotNull DiffProvider diffProvider,
                                  @NotNull VirtualFile selectedFile,
                                  @NotNull Project project,
-                                 @Nullable Editor editor,
-                                 @NotNull VcsBackgroundableActions actionKey) {
-      super(diffProvider, selectedFile, project, editor, actionKey);
+                                 @Nullable Editor editor) {
+      super(diffProvider, selectedFile, project, editor);
     }
 
     protected VcsRevisionNumber getRevisionNumber() {

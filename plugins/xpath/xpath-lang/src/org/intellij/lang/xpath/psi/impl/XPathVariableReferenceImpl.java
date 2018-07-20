@@ -56,6 +56,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return this;
     }
 
+    @NotNull
     public PsiElement getElement() {
         return this;
     }
@@ -64,6 +65,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return getTextRange().getStartOffset() + 1;
     }
 
+    @NotNull
     public TextRange getRangeInElement() {
         return TextRange.from(1, getTextLength() - 1);
     }

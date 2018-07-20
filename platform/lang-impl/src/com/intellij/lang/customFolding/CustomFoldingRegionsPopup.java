@@ -21,62 +21,36 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
  * @author Rustam Vishnyakov
  */
 public class CustomFoldingRegionsPopup {
-  private final @NotNull JBList<MyFoldingDescriptorWrapper> myRegionsList;
-  private final @NotNull JBPopup myPopup;
-  private final @NotNull Editor myEditor;
-
-  CustomFoldingRegionsPopup(@NotNull Collection<FoldingDescriptor> descriptors,
-                            @NotNull final Editor editor,
-                            @NotNull final Project project) {
-    myEditor = editor;
-    myRegionsList = new JBList<>();
-    myRegionsList.setModel(new MyListModel(descriptors));
-    myRegionsList.setSelectedIndex(0);
-
-    final PopupChooserBuilder popupBuilder = JBPopupFactory.getInstance().createListPopupBuilder(myRegionsList);
-      myPopup = popupBuilder
-        .setTitle(IdeBundle.message("goto.custom.region.command"))
-        .setResizable(false)
-        .setMovable(false)
-        .setItemChoosenCallback(() -> {
-          PsiElement navigationElement = getNavigationElement();
-          if (navigationElement != null) {
-            navigateTo(editor, navigationElement);
-            IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          }
-        }).createPopup();
-  }
-
-  void show() {
-    myPopup.showInBestPositionFor(myEditor);
-  }
-
-  private static class MyListModel extends DefaultListModel<MyFoldingDescriptorWrapper> {
-    private MyListModel(Collection<FoldingDescriptor> descriptors) {
-      descriptors = orderByPosition(descriptors);
-      Stack<FoldingDescriptor> stack = new Stack<>();
-      for (FoldingDescriptor descriptor : descriptors) {
-        while (!stack.isEmpty() && descriptor.getRange().getStartOffset() >= stack.peek().getRange().getEndOffset()) stack.pop();
-        super.addElement(new MyFoldingDescriptorWrapper(descriptor, stack.size()));
-        stack.push(descriptor);
-      }
-    }
+  public static void show(@NotNull final Collection<FoldingDescriptor> descriptors,
+                          @NotNull final Editor editor,
+                          @NotNull final Project project) {
+    List<MyFoldingDescriptorWrapper> model = orderByPosition(descriptors);
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(model)
+      .setTitle(IdeBundle.message("goto.custom.region.command"))
+      .setResizable(false)
+      .setMovable(false)
+      .setItemChosenCallback((selection) -> {
+        PsiElement navigationElement = selection.getDescriptor().getElement().getPsi();
+        if (navigationElement != null) {
+          navigateTo(editor, navigationElement);
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
+        }
+      })
+      .createPopup()
+      .showInBestPositionFor(editor);
   }
 
   private static class MyFoldingDescriptorWrapper {
@@ -100,16 +74,7 @@ public class CustomFoldingRegionsPopup {
     }
   }
 
-  @Nullable
-  public PsiElement getNavigationElement() {
-    Object selection = myRegionsList.getSelectedValue();
-    if (selection != null) {
-      return  ((MyFoldingDescriptorWrapper)selection).getDescriptor().getElement().getPsi();
-    }
-    return null;
-  }
-
-  private static Collection<FoldingDescriptor> orderByPosition(Collection<FoldingDescriptor> descriptors) {
+  private static List<MyFoldingDescriptorWrapper> orderByPosition(Collection<FoldingDescriptor> descriptors) {
     List<FoldingDescriptor> sorted = new ArrayList<>(descriptors.size());
     sorted.addAll(descriptors);
     Collections.sort(sorted, (descriptor1, descriptor2) -> {
@@ -117,7 +82,14 @@ public class CustomFoldingRegionsPopup {
       int pos2 = descriptor2.getElement().getTextRange().getStartOffset();
       return pos1 - pos2;
     });
-    return sorted;
+    Stack<FoldingDescriptor> stack = new Stack<>();
+    List<MyFoldingDescriptorWrapper> result = new ArrayList<>();
+    for (FoldingDescriptor descriptor : sorted) {
+      while (!stack.isEmpty() && descriptor.getRange().getStartOffset() >= stack.peek().getRange().getEndOffset()) stack.pop();
+      result.add(new MyFoldingDescriptorWrapper(descriptor, stack.size()));
+      stack.push(descriptor);
+    }
+    return result;
   }
 
   private static void navigateTo(@NotNull Editor editor, @NotNull PsiElement element) {

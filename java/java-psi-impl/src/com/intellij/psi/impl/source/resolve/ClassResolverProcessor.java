@@ -239,7 +239,10 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
         return true;
       }
     }
-    return myCurrentFileContext instanceof PsiImportStatementBase;
+    if (myCurrentFileContext instanceof PsiImportStatementBase) {
+      return ((PsiImportStatementBase)myCurrentFileContext).isOnDemand();
+    }
+    return false;
   }
 
   private boolean checkAccessibility(final PsiClass aClass) {

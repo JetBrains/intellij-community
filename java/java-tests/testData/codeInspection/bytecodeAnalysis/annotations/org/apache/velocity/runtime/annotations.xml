@@ -75,6 +75,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.runtime.parser.Parser createNewParser()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.util.introspection.Introspector getIntrospector()'>

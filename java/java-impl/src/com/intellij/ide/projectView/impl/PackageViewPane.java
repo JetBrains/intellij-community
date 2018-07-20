@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -49,16 +35,15 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.util.*;
-
-import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
 
 public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
@@ -75,7 +60,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.General.PackagesTab;
+    return AllIcons.Nodes.CopyOfFolder;
   }
 
   @Override
@@ -124,11 +109,11 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   @Nullable
   private PackageElement getSelectedPackageElement() {
     PackageElement result = null;
-    final DefaultMutableTreeNode selectedNode = getSelectedNode();
-    if (selectedNode != null) {
-      Object o = selectedNode.getUserObject();
-      if (o instanceof AbstractTreeNode) {
-        Object selected = ((AbstractTreeNode)o).getValue();
+    TreePath path = getSelectedPath();
+    if (path != null) {
+      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      if (node != null) {
+        Object selected = node.getValue();
         result = selected instanceof PackageElement ? (PackageElement)selected : null;
       }
     }
@@ -195,15 +180,11 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ShowModulesAction(myProject){
-      @NotNull
-      @Override
-      protected String getId() {
-        return PackageViewPane.this.getId();
-      }
-    }).setAsSecondary(true);
+    actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
+    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
+    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
   }
 
   @Override
@@ -356,6 +337,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
-    return isFeatureEnabled("package.view.async.tree.model") ? null : super.createBuilder(model);
+    return null;
   }
 }

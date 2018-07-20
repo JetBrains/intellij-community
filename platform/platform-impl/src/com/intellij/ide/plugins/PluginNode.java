@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,6 +27,9 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   private PluginId id;
   private String name;
+  private String productCode;
+  private Date releaseDate;
+  private int releaseVersion;
   private String version;
   private String vendor;
   private String description;
@@ -49,6 +53,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private boolean myEnabled = true;
   private String myRating;
   private boolean myIncomplete;
+  private List<String> myTags;
 
   public PluginNode() { }
 
@@ -79,6 +84,35 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public void setId(String id) {
     this.id = PluginId.getId(id);
+  }
+
+  @Nullable
+  @Override
+  public String getProductCode() {
+    return productCode;
+  }
+
+  public void setProductCode(String productCode) {
+    this.productCode = productCode;
+  }
+
+  @Nullable
+  @Override
+  public Date getReleaseDate() {
+    return releaseDate;
+  }
+
+  public void setReleaseDate(Date date) {
+    this.releaseDate = date;
+  }
+
+  @Override
+  public int getReleaseVersion() {
+    return releaseVersion;
+  }
+
+  public void setReleaseVersion(int releaseVersion) {
+    this.releaseVersion = releaseVersion;
   }
 
   public String getCategory() {
@@ -223,6 +257,18 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   public void addDepends(String id) {
     (myDependencies != null ? myDependencies : (myDependencies = new ArrayList<>())).add(PluginId.getId(id));
+  }
+
+  public List<String> getTags() {
+    return myTags;
+  }
+
+  public void setTags(List<String> tags) {
+    myTags = new ArrayList<>(tags);
+  }
+
+  public void addTags(String tag) {
+    (myTags != null ? myTags : (myTags = new ArrayList<>())).add(tag);
   }
 
   /**

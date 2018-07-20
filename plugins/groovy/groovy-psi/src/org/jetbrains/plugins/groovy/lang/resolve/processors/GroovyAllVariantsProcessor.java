@@ -3,9 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -15,9 +13,8 @@ import java.util.List;
 class GroovyAllVariantsProcessor extends GroovyResolverProcessor {
 
   GroovyAllVariantsProcessor(@NotNull GrReferenceExpression ref,
-                             @NotNull EnumSet<GroovyResolveKind> kinds,
-                             @Nullable GrExpression myUpToArgument) {
-    super(ref, kinds, myUpToArgument, false);
+                             @NotNull EnumSet<GroovyResolveKind> kinds) {
+    super(ref, kinds, false);
   }
 
   @NotNull

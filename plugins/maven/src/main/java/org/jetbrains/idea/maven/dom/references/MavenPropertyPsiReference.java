@@ -17,10 +17,13 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -31,8 +34,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.Processor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -41,6 +44,8 @@ import gnu.trove.THashSet;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
@@ -50,6 +55,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -62,7 +68,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MavenPropertyPsiReference extends MavenPsiReference {
+public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
 
   @Nullable
@@ -170,7 +176,14 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       }
     }
 
-    // todo resolve properties from config.
+    if (mavenProject.getMavenConfig().containsKey(myText)) {
+      return resolveConfigFileProperty(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, mavenProject.getMavenConfig().get(myText));
+    }
+
+    if (mavenProject.getJvmConfig().containsKey(myText)) {
+      return resolveConfigFileProperty(MavenConstants.JVM_CONFIG_RELATIVE_PATH, mavenProject.getJvmConfig().get(myText));
+    }
+
     MavenRunnerSettings runnerSettings = MavenRunner.getInstance(myProject).getSettings();
     if (runnerSettings.getMavenProperties().containsKey(myText) || runnerSettings.getVmOptions().contains("-D" + myText + '=')) {
       return myElement;
@@ -275,6 +288,27 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return PsiManager.getInstance(myProject).findDirectory(mavenProject.getDirectoryFile());
   }
 
+  private PsiElement resolveConfigFileProperty(@SystemIndependent String fileRelativePath, String propertyValue) {
+    VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(myMavenProject.getDirectoryFile()), false);
+    if (baseDir != null) {
+      VirtualFile mavenConfigFile = baseDir.findFileByRelativePath(fileRelativePath);
+      if (mavenConfigFile != null) {
+        PsiFile psiFile = PsiManager.getInstance(myProject).findFile(mavenConfigFile);
+        if (psiFile != null && psiFile.getChildren().length > 0) {
+          return new MavenPsiElementWrapper(psiFile.getFirstChild(), psiFile) {
+
+            @Override
+            public String getName() {
+              return propertyValue;
+            }
+          };
+        }
+      }
+    }
+
+    return myElement;
+  }
+
   @Nullable
   private PsiElement resolveSettingsModelProperty() {
     if (!schemaHasProperty(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, myText)) return null;
@@ -321,12 +355,9 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private boolean schemaHasProperty(String schema, final String property) {
-    return processSchema(schema, new SchemaProcessor<Boolean>() {
-      @Nullable
-      public Boolean process(@NotNull String eachProperty, XmlElementDescriptor descriptor) {
-        if (eachProperty.equals(property)) return true;
-        return null;
-      }
+    return processSchema(schema, (eachProperty, descriptor) -> {
+      if (eachProperty.equals(property)) return true;
+      return null;
     }) != null;
   }
 
@@ -372,22 +403,16 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(MavenIcons.MavenLogo));
     }
 
-    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, new SchemaProcessor<Object>() {
-      @Override
-      public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-        if (property.startsWith("project.")) {
-          addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MavenLogo);
-        }
-        return null;
+    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
+      if (property.startsWith("project.")) {
+        addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MavenLogo);
       }
+      return null;
     });
 
-    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, new SchemaProcessor<Object>(){
-      @Override
-      public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
-        result.add(createLookupElement(descriptor, property, MavenIcons.MavenLogo));
-        return null;
-      }
+    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, (property, descriptor) -> {
+      result.add(createLookupElement(descriptor, property, MavenIcons.MavenLogo));
+      return null;
     });
 
     collectPropertiesVariants(result, variants);
@@ -403,6 +428,17 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     for (String prop : MavenUtil.getPropertiesFromMavenOpts().keySet()) {
       if (variants.add(prop)) {
         result.add(LookupElementBuilder.create(prop).withIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
+
+    for (String property : myMavenProject.getMavenConfig().keySet()) {
+      if (variants.add(property)) {
+        result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
+      }
+    }
+    for (String property : myMavenProject.getJvmConfig().keySet()) {
+      if (variants.add(property)) {
+        result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
       }
     }
 
@@ -537,9 +573,24 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return mySoft;
   }
 
+  @FunctionalInterface
   private interface SchemaProcessor<T> {
     @Nullable
     T process(@NotNull String property, XmlElementDescriptor descriptor);
   }
 
+  @Nullable
+  @Override
+  public LocalQuickFix[] getQuickFixes() {
+    return new LocalQuickFix[] {new LocalQuickFixBase(MavenDomBundle.message("fix.ignore.unresolved.maven.property")) {
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        PsiElement psiElement = ObjectUtils.notNull(myElement.getFirstChild(), myElement);
+
+        DefaultXmlSuppressionProvider xmlSuppressionProvider = new DefaultXmlSuppressionProvider();
+        xmlSuppressionProvider.suppressForTag(psiElement, MavenPropertyPsiReferenceProvider.UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID);
+      }
+    }};
+  }
 }

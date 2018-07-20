@@ -564,7 +564,7 @@ public class PsiUtil {
       final PsiType[] types = getArgumentTypes(call.getInvokedExpression(), true);
       final Trinity<GrClosureSignature, GrClosureSignatureUtil.ArgInfo<PsiType>[], GrClosureSignatureUtil.ApplicabilityResult>
         resultTrinity = types != null ? GrClosureSignatureUtil.getApplicableSignature(signature, types, call) : null;
-      _signature = resultTrinity != null ? resultTrinity.first : null;
+      _signature = Trinity.getFirst(resultTrinity);
     }
     if (_signature != null) {
       return isRawType(_signature.getReturnType(), TypesUtil.composeSubstitutors(_signature.getSubstitutor(), result.getSubstitutor()));

@@ -58,18 +58,15 @@ public class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspecti
       if (parent instanceof GrTypeDefinition && ((GrTypeDefinition)parent).getNameIdentifierGroovy() == element) {
         final GrTypeDefinition aClass = (GrTypeDefinition)parent;
 
-        new WriteCommandAction(project, aClass.getContainingFile()) {
-          @Override
-          protected void run(@NotNull Result result) {
-            final List<ClashingMethod> clashingMethods = collectClassingMethods(aClass);
+        WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> {
+          final List<ClashingMethod> clashingMethods = collectClassingMethods(aClass);
 
-            for (ClashingMethod method : clashingMethods) {
-              PsiMethod traitMethod = method.getSignature().getMethod();
-              LOG.assertTrue(traitMethod instanceof GrTraitMethod);
-              OverrideImplementUtil.overrideOrImplement(aClass, traitMethod);
-            }
+          for (ClashingMethod method : clashingMethods) {
+            PsiMethod traitMethod = method.getSignature().getMethod();
+            LOG.assertTrue(traitMethod instanceof GrTraitMethod);
+            OverrideImplementUtil.overrideOrImplement(aClass, traitMethod);
           }
-        }.execute();
+        });
       }
     }
   }

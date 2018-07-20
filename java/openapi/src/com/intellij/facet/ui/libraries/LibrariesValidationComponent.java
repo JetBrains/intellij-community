@@ -37,6 +37,6 @@ public interface LibrariesValidationComponent {
   void removeValidityListener(ValidityListener listener);
 
   interface ValidityListener extends EventListener {
-    void valididyChanged(boolean isValid);
+    void validityChanged(boolean isValid);
   }
 }

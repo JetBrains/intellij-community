@@ -19,7 +19,7 @@ Groovy script
       PsiWhiteSpace('\n   ')
       Modifiers
         PsiElement(def)('def')
-      PsiElement(new line)('\n')
-      PsiErrorElement:Identifier, string literal or '(' expected
+      PsiErrorElement:identifier expected
         <empty list>
+      PsiElement(new line)('\n')
       PsiElement(})('}')

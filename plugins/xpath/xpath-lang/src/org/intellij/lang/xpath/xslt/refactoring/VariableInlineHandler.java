@@ -111,18 +111,18 @@ public class VariableInlineHandler extends InlineActionHandler {
     final String expression = tag.getAttributeValue("select");
     if (expression == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-              MessageFormat
-                      .format("{0} ''{1}'' has no value.", StringUtil.capitalize(type), variable.getName()),
-              TITLE, null);
+                                          MessageFormat
+                                            .format("{0} ''{1}'' has no value.", StringUtil.capitalize(type), variable.getName()),
+                                          TITLE, null);
       return;
     }
 
     final Collection<PsiReference> references =
-            ReferencesSearch.search(variable, new LocalSearchScope(tag.getParentTag()), false).findAll();
+      ReferencesSearch.search(variable, new LocalSearchScope(tag.getParentTag()), false).findAll();
     if (references.size() == 0) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-              MessageFormat.format("{0} ''{1}'' is never used.", variable.getName()),
-              TITLE, null);
+                                          MessageFormat.format("{0} ''{1}'' is never used.", variable.getName()),
+                                          TITLE, null);
       return;
     }
 
@@ -135,7 +135,8 @@ public class VariableInlineHandler extends InlineActionHandler {
         public boolean process(PsiReference psiReference) {
           if (++allRefs > references.size()) {
             return false;
-          } else if (!references.contains(psiReference)) {
+          }
+          else if (!references.contains(psiReference)) {
             return false;
           }
           return true;
@@ -159,7 +160,7 @@ public class VariableInlineHandler extends InlineActionHandler {
       final TextAttributes textAttributes = EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes();
       final Color color = getScrollmarkColor(textAttributes);
       highlighter.addOccurrenceHighlight(e, range.getStartOffset(), range.getEndOffset(), textAttributes,
-              HighlightManagerImpl.HIDE_BY_ESCAPE, highlighters, color);
+                                         HighlightManagerImpl.HIDE_BY_ESCAPE, highlighters, color);
     }
 
     highlighter.addOccurrenceHighlights(e, new PsiElement[]{((XsltVariable)variable).getNameIdentifier()},
@@ -167,50 +168,50 @@ public class VariableInlineHandler extends InlineActionHandler {
 
     if (!hasExternalRefs) {
       if (!ApplicationManager.getApplication().isUnitTestMode() &&
-              Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} occurrence{3})",
-              type,
-              variable.getName(),
-              String.valueOf(references.size()),
-              references.size() > 1 ? "s" : ""),
-              TITLE, Messages.getQuestionIcon()) != Messages.YES) {
+          Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} occurrence{3})",
+                                                        type,
+                                                        variable.getName(),
+                                                        String.valueOf(references.size()),
+                                                        references.size() > 1 ? "s" : ""),
+                                   TITLE, Messages.getQuestionIcon()) != Messages.YES) {
         return;
       }
-    } else {
+    }
+    else {
       if (!ApplicationManager.getApplication().isUnitTestMode() &&
-              Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} local occurrence{3})\n" +
-              "\nWarning: It is being used in external files. Its declaration will not be removed.",
-              type,
-              variable.getName(),
-              String.valueOf(references.size()),
-              references.size() > 1 ? "s" : ""),
-              TITLE, Messages.getWarningIcon()) != Messages.YES) {
+          Messages.showYesNoDialog(MessageFormat.format("Inline {0} ''{1}''? ({2} local occurrence{3})\n" +
+                                                        "\nWarning: It is being used in external files. Its declaration will not be removed.",
+                                                        type,
+                                                        variable.getName(),
+                                                        String.valueOf(references.size()),
+                                                        references.size() > 1 ? "s" : ""),
+                                   TITLE, Messages.getWarningIcon()) != Messages.YES) {
         return;
       }
     }
 
     final boolean hasRefs = hasExternalRefs;
-    new WriteCommandAction.Simple(project, "XSLT.Inline", tag.getContainingFile()) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          for (PsiReference psiReference : references) {
-            final PsiElement element = psiReference.getElement();
-            if (element instanceof XPathElement) {
-              final XPathElement newExpr = XPathChangeUtil.createExpression(element, expression);
-              element.replace(newExpr);
-            } else {
-              assert false;
-            }
+    WriteCommandAction.writeCommandAction(project, tag.getContainingFile()).withName("XSLT.Inline").run(() -> {
+      try {
+        for (PsiReference psiReference : references) {
+          final PsiElement element = psiReference.getElement();
+          if (element instanceof XPathElement) {
+            final XPathElement newExpr = XPathChangeUtil.createExpression(element, expression);
+            element.replace(newExpr);
           }
+          else {
+            assert false;
+          }
+        }
 
-          if (!hasRefs) {
-            tag.delete();
-          }
-        } catch (IncorrectOperationException e) {
-          Logger.getInstance(VariableInlineHandler.class.getName()).error(e);
+        if (!hasRefs) {
+          tag.delete();
         }
       }
-    }.execute();
+      catch (IncorrectOperationException ex) {
+        Logger.getInstance(VariableInlineHandler.class.getName()).error(ex);
+      }
+    });
   }
 
   @Nullable

@@ -28,29 +28,49 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.table.DefaultTableCellHeaderRenderer;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
-  private AnnotationsPanel myNullablePanel;
-  private AnnotationsPanel myNotNullPanel;
+  private final AnnotationsPanel myNullablePanel;
+  private final AnnotationsPanel myNotNullPanel;
+  private final boolean myShowInstrumentationOptions;
 
   public NullableNotNullDialog(@NotNull Project project) {
+    this(project, false);
+  }
+
+  private NullableNotNullDialog(@NotNull Project project, boolean showInstrumentationOptions) {
     super(project, true);
     myProject = project;
+    myShowInstrumentationOptions = showInstrumentationOptions;
+
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    myNullablePanel = new AnnotationsPanel("Nullable",
+                                           manager.getDefaultNullable(),
+                                           manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES,
+                                           Collections.emptySet(), false);
+    myNotNullPanel = new AnnotationsPanel("NotNull",
+                                          manager.getDefaultNotNull(),
+                                          manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS,
+                                          ContainerUtil.newHashSet(manager.getInstrumentedNotNulls()), showInstrumentationOptions);
+
     init();
     setTitle("Nullable/NotNull Configuration");
   }
@@ -70,22 +90,26 @@ public class NullableNotNullDialog extends DialogWrapper {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
-        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-        new NullableNotNullDialog(project).show();
+        showDialog(context, false);
       }
     };
   }
 
+  public static void showDialogWithInstrumentationOptions(@NotNull Component context) {
+    showDialog(context, true);
+  }
+
+  private static void showDialog(Component context, boolean showInstrumentationOptions) {
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
+    if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+    NullableNotNullDialog dialog = new NullableNotNullDialog(project, showInstrumentationOptions);
+    dialog.show();
+  }
+
   @Override
   protected JComponent createCenterPanel() {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final Splitter splitter = new Splitter(true);
-    myNullablePanel =
-      new AnnotationsPanel("Nullable", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
     splitter.setFirstComponent(myNullablePanel.getComponent());
-    myNotNullPanel =
-      new AnnotationsPanel("NotNull", manager.getDefaultNotNull(), manager.getNotNulls(), ArrayUtil.toStringArray(manager.getPredefinedNotNulls()));
     splitter.setSecondComponent(myNotNullPanel.getComponent());
     splitter.setHonorComponentsMinimumSize(true);
     splitter.setPreferredSize(JBUI.size(300, 400));
@@ -102,78 +126,137 @@ public class NullableNotNullDialog extends DialogWrapper {
     manager.setNullables(myNullablePanel.getAnnotations());
     manager.setDefaultNullable(myNullablePanel.getDefaultAnnotation());
 
+    if (myShowInstrumentationOptions) {
+      manager.setInstrumentedNotNulls(myNotNullPanel.getCheckedAnnotations());
+    }
+
     super.doOKAction();
   }
 
   private class AnnotationsPanel {
     private String myDefaultAnnotation;
     private final Set<String> myDefaultAnnotations;
-    private final JBList<String> myList;
+    private final JBTable myTable;
     private final JPanel myComponent;
+    private final DefaultTableModel myTableModel;
 
-    private AnnotationsPanel(final String name, final String defaultAnnotation,
-                             final Collection<String> annotations, final String[] defaultAnnotations) {
+    private AnnotationsPanel(String name, String defaultAnnotation, List<String> annotations, String[] defaultAnnotations, Set<String> checkedAnnotations, boolean showInstrumentationOptions) {
       myDefaultAnnotation = defaultAnnotation;
       myDefaultAnnotations = new HashSet<>(Arrays.asList(defaultAnnotations));
-      myList = new JBList<>(annotations);
-      myList.setCellRenderer(new ColoredListCellRenderer<String>() {
+      myTableModel = new DefaultTableModel() {
         @Override
-        protected void customizeCellRenderer(@NotNull JList list, String value, int index, boolean selected, boolean hasFocus) {
-          append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        public boolean isCellEditable(int row, int column) {
+          return column == 1;
+        }
+      };
+      myTableModel.setColumnCount(showInstrumentationOptions ? 2 : 1);
+      for (String annotation : annotations) {
+        addRow(annotation, checkedAnnotations.contains(annotation));
+      }
+
+      DefaultTableColumnModel columnModel = new DefaultTableColumnModel();
+      columnModel.addColumn(new TableColumn(0, 100, new ColoredTableCellRenderer() {
+        @Override
+        public void acquireState(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+          super.acquireState(table, isSelected, false, row, column);
+        }
+
+        @Override
+        protected void customizeCellRenderer(JTable table,
+                                             Object value,
+                                             boolean selected,
+                                             boolean hasFocus,
+                                             int row,
+                                             int column) {
+          append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (value.equals(myDefaultAnnotation)) {
             setIcon(AllIcons.Diff.CurrentLine);
           } else {
             setIcon(EmptyIcon.ICON_16);
           }
-          //if (myDefaultAnnotations.contains(value)) {
-          //  append(" (built in)", SimpleTextAttributes.GRAY_ATTRIBUTES);
-          //}
         }
-      });
+      }, null));
+      if (showInstrumentationOptions) {
+        columnModel.getColumn(0).setHeaderValue("Annotation");
+
+        TableColumn checkColumn = new TableColumn(1, 100, new BooleanTableCellRenderer(), new BooleanTableCellEditor());
+        columnModel.addColumn(checkColumn);
+        checkColumn.setHeaderValue(" Instrument ");
+
+        DefaultTableCellHeaderRenderer renderer = new DefaultTableCellHeaderRenderer();
+        renderer.setToolTipText("Add runtime assertions for notnull-annotated methods and parameters");
+        checkColumn.setHeaderRenderer(renderer);
+        checkColumn.sizeWidthToFit();
+      }
+
+      myTable = new JBTable(myTableModel, columnModel);
 
       final AnActionButton selectButton =
         new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            final String selectedValue = myList.getSelectedValue();
+            String selectedValue = getSelectedAnnotation();
             if (selectedValue == null) return;
             myDefaultAnnotation = selectedValue;
-            DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
 
             // to show the new default value in the ui
-            model.setElementAt(myList.getSelectedValue(), myList.getSelectedIndex());
+            myTableModel.fireTableRowsUpdated(myTable.getSelectedRow(), myTable.getSelectedRow());
           }
 
           @Override
           public void updateButton(AnActionEvent e) {
-            String selectedValue = myList.getSelectedValue();
+            String selectedValue = getSelectedAnnotation();
             e.getPresentation().setEnabled(selectedValue != null && !selectedValue.equals(myDefaultAnnotation));
           }
         };
 
-      final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions()
-        .setAddAction(b -> chooseAnnotation(name, myList))
-        .setRemoveAction(new AnActionButtonRunnable() {
+      final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable).disableUpDownActions()
+                                                                .setAddAction(b -> chooseAnnotation(name))
+                                                                .setRemoveAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton anActionButton) {
-            final String selectedValue = myList.getSelectedValue();
+            String selectedValue = getSelectedAnnotation();
             if (selectedValue == null) return;
-            if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = myList.getModel().getElementAt(0);
+            if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myTable.getValueAt(0, 0);
 
-            ((DefaultListModel)myList.getModel()).removeElement(selectedValue);
+            myTableModel.removeRow(myTable.getSelectedRow());
           }
         })
-        .setRemoveActionUpdater(e -> !myDefaultAnnotations.contains(myList.getSelectedValue()))
-        .addExtraAction(selectButton);
+                                                                .setRemoveActionUpdater(e -> !myDefaultAnnotations.contains(getSelectedAnnotation()))
+                                                                .addExtraAction(selectButton);
       final JPanel panel = toolbarDecorator.createPanel();
       myComponent = new JPanel(new BorderLayout());
       myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, JBUI.insetsTop(10)));
       myComponent.add(panel);
-      myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myList.setSelectedValue(myDefaultAnnotation, true);
+      myComponent.setPreferredSize(new JBDimension(myComponent.getPreferredSize().width, 200));
+
+      myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      myTable.setRowSelectionAllowed(true);
+      myTable.setShowGrid(false);
+
+      selectAnnotation(myDefaultAnnotation);
     }
 
-    private void chooseAnnotation(String title, JBList list) {
+    private void addRow(String annotation, boolean checked) {
+      myTableModel.addRow(new Object[]{annotation, checked});
+    }
+
+    private Integer selectAnnotation(String annotation) {
+      for (int i = 0; i < myTable.getRowCount(); i++) {
+        if (annotation.equals(myTable.getValueAt(i, 0))) {
+          myTable.setRowSelectionInterval(i, i);
+          return i;
+        }
+      }
+      return null;
+    }
+
+    private String getSelectedAnnotation() {
+      int selectedRow = myTable.getSelectedRow();
+      return selectedRow <0 ? null : (String)myTable.getValueAt(selectedRow, 0);
+    }
+
+    private void chooseAnnotation(String title) {
       final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
         .createNoInnerClassesScopeChooser("Choose " + title + " annotation", GlobalSearchScope.allScope(myProject), new ClassFilter() {
           @Override
@@ -187,30 +270,34 @@ public class NullableNotNullDialog extends DialogWrapper {
         return;
       }
       final String qualifiedName = selected.getQualifiedName();
-      //noinspection unchecked
-      final DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
-      final int index = model.indexOf(qualifiedName);
-      if (index < 0) {
-        model.addElement(qualifiedName);
-      } else {
-        myList.setSelectedIndex(index);
+      if (selectAnnotation(qualifiedName) == null) {
+        addRow(qualifiedName, false);
       }
     }
 
-    public JComponent getComponent() {
+    JComponent getComponent() {
       return myComponent;
     }
 
-    public String getDefaultAnnotation() {
+    String getDefaultAnnotation() {
       return myDefaultAnnotation;
     }
 
-    public String[] getAnnotations() {
-      final ListModel model = myList.getModel();
-      final int size = model.getSize();
-      final String[] result = new String[size];
+    String[] getAnnotations() {
+      int size = myTable.getRowCount();
+      String[] result = new String[size];
       for (int i = 0; i < size; i++) {
-        result[i] = (String)model.getElementAt(i);
+        result[i] = (String)myTable.getValueAt(i, 0);
+      }
+      return result;
+    }
+
+    List<String> getCheckedAnnotations() {
+      List<String> result = new ArrayList<>();
+      for (int i = 0; i < myTable.getRowCount(); i++) {
+        if (Boolean.TRUE.equals(myTable.getValueAt(i, 1))) {
+          result.add((String)myTable.getValueAt(i, 0));
+        }
       }
       return result;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -50,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -208,19 +210,6 @@ public class JavaDocInfoGenerator {
     };
   }
 
-  @Nullable
-  public String generateFileInfo() {
-    StringBuilder buffer = new StringBuilder();
-    if (myElement instanceof PsiFile) {
-
-      VirtualFile virtualFile = ((PsiFile)myElement).getVirtualFile();
-      if (virtualFile != null) buffer.append(virtualFile.getPresentableUrl());
-
-    }
-
-    return sanitizeHtml(buffer);
-  }
-
   private String sanitizeHtml(StringBuilder buffer) {
     String text = buffer.toString();
     if (text.isEmpty()) return null;
@@ -354,40 +343,32 @@ public class JavaDocInfoGenerator {
     return packageName;
   }
 
-  /**
-   * To be deleted in 2018.2
-   */
-  @Deprecated
-  public boolean generateDocInfoCore(StringBuilder buffer, boolean generatePrologueAndEpilogue) {
-    return generateDocInfoCore(buffer);
-  }
-
-  public boolean generateDocInfoCore(StringBuilder buffer) {
+  public boolean generateDocInfoCore(StringBuilder buffer, boolean generatePrologue) {
     if (myElement instanceof PsiClass) {
-      generateClassJavaDoc(buffer, (PsiClass)myElement);
+      generateClassJavaDoc(buffer, (PsiClass)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiMethod) {
-      generateMethodJavaDoc(buffer, (PsiMethod)myElement);
+      generateMethodJavaDoc(buffer, (PsiMethod)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiParameter) {
-      generateMethodParameterJavaDoc(buffer, (PsiParameter)myElement);
+      generateMethodParameterJavaDoc(buffer, (PsiParameter)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiField) {
-      generateFieldJavaDoc(buffer, (PsiField)myElement);
+      generateFieldJavaDoc(buffer, (PsiField)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiVariable) {
-      generateVariableJavaDoc(buffer, (PsiVariable)myElement);
+      generateVariableJavaDoc(buffer, (PsiVariable)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiDirectory) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myElement);
       if (aPackage == null) return false;
-      generatePackageJavaDoc(buffer, aPackage);
+      generatePackageJavaDoc(buffer, aPackage, generatePrologue);
     }
     else if (myElement instanceof PsiPackage) {
-      generatePackageJavaDoc(buffer, (PsiPackage)myElement);
+      generatePackageJavaDoc(buffer, (PsiPackage)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiJavaModule) {
-      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement);
+      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement, generatePrologue);
     }
     else {
       return false;
@@ -414,7 +395,7 @@ public class JavaDocInfoGenerator {
   public String generateDocInfo(List<String> docURLs) {
     StringBuilder buffer = new StringBuilder();
 
-    if (!generateDocInfoCore(buffer)) {
+    if (!generateDocInfoCore(buffer, true)) {
       return null;
     }
 
@@ -463,8 +444,10 @@ public class JavaDocInfoGenerator {
     return false;
   }
 
-  private void generateClassJavaDoc(StringBuilder buffer, PsiClass aClass) {
+  private void generateClassJavaDoc(StringBuilder buffer, PsiClass aClass, boolean generatePrologue) {
     if (aClass instanceof PsiAnonymousClass) return;
+
+    if (generatePrologue) generatePrologue(buffer);
 
     buffer.append(DocumentationMarkup.DEFINITION_START);
     PsiFile file = aClass.getContainingFile();
@@ -626,7 +609,8 @@ public class JavaDocInfoGenerator {
     return comment;
   }
 
-  private void generateFieldJavaDoc(StringBuilder buffer, PsiField field) {
+  private void generateFieldJavaDoc(StringBuilder buffer, PsiField field, boolean generatePrologue) {
+    if (generatePrologue) generatePrologue(buffer);
 
     buffer.append(DocumentationMarkup.DEFINITION_START);
     generateLinkToParentIfNeeded(buffer, field);
@@ -678,7 +662,8 @@ public class JavaDocInfoGenerator {
   }
 
   // not a javadoc in fact..
-  private static void generateVariableJavaDoc(StringBuilder buffer, PsiVariable variable) {
+  private void generateVariableJavaDoc(StringBuilder buffer, PsiVariable variable, boolean generatePrologue) {
+    if (generatePrologue) generatePrologue(buffer);
 
     buffer.append(DocumentationMarkup.DEFINITION_START);
     String modifiers = PsiFormatUtil.formatModifiers(variable, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
@@ -700,7 +685,7 @@ public class JavaDocInfoGenerator {
 
   }
 
-  private void generatePackageJavaDoc(final StringBuilder buffer, final PsiPackage psiPackage) {
+  private void generatePackageJavaDoc(final StringBuilder buffer, final PsiPackage psiPackage, boolean generatePrologue) {
     for (PsiDirectory directory : psiPackage.getDirectories(new EverythingGlobalScope(myProject))) {
       final PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
@@ -708,6 +693,7 @@ public class JavaDocInfoGenerator {
         if (node != null) {
           final ASTNode docCommentNode = findRelevantCommentNode(node);
           if (docCommentNode != null) {
+            if (generatePrologue) generatePrologue(buffer);
             generateCommonSection(buffer, (PsiDocComment)docCommentNode.getPsi());
             buffer.append(DocumentationMarkup.SECTIONS_END);
             break;
@@ -716,13 +702,14 @@ public class JavaDocInfoGenerator {
       }
       PsiFile packageHtmlFile = directory.findFile("package.html");
       if (packageHtmlFile != null) {
-        generatePackageHtmlJavaDoc(buffer, packageHtmlFile);
+        generatePackageHtmlJavaDoc(buffer, packageHtmlFile, generatePrologue);
         break;
       }
     }
   }
 
-  private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module) {
+  private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologue) {
+    if (generatePrologue) generatePrologue(buffer);
 
     buffer.append(DocumentationMarkup.DEFINITION_START);
     generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
@@ -770,7 +757,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generatePackageHtmlJavaDoc(final StringBuilder buffer, final PsiFile packageHtmlFile) {
+  private void generatePackageHtmlJavaDoc(final StringBuilder buffer, final PsiFile packageHtmlFile, boolean generatePrologue) {
     String htmlText = packageHtmlFile.getText();
 
     try {
@@ -796,6 +783,7 @@ public class JavaDocInfoGenerator {
       return;
     }
 
+    if (generatePrologue) generatePrologue(buffer);
     generateCommonSection(buffer, docComment);
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
@@ -895,9 +883,10 @@ public class JavaDocInfoGenerator {
            AnnotationUtil.isAnnotated((PsiClass)annotationType, CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE, 0);
   }
 
-  private void generateMethodParameterJavaDoc(StringBuilder buffer, PsiParameter parameter) {
+  private void generateMethodParameterJavaDoc(StringBuilder buffer, PsiParameter parameter, boolean generatePrologue) {
     String parameterName = parameter.getName();
 
+    if (generatePrologue) generatePrologue(buffer);
 
     buffer.append(DocumentationMarkup.DEFINITION_START);
 
@@ -964,7 +953,8 @@ public class JavaDocInfoGenerator {
     return buffer.toString();
   }
 
-  private void generateMethodJavaDoc(StringBuilder buffer, PsiMethod method) {
+  private void generateMethodJavaDoc(StringBuilder buffer, PsiMethod method, boolean generatePrologue) {
+    if (generatePrologue) generatePrologue(buffer);
 
     buffer.append(DocumentationMarkup.DEFINITION_START);
     generateLinkToParentIfNeeded(buffer, method);
@@ -1182,6 +1172,24 @@ public class JavaDocInfoGenerator {
     }
   }
 
+  protected void generatePrologue(StringBuilder buffer) {
+    URL baseUrl = getBaseUrl();
+    if (baseUrl != null) {
+      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>"); // used to resolve URLs of local images
+    }
+  }
+
+  private URL getBaseUrl() {
+    if (myElement == null) return null;
+    PsiElement element = myElement.getNavigationElement();
+    if (element == null) return null;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return null;
+    return VfsUtilCore.convertToURL(vFile.getUrl());
+  }
+
   private void generateDescription(StringBuilder buffer, PsiDocComment comment) {
     PsiElement[] elements = comment.getDescriptionElements();
     generateValue(buffer, elements, ourEmptyElementsProvider);
@@ -1271,14 +1279,24 @@ public class JavaDocInfoGenerator {
 
   private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
     buffer.append("<code>");
+    int pos = buffer.length();
     generateLiteralValue(buffer, tag);
     buffer.append("</code>");
+    if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag) {
     StringBuilder tmpBuffer = new StringBuilder();
-    for (PsiElement element : tag.getDataElements()) {
-      appendPlainText(StringUtil.escapeXml(element.getText()), tmpBuffer);
+    PsiElement[] children = tag.getChildren();
+    for (int i = 2; i < children.length - 1; i++) { // process all children except tag opening/closing elements
+      PsiElement child = children[i];
+      if (child instanceof PsiDocToken && ((PsiDocToken)child).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+      String elementText = child.getText();
+      if (child instanceof PsiWhiteSpace) {
+        int pos = elementText.lastIndexOf('\n');
+        if (pos >= 0) elementText = elementText.substring(0, pos + 1); // skip whitespace before leading asterisk
+      }
+      appendPlainText(StringUtil.escapeXml(elementText), tmpBuffer);
     }
     if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
       buffer.append(tmpBuffer);

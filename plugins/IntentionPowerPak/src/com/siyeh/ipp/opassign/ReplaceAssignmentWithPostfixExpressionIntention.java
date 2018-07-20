@@ -17,6 +17,7 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -24,8 +25,7 @@ import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceAssignmentWithPostfixExpressionIntention
-  extends MutablyNamedIntention {
+public class ReplaceAssignmentWithPostfixExpressionIntention extends MutablyNamedIntention {
 
   @NotNull
   @Override
@@ -38,7 +38,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntention
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)element;
     final PsiBinaryExpression rhs =
-      (PsiBinaryExpression)assignmentExpression.getRExpression();
+      (PsiBinaryExpression)PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
     final IElementType tokenType;
@@ -67,7 +67,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntention
     final PsiExpression lhs = assignmentExpression.getLExpression();
     CommentTracker commentTracker = new CommentTracker();
     final String lhsText = commentTracker.text(lhs);
-    final PsiExpression rhs = assignmentExpression.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
     if (!(rhs instanceof PsiBinaryExpression)) {
       return;
     }

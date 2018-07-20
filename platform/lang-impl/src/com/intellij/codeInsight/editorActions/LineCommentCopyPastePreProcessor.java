@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -35,6 +35,8 @@ public class LineCommentCopyPastePreProcessor implements CopyPastePreProcessor {
 
     Document document = editor.getDocument();
     int offset = editor.getSelectionModel().getSelectionStart();
+    if (DocumentUtil.isAtLineEnd(offset, editor.getDocument()) && text.startsWith("\n")) return text;
+
     int lineStartOffset = DocumentUtil.getLineStartOffset(offset, document);
     CharSequence chars = document.getImmutableCharSequence();
     int firstNonWsLineOffset = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");

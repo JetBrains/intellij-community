@@ -346,14 +346,17 @@ public abstract class AbstractLayoutCodeProcessor {
       }
       catch (CancellationException ignored) {
       }
-      catch (ExecutionException e) {
-        if (e.getCause() instanceof IndexNotReadyException) {
-          throw (IndexNotReadyException)e.getCause();
-        }
-        LOG.error(e);
-      }
       catch (Exception e) {
-        LOG.error(e);
+        Throwable cause = e.getCause();
+        if (cause != null) {
+          if (cause instanceof IndexNotReadyException) {
+            throw (IndexNotReadyException)e.getCause();
+          }
+          LOG.error(getClass().getSimpleName() + " failure, see the stack trace", cause);
+        }
+        else {
+          LOG.error(e);
+        }
       }
     };
     runLayoutCodeProcess(readAction, writeAction);
@@ -387,6 +390,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private static boolean canBeFormatted(PsiFile file) {
+    if (!file.isValid()) return false;
     if (LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
     }

@@ -186,6 +186,10 @@ public class DiffDrawUtil {
     return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
   }
 
+  public static int yToLine(@NotNull Editor editor, int y) {
+    return editor.xyToLogicalPosition(new Point(0, y)).line;
+  }
+
   @NotNull
   private static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
                                                   @Nullable final Editor editor,

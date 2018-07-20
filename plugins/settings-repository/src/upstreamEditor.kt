@@ -16,17 +16,8 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-fun validateUrl(url: String?, project: Project?): Boolean {
-  if (url == null) {
-    Messages.showErrorDialog(project, "URL is empty", "")
-    return false
-  }
-
-  if (!icsManager.repositoryService.checkUrl(url, project)) {
-    return false
-  }
-
-  return true
+fun validateUrl(url: String?, project: Project?): String? {
+  return if (url == null) "URL is empty" else icsManager.repositoryService.checkUrl(url, project)
 }
 
 fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButton, dialogParent: Container, okAction: (() -> Unit)): Array<Action> {
@@ -42,7 +33,8 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
     object : AbstractAction(icsMessage("action.${if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.OVERWRITE_LOCAL) "ResetToTheirs" else "ResetToMy")}Settings.text")) {
       private fun saveRemoteRepositoryUrl(): Boolean {
         val url = urlTextField.text.nullize(true)
-        if (!validateUrl(url, project)) {
+        validateUrl(url, project)?.let {
+          Messages.showErrorDialog(project, it, "")
           return false
         }
 
@@ -53,7 +45,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
       }
 
       override fun actionPerformed(event: ActionEvent) {
-        ActionsCollector.getInstance().record("Ics.${getValue(Action.NAME)}")
+        ActionsCollector.getInstance().record("Ics.${getValue(Action.NAME)}", icsManager::class.java)
         val repositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
         var upstreamSet = false
         try {

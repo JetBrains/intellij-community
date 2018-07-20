@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -44,12 +45,19 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   public abstract void beClassConfiguration(PsiClass aClass);
 
   public abstract boolean isConfiguredByElement(PsiElement element);
+  
+  public abstract String getTestType();
 
   public String prepareParameterizedParameter(String paramSetName) {
     return paramSetName;
   }
 
   public abstract TestSearchScope getTestSearchScope();
+  public abstract void setSearchScope(TestSearchScope searchScope);
+
+  @Nullable
+  @Override
+  public abstract JavaTestFrameworkRunnableState<? extends JavaTestConfigurationBase> getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   @Nullable
   @Override

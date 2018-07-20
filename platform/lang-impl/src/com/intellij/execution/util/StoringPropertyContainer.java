@@ -18,9 +18,9 @@ package com.intellij.execution.util;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.Storage;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class StoringPropertyContainer extends AbstractProperty.AbstractPropertyContainer<AbstractProperty<Boolean>> {
@@ -55,11 +55,11 @@ public class StoringPropertyContainer extends AbstractProperty.AbstractPropertyC
 
   @Override
   protected Object getValueOf(@NotNull AbstractProperty<Boolean> property) {
-    Object value = myValues.get(property);
+    Boolean value = myValues.get(property);
     if (value == null) {
       String stringValue = myStorage.get(property.getName());
       value = stringValue != null ? Boolean.valueOf(stringValue) : property.getDefault(this);
-      myValues.put(property, (Boolean)value);
+      myValues.put(property, value);
     }
     return value;
   }

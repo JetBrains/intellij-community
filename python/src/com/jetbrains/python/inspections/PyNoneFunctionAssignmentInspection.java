@@ -16,7 +16,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,7 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final Map<PyFunction, Boolean> myHasInheritors = new HashMap<>();
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    private Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -61,22 +60,10 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
         final PyExpression callee = call.getCallee();
 
         if (type instanceof PyNoneType && callee != null) {
-          final Condition<PyCallable> ignoredCallable = callable -> {
-            if (PySdkUtil.isElementInSkeletons(callable)) {
-              return true;
-            }
-            if (callable instanceof PyFunction) {
-              final PyFunction function = (PyFunction)callable;
-              // Currently we don't infer types returned by decorators
-              if (hasInheritors(function) ||
-                  PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator(function, myTypeEvalContext) ||
-                  PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
-                return true;
-              }
-            }
-
-            return false;
-          };
+          final Condition<PyCallable> ignoredCallable =
+            callable -> myTypeEvalContext.getReturnType(callable) != PyNoneType.INSTANCE ||
+                        PySdkUtil.isElementInSkeletons(callable) ||
+                        callable instanceof PyFunction && hasInheritors((PyFunction)callable);
 
           final List<PyCallable> callables = call.multiResolveCalleeFunction(getResolveContext());
           if (!callables.isEmpty() && !ContainerUtil.exists(callables, ignoredCallable)) {

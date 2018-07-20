@@ -5,10 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.JavaValueModifier;
-import com.intellij.debugger.engine.StackFrameContext;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -62,10 +59,10 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
 
       EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
       SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-      PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
 
       ExpressionEvaluator evaluator = ReadAction.compute(() -> {
         PsiCodeFragment code = getEvaluationCode(thisEvaluationContext);
+        PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
         try {
           return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
         }
@@ -87,7 +84,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       }
 
       Value value = evaluator.evaluate(thisEvaluationContext);
-      DebuggerUtilsEx.keep(value, thisEvaluationContext);
+      thisEvaluationContext.keep(value);
 
       myModifier = evaluator.getModifier();
       setLvalue(myModifier != null);
@@ -144,18 +141,16 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
           set(expression, callback, debuggerContext, new SetValueRunnable() {
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
               throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-              final Modifier modifier = evaluationDescriptor.getModifier();
-              modifier.setValue(preprocessValue(evaluationContext, newValue, modifier.getExpectedType()));
+              //noinspection ConstantConditions
+              evaluationDescriptor.getModifier().setValue(preprocessValue(evaluationContext, newValue, getLType()));
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                      ClassNotLoadedException,
-                                                                                                      IncompatibleThreadStateException,
-                                                                                                      InvalidTypeException,
-                                                                                                      EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   evaluationContext.getClassLoader());
+            @NotNull
+            @Override
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+              //noinspection ConstantConditions
+              return evaluationDescriptor.getModifier().getExpectedType();
             }
           });
         }

@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
@@ -82,13 +83,15 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     }
 
     if (ChangeListManagerImpl.isUnder(change, myScope)) {
+      AbstractVcs vcs = vcsKey != null ? myVcsManager.findVcsByName(vcsKey.getName()) : null;
+
       if (changeList != null) {
         LOG.debug("[processChangeInList-1] to add change to cl");
-        myChangeListUpdater.addChangeToList(changeList.getName(), change, vcsKey);
+        myChangeListUpdater.addChangeToList(changeList.getName(), change, vcs);
       }
       else {
         LOG.debug("[processChangeInList-1] to add to corresponding list");
-        myChangeListUpdater.addChangeToCorrespondingList(change, vcsKey);
+        myChangeListUpdater.addChangeToCorrespondingList(change, vcs);
       }
     }
     else {

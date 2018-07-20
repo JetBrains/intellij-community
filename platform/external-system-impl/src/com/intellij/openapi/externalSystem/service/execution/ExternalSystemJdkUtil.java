@@ -57,7 +57,10 @@ public class ExternalSystemJdkUtil {
       String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
       if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
-      return JavaSdk.getInstance().createJdk("", javaHome);
+
+      SimpleJavaSdkType sdkType = SimpleJavaSdkType.getInstance();
+      String sdkName = sdkType.suggestSdkName(null, javaHome);
+      return sdkType.createJdk(sdkName, javaHome);
     }
 
     Sdk projectJdk = ProjectJdkTable.getInstance().findJdk(jdkName);
@@ -103,6 +106,7 @@ public class ExternalSystemJdkUtil {
   }
 
   /** @deprecated trivial (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean checkForJdk(@NotNull Project project, @Nullable String jdkName) {
     try {
       final Sdk sdk = getJdk(project, jdkName);

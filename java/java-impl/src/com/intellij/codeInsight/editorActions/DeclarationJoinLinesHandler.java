@@ -23,10 +23,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler");
@@ -62,7 +65,10 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     PsiAssignmentExpression assignment = (PsiAssignmentExpression)ref.getParent();
     if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
 
-    if (ReferencesSearch.search(var, new LocalSearchScope(assignment.getRExpression()), false).findFirst() != null) {
+    PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return -1;
+
+    if (ReferencesSearch.search(var, new LocalSearchScope(rExpression), false).findFirst() != null) {
       return -1;
     }
 
@@ -103,75 +109,45 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     }
   }
 
+  /**
+   * Returns an updated initializer after joining with given assignment
+   * @param var variable which initializer should be updated
+   * @param assignment assignment to merge into the initializer
+   * @return updated initializer or null if operation cannot be performed (e.g. code is incomplete)
+   */
+  @Nullable
   public static PsiExpression getInitializerExpression(PsiLocalVariable var,
                                                        PsiAssignmentExpression assignment) {
-    return getInitializerExpression(var.getInitializer(), 
-                                    assignment);
+    return getInitializerExpression(var.getInitializer(), assignment);
   }
 
-  public static PsiExpression getInitializerExpression(PsiExpression initializer,
-                                                       PsiAssignmentExpression assignment) {
+  @Nullable
+  public static PsiExpression getInitializerExpression(PsiExpression initializer, PsiAssignmentExpression assignment) {
     PsiExpression initializerExpression;
-    final IElementType originalOpSign = assignment.getOperationTokenType();
+    PsiJavaToken sign = assignment.getOperationSign();
+    final IElementType compoundOp = assignment.getOperationTokenType();
     final PsiExpression rExpression = assignment.getRExpression();
-    if (originalOpSign == JavaTokenType.EQ) {
-      initializerExpression = rExpression;
+    if (rExpression == null) return null;
+    if (compoundOp == JavaTokenType.EQ) {
+      return rExpression;
     }
-    else {
-      if (initializer == null) return null;
-      String opSign = null;
-      if (originalOpSign == JavaTokenType.ANDEQ) {
-        opSign = "&";
-      }
-      else if (originalOpSign == JavaTokenType.ASTERISKEQ) {
-        opSign = "*";
-      }
-      else if (originalOpSign == JavaTokenType.DIVEQ) {
-        opSign = "/";
-      }
-      else if (originalOpSign == JavaTokenType.GTGTEQ) {
-        opSign = ">>";
-      }
-      else if (originalOpSign == JavaTokenType.GTGTGTEQ) {
-        opSign = ">>>";
-      }
-      else if (originalOpSign == JavaTokenType.LTLTEQ) {
-        opSign = "<<";
-      }
-      else if (originalOpSign == JavaTokenType.MINUSEQ) {
-        opSign = "-";
-      }
-      else if (originalOpSign == JavaTokenType.OREQ) {
-        opSign = "|";
-      }
-      else if (originalOpSign == JavaTokenType.PERCEQ) {
-        opSign = "%";
-      }
-      else if (originalOpSign == JavaTokenType.PLUSEQ) {
-        opSign = "+";
-      }
-      else if (originalOpSign == JavaTokenType.XOREQ) {
-        opSign = "^";
-      }
-
-      try {
-        final Project project = assignment.getProject();
-        String initializerText = initializer.getText() + opSign;
-        final String rightText = rExpression.getText();
-        if (ParenthesesUtils.areParenthesesNeeded(assignment.getOperationSign(), rExpression)) {
-          initializerText += "(" + rightText + ")";
-        }
-        else {
-          initializerText += rightText;
-        }
-        initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
-        initializerExpression = (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
+    if (initializer == null) return null;
+    String opSign = sign.getText().replace("=", "");
+    IElementType simpleOp = TypeConversionUtil.convertEQtoOperation(compoundOp);
+    if (simpleOp == null) return null;
+    final Project project = assignment.getProject();
+    final String rightText = rExpression.getText();
+    String initializerText;
+    if ("+".equals(opSign) && ExpressionUtils.isZero(initializer) ||
+        "*".equals(opSign) && ExpressionUtils.isOne(initializer)) {
+      initializerText = rightText;
+    } else {
+      boolean parenthesesForLhs = PsiPrecedenceUtil.getPrecedence(initializer) > PsiPrecedenceUtil.getPrecedenceForOperator(simpleOp);
+      boolean parenthesesForRhs = PsiPrecedenceUtil.areParenthesesNeeded(sign, rExpression);
+      initializerText = (parenthesesForLhs ? "(" + initializer.getText() + ")" : initializer.getText()) + opSign +
+                        (parenthesesForRhs ? "(" + rExpression.getText() + ")" : rExpression.getText());
     }
-    return initializerExpression;
+    initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
+    return (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
   }
 }

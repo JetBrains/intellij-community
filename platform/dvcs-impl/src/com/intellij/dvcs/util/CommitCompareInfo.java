@@ -68,7 +68,7 @@ public class CommitCompareInfo {
     Pair<List<VcsFullCommitDetails>, List<VcsFullCommitDetails>> pair = myInfo.get(repo);
     if (pair == null) {
       LOG.error("Compare info not found for repository " + repo);
-      return Pair.create(Collections.<VcsFullCommitDetails>emptyList(), Collections.<VcsFullCommitDetails>emptyList());
+      return Pair.create(Collections.emptyList(), Collections.emptyList());
     }
     return pair;
   }
@@ -93,6 +93,11 @@ public class CommitCompareInfo {
       changes.addAll(changeCollection);
     }
     return changes;
+  }
+
+  protected void updateTotalDiff(@NotNull Map<Repository, Collection<Change>> newDiff) {
+    myTotalDiff.clear();
+    myTotalDiff.putAll(newDiff);
   }
 
   public enum InfoType {

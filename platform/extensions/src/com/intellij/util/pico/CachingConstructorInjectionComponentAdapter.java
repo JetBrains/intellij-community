@@ -39,10 +39,6 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     new ThreadLocal<>();
   private Object myInstance;
 
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-    super(componentKey, componentImplementation, parameters, allowNonPublicClasses, monitor, lifecycleStrategy);
-  }
-
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
     super(componentKey, componentImplementation, parameters, allowNonPublicClasses, DefaultPicoContainer.DEFAULT_DELEGATING_COMPONENT_MONITOR, DefaultPicoContainer.DEFAULT_LIFECYCLE_STRATEGY);
   }

@@ -104,13 +104,7 @@ public class CommanderPanel extends JPanel {
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     if (enablePopupMenu) {
-      myCopyPasteDelegator = new CopyPasteDelegator(myProject, myList) {
-        @Override
-        @NotNull
-        protected PsiElement[] getSelectedElements() {
-          return CommanderPanel.this.getSelectedElements();
-        }
-      };
+      myCopyPasteDelegator = new CopyPasteDelegator(myProject, myList);
     }
 
     myListSpeedSearch = new ListSpeedSearch(myList);

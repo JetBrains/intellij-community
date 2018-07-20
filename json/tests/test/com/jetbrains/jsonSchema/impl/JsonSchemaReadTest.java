@@ -2,9 +2,6 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.json.JsonLanguage;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
@@ -58,27 +55,27 @@ public class JsonSchemaReadTest extends CompletionTestCase {
   public void testMainSchemaHighlighting() {
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
     final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
-    Assert.assertEquals(1, providers.size());
-    final VirtualFile mainSchema = providers.get(0).getSchemaFile();
-    assertNotNull(mainSchema);
-    assertTrue(service.isSchemaFile(mainSchema));
+    Assert.assertEquals(JsonSchemaProjectSelfProviderFactory.TOTAL_PROVIDERS, providers.size());
+    for (JsonSchemaFileProvider provider: providers) {
+      final VirtualFile mainSchema = provider.getSchemaFile();
+      assertNotNull(mainSchema);
+      assertTrue(service.isSchemaFile(mainSchema));
 
-    final Annotator annotator = new JsonSchemaAnnotator();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);
-    Disposer.register(getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        LanguageAnnotators.INSTANCE.removeExplicitExtension(JsonLanguage.INSTANCE, annotator);
-        JsonSchemaTestServiceImpl.setProvider(null);
-      }
-    });
+      enableInspectionTool(new JsonSchemaComplianceInspection());
+      Disposer.register(getTestRootDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          JsonSchemaTestServiceImpl.setProvider(null);
+        }
+      });
 
-    configureByExistingFile(mainSchema);
-    final List<HighlightInfo> infos = doHighlighting();
-    for (HighlightInfo info : infos) {
-      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
-        assertFalse(String.format("%s in: %s", info.getDescription(),
-                                  myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))), true);
+      configureByExistingFile(mainSchema);
+      final List<HighlightInfo> infos = doHighlighting();
+      for (HighlightInfo info : infos) {
+        if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
+          fail(String.format("%s in: %s", info.getDescription(),
+                             myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
+        }
       }
     }
   }

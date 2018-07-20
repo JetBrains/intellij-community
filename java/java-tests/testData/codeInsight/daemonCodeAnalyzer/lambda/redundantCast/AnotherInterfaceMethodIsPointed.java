@@ -22,6 +22,6 @@ class Test {
     strings.forEach((IoFunction<String>) arg -> {throw new IOException();});
     strings.forEach((IFunction<String>) arg -> {});
     strings.forEach((IIFunction<String>) arg -> {});
-    strings.forEach((<warning descr="Casting 'arg -> {}' to 'Consumer<String>' is redundant">Consumer<String></warning>) arg -> {});
+    strings.forEach((<warning descr="Casting 'arg -> {...}' to 'Consumer<String>' is redundant">Consumer<String></warning>) arg -> {});
   }
 }

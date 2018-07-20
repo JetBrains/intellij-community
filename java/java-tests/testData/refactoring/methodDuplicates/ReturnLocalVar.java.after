@@ -10,7 +10,7 @@ class Return {
 
   public void contextLValue() {
       Return r = method();
-    r = null;
+      r = null;
   }
 
   public void contextNoUsage() {
@@ -19,6 +19,6 @@ class Return {
 
   public void contextRValue() {
       Return r = method();
-    Return r2 = r;
+      Return r2 = r;
   }
 }

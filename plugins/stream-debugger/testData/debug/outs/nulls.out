@@ -3,16 +3,17 @@ LineBreakpoint created at Nulls.java:6
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 Nulls.java:6
 Stream.of(null, null)
-.count()
-count
+.toArray()
+toArray
     before: 1,2
-    after: nothing
-mappings for count
+    after: 3,4
+mappings for toArray
   direct:
-    1 -> nothing
-    2 -> nothing
+    1 -> 3
+    2 -> 4
   reverse:
-    empty
+    1 <- 3
+    2 <- 4
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

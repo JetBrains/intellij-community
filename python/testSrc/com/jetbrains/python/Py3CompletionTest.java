@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +90,7 @@ public class Py3CompletionTest extends PyTestCase {
       }
     });
   }
+
   @Nullable
   private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
@@ -175,7 +177,30 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
+  }
+
+  // PY-17828
+  public void testDunderPrepareHonourInspectionSettings() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        myFixture.enableInspections(PyMethodParametersInspection.class);
+
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
   }
 
   // PY-20279
@@ -292,6 +317,49 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-27398
   public void testDataclassPostInitNoInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-26354
+  public void testAttrsPostInit() {
+    doTestByText("import attr\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class C:\n" +
+                 "    x = attr.ib()\n" +
+                 "    y = attr.ib(init=False)\n" +
+                 "\n" +
+                 "    def __attrs_<caret>");
+
+    myFixture.checkResult("import attr\n" +
+                          "\n" +
+                          "@attr.s\n" +
+                          "class C:\n" +
+                          "    x = attr.ib()\n" +
+                          "    y = attr.ib(init=False)\n" +
+                          "\n" +
+                          "    def __attrs_post_init__(self):");
+  }
+
+  // PY-26354
+  public void testAttrsPostInitNoInit() {
+    assertEmpty(
+      doTestByText("import attr\n" +
+                   "\n" +
+                   "@attr.s(init=False)\n" +
+                   "class C:\n" +
+                   "    x = attr.ib()\n" +
+                   "    y = attr.ib(init=False)\n" +
+                   "\n" +
+                   "    def __attrs_<caret>")
+    );
+  }
+
+  // PY-26354
+  public void testAttrsValidatorParameters() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
   }
 
   //PY-28332

@@ -176,7 +176,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     return false;
   }
 

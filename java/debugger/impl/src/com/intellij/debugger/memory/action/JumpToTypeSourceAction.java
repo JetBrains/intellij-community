@@ -47,8 +47,8 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
   }
 
   @Nullable
-  private PsiClass getPsiClass(AnActionEvent e) {
-    final ReferenceType selectedClass = getSelectedClass(e);
+  private static PsiClass getPsiClass(AnActionEvent e) {
+    final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (selectedClass == null || project == null) {
       return null;

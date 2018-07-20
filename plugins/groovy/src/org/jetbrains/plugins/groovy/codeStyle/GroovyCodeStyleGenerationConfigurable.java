@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
+import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
@@ -26,36 +13,39 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final CodeStyleSettings mySettings;
   private final MembersOrderList myMembersOrderList;
+  private final CommenterForm myCommenterForm;
 
   public GroovyCodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
     myMembersOrderList = new MembersOrderList();
+    myCommenterForm = new CommenterForm(GroovyLanguage.INSTANCE);
   }
 
   @Nullable
   @Override
   public JComponent createComponent() {
-    JPanel panel = ToolbarDecorator.createDecorator(myMembersOrderList)
-      .disableAddAction().disableRemoveAction().createPanel();
+    JPanel membersOrderPanel = ToolbarDecorator.createDecorator(myMembersOrderList).disableAddAction().disableRemoveAction().createPanel();
+    membersOrderPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members")));
 
-    JPanel wholePanel = new JPanel(new BorderLayout());
-    wholePanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members"), true, new JBInsets(0, 10, 10, 10)));
-    wholePanel.add(panel, BorderLayout.NORTH);
+    JPanel wholePanel = new JPanel();
+    wholePanel.setLayout(new BoxLayout(wholePanel, BoxLayout.Y_AXIS));
+    wholePanel.setBorder(IdeBorderFactory.createEmptyBorder(new JBInsets(0, 10, 10, 10)));
+    wholePanel.add(membersOrderPanel);
+    wholePanel.add(myCommenterForm.getCommenterPanel());
     return wholePanel;
   }
 
   @Override
   public boolean isModified() {
-    return myMembersOrderList.isModified(mySettings);
+    return myMembersOrderList.isModified(mySettings) || myCommenterForm.isModified(mySettings);
   }
 
   @Override
@@ -77,11 +67,13 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
   @Override
   public void reset(@NotNull CodeStyleSettings settings) {
     myMembersOrderList.reset(settings);
+    myCommenterForm.reset(settings);
   }
 
   @Override
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     myMembersOrderList.apply(settings);
+    myCommenterForm.apply(settings);
   }
 
   public static class MembersOrderList extends JBList {

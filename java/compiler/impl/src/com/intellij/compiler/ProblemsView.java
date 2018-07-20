@@ -60,7 +60,7 @@ public abstract class ProblemsView {
   public final void addMessage(CompilerMessage message, @NotNull UUID sessionId) {
     final VirtualFile file = message.getVirtualFile();
     Navigatable navigatable = message.getNavigatable();
-    if (navigatable == null && file != null) {
+    if (navigatable == null && file != null && !file.getFileType().isBinary()) {
       navigatable = new OpenFileDescriptor(myProject, file, -1, -1);
     }
     final CompilerMessageCategory category = message.getCategory();

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -61,7 +59,7 @@ public class FileUtilRt {
 
   private static String ourCanonicalTempPathCache;
 
-  protected static final class NIOReflect {
+  static final class NIOReflect {
     // NIO-reflection initialization placed in a separate class for lazy loading
     static final boolean IS_AVAILABLE;
 
@@ -339,10 +337,9 @@ public class FileUtilRt {
       Runtime.getRuntime().addShutdownHook(new Thread("FileUtil deleteOnExit") {
         @Override
         public void run() {
-          String name = queue.poll();
-          while (name != null) {
+          String name;
+          while ((name = queue.poll()) != null) {
             delete(new File(name));
-            name = queue.poll();
           }
         }
       });
@@ -410,29 +407,35 @@ public class FileUtilRt {
     // normalize and use only the file name from the prefix
     prefix = new File(prefix).getName();
 
-    int exceptionsCount = 0;
+    int attempts = 0;
     int i = 0;
     int maxFileNumber = 10;
+    IOException exception = null;
     while (true) {
+      File f = null;
       try {
-        File f = calcName(dir, prefix, suffix, i);
+        f = calcName(dir, prefix, suffix, i);
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
-        if (!success) {
-          String[] children = f.getParentFile().list();
-          List<String> list = children == null ? Collections.<String>emptyList() : Arrays.asList(children);
-          maxFileNumber = Math.max(10, list.size() * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
-          throw new IOException("Unable to create temporary file " + f + "\nDirectory '" + f.getParentFile() +
-                                "' list ("+list.size()+" children): " + list);
+        if (success) {
+          return normalizeFile(f);
         }
-
-        return normalizeFile(f);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
-        if (++exceptionsCount >= 100) {
-          throw e;
+        exception = e;
+      }
+      attempts++;
+      int MAX_ATTEMPTS = 100;
+      if (attempts > maxFileNumber / 2 || attempts > MAX_ATTEMPTS) {
+        String[] children = dir.list();
+        int size = children == null ? 0 : children.length;
+        maxFileNumber = Math.max(10, size * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
+        if (attempts > MAX_ATTEMPTS) {
+          throw exception != null ? exception: new IOException("Unable to create temporary file " + f + "\nDirectory '" + dir +
+                                "' list ("+size+" children): " + Arrays.toString(children));
         }
       }
+
       i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). try file2.
       if (i > 2) {
         i = 2 + RANDOM.nextInt(maxFileNumber); // generate random suffix if too many failures
@@ -449,7 +452,7 @@ public class FileUtilRt {
     String name = prefix + suffix;
     File f = new File(dir, name);
     if (!name.equals(f.getName())) {
-      throw new IOException("Unable to create temporary file " + f + " for name " + name);
+      throw new IOException("Generated name is malformed. name='"+name+"'; new File(dir, name)='" + f+"'");
     }
     return f;
   }
@@ -482,7 +485,7 @@ public class FileUtilRt {
   }
 
   @TestOnly
-  public static void resetCanonicalTempPathCache(final String tempPath) {
+  static void resetCanonicalTempPathCache(final String tempPath) {
     ourCanonicalTempPathCache = tempPath;
   }
 
@@ -700,7 +703,7 @@ public class FileUtilRt {
     return deleteRecursively(file);
   }
 
-  protected static boolean deleteRecursivelyNIO(File file) {
+  static boolean deleteRecursivelyNIO(File file) {
     try {
       /*
       Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {

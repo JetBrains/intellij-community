@@ -343,7 +343,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
               if (cursor != null && !cursor.equals(target.getCursor())) {
                 if (target instanceof JComponent) {
-                  ((JComponent)target).putClientProperty(PREPROCESSED_CURSOR_KEY, Boolean.TRUE);
+                  savePreProcessedCursor((JComponent)target, target.getCursor());
                 }
                 UIUtil.setCursor(target, cursor);
               }
@@ -392,15 +392,28 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private void restoreLastComponent(Component newC) {
     if (myLastCursorComponent != null && myLastCursorComponent != newC) {
-      UIUtil.setCursor(myLastCursorComponent, myLastOriginalCursor);
+      Cursor cursor = null;
       if (myLastCursorComponent instanceof JComponent) {
-        ((JComponent)myLastCursorComponent).putClientProperty(PREPROCESSED_CURSOR_KEY, null);
+        JComponent jComponent = (JComponent)myLastCursorComponent;
+        cursor = (Cursor) jComponent.getClientProperty(PREPROCESSED_CURSOR_KEY);
+        jComponent.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
       }
+      cursor = cursor != null ? cursor : myLastOriginalCursor;
+      UIUtil.setCursor(myLastCursorComponent, cursor);
     }
   }
 
   public static boolean hasPreProcessedCursor(@NotNull  JComponent component) {
     return component.getClientProperty(PREPROCESSED_CURSOR_KEY) != null;
+  }
+
+  public static boolean savePreProcessedCursor(@NotNull  JComponent component, @NotNull Cursor cursor) {
+    if (hasPreProcessedCursor(component)) {
+      return false;
+    }
+
+    component.putClientProperty(PREPROCESSED_CURSOR_KEY, cursor);
+    return true;
   }
 
   public void setCursor(Cursor cursor, @NotNull Object requestor) {

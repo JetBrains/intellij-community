@@ -310,4 +310,6 @@
   <action id="GotoImplementation"/>
   <action id="EditorScrollUp"/>
   <action id="EditorScrollDown"/>
+  <action id="Vcs.MoveChangedLinesToChangelist"/>
+  <action id="ChangesView.Move"/>
 </keymap>

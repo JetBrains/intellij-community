@@ -20,8 +20,11 @@
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
-    <orderEntry type="library" exported="" scope="TEST" name="hamcrest" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.tools" scope="TEST" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
   </component>
 </module>

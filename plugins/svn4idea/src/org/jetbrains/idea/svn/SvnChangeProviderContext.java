@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
@@ -138,9 +138,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
     if (parent != null) {
       Url copyFromUrl = myCopyFromURLs.get(parent);
-
-      //noinspection ConstantConditions
-      result = parent == filePath ? copyFromUrl : append(copyFromUrl, FileUtil.getRelativePath(parent.getIOFile(), filePath.getIOFile()));
+      result = parent == filePath ? copyFromUrl : append(copyFromUrl, getRelativePath(parent.getPath(), filePath.getPath()));
     }
 
     return result;
@@ -262,11 +260,11 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (status.isSwitched() || (convertedStatus == FileStatus.SWITCHED)) {
       final VirtualFile virtualFile = filePath.getVirtualFile();
       if (virtualFile == null) return;
-      final String switchUrl = status.getURL().toString();
+      Url switchUrl = status.getURL();
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
       if (vcsRoot != null) {  // it will be null if we walked into an excluded directory
         String baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
-        myChangelistBuilder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl : baseUrl, true);
+        myChangelistBuilder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl.toDecodedString() : baseUrl, true);
       }
     }
   }

@@ -101,16 +101,9 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
                                            PsiElement anchorElementIfAll) {
     final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
 
-    PsiLocalVariable localVariable = null;
-    if (expr instanceof PsiReferenceExpression) {
-      PsiElement ref = ((PsiReferenceExpression)expr).resolve();
-      if (ref instanceof PsiLocalVariable) {
-        localVariable = (PsiLocalVariable)ref;
-      }
-    }
-    else if (anchorElement instanceof PsiLocalVariable) {
-      localVariable = (PsiLocalVariable)anchorElement;
-    }
+    ElementToWorkOn elementToWorkOn = ElementToWorkOn.adjustElements(expr, anchorElement);
+    PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
+    expr = elementToWorkOn.getExpression();
 
     String enteredName = null;
     boolean replaceAllOccurrences = true;
@@ -246,6 +239,13 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
       else {
         super.visitReferenceExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      if (!PsiMethodReferenceUtil.isResolvedBySecondSearch(expression)) {
+        super.visitMethodReferenceExpression(expression);
       }
     }
 

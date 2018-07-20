@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -23,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -147,7 +132,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return fixes.toArray(SuppressQuickFix.EMPTY_ARRAY);
   }
 
-  private static void addAllSuppressActions(@NotNull Set<SuppressQuickFix> fixes,
+  private static void addAllSuppressActions(@NotNull Collection<? super SuppressQuickFix> fixes,
                                             @NotNull PsiElement element,
                                             @NotNull InspectionSuppressor suppressor,
                                             @NotNull ThreeState appliedToInjectionHost,
@@ -198,7 +183,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       case 1:
         return Collections.singleton(elementLanguageSuppressor.get(0));
       default:
-        return new java.util.HashSet<>(elementLanguageSuppressor);
+        return new HashSet<>(elementLanguageSuppressor);
     }
   }
 
@@ -341,7 +326,6 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * and bean-style getters/setters (like {@code int getToolOption(), void setToolOption(int)}) to store your options.
    *
    * @param node to store settings to.
-   * @throws WriteExternalException if no data should be saved for this component.
    */
   public void writeSettings(@NotNull Element node) {
     if (useNewSerializer()) {

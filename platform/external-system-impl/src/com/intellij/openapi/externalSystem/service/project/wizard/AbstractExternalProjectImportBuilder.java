@@ -70,6 +70,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   /**
    * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, AbstractImportFromExternalSystemControl, ProjectSystemId)}
    */
+  @Deprecated
   public AbstractExternalProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager projectDataManager,
                                               @NotNull C control,
                                               @NotNull ProjectSystemId externalSystemId) {
@@ -253,10 +254,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
           return;
         }
         ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
-      }
-
-      @Override
-      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
       }
     };
   }

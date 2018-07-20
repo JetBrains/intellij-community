@@ -69,14 +69,16 @@ public class PyDocReference extends PyReferenceImpl {
         final List<Pair<PsiElement,TextRange>> files = languageManager.getInjectedPsiFiles(host);
         if (files != null) {
           for (Pair<PsiElement, TextRange> pair : files) {
-            final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
+            if (pair.getFirst() instanceof PyFile) {
+              final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
 
-            PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)pair.getFirst(), referencedName, pair.getFirst());
-            final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, pair.getFirst(),
-                                                                                pair.getFirst());
-            if (resultList.size() > 0) {
-              List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
-              return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
+              PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)pair.getFirst(), referencedName, pair.getFirst());
+              final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, pair.getFirst(),
+                                                                                  pair.getFirst());
+              if (resultList.size() > 0) {
+                List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
+                return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
+              }
             }
           }
         }
@@ -151,9 +153,8 @@ public class PyDocReference extends PyReferenceImpl {
   @NotNull
   public Object[] getVariants() {
     final ArrayList<Object> ret = Lists.newArrayList(super.getVariants());
-    final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
-                                          (PyQualifiedExpression)originalElement : myElement;
+    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
 
     final ScopeOwner scopeOwner = getHostScopeOwner();
     if (scopeOwner != null) {

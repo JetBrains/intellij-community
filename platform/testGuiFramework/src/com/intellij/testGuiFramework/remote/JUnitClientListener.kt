@@ -29,7 +29,7 @@ import org.junit.runner.notification.RunListener
  */
 class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener() {
 
-  val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClientListener")
+  val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClientListener")
 
   override fun testStarted(description: Description?) {
     description ?: throw Exception("Unable to send notification to JUnitServer that test is starter due to null description!")

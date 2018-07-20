@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.Disposable;
@@ -37,10 +37,11 @@ class InlayModelWindow implements InlayModel {
     return false;
   }
 
+  @Nullable
   @Override
-  public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
+  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
     logUnsupported();
-    return false;
+    return null;
   }
 
   @Nullable

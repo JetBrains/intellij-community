@@ -24,8 +24,8 @@ import java.util.function.Function;
 public abstract class CommentMacro extends MacroBase {
   private final Function<Commenter, String> myCommenterFunction;
 
-  protected CommentMacro(String name, String description, Function<Commenter, String> commenterFunction) {
-    super(name, description);
+  protected CommentMacro(String name, Function<Commenter, String> commenterFunction) {
+    super(name, name + "()");
     myCommenterFunction = commenterFunction;
   }
 
@@ -41,25 +41,25 @@ public abstract class CommentMacro extends MacroBase {
 
   public static class LineCommentStart extends CommentMacro {
     public LineCommentStart() {
-      super("lineCommentStart", "Line comment start characters for the current language", Commenter::getLineCommentPrefix);
+      super("lineCommentStart", Commenter::getLineCommentPrefix);
     }
   }
 
   public static class BlockCommentStart extends CommentMacro {
     public BlockCommentStart() {
-      super("blockCommentStart", "Block comment start characters for the current language", Commenter::getBlockCommentPrefix);
+      super("blockCommentStart", Commenter::getBlockCommentPrefix);
     }
   }
 
   public static class BlockCommentEnd extends CommentMacro {
     public BlockCommentEnd() {
-      super("blockCommentEnd", "Block comment end characters for the current language", Commenter::getBlockCommentSuffix);
+      super("blockCommentEnd", Commenter::getBlockCommentSuffix);
     }
   }
 
   public static class AnyCommentStart extends CommentMacro {
     public AnyCommentStart() {
-      super("commentStart", "Comment start characters for the current language, preferring line comment, if it exists",
+      super("commentStart",
             commenter -> {
               String line = commenter.getLineCommentPrefix();
               return StringUtil.isNotEmpty(line) ? line : commenter.getBlockCommentPrefix();
@@ -68,7 +68,7 @@ public abstract class CommentMacro extends MacroBase {
   }
   public static class AnyCommentEnd extends CommentMacro {
     public AnyCommentEnd() {
-      super("commentEnd", "Comment end characters for the current language, empty if the language has line comments",
+      super("commentEnd",
             commenter -> {
               String line = commenter.getLineCommentPrefix();
               return StringUtil.isNotEmpty(line) ? "" : commenter.getBlockCommentSuffix();

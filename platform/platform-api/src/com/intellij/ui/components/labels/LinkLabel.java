@@ -177,7 +177,10 @@ public class LinkLabel<T> extends JLabel {
 
   @NotNull
   protected Rectangle getTextBounds() {
-    return UIUtil.getLabelTextBounds(this);
+    if (textR.isEmpty()) {
+      updateLayoutRectangles();
+    }
+    return textR;
   }
 
   protected Color getTextColor() {
@@ -211,6 +214,17 @@ public class LinkLabel<T> extends JLabel {
   private final JBRectangle viewR = new JBRectangle();
 
   protected boolean isInClickableArea(Point pt) {
+    updateLayoutRectangles();
+    if (getIcon() != null) {
+      iconR.width += getIconTextGap(); //todo[kb] icon at right?
+      if (iconR.contains(pt)) {
+        return true;
+      }
+    }
+    return textR.contains(pt);
+  }
+
+  private void updateLayoutRectangles() {
     iconR.clear();
     textR.clear();
     final Insets insets = getInsets(null);
@@ -230,13 +244,6 @@ public class LinkLabel<T> extends JLabel {
                                        iconR,
                                        textR,
                                        getIconTextGap());
-    if (getIcon() != null) {
-      iconR.width += getIconTextGap(); //todo[kb] icon at right?
-      if (iconR.contains(pt)) {
-        return true;
-      }
-    }
-    return textR.contains(pt);
   }
 
   //for GUI tests

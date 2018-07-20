@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -255,7 +253,7 @@ public class XLineBreakpointManager {
                                              mouseEvent.isAltDown(),
                                              false,
                                              !mouseEvent.isShiftDown() && !Registry.is("debugger.click.disable.breakpoints"))
-          .done(breakpoint -> {
+          .onSuccess(breakpoint -> {
             if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
               breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
               String selection = editor.getSelectionModel().getSelectedText();

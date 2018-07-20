@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("JvmElementActionFactories")
 
 package com.intellij.lang.jvm.actions
@@ -12,7 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 
 fun useInterlaguageActions(): Boolean = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("ide.interlanguage.fixes")
 
-val EP_NAME = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
+val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
 
 private inline fun createActions(crossinline actions: (JvmElementActionsFactory) -> List<IntentionAction>): List<IntentionAction> {
   return EP_NAME.extensions.flatMap {
@@ -32,14 +32,17 @@ fun createConstructorActions(target: JvmClass, request: CreateConstructorRequest
   }
 }
 
+fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+  return createActions {
+    it.createAddAnnotationActions(target, request)
+  }
+}
+
 fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
   return createActions {
     it.createChangeModifierActions(target, request)
   }
 }
 
-fun createPropertyActions(target: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
-  return createActions {
-    it.createAddPropertyActions(target, request)
-  }
-}
+fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> =
+  createActions { it.createAddFieldActions(target, request) }

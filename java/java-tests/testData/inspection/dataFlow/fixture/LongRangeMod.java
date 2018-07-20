@@ -18,6 +18,7 @@ public class LongRangeMod {
   // IDEA-113410
   void test() {
     List<String> someList = new LinkedList<>();
+    someList.add("foo");
 
     int i = 0;
     Object something = null;

@@ -18,6 +18,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.DnDDragStartBean;
@@ -93,7 +94,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final IdeView myIdeView;
-  private final CopyPasteDelegator myCopyPasteDelegator;
   private FocusListener myNavBarItemFocusListener;
 
   private LightweightHint myHint = null;
@@ -120,15 +120,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (!docked && UIUtil.isUnderDarcula()) {
       setBorder(new LineBorder(Gray._120, 1));
     }
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        Object inner = getDataInner(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
-        return inner instanceof PsiElement[] ? (PsiElement[])inner : PsiElement.EMPTY_ARRAY;
-      }
-    };
-
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
     if (!docked) {
@@ -669,7 +660,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @Nullable
   private Object getDataInner(String dataId) {
-    return getDataImpl(dataId, () -> getSelection());
+    return getDataImpl(dataId, this, () -> getSelection());
   }
 
   @NotNull
@@ -680,7 +671,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return JBIterable.of(size > 0 ? myModel.getElement(size - 1) : null);
   }
 
-  Object getDataImpl(String dataId, Getter<JBIterable<?>> selection) {
+  Object getDataImpl(String dataId, @NotNull JComponent source, @NotNull Getter<JBIterable<?>> selection) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
@@ -729,13 +720,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return this;
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getCutProvider();
+      return getCopyPasteDelegator(source).getCutProvider();
     }
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getCopyProvider();
+      return getCopyPasteDelegator(source).getCopyProvider();
     }
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getPasteProvider();
+      return getCopyPasteDelegator(source).getPasteProvider();
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return selection.get().filter(Module.class).isNotEmpty() ? myDeleteModuleProvider : new DeleteHandler.DefaultDeleteProvider();
@@ -746,6 +737,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
 
     return null;
+  }
+
+  @NotNull
+  private CopyPasteSupport getCopyPasteDelegator(@NotNull JComponent source) {
+    String key = "NavBarPanel.copyPasteDelegator";
+    Object result = source.getClientProperty(key);
+    if (!(result instanceof CopyPasteSupport)) {
+      source.putClientProperty(key, result = new CopyPasteDelegator(myProject, source));
+    }
+    return (CopyPasteSupport)result;
   }
 
   @Override

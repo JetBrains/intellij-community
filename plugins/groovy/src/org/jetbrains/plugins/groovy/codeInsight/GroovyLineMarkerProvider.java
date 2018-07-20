@@ -56,11 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -243,7 +239,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       PsiElement range = element instanceof GrNamedElement ? ((GrNamedElement)element).getNameIdentifierGroovy() : element;
 
       final MarkerType type = element instanceof GrField ? GroovyMarkerTypes.OVERRIDEN_PROPERTY_TYPE
-                                                         : GroovyMarkerTypes.GR_OVERRIDEN_METHOD;
+                                                         : GroovyMarkerTypes.GR_OVERRIDDEN_METHOD;
       LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(), icon, Pass.LINE_MARKERS, type.getTooltip(),
                                                  type.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
       result.add(info);

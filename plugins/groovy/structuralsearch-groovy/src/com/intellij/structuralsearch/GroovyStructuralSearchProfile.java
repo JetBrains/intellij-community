@@ -68,20 +68,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   }
 
   @Override
-  public Class getElementContextByPsi(PsiElement element) {
-    if (element instanceof PsiIdentifier) {
-      element = element.getParent();
-    }
-
-    if (element instanceof PsiMember) {
-      return PsiMember.class;
-    } else {
-      return PsiExpression.class;
-    }
-  }
-
-  @Override
-  public boolean isIdentifier(PsiElement element) {
+  public boolean isIdentifier(@Nullable PsiElement element) {
     return element instanceof PsiIdentifier;
   }
 }

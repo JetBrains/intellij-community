@@ -112,7 +112,7 @@ public class ExtractEnumTest extends MultiFileTestCase {
   }
 
   public void testCantChangeReturnType() {
-    doTest("Unable to migrate statement to enum constant. Field &lt;b&gt;&lt;code&gt;length&lt;/code&gt;&lt;/b&gt; is out of project", false,
+    doTest("Unable to migrate statement to enum constant. Field <b><code>length</code></b> is out of project", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }

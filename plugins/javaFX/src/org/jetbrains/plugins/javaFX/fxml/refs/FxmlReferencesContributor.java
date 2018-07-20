@@ -161,11 +161,13 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         myPosition = position;
       }
 
+      @NotNull
       @Override
       public PsiElement getElement() {
         return myReference.getElement();
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         return myReference.getRangeInElement();

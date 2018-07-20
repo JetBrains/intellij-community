@@ -412,6 +412,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertDoesntMatch("Foo ", "Foox");
     assertDoesntMatch("Collections ", "CollectionSplitter");
     assertMatches("CollectionS ", "CollectionSplitter");
+    assertMatches("*run ", "in Runnable.run");
 
     assertDoesntMatch("*l ", "AppDelegate");
     assertDoesntMatch("*le ", "AppDelegate");
@@ -426,6 +427,10 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("*v2 ", "VARCHAR2");
     assertMatches("smart8co", "SmartType18CompletionTest");
     assertMatches("smart8co", "smart18completion");
+  }
+
+  public void testMatchOnlyAdjacentDigits() {
+    assertDoesntMatch("*012", "001122");
   }
 
   public void testSpecialSymbols() {

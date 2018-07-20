@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
@@ -31,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +24,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.util.containers.ContainerUtil.ar;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Dmitry Avdeev
@@ -77,6 +61,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   private boolean isAvailable(@NotNull AnActionEvent event) {
     if (myText == null) {
+      event.getPresentation().setEnabledAndVisible(true); // we may share the event for several actions
       myAction.update(event);
       if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
         String text = event.getPresentation().getText();
@@ -105,45 +90,37 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
 
   private static void addActions(@NotNull Project project,
                                  @NotNull RangeHighlighterEx info,
-                                 @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors,
                                  @NotNull AnActionEvent event) {
     final GutterIconRenderer r = info.getGutterIconRenderer();
     if (r == null || DumbService.isDumb(project) && !DumbService.isDumbAware(r)) {
       return;
     }
     List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<>();
-    for (AnAction action : ar(r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(), r.getPopupMenuActions())) {
+    AtomicInteger order = new AtomicInteger();
+    for (AnAction action : new AnAction[]{r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(),
+      r.getPopupMenuActions()}) {
       if (action != null) {
-        addActions(action, list, r, 0, event);
+        addActions(action, list, r, order, event);
       }
     }
-
-    if (list.isEmpty()) return;
-    if (list.size() == 1) {
-      descriptors.addAll(list);
-    }
-    else {
-      HighlightInfo.IntentionActionDescriptor first = list.get(0);
-      List<IntentionAction> options = ContainerUtil.map(list.subList(1, list.size()), HighlightInfo.IntentionActionDescriptor::getAction);
-      descriptors.add(new HighlightInfo.IntentionActionDescriptor(first.getAction(), options, null, first.getIcon()));
-    }
+    descriptors.addAll(list);
   }
 
   private static void addActions(@NotNull AnAction action,
-                                 @NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> descriptors,
                                  @NotNull GutterIconRenderer renderer,
-                                 int order,
+                                 AtomicInteger order,
                                  @NotNull AnActionEvent event) {
     if (action instanceof ActionGroup) {
-      AnAction[] children = ((ActionGroup)action).getChildren(null);
-      for (int i = 0; i < children.length; i++) {
-        addActions(children[i], descriptors, renderer, i + order, event);
+      for (AnAction child : ((ActionGroup)action).getChildren(null)) {
+        addActions(child, descriptors, renderer, order, event);
       }
     }
     Icon icon = action.getTemplatePresentation().getIcon();
     if (icon == null) icon = renderer.getIcon();
     if (icon.getIconWidth() < 16) icon = IconUtil.toSize(icon, 16, 16);
-    final GutterIntentionAction gutterAction = new GutterIntentionAction(action, order, icon);
+    final GutterIntentionAction gutterAction = new GutterIntentionAction(action, order.getAndIncrement(), icon);
     if (!gutterAction.isAvailable(event)) return;
     descriptors.add(new HighlightInfo.IntentionActionDescriptor(gutterAction, Collections.emptyList(), null, icon) {
       @NotNull

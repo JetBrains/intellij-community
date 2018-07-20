@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.xslt.debugger.rt" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
+    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />

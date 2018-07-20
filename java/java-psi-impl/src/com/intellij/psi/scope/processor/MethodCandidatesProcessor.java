@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.scope.processor;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
@@ -32,9 +33,12 @@ import java.util.List;
  * @author ik
  */
 public class MethodCandidatesProcessor extends MethodsProcessor{
-  protected boolean myHasAccessibleStaticCorrectCandidate;
+  boolean myHasAccessibleStaticCorrectCandidate;
 
-  public MethodCandidatesProcessor(@NotNull PsiElement place, PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers, @NotNull List<CandidateInfo> container) {
+  protected MethodCandidatesProcessor(@NotNull PsiElement place,
+                                      PsiFile placeFile,
+                                      @NotNull PsiConflictResolver[] resolvers,
+                                      @NotNull List<CandidateInfo> container) {
     super(resolvers, container, place, placeFile);
   }
 
@@ -50,7 +54,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, boolean staticProblem) {
+  public void addMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean staticProblem) {
     final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
@@ -72,7 +76,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  private boolean isInterfaceStaticMethodAccessibleThroughInheritance(PsiMethod method) {
+  private boolean isInterfaceStaticMethodAccessibleThroughInheritance(@NotNull PsiMethod method) {
     if (method.hasModifierProperty(PsiModifier.STATIC) && 
         !(myCurrentFileContext instanceof PsiImportStaticStatement) && 
         myPlace instanceof PsiMethodCallExpression && 
@@ -83,7 +87,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
-  protected PsiClass getContainingClass(PsiMethod method) {
+  protected PsiClass getContainingClass(@NotNull PsiMethod method) {
     return method.getContainingClass();
   }
 
@@ -93,36 +97,16 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                     final boolean staticProblem, final boolean accessible, final boolean varargs) {
-    final PsiExpressionList argumentList = getArgumentList();
-    return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                   null, getTypeArguments(), getLanguageLevel()) {
-
-      private PsiType[] myExpressionTypes;
-
-      @Override
-      public PsiType[] getArgumentTypes() {
-        if (myExpressionTypes == null && argumentList != null) {
-          final PsiType[] expressionTypes = getExpressionTypes(argumentList);
-          if (MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
-            return expressionTypes;
-          }
-          myExpressionTypes = expressionTypes;
-        }
-        return myExpressionTypes;
-      }
-
-      @Override
-      public boolean isVarargs() {
-        return varargs;
-      }
-    };
+    return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
+                                               getTypeArguments(), getLanguageLevel(), varargs);
   }
 
-  protected static PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
-    return argumentList != null ? argumentList.getExpressionTypes() : null;
+  @NotNull
+  private static PsiType[] getExpressionTypes(@NotNull PsiExpressionList argumentList) {
+    return argumentList.getExpressionTypes();
   }
 
-  protected boolean isAccepted(final PsiMethod candidate) {
+  protected boolean isAccepted(@NotNull PsiMethod candidate) {
     if (!isConstructor()) {
       return !candidate.isConstructor() && candidate.getName().equals(getName(ResolveState.initial()));
     }
@@ -137,7 +121,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  protected boolean isShadowed(final PsiMethod candidate) {
+  private boolean isShadowed(@NotNull PsiMethod candidate) {
     if (myCurrentFileContext instanceof PsiImportStaticStatement) {
       for (JavaResolveResult result : getResults()) {
         if (result.getElement() != candidate &&
@@ -148,6 +132,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
+  @NotNull
   public CandidateInfo[] getCandidates() {
     final JavaResolveResult[] resolveResult = getResult();
     if (resolveResult.length == 0) return CandidateInfo.EMPTY_ARRAY;
@@ -155,5 +140,39 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     //noinspection SuspiciousSystemArraycopy
     System.arraycopy(resolveResult, 0, infos, 0, resolveResult.length);
     return infos;
+  }
+
+  private static class VarargsAwareMethodCandidateInfo extends MethodCandidateInfo {
+    private final PsiExpressionList myArgumentList;
+    private final boolean myVarargs;
+    private PsiType[] myExpressionTypes;
+
+    VarargsAwareMethodCandidateInfo(@NotNull PsiMethod method,
+                                    @NotNull PsiSubstitutor substitutor,
+                                    boolean accessible,
+                                    boolean staticProblem,
+                                    PsiExpressionList argumentList,
+                                    PsiElement context, PsiType[] arguments, @NotNull LanguageLevel level, boolean varargs) {
+      super(method, substitutor, !accessible, staticProblem, argumentList, context, null, arguments, level);
+      myArgumentList = argumentList;
+      myVarargs = varargs;
+    }
+
+    @Override
+    public PsiType[] getArgumentTypes() {
+      if (myExpressionTypes == null && myArgumentList != null) {
+        final PsiType[] expressionTypes = getExpressionTypes(myArgumentList);
+        if (isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
+          return expressionTypes;
+        }
+        myExpressionTypes = expressionTypes;
+      }
+      return myExpressionTypes;
+    }
+
+    @Override
+    public boolean isVarargs() {
+      return myVarargs;
+    }
   }
 }

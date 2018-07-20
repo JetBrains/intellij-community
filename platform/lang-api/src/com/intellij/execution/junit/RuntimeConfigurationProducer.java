@@ -27,6 +27,7 @@ import java.util.List;
 /**
  * @deprecated please use {@link com.intellij.execution.actions.RunConfigurationProducer} instead
  */
+@Deprecated
 public abstract class RuntimeConfigurationProducer implements Comparable, Cloneable {
   public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer");
 
@@ -177,6 +178,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   /**
    * @deprecated feel free to pass your configuration to SMTRunnerConsoleProperties directly instead of wrapping in DelegatingRuntimeConfiguration
    */
+  @Deprecated
   public static class DelegatingRuntimeConfiguration<T extends LocatableConfiguration>
     extends LocatableConfigurationBase implements ModuleRunConfiguration {
     private final T myConfig;

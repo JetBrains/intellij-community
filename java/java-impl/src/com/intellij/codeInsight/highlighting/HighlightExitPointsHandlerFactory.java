@@ -31,6 +31,9 @@ public class HighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFac
       if (PsiKeyword.RETURN.equals(target.getText()) || PsiKeyword.THROW.equals(target.getText())) {
         return new HighlightExitPointsHandler(editor, file, target);
       }
+      if (PsiKeyword.CONTINUE.equals(target.getText()) || PsiKeyword.BREAK.equals(target.getText())) {
+        return new HighlightBreakOutsHandler(editor, file, target);
+      }
     }
     return null;
   }

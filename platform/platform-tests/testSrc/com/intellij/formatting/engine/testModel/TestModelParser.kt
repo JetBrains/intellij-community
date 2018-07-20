@@ -153,8 +153,8 @@ sealed class TestBlock {
   class Leaf(val attributes: String, override val text: String) : TestBlock()
 
   class Composite(val attributes: String) : TestBlock() {
-    val children = mutableListOf<TestBlock>()
-    fun addChild(block: TestBlock) = children.add(block)
+    val children: MutableList<TestBlock> = mutableListOf<TestBlock>()
+    fun addChild(block: TestBlock): Boolean = children.add(block)
     override val text: String
       get() = children.joinToString("", transform = { it.text })
   }

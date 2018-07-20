@@ -118,9 +118,8 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                @NotNull String path,
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                Project project,
-                                               boolean canBeDeleted,
                                                boolean unescapePath) throws VcsException {
-    FilePath file = createPath(vcsRoot, path, canBeDeleted, unescapePath);
+    FilePath file = createPath(vcsRoot, path, unescapePath);
     return createRevision(file, revisionNumber, project);
   }
 
@@ -148,7 +147,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       filePath = virtualFile == null ? VcsUtil.getFilePath(file, false) : VcsUtil.getFilePath(virtualFile);
     } else {
-      filePath = createPath(vcsRoot, path, false, unescapePath);
+      filePath = createPath(vcsRoot, path, unescapePath);
     }
     return createRevision(filePath, revisionNumber, project);
   }
@@ -156,7 +155,6 @@ public class GitContentRevision implements ByteBackedContentRevision {
   @NotNull
   public static FilePath createPath(@NotNull VirtualFile vcsRoot,
                                     @NotNull String path,
-                                    boolean canBeDeleted,
                                     boolean unescapePath) throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
     return VcsUtil.getFilePath(absolutePath, false);

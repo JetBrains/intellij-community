@@ -24,7 +24,8 @@
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
     <psi.referenceContributor implementation="com.intellij.lang.properties.PropertiesReferenceContributor"/>
-    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder" order="FIRST"/>
+    <lang.foldingBuilder language="UAST" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder"
+                         order="FIRST"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlinePropertyHandler"/>
 
@@ -66,6 +67,7 @@
       <category>Java/I18N</category>
     </intentionAction>
 
+    <completion.confidence language="JAVA" implementationClass="com.intellij.lang.properties.PropertyKeyLiteralConfidence" id="propertyKeys" order="before javaSkipAutopopupInStrings"/>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">

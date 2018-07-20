@@ -1,55 +1,57 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.SeverityEditorDialog;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
-import java.util.List;
+import java.util.stream.Stream;
 
-/**
- * @author Dmitry Batkovich
- */
-public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
+public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
+  static final HighlightSeverity EDIT_SEVERITIES = new HighlightSeverity(InspectionsBundle.message("inspection.edit.severities.text"), -1);
+  @NotNull
   private final Runnable myOnClose;
+  private ScopesAndSeveritiesTable myTable;
+  @NotNull
   private final Icon myDisabledIcon;
+  @NotNull
+  private final Project myProject;
 
-  public SeverityRenderer(final SeverityState[] values, @Nullable final Runnable onClose) {
-    super(values);
+  public SeverityRenderer(@NotNull InspectionProfileImpl inspectionProfile,
+                          @NotNull Project project,
+                          @NotNull Runnable onClose,
+                          @NotNull ScopesAndSeveritiesTable table) {
+    super(getSeverities(inspectionProfile));
     myOnClose = onClose;
+    myTable = table;
     myDisabledIcon = HighlightDisplayLevel.createIconByMask(UIUtil.getLabelDisabledForeground());
+    myProject = project;
   }
 
-  public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile, @Nullable final Runnable onClose) {
-    final List<HighlightSeverity> severities;
-    severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getOwnSeverityRegistrar());
-    return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], severity -> new SeverityState(severity, true, false)), onClose);
+  @NotNull
+  public static HighlightSeverity[] getSeverities(InspectionProfileImpl inspectionProfile) {
+    Stream<HighlightSeverity>
+      severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getSeverityRegistrar()).stream();
+    return StreamEx.of(severities).append(EDIT_SEVERITIES).toArray(HighlightSeverity.class);
   }
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
@@ -60,21 +62,28 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   }
 
   @Override
-  protected void customizeComponent(SeverityState value, JTable table, boolean isSelected) {
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    component.setEnabled(((ScopesAndSeveritiesTable)table).isRowEnabled(row));
+    return component;
+  }
+
+  @Override
+  protected void customizeComponent(HighlightSeverity value, JTable table, boolean isSelected) {
     super.customizeComponent(value, table, isSelected);
-    setPaintArrow(value.isEnabledForEditing());
-    setEnabled(!value.isDisabled());
     setDisabledIcon(myDisabledIcon);
   }
 
   @Override
-  protected String getTextFor(@NotNull final SeverityState value) {
-    return SingleInspectionProfilePanel.renderSeverity(value.getSeverity());
+  protected String getTextFor(@NotNull final HighlightSeverity value) {
+    return SingleInspectionProfilePanel.renderSeverity(value);
   }
 
   @Override
-  protected Icon getIconFor(@NotNull final SeverityState value) {
-    return getIcon(HighlightDisplayLevel.find(value.getSeverity()));
+  protected Icon getIconFor(@NotNull final HighlightSeverity value) {
+    return value == EDIT_SEVERITIES
+           ? EmptyIcon.create(HighlightDisplayLevel.getEmptyIconDim())
+           : getIcon(HighlightDisplayLevel.find(value));
   }
 
   @Override
@@ -83,10 +92,18 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   }
 
   @Override
+  protected ListSeparator getSeparatorAbove(HighlightSeverity value) {
+    return value == EDIT_SEVERITIES ? new ListSeparator() : null;
+  }
+
+  @Override
   public void onClosed(LightweightWindowEvent event) {
     super.onClosed(event);
-    if (myOnClose != null) {
-      myOnClose.run();
+    myOnClose.run();
+    if (getCellEditorValue() == EDIT_SEVERITIES) {
+      ApplicationManager.getApplication().invokeLater(() ->
+                                                        SeverityEditorDialog.show(myProject, null, SeverityRegistrar.getSeverityRegistrar(myProject), true, severity ->
+                                                          myTable.setSelectedSeverity(severity)));
     }
   }
 }

@@ -1,50 +1,38 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
-import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
-import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +42,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
+
 /**
  * @author gregsh
  */
@@ -62,12 +52,23 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   public static final String ID = "Scratches";
 
   public static boolean isScratchesMergedIntoProjectTab() {
-    return (Registry.is("ide.scratch.in.project.view") || PlatformUtils.isDatabaseIDE()) &&
+    return Registry.is("ide.scratch.in.project.view") &&
            !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public ScratchProjectViewPane(Project project) {
     super(project);
+    registerUpdaters(project, this, new Runnable() {
+      AbstractProjectViewPane updateTarget;
+      @Override
+      public void run() {
+        if (updateTarget == null) {
+          updateTarget = !isScratchesMergedIntoProjectTab() ? ScratchProjectViewPane.this :
+                         ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
+        }
+        if (updateTarget != null) updateTarget.updateFromRoot(true);
+      }
+    });
   }
 
   @Override
@@ -82,6 +83,11 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Override
+  public Icon getIcon() {
+    return AllIcons.Scope.Scratches;
+  }
+
+  @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new MyTreeStructure(myProject);
   }
@@ -91,29 +97,25 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return 11;
   }
 
-  @NotNull
   @Override
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-    ProjectTreeBuilder builder =
-      new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
-        @Override
-        protected ProjectViewPsiTreeChangeListener createPsiTreeChangeListener(Project project) {
-          return new ProjectTreeBuilderPsiListener(project) {
-            @Override
-            protected void childrenChanged(PsiElement parent, boolean stopProcessingForThisModificationCount) {
-              VirtualFile virtualFile = parent instanceof PsiFileSystemItem ? ((PsiFileSystemItem)parent).getVirtualFile() : null;
-              if (virtualFile != null && virtualFile.isValid() && ScratchFileService.getInstance().getRootType(virtualFile) != null) {
-                queueUpdateFrom(parent, true);
-              }
-            }
-          };
+    return null;
+  }
+
+  private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
+    project.getMessageBus().connect(disposable).subscribe(VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        boolean update = JBIterable.from(events).find(e -> ScratchUtil.isScratch(e.getFile())) != null;
+        if (update) {
+          onUpdate.run();
         }
-      };
+      }
+    });
     for (RootType rootId : RootType.getAllRootIds()) {
       if (rootId.isHidden()) continue;
-      rootId.registerTreeUpdater(myProject, builder, builder::queueUpdate);
+      rootId.registerTreeUpdater(project, disposable, onUpdate);
     }
-    return builder;
   }
 
   @Override
@@ -174,6 +176,34 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return new MyProjectNode(project, settings);
   }
 
+  public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
+    @NotNull
+    @Override
+    public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
+                                               @NotNull Collection<AbstractTreeNode> children,
+                                               ViewSettings settings) {
+      Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
+      if (project != null && isScratchesMergedIntoProjectTab()) {
+        children.add(createRootNode(project, settings));
+      }
+      return children;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
+      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataName)) {
+        AbstractTreeNode single = JBIterable.from(selected).single();
+        if (single instanceof MyRootNode) {
+          VirtualFile file = ((MyRootNode)single).getVirtualFile();
+          Project project = single.getProject();
+          return file == null || project == null ? null : PsiManager.getInstance(project).findDirectory(file);
+        }
+      }
+      return null;
+    }
+  }
+
   private static class MyTreeStructure extends ProjectTreeStructure {
 
     MyTreeStructure(final Project project) {
@@ -218,7 +248,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     protected void update(PresentationData presentation) {
       presentation.setPresentableText(getValue());
-      presentation.setIcon(AllIcons.General.ProjectTab);
+      presentation.setIcon(AllIcons.Scope.Scratches);
     }
 
     @Override

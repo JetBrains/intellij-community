@@ -15,17 +15,24 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BigDecimalEqualsInspection extends BaseInspection {
@@ -56,21 +63,17 @@ public class BigDecimalEqualsInspection extends BaseInspection {
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
-      assert expression != null;
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
-      final PsiExpression qualifier = expression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      EqualityCheck check = EqualityCheck.from(call);
+      if (check == null) return;
       CommentTracker commentTracker = new CommentTracker();
-      final String qualifierText = commentTracker.text(qualifier);
-      assert call != null;
-      final PsiExpressionList argumentList = call.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      final String argText = commentTracker.text(args[0]);
-      PsiReplacementUtil.replaceExpression(call, qualifierText + ".compareTo(" + argText + ")==0", commentTracker);
+      final String qualifierText = commentTracker.text(check.getLeft(), ParenthesesUtils.METHOD_CALL_PRECEDENCE);
+      final String argText = commentTracker.text(check.getRight());
+      String replacement = qualifierText + ".compareTo(" + argText + ")==0";
+      if (!check.isLeftDereferenced() && NullabilityUtil.getExpressionNullability(check.getLeft(), true) != Nullability.NOT_NULL) {
+        replacement = commentTracker.text(check.getLeft(), ParenthesesUtils.EQUALITY_PRECEDENCE) + "!=null && " + replacement;
+      }
+      PsiReplacementUtil.replaceExpression(call, replacement, commentTracker);
     }
   }
 
@@ -84,23 +87,12 @@ public class BigDecimalEqualsInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isEqualsCall(expression)) {
-        return;
-      }
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length == 0) {
-        return;
-      }
-      final PsiExpression arg = arguments[0];
-      if (!ExpressionUtils.hasType(arg, "java.math.BigDecimal")) {
-        return;
-      }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!ExpressionUtils.hasType(qualifier, "java.math.BigDecimal")) {
-        return;
-      }
+      EqualityCheck check = EqualityCheck.from(expression);
+      if (check == null) return;
+      PsiExpression left = check.getLeft();
+      PsiExpression right = check.getRight();
+      if (!ExpressionUtils.hasType(left, "java.math.BigDecimal")) return;
+      if (!ExpressionUtils.hasType(right, "java.math.BigDecimal")) return;
       final PsiElement context = expression.getParent();
       if (context instanceof PsiExpressionStatement) {
         //cheesy, but necessary, because otherwise the quickfix will

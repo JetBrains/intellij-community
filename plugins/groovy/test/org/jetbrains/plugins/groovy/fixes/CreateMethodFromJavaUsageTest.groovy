@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.fixes
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -13,6 +12,10 @@ class CreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
   private static final String AFTER = "After.groovy"
   private static final String JAVA = "Area.java"
 
+  public static final String CREATE_METHOD = 'Create method'
+  public static final String CREATE_ABSTRACT_METHOD = 'Create abstract method'
+  public static final String CREATE_CONSTRUCTOR = 'Create constructor'
+
   final String getBasePath() {
     return TestUtils.testDataPath + 'fixes/createMethodFromJava/' + getTestName(true) + '/'
   }
@@ -24,7 +27,7 @@ class CreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
     fixture.enableInspections(customInspections)
   }
 
-  private void doTest(String action = 'Create method', int actionCount = 1) {
+  private void doTest(String action = CREATE_METHOD, int actionCount = 1) {
     fixture.with {
       def fixes = filterAvailableIntentions(action)
       assert fixes.size() == actionCount
@@ -52,19 +55,19 @@ class CreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
   }
 
   void testAbstract() {
-    doTest('Create abstract method')
+    doTest(CREATE_ABSTRACT_METHOD)
   }
 
   void testAbstractStatic() {
-    doTest('Create abstract method', 0)
+    doTest(CREATE_ABSTRACT_METHOD, 0)
   }
 
   void testAbstractInNonAbstract() {
-    doTest('Create abstract method', 0)
+    doTest(CREATE_ABSTRACT_METHOD, 0)
   }
 
   void testAbstractInInterface() {
-    doTest('Create abstract method')
+    doTest()
   }
 
   void testArrayParam() {
@@ -120,7 +123,7 @@ class CreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
   }
 
   void testUnresolvedArg() {
-    doTest('Create method', 0)
+    doTest(CREATE_METHOD, 0)
   }
 
   void testIntegerCast() {
@@ -129,6 +132,30 @@ class CreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
 
   void testSeveralArguments() {
     doTest()
+  }
+
+  void testConstructor1() {
+    doTest(CREATE_CONSTRUCTOR)
+  }
+
+  void testConstructor2() {
+    doTest(CREATE_CONSTRUCTOR)
+  }
+
+  void testConstructorAnon() {
+    doTest(CREATE_CONSTRUCTOR)
+  }
+
+  void testConstructorInterface() {
+    doTest(CREATE_CONSTRUCTOR, 0)
+  }
+
+  void testConstructorTrait() {
+    doTest(CREATE_CONSTRUCTOR, 0)
+  }
+
+  void testConstructorEnum() {
+    doTest(CREATE_CONSTRUCTOR, 0)
   }
 }
 

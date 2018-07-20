@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -12,7 +12,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,8 @@ public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final Boolean not = (Boolean)infos[0];
-    return new EqualsToEqualityFix(not.booleanValue());
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[1];
+    return EqualsToEqualityFix.buildFix(methodCallExpression, not.booleanValue());
   }
 
   @Override
@@ -55,24 +56,19 @@ public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isEqualsCall(expression)) {
-        return;
-      }
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
-      final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-      if (expressions.length != 1) {
-        return;
-      }
-      final PsiExpression argument = expressions[0];
-      if (!TypeConversionUtil.isBinaryOperatorApplicable(JavaTokenType.EQEQ, qualifier, argument, false)) {
+      EqualityCheck check = EqualityCheck.from(expression);
+      if (check == null) return;
+      PsiExpression left = check.getLeft();
+      PsiExpression right = check.getRight();
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(JavaTokenType.EQEQ, left, right, false)) {
         // replacing with == or != will generate uncompilable code
         return;
       }
-      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(left.getType());
+      if (aClass != null && aClass.isEnum()) {
+        // Enums are reported by separate EqualsCalledOnEnumConstantInspection
+        return;
+      }
       final ProblemHighlightType highlightType;
       if (ClassUtils.isFinalClassWithDefaultEquals(aClass)) {
         highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
@@ -83,9 +79,9 @@ public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
       }
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
       final boolean negated = parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent);
-      final PsiElement nameToken = methodExpression.getReferenceNameElement();
+      final PsiElement nameToken = expression.getMethodExpression().getReferenceNameElement();
       assert nameToken != null;
-      registerError(nameToken, highlightType, Boolean.valueOf(negated));
+      registerError(nameToken, highlightType, negated, expression);
     }
   }
 }

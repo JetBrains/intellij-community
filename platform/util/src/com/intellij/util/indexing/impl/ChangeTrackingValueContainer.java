@@ -36,7 +36,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   private TIntHashSet myInvalidated;
   private volatile ValueContainerImpl<Value> myMerged;
   private final Initializer<Value> myInitializer;
-
+  
   public interface Initializer<T> extends Computable<ValueContainer<T>> {
     Object getLock();
   }
@@ -67,6 +67,14 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
     if (myInvalidated == null) myInvalidated = new TIntHashSet(1);
     myInvalidated.add(inputId);
+  }
+
+  // Resets diff of index value for particular fileId
+  public void dropAssociatedValue(int inputId) {
+    myMerged = null;
+
+    if (myAdded != null) myAdded.removeAssociatedValue(inputId);
+    if (myInvalidated != null) myInvalidated.remove(inputId);
   }
 
   @Override

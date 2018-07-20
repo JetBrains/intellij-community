@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author maxim
@@ -152,8 +153,10 @@ public final class ReplacementBuilder {
     ScriptSupport scriptSupport = replacementVarsMap.get(info.getName());
 
     if (scriptSupport == null) {
-      String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
-      scriptSupport = new ScriptSupport(myProject, StringUtil.stripQuotesAroundValue(constraint), info.getName());
+      final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
+      final List<String> variableNames =
+        options.getVariableDefinitions().stream().map(o -> o.getName()).collect(Collectors.toList());
+      scriptSupport = new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames);
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate(match, null);

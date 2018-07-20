@@ -1342,6 +1342,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-29577
+  public void testRangeTypeByModifications() {
+    doTest("List[int]",
+           "expr = range(10)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.append('a')");
+
+    doTest("List[Union[int, Any]]",
+           "expr = range(10)\n" +
+           "expr.append(var)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr[0] = 'a'\n");
+
+    doTest("List[Union[int, str, None]]",
+           "expr = range(10)\n" +
+           "expr.extend(['a', None])");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.index('a')");
+  }
+
   // PY-1182
   public void testDictTypeByModifications() {
     doTest("Dict[str, Union[int, str]]",
@@ -3179,19 +3205,77 @@ public class PyTypeTest extends PyTestCase {
   public void testGenericTypingProtocolExt() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
-      () -> {
-        doMultiFileTest("int",
-                        "from typing_extensions import Protocol\n" +
-                        "from typing import TypeVar\n" +
-                        "T = TypeVar(\"T\")\n" +
-                        "class MyProto1(Protocol[T]):\n" +
-                        "    def func(self) -> T:\n" +
-                        "        pass\n" +
-                        "class MyClass1(MyProto1[int]):\n" +
-                        "    pass\n" +
-                        "expr = MyClass1().func()");
-      }
+      () -> doMultiFileTest("int",
+                            "from typing_extensions import Protocol\n" +
+                            "from typing import TypeVar\n" +
+                            "T = TypeVar(\"T\")\n" +
+                            "class MyProto1(Protocol[T]):\n" +
+                            "    def func(self) -> T:\n" +
+                            "        pass\n" +
+                            "class MyClass1(MyProto1[int]):\n" +
+                            "    pass\n" +
+                            "expr = MyClass1().func()")
     );
+  }
+
+  // PY-9634
+  public void testAfterIsInstanceAndAttributeUsage() {
+    doTest("Union[int, {bar}]",
+           "def bar(y):\n" +
+           "    if isinstance(y, int):\n" +
+           "        pass\n" +
+           "    print(y.bar)" +
+           "    expr = y");
+  }
+
+  // PY-28052
+  public void testClassAttributeAnnotatedAsAny() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Any",
+                   "from typing import Any\n" +
+                   "\n" +
+                   "\n" +
+                   "class MyClass:\n" +
+                   "    arbitrary: Any = 42\n" +
+                   "\n" +
+                   "\n" +
+                   "expr = MyClass().arbitrary")
+    );
+  }
+
+  // PY-13750
+  public void testBuiltinRound() {
+    doTest("float", "expr = round(1)");
+    doTest("float", "expr = round(1, 1)");
+
+    doTest("float", "expr = round(1.1)");
+    doTest("float", "expr = round(1.1, 1)");
+
+    doTest("float", "expr = round(True)");
+    doTest("float", "expr = round(True, 1)");
+  }
+
+  // PY-28227
+  public void testTypeVarTargetAST() {
+    doTest("T",
+           "from typing import TypeVar\n" +
+           "expr = TypeVar('T')");
+  }
+
+  // PY-28227
+  public void testTypeVarTargetStub() {
+    doMultiFileTest("T",
+                    "from a import T\n" +
+                    "expr = T");
+  }
+
+  // PY-29748
+  public void testAfterIdentityComparison() {
+    doTest("int",
+           "a = 1\n" +
+           "if a is a:\n" +
+           "   expr = a");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

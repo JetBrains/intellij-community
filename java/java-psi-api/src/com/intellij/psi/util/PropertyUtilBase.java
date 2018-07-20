@@ -3,7 +3,6 @@ package com.intellij.psi.util;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.beans.PropertyKind;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -13,7 +12,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +22,6 @@ import java.beans.Introspector;
 import java.util.*;
 
 public class PropertyUtilBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PropertyUtil");
 
   @NonNls protected static final String GET_PREFIX = PropertyKind.GETTER.prefix;
   @NonNls protected static final String IS_PREFIX = PropertyKind.BOOLEAN_GETTER.prefix;
@@ -446,62 +443,56 @@ public class PropertyUtilBase {
   }
 
   /**
-   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateGetterPrototype(com.intellij.psi.PsiField)} or
-   * {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleGetterPrototype(com.intellij.psi.PsiField)}
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateGetterPrototype(PsiField)} or
+   * {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleGetterPrototype(PsiField)}
    * to add @Override annotation
    */
-  @Nullable
+  @NotNull
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
     Project project = field.getProject();
     String name = field.getName();
     String getName = suggestGetterName(field);
-    try {
-      PsiMethod getMethod = factory.createMethod(getName, field.getType());
-      PsiUtil.setModifierProperty(getMethod, PsiModifier.PUBLIC, true);
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiUtil.setModifierProperty(getMethod, PsiModifier.STATIC, true);
-      }
-
-      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, getMethod);
-
-      PsiCodeBlock body = factory.createCodeBlockFromText("{\nreturn " + name + ";\n}", null);
-      getMethod.getBody().replace(body);
-      getMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(getMethod);
-      return getMethod;
+    PsiMethod getMethod = factory.createMethod(getName, field.getType());
+    PsiUtil.setModifierProperty(getMethod, PsiModifier.PUBLIC, true);
+    if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiUtil.setModifierProperty(getMethod, PsiModifier.STATIC, true);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
+
+    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, getMethod);
+
+    PsiCodeBlock body = factory.createCodeBlockFromText("{\nreturn " + name + ";\n}", null);
+    Objects.requireNonNull(getMethod.getBody()).replace(body);
+    getMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(getMethod);
+    return getMethod;
   }
 
   /**
-   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
-   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(com.intellij.psi.PsiField)}
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(PsiField)}
+   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(PsiField)}
    * to add @Override annotation
    */
-  @Nullable
+  @NotNull
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field) {
     return generateSetterPrototype(field, field.getContainingClass());
   }
 
   /**
-   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
-   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(com.intellij.psi.PsiField)}
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(PsiField)}
+   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(PsiField)}
    * to add @Override annotation
    */
-  @Nullable
+  @NotNull
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field, @NotNull PsiClass containingClass) {
     return generateSetterPrototype(field, containingClass, false);
   }
 
   /**
-   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
-   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(com.intellij.psi.PsiField)}
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(PsiField)}
+   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(PsiField)}
    * to add @Override annotation
    */
-  @Nullable
+  @NotNull
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field, @NotNull PsiClass containingClass, boolean returnSelf) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -547,15 +538,9 @@ public class PropertyUtilBase {
     }
     buffer.append("}");
     PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
-    setMethod.getBody().replace(body);
+    Objects.requireNonNull(setMethod.getBody()).replace(body);
     setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
     return setMethod;
-  }
-
-  /** @deprecated use {@link NullableNotNullManager#copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
-  public static void annotateWithNullableStuff(@NotNull PsiModifierListOwner field,
-                                               @NotNull PsiModifierListOwner listOwner) throws IncorrectOperationException {
-    NullableNotNullManager.getInstance(field.getProject()).copyNullableOrNotNullAnnotation(field, listOwner);
   }
 
   @Nullable
@@ -610,8 +595,9 @@ public class PropertyUtilBase {
       final PsiElement resolved = target instanceof PsiReferenceExpression ? ((PsiReferenceExpression)target).resolve() : null;
       if (resolved instanceof PsiField) {
         final PsiField field = (PsiField)resolved;
-        if (psiMember.getContainingClass() == field.getContainingClass() ||
-            psiMember.getContainingClass().isInheritor(field.getContainingClass(), true)) {
+        PsiClass memberClass = psiMember.getContainingClass();
+        PsiClass fieldClass = field.getContainingClass();
+        if (memberClass != null && fieldClass != null && (memberClass == fieldClass || memberClass.isInheritor(fieldClass, true))) {
           return field;
         }
       }

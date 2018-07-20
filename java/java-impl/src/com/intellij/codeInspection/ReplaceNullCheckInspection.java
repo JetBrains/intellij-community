@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
@@ -62,6 +62,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         PsiStatement nextToDelete = context.myNextToDelete;
         int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
         boolean isInfoLevel = noWarningReplacementBigger && ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
+        if (!isOnTheFly && isInfoLevel) return;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
         holder.registerProblem(ifStatement.getFirstChild(), InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
                                new ReplaceWithRequireNonNullFix(method, false));
@@ -260,7 +261,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         nonNullDiff = qualifierDiff.getRight();
         if(!ExpressionUtils.isReferenceTo(nullDiff, variable)) return null;
       }
-      if(NullnessUtil.getExpressionNullness(nonNullDiff, true) != Nullness.NOT_NULL) return null;
+      if(NullabilityUtil.getExpressionNullability(nonNullDiff, true) != Nullability.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nonNullDiff)) return null;
       return new NotNullContext(nonNullDiff, nullDiff, nullBranch, reference, ifStatement, toDelete, false);
     }
@@ -292,10 +293,10 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
     @Nullable
     static TernaryNotNullContext from(@NotNull PsiConditionalExpression ternary) {
-      PsiBinaryExpression binOp = tryCast(ternary.getCondition(), PsiBinaryExpression.class);
+      PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(ternary.getCondition()), PsiBinaryExpression.class);
       if(binOp == null) return null;
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
-      PsiReferenceExpression referenceExpression = tryCast(value, PsiReferenceExpression.class);
+      PsiReferenceExpression referenceExpression = tryCast(PsiUtil.skipParenthesizedExprDown(value), PsiReferenceExpression.class);
       if(referenceExpression == null) return null;
       PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
       if(variable == null) return null;
@@ -304,7 +305,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       if(ClassUtils.isPrimitive(variable.getType())) return null;
       PsiExpression nonNullBranch = negated ? ternary.getThenExpression() : ternary.getElseExpression();
       if(!ExpressionUtils.isReferenceTo(nonNullBranch, variable)) return null;
-      if(NullnessUtil.getExpressionNullness(nullBranch, true) != Nullness.NOT_NULL) return null;
+      if(NullabilityUtil.getExpressionNullability(nullBranch, true) != Nullability.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nullBranch)) return null;
       return new TernaryNotNullContext(ternary, nullBranch, referenceExpression);
     }

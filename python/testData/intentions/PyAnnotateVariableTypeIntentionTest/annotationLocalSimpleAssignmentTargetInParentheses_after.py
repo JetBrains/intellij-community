@@ -1,7 +1,4 @@
-from typing import Any
-
-
 def func():
-    var: [Any]
+    var: [object]
     (var) = 'spam'
     var

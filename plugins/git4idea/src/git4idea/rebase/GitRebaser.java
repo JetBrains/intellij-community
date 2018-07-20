@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -43,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -291,8 +278,8 @@ public class GitRebaser {
     myGit.runCommand(handler).getOutputOrThrow();
   }
 
-  private static GitConflictResolver.Params makeParamsForRebaseConflict() {
-    return new GitConflictResolver.Params().
+  private GitConflictResolver.Params makeParamsForRebaseConflict() {
+    return new GitConflictResolver.Params(myProject).
       setReverse(true).
       setErrorNotificationTitle("Can't continue rebase").
       setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.").
@@ -347,13 +334,13 @@ public class GitRebaser {
     @NotNull private final VirtualFile myRoot;
 
     public ConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
-      super(project, git, Collections.singleton(root), makeParams());
+      super(project, git, Collections.singleton(root), makeParams(project));
       myRebaser = rebaser;
       myRoot = root;
     }
 
-    private static Params makeParams() {
-      Params params = new Params();
+    private static Params makeParams(Project project) {
+      Params params = new Params(project);
       params.setReverse(true);
       params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
       params.setErrorNotificationTitle("Can't continue rebase");
@@ -380,7 +367,7 @@ public class GitRebaser {
 
     /**
      * The constructor from fields that is expected to be
-     * accessed only from {@link git4idea.rebase.GitRebaseEditorService}.
+     * accessed only from {@link GitRebaseEditorService}.
      *
      * @param rebaseEditorService
      * @param root      the git repository root
@@ -413,8 +400,7 @@ public class GitRebaser {
             String commit = s.spaceToken();
             pickLines.put(commit, "pick " + commit + " " + s.line());
           }
-          PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), CharsetToolkit.UTF8));
-          try {
+          try (PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), StandardCharsets.UTF_8))) {
             for (String commit : myCommits) {
               String key = pickLines.headMap(commit + "\u0000").lastKey();
               if (key == null || !commit.startsWith(key)) {
@@ -422,9 +408,6 @@ public class GitRebaser {
               }
               w.print(pickLines.get(key) + "\n");
             }
-          }
-          finally {
-            w.close();
           }
           return 0;
         }

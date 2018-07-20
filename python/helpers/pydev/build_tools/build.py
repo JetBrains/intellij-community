@@ -104,13 +104,13 @@ def build():
 
 
         env = os.environ.copy()
-        if sys.version_info[:2] in ((2,6), (2,7), (3,5), (3, 6)):
+        if sys.version_info[:2] in ((2, 6), (2, 7), (3, 5), (3, 6), (3, 7)):
             import setuptools # We have to import it first for the compiler to be found
             from distutils import msvc9compiler
 
-            if sys.version_info[:2] in ((2,6), (2,7)):
+            if sys.version_info[:2] in ((2, 6), (2, 7)):
                 vcvarsall = msvc9compiler.find_vcvarsall(9.0)
-            elif sys.version_info[:2] in ((3,5), (3,6)):
+            elif sys.version_info[:2] in ((3, 5), (3, 6), (3, 7)):
                 vcvarsall = msvc9compiler.find_vcvarsall(14.0)
             if vcvarsall is None or not os.path.exists(vcvarsall):
                 raise RuntimeError('Error finding vcvarsall.')
@@ -155,6 +155,7 @@ def build():
     ]+additional_args
     print('Calling args: %s' % (args,))
     subprocess.check_call(args, env=env,)
+
 
 if __name__ == '__main__':
     use_cython = os.getenv('PYDEVD_USE_CYTHON', None)

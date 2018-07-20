@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Represents the iterator which traverses the iterable within the loop
  *
@@ -68,7 +70,7 @@ public class IteratorDeclaration {
     PsiCodeBlock block =
       element instanceof PsiCodeBlock ? (PsiCodeBlock)element : PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
     if (block == null) return null;
-    return StreamEx.of(DefUseUtil.getRefs(block, myIterator, myIterator.getInitializer()))
+    return StreamEx.of(DefUseUtil.getRefs(block, myIterator, Objects.requireNonNull(myIterator.getInitializer())))
       .filter(e -> PsiTreeUtil.isAncestor(parent, e, false))
       .collect(MoreCollectors.onlyOne()).orElse(null);
   }
@@ -100,7 +102,7 @@ public class IteratorDeclaration {
     PsiElement element = declaration.getDeclaredElements()[0];
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable variable = (PsiLocalVariable)element;
-    PsiExpression initializer = variable.getInitializer();
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
     if (!(initializer instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
     if (!call.getArgumentList().isEmpty()) return null;

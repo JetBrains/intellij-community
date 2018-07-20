@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -171,6 +171,18 @@ public class InspectionsConfigTreeTable extends TreeTable {
     getEmptyText().setText("No enabled inspections available");
   }
 
+  @Nullable
+  public InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
+    TreePath[] paths = getTree().getSelectionPaths();
+    return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool
+           ? (InspectionConfigTreeNode.Tool)paths[0].getLastPathComponent()
+           : null;
+  }
+
+  public Collection<InspectionConfigTreeNode.Tool> getSelectedToolNodes() {
+    return InspectionsAggregationUtil.getInspectionsNodes(getTree().getSelectionPaths());
+  }
+
   @Override
   public void paint(@NotNull Graphics g) {
     super.paint(g);
@@ -315,7 +327,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final HashSet<HighlightDisplayKey> tools = new HashSet<>();
       final List<InspectionConfigTreeNode> nodes = new ArrayList<>();
 
-      for (TreePath selectionPath : myTreeTable.getTree().getSelectionPaths()) {
+      TreePath[] selectionPaths = myTreeTable.getTree().getSelectionPaths();
+      if (selectionPaths == null) return;
+      for (TreePath selectionPath : selectionPaths) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
         collectInspectionFromNodes(node, tools, nodes);
       }

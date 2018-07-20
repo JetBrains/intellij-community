@@ -67,7 +67,7 @@ class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.Sta
     var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
 
     @JvmField
-    var SHARED_SETTINGS = SharedSettings()
+    var SHARED_SETTINGS: SharedSettings = SharedSettings()
   }
 
   private var myState: State = State()

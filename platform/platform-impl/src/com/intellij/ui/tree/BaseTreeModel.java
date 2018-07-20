@@ -20,7 +20,7 @@ public abstract class BaseTreeModel<T> extends AbstractTreeModel implements Chil
 
   @Override
   public int getChildCount(Object object) {
-    List<T> list = getChildren(object);
+    List<? extends T> list = getChildren(object);
     return list == null ? 0 : list.size();
   }
 
@@ -28,14 +28,14 @@ public abstract class BaseTreeModel<T> extends AbstractTreeModel implements Chil
   @Override
   public Object getChild(Object object, int index) {
     if (index < 0) return null;
-    List<T> list = getChildren(object);
+    List<? extends T> list = getChildren(object);
     return list != null && index < list.size() ? list.get(index) : null;
   }
 
   @Override
   @SuppressWarnings("SuspiciousMethodCalls")
   public int getIndexOfChild(Object object, Object child) {
-    List<T> list = getChildren(object);
+    List<? extends T> list = getChildren(object);
     return list == null ? -1 : getChildren(object).indexOf(child);
   }
 }

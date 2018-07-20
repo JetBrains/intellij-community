@@ -38,13 +38,15 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.util.*;
+import com.intellij.util.FilteredQuery;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 // TODO this should eventually replace PackageUtil from intellij.java.impl

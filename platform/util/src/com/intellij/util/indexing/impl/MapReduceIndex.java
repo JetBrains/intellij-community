@@ -255,7 +255,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     if (myForwardIndex != null) {
       return myForwardIndex.getDiffBuilder(inputId);
     }
-    return new EmptyInputDataDiffBuilder(inputId);
+    return new EmptyInputDataDiffBuilder<Key, Value>(inputId);
   }
 
   @NotNull
@@ -334,6 +334,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       getWriteLock().unlock();
     }
   }
+
+  public void removeTransientDataForFile(int inputId) {}
 
   public static <Key, Value> void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<Key, Value> data,
                                                                          @NotNull IndexId<Key, Value> indexId,

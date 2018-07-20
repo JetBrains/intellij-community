@@ -11,10 +11,11 @@
 
   <actions>
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
-            text="Open in terminal"
+            text="Open in Terminal"
             description="Open current file location in terminal"
             icon="TerminalIcons.OpenTerminal_13x13">
-      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+      <add-to-group group-id="RevealGroup" anchor="last"/>
+      <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
   </actions>
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -72,18 +73,25 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     Project project = e.getData(CommonDataKeys.PROJECT);
     ListSelection<Change> selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
     boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()));
-    boolean isToolbar = "ChangesBrowser".equals(e.getPlace());
 
-    e.getPresentation().setEnabled(project != null && !isToolbar && selection != null && !isInAir && canShowDiff(selection.getList()));
-    e.getPresentation().setVisible(!isToolbar);
+    e.getPresentation().setEnabled(project != null && selection != null && !isInAir && canShowDiff(selection.getList()));
   }
 
   @Nullable
   private Change getChangeWithLocal(@NotNull Change c) {
     ContentRevision revision = myUseBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
+    ContentRevision otherRevision = myUseBeforeVersion ? c.getAfterRevision() : c.getBeforeRevision();
     if (!isValidRevision(revision)) return null;
 
-    ContentRevision contentRevision = CurrentContentRevision.create(revision.getFile());
+    FilePath filePath = revision.getFile();
+    if (filePath.getVirtualFile() == null && otherRevision != null) {
+      FilePath otherFile = otherRevision.getFile();
+      if (otherFile.getVirtualFile() != null) {
+        filePath = otherFile;
+      }
+    }
+
+    ContentRevision contentRevision = CurrentContentRevision.create(filePath);
     return new Change(revision, contentRevision);
   }
 

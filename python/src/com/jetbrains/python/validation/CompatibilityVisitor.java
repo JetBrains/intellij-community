@@ -20,6 +20,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -623,6 +624,19 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         else if (seenKeywordContainer) {
           registerProblem(argument, "Positional argument after **expression", new PyRemoveArgumentQuickFix());
         }
+      }
+    }
+
+    /* check for trailing comma */
+    PyExpression lastArg = ContainerUtil.getLastItem(Arrays.asList(callExpression.getArguments()));
+    if (lastArg instanceof PyStarArgument) {
+      PsiElement sibling = PyPsiUtils.getNextNonWhitespaceSibling(lastArg);
+      if (sibling != null && sibling.getNode().getElementType() == PyTokenTypes.COMMA) {
+        boolean isKeyword = ((PyStarArgument)lastArg).isKeyword();
+        registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                       "Python versions < 3.5 do not allow a trailing comma after "
+                                       + (isKeyword ? "**" : "*") + "expression",
+                                       sibling);
       }
     }
   }

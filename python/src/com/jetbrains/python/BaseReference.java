@@ -32,10 +32,12 @@ public abstract class BaseReference implements PsiReference, PyUserInitiatedReso
     myElement = element;
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return new TextRange(0, myElement.getTextLength());
   }

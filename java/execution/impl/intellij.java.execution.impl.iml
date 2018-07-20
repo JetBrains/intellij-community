@@ -24,6 +24,8 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
   </component>
   <component name="copyright">
     <Base>

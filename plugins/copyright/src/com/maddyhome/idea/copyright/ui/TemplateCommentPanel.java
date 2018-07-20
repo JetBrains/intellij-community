@@ -99,7 +99,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
   }
 
   private final EventListenerList listeners = new EventListenerList();
-  private boolean allowBlock = false;
+  private final boolean allowBlock;
 
 
   public TemplateCommentPanel(FileType fileType, TemplateCommentPanel parentPanel, String[] locations, Project project) {
@@ -233,14 +233,8 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     res.setSeparateAfter(cbSeparatorAfter.isSelected());
     res.setSeparateBefore(cbSeparatorBefore.isSelected());
     try {
-      Object val = Integer.parseInt(txtLengthBefore.getText());
-      if (val instanceof Number) {
-        res.setLenBefore(((Number)val).intValue());
-      }
-      val = Integer.parseInt(txtLengthAfter.getText());
-      if (val instanceof Number) {
-        res.setLenAfter(((Number)val).intValue());
-      }
+      res.setLenBefore(Integer.parseInt(txtLengthBefore.getText()));
+      res.setLenAfter(Integer.parseInt(txtLengthAfter.getText()));
     }
     catch (NumberFormatException e) {
       //leave blank

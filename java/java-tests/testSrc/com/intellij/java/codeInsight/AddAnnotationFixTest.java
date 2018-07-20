@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsListener;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -10,7 +9,6 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -41,6 +39,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -72,12 +71,11 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myModule = builder.getFixture().getModule();
     myProject = myFixture.getProject();
 
-    CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = true;
+    JavaCodeStyleSettings.getInstance(myProject).USE_EXTERNAL_ANNOTATIONS = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = false;
     try {
       myFixture.tearDown();
     }
@@ -340,25 +338,19 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     stopListeningAndCheckEvents();
 
     startListening(method, AnnotationUtil.NOT_NULL, false);
-    new WriteCommandAction(myProject){
-      @Override
-      protected void run(@NotNull final Result result) {
-        ExternalAnnotationsManager.getInstance(myProject).editExternalAnnotation(method, AnnotationUtil.NOT_NULL, null);
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      ExternalAnnotationsManager.getInstance(myProject).editExternalAnnotation(method, AnnotationUtil.NOT_NULL, null);
+    });
     stopListeningAndCheckEvents();
 
     startListening(method, AnnotationUtil.NOT_NULL, false);
-    new WriteCommandAction(myProject){
-      @Override
-      protected void run(@NotNull final Result result) {
-        ExternalAnnotationsManager.getInstance(myProject).deannotate(method, AnnotationUtil.NOT_NULL);
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      ExternalAnnotationsManager.getInstance(myProject).deannotate(method, AnnotationUtil.NOT_NULL);
+    });
     stopListeningAndCheckEvents();
   }
 
-  public void testListenerNotifiedOnExternalChanges() {
+  public void testListenerNotifiedOnExternalChanges() throws IOException {
     addDefaultLibrary();
     myFixture.configureByFiles("/content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
@@ -366,16 +358,13 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     ExternalAnnotationsManager.getInstance(myProject).findExternalAnnotation(getOwner(), AnnotationUtil.NOT_NULL); // force creating service
 
     startListeningForExternalChanges();
-    new WriteCommandAction(myProject) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
-        assert file != null;
-        String newText = "  " + StreamUtil.readText(file.getInputStream(), "UTF-8") + "      ";
-        FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), newText);
-        file.refresh(false, false);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
+      assert file != null;
+      String newText = "  " + StreamUtil.readText(file.getInputStream(), "UTF-8") + "      ";
+      FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), newText);
+      file.refresh(false, false);
+    });
     stopListeningAndCheckEvents();
   }
 

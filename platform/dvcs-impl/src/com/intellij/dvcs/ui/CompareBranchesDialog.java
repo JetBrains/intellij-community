@@ -16,16 +16,13 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.ui.TabbedPaneImpl;
-import com.intellij.util.Function;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 

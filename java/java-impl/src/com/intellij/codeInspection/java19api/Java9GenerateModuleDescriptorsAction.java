@@ -42,7 +42,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
@@ -158,7 +158,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     );
   }
 
-  private static void collectClassFiles(@NotNull File file, @NotNull List<File> files) {
+  private static void collectClassFiles(@NotNull File file, @NotNull List<? super File> files) {
     final File[] children = file.listFiles();
     if (children != null) { // is Directory
       for (File child : children) {
@@ -347,7 +347,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return moduleInfo;
     }
 
-    private static void createFiles(Project project, List<ModuleInfo> moduleInfos, ProgressIndicator indicator) {
+    private static void createFiles(Project project, List<? extends ModuleInfo> moduleInfos, ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
       int count = 0;
       double total = moduleInfos.size();
@@ -568,7 +568,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   private static class UniqueModuleNames {
-    private final ObjectIntHashMap<String> myCounts = new ObjectIntHashMap<>();
+    private final UniqueNameGenerator myNameGenerator;
 
     public UniqueModuleNames(@NotNull Project project) {
       LOG.assertTrue(!DumbService.isDumb(project), "Module name index should be ready");
@@ -576,23 +576,17 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
       GlobalSearchScope scope = ProjectScope.getAllScope(project);
 
+      List<PsiJavaModule> modules = new ArrayList<>();
       for (String key : index.getAllKeys(project)) {
-        for (PsiJavaModule module : index.get(key, project, scope)) {
-          String name = ReadAction.compute(() -> module.getName());
-          myCounts.put(name, 1);
-        }
+        modules.addAll(index.get(key, project, scope));
       }
+      myNameGenerator = new UniqueNameGenerator(modules, module -> ReadAction.compute(() -> module.getName()));
     }
 
     @NotNull
     public String getUniqueName(@NotNull Module module) {
       String name = NameConverter.convertModuleName(module.getName());
-      int count = myCounts.get(name, 0);
-      myCounts.put(name, count + 1);
-      if (count != 0) {
-        name += count;
-      }
-      return name;
+      return myNameGenerator.generateUniqueName(name);
     }
   }
 

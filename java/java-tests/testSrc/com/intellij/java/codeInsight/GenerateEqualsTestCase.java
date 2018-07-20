@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -22,7 +23,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -68,22 +68,16 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
                                   Function<PsiField[], PsiField[]> nonNull,
                                   boolean insertOverride, 
                                   boolean useAccessors) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS = true;
-    settings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION = insertOverride;
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
-    try {
-      PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());
-      if (element == null) return;
-      PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      if (aClass == null) return;
-      PsiField[] fields = aClass.getFields();
-      new GenerateEqualsHelper(getProject(), aClass, equals.fun(fields), hashCode.fun(fields), nonNull.fun(fields), false, useAccessors).invoke();
-      FileDocumentManager.getInstance().saveAllDocuments();
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject()).clone();
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
+    JavaCodeStyleSettings.getInstance(getProject()).INSERT_OVERRIDE_ANNOTATION = insertOverride;
+    PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());
+    if (element == null) return;
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (aClass == null) return;
+    PsiField[] fields = aClass.getFields();
+    new GenerateEqualsHelper(getProject(), aClass, equals.fun(fields), hashCode.fun(fields), nonNull.fun(fields), false, useAccessors).invoke();
+    FileDocumentManager.getInstance().saveAllDocuments();
   }
 
   private static PsiField[] getIndexed(PsiField[] fields, int[] indices) {

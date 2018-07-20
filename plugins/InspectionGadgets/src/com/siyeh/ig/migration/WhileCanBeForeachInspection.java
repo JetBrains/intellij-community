@@ -18,10 +18,10 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -87,7 +87,6 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       if (iteratorContentType == null) {
         return;
       }
-      final Project project = whileStatement.getProject();
       final PsiStatement firstStatement = ForCanBeForeachInspection.getFirstStatement(body);
       final boolean isDeclaration = ForCanBeForeachInspection.isIteratorNextDeclaration(firstStatement, iterator, contentType);
       final PsiStatement statementToSkip;
@@ -112,7 +111,7 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       }
       @NonNls final StringBuilder out = new StringBuilder();
       out.append("for(");
-      if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+      if (JavaCodeStyleSettings.getInstance(whileStatement.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
         out.append("final ");
       }
       out.append(iteratorContentType.getCanonicalText()).append(' ').append(contentVariableName).append(": ");
@@ -138,7 +137,16 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
           break;
         }
         final PsiExpression expression = assignment.getRExpression();
-        initializer.delete();
+        PsiTypeElement typeElement = iterator.getTypeElement();
+        if (typeElement.isInferredType() &&
+            (expression == null || 
+             PsiType.NULL.equals(expression.getType()) || 
+             expression instanceof PsiArrayInitializerExpression || 
+             expression instanceof PsiFunctionalExpression) &&     
+            PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+          deleteIterator = false;
+          break;
+        }
         iterator.setInitializer(expression);
         final PsiElement statement = assignment.getParent();
         final PsiElement lastChild = statement.getLastChild();

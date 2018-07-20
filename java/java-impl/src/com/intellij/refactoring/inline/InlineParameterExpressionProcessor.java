@@ -38,6 +38,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -315,20 +316,11 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @Nullable
   private PsiElement findAnchorForLocalVariableDeclaration(PsiCodeBlock body) {
-    PsiElement anchor = body.getLBrace();
-    if (myMethod.isConstructor()) {
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          final String referenceName = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName();
-          if (PsiKeyword.SUPER.equals(referenceName) || PsiKeyword.THIS.equals(referenceName)) {
-            anchor = statements[0];
-          }
-        }
-      }
+    PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(myMethod);
+    if (call != null) {
+      return call.getParent();
     }
-    return anchor;
+    return body.getLBrace();
   }
 
   private static class LocalReplacementUsageInfo extends UsageInfo {

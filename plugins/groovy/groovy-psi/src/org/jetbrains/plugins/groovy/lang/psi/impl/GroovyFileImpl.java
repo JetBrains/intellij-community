@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -9,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
@@ -42,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPackages;
 import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.processBindings;
 
 /**
@@ -127,27 +123,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     }
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
-
-    if (shouldProcessPackages(processor)) {
-      NameHint nameHint = processor.getHint(NameHint.KEY);
-      String expectedName = nameHint != null ? nameHint.getName(state) : null;
-
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      if (expectedName != null) {
-        final PsiPackage pkg = facade.findPackage(expectedName);
-        if (pkg != null && !processor.execute(pkg, state)) {
-          return false;
-        }
-      }
-      else {
-        PsiPackage defaultPackage = facade.findPackage("");
-        if (defaultPackage != null) {
-          for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
-            if (!ResolveUtil.processElement(processor, subPackage, state)) return false;
-          }
-        }
-      }
-    }
 
     if (ResolveUtil.shouldProcessProperties(classHint)) {
       if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {

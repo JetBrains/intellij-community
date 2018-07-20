@@ -140,11 +140,13 @@ abstract class LightClassReferenceBase extends LightElement implements PsiJavaCo
     return false;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;

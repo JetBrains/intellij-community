@@ -16,6 +16,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.IntDistribution
+import org.jetbrains.jetCheck.PropertyChecker
 
 /**
  * @author peter
@@ -138,7 +139,7 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
   }
 
   fun testPsiDocSynchronization() {
-    ImperativeCommand.checkScenarios { RandomAstChanges() }
+    PropertyChecker.checkScenarios { RandomAstChanges() }
   }
 
   private inner class RandomAstChanges: ImperativeCommand {

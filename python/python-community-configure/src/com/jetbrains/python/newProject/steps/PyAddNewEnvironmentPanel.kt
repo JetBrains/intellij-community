@@ -2,6 +2,7 @@
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PySdkSettings
@@ -9,6 +10,7 @@ import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
@@ -18,7 +20,7 @@ import javax.swing.JList
  * @author vlan
  */
 class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?, preferredType: String?) : PyAddSdkPanel() {
-  override val panelName = "New environment using"
+  override val panelName: String = "New environment using"
   override val nameExtensionComponent: JComboBox<PyAddNewEnvPanel>
 
   override var newProjectPath: String? = newProjectPath
@@ -29,10 +31,12 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
       }
     }
 
-  private val panels = listOf(PyAddNewVirtualEnvPanel(null, existingSdks, newProjectPath),
-                              PyAddNewCondaEnvPanel(null, existingSdks, newProjectPath))
+  // TODO: Introduce a method in PyAddSdkProvider or in a Python SDK Provider
+  private val panels = listOf(PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath),
+                              PyAddPipEnvPanel(null, null, existingSdks, newProjectPath),
+                              PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath))
 
-  var selectedPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
+  var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
 
@@ -80,7 +84,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     return createdSdk
   }
 
-  override fun validateAll() = selectedPanel.validateAll()
+  override fun validateAll(): List<ValidationInfo> = selectedPanel.validateAll()
 
   override fun addChangeListener(listener: Runnable) {
     for (panel in panels) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.scopeChooser;
 
@@ -303,11 +301,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void createScope(final boolean isLocal, String title, final PackageSet set) {
+    NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
     final String newName = Messages.showInputDialog(myTree, IdeBundle.message("add.scope.name.label"), title,
                                                     Messages.getInformationIcon(), createUniqueName(), new InputValidator() {
       @Override
       public boolean checkInput(String inputString) {
-        final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
         for (NamedScope scope : holder.getPredefinedScopes()) {
           if (Comparing.strEqual(scope.getName(), inputString.trim())) {
             return false;
@@ -322,8 +320,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
     });
     if (newName != null) {
-      final NamedScope scope = new NamedScope(newName, set);
-      addNewScope(scope, isLocal);
+      addNewScope(holder.createScope(newName, set), isLocal);
     }
   }
 
@@ -452,10 +449,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     public void actionPerformed(AnActionEvent e) {
       NamedScope scope = (NamedScope)getSelectedObject();
       if (scope != null) {
-        final NamedScope newScope = scope.createCopy();
         final ScopeConfigurable configurable =
           (ScopeConfigurable)((MyNode)myTree.getSelectionPath().getLastPathComponent()).getConfigurable();
-        addNewScope(new NamedScope(createUniqueName(), newScope.getValue()), configurable.getHolder() == myLocalScopesManager);
+        NamedScopesHolder holder = configurable.getHolder();
+        PackageSet set = scope.getValue();
+        addNewScope(holder.createScope(createUniqueName(), set == null ? null : set.createCopy()), holder == myLocalScopesManager);
       }
     }
 

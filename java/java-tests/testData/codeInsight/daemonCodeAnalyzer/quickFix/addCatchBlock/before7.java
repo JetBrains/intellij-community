@@ -9,6 +9,6 @@ class Test {
     }
 
     void m() {
-        try (MyResource r = <caret>new MyResource())
+        try (MyResource r = new My<caret>Resource())
     }
 }

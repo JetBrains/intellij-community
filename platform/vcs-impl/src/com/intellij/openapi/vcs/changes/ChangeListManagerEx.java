@@ -31,6 +31,12 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);
 
   /**
+   * @param automatic true is changelist switch operation was not triggered by user (and, for example, will be reverted soon)
+   *                  4ex: This flag disables automatic empty changelist deletion.
+   */
+  public abstract void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic);
+
+  /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
    * They will be shown when notifications are unblocked.
    */

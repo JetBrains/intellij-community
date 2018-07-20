@@ -17,13 +17,13 @@ package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.find.impl.FindDialog;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiTask;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButton;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.junit.Assert.assertNotNull;
@@ -55,7 +55,7 @@ public class FindDialogFixture extends IdeaDialogFixture<FindDialog> {
 
   @NotNull
   public FindDialogFixture clickFind() {
-    findAndClickButton(this, "Find");
+    GuiTestUtil.INSTANCE.findAndClickButton(this, "Find");
     return this;
   }
 }

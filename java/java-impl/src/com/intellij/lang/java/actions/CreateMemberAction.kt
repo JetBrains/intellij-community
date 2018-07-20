@@ -11,8 +11,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.createSmartPointer
 
-internal abstract class CreateMemberAction(
-  target: PsiClass,
+internal abstract class CreateTargetAction<T : PsiElement>(
+  target: T,
   protected open val request: ActionRequest
 ) : IntentionAction {
 
@@ -22,14 +22,19 @@ internal abstract class CreateMemberAction(
     return myTargetPointer.element != null && request.isValid
   }
 
-  protected val target: PsiClass
+  protected val target: T
     get() = requireNotNull(myTargetPointer.element) {
       "Don't access this property if isAvailable() returned false"
     }
 
-  open fun getTarget(): JvmClass = target
-
   override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = target
 
   override fun startInWriteAction(): Boolean = true
+}
+
+internal abstract class CreateMemberAction(target: PsiClass, request: ActionRequest
+) : CreateTargetAction<PsiClass>(target, request) {
+
+  open fun getTarget(): JvmClass = target
+
 }

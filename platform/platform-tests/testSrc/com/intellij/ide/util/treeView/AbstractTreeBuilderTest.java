@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -21,7 +7,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.WaitFor;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,18 +119,22 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
   @Override
   protected void tearDown() throws Exception {
-    myElementUpdate.clear();
-    myElementUpdateHook = null;
-    myStructure.setReValidator(null);
-    super.tearDown();
+    try {
+      myElementUpdate.clear();
+      myElementUpdateHook = null;
+      myStructure.setReValidator(null);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Nullable
   Node removeFromParentButKeepRef(NodeElement child) {
     NodeElement parent = (NodeElement)myStructure.getParentElement(child);
     AbstractTreeBuilderTest.Node node = myStructure.getNodeFor(parent).remove(child, false);
-    Assert.assertEquals(parent, myStructure.getParentElement(child));
-    Assert.assertFalse(Arrays.asList(myStructure._getChildElements(parent, false)).contains(child));
+    assertEquals(parent, myStructure.getParentElement(child));
+    assertFalse(Arrays.asList(myStructure._getChildElements(parent, false)).contains(child));
 
     return node;
   }
@@ -166,7 +155,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       }
     }
 
-    Assert.assertEquals(expected, result.toString());
+    assertEquals(expected, result.toString());
     mySortedParent.clear();
   }
 
@@ -180,7 +169,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
   void assertUpdates(String expected) {
     List<Object> entries = Arrays.asList(myElementUpdate.values().toArray());
-    Assert.assertEquals(expected + "\n", PlatformTestUtil.print(entries) + "\n");
+    assertEquals(expected + "\n", PlatformTestUtil.print(entries) + "\n");
     myElementUpdate.clear();
   }
 
@@ -210,7 +199,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
 
   void hideTree() throws Exception {
-    Assert.assertFalse(getMyBuilder().myWasCleanedUp);
+    assertFalse(getMyBuilder().myWasCleanedUp);
 
     invokeLaterIfNeeded(() -> getBuilder().getUi().deactivate());
 
@@ -227,7 +216,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
     waitFor.assertCompleted("Tree cleanup was not performed. isCancelledReadyState=" + getBuilder().getUi().isCancelledReady());
 
-    Assert.assertTrue(getMyBuilder().myWasCleanedUp);
+    assertTrue(getMyBuilder().myWasCleanedUp);
   }
 
   void buildNode(String elementText, boolean select) throws Exception {
@@ -254,7 +243,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       }
     }, o -> done[0]);
 
-    Assert.assertNotNull(findNode(element, select));
+    assertNotNull(findNode(element, select));
   }
 
 
@@ -271,7 +260,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   @Nullable
   private DefaultMutableTreeNode findNode(DefaultMutableTreeNode treeNode, NodeElement toFind, boolean shouldBeSelected) {
     final Object object = treeNode.getUserObject();
-    Assert.assertNotNull(object);
+    assertNotNull(object);
     if (!(object instanceof NodeDescriptor)) return null;
     final NodeElement element = (NodeElement)((NodeDescriptor)object).getElement();
     if (toFind.equals(element)) return treeNode;
@@ -281,7 +270,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       if (result != null) {
         if (shouldBeSelected) {
           final TreePath path = new TreePath(result.getPath());
-          Assert.assertTrue("Path should be selected: " + path, myTree.isPathSelected(path));
+          assertTrue("Path should be selected: " + path, myTree.isPathSelected(path));
         }
         return result;
       }
@@ -289,7 +278,6 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
     return null;
   }
-
 
   class Node  {
 
@@ -359,7 +347,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
     public void delete() {
       final NodeElement parent = (NodeElement)myStructure.getParentElement(myElement);
-      Assert.assertNotNull(myElement.toString(), parent);
+      assertNotNull(myElement.toString(), parent);
 
       myStructure.getNodeFor(parent).remove(myElement, true);
     }
@@ -550,7 +538,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
         if ("update".equals(action)) {
           myUpdateCount++;
         } else if ("getChildren".equals(action)) {
-          Assert.assertTrue("getChildren() is called before update(), node=" + myElement, myUpdateCount > 0);
+          assertTrue("getChildren() is called before update(), node=" + myElement, myUpdateCount > 0);
           myGetChildrenCount++;
         }
       }

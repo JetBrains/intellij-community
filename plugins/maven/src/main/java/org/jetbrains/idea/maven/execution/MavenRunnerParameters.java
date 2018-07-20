@@ -221,6 +221,7 @@ public class MavenRunnerParameters implements Cloneable {
    * @deprecated use getProfileMap()
    * @return
    */
+  @Deprecated
   @Transient
   public Collection<String> getProfiles() {
     return Maps.filterValues(myProfilesMap, Predicates.equalTo(true)).keySet();
@@ -231,6 +232,7 @@ public class MavenRunnerParameters implements Cloneable {
    * @deprecated use getProfileMap()
    * @param profiles
    */
+  @Deprecated
   public void setProfiles(@Nullable Collection<String> profiles) {
     if (profiles != null) {
       for (String profile : profiles) {

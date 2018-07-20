@@ -113,7 +113,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, true);
     setGlassPane(glassPane);
     myGlassPaneInitialized = true;
-    UIUtil.decorateFrame(this);
+    UIUtil.decorateWindowHeader(this);
     glassPane.setVisible(false);
   }
 
@@ -263,12 +263,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
           public void dispose() {
             componentFactory.disposeComponent(myStatusBar, c);
           }
-        }, "before " + MemoryUsagePanel.WIDGET_ID);
+        }, StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
       }
     }
 
     myStatusBar.addWidget(myMemoryWidget);
-    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
+    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
 
     setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
   }
@@ -326,7 +326,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    UIUtil.decorateFrame(this);
+    UIUtil.decorateWindowHeader(this);
     setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();

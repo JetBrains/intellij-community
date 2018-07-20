@@ -17,10 +17,10 @@ package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.java.codeInspection.DataFlowInspectionTestCase;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -37,7 +37,7 @@ public class BytecodeAnalysisResultsHighlightingTest extends DataFlowInspectionT
       @Override
       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
         super.configureModule(module, model, contentEntry);
-        PsiTestUtil.addLibrary(module, model, "velocity", PathManagerEx.getCommunityHomePath() + "/lib", "velocity.jar");
+        PsiTestUtil.addProjectLibrary(model, "velocity", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Velocity"));
       }
     };
   }

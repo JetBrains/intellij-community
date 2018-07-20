@@ -1,4 +1,13 @@
 c<caret>
 -----
+abstract
 char
 class
+interface
+package
+protected
+public
+static
+strictfp
+switch
+synchronized

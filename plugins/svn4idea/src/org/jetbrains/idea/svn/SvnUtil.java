@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
@@ -165,12 +165,6 @@ public class SvnUtil {
     if (progress != null && progress.isCanceled()) {
       throw new ProcessCanceledException();
     }
-  }
-
-  @Nullable
-  public static String getExactLocation(final SvnVcs vcs, File path) {
-    Info info = vcs.getInfo(path);
-    return info != null && info.getURL() != null ? info.getURL().toString() : null;
   }
 
   @NotNull
@@ -415,6 +409,11 @@ public class SvnUtil {
     return FileUtil.filesEqual(file, getWorkingCopyRoot(file));
   }
 
+  public static boolean isWorkingCopyRoot(@NotNull VirtualFile file) {
+    VirtualFile adminDir = file.findChild(SVN_ADMIN_DIR_NAME);
+    return adminDir != null && adminDir.findChild(WC_DB_FILE_NAME) != null;
+  }
+
   @NotNull
   public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) {
     assert fullUrl.startsWith(baseUrl);
@@ -554,6 +553,17 @@ public class SvnUtil {
     return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : null;
   }
 
+  @Nullable
+  public static VirtualFile getWorkingCopyRoot(@NotNull VirtualFile file) {
+    do {
+      if (isWorkingCopyRoot(file)) return file;
+      file = file.getParent();
+    }
+    while (file != null);
+
+    return null;
+  }
+
   /**
    * @deprecated Use {@link SvnUtil#getWorkingCopyRoot(File)} instead.
    */
@@ -613,7 +623,7 @@ public class SvnUtil {
   @NotNull
   public static Url removePathTail(@NotNull Url url) throws SvnBindException {
     // TODO: Fix - remove tail only from path
-    return createUrl(Url.removeTail(url.toDecodedString()));
+    return createUrl(Url.removeTail(url.toDecodedString()), false);
   }
 
   @NotNull

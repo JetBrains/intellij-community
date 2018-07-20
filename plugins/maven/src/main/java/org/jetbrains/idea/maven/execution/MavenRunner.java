@@ -87,6 +87,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           return settings.isRunMavenInBackground();
         }
 
+        @Override
         public void processSentToBackground() {
           settings.setRunMavenInBackground(true);
         }
@@ -108,17 +109,24 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           @Nullable ProgressIndicator indicator) {
+    return runBatch(commands, coreSettings, runnerSettings, action, indicator, null);
+  }
+
+  public boolean runBatch(List<MavenRunnerParameters> commands,
+                          @Nullable MavenGeneralSettings coreSettings,
+                          @Nullable MavenRunnerSettings runnerSettings,
+                          @Nullable final String action,
+                          @Nullable ProgressIndicator indicator,
+                          @Nullable MavenConsole mavenConsole) {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
 
     if (commands.isEmpty()) return true;
 
-    MavenConsole console
-
-    =ReadAction.compute(()->{
-
-      if (myProject.isDisposed()) return null;
-      return createConsole();
-    });
+    MavenConsole console = mavenConsole != null ? mavenConsole
+      : ReadAction.compute(() -> {
+          if (myProject.isDisposed()) return null;
+          return createConsole();
+        });
     if (console == null) return false;
 
     try {

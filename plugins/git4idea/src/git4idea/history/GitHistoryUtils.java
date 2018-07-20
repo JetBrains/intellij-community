@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.project.Project;
@@ -237,7 +223,7 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> history(@NotNull Project project, @NotNull VirtualFile root, String... parameters)
     throws VcsException {
-    final VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
+    VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
     }
@@ -254,11 +240,13 @@ public class GitHistoryUtils {
     return ArrayUtil.toStringArray(parameters);
   }
 
+  // used externally
+  @SuppressWarnings("unused")
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  @NotNull String... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, false, parameters);
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {

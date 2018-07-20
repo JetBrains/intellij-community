@@ -1,3 +1,3 @@
 def func(x):
-    var = x
+    var = {'foo': x}
     v<caret>ar

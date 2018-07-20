@@ -22,19 +22,21 @@ import javax.swing.*;
 /**
  * @author Vladimir Kondratyev
  */
-public final class UpdateRootPaneCmd extends FinalizableCommand{
+public final class UpdateRootPaneCmd extends FinalizableCommand {
   private final JRootPane myRootPane;
 
-  public UpdateRootPaneCmd(@NotNull final JRootPane rootPane, final Runnable finishCallBack){
+  public UpdateRootPaneCmd(@NotNull final JRootPane rootPane, @NotNull Runnable finishCallBack) {
     super(finishCallBack);
-    myRootPane=rootPane;
+    myRootPane = rootPane;
   }
 
-  public void run(){
-    try{
+  @Override
+  public void run() {
+    try {
       myRootPane.revalidate();
       myRootPane.repaint();
-    }finally{
+    }
+    finally {
       finish();
     }
   }

@@ -24,7 +24,6 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Query;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -34,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class TooBroadScopeInspectionBase extends BaseInspection {
@@ -77,7 +74,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     return InspectionGadgetsBundle.message("too.broad.scope.problem.descriptor");
   }
 
-  protected boolean isMoveable(PsiExpression expression) {
+  protected boolean isMovable(PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (expression == null) {
       return true;
@@ -88,7 +85,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiArrayInitializerExpression) {
       final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
       for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
-        if (!isMoveable(initializer)) {
+        if (!isMovable(initializer)) {
           return false;
         }
       }
@@ -99,7 +96,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
       if (arrayDimensions.length > 0) {
         for (PsiExpression arrayDimension : arrayDimensions) {
-          if (!isMoveable(arrayDimension)) {
+          if (!isMovable(arrayDimension)) {
             return false;
           }
         }
@@ -109,7 +106,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       if (arrayInitializer != null) {
         final PsiExpression[] initializers = arrayInitializer.getInitializers();
         for (final PsiExpression initializerExpression : initializers) {
-          if (!isMoveable(initializerExpression)) {
+          if (!isMovable(initializerExpression)) {
             return false;
           }
         }
@@ -130,7 +127,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       final PsiExpression[] expressions = argumentList.getExpressions();
       for (final PsiExpression argumentExpression : expressions) {
-        if (!isMoveable(argumentExpression)) {
+        if (!isMovable(argumentExpression)) {
           return false;
         }
       }
@@ -139,7 +136,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiExpression qualifier = referenceExpression.getQualifierExpression();
-      if (!isMoveable(qualifier)) {
+      if (!isMovable(qualifier)) {
         return false;
       }
       final PsiElement target = referenceExpression.resolve();
@@ -163,7 +160,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       for (PsiExpression operand : polyadicExpression.getOperands()) {
-        if (!isMoveable(operand)) {
+        if (!isMovable(operand)) {
           return false;
         }
       }
@@ -180,12 +177,12 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (qualifierExpression != null && !isMoveable(qualifierExpression)) {
+      if (qualifierExpression != null && !isMovable(qualifierExpression)) {
         return false;
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       for (PsiExpression argument : argumentList.getExpressions()){
-        if (!isMoveable(argument)) {
+        if (!isMovable(argument)) {
           return false;
         }
       }
@@ -203,7 +200,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       return false;
     }
     final String qualifiedName = aClass.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.startsWith("java.")) {
+    if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread")) {
       return false;
     }
     final String methodName = method.getName();
@@ -228,20 +225,10 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     return aClass != null && aClass.isEnum();
   }
 
-  static List<PsiReferenceExpression> findReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
-      return Collections.emptyList();
-    }
+  static List<PsiReferenceExpression> findReferences(@NotNull PsiLocalVariable variable) {
     final List<PsiReferenceExpression> result = new SmartList<>();
-    final Query<PsiReference> query = ReferencesSearch.search(variable);
-    final Collection<PsiReference> referencesCollection = query.findAll();
-    if (referencesCollection.isEmpty()) {
-      return Collections.emptyList();
-    }
-    for (PsiReference reference : referencesCollection) {
-      final PsiElement referenceElement = reference.getElement();
-      result.add((PsiReferenceExpression)referenceElement);
-    }
+    ReferencesSearch.search(variable, variable.getUseScope())
+                    .forEach(reference -> reference instanceof PsiReferenceExpression && result.add((PsiReferenceExpression)reference));
     return result;
   }
 
@@ -261,16 +248,19 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return;
       }
       final PsiExpression initializer = variable.getInitializer();
-      if (!isMoveable(initializer)) {
+      if (!isMovable(initializer)) {
         return;
       }
-      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
-      final List<PsiReferenceExpression> references = findReferences(variable, variableScope);
-      if (references.isEmpty() || variableScope == null) {
+      final List<PsiReferenceExpression> references = findReferences(variable);
+      if (references.isEmpty()) {
         return;
       }
       PsiElement commonParent = ScopeUtils.getCommonParent(references);
       if (commonParent == null) {
+        return;
+      }
+      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
+      if (variableScope == null) {
         return;
       }
       if (initializer != null) {

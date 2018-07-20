@@ -193,6 +193,7 @@ public class PyNames {
   public static final String ABS = "__abs__";
   public static final String ROUND = "__round__";
   public static final String CLASS_GETITEM = "__class_getitem__";
+  public static final String PREPARE = "__prepare__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -209,6 +210,8 @@ public class PyNames {
   public static final String ABSTRACTMETHOD = "abstractmethod";
   public static final String ABSTRACTPROPERTY = "abstractproperty";
   public static final String ABC_META_CLASS = "ABCMeta";
+  public static final String ABC = "abc.ABC";
+  public static final String ABC_META = "abc.ABCMeta";
 
   public static final String TUPLE = "tuple";
   public static final String SET = "set";
@@ -440,7 +443,7 @@ public class PyNames {
     .put(BYTES, _only_self_descr)
     .put("__format__", new BuiltinDescription("(self, format_spec)"))
     .put("__instancecheck__", new BuiltinDescription("(self, instance)"))
-    .put("__prepare__", new BuiltinDescription("(metacls, name, bases)"))
+    .put(PREPARE, new BuiltinDescription("(metacls, name, bases)"))
     .put(ROUND, new BuiltinDescription("(self, n=None)"))
     .put("__subclasscheck__", new BuiltinDescription("(self, subclass)"))
     .put(DUNDER_NEXT, _only_self_descr)

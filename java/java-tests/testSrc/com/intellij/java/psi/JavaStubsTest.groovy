@@ -16,7 +16,7 @@
 package com.intellij.java.psi
 
 import com.intellij.codeInsight.AnnotationTargetUtil
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -64,7 +64,7 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
       """.stripIndent())
 
     def file = cls.containingFile as PsiFileImpl
-    assert ControlFlowAnalyzer.isPure(cls.methods[0])
+    assert JavaMethodContractUtil.isPure(cls.methods[0])
     assert file.stub
     assert !file.contentsLoaded
   }
@@ -160,7 +160,8 @@ import java.lang.annotation.*;
   }
 
   void "test parameter list count"() {
-    def list = myFixture.addClass('class Cls { void foo(a) {} }').methods[0].parameterList
+    myFixture.addFileToProject('a.java', 'class Cls { void foo(a) {} }')
+    def list = myFixture.findClass('Cls').methods[0].parameterList
     assert list.parametersCount == list.parameters.size()
   }
 
@@ -178,7 +179,7 @@ import java.lang.annotation.*;
   void "test breaking and adding import does not cause stub AST mismatch"() {
     def file = myFixture.addFileToProject("a.java", "import foo.*; import bar.*; class Foo {}") as PsiJavaFile
     def another = myFixture.addClass("package zoo; public class Another {}")
-    WriteCommandAction.runWriteCommandAction(project) { 
+    WriteCommandAction.runWriteCommandAction(project) {
       file.viewProvider.document.insertString(file.text.indexOf('import'), 'x')
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       file.importClass(another)
@@ -188,12 +189,12 @@ import java.lang.annotation.*;
 
   void "test removing import in broken code does not cause stub AST mismatch"() {
     def file = myFixture.addFileToProject("a.java", "import foo..module.SomeClass; class Foo {}") as PsiJavaFile
-    WriteCommandAction.runWriteCommandAction(project) { 
+    WriteCommandAction.runWriteCommandAction(project) {
       file.importList.importStatements[0].delete()
     }
     PsiTestUtil.checkStubsMatchText(file)
   }
-  
+
   void "test adding type before method call does not cause stub AST mismatch"() {
     def file = myFixture.addFileToProject("a.java", """
 class Foo {
@@ -203,7 +204,7 @@ class Foo {
   }
 }
 """) as PsiJavaFile
-    WriteCommandAction.runWriteCommandAction(project) { 
+    WriteCommandAction.runWriteCommandAction(project) {
       file.viewProvider.document.insertString(file.text.indexOf('call'), 'char ')
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       PsiTestUtil.checkStubsMatchText(file)
@@ -215,8 +216,8 @@ class Foo {
     PsiFile psiFile = myFixture.addFileToProject("a.java", text)
     Document document = psiFile.getViewProvider().getDocument()
 
-    WriteCommandAction.runWriteCommandAction(project) { 
-      document.insertString(text.indexOf("return"), "class ") 
+    WriteCommandAction.runWriteCommandAction(project) {
+      document.insertString(text.indexOf("return"), "class ")
     }
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
     PsiTestUtil.checkStubsMatchText(psiFile)
@@ -317,6 +318,44 @@ class A {
   }  
 }"""
     PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", text))
+  }
+
+  void "test incomplete static import does not cause CCE"() {
+    def file = myFixture.addFileToProject('a.java', 'import static foo.bar.') as PsiJavaFile
+    assert ((PsiFileImpl)file).stub
+    assert file.node
+    def staticImport = ((PsiJavaFile)file).importList.importStaticStatements[0]
+    assert staticImport.referenceName == null
+    assert !staticImport.resolveTargetClass()
+  }
+
+  void "test adding import to broken file with type parameters"() {
+    def file = myFixture.addFileToProject("a.java", "A<B>") as PsiJavaFile
+    WriteCommandAction.runWriteCommandAction(project) {
+      file.importClass(myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST))
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test remove extends reference before dot"() {
+    def file = myFixture.addFileToProject('a.java', 'class A extends B. { int a; }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").extendsList.referenceElements[0].delete()
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test add reference into broken extends list"() {
+    def file = myFixture.addFileToProject('a.java', 'class A extends.ends Foo { int a; }')
+    WriteCommandAction.runWriteCommandAction(project) {
+      myFixture.findClass("A").extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+
+  void "test identifier dot before class"() {
+    def file = myFixture.addFileToProject('a.java', 'class A {{ public id.class B {}}}')
+    PsiTestUtil.checkStubsMatchText(file)
   }
 
 }

@@ -59,11 +59,13 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return qualifiedReferenceName;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement refNameElement = getReferenceNameElement();

@@ -88,6 +88,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInnerArrayConstructorRef() { doTest(true); }
+  public void testAbstractArrayConstructorRef() { doTest(true); }
 
   public void testNoConstraintsWildcard() {
     doTest();
@@ -167,6 +168,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   public void testNoAnonymousOuterMethodReference() { doAntiTest(); }
 
   public void testMethodReferenceOnAncestor() { doTest(true); }
+  public void testObjectsNonNull() { doTest(true); }
 
   public void testNoLambdaSuggestionForGenericsFunctionalInterfaceMethod() {
     configureByFile("/" + getTestName(false) + ".java");
@@ -185,6 +187,12 @@ public void testConvertToObjectStream() {
     myFixture.complete(CompletionType.SMART, 2);
     myFixture.type('\n');
     checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
+
+  public void testNoUnrelatedMethodSuggestion() {
+    configureByTestName();
+    myFixture.complete(CompletionType.SMART, 1);
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
   }
 
   public void testInferFromReturnTypeWhenCompleteInsideArgList() {
@@ -212,6 +220,12 @@ public void testConvertToObjectStream() {
   }
 
   public void testCollectionsEmptyMap() { doTest(true); }
+  public void testExpectedSuperOfLowerBound() { 
+    doTest(false);
+  }
+  public void testLowerBoundOfFreshVariable() { 
+    doTest(false);
+  }
 
   private void doTest() {
     doTest(true);
@@ -261,7 +275,7 @@ public void testConvertToObjectStream() {
 
   public void testPreferLambdaOverGenericGetter() {
     configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "getSomeGenericValue");
+    myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "isNull", "nonNull", "getSomeGenericValue");
   }
 
   public void testNoInaccessibleConstructorRef() {
@@ -269,4 +283,13 @@ public void testConvertToObjectStream() {
     assertOrderedEquals(myFixture.getLookupElementStrings(), "() -> ");
   }
 
+  public void testPreselectTreeMapWhenSortedMapExpected() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(2, "SortedMap", "NavigableMap", "TreeMap", "ConcurrentNavigableMap", "ConcurrentSkipListMap");
+  }
+
+  public void testConsiderClassProximityForClassLiterals() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "String.class");
+  }
 }

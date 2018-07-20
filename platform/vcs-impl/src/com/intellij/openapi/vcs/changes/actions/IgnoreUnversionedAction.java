@@ -16,9 +16,9 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
 import static com.intellij.util.containers.UtilKt.isEmpty;
 
-public class IgnoreUnversionedAction extends AnAction {
+public class IgnoreUnversionedAction extends DumbAwareAction {
 
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);

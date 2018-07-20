@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -358,7 +359,7 @@ public class ControlFlowUtils {
       return false;
     }
     final PsiStatement body = loopStatement.getBody();
-    return body != null && PsiTreeUtil.isAncestor(body, element, true);
+    return PsiTreeUtil.isAncestor(body, element, true);
   }
 
   public static boolean isInFinallyBlock(@NotNull PsiElement element) {
@@ -551,6 +552,10 @@ public class ControlFlowUtils {
     return i == count;
   }
 
+  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<T> aClass) {
+    return PsiTreeUtil.getParentOfType(element, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
+  }
+
   public static boolean isEmptyCodeBlock(PsiCodeBlock codeBlock) {
     return hasStatementCount(codeBlock, 0);
   }
@@ -714,7 +719,10 @@ public class ControlFlowUtils {
   public static boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
     if(statement == null || statement == loop) return false;
     for (PsiStatement sibling = statement; sibling != null; sibling = nextExecutedStatement(sibling)) {
-      if(sibling instanceof PsiContinueStatement) return false;
+      if(sibling instanceof PsiContinueStatement) {
+        PsiStatement continueTarget = ((PsiContinueStatement)sibling).findContinuedStatement();
+        return PsiTreeUtil.isAncestor(continueTarget, loop, true);
+      }
       if(sibling instanceof PsiThrowStatement || sibling instanceof PsiReturnStatement) return true;
       if(sibling instanceof PsiBreakStatement) {
         PsiBreakStatement breakStatement = (PsiBreakStatement)sibling;
@@ -775,10 +783,10 @@ public class ControlFlowUtils {
    * @param variable variable to analyze
    * @return true if variable can be referenced between start point and statement entry
    */
-  private static boolean isVariableReferencedBeforeStatementEntry(final ControlFlow flow,
+  private static boolean isVariableReferencedBeforeStatementEntry(@NotNull ControlFlow flow,
                                                                   final int start,
                                                                   final PsiStatement statement,
-                                                                  final PsiVariable variable) {
+                                                                  @NotNull PsiVariable variable) {
     final int statementStart = flow.getStartOffset(statement);
     final int statementEnd = flow.getEndOffset(statement);
 
@@ -846,7 +854,7 @@ public class ControlFlowUtils {
     return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
   }
 
-  static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
+  private static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
     PsiElement declaration = var.getParent();
     PsiElement nextStatementParent = nextStatement.getParent();
     if(nextStatementParent instanceof PsiLabeledStatement) {
@@ -941,7 +949,11 @@ public class ControlFlowUtils {
     if(parent instanceof PsiLocalVariable) {
       PsiElement grandParent = parent.getParent();
       if(grandParent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)grandParent).getDeclaredElements().length == 1) {
-        return true;
+        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        if (!typeElement.isInferredType() ||
+            PsiTypesUtil.replaceWithExplicitType(((PsiLocalVariable)parent.copy()).getTypeElement()) != null) {
+          return true;
+        }
       }
     }
     if (parent instanceof PsiField) {
@@ -990,8 +1002,12 @@ public class ControlFlowUtils {
    */
   public static boolean isReachable(@NotNull PsiStatement statement) {
     ControlFlow flow;
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
-    if (block == null) return true;
+    PsiElement block = statement;
+    do {
+      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class);
+      if (block == null) return true;
+    }
+    while (block.getParent() instanceof PsiSwitchStatement);
     try {
       flow = ControlFlowFactory.getInstance(statement.getProject())
         .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());

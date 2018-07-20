@@ -1,0 +1,42 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: -1, value: 0.0}
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id003 {horizontal: true, value: 6.0}
+      min: *id003
+      preferred: *id003
+    grow: 0.0
+  - {}
+  count: 2
+componentConstrains:
+  Create Android module: {}
+  'Android module name:': {}
+  'JTextField #3':
+    horizontal: {grow: 100.0}
+    spanX: 2097051
+    wrap: true
+cellBounds:
+- [0, 0, 145, 15]
+- [151, 0, 329, 15]
+- [0, 25, 145, 21]
+- [151, 25, 329, 21]
+componentBounds:
+  Create Android module: [0, 0, 145, 15]
+  'Android module name:': [0, 28, 142, 15]
+  'JTextField #3': [148, 22, 335, 27]

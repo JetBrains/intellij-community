@@ -210,16 +210,13 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       }
     }
 
-    new WriteCommandAction(getProject(), PsiUtilCore.toPsiFileArray(files)) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        for (final T t : toDelete) {
-          if (t.isValid()) {
-            t.undefine();
-          }
+    WriteCommandAction.writeCommandAction(getProject(), PsiUtilCore.toPsiFileArray(files)).run(() -> {
+      for (final T t : toDelete) {
+        if (t.isValid()) {
+          t.undefine();
         }
       }
-    }.execute();
+    });
   }
 
   protected final void doRemove() {

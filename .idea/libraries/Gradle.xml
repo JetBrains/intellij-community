@@ -1,11 +1,11 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:4.5.1" />
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:4.8" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/4.5.1/gradle-api-4.5.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/4.5.1/gradle-api-impldep-4.5.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/4.5.1/gradle-wrapper-4.5.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/4.5.1/gradle-launcher-4.5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/4.8/gradle-api-4.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/4.8/gradle-api-impldep-4.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/4.8/gradle-wrapper-4.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/4.8/gradle-launcher-4.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

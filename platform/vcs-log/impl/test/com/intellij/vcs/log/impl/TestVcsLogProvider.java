@@ -131,7 +131,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                              boolean fast) {
+                              boolean isForIndexing) {
     throw new UnsupportedOperationException();
   }
 
@@ -141,7 +141,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) {
+  public List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes) {
     throw new UnsupportedOperationException();
   }
 
@@ -268,6 +268,15 @@ public class TestVcsLogProvider implements VcsLogProvider {
     @Override
     public VcsRefType deserialize(@NotNull DataInput in) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isFavorite(@NotNull VcsRef reference) {
+      return false;
+    }
+
+    @Override
+    public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
     }
 
     @NotNull

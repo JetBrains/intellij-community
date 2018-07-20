@@ -129,6 +129,7 @@ public class PyStackFrame extends XStackFrame {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
+    myDebugProcess.setCurrentRootNode(node);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         boolean cached = myDebugProcess.isCurrentFrameCached();
@@ -214,7 +215,7 @@ public class PyStackFrame extends XStackFrame {
         node.addChildren(list, true);
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Icon getIcon() {
         return AllIcons.Debugger.WatchLastReturnValue;
@@ -237,7 +238,7 @@ public class PyStackFrame extends XStackFrame {
         node.addChildren(list, true);
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Icon getIcon() {
         return PythonIcons.Python.Debug.SpecialVar;
@@ -256,10 +257,6 @@ public class PyStackFrame extends XStackFrame {
 
   public String getThreadFrameId() {
     return myFrameInfo.getThreadId() + ":" + myFrameInfo.getId();
-  }
-
-  public String getFrameName() {
-    return myFrameInfo.getName();
   }
 
   protected XSourcePosition getPosition() {

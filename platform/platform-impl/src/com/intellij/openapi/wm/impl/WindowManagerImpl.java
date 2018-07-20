@@ -179,11 +179,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public final boolean isInsideScreenBounds(final int x, final int y) {
-    return ScreenUtil.getAllScreensShape().contains(x, y);
-  }
-
-  @Override
   public final boolean isAlphaModeSupported() {
     if (myAlphaModeSupported == null) {
       myAlphaModeSupported = calcAlphaModelSupported();
@@ -351,11 +346,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   public final StatusBar getStatusBar(final Project project) {
     IdeFrameImpl frame = myProjectToFrame.get(project);
     return frame == null ? null : frame.getStatusBar();
-  }
-
-  @Override
-  public StatusBar getStatusBar(@NotNull Component c) {
-    return getStatusBar(c, null);
   }
 
   @Override

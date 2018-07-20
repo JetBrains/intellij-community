@@ -4,20 +4,20 @@ package com.intellij.codeInspection.dataFlow.rangeSet;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ThreeState;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
  * An immutable set of long values optimized for small number of ranges.
@@ -25,6 +25,22 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
  * @author Tagir Valeev
  */
 public abstract class LongRangeSet {
+  private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
+  private static final String CHECKER_RANGE = "org.checkerframework.common.value.qual.IntRange";
+  private static final String CHECKER_GTE_NEGATIVE_ONE = "org.checkerframework.checker.index.qual.GTENegativeOne";
+  private static final String CHECKER_NON_NEGATIVE = "org.checkerframework.checker.index.qual.NonNegative";
+  private static final String CHECKER_POSITIVE = "org.checkerframework.checker.index.qual.Positive";
+  private static final String JSR305_NONNEGATIVE = "javax.annotation.Nonnegative";
+  private static final String VALIDATION_MIN = "javax.validation.constraints.Min";
+  private static final String VALIDATION_MAX = "javax.validation.constraints.Max";
+  private static final List<String> ANNOTATIONS = Arrays.asList(CHECKER_RANGE,
+                                                                CHECKER_GTE_NEGATIVE_ONE,
+                                                                CHECKER_NON_NEGATIVE,
+                                                                CHECKER_POSITIVE,
+                                                                JSR305_NONNEGATIVE,
+                                                                VALIDATION_MIN,
+                                                                VALIDATION_MAX);
+
   LongRangeSet() {}
 
   /**
@@ -140,6 +156,43 @@ public abstract class LongRangeSet {
   }
 
   /**
+   * Performs a supported binary operation from token (defined in {@link JavaTokenType}).
+   *
+   * @param token  a token which corresponds to the operation
+   * @param right  a right-hand operand
+   * @param isLong true if operation should be performed on long types (otherwise int is assumed)
+   * @return the resulting LongRangeSet which covers possible results of the operation (probably including some more elements);
+   * or null if the supplied token is not supported.
+   */
+  @Contract("null, _, _ -> null")
+  @Nullable
+  public final LongRangeSet binOpFromToken(IElementType token, LongRangeSet right, boolean isLong) {
+    if (token == null) return null;
+    if (token.equals(JavaTokenType.PLUS)) {
+      return plus(right, isLong);
+    }
+    if (token.equals(JavaTokenType.MINUS)) {
+      return minus(right, isLong);
+    }
+    if (token.equals(JavaTokenType.AND)) {
+      return bitwiseAnd(right);
+    }
+    if (token.equals(JavaTokenType.PERC)) {
+      return mod(right);
+    }
+    if (token.equals(JavaTokenType.DIV)) {
+      return div(right, isLong);
+    }
+    if (token.equals(JavaTokenType.GTGT)) {
+      return shiftRight(right, isLong);
+    }
+    if (token.equals(JavaTokenType.GTGTGT)) {
+      return unsignedShiftRight(right, isLong);
+    }
+    return null;
+  }
+
+  /**
    * Returns a range which represents all the possible values after applying {@link Math#abs(int)} or {@link Math#abs(long)}
    * to the values from this set
    *
@@ -211,8 +264,128 @@ public abstract class LongRangeSet {
     return all().subtract(result);
   }
 
+  /**
+   * Returns a range which represents all the possible values after applying {@code x / y} operation for
+   * all {@code x} from this set and for all {@code y} from the divisor set. The resulting set may contain
+   * some more values. Division by zero yields an empty set of possible results.
+   *
+   * @param divisor divisor set to divide by
+   * @param isLong whether the operation is performed on long type (if false, the int type is assumed). This only changes the special
+   *               treatment of {@code MIN_VALUE/-1} division; other division results do not depend on the resulting type.
+   * @return a new range
+   */
   @NotNull
-  abstract public LongRangeSet mod(LongRangeSet other);
+  public LongRangeSet div(LongRangeSet divisor, boolean isLong) {
+    if (divisor.isEmpty() || divisor.equals(new Point(0))) return empty();
+    long[] left = splitAtZero(asRanges());
+    long[] right = splitAtZero(new long[]{divisor.min(), divisor.max()});
+    LongRangeSet result = empty();
+    for (int i = 0; i < left.length; i += 2) {
+      for (int j = 0; j < right.length; j += 2) {
+        result = result.union(divide(left[i], left[i + 1], right[j], right[j + 1], isLong));
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private static LongRangeSet divide(long dividendMin, long dividendMax, long divisorMin, long divisorMax, boolean isLong) {
+    if (divisorMin == 0) {
+      if (divisorMax == 0) return empty();
+      divisorMin = 1;
+    }
+    if (dividendMin >= 0) {
+      return divisorMin > 0
+             ? range(dividendMin / divisorMax, dividendMax / divisorMin)
+             : range(dividendMax / divisorMax, dividendMin / divisorMin);
+    }
+    if (divisorMin > 0) {
+      return range(dividendMin / divisorMin, dividendMax / divisorMax);
+    }
+    long minValue = minValue(isLong);
+    if (dividendMin == minValue && divisorMax == -1) {
+      // MIN_VALUE/-1 = MIN_VALUE
+      return point(minValue)
+        .union(divisorMin == -1 ? empty() : range(dividendMin / divisorMin, dividendMin / (divisorMax - 1)))
+        .union(dividendMax == minValue ? empty() : range(dividendMax / divisorMin, (dividendMin + 1) / divisorMax));
+    }
+    return range(dividendMax / divisorMin, dividendMin / divisorMax);
+  }
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x >> y} operation for
+   * all {@code x} from this set and for all {@code y} from the shiftSize set. The resulting set may contain
+   * some more values.
+   *
+   * @param shiftSize set of possible shift sizes (number of bits to shift to the right)
+   * @param isLong whether the operation is performed on long type (if false, the int type is assumed).
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet shiftRight(LongRangeSet shiftSize, boolean isLong) {
+    if (isEmpty() || shiftSize.isEmpty()) return empty();
+    int maxShift = (isLong ? Long.SIZE : Integer.SIZE) - 1;
+    if (shiftSize.min() < 0 || shiftSize.max() > maxShift) {
+      shiftSize = shiftSize.bitwiseAnd(point(maxShift));
+    }
+    long min = shiftSize.min();
+    long max = shiftSize.max();
+    LongRangeSet negative = intersect(range(minValue(isLong), -1));
+    LongRangeSet positive = intersect(range(0, maxValue(isLong)));
+    return positive.shrPositive(min, max, isLong)
+                   .union(point(-1).minus(point(-1).minus(negative, isLong).shrPositive(min, max, isLong), isLong));
+  }
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x >>> y} operation for
+   * all {@code x} from this set and for all {@code y} from the shiftSize set. The resulting set may contain
+   * some more values.
+   *
+   * @param shiftSize set of possible shift sizes (number of bits to shift to the right)
+   * @param isLong whether the operation is performed on long type (if false, the int type is assumed).
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet unsignedShiftRight(LongRangeSet shiftSize, boolean isLong) {
+    if (isEmpty() || shiftSize.isEmpty()) return empty();
+    int maxShift = (isLong ? Long.SIZE : Integer.SIZE) - 1;
+    if (shiftSize.min() < 0 || shiftSize.max() > maxShift) {
+      shiftSize = shiftSize.bitwiseAnd(point(maxShift));
+    }
+    long min = shiftSize.min();
+    long max = shiftSize.max();
+    LongRangeSet negative = intersect(range(minValue(isLong), -1));
+    LongRangeSet positive = intersect(range(0, maxValue(isLong)));
+    LongRangeSet result = positive.shrPositive(min, max, isLong);
+    if (min == 0) {
+      result = result.union(negative);
+      if (max == 0) return result;
+      min++;
+    }
+    // for x < 0, y > 0, x >>> y = (MAX_VALUE - ((-1-x) >> 1)) >> (y-1)
+    return result.union(point(maxValue(isLong)).minus(point(-1).minus(negative, isLong).shrPositive(1, 1, isLong), isLong)
+                                               .shrPositive(min - 1, max - 1, isLong));
+  }
+
+  private LongRangeSet shrPositive(long min, long max, boolean isLong) {
+    if (isEmpty()) return empty();
+    int maxShift = (isLong ? Long.SIZE : Integer.SIZE) - 1;
+    if (max == maxShift) {
+      return min == max ? point(0) : point(0).union(div(range(1L << min, 1L << (max - 1)), isLong));
+    }
+    return div(range(1L << min, 1L << max), isLong);
+  }
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x % y} operation for
+   * all {@code x} from this set and for all {@code y} from the divisor set. The resulting set may contain
+   * some more values. Division by zero yields an empty set of possible results.
+   *
+   * @param divisor divisor set to divide by
+   * @return a new range
+   */
+  @NotNull
+  abstract public LongRangeSet mod(LongRangeSet divisor);
 
   private static long[] splitAtZero(long[] ranges) {
     for (int i = 0; i < ranges.length; i += 2) {
@@ -289,7 +462,7 @@ public abstract class LongRangeSet {
    */
   private static ThreeState[] bits(long from, long to) {
     ThreeState[] bits = new ThreeState[Long.SIZE];
-    Arrays.setAll(bits, idx -> ThreeState.NO);
+    Arrays.fill(bits, ThreeState.NO);
     while (true) {
       int fromBit = Long.numberOfLeadingZeros(from);
       int toBit = Long.numberOfLeadingZeros(to);
@@ -308,6 +481,15 @@ public abstract class LongRangeSet {
     return bits;
   }
 
+  private static String formatNumber(long value) {
+    if (value == Long.MAX_VALUE) return "Long.MAX_VALUE";
+    if (value == Long.MAX_VALUE - 1) return "Long.MAX_VALUE-1";
+    if (value == Long.MIN_VALUE) return "Long.MIN_VALUE";
+    if (value == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
+    if (value == Integer.MAX_VALUE - 1) return "Integer.MAX_VALUE-1";
+    if (value == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
+    return String.valueOf(value);
+  }
   /**
    * Returns a stream of all values from this range. Be careful: could be huge
    *
@@ -384,7 +566,7 @@ public abstract class LongRangeSet {
   abstract long[] asRanges();
 
   static String toString(long from, long to) {
-    return from == to ? String.valueOf(from) : from + (to - from == 1 ? ", " : "..") + to;
+    return formatNumber(from) + (from == to ? "" : (to - from == 1 ? ", " : "..") + formatNumber(to));
   }
 
   static long minValue(boolean isLong) {
@@ -437,16 +619,40 @@ public abstract class LongRangeSet {
   @NotNull
   public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
     if (owner == null) return all();
-    PsiAnnotation rangeAnnotation = AnnotationUtil.findAnnotation(owner, "org.jetbrains.annotations.Range");
-    if(rangeAnnotation != null) {
-      Long from = AnnotationUtil.getLongAttributeValue(rangeAnnotation, "from");
-      Long to = AnnotationUtil.getLongAttributeValue(rangeAnnotation, "to");
-      if(from != null && to != null && to >= from) {
-        return range(from, to);
-      }
-    }
-    if (AnnotationUtil.isAnnotated(owner, "javax.annotation.Nonnegative", CHECK_TYPE)) {
-      return range(0, Long.MAX_VALUE);
+    return StreamEx.ofNullable(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE))
+                   .append(AnnotationUtil.findAnnotations(owner, ANNOTATIONS))
+                   .map(LongRangeSet::fromAnnotation).foldLeft(all(), LongRangeSet::intersect);
+  }
+
+  private static LongRangeSet fromAnnotation(PsiAnnotation annotation) {
+    switch (Objects.requireNonNull(annotation.getQualifiedName())) {
+      case JETBRAINS_RANGE:
+      case CHECKER_RANGE:
+        Long from = AnnotationUtil.getLongAttributeValue(annotation, "from");
+        Long to = AnnotationUtil.getLongAttributeValue(annotation, "to");
+        if(from != null && to != null && to >= from) {
+          return range(from, to);
+        }
+        break;
+      case VALIDATION_MIN:
+        Long minValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
+        if (minValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
+          return range(minValue, Long.MAX_VALUE);
+        }
+        break;
+      case VALIDATION_MAX:
+        Long maxValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
+        if (maxValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
+          return range(Long.MIN_VALUE, maxValue);
+        }
+        break;
+      case CHECKER_GTE_NEGATIVE_ONE:
+        return range(-1, Long.MAX_VALUE);
+      case JSR305_NONNEGATIVE:
+      case CHECKER_NON_NEGATIVE:
+        return range(0, Long.MAX_VALUE);
+      case CHECKER_POSITIVE:
+        return range(1, Long.MAX_VALUE);
     }
     return all();
   }
@@ -673,7 +879,7 @@ public abstract class LongRangeSet {
 
     @Override
     public String toString() {
-      return "{" + myValue + "}";
+      return "{" + formatNumber(myValue) + "}";
     }
   }
 
@@ -1050,6 +1256,9 @@ public abstract class LongRangeSet {
     @NotNull
     @Override
     public LongRangeSet plus(LongRangeSet other, boolean isLong) {
+      if (myRanges.length > 6) {
+        return range(min(), max()).plus(other, isLong);
+      }
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
         result = result.union(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));

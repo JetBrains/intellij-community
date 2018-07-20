@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -85,6 +86,14 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
         if (aClass != null) {
           message += "Class: " + aClass.getClass() + "|" + aClass.getQualifiedName() + "\n"
                      + "File: " + aClass.getContainingFile() + "\n";
+        }
+        if (variableType instanceof PsiClassReferenceType) {
+          PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)variableType).getReference();
+          message += "Reference: " + reference.getCanonicalText() + "\n"
+                     + "Reference class: " + reference.getClass() + "\n"
+                     + "Reference name: " + reference.getReferenceName() + "\n"
+                     + "Reference qualifier: " + (reference.getQualifier() == null ? "(null)" : reference.getQualifier().getText())
+                     + "Reference file: " + reference.getContainingFile();
         }
         throw new IncorrectOperationException(message, (Throwable)ioe);
       }

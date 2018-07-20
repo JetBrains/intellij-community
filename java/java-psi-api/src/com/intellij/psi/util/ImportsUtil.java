@@ -21,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class ImportsUtil {
   private ImportsUtil() {
@@ -61,14 +60,19 @@ public class ImportsUtil {
     staticImport.delete();
   }
 
-  public static void expand(@NotNull PsiJavaCodeReferenceElement refExpr, PsiImportStaticStatement staticImport) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refExpr.getProject());
-    final PsiReferenceExpression referenceExpression = elementFactory.createReferenceExpression(staticImport.resolveTargetClass());
-    if (refExpr instanceof PsiReferenceExpression) {
-      ((PsiReferenceExpression)refExpr).setQualifierExpression(referenceExpression);
+  public static void expand(@NotNull PsiJavaCodeReferenceElement ref, PsiImportStaticStatement staticImport) {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(ref.getProject());
+    PsiClass targetClass = staticImport.resolveTargetClass();
+    assert targetClass != null;
+    if (ref instanceof PsiReferenceExpression) {
+      ((PsiReferenceExpression)ref).setQualifierExpression(elementFactory.createReferenceExpression(targetClass));
+    }
+    else if (ref instanceof PsiImportStaticReferenceElement) {
+      ref.replace(
+        Objects.requireNonNull(elementFactory.createImportStaticStatement(targetClass, ref.getText()).getImportReference()));
     }
     else {
-      refExpr.replace(elementFactory.createReferenceFromText(referenceExpression.getText() + "." + refExpr.getText(), refExpr));
+      ref.replace(elementFactory.createReferenceFromText(targetClass.getQualifiedName() + "." + ref.getText(), ref));
     }
   }
 

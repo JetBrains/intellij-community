@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public abstract class BeforeAfterActionMetaData {
+public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData");
 
   protected static final TextDescriptor[] EMPTY_EXAMPLE = new TextDescriptor[0];
@@ -80,9 +80,7 @@ public abstract class BeforeAfterActionMetaData {
           URL url = new URL(descriptionDirectory.toExternalForm() + "/" +
                             prefix + "." + extension + (i == 0 ? "" : Integer.toString(i)) +
                             suffix);
-          try {
-            InputStream inputStream = url.openStream();
-            inputStream.close();
+          try (InputStream inputStream = url.openStream()) {
             urls.add(new ResourceTextDescriptor(url));
           }
           catch (IOException ioe) {
@@ -116,6 +114,7 @@ public abstract class BeforeAfterActionMetaData {
     return urls.toArray(new TextDescriptor[0]);
   }
 
+  @Override
   @NotNull
   public TextDescriptor[] getExampleUsagesBefore() {
     if (myExampleUsagesBefore == null) {
@@ -130,6 +129,7 @@ public abstract class BeforeAfterActionMetaData {
     return myExampleUsagesBefore;
   }
 
+  @Override
   @NotNull
   public TextDescriptor[] getExampleUsagesAfter() {
     if (myExampleUsagesAfter == null) {
@@ -144,6 +144,7 @@ public abstract class BeforeAfterActionMetaData {
     return myExampleUsagesAfter;
   }
 
+  @Override
   @NotNull
   public TextDescriptor getDescription() {
     if (myDescription == null) {

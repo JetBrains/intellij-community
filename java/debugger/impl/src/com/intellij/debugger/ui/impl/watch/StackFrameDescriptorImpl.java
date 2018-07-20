@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
@@ -117,7 +115,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     return null;
   }
-  
+
   @Override
   public String getName() {
     return myName;
@@ -159,7 +157,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
           label.append(name.substring(dotIndex + 1));
           if (settings.SHOW_PACKAGE_NAME) {
             label.append(" {");
-            label.append(name.substring(0, dotIndex));
+            label.append(name, 0, dotIndex);
             label.append("}");
           }
         }
@@ -213,6 +211,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myIcon;
   }
 
+  @Nullable
   public ObjectReference getThisObject() {
     return myThisObject;
   }

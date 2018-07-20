@@ -178,9 +178,11 @@
     <keyboard-shortcut first-keystroke="control Q"/>
   </action>
   <action id="JumpToLastWindow"/>
+  <action id="GotoNextElementUnderCaretUsage"/>
   <action id="MethodDown">
     <keyboard-shortcut first-keystroke="control alt DOWN"/>
   </action>
+  <action id="GotoPrevElementUnderCaretUsage"/>
   <action id="MethodUp">
     <keyboard-shortcut first-keystroke="control alt UP"/>
   </action>

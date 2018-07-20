@@ -187,22 +187,13 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
       Disposer.dispose(myLibrariesModifiableModel);
       myLibrariesModifiableModel = null;
     }
-    disposeUncommittedLibraries();
+    disposeLibraryEditors();
   }
 
-  private void disposeUncommittedLibraries() {
-    for (final Library library : new ArrayList<>(myLibrary2EditorMap.keySet())) {
-      final Library existingLibrary = myTable.getLibraryByName(library.getName());
-      if (existingLibrary != library) {
-        Disposer.dispose(library);
-      }
-
-      final ExistingLibraryEditor libraryEditor = myLibrary2EditorMap.get(library);
-      if (libraryEditor != null) {
-        Disposer.dispose(libraryEditor);
-      }
+  private void disposeLibraryEditors() {
+    for (ExistingLibraryEditor libraryEditor : myLibrary2EditorMap.values()) {
+      Disposer.dispose(libraryEditor);
     }
-
     myLibrary2EditorMap.clear();
   }
 }

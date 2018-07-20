@@ -30,7 +30,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   private final Project myProject;
 
-  public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, Project project) {
+  public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, @NotNull Runnable finishCallBack, Project project) {
     super(finishCallBack);
     myToolWindow = toolWindow;
     myFocusWatcher = focusWatcher;
@@ -39,7 +39,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   @Override
   public final void run() {
-    myToolWindow.getActivation().doWhenDone(() -> processRequestFocus());
+    processRequestFocus();
   }
 
   private void processRequestFocus() {

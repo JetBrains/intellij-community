@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -39,9 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.EXCEPT_CARET_REGION;
-import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.NO;
 
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
@@ -98,7 +96,7 @@ public class FoldingUpdate {
 
     final List<RegionInfo> elementsToFold = getFoldingsFor(file, document, quick);
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFold,
-                                                                                applyDefaultState ? EXCEPT_CARET_REGION : NO, 
+                                                                                applyDefaultStateMode(applyDefaultState),
                                                                                 !applyDefaultState, false);
     long documentTimestamp = document.getModificationStamp();
     int documentLength = document.getTextLength();
@@ -121,6 +119,11 @@ public class FoldingUpdate {
       dependencies.addAll(info.descriptor.getDependencies());
     }
     return CachedValueProvider.Result.create(runnable, ArrayUtil.toObjectArray(dependencies));
+  }
+
+  @NotNull
+  private static UpdateFoldRegionsOperation.ApplyDefaultStateMode applyDefaultStateMode(boolean applyDefaultState) {
+    return applyDefaultState ? UpdateFoldRegionsOperation.ApplyDefaultStateMode.EXCEPT_CARET_REGION : UpdateFoldRegionsOperation.ApplyDefaultStateMode.NO;
   }
 
   private static final Key<Object> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");
@@ -168,7 +171,7 @@ public class FoldingUpdate {
         if (!injectedEditor.getDocument().isValid()) continue;
         List<RegionInfo> list = lists.get(i);
         updateOperations.add(new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, list,
-                                                            applyDefaultState ? EXCEPT_CARET_REGION : NO, !applyDefaultState, true));
+                                                            applyDefaultStateMode(applyDefaultState), !applyDefaultState, true));
       }
       foldingModel.runBatchFoldingOperation(() -> {
         for (Runnable operation : updateOperations) {
@@ -204,7 +207,7 @@ public class FoldingUpdate {
    * @param file the file to test
    * @return true  if folding initialization available in the Dumb Mode
    */
-  static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
+  private static boolean supportsDumbModeFolding(@NotNull PsiFile file) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (final Language language : viewProvider.getLanguages()) {
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
@@ -215,17 +218,17 @@ public class FoldingUpdate {
   }
 
   static List<RegionInfo> getFoldingsFor(@NotNull PsiFile file, @NotNull Document document, boolean quick) {
-    List<RegionInfo> foldingMap = new ArrayList<>();
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     }
+    List<RegionInfo> foldingMap = new ArrayList<>();
     getFoldingsFor(file, document, foldingMap, quick);
     return foldingMap;
   }
 
   private static void getFoldingsFor(@NotNull PsiFile file,
                                      @NotNull Document document,
-                                     @NotNull List<RegionInfo> elementsToFold,
+                                     @NotNull List<? super RegionInfo> elementsToFold,
                                      boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
     TextRange docRange = TextRange.from(0, document.getTextLength());
@@ -243,7 +246,7 @@ public class FoldingUpdate {
             diagnoseIncorrectRange(psi, document, language, foldingBuilder, descriptor, psiElement);
             continue;
           }
-          RegionInfo regionInfo = new RegionInfo(descriptor, psiElement);
+          RegionInfo regionInfo = new RegionInfo(descriptor, psiElement, foldingBuilder);
           elementsToFold.add(regionInfo);
         }
       }
@@ -267,16 +270,19 @@ public class FoldingUpdate {
 
   static class RegionInfo {
     @NotNull
-    public final FoldingDescriptor descriptor;
-    public final PsiElement element;
-    public final String signature;
-    public final boolean collapsedByDefault;
+    final FoldingDescriptor descriptor;
+    final PsiElement element;
+    final String signature;
+    final boolean collapsedByDefault;
 
-    private RegionInfo(@NotNull FoldingDescriptor descriptor, @NotNull PsiElement psiElement) {
+    private RegionInfo(@NotNull FoldingDescriptor descriptor,
+                       @NotNull PsiElement psiElement,
+                       @NotNull FoldingBuilder foldingBuilder) {
       this.descriptor = descriptor;
-      this.element = psiElement;
-      this.collapsedByDefault = FoldingPolicy.isCollapseByDefault(psiElement);
-      this.signature = createSignature(psiElement);
+      element = psiElement;
+      Boolean hardCoded = descriptor instanceof NamedFoldingDescriptor ? ((NamedFoldingDescriptor)descriptor).isCollapsedByDefault() : null;
+      collapsedByDefault = hardCoded == null ? FoldingPolicy.isCollapsedByDefault(psiElement, foldingBuilder) : hardCoded;
+      signature = createSignature(psiElement);
     }
 
     private static String createSignature(@NotNull PsiElement element) {

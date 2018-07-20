@@ -2,5 +2,5 @@
 package org.jetbrains.idea.svn.mergeinfo
 
 data class MergeRange(override val start: Long, override val endInclusive: Long, val isInheritable: Boolean = true) : ClosedRange<Long> {
-  val revisions get() = start..endInclusive
+  val revisions: LongRange get() = start..endInclusive
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,9 +94,7 @@ public class RefreshWorker {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("file=" + file + " dirty=" + fileDirty);
-      }
+      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
       if (!fileDirty) continue;
 
       checkCancelled(file);
@@ -215,9 +199,7 @@ public class RefreshWorker {
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
         if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("retry: " + dir);
-          }
+          if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
         }
 
@@ -232,7 +214,7 @@ public class RefreshWorker {
             scheduleCreation(dir, name, childAttributes.isDirectory());
           }
           else {
-            LOG.warn("[+] fs=" + fs + " dir=" + dir + " name=" + name);
+            if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + name);
           }
         }
 
@@ -244,7 +226,7 @@ public class RefreshWorker {
             checkAndScheduleFileNameChange(actualNames, child);
           }
           else {
-            LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
+            if (LOG.isTraceEnabled()) LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
             scheduleDeletion(child);
           }
         }
@@ -261,13 +243,13 @@ public class RefreshWorker {
     while (true) {
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
-        ReadAction.compute(() -> Pair.create(dir.getCachedChildren(), dir.getSuspiciousNames()));
+        ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
 
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
 
       OpenTHashSet<String> actualNames =
-        fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
+        fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
 
       if (LOG.isTraceEnabled()) {
         LOG.trace("cached=" + cached + " actual=" + actualNames);
@@ -291,9 +273,7 @@ public class RefreshWorker {
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("retry: " + dir);
-          }
+          if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
         }
 

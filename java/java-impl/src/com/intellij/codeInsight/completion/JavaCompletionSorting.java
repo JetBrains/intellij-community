@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -280,7 +281,9 @@ public class JavaCompletionSorting {
     for (int i = 0; i < limit; i++) {
       String word = words.get(words.size() - i - 1);
       String expectedWord = expectedWords[expectedWords.length - i - 1];
-      if (word.equalsIgnoreCase(expectedWord)) {
+      if ( word.equalsIgnoreCase(expectedWord) || 
+           StringUtil.endsWithIgnoreCase(word, expectedWord) || 
+           StringUtil.endsWithIgnoreCase(expectedWord, word)) {
         max = Math.max(max, i + 1);
       }
       else {
@@ -621,11 +624,7 @@ public class JavaCompletionSorting {
         @Override
         public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
           Object object = shorterElement.getObject();
-          if (!(object instanceof PsiClass)) return false;
-
-          if (longerElement.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) return true;
-          
-          if (longerElement.getObject() instanceof PsiClass) {
+          if (object instanceof PsiClass && longerElement.getObject() instanceof PsiClass) {
             PsiClass psiClass = (PsiClass)object;
             PsiFile file = psiClass.getContainingFile();
             if (file != null) {

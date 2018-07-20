@@ -98,6 +98,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
    * @deprecated  method {@link ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)}
    * would be used instead to avoid wrong custom 'cloning'
    */
+  @Deprecated
   protected ModuleBasedConfiguration createInstance() {
     @SuppressWarnings("unchecked")
     ModuleBasedConfiguration<ConfigurationModule> configuration =

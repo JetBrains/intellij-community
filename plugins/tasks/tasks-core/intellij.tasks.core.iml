@@ -25,8 +25,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" exported="" name="http-client-3.1" level="project" />
-    <orderEntry type="library" exported="" name="XmlRPC" level="project" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" exported="" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.xml.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
@@ -64,5 +63,6 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.tasks" exported="" />
+    <orderEntry type="library" name="http-client-3.1" level="project" />
   </component>
 </module>

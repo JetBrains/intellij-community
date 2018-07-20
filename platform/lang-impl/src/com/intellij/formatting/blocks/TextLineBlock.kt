@@ -32,21 +32,21 @@ class TextLineBlock(
 
   override fun getSubBlocks(): List<Block> = emptyList()
 
-  override fun getWrap() = null
+  override fun getWrap(): Nothing? = null
 
-  override fun getIndent() = indent
+  override fun getIndent(): Indent? = indent
 
-  override fun getAlignment() = alignment
+  override fun getAlignment(): Alignment? = alignment
 
-  override fun getSpacing(child1: Block?, child2: Block) = spacing
+  override fun getSpacing(child1: Block?, child2: Block): Spacing? = spacing
 
   override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
     throw UnsupportedOperationException("Should not be called")
   }
 
-  override fun isIncomplete() = false
+  override fun isIncomplete(): Boolean = false
 
-  override fun isLeaf() = true
+  override fun isLeaf(): Boolean = true
 
   override fun toString(): String {
     return "TextLineBlock(text='$text', textRange=$textRange)"

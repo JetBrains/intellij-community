@@ -25,6 +25,6 @@ class JavaDumbUElement(
   givenParent: UElement?,
   private val customRenderString: String? = null
 ) : JavaAbstractUElement(givenParent), JvmDeclarationUElement {
-  override fun asLogString() = log()
-  override fun asRenderString() = customRenderString ?: "<stub@$psi>"
+  override fun asLogString(): String = log()
+  override fun asRenderString(): String = customRenderString ?: "<stub@$psi>"
 }

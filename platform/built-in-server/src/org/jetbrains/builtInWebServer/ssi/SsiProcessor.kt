@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
@@ -39,29 +25,25 @@ class SsiProcessor(allowExec: Boolean) {
   private val commands: MutableMap<String, SsiCommand> = THashMap()
 
   init {
-    commands.put("config", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+    commands.put("config", SsiCommand { state, _, paramNames, paramValues, writer ->
       for (i in paramNames.indices) {
         val paramName = paramNames[i]
         val paramValue = paramValues[i]
         val substitutedValue = state.substituteVariables(paramValue)
-        if (paramName.equals("errmsg", ignoreCase = true)) {
-          state.configErrorMessage = substitutedValue
-        }
-        else if (paramName.equals("sizefmt", ignoreCase = true)) {
-          state.configSizeFmt = substitutedValue
-        }
-        else if (paramName.equals("timefmt", ignoreCase = true)) {
-          state.setConfigTimeFormat(substitutedValue, false)
-        }
-        else {
-          LOG.info("#config--Invalid attribute: " + paramName)
-          // We need to fetch this value each time, since it may change during the loop
-          writer.write(state.configErrorMessage)
+        when {
+          paramName.equals("errmsg", ignoreCase = true) -> state.configErrorMessage = substitutedValue
+          paramName.equals("sizefmt", ignoreCase = true) -> state.configSizeFmt = substitutedValue
+          paramName.equals("timefmt", ignoreCase = true) -> state.setConfigTimeFormat(substitutedValue, false)
+          else -> {
+            LOG.info("#config--Invalid attribute: $paramName")
+            // We need to fetch this value each time, since it may change during the loop
+            writer.write(state.configErrorMessage)
+          }
         }
       }
       0
     })
-    commands.put("echo", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+    commands.put("echo", SsiCommand { state, _, paramNames, paramValues, writer ->
       var encoding = "entity"
       var originalValue: String? = null
       val errorMessage = state.configErrorMessage
@@ -76,12 +58,12 @@ class SsiProcessor(allowExec: Boolean) {
             encoding = paramValue
           }
           else {
-            LOG.info("#echo--Invalid encoding: " + paramValue)
+            LOG.info("#echo--Invalid encoding: $paramValue")
             writer.write(errorMessage)
           }
         }
         else {
-          LOG.info("#echo--Invalid attribute: " + paramName)
+          LOG.info("#echo--Invalid attribute: $paramName")
           writer.write(errorMessage)
         }
       }
@@ -105,7 +87,7 @@ class SsiProcessor(allowExec: Boolean) {
             lastModified = state.ssiExternalResolver.getFileLastModified(substitutedValue, virtual)
             val file = state.ssiExternalResolver.findFile(substitutedValue, virtual)
             if (file == null) {
-              LOG.warn("#include-- Couldn't find file: " + substitutedValue)
+              LOG.warn("#include-- Couldn't find file: $substitutedValue")
               return@SsiCommand 0
             }
 
@@ -114,19 +96,19 @@ class SsiProcessor(allowExec: Boolean) {
             }
           }
           catch (e: IOException) {
-            LOG.warn("#include--Couldn't include file: " + substitutedValue, e)
+            LOG.warn("#include--Couldn't include file: $substitutedValue", e)
             writer.write(configErrorMessage)
           }
 
         }
         else {
-          LOG.info("#include--Invalid attribute: " + paramName)
+          LOG.info("#include--Invalid attribute: $paramName")
           writer.write(configErrorMessage)
         }
       }
       lastModified
     })
-    commands.put("flastmod", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+    commands.put("flastmod", SsiCommand { state, _, paramNames, paramValues, writer ->
       var lastModified: Long = 0
       val configErrMsg = state.configErrorMessage
       for (i in paramNames.indices) {
@@ -140,14 +122,14 @@ class SsiProcessor(allowExec: Boolean) {
           writer.write(strftime.format(Date(lastModified)))
         }
         else {
-          LOG.info("#flastmod--Invalid attribute: " + paramName)
+          LOG.info("#flastmod--Invalid attribute: $paramName")
           writer.write(configErrMsg)
         }
       }
       lastModified
     })
     commands.put("fsize", SsiFsize())
-    commands.put("printenv", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+    commands.put("printenv", SsiCommand { state, _, paramNames, _, writer ->
       var lastModified: Long = 0
       // any arguments should produce an error
       if (paramNames.isEmpty()) {
@@ -172,7 +154,7 @@ class SsiProcessor(allowExec: Boolean) {
       }
       lastModified
     })
-    commands.put("set", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+    commands.put("set", SsiCommand { state, _, paramNames, paramValues, writer ->
       var lastModified: Long = 0
       val errorMessage = state.configErrorMessage
       var variableName: String? = null
@@ -195,7 +177,7 @@ class SsiProcessor(allowExec: Boolean) {
           }
         }
         else {
-          LOG.info("#set--Invalid attribute: " + paramName)
+          LOG.info("#set--Invalid attribute: $paramName")
           writer.write(errorMessage)
           throw SsiStopProcessingException()
         }
@@ -230,7 +212,7 @@ class SsiProcessor(allowExec: Boolean) {
             index += COMMAND_END.length
             val commandName = parseCommand(command)
             if (LOG.isDebugEnabled) {
-              LOG.debug("SSIProcessor.process -- processing command: " + commandName)
+              LOG.debug("SSIProcessor.process -- processing command: $commandName")
             }
             val paramNames = parseParamNames(command, commandName.length)
             val paramValues = parseParamValues(command, commandName.length, paramNames.size)
@@ -385,7 +367,7 @@ class SsiProcessor(allowExec: Boolean) {
       }
       bIdx++
     }
-    @Suppress("CAST_NEVER_SUCCEEDS")
+    @Suppress("CAST_NEVER_SUCCEEDS", "UNCHECKED_CAST")
     return values as Array<String>
   }
 
@@ -412,9 +394,9 @@ class SsiProcessor(allowExec: Boolean) {
     return if (firstLetter == -1) "" else instruction.substring(firstLetter, lastLetter + 1)
   }
 
-  protected fun charCmp(buf: CharSequence, index: Int, command: String) = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
+  protected fun charCmp(buf: CharSequence, index: Int, command: String): Boolean = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
 
-  protected fun isSpace(c: Char) = c == ' ' || c == '\n' || c == '\t' || c == '\r'
+  protected fun isSpace(c: Char): Boolean = c == ' ' || c == '\n' || c == '\t' || c == '\r'
 
-  protected fun isQuote(c: Char) = c == '\'' || c == '\"' || c == '`'
+  protected fun isQuote(c: Char): Boolean = c == '\'' || c == '\"' || c == '`'
 }

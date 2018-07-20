@@ -1,37 +1,29 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("OrderUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow
 
+import com.intellij.util.ArrayUtil.EMPTY_INT_ARRAY
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl
 import java.util.*
 
 private val fakeRoot = InstructionImpl(null)
 
-fun reversedPostOrder(flow: Array<Instruction>): IntArray = postOrder(flow).reversedArray()
+@JvmOverloads
+fun reversedPostOrder(flow: Array<Instruction>, reachable: Boolean = false): IntArray = postOrder(flow, reachable).reversedArray()
 
-fun postOrder(flow: Array<Instruction>): IntArray {
-  val N = flow.size
-  val result = IntArray(N)
+fun postOrder(flow: Array<Instruction>, reachable: Boolean): IntArray {
+  val n = flow.size
+  if (n == 0) return EMPTY_INT_ARRAY
+
+  val result = IntArray(n) { -1 }
   var resultIndex = 0
 
-  val visited = BooleanArray(N)
+  val visited = BooleanArray(n)
   val stack: Deque<Pair<Instruction, Iterator<Instruction>>> = LinkedList()
-  stack.push(fakeRoot to flow.iterator())
+
+  val rootIterator = if (reachable) listOf(flow[0]).iterator() else flow.iterator()
+  stack.push(fakeRoot to rootIterator)
 
   while (!stack.isEmpty()) {
     val (instruction, iterator) = stack.peek()
@@ -51,8 +43,13 @@ fun postOrder(flow: Array<Instruction>): IntArray {
     }
   }
 
-  assert(resultIndex == N)
-  return result
+  if (reachable) {
+    assert(resultIndex <= n)
+  }
+  else {
+    assert(resultIndex == n)
+  }
+  return if (resultIndex == n) result else result.take(resultIndex).toIntArray()
 }
 
 private inline fun <T> Iterator<T>.firstOrNull(predicate: (T) -> Boolean): T? {

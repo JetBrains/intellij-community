@@ -520,12 +520,9 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       return false;
     }
     if (getLocalVariable() != null) {
-      new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          getLocalVariable().setName(myLocalName);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+        getLocalVariable().setName(myLocalName);
+      });
     }
 
     if (!isIdentifier(newName, myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;

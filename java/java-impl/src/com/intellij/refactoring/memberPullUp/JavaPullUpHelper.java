@@ -408,6 +408,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       Initializer i2 = fieldsToInitializers.get(field2);
       if(i1.movedFieldsUsed.contains(field2)) return 1;
       if(i2.movedFieldsUsed.contains(field1)) return -1;
+      if (i1.usedParameters.stream().anyMatch(p -> p.isVarArgs())) return 1;
+      if (i2.usedParameters.stream().anyMatch(p -> p.isVarArgs())) return -1;
       return 0;
     });
 

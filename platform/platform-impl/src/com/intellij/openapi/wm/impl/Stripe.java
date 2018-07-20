@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -99,31 +99,24 @@ final class Stripe extends JPanel implements UISettingsListener {
       }
     }
 
+    @SuppressWarnings("UseDPIAwareInsets")
     @Override
     public Insets getBorderInsets(Component c) {
       Stripe stripe = (Stripe)c;
       ToolWindowAnchor anchor = stripe.getAnchor();
 
-      Insets result = new Insets(0, 0, 0, 0);
-      final int off = UIUtil.isUnderDarcula() ? 1 : 0;
       if (anchor == ToolWindowAnchor.LEFT) {
-        result.top = 1;
-        result.right = 1 + off;
+        return new Insets(1, 0, 0, 1);
       }
       else if (anchor == ToolWindowAnchor.RIGHT) {
-        result.left = 1 + off;
-        result.top = 1;
+        return new Insets(1, 1, 0, 0);
       }
       else if (anchor == ToolWindowAnchor.TOP) {
-        result.bottom = 0;
-        //result.bottom = 1;
-        result.top = 1;
+        return new Insets(1, 0, 0, 0);
       }
       else {
-        result.top = 1 + off;
+        return new Insets(1, 0, 0, 0);
       }
-
-      return result;
     }
 
     @Override
@@ -293,7 +286,6 @@ final class Stripe extends JPanel implements UISettingsListener {
     if (!sidesStarted && processDrop) {
       tryDroppingOnGap(data, gap, -1);
     }
-
 
     if (isDroppingButton()) {
       final Dimension dragSize = myDragButton.getPreferredSize();

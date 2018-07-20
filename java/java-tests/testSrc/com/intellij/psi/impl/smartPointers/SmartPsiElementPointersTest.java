@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -9,6 +7,7 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.FileASTNode;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -20,9 +19,11 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +44,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.*;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ref.GCUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -65,7 +67,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/codeEditor/smartPsiElementPointers";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    myRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    myRoot = createTestProjectStructure( root);
   }
 
   public void testChangeInDocument() {
@@ -902,7 +904,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     String text = StringUtil.repeatSymbol(' ', 100000);
     PsiFile file = createFile("a.txt", text);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 500, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 650, () -> {
       List<SmartPsiFileRange> pointers = new ArrayList<>();
       for (int i = 0; i < text.length() - 1; i++) {
         pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));
@@ -1072,6 +1074,21 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
       SmartPointerEx<PsiElement> pointer = createPointer(element);
       assertEquals(element, pointer.getElement());
     }
+  }
+
+  public void testDoNotLeakLightVirtualFileSmartPointersReachableViaDocument() {
+    Key<SmartPointerEx<PsiClass>> key = Key.create("smart pointer test");
+
+    Runnable createFileAndPointer = () -> {
+      PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}", true, false);
+      SmartPointerEx<PsiClass> pointer = createPointer(((PsiJavaFile)file).getClasses()[0]);
+      file.getViewProvider().getDocument().putUserData(key, pointer);
+    };
+    createFileAndPointer.run();
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    SmartPointerTracker.processQueue();
+    LeakHunter.checkLeak(LeakHunter.allRoots(), Document.class, d -> !(d instanceof FrozenDocument) && d.getUserData(key) != null);
   }
 
 }

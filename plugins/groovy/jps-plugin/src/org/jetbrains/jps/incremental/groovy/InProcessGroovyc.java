@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.jps.incremental.CompileContext;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -69,23 +70,23 @@ class InProcessGroovyc implements GroovycFlavor {
   }
 
   @Override
-  public GroovycContinuation runGroovyc(final Collection<String> compilationClassPath,
-                                        final boolean forStubs,
-                                        final JpsGroovySettings settings,
-                                        final File tempFile,
-                                        final GroovycOutputParser parser) throws Exception {
+  public GroovycContinuation runGroovyc(Collection<String> compilationClassPath,
+                                        boolean forStubs,
+                                        CompileContext context,
+                                        File tempFile,
+                                        GroovycOutputParser parser, String byteCodeTargetLevel) throws Exception {
     boolean jointPossible = forStubs && !myHasStubExcludes;
     final LinkedBlockingQueue<String> mailbox = jointPossible && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
                                                 ? new LinkedBlockingQueue<>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
     if (loader == null) {
-      parser.addCompilerMessage(parser.reportNoGroovy());
+      parser.addCompilerMessage(parser.reportNoGroovy(null));
       return null;
     }
 
     final Future<Void> future = ourExecutor.submit(() -> {
-      runGroovycInThisProcess(loader, forStubs, settings, tempFile, parser, mailbox);
+      runGroovycInThisProcess(loader, forStubs, context, tempFile, parser, byteCodeTargetLevel, mailbox);
       return null;
     });
     if (mailbox == null) {
@@ -141,10 +142,10 @@ class InProcessGroovyc implements GroovycFlavor {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void runGroovycInThisProcess(ClassLoader loader,
                                               boolean forStubs,
-                                              JpsGroovySettings settings,
+                                              CompileContext context,
                                               File tempFile,
                                               final GroovycOutputParser parser,
-                                              @Nullable Queue mailbox) throws Exception {
+                                              @Nullable String byteCodeTargetLevel, @Nullable Queue mailbox) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
@@ -154,8 +155,10 @@ class InProcessGroovyc implements GroovycFlavor {
     Thread.currentThread().setContextClassLoader(loader);
     try {
       Class<?> runnerClass = loader.loadClass("org.jetbrains.groovy.compiler.rt.GroovycRunner");
-      Method intMain = runnerClass.getDeclaredMethod("intMain2", boolean.class, boolean.class, boolean.class, String.class, String.class, Queue.class);
-      Integer exitCode = (Integer)intMain.invoke(null, settings.invokeDynamic, false, forStubs, tempFile.getPath(), settings.configScript, mailbox);
+      Method intMain = runnerClass.getDeclaredMethod("intMain2", boolean.class, boolean.class, boolean.class, String.class, String.class, String.class, Queue.class);
+      JpsGroovySettings groovySettings = JpsGroovycRunner.getGroovyCompilerSettings(context);
+      Integer exitCode = (Integer)intMain.invoke(null, groovySettings.invokeDynamic, false, forStubs, tempFile.getPath(), groovySettings.configScript,
+                                                 byteCodeTargetLevel, mailbox);
       parser.notifyFinished(exitCode);
     }
     catch (Exception e) {
@@ -325,7 +328,7 @@ class InProcessGroovyc implements GroovycFlavor {
       boolean hasLineSeparator = false;
 
       @Override
-      public void write(int b) throws IOException {
+      public void write(int b) {
         if (Thread.currentThread() != thread) {
           overridden.write(b);
           return;
@@ -345,7 +348,7 @@ class InProcessGroovyc implements GroovycFlavor {
       }
 
       @Override
-      public void flush() throws IOException {
+      public void flush() {
         if (Thread.currentThread() != thread) {
           overridden.flush();
           return;

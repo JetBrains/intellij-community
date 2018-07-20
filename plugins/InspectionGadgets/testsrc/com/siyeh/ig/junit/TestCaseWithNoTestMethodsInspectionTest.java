@@ -48,7 +48,9 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightInspectionTest
       "    public abstract void run(TestResult result);\n" +
       "}",
       "package org.junit.jupiter.api;" +
-      "public @interface Test {}"
+      "public @interface Test {}",
+      "package org.junit.jupiter.api;" +
+      "public @interface Nested {}"
     };
   }
 }

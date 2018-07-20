@@ -21,11 +21,13 @@ public class JsonPropertyNameReference implements PsiReference {
     myProperty = property;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myProperty;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final JsonValue nameElement = myProperty.getNameElement();

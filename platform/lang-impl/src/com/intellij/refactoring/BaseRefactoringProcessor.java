@@ -34,6 +34,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -71,7 +72,6 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,9 +182,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Ref<Boolean> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
 
+    DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(this::findUsages));
+        refUsages.set(ReadAction.compute(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());
@@ -545,18 +547,26 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   @Override
   public final void run() {
+    Runnable runnable = this::doRun;
+    if (shouldDisableAccessChecks()) {
+      runnable = () -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+    }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      doRun();
+      runnable.run();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
-      DumbService.getInstance(myProject).smartInvokeLater(this::doRun);
+      DumbService.getInstance(myProject).smartInvokeLater(runnable);
     }
     else {
-      doRun();
+      runnable.run();
     }
+  }
+
+  protected boolean shouldDisableAccessChecks() {
+    return false;
   }
 
   public static class ConflictsInTestsException extends RuntimeException {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
@@ -21,8 +7,6 @@ import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -45,7 +29,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence.*;
+import static com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence.persistProjectUsages;
 
 public class StatisticsJobsScheduler implements ApplicationComponent {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 10 * 60 * 1000;
@@ -68,11 +52,6 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
 
   public StatisticsJobsScheduler(@NotNull FrameStateManager frameStateManager) {
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
-    NotificationsConfiguration.getNotificationsConfiguration().register(
-      StatisticsNotificationManager.GROUP_DISPLAY_ID,
-      NotificationDisplayType.STICKY_BALLOON,
-      false);
-
     myFrameStateManager = frameStateManager;
   }
 
@@ -89,7 +68,7 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
 
   private void runStatisticsService() {
     if (StatisticsUploadAssistant.isShouldShowNotification()) {
-      myFrameStateManager.addListener(new FrameStateListener.Adapter() {
+      myFrameStateManager.addListener(new FrameStateListener() {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
@@ -105,11 +84,7 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
       final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
       if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
         runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
-
-        // TODO: to be removed in 2018.1
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * SEND_STATISTICS_DELAY_IN_MIN);
       }
-
       if (FeatureUsageLogger.INSTANCE.isEnabled() && StatisticsUploadAssistant.isTimeToSendEventLog()) {
         runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), 3 * SEND_STATISTICS_DELAY_IN_MIN);
       }

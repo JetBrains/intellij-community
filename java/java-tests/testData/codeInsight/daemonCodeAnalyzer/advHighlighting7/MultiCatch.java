@@ -48,7 +48,7 @@ abstract class C {
 
     try { f(); } catch (E1 | E2 | <error descr="Exception 'C.E3' is never thrown in the corresponding try block">E3</error> e) { }
     try { f(); } catch (<error descr="Exception 'C.E3' is never thrown in the corresponding try block">E3</error> | <error descr="Exception 'C.E4' is never thrown in the corresponding try block">E4</error> | RE e) { } catch (E e) { }
-    try { <error descr="Unhandled exceptions: C.E1, C.E2">f();</error> } catch (E3 | E4 | RE e) { }
+    try { <error descr="Unhandled exceptions: C.E1, C.E2">f</error>(); } catch (E3 | E4 | RE e) { }
 
     try { f(); } catch (E e) { } catch (<error descr="Exception 'C.E1' has already been caught">E1</error> | <error descr="Exception 'C.E3' has already been caught">E3</error> e) { }
     try { f(); } catch (E1 | E2 e) { } catch (<error descr="Exception 'C.E2' has already been caught">E2</error> e) { }

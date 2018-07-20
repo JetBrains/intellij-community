@@ -66,7 +66,7 @@ class PluginLayout extends BaseLayout {
     }
     layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
     if (layout.doNotCreateSeparateJarForLocalizableResources) {
-      layout.modulesWithLocalizableResourcesInCommonJar.clear()
+      layout.localizableResourcesJars.clear()
     }
     return layout
   }

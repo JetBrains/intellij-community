@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast.java
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiThisExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
@@ -30,5 +31,5 @@ class JavaUThisExpression(
   override val labelIdentifier: UIdentifier?
     get() = psi.qualifier?.let { UIdentifier(it, this) }
 
-  override fun resolve() = psi.qualifier?.resolve()
+  override fun resolve(): PsiElement? = psi.qualifier?.resolve()
 }

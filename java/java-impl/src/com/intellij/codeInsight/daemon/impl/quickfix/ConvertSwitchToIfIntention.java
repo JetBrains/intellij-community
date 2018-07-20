@@ -280,6 +280,8 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         out.append(variable.getType().getCanonicalText()).append(' ').append(variable.getName()).append(';');
       }
     }
+
+    boolean addLineBreak = true;
     for (PsiElement bodyStatement : bodyStatements) {
       if (bodyStatement instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)bodyStatement;
@@ -289,20 +291,25 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         }
       }
       else {
-        appendElement(bodyStatement, out, commentTracker);
+        addLineBreak = appendElement(bodyStatement, out, commentTracker);
       }
     }
-    out.append("\n}");
+    if (addLineBreak) {
+      out.append("\n");
+    }
+    out.append("}");
   }
 
-  private static void appendElement(PsiElement element, @NonNls StringBuilder out, CommentTracker commentTracker) {
+  private static boolean appendElement(PsiElement element, @NonNls StringBuilder out, CommentTracker commentTracker) {
     if (element instanceof PsiBreakStatement) {
       final PsiBreakStatement breakStatement = (PsiBreakStatement)element;
       final PsiIdentifier identifier = breakStatement.getLabelIdentifier();
       if (identifier == null) {
-        return;
+        return false;
       }
     }
     out.append(commentTracker.text(element));
+
+    return true;
   }
 }

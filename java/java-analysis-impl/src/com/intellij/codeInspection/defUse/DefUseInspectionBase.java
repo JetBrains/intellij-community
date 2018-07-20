@@ -1,11 +1,16 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -16,10 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS;
@@ -66,15 +69,7 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {
-      Collections.sort(unusedDefs, (o1, o2) -> {
-        int offset1 = o1.getContext().getTextOffset();
-        int offset2 = o2.getContext().getTextOffset();
-
-        if (offset1 == offset2) return 0;
-        if (offset1 < offset2) return -1;
-
-        return 1;
-      });
+      unusedDefs.sort(Comparator.comparingInt(o -> o.getContext().getTextOffset()));
 
       for (DefUseUtil.Info info : unusedDefs) {
         PsiElement context = info.getContext();
@@ -82,7 +77,10 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
 
         if (context instanceof PsiDeclarationStatement || context instanceof PsiResourceVariable) {
           if (info.isRead() && REPORT_REDUNDANT_INITIALIZER) {
-            reportInitializerProblem(psiVariable, holder, isOnTheFly);
+            PsiTypeElement typeElement = psiVariable.getTypeElement();
+            if (typeElement == null || !typeElement.isInferredType()) {
+              reportInitializerProblem(psiVariable, holder, isOnTheFly);
+            }
           }
         }
         else if (context instanceof PsiAssignmentExpression) {
@@ -145,6 +143,20 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
         final List<PsiAssignmentExpression> assignments = collectAssignments(field, classInitializer);
         if (!assignments.isEmpty()) {
           boolean isDefinitely = HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, classInitializer.getBody());
+          if (isDefinitely) {
+            try {
+              ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(classInitializer.getBody());
+              if (ControlFlowUtil.getReadBeforeWrite(flow)
+                                 .stream()
+                                 .anyMatch(read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
+                                                   read.isReferenceTo(field))) {
+                isDefinitely = false;
+              }
+            }
+            catch (AnalysisCanceledException e) {
+              // ignore
+            }
+          }
           fieldWrites.add(FieldWrite.createAssignments(isDefinitely, assignments));
         }
       }
@@ -179,8 +191,19 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
       return false;
     }
     for (PsiMethod constructor : constructors) {
+      if (!JavaHighlightUtil.getChainedConstructors(constructor).isEmpty()) continue;
       final PsiCodeBlock body = constructor.getBody();
       if (body == null || !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+        return false;
+      }
+      try {
+        ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(body);
+        if (ControlFlowUtil.getReadBeforeWrite(flow).stream()
+                           .anyMatch(read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
+          return false;
+        }
+      }
+      catch (AnalysisCanceledException e) {
         return false;
       }
     }

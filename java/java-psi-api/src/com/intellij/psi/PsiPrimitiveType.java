@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Represents primitive types of Java language.
@@ -33,30 +22,77 @@ import java.util.Map;
 public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
 
   private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<>();
-  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<>();
 
+  private final JvmPrimitiveTypeKind myKind;
   private final String myName;
 
-  PsiPrimitiveType(@NotNull String name, String boxedName) {
-    this(name, TypeAnnotationProvider.EMPTY);
-    if (boxedName != null) {
-      ourQNameToUnboxed.put(boxedName, this);
-      ourUnboxedToQName.put(this, boxedName);
+  /**
+   * This constructor stores PsiType.XXX primitive types instances in a map for later reusing.
+   * PsiType.NULL is not registered and handled separately since it's not really a primitive type.
+   */
+  PsiPrimitiveType(@Nullable("for NULL type") JvmPrimitiveTypeKind kind) {
+    super(PsiAnnotation.EMPTY_ARRAY);
+    myKind = kind;
+    if (kind != null) {
+      ourQNameToUnboxed.put(kind.getBoxedFqn(), this);
     }
+    myName = getName(kind);
   }
 
-  public PsiPrimitiveType(@NotNull String name, @NotNull PsiAnnotation[] annotations) {
+  public PsiPrimitiveType(@Nullable("for NULL type") JvmPrimitiveTypeKind kind, @NotNull PsiAnnotation[] annotations) {
     super(annotations);
+    myKind = kind;
+    myName = getName(kind);
+  }
+
+  public PsiPrimitiveType(@Nullable("for NULL type") JvmPrimitiveTypeKind kind, @NotNull TypeAnnotationProvider provider) {
+    super(provider);
+    myKind = kind;
+    myName = getName(kind);
+  }
+
+  /**
+   * @param name valid {@link JvmPrimitiveTypeKind#getName primitive name}, or NoSuchElementException will be thrown
+   */
+  public PsiPrimitiveType(@NotNull String name, @NotNull TypeAnnotationProvider provider) {
+    super(provider);
+    JvmPrimitiveTypeKind kind = JvmPrimitiveTypeKind.getKindByName(name);
+    if (kind == null) throw new NoSuchElementException("Cannot find primitive type: " + name);
+    myKind = kind;
     myName = name;
   }
 
-  public PsiPrimitiveType(@NotNull String name, @NotNull TypeAnnotationProvider provider) {
-    super(provider);
+  /**
+   * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
+   */
+  @Deprecated
+  public PsiPrimitiveType(@NotNull String name, @NotNull PsiAnnotation[] annotations) {
+    super(annotations);
+    myKind = null;
     myName = name;
   }
 
   @NotNull
+  @Contract(pure = true)
+  private static String getName(@Nullable JvmPrimitiveTypeKind kind) {
+    return kind == null ? "null" : kind.getName();
+  }
+
+  @NotNull
   @Override
+  public final JvmPrimitiveTypeKind getKind() {
+    return Objects.requireNonNull(
+      myKind,
+      "getKind() called on PsiType.NULL\n" +
+      "If your code works with JvmElement API then this should not happen " +
+      "unless some implementation improperly returns PsiType.NULL " +
+      "from JvmMethod.getReturnType() (or any other available methods).\n" +
+      "If your code works with PsiType-s then you must check " +
+      "if this type is PsiType.NULL type before calling this method"
+    );
+  }
+
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -155,8 +191,9 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     return type instanceof PsiPrimitiveType ? (PsiPrimitiveType)type : getUnboxedType(type);
   }
 
+  @Nullable
   public String getBoxedTypeName() {
-    return ourUnboxedToQName.get(this);
+    return myKind == null ? null : myKind.getBoxedFqn();
   }
 
   /**
@@ -164,7 +201,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
    *
    * @param context where this boxed type is to be used
    * @return the class type, or null if the current language level does not support autoboxing or
-   *         it was not possible to resolve the reference to the class.
+   * it was not possible to resolve the reference to the class.
    */
   @Nullable
   public PsiClassType getBoxedType(@NotNull PsiElement context) {
@@ -195,17 +232,21 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass);
   }
 
+  /**
+   * @deprecated please use {@link JvmPrimitiveTypeKind#getBoxedFqns}
+   */
+  @Deprecated
   public static Collection<String> getAllBoxedTypeNames() {
-    return Collections.unmodifiableCollection(ourQNameToUnboxed.keySet());
+    return JvmPrimitiveTypeKind.getBoxedFqns();
   }
 
   @Override
   public int hashCode() {
-    return myName.hashCode();
+    return myKind == null ? 0 : myKind.hashCode();
   }
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof PsiPrimitiveType && myName.equals(((PsiPrimitiveType)obj).myName);
+    return this == obj || obj instanceof PsiPrimitiveType && myKind == ((PsiPrimitiveType)obj).myKind;
   }
 }

@@ -19,6 +19,11 @@ public abstract class AbstractAllInPackageConfigurationProducer extends JUnitCon
   }
 
   @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return JUnitConfiguration.TEST_PACKAGE.equals(type);
+  }
+
+  @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {

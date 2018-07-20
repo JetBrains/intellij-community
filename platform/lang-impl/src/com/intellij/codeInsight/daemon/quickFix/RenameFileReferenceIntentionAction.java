@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
   private final String myExistingElementName;
   private final FileReference myFileReference;
 
-  public RenameFileReferenceIntentionAction(final String existingElementName, final FileReference fileReference) {
+  RenameFileReferenceIntentionAction(final String existingElementName, final FileReference fileReference) {
     myExistingElementName = existingElementName;
     myFileReference = fileReference;
   }
@@ -61,12 +60,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (isAvailable(project, null, null)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          invoke(project, null, descriptor.getPsiElement().getContainingFile());
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, descriptor.getPsiElement().getContainingFile()));
     }
   }
 

@@ -132,6 +132,9 @@ public class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction 
            parent instanceof PyArgumentList && ArrayUtil.getFirstElement(((PyArgumentList)parent).getArguments()) == pyString)) {
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
       }
+      if (expression instanceof PyStringLiteralExpression && ((PyStringLiteralExpression)expression).isDocString()) {
+        expression = elementGenerator.createStringLiteralAlreadyEscaped(result.toString());
+      }
       if (expression != null) {
         pyString.replace(expression);
       }
@@ -165,7 +168,7 @@ public class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction 
       if (!firstChunk) {
         result.append(" ");
       }
-      result.append(info.getPrefix()).append(chunkQuote).append(line.substring(chunkStart, k)).append(chunkQuote);
+      result.append(info.getPrefix()).append(chunkQuote).append(line, chunkStart, k).append(chunkQuote);
       firstChunk = false;
       chunkStart = k;
     }

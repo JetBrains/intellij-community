@@ -17,6 +17,8 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,25 +28,35 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 public class LabelIcon implements Icon {
   public static final float SIZE = 6.25f;
   private final int mySize;
-  @NotNull private final Color[] myColors;
+  @NotNull private final List<Color> myColors;
   @NotNull private final Color myBgColor;
-  @NotNull private final BufferedImage myImage;
+  @NotNull private BufferedImage myImage;
 
-  public LabelIcon(int size, @NotNull Color bgColor, @NotNull Color... colors) {
+  public LabelIcon(@NotNull JComponent component, int size, @NotNull Color bgColor, @NotNull List<Color> colors) {
     mySize = size;
     myBgColor = bgColor;
     myColors = colors;
+    myImage = createImage(component, null);
+  }
 
-    myImage = UIUtil.createImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    paintIcon(myImage.createGraphics());
+  private BufferedImage createImage(Component c, Graphics2D g) {
+    BufferedImage image = c != null ?
+                          UIUtil.createImage(c.getGraphicsConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                          UIUtil.createImage(g, getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    paintIcon(image.createGraphics());
+    return image;
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    if (ImageUtil.getImageScale(myImage) != JBUI.sysScale((Graphics2D)g)) {
+      myImage = createImage(null, (Graphics2D)g);
+    }
     UIUtil.drawImage(g, myImage, x, y, null);
   }
 
@@ -53,12 +65,12 @@ public class LabelIcon implements Icon {
 
     float scale = mySize / SIZE;
 
-    for (int i = myColors.length - 1; i >= 0; i--) {
-      if (i != myColors.length - 1) {
+    for (int i = myColors.size() - 1; i >= 0; i--) {
+      if (i != myColors.size() - 1) {
         g2.setColor(myBgColor);
         paintTag(g2, scale, scale * 2 * i + 1, 0);
       }
-      g2.setColor(myColors[i]);
+      g2.setColor(myColors.get(i));
       paintTag(g2, scale, scale * 2 * i, 0);
     }
 
@@ -84,7 +96,7 @@ public class LabelIcon implements Icon {
 
   @Override
   public int getIconWidth() {
-    return getWidth(myColors.length);
+    return getWidth(myColors.size());
   }
 
   protected int getWidth(int labelsCount) {

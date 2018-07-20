@@ -81,7 +81,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   private int myCurrentCompletionsPos = 1;
   private String myFileSpitRegExp;
 
-  private boolean myAutopopup = false;
+  protected boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
   private final Set<Action> myDisabledTextActions;
   private final Map<String, String> myMacroMap;
@@ -736,7 +736,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myPathTextField.setCaretPosition(newPos);
   }
 
-  private void setTextToFile(final LookupFile file) {
+  protected void setTextToFile(final LookupFile file) {
     String text = file.getAbsolutePath();
     if (file.isDirectory() && !text.endsWith(myFinder.getSeparator())) {
       text += myFinder.getSeparator();

@@ -27,7 +27,8 @@ public enum Depth {
   INFINITY("infinity"),
   IMMEDIATES("immediates"),
   FILES("files"),
-  EMPTY("empty");
+  EMPTY("empty"),
+  EXCLUDE("exclude");
 
   @NotNull private static final Map<String, Depth> ourAllDepths = ContainerUtil.newHashMap();
 

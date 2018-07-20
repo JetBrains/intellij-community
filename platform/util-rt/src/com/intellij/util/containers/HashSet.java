@@ -27,10 +27,6 @@ public class HashSet<E> extends java.util.HashSet<E> {
     super(collection);
   }
 
-  public HashSet(int i, float v) {
-    super(i, v);
-  }
-
   public HashSet(int i) {
     super(i);
   }

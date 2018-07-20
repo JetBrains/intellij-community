@@ -32,7 +32,8 @@ public class TrelloList extends TrelloModel {
 
   private boolean closed;
   private String idBoard;
-  private String name;
+  @NotNull
+  private String name = "";
   /**
    * This field is not part of REST responses. It will be set explicitly to show in UI, that
    * selected list doesn't belong to specified board anymore.

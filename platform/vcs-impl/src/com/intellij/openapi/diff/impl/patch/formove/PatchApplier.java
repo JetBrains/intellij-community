@@ -20,7 +20,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
@@ -29,14 +28,17 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchUtil;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.PathsVerifier.PatchAndFile;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -51,8 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
@@ -182,7 +182,7 @@ public class PatchApplier<Unused> {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    return runUnderChangeList(project, targetChangeList, () -> {
+    return PartialChangesUtil.computeUnderChangeListWithRefresh(project, targetChangeList, "Applying patch...", () -> {
       ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
       for (PatchApplier patchApplier : group) {
         result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
@@ -242,46 +242,6 @@ public class PatchApplier<Unused> {
 
       return result;
     });
-  }
-
-  private static <T> T runUnderChangeList(@NotNull Project project,
-                                          @Nullable LocalChangeList targetChangeList,
-                                          @NotNull Computable<T> task) {
-    ChangeListManager clm = ChangeListManager.getInstance(project);
-    LocalChangeList oldDefaultList = clm.getDefaultChangeList();
-
-    if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
-      return task.compute();
-    }
-
-    clm.setDefaultChangeList(targetChangeList);
-    try {
-      return task.compute();
-    }
-    finally {
-      try {
-        CountDownLatch waiter = new CountDownLatch(1);
-
-        // wait for CLM update
-        clm.invokeAfterUpdate(() -> waiter.countDown(),
-                              InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "Apply Patch", ModalityState.NON_MODAL);
-
-        boolean success = false;
-        while (!success) {
-          ProgressManager.checkCanceled();
-          try {
-            success = waiter.await(50, TimeUnit.MILLISECONDS);
-          }
-          catch (InterruptedException e) {
-            LOG.warn(e);
-            throw new ProcessCanceledException(e);
-          }
-        }
-      }
-      finally {
-        clm.setDefaultChangeList(oldDefaultList);
-      }
-    }
   }
 
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {

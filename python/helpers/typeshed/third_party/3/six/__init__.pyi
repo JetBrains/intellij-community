@@ -11,6 +11,7 @@ from typing import (
     Iterable,
     KeysView,
     Mapping,
+    NoReturn,
     Optional,
     Pattern,
     Tuple,
@@ -23,7 +24,6 @@ from typing import (
 import types
 import typing
 import unittest
-from mypy_extensions import NoReturn
 
 # Exports
 from io import StringIO as StringIO, BytesIO as BytesIO

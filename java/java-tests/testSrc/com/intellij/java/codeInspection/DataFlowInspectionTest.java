@@ -18,6 +18,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -95,6 +96,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNotEqualsDoesntImplyNotNullity() { doTest(); }
   public void testEqualsEnumConstant() { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
+  public void testIncompleteSwitchEnum() { doTest(); }
   public void testEnumConstantNotNull() { doTest(); }
   public void testCheckEnumConstantConstructor() { doTest(); }
   public void testCompareToEnumConstant() { doTest(); }
@@ -279,6 +281,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalGetter() { doTest(); }
   public void testGetterResultsNotSame() { doTest(); }
   public void testIntersectionTypeInstanceof() { doTest(); }
+  
+  public void testKeepComments() { 
+    doTest();
+    checkIntentionResult("Simplify");
+  }
 
   public void testImmutableClassNonGetterMethod() {
     myFixture.addClass("package javax.annotation.concurrent; public @interface Immutable {}");
@@ -368,14 +375,26 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
   
   public void testTypeQualifierNickname() {
+    myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     addJavaxNullabilityAnnotations(myFixture);
+    addNullableNick();
 
-    myFixture.addClass("package bar;" +
-                       "import javax.annotation.meta.*;" +
-                       "@TypeQualifierNickname() @javax.annotation.NonNull(when = Maybe.MAYBE) " +
-                       "public @interface NullableNick {}");
-    
     doTest();
+  }
+
+  public void testTypeQualifierNicknameWithoutDeclarations() {
+    addJavaxNullabilityAnnotations(myFixture);
+    addNullableNick();
+
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, "TypeQualifierNickname.java");
+  }
+
+  private void addNullableNick() {
+    myFixture.addClass("package bar;" +
+                       "@javax.annotation.meta.TypeQualifierNickname() " +
+                       "@javax.annotation.Nonnull(when = javax.annotation.meta.When.MAYBE) " +
+                       "public @interface NullableNick {}");
   }
 
   public static void addJavaxDefaultNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
@@ -392,8 +411,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
                      "public @interface TypeQualifierDefault { java.lang.annotation.ElementType[] value() default {};}");
     fixture.addClass("package javax.annotation.meta;" +
                      "public enum When { ALWAYS, UNKNOWN, MAYBE, NEVER }");
-    fixture.addClass("package javax.annotation.meta;" +
-                     "public @interface TypeQualifierNickname {}");
 
     fixture.addClass("package javax.annotation;" +
                      "import javax.annotation.meta.*;" +
@@ -548,6 +565,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
       public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
         return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
+
+      @Override
+      public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
+        return element instanceof PsiClass && ((PsiClass)element).getName().equals("Instrumented");
+      }
     }, myFixture.getTestRootDisposable());
     doTest();
   }
@@ -586,4 +608,17 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullabilityBasics() { doTest(); }
   public void testReassignedVarInLoop() { doTest(); }
   public void testLoopDoubleComparisonNotComplex() { doTest(); }
+  public void testAssumeNotNull() {
+    myFixture.addClass("package org.junit; public class Assert { public static void assertTrue(boolean b) {}}");
+    myFixture.addClass("package org.junit; public class Assume { public static void assumeNotNull(Object... objects) {}}");
+    doTest();
+  }
+  public void testMergedInitializerAndConstructor() { doTest(); }
+  public void testClassMethodsInlining() { doTest(); }
+  public void testObjectLocality() { doTest(); }
+  public void testInstanceOfForUnknownVariable() { doTest(); }
+  public void testNanComparisonWrong() { doTest(); }
+  public void testConstantMethods() { doTest(); }
+  public void testPolyadicEquality() { doTest(); }
+  public void testBoxUnboxArrayElement() { doTest(); }
 }

@@ -42,6 +42,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
     super(key, element, bundleName, soft);
   }
 
+  @Override
   @NotNull
   protected String getKeyText() {
     String keyText = super.getKeyText();
@@ -50,6 +51,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
     return keyText;
   }
 
+  @Override
   protected void addKey(Object property, Set<Object> variants) {
     String key = ((IProperty)property).getUnescapedKey();
     final String keyPrefix = getKeyPrefix();

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.*;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -30,6 +32,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JPanel contentPane;
@@ -42,7 +45,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JCheckBox myIgnoreWhitespacesCheckBox;
 
   private final Project myProject;
-  private final String mySelectedBranchUrl;
+  @NotNull private final Url mySelectedBranchUrl;
   private final SvnVcs myVcs;
   private final String mySelectedRepositoryUUID;
 
@@ -50,7 +53,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private boolean myMustSelectBeforeOk;
 
-  public IntegratedSelectedOptionsDialog(final Project project, final Url currentBranch, final String selectedBranchUrl) {
+  public IntegratedSelectedOptionsDialog(final Project project, final Url currentBranch, @NotNull Url selectedBranchUrl) {
     super(project, true);
     myMustSelectBeforeOk = true;
     myProject = project;
@@ -88,10 +91,11 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myIgnoreWhitespacesCheckBox.setSelected(svnConfig.isIgnoreSpacesInMerge());
 
     mySourceInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.source.label.text", currentBranch));
-    myTargetInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl));
+    myTargetInfoLabel
+      .setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl.toDecodedString()));
 
     final String addText = SvnBundle.message("action.Subversion.integrate.changes.dialog.add.wc.text");
-    final AnAction addAction = new AnAction(addText, addText, IconUtil.getAddIcon()) {
+    final AnAction addAction = new DumbAwareAction(addText, addText, IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
       }
@@ -124,7 +128,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myGroup.add(addAction);
 
     final String removeText = SvnBundle.message("action.Subversion.integrate.changes.dialog.remove.wc.text");
-    myGroup.add(new AnAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
+    myGroup.add(new DumbAwareAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.getDelete(), myWorkingCopiesList);
       }
@@ -191,7 +195,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     final DefaultListModel model = (DefaultListModel) myWorkingCopiesList.getModel();
     model.addElement(info);
     myWorkingCopiesList.setSelectedValue(info, true);
-    SvnBranchMapperManager.getInstance().put(mySelectedBranchUrl, file.getAbsolutePath());
+    SvnBranchMapperManager.getInstance().put(mySelectedBranchUrl, file);
   }
 
   private boolean underProject(final File file) {
@@ -231,15 +235,15 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static Url realTargetUrl(final SvnVcs vcs, final WorkingCopyInfo info, final String targetBranchUrl) {
-    final Info svnInfo = vcs.getInfo(info.getLocalPath());
-    final Url svnurl = svnInfo != null ? svnInfo.getURL() : null;
+  private static Url realTargetUrl(@NotNull SvnVcs vcs, @NotNull WorkingCopyInfo info, @NotNull Url targetBranchUrl) {
+    Info svnInfo = vcs.getInfo(info.getLocalPath());
+    Url url = svnInfo != null ? svnInfo.getURL() : null;
 
-    return (svnurl != null) && (svnurl.toString().startsWith(targetBranchUrl)) ? svnurl : null;
+    return url != null && isAncestor(targetBranchUrl, url) ? url : null;
   }
 
   @Nullable
-  public static Pair<WorkingCopyInfo, Url> selectWorkingCopy(final Project project, final Url currentBranch, final String targetBranch,
+  public static Pair<WorkingCopyInfo, Url> selectWorkingCopy(final Project project, final Url currentBranch, @NotNull Url targetBranch,
                                                              final boolean showIntegrationParameters,
                                                              final String selectedLocalBranchPath, final String dialogTitle) {
     final IntegratedSelectedOptionsDialog dialog = new IntegratedSelectedOptionsDialog(project, currentBranch, targetBranch);

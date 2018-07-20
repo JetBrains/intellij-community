@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,16 +27,22 @@ public class ProblemDescriptorUtil {
 
   public static final Couple<String> XML_CODE_MARKER = Couple.of("<xml-code>", "</xml-code>");
 
+  @NotNull
   public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement psiElement) {
+    TextRange range = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
+    return extractHighlightedText(range, psiElement);
+  }
+
+  @NotNull
+  public static String extractHighlightedText(@Nullable TextRange range, @Nullable PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
     String ref = psiElement.getText();
-    if (descriptor instanceof ProblemDescriptorBase) {
-      TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
+    if (range != null) {
       final TextRange elementRange = psiElement.getTextRange();
-      if (textRange != null && elementRange != null) {
-        textRange = textRange.shiftRight(-elementRange.getStartOffset());
-        if (textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= elementRange.getLength()) {
-          ref = textRange.substring(ref);
+      if (elementRange != null) {
+        range = range.shiftRight(-elementRange.getStartOffset());
+        if (range.getStartOffset() >= 0 && range.getEndOffset() <= elementRange.getLength()) {
+          ref = range.substring(ref);
         }
       }
     }
@@ -124,15 +129,7 @@ public class ProblemDescriptorUtil {
   public static HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                               @NotNull HighlightSeverity severity,
                                                               @NotNull SeverityRegistrar severityRegistrar) {
-    final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
-    final HighlightInfoType highlightInfoType = getHighlightInfoType(highlightType, severity, severityRegistrar);
-    if (highlightInfoType == HighlightSeverity.INFORMATION) {
-      final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
-      if (attributes != null) {
-        return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
-      }
-    }
-    return highlightInfoType;
+    return getHighlightInfoType(problemDescriptor.getHighlightType(), severity, severityRegistrar);
   }
 
   public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,

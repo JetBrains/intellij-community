@@ -51,7 +51,7 @@ public class ShowByteCodeAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(false);
-    e.getPresentation().setIcon(AllIcons.Toolwindows.Documentation);
+    e.getPresentation().setIcon(AllIcons.Actions.Preview);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final PsiElement psiElement = getPsiElement(e.getDataContext(), project, e.getData(CommonDataKeys.EDITOR));
@@ -130,7 +130,7 @@ public class ShowByteCodeAction extends AnAction {
             return false;
           };
 
-          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, editor.getComponent())
+          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getEditorComponent())
             .setProject(project)
             .setDimensionServiceKey(project, ShowByteCodeAction.class.getName(), false)
             .setResizable(true)

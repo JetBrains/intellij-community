@@ -79,15 +79,6 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return myPathMappings.isEmpty();
   }
 
-  /**
-   * @deprecated use {@code !isEmpty()} instead
-   * @see #isEmpty()
-   */
-  @Deprecated
-  public boolean isUseMapping() {
-    return !isEmpty();
-  }
-
   public static class BestMappingSelector {
     private int myBestWeight = -1;
     private PathMapping myBest = null;
@@ -332,6 +323,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       if (myRemoteRoot != null ? !myRemoteRoot.equals(mapping.myRemoteRoot) : mapping.myRemoteRoot != null) return false;
 
       return true;
+    }
+
+    @Override
+    public String toString() {
+      return "{'" + myLocalRoot + "' <=> '" + myRemoteRoot + "'}";
     }
 
     @Override

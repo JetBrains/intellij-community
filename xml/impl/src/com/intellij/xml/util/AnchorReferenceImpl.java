@@ -41,7 +41,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   @NonNls private static final String MAP_ELEMENT_NAME = "map";
   private static final Key<CachedValue<Map<String,XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
 
-  AnchorReferenceImpl(final String anchor, @Nullable final FileReference psiReference, final PsiElement element, final int offset,
+  AnchorReferenceImpl(final String anchor, @Nullable final FileReference psiReference, @NotNull final PsiElement element, final int offset,
                       final boolean soft) {
 
     myAnchor = anchor;
@@ -51,11 +51,13 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     mySoft = soft;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(myOffset,myOffset+myAnchor.length());

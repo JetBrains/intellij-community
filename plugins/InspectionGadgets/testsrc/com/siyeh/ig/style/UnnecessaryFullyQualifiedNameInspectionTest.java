@@ -1,8 +1,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.IGInspectionTestCase;
@@ -33,16 +31,9 @@ public class UnnecessaryFullyQualifiedNameInspectionTest extends IGInspectionTes
   }
 
   private void doTestWithFqnInJavadocSetting(String dirPath, int classNamesInJavadoc) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
 
-    int oldClassNamesInJavadoc = javaSettings.CLASS_NAMES_IN_JAVADOC;
-    try {
-      javaSettings.CLASS_NAMES_IN_JAVADOC = classNamesInJavadoc;
-      doTest(dirPath, new UnnecessaryFullyQualifiedNameInspection());
-    }
-    finally {
-      javaSettings.CLASS_NAMES_IN_JAVADOC = oldClassNamesInJavadoc;
-    }
+    javaSettings.CLASS_NAMES_IN_JAVADOC = classNamesInJavadoc;
+    doTest(dirPath, new UnnecessaryFullyQualifiedNameInspection());
   }
 }

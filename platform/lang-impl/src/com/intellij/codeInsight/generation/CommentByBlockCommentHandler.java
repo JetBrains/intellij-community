@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
@@ -38,9 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
@@ -418,18 +417,16 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
     if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n') {
       if (endOffset == myDocument.getTextLength() || endOffset > 0 && chars.charAt(endOffset - 1) == '\n') {
-        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
         CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFile);
         String space;
         if (!settings.BLOCK_COMMENT_AT_FIRST_COLUMN) {
-          final FileType fileType = myFile.getFileType();
           int line1 = myEditor.offsetToLogicalPosition(startOffset).line;
           int line2 = myEditor.offsetToLogicalPosition(endOffset - 1).line;
-          Indent minIndent = CommentUtil.getMinLineIndent(myProject, myDocument, line1, line2, fileType);
+          IndentData minIndent = CommentUtil.getMinLineIndent(myDocument, line1, line2, myFile);
           if (minIndent == null) {
-            minIndent = codeStyleManager.zeroIndent();
+            minIndent = new IndentData(0);
           }
-          space = codeStyleManager.fillIndent(minIndent, fileType);
+          space = minIndent.createIndentInfo().generateNewWhiteSpace(CodeStyle.getIndentOptions(myFile));
         }
         else {
           space = "";

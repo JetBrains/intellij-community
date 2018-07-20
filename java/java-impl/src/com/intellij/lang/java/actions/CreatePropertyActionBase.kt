@@ -36,14 +36,16 @@ internal abstract class CreatePropertyActionBase(
 
     // check parameters count
     when (propertyKind) {
-      PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER -> if (request.parameters.isNotEmpty()) return false
-      PropertyKind.SETTER -> if (request.parameters.size != 1) return false
+      PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER -> if (request.expectedParameters.isNotEmpty()) return false
+      PropertyKind.SETTER -> if (request.expectedParameters.size != 1) return false
     }
 
     return target.findMethodsByName(request.methodName, false).isEmpty()
   }
 
   protected val propertyInfo: Pair<String, PropertyKind> get() = requireNotNull(doGetPropertyInfo()).toNotNull()
+
+  internal fun getPropertyName() : String? = doGetPropertyInfo()?.first
 
   override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
 

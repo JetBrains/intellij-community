@@ -105,15 +105,6 @@ public abstract class LookupElement extends UserDataHolderBase {
     presentation.setItemText(getLookupString());
   }
 
-  /**
-   * use {@link #as(ClassConditionKey)} instead
-   */
-  @Deprecated
-  @Nullable
-  public final <T> T as(Class<T> aClass) {
-    return as(ClassConditionKey.create(aClass));
-  }
-
   @SuppressWarnings("unchecked")
   @Nullable
   public <T> T as(ClassConditionKey<T> conditionKey) {

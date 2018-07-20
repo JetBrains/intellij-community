@@ -24,7 +24,9 @@ def escape_value(value):
 
 
 class TeamcityServiceMessages(object):
-    def __init__(self, output=sys.stdout, now=_time, encoding='auto'):
+    def __init__(self, output=None, now=_time, encoding='auto'):
+        if output is None:
+            output = sys.stdout
         if sys.version_info < (3, ) or not hasattr(output, 'buffer'):
             self.output = output
         else:
@@ -120,8 +122,12 @@ class TeamcityServiceMessages(object):
         import teamcity.context_managers as cm
         return cm.testSuite(self, name=name)
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None):
-        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId)
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, metainfo=None):
+        """
+
+        :param metainfo: Used to pass any payload from test runner to Intellij. See IDEA-176950
+        """
+        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId, metainfo=metainfo)
 
     def testFinished(self, testName, testDuration=None, flowId=None):
         if testDuration is not None:
@@ -150,7 +156,7 @@ class TeamcityServiceMessages(object):
             diff_message = u"\n{0} != {1}\n".format(comparison_failure.actual, comparison_failure.expected)
             self.message('testFailed',
                          name=testName,
-                         message=message + diff_message,
+                         message=text_type(message) + text_type(diff_message),
                          details=details,
                          flowId=flowId,
                          type="comparisonFailure",

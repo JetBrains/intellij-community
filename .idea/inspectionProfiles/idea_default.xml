@@ -158,6 +158,10 @@
     <inspection_tool class="BeforeOrAfterIsPublicVoidNoArg" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="BindingAnnotationWithoutInject" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BooleanMethodIsAlwaysInverted" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="BoundedWildcard" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="REPORT_INVARIANT_CLASSES" value="false" />
+      <option name="REPORT_PRIVATE_METHODS" value="false" />
+    </inspection_tool>
     <inspection_tool class="BpmnConfigDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="BuildoutUnresolvedPartInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BusyWait" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -236,7 +240,7 @@
     </inspection_tool>
     <inspection_tool class="DuplicateCaseLabelJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DuplicateCondition" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="ignoreMethodCalls" value="false" />
+      <option name="ignoreSideEffectConditions" value="true" />
     </inspection_tool>
     <inspection_tool class="DuplicatedBlockNamesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="EmptyStatementBody" enabled="true" level="WARNING" enabled_by_default="true">
@@ -485,10 +489,6 @@
     <inspection_tool class="LocalVariableName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="[a-z][A-Za-z\d_]*" />
     </inspection_tool>
-    <inspection_tool class="LoggerInitializedWithForeignClass" enabled="false" level="WARNING" enabled_by_default="false">
-      <option name="loggerClassName" value="org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger" />
-      <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger" />
-    </inspection_tool>
     <inspection_tool class="LoopStatementThatDoesntLoopJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MakoArgumentListInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MavenDuplicateDependenciesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -565,8 +565,11 @@
     </inspection_tool>
     <inspection_tool class="PointlessBooleanExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PointlessNullCheck" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="REPORT_CALLS" value="false" />
       <scope name="android" level="WARNING" enabled="false" />
+      <option name="REPORT_CALLS" value="false" />
+    </inspection_tool>
+    <inspection_tool class="PrivatePropertyName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
     <inspection_tool class="ProtectedMemberInFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicFieldAccessedInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -574,7 +577,6 @@
     <inspection_tool class="Query_index_required" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_restricted" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RedundantCast" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="IGNORE_ANNOTATED_METHODS" value="true" />
       <option name="IGNORE_SUSPICIOUS_METHOD_CALLS" value="true" />
     </inspection_tool>
     <inspection_tool class="RedundantSamConstructor" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
@@ -705,18 +707,18 @@
         <constraint name="type" within="" contains="" />
         <constraint name="runnable" nameOfExprType="java.lang.Runnable" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="DBE model property is private (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  private $FieldType$ $FieldName$&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
+      <searchConfiguration name="DBE model property is private (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  private $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
         <constraint name="FieldName" target="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="DBE model property is package local (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
+      <searchConfiguration name="DBE model property is package local (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  @Modifier(&quot;packageLocal&quot;) $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
         <constraint name="FieldName" target="true" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="DBE model property is protected (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  protected $FieldType$ $FieldName$&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
+      <searchConfiguration name="DBE model property is protected (must be public)" text="class $Class$ {&#10;  @StateProperty&#10;  protected $FieldType$ $FieldName$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" within="" contains="" />
         <constraint name="FieldName" target="true" within="" contains="" />
@@ -769,6 +771,28 @@
         <constraint name="c" nameOfExprType="char" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="TokenSet.create(TokenType.WHITE_SPACE) -&gt; TokenSet.WHITE_SPACE" text="com.intellij.psi.tree.TokenSet.create(com.intellij.psi.TokenType.WHITE_SPACE)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.psi.tree.TokenSet.WHITE_SPACE" />
+      <replaceConfiguration name="can be simplified to ReadAction.compute" created="1516639178225" text="$application$.runReadAction(new $Computable$() {&#10;  public $SearchScope$ compute() {&#10;    return $e$;&#10;  }&#10;})" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
+        <constraint name="SearchScope" within="" contains="" />
+        <constraint name="e" within="" contains="" />
+        <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Computable" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="can be simplified to ReadAction.compute_" created="1516639178225" text="$application$.runReadAction(($C$)()-&gt;$e$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.application.ReadAction.compute(()-&gt;$e$)">
+        <constraint name="e" within="" contains="" />
+        <constraint name="C" minCount="0" within="" contains="" />
+        <constraint name="application" nameOfExprType="com.intellij.openapi.application.Application" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="incorrect DumbAware check" created="1522680840725" text="$target$ instanceof DumbAware" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.project.DumbService.isDumbAware($target$)">
+        <constraint name="target" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" created="1523461479091" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
+        <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="findAnnotation(name) == null -&gt; !hasAnnotation(name)" created="1523461974706" text="$Instance$.findAnnotation($Parameter$) == null&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$Instance$.hasAnnotation($Parameter$)">
+        <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -877,8 +901,10 @@
     <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false">
         <option name="m_ignoreJavadoc" value="true" />
+        <option name="ignoreInModuleStatements" value="true" />
       </scope>
       <option name="m_ignoreJavadoc" value="true" />
+      <option name="ignoreInModuleStatements" value="true" />
     </inspection_tool>
     <inspection_tool class="UnnecessaryLabelJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessaryLabelOnBreakStatement" enabled="false" level="WARNING" enabled_by_default="false" />

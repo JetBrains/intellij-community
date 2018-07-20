@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -25,15 +25,20 @@ public class MethodProcessorRunnable implements Runnable {
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
   private final VarProcessor varProc;
+  private final DecompilerContext parentContext;
 
   private volatile RootStatement root;
   private volatile Throwable error;
   private volatile boolean finished = false;
 
-  public MethodProcessorRunnable(StructMethod method, MethodDescriptor methodDescriptor, VarProcessor varProc) {
+  public MethodProcessorRunnable(StructMethod method,
+                                 MethodDescriptor methodDescriptor,
+                                 VarProcessor varProc,
+                                 DecompilerContext parentContext) {
     this.method = method;
     this.methodDescriptor = methodDescriptor;
     this.varProc = varProc;
+    this.parentContext = parentContext;
   }
 
   @Override
@@ -42,13 +47,14 @@ public class MethodProcessorRunnable implements Runnable {
     root = null;
 
     try {
+      DecompilerContext.setCurrentContext(parentContext);
       root = codeToJava(method, methodDescriptor, varProc);
     }
-    catch (ThreadDeath ex) {
-      throw ex;
+    catch (Throwable t) {
+      error = t;
     }
-    catch (Throwable ex) {
-      error = ex;
+    finally {
+      DecompilerContext.setCurrentContext(null);
     }
 
     finished = true;
@@ -120,39 +126,26 @@ public class MethodProcessorRunnable implements Runnable {
 
     SequenceHelper.condenseSequences(root);
 
-    while (true) {
-      StackVarsProcessor stackProc = new StackVarsProcessor();
+    StackVarsProcessor stackProc = new StackVarsProcessor();
+
+    do {
       stackProc.simplifyStackVars(root, mt, cl);
-
       varProc.setVarVersions(root);
-
-      if (!new PPandMMHelper().findPPandMM(root)) {
-        break;
-      }
     }
+    while (new PPandMMHelper().findPPandMM(root));
 
     while (true) {
       LabelHelper.cleanUpEdges(root);
 
-      while (true) {
+      do {
         MergeHelper.enhanceLoops(root);
-
-        if (LoopExtractHelper.extractLoops(root)) {
-          continue;
-        }
-
-        if (!IfHelper.mergeAllIfs(root)) {
-          break;
-        }
       }
+      while (LoopExtractHelper.extractLoops(root) || IfHelper.mergeAllIfs(root));
 
       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
           SequenceHelper.condenseSequences(root);
-
-          StackVarsProcessor stackProc = new StackVarsProcessor();
           stackProc.simplifyStackVars(root, mt, cl);
-
           varProc.setVarVersions(root);
         }
       }
@@ -169,9 +162,9 @@ public class MethodProcessorRunnable implements Runnable {
       }
 
       // FIXME: !!
-      //			if(!EliminateLoopsHelper.eliminateLoops(root)) {
-      //				break;
-      //			}
+      //if(!EliminateLoopsHelper.eliminateLoops(root)) {
+      //  break;
+      //}
     }
 
     ExitHelper.removeRedundantReturns(root);

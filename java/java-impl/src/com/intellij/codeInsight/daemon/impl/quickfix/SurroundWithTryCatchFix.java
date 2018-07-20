@@ -62,7 +62,13 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myElement != null && myElement.isValid();
+    if (myElement != null && myElement.isValid()) {
+      PsiElement parentStatement = RefactoringUtil.getParentStatement(myElement, false);
+      return !(parentStatement instanceof PsiDeclarationStatement &&
+               ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass);
+    }
+
+    return false;
   }
 
   @Override

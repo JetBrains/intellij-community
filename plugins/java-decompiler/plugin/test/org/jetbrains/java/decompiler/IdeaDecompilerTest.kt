@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
@@ -36,11 +34,13 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   }
 
   override fun tearDown() {
-    FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
-    for (file in EditorHistoryManager.getInstance(project).files) {
-      EditorHistoryManager.getInstance(project).removeFile(file)
+    try {
+      FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
+      EditorHistoryManager.getInstance(project).removeAllFiles()
     }
-    super.tearDown()
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testSimple() {
@@ -118,7 +118,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   fun testPerformance() {
     val decompiler = IdeaDecompiler()
     val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
-    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000, { decompiler.getText(file) }).assertTiming()
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000) { decompiler.getText(file) }.assertTiming()
   }
 
   fun testStructureView() {
@@ -170,7 +170,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
       }
       else if (file.fileType === StdFileTypes.CLASS && !file.name.contains('$')) {
         val decompiled = (psiManager.findFile(file)!! as ClsFileImpl).mirror.text
-        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name == "package-info.class")
+        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 
         // check that no mapped line number is on an empty line
         val prefix = "// "

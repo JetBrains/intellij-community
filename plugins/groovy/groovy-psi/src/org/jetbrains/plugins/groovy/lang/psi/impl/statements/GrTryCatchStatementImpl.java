@@ -1,34 +1,19 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author ilyas
@@ -39,7 +24,7 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitTryStatement(this);
   }
 
@@ -47,22 +32,25 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
     return "Try statement";
   }
 
+  @Nullable
   @Override
-  @NotNull
+  public GrTryResourceList getResourceList() {
+    return findChildByClass(GrTryResourceList.class);
+  }
+
+  @Override
+  @Nullable
   public GrOpenBlock getTryBlock() {
-    return findNotNullChildByClass(GrOpenBlock.class);
+    return findChildByClass(GrOpenBlock.class);
   }
 
-  @Override
   @NotNull
+  @Override
   public GrCatchClause[] getCatchClauses() {
-    List<GrCatchClause> result = new ArrayList<>();
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrCatchClause) result.add((GrCatchClause)cur);
-    }
-    return result.toArray(new GrCatchClause[0]);
+    return findChildrenByClass(GrCatchClause.class);
   }
 
+  @Nullable
   @Override
   public GrFinallyClause getFinallyClause() {
     return findChildByClass(GrFinallyClause.class);
@@ -75,5 +63,17 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
       anchor = getTryBlock();
     }
     return (GrCatchClause)addAfter(clause, anchor);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final GrTryResourceList resourceList = getResourceList();
+    if (resourceList != null && lastParent == getTryBlock()) {
+      return resourceList.processDeclarations(processor, state, null, place);
+    }
+    return true;
   }
 }

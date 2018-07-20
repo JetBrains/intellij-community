@@ -144,7 +144,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setEditable(true);
-    myTree.setHorizontalAutoScrollingEnabled(false);
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
     DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
       @Override
@@ -208,7 +207,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        mySplitterComponent.updatePreview();
+        mySplitterComponent.updatePreview(false);
       }
     });
   }
@@ -747,7 +746,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   public class MyShelfContent extends DnDActivateOnHoldTargetContent {
 
-    private MyShelfContent(JPanel panel, String displayName, boolean isLockable) {
+    private MyShelfContent(JPanel panel, @NotNull String displayName, boolean isLockable) {
       super(myProject, panel, displayName, isLockable);
     }
 
@@ -827,8 +826,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       updateRequest();
     }
 
+    @Override
     @CalledInAwt
-    public void refresh() {
+    public void refresh(boolean fromModelRefresh) {
       DataContext dc = DataManager.getInstance().getDataContext(myTree);
       List<ShelvedChange> selectedChanges = getShelveChanges(dc);
       List<ShelvedBinaryFile> selectedBinaryChanges = getBinaryShelveChanges(dc);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,8 +79,7 @@ public class InheritanceUtil {
   }
 
   public static boolean hasImplementation(@NotNull PsiClass aClass) {
-    final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
-    if (aClass.isInterface() && FunctionalExpressionSearch.search(aClass, scope).findFirst() != null) return true;
+    if (aClass.isInterface() && FunctionalExpressionSearch.search(aClass).findFirst() != null) return true;
     for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
       if (!provider.isApplicableTo(aClass)) {
         continue;
@@ -90,8 +89,7 @@ public class InheritanceUtil {
         return true;
       }
     }
-    final Query<PsiClass> search = ClassInheritorsSearch.search(aClass, scope, true);
-    return !search.forEach(
+    return !ClassInheritorsSearch.search(aClass).forEach(
       inheritor -> inheritor.isInterface() || inheritor.isAnnotationType() || inheritor.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 

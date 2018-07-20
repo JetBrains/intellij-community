@@ -91,7 +91,7 @@ public class BasicJarHandler extends ZipHandlerBase {
     LOG.trace(msg);
   }
   
-  public static void closeOpenedZipReferences() {
+  static void closeOpenedZipReferences() {
     synchronized (ourOpenFileLimitGuard) {
       ourOpenFileLimitGuard.keySet().forEach(BasicJarHandler::dispose);
     }
@@ -103,7 +103,7 @@ public class BasicJarHandler extends ZipHandlerBase {
   }
 
   private static final ScheduledExecutorService
-    ourScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("Zip handle janitor", 1);
+    ourScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
   
   private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
     private ZipFile myFile;
@@ -184,6 +184,7 @@ public class BasicJarHandler extends ZipHandlerBase {
       return myFileSystem.isMakeCopyOfJar(file) ? 2000 : 5 * 60 * 1000;
     }
 
+    @NotNull
     @Override
     public ZipFile get() {
       assert myLock.isLocked();

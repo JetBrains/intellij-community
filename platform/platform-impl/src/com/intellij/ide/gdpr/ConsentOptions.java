@@ -6,10 +6,13 @@ package com.intellij.ide.gdpr;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +29,13 @@ import java.util.stream.Stream;
 public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.gdpr.ConsentOptions");
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
-  private static final String BUNDLED_RESOURCE_PATH = "/consents.json";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
+
+  @NotNull
+  private static String getBundledResourcePath() {
+    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    return appInfo.isVendorJetBrains() ? "/consents.json" : "/consents-" + appInfo.getShortCompanyName() + ".json";
+  }
 
   private static final class InstanceHolder {
     static final ConsentOptions ourInstance = new ConsentOptions(new IOBackend() {
@@ -45,7 +53,7 @@ public final class ConsentOptions {
 
       @NotNull
       public String readBundledConsents() {
-        return loadText(ConsentOptions.class.getResourceAsStream(BUNDLED_RESOURCE_PATH));
+        return loadText(ConsentOptions.class.getResourceAsStream(getBundledResourcePath()));
       }
 
       public void writeConfirmedConsents(@NotNull String data) throws IOException {
@@ -61,7 +69,7 @@ public final class ConsentOptions {
       private String loadText(InputStream stream) {
         try {
           if (stream != null) {
-            final Reader reader = new InputStreamReader(new BufferedInputStream(stream), StandardCharsets.UTF_8);
+            final Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)), StandardCharsets.UTF_8);
             try {
               return new String(FileUtil.adaptiveLoadText(reader));
             }
@@ -144,7 +152,7 @@ public final class ConsentOptions {
     }
   }
 
-  public Pair<Collection<Consent>, Boolean> getConsents() {
+  public Pair<List<Consent>, Boolean> getConsents() {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (allDefaults.isEmpty()) {
       return Pair.create(Collections.emptyList(), Boolean.FALSE);

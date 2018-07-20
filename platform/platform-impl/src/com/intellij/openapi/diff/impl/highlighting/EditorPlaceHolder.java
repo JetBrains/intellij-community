@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.DiffVersionComponent;
-import com.intellij.openapi.diff.impl.util.ContentDocumentListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -78,7 +77,6 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
             myFileEditor = providers[0].createEditor(getProject(), file);
             if (myFileEditor instanceof TextEditor) {
               myEditor = (EditorEx)((TextEditor)myFileEditor).getEditor();
-              ContentDocumentListener.install(myContent, this);
             }
             myFileEditorProvider = providers[0];
             addDisposable(new Disposable() {
@@ -112,7 +110,6 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
             myEditor = null;
           }
         });
-        ContentDocumentListener.install(myContent, this);
       }
     }
     fireContentChanged();

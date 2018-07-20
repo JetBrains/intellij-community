@@ -21,7 +21,7 @@ import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.hierarchy.ExistingHierarchy
 import org.fest.swing.keystroke.KeyStrokeMap
-import org.fest.swing.timing.Pause
+import org.fest.swing.timing.Pause.pause
 import org.fest.swing.util.Modifiers
 import org.fest.util.Preconditions
 import java.awt.Component
@@ -49,7 +49,7 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
       Thread.sleep(50)
     }
     else {
-      Pause.pause(waitConst)
+      pause(waitConst)
       if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
     }
   }
@@ -61,13 +61,14 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
 
   //smooth mouse move
   override fun moveMouse(x: Int, y: Int) {
+    val pauseConstMs = settings().delayBetweenEvents().toLong()
     val n = 20
     val start = MouseInfo.getPointerInfo().location
     val dx = (x - start.x) / n.toDouble()
     val dy = (y - start.y) / n.toDouble()
     for (step in 1..n) {
       try {
-        Pause.pause(10L)
+        pause(pauseConstMs)
       }
       catch (e: InterruptedException) {
         e.printStackTrace()
@@ -87,14 +88,19 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
 
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
-    moveMouse(c, where.x, where.y)
-    myEdtAwareClick(button, times, where, c)
+    moveMouseAndClick(c, where, button, times)
   }
 
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
-    moveMouse(where.x, where.y)
-    myEdtAwareClick(button, times, where, null)
+    moveMouseAndClick(null, where, button, times)
+  }
+
+  private fun moveMouseAndClick(c: Component? = null, where: Point, button: MouseButton, times: Int) {
+    if (c != null) moveMouse(c, where.x, where.y) else moveMouse(where.x, where.y)
+    //pause between moving cursor and performing a click.
+    pause(waitConst)
+    myEdtAwareClick(button, times, where, c)
   }
 
 
@@ -138,9 +144,20 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
     fastReleaseModifiers(updatedModifiers)
   }
 
+  fun fastPressAndReleaseModifiers(vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    fastPressModifiers(unifiedModifiers)
+    pause(50)
+    fastReleaseModifiers(unifiedModifiers)
+  }
+
   fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
     fastPressKey(keyCode)
     fastReleaseKey(keyCode)
+  }
+
+  fun shortcut(keyStoke: KeyStroke) {
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
   }
 
   fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
@@ -152,8 +169,8 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
     val keyCodeArray: IntArray = string
       .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
       .toIntArray()
-    if (delayBetweenShortcutAndTypingMs > 0) Pause.pause(delayBetweenShortcutAndTypingMs.toLong())
-    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(10) }
+    if (delayBetweenShortcutAndTypingMs > 0) pause(delayBetweenShortcutAndTypingMs.toLong())
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); pause(50) }
   }
 
   private fun fastPressKey(keyCode: Int) {

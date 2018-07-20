@@ -2,6 +2,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -23,5 +24,12 @@ public interface BundledKeymapProvider {
     try (InputStream stream = BundledKeymapProvider.class.getResourceAsStream("/keymaps/" + key)) {
       return consumer.apply(stream);
     }
+  }
+
+  /**
+   * Returns the name of the keymap stored in the given file.
+   */
+  default String getKeyFromFileName(String filename) {
+    return FileUtilRt.getNameWithoutExtension(filename);
   }
 }

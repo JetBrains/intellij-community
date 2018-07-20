@@ -93,11 +93,13 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       return null;
     }
     return new PsiReference() {
+      @NotNull
       @Override
       public PsiElement getElement() {
         return RegExpNamedGroupRefImpl.this;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         final ASTNode groupNode = getNode().getFirstChildNode();

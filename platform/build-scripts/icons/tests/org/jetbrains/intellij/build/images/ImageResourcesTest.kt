@@ -201,7 +201,7 @@ private class MyOptimumSizeChecker(val projectHome: File, val iconsOnly: Boolean
     val images = allImages.filter { it.file != null }
 
     images.forEach { image ->
-      image.files.values.forEach { file ->
+      image.files.forEach { file ->
         val optimized = ImageSizeOptimizer.optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
           failures.add(FailedTest(module, "image size can be optimized: ${optimized.compressionStats}", image, file))
@@ -218,22 +218,22 @@ private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule)
     val generator = IconsClassGenerator(projectHome, util, false)
     generator.processModule(module)
 
-    generator.getModifiedClasses().forEach { (module, file) ->
-      failures.add(FailedTest(module, "image class file should be regenerated", file))
+    generator.getModifiedClasses().forEach { (module, file, details) ->
+      failures.add(FailedTest(module, "image class file should be regenerated", file, details))
     }
   }
 }
 
-class FailedTest internal constructor(val module: String, val message: String, val id: String, val paths: List<String>) {
+class FailedTest internal constructor(val module: String, val message: String, val id: String, val details: String) {
   internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File) :
-    this(module.name, message, image.id, listOf(file.absolutePath))
+    this(module.name, message, image.id, file.absolutePath)
 
   internal constructor(module: JpsModule, message: String, image: ImagePaths) :
-    this(module.name, message, image.id, image.files.values.map { it.absolutePath }.toList())
+    this(module.name, message, image.id, image.files.map { it.absolutePath }.joinToString("\n"))
 
-  internal constructor(module: JpsModule, message: String, file: File) :
-    this(module.name, message, file.name, listOf(file.path))
+  internal constructor(module: JpsModule, message: String, file: File, details: String) :
+    this(module.name, message, file.name, "${file.path}\n\n$details")
 
-  fun getTestName(): String = "'${module}' - $id - $message"
-  fun getException(): Throwable = Exception("${message}\n\n${paths.joinToString("\n")}")
+  fun getTestName(): String = "'${module}' - $id - ${message.substringBefore('\n')}"
+  fun getException(): Throwable = Exception("${message}\n\n$details".trim())
 }

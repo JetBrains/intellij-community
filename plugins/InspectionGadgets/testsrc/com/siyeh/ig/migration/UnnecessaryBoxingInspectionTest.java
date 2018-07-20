@@ -4,10 +4,17 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryBoxingInspectionTest extends LightInspectionTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_10;
+  }
 
   public void testUnnecessaryBoxing() {
     doTest();

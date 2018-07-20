@@ -42,7 +42,7 @@ fun getIdentifierAnnotationOwner(identifier: PsiElement): UDeclaration? =
  * Result could be:
  * - an [UAnnotation] if this is a root annotation
  * - an [UCallExpression] if this is a nested annotation
- * - another [UElement] if something strange is going on
+ * - another [UElement] if something strange is going on (invalid code for instance)
  * - `null` if given argument is not an identifier in annotation.
  */
 fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
@@ -70,7 +70,7 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
 }
 
 /**
- * @param uElement a element that occurs in annotation
+ * @param uElement an element that occurs in annotation
  * @return the annotation in which this element occurs and a corresponding parameter name if available
  */
 fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
@@ -93,11 +93,7 @@ fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, Strin
         else
           tryConvertToEntry(uElement, parent, name)
       is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
-      else ->
-        // KtCollectionLiteralExpression are not supported by UAST until 1.2.30-eap-2
-        if (parent.sourcePsi?.javaClass?.name == "org.jetbrains.kotlin.psi.KtCollectionLiteralExpression")
-          retrievePsiAnnotationEntry(parent, null)
-        else null
+      else -> null
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
@@ -25,7 +26,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +45,13 @@ class SliceForwardUtil {
   static boolean processUsagesFlownFromThe(@NotNull PsiElement element,
                                            @NotNull final JavaSliceUsage parent,
                                            @NotNull final Processor<SliceUsage> processor) {
+    PsiExpression expression = getMethodCallTarget(element);
+    if (expression != null) {
+      SliceUsage usage = SliceUtil.createSliceUsage(expression, parent, parent.getSubstitutor(), parent.indexNesting, "");
+      if (!processor.process(usage)) {
+        return false;
+      }
+    }
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
       PsiElement target = pair.getFirst();
@@ -196,7 +206,7 @@ class SliceForwardUtil {
     }
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
-      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond(),parent.indexNesting, "");
+      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond(), parent.indexNesting, "");
       return processor.process(usage);
     }
     if (parent.params.showInstanceDereferences && isDereferenced(element)) {
@@ -204,6 +214,16 @@ class SliceForwardUtil {
       return processor.process(usage);
     }
     return true;
+  }
+
+  private static PsiExpression getMethodCallTarget(PsiElement element) {
+    element = complexify(element);
+    PsiMethodCallExpression call = null;
+    if (element.getParent() instanceof PsiExpressionList) {
+      call = ObjectUtils.tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
+    }
+    PsiExpression value = JavaMethodContractUtil.findReturnedValue(call);
+    return value == element ? call : null;
   }
 
   private static boolean isDereferenced(@NotNull PsiElement element) {
@@ -257,6 +277,13 @@ class SliceForwardUtil {
       PsiReturnStatement statement = (PsiReturnStatement)parent;
       if (element.equals(statement.getReturnValue())) {
         target = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      }
+    }
+    else if (element instanceof PsiExpression){
+      PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)element);
+      PsiExpression maybeQualifier = JavaMethodContractUtil.findReturnedValue(call);
+      if (maybeQualifier == element) {
+        target = call;
       }
     }
 

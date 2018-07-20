@@ -58,9 +58,6 @@ public class TestNGConfigurationModel
     }
 
     public void setType(TestType type) {
-        if (type == this.type)
-            return;
-
         this.type = type;
         updateEditorType(type);
     }

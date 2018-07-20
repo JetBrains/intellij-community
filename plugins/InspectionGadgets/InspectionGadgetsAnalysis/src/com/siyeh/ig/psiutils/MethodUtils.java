@@ -8,10 +8,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
@@ -323,14 +325,7 @@ public class MethodUtils {
       }
       else if (statement instanceof PsiExpressionStatement) {
         final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
-        final PsiExpression expression = expressionStatement.getExpression();
-        if (!(expression instanceof PsiMethodCallExpression)) {
-          return false;
-        }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        if (!PsiKeyword.SUPER.equals(methodExpression.getText())) {
-          // constructor super call
+        if (!JavaPsiConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
           return false;
         }
       }
@@ -400,22 +395,6 @@ public class MethodUtils {
       return false;
     }
     return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
-  }
-
-  public static PsiMethodCallExpression findSuperOrThisCall(PsiMethod constructor) {
-    if (constructor == null || !constructor.isConstructor()) {
-      return null;
-    }
-    final PsiStatement firstStatement = PsiTreeUtil.getChildOfType(constructor.getBody(), PsiStatement.class);
-    if (!(firstStatement instanceof PsiExpressionStatement)) {
-      return null;
-    }
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)firstStatement;
-    final PsiExpression expression = expressionStatement.getExpression();
-    if (!RefactoringChangeUtil.isSuperOrThisMethodCall(expression)) {
-      return null;
-    }
-    return (PsiMethodCallExpression)expression;
   }
 
   /**

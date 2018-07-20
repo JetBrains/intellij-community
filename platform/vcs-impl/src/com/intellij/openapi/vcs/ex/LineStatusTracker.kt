@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
@@ -30,6 +31,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Graphics
 import java.awt.Point
@@ -99,14 +101,14 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
     : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
-    override fun canDoAction(range: Range, e: MouseEvent?): Boolean {
+    override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean {
       if (tracker.mode == Mode.SILENT) return false
-      return super.canDoAction(range, e)
+      return super.canDoAction(editor, ranges, e)
     }
 
-    override fun paint(editor: Editor, range: Range, g: Graphics) {
+    override fun paint(editor: Editor, g: Graphics) {
       if (tracker.mode == Mode.SILENT) return
-      super.paint(editor, range, g)
+      super.paint(editor, g)
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
@@ -130,5 +132,17 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
         RollbackLineStatusAction.rollback(tracker, range, editor)
       }
     }
+  }
+
+  @CalledInAny
+  internal fun freeze() {
+    documentTracker.freeze(Side.LEFT)
+    documentTracker.freeze(Side.RIGHT)
+  }
+
+  @CalledInAwt
+  internal fun unfreeze() {
+    documentTracker.unfreeze(Side.LEFT)
+    documentTracker.unfreeze(Side.RIGHT)
   }
 }

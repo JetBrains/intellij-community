@@ -111,6 +111,10 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     fireContentsChanged(this, i, i);
   }
 
+  public void allContentsChanged() {
+    fireContentsChanged(this, 0, myItems.size() - 1);
+  }
+
   public void sort(final Comparator<T> comparator) {
     Collections.sort(myItems, comparator);
   }

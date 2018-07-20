@@ -23,7 +23,7 @@ public final class MantisProject {
   private List<MantisFilter> myFilters = new ArrayList<>();
 
   private int myId;
-  private String myName;
+  private String myName = "";
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisProject() {

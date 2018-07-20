@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -87,8 +73,16 @@ public interface Keymap extends Scheme {
   @NotNull
   Map<String, List<KeyboardShortcut>> getConflicts(@NotNull String actionId, @NotNull KeyboardShortcut keyboardShortcut);
 
+  /**
+   * @deprecated Use {@link KeymapManagerListener#TOPIC}
+   */
+  @Deprecated
   void addShortcutChangeListener(@NotNull Listener listener);
 
+  /**
+   * @deprecated Use {@link KeymapManagerListener#TOPIC}
+   */
+  @Deprecated
   void removeShortcutChangeListener(@NotNull Listener listener);
 
   void removeAllActionShortcuts(@NotNull String actionId);
@@ -98,7 +92,11 @@ public interface Keymap extends Scheme {
 
   boolean hasActionId(@NotNull String actionId, @NotNull MouseShortcut shortcut);
 
+  /**
+   * @deprecated Use {@link KeymapManagerListener#TOPIC}
+   */
+  @Deprecated
   interface Listener {
-    void onShortcutChanged(String actionId);
+    void onShortcutChanged(@NotNull String actionId);
   }
 }

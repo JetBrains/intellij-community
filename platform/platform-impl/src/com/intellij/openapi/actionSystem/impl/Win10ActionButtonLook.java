@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,12 +30,16 @@ import static com.intellij.openapi.actionSystem.ActionButtonComponent.*;
 public class Win10ActionButtonLook extends ActionButtonLook {
   @Override public void paintBackground(Graphics g, JComponent component, int state) {
     if (state != NORMAL) {
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-
-      g.setColor(getBackgroundColorForState(state));
-      g.fillRect(rect.x, rect.y, rect.width, rect.height);
+      paintBackground(g, component, getBackgroundColorForState(state));
     }
+  }
+
+  @Override
+  public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
+    Rectangle rect = new Rectangle(component.getSize());
+    JBInsets.removeFrom(rect, component.getInsets());
+    g.setColor(color);
+    g.fillRect(rect.x, rect.y, rect.width, rect.height);
   }
 
   private static Color getBackgroundColorForState(int state) {
@@ -53,16 +58,18 @@ public class Win10ActionButtonLook extends ActionButtonLook {
     if (state != NORMAL) {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
         g2.setColor(getBorderColorForState(state));
 
-        Rectangle outerRect = new Rectangle(component.getSize());
-        JBInsets.removeFrom(outerRect, JBUI.insets(1));
+        Rectangle rect = new Rectangle(component.getSize());
+        JBInsets.removeFrom(rect, component.getInsets());
 
-        Rectangle innerRect = new Rectangle(outerRect);
+        Rectangle innerRect = new Rectangle(rect);
         JBInsets.removeFrom(innerRect, JBUI.insets(1));
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        border.append(outerRect, false);
+        border.append(rect, false);
         border.append(innerRect, false);
 
         g2.fill(border);
@@ -70,10 +77,6 @@ public class Win10ActionButtonLook extends ActionButtonLook {
         g2.dispose();
       }
     }
-  }
-
-  @Override public Insets getInsets() {
-    return JBUI.insets(2, 1);
   }
 
   private static Color getBorderColorForState(int state) {
