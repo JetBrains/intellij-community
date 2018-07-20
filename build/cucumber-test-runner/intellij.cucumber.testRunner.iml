@@ -11,6 +11,5 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="library" scope="PROVIDED" name="cucumber-core" level="project" />
     <orderEntry type="module" module-name="intellij.cucumber.jvmFormatter" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.cucumber.jvmFormatter3" scope="RUNTIME" />
   </component>
 </module>
