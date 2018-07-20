@@ -3333,12 +3333,23 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   @NotNull
-  @SuppressWarnings("SpellCheckingInspection")
   public static String toHexString(@NotNull byte[] bytes) {
-    String digits = "0123456789abcdef";
+    @SuppressWarnings("SpellCheckingInspection") String digits = "0123456789abcdef";
     StringBuilder sb = new StringBuilder(2 * bytes.length);
     for (byte b : bytes) sb.append(digits.charAt((b >> 4) & 0xf)).append(digits.charAt(b & 0xf));
     return sb.toString();
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  public static byte[] parseHexString(@NotNull String str) {
+    int len = str.length();
+    if (len % 2 != 0) throw new IllegalArgumentException("Non-even-length: " + str);
+    byte[] bytes = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+      bytes[i / 2] = (byte)((Character.digit(str.charAt(i), 16) << 4) + Character.digit(str.charAt(i + 1), 16));
+    }
+    return bytes;
   }
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
