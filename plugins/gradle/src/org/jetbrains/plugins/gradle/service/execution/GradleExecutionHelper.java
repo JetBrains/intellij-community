@@ -261,8 +261,8 @@ public class GradleExecutionHelper {
         final File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
         final String fileName = "gradle-wrapper";
         final File jarFile = new File(wrapperFilesLocation, fileName + ".jar");
-        final File propertiesFile = new File(wrapperFilesLocation, fileName + ".properties");
         final File scriptFile = new File(wrapperFilesLocation, "gradlew");
+        final File pathToProperties = new File(wrapperFilesLocation, "path.tmp");
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation)));
         final String[] lines = {
@@ -270,8 +270,13 @@ public class GradleExecutionHelper {
           "gradle.projectsEvaluated { gr ->",
           "  def wrapper = gr.rootProject.tasks[\"wrapper\"]",
           "  if (wrapper != null) {",
-          "    wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile.getCanonicalPath()) + "')",
-          "    wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile.getCanonicalPath()) + "')",
+          "    if (wrapper.jarFile.exists()) {",
+          "      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile.getCanonicalPath()) + "')",
+          "      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile.getCanonicalPath()) + "')",
+          "    }",
+          "    wrapper.doLast {",
+          "      new File('" + StringUtil.escapeBackSlashes(pathToProperties.getCanonicalPath()) + "').write wrapper.propertiesFile.getCanonicalPath()",
+          "    }",
           "  }",
           "}",
           "",
@@ -282,7 +287,7 @@ public class GradleExecutionHelper {
         launcher.withCancellationToken(cancellationToken);
         launcher.forTasks("wrapper");
         launcher.run();
-        settings.setWrapperPropertyFile(propertiesFile.getCanonicalPath());
+        settings.setWrapperPropertyFile(FileUtil.loadFile(pathToProperties));
       }
       catch (IOException e) {
         LOG.warn("Can't update wrapper", e);
