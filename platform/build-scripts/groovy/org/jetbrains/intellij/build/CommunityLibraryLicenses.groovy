@@ -390,7 +390,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "weberknecht", libraryName: "weberknecht-0.1.5.jar", version: "0.1.5", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/pelotoncycle/weberknecht"),
-    new LibraryLicense(name: "winp", version: "1.26", license: "MIT", url: "http://java.net/projects/winp",
+    new LibraryLicense(name: "winp", version: "1.26", license: "MIT", url: "https://github.com/kohsuke/winp",
                        licenseUrl: "http://opensource.org/licenses/mit-license.php"),
     new LibraryLicense(name: "Xalan", libraryName: "Xalan-2.7.1", version: "2.7.1", license: "Apache 2.0",
                        url: "http://xml.apache.org/xalan-j/", licenseUrl: "http://xml.apache.org/xalan-j/"),
