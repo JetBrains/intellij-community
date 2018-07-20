@@ -49,7 +49,7 @@ public class CommitCompareInfo {
     myInfo.put(repository, (Pair)Couple.of(headToBranch, branchToHead));
   }
 
-  public void put(@NotNull Repository repository, @NotNull Collection<Change> totalDiff) {
+  public void putTotalDiff(@NotNull Repository repository, @NotNull Collection<Change> totalDiff) {
     myTotalDiff.put(repository, totalDiff);
   }
 

@@ -80,7 +80,7 @@ public class HgBranchWorker {
       List<HgCommit> headToBranch = loadCommitsBetween(repository, CURRENT_REVISION, branchName);
       List<HgCommit> branchToHead = loadCommitsBetween(repository, branchName, CURRENT_REVISION);
       compareInfo.put(repository, headToBranch, branchToHead);
-      compareInfo.put(repository, loadTotalDiff(repository, branchName));
+      compareInfo.putTotalDiff(repository, loadTotalDiff(repository, branchName));
     }
     return compareInfo;
   }

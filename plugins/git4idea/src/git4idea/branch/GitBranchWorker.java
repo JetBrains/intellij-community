@@ -161,7 +161,7 @@ public final class GitBranchWorker {
       List<GitCommit> branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");
       compareInfo.put(repository, headToBranch, branchToHead);
 
-      compareInfo.put(repository, loadTotalDiff(repository, branchName));
+      compareInfo.putTotalDiff(repository, loadTotalDiff(repository, branchName));
     }
     return compareInfo;
   }
