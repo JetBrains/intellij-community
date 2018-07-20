@@ -93,7 +93,8 @@ private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sy
 
 private fun notifySlackChannel(isSuccess: Boolean, report: String) {
   HttpClients.createDefault().use {
-    val text = (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n$report\n" +
+    val text = "*${System.getProperty("teamcity.buildConfName")}* " +
+               (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n$report\n" +
                (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
                "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
     val post = HttpPost(CHANNEL_WEB_HOOK)
