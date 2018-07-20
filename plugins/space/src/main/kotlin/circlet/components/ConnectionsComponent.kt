@@ -22,9 +22,10 @@ class ConnectionsComponent : ApplicationComponent, LifetimedComponent by SimpleL
     private val connections = LifetimedValueCache<String, Connection>(lifetime) { url, connectionLifetime ->
         Connection(
             LoginModel(
-                persistence = IdeaPersistence.substorage("$url-"),
-                server = url,
                 appLifetime = connectionLifetime,
+                server = url,
+                credentialsPersistence = IdeaPersistence.substorage("$url-"),
+                offlinePersistence = null,
                 notificationKind = NotificationKind.Ide
             ),
             connectionLifetime
