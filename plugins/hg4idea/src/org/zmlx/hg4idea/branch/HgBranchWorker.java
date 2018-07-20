@@ -12,11 +12,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.action.HgCompareWithBranchAction;
 import org.zmlx.hg4idea.log.HgCommit;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -94,14 +97,8 @@ public class HgBranchWorker {
   @NotNull
   private static Collection<Change> loadTotalDiff(@NotNull HgRepository repository, @NotNull String branchName) throws VcsException {
     // return diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
-    return HgCompareWithBranchActionCaller.doGetDiffChanges(repository.getProject(), repository.getRoot(), branchName);
-  }
-
-  private static class HgCompareWithBranchActionCaller extends HgCompareWithBranchAction {
-    public static Collection<Change> doGetDiffChanges(@NotNull Project project,
-                                                      @NotNull VirtualFile file,
-                                                      @NotNull String branchToCompare) throws VcsException {
-      return new HgCompareWithBranchActionCaller().getDiffChanges(project, file, branchToCompare);
-    }
+    HgRevisionNumber branchRevisionNumber = HgCompareWithBranchAction.getBranchRevisionNumber(repository, branchName);
+    VirtualFile root = repository.getRoot();
+    return HgUtil.getDiff(repository.getProject(), root, VcsUtil.getFilePath(root), branchRevisionNumber, null);
   }
 }
