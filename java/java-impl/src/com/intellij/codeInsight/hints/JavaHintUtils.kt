@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException
 
 object JavaInlayHintsProvider {
 
-  fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
+  fun hints(callExpression: PsiCall): Set<InlayInfo> {
     if (JavaMethodCallElement.isCompletionMode(callExpression)) {
       val argumentList = callExpression.argumentList?:return emptySet()
       val text = argumentList.text
@@ -101,7 +101,7 @@ object JavaInlayHintsProvider {
       .toSet()
   }
 
-  private fun methodHints(callExpression: PsiCallExpression, resolveResult: ResolveResult): Set<InlayInfo> {
+  private fun methodHints(callExpression: PsiCall, resolveResult: ResolveResult): Set<InlayInfo> {
     val element = resolveResult.element
     val substitutor = (resolveResult as? JavaResolveResult)?.substitutor ?: PsiSubstitutor.EMPTY
     
@@ -175,7 +175,7 @@ object JavaInlayHintsProvider {
 
   private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.get()
 
-  private fun isMethodToShow(method: PsiMethod, callExpression: PsiCallExpression): Boolean {
+  private fun isMethodToShow(method: PsiMethod, callExpression: PsiCall): Boolean {
     val params = method.parameterList.parameters
     if (params.isEmpty()) return false
     if (params.size == 1) {
@@ -195,7 +195,7 @@ object JavaInlayHintsProvider {
   }
   
   
-  private fun isBuilderLike(expression: PsiCallExpression, method: PsiMethod): Boolean {
+  private fun isBuilderLike(expression: PsiCall, method: PsiMethod): Boolean {
     if (expression is PsiNewExpression) return false
 
     val returnType = TypeConversionUtil.erasure(method.returnType) ?: return false
@@ -212,7 +212,7 @@ object JavaInlayHintsProvider {
     return false
   }
   
-  private fun callInfo(callExpression: PsiCallExpression, method: PsiMethod): CallInfo {
+  private fun callInfo(callExpression: PsiCall, method: PsiMethod): CallInfo {
     val params = method.parameterList.parameters
     val hasVarArg = params.lastOrNull()?.isVarArgs ?: false
     val regularParamsCount = if (hasVarArg) params.size - 1 else params.size
