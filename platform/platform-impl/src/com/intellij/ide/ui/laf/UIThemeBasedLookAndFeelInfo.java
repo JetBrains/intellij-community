@@ -4,6 +4,8 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +38,17 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
 
     installBackgroundImage();
+    installEditorScheme();
+  }
+
+  private void installEditorScheme() {
+    String name = myTheme.getEditorSchemeName();
+    if (name != null) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(name);
+      if (scheme != null) {
+        EditorColorsManager.getInstance().setGlobalScheme(scheme);
+      }
+    }
   }
 
   private void installBackgroundImage() {
