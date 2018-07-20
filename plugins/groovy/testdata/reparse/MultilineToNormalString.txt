@@ -46,11 +46,9 @@ Groovy script
                 PsiElement(Gstring begin)('"')
                 GrStringContentImpl(STRING_CONTENT)
                   PsiElement(Gstring content)(')')
-                PsiErrorElement:Gstring end expected
+                PsiErrorElement:Gstring end expected, got '}'
                   <empty list>
-              PsiElement(new line)('\n  ')
-              PsiErrorElement:')', ',' or <expression> expected, got '}'
-                <empty list>
+          PsiWhiteSpace('\n  ')
           PsiElement(})('}')
       PsiElement(new line)('\n\n  ')
       Method

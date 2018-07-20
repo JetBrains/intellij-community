@@ -161,7 +161,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
             final TargetResolver.Result result = project.getDefaultTarget().getValue();
             if (result != null) {
               final Pair<AntDomTarget,String> targetWithName = result.getResolvedTarget(project.getDefaultTarget().getRawText());
-              myDefaultTarget = targetWithName != null? targetWithName.getFirst() : null;
+              myDefaultTarget = Pair.getFirst(targetWithName);
             }
           }
           for (final AntDomTarget target : project.getDeclaredTargets()) {

@@ -110,7 +110,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
           final PsiElement identifier = element.getNameIdentifier();
           final PsiElement problemElement = identifier != null ? identifier : element;
           registerProblem(problemElement, String.format("Shadows built-in name '%s'", name),
-                          ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix(), new PyIgnoreBuiltinQuickFix(name));
+                          ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix(problemElement), new PyIgnoreBuiltinQuickFix(name));
         }
       }
     }

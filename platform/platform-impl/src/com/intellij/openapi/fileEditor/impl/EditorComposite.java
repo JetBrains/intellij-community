@@ -42,6 +42,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -293,6 +294,11 @@ public abstract class EditorComposite implements Disposable {
       }
     }
     return Collections.unmodifiableList(result);
+  }
+
+  @Nullable
+  public JBTabs getTabs() {
+    return myTabbedPaneWrapper == null ? null : ((TabbedPaneWrapper.AsJBTabs)myTabbedPaneWrapper).getTabs();
   }
 
   public void addTopComponent(FileEditor editor, JComponent component) {

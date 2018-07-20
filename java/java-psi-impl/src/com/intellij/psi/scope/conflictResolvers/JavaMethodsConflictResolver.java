@@ -643,17 +643,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor1,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }
-    final PsiUtil.ApplicabilityChecker applicabilityChecker = new PsiUtil.ApplicabilityChecker() {
-      @Override
-      public boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId) {
-        if (right instanceof PsiClassType) {
-          final PsiClass rightClass = ((PsiClassType)right).resolve();
-          if (rightClass instanceof PsiTypeParameter) {
-            right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
-          }
+    final PsiUtil.ApplicabilityChecker applicabilityChecker = (left, right, allowUncheckedConversion, argId) -> {
+      if (right instanceof PsiClassType) {
+        final PsiClass rightClass = ((PsiClassType)right).resolve();
+        if (rightClass instanceof PsiTypeParameter) {
+          right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
         }
-        return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
       }
+      return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
     };
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(method1, methodSubstitutor1, types2AtSite, languageLevel, false, varargsPosition, applicabilityChecker);
     return applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;

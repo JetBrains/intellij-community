@@ -70,6 +70,11 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
+  protected LocalQuickFix createMutabilityViolationFix(ProblemsHolder holder, PsiElement violation) {
+    return WrapWithMutableCollectionFix.createFix(violation, holder.isOnTheFly());
+  }
+
+  @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
     return new IntroduceVariableFix(true);
   }

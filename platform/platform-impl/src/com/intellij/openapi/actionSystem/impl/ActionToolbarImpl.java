@@ -911,6 +911,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     return dimension;
   }
+
+  /**
+   * Forces the minimum size of the toolbar to show all buttons, When set to <code>true</code>. By default (<code>false</code>) the
+   * toolbar will shrink further and show the auto popup chevron button.
+   * @param force
+   */
   public void setForceMinimumSize(boolean force) {
     myForceMinimumSize = force;
   }

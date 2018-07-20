@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -56,7 +42,9 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +104,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @NotNull
   @Override
   public Document getDocument() {
+    // this pass always get not-null document
     //noinspection ConstantConditions
     return super.getDocument();
   }
@@ -226,12 +215,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                                         }));
 
 
-      setProgressLimit((long)(allInsideElements.size()+allOutsideElements.size()));
+      setProgressLimit(allInsideElements.size() + allOutsideElements.size());
 
       final boolean forceHighlightParents = forceHighlightParents();
 
       if (!isDumbMode()) {
-        highlightTodos(getFile(), getDocument().getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), progress, myPriorityRange, insideResult,
+        highlightTodos(getFile(), getDocument().getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(),
+                       myPriorityRange, insideResult,
                        outsideResult);
       }
 
@@ -276,13 +266,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return new ArrayList<>(myHighlights);
   }
 
-  private boolean collectHighlights(@NotNull final List<PsiElement> elements1,
-                                    @NotNull final List<ProperTextRange> ranges1,
-                                    @NotNull final List<PsiElement> elements2,
-                                    @NotNull final List<ProperTextRange> ranges2,
+  private boolean collectHighlights(@NotNull final List<? extends PsiElement> elements1,
+                                    @NotNull final List<? extends ProperTextRange> ranges1,
+                                    @NotNull final List<? extends PsiElement> elements2,
+                                    @NotNull final List<? extends ProperTextRange> ranges2,
                                     @NotNull final HighlightVisitor[] visitors,
                                     @NotNull final List<HighlightInfo> insideResult,
-                                    @NotNull final List<HighlightInfo> outsideResult,
+                                    @NotNull final List<? super HighlightInfo> outsideResult,
                                     final boolean forceHighlightParents) {
     final Set<PsiElement> skipParentsSet = new THashSet<>();
 
@@ -468,10 +458,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                              @NotNull CharSequence text,
                              int startOffset,
                              int endOffset,
-                             @NotNull ProgressIndicator progress,
                              @NotNull ProperTextRange priorityRange,
-                             @NotNull Collection<HighlightInfo> insideResult,
-                             @NotNull Collection<HighlightInfo> outsideResult) {
+                             @NotNull Collection<? super HighlightInfo> insideResult,
+                             @NotNull Collection<? super HighlightInfo> outsideResult) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
@@ -479,25 +468,50 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();
-      TextRange range = todoItem.getTextRange();
+
+      TextRange textRange = todoItem.getTextRange();
+      List<TextRange> additionalRanges = todoItem.getAdditionalTextRanges();
+
+      StringJoiner joiner = new StringJoiner("\n");
+      JBIterable.of(textRange).append(additionalRanges).forEach(
+        range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))
+      );
+      String description = joiner.toString();
+      String tooltip = XmlStringUtil.escapeString(StringUtil.shortenPathWithEllipsis(description, 1024)).replace("\n", "<br>");
+
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO).range(range);
-      builder.textAttributes(attributes);
-      String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
-      builder.description(description);
-      builder.unescapedToolTip(StringUtil.shortenPathWithEllipsis(description, 1024));
-      HighlightInfo info = builder.createUnconditionally();
-      (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
+      addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributes, description, tooltip, textRange);
+      if (!additionalRanges.isEmpty()) {
+        TextAttributes attributesForAdditionalLines = attributes.clone();
+        attributesForAdditionalLines.setErrorStripeColor(null);
+        for (TextRange range: additionalRanges) {
+          addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributesForAdditionalLines, description,
+                      tooltip, range);
+        }
+      }
     }
   }
 
-  private static boolean shouldHighlightTodos(PsiTodoSearchHelper helper, PsiFile file) {
-    if (helper instanceof PsiTodoSearchHelperImpl) {
-      PsiTodoSearchHelperImpl helperImpl = (PsiTodoSearchHelperImpl) helper;
-      return helperImpl.shouldHighlightInEditor(file);
-    } else {
-      return false;
-    }
+  private static void addTodoItem(int restrictStartOffset,
+                                  int restrictEndOffset,
+                                  @NotNull ProperTextRange priorityRange,
+                                  @NotNull Collection<? super HighlightInfo> insideResult,
+                                  @NotNull Collection<? super HighlightInfo> outsideResult,
+                                  @NotNull TextAttributes attributes,
+                                  @NotNull String description, @NotNull String tooltip, @NotNull TextRange range) {
+    if (range.getStartOffset() >= restrictEndOffset || range.getEndOffset() <= restrictStartOffset) return;
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO)
+                                      .range(range)
+                                      .textAttributes(attributes)
+                                      .description(description)
+                                      .escapedToolTip(tooltip)
+                                      .createUnconditionally();
+    Collection<? super HighlightInfo> result = priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult;
+    result.add(info);
+  }
+
+  private static boolean shouldHighlightTodos(@NotNull PsiTodoSearchHelper helper, @NotNull PsiFile file) {
+    return helper instanceof PsiTodoSearchHelperImpl && ((PsiTodoSearchHelperImpl)helper).shouldHighlightInEditor(file);
   }
 
   private void reportErrorsToWolf() {
@@ -519,12 +533,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  @Override
-  public double getProgress() {
-    // do not show progress of visible highlighters update
-    return myUpdateAll ? super.getProgress() : -1;
-  }
-
+  @NotNull
   private static List<Problem> convertToProblems(@NotNull Collection<? extends HighlightInfo> infos,
                                                  @NotNull VirtualFile file,
                                                  final boolean hasErrorElement) {

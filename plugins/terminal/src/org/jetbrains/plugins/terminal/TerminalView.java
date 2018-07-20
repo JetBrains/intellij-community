@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -68,6 +69,9 @@ public class TerminalView {
   }
 
   public void initTerminal(final ToolWindow toolWindow) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     LocalTerminalDirectRunner terminalRunner = LocalTerminalDirectRunner.createTerminalRunner(myProject);
 
     toolWindow.setToHideOnEmptyContent(true);

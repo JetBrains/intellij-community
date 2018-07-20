@@ -39,6 +39,12 @@ import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
+internal fun isImportExportActionApplicable(): Boolean {
+  val app = ApplicationManager.getApplication()
+  val storageManager = app.stateStore.storageManager as? StateStorageManagerImpl ?: return true
+  return !storageManager.isStreamProviderPreventExportAction
+}
+
 // for Rider purpose
 open class ExportSettingsAction : AnAction(), DumbAware {
   protected open fun getExportableComponents(): Map<Path, List<ExportableItem>> = getExportableComponentsMap(true, true)
@@ -46,6 +52,10 @@ open class ExportSettingsAction : AnAction(), DumbAware {
   protected open fun exportSettings(saveFile: Path, markedComponents: Set<ExportableItem>) {
     val exportFiles = markedComponents.mapTo(THashSet()) { it.file }
     exportSettings(exportFiles, saveFile.outputStream(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isImportExportActionApplicable()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -162,7 +172,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
 
     val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses true
-    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isEmpty())) {
+    if (!isStorageExportable(storage)) {
       return@processAllImplementationClasses true
     }
 
@@ -212,6 +222,13 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
   }
   return result
+}
+
+private fun isStorageExportable(storage: Storage): Boolean {
+  if (storage.exportable) {
+    return true
+  }
+  return storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isEmpty()
 }
 
 private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDescriptor: PluginDescriptor?): String {

@@ -19,12 +19,10 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
@@ -146,23 +144,37 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
           return;
         }
       }
-      WriteAction.run(() -> removeException(method));
+
+      PsiType exceptionType = JavaPsiFacade.getElementFactory(project).createTypeFromText(myThrowsCanonicalText, null);
+      WriteAction.run(() -> {
+        for (PsiElement element : extractRefsToRemove(method, exceptionType)) {
+          element.delete();
+        }
+      });
     }
 
-    private void removeException(PsiMethod myMethod) {
-      PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
-      Arrays.stream(referenceElements).filter(referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText)).forEach(PsiElement::delete);
-      PsiDocComment comment = myMethod.getDocComment();
+    public static PsiElement[] extractRefsToRemove(PsiMethod method, PsiType exceptionType) {
+      List<PsiElement> refs = new SmartList<>();
+      PsiJavaCodeReferenceElement[] referenceElements = method.getThrowsList().getReferenceElements();
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+      Arrays.stream(referenceElements).filter(ref -> {
+        PsiType refType = elementFactory.createType(ref);
+        return exceptionType.isAssignableFrom(refType);
+      }).forEach(refs::add);
+      PsiDocComment comment = method.getDocComment();
       if (comment != null) {
         Arrays
           .stream(comment.getTags())
           .filter(tag -> "throws".equals(tag.getName()))
           .filter(tag -> {
             PsiClass tagValueClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
-            return tagValueClass != null && myThrowsCanonicalText.equals(tagValueClass.getQualifiedName());
+            if (tagValueClass == null) return false;
+            PsiClassType tagValueType = elementFactory.createType(tagValueClass);
+            return exceptionType.isAssignableFrom(tagValueType);
           })
-          .forEach(tag -> tag.delete());
+          .forEach(refs::add);
       }
+      return refs.toArray(PsiElement.EMPTY_ARRAY);
     }
   }
 

@@ -142,6 +142,69 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     }
   }
 
+  fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d1_e")
+    refreshCLM()
+
+    file.moveAllChangesTo("Test")
+    clm.waitUntilRefreshed()
+    assertNull(file.tracker)
+
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    lstm.waitUntilBaseContentsLoaded()
+
+    val tracker = file.tracker as PartialLocalLineStatusTracker
+    val ranges = tracker.getRanges()!!
+    assertEquals(2, ranges.size)
+    ranges[0].assertChangeList("Default Changelist")
+    ranges[1].assertChangeList("Test")
+  }
+
+  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  fun `test tracker from non-default changelist - closed file modified during initialisation, edit line from non-active list`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a1_b_c_d_e")
+    refreshCLM()
+
+    file.moveAllChangesTo("Test")
+    clm.waitUntilRefreshed()
+    assertNull(file.tracker)
+
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    lstm.waitUntilBaseContentsLoaded()
+
+    file.assertAffectedChangeLists("Test")
+  }
+
+  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line and line from non-active list`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e1")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+
+    file.moveAllChangesTo("Test")
+    clm.waitUntilRefreshed()
+    assertNull(file.tracker)
+
+    runCommand { file.document.replaceString(1, 2, "2") }
+    runCommand { file.document.replaceString(5, 6, "c1") }
+    lstm.waitUntilBaseContentsLoaded()
+
+    val tracker = file.tracker as PartialLocalLineStatusTracker
+    val ranges = tracker.getRanges()!!
+    assertEquals(3, ranges.size)
+    ranges[0].assertChangeList("Test")
+    ranges[1].assertChangeList("Default Changelist")
+    ranges[2].assertChangeList("Test")
+  }
+
   fun `test tracker changes moves`() {
     createChangelist("Test #1")
     createChangelist("Test #2")

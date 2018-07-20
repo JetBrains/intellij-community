@@ -16,7 +16,6 @@
 package com.jetbrains.python.pyi;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.icons.AllIcons;
@@ -33,7 +32,6 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -73,9 +71,7 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
     final String stubFileName = relatedElement.getContainingFile().getName();
     return new RelatedItemLineMarkerInfo<>(
       element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
-      element1 -> itemTitle + " in " + stubFileName, new GutterIconNavigationHandler<PsiElement>() {
-      @Override
-      public void navigate(MouseEvent e, PsiElement elt) {
+      element1 -> itemTitle + " in " + stubFileName, (e, elt) -> {
         final PsiElement restoredRelatedElement = relatedElementPointer.getElement();
         if (restoredRelatedElement == null) {
           return;
@@ -87,7 +83,6 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
                               .createNavigatable(restoredRelatedElement.getProject(), virtualFile, offset)
                               .navigate(true);
         }
-      }
-    }, GutterIconRenderer.Alignment.RIGHT, GotoRelatedItem.createItems(Collections.singletonList(relatedElement)));
+      }, GutterIconRenderer.Alignment.RIGHT, GotoRelatedItem.createItems(Collections.singletonList(relatedElement)));
   }
 }

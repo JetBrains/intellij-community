@@ -98,20 +98,17 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
 
   @Override
   public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull Language value) throws IOException {
-    final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
-    if (iStream != null) {
-      try {
+    boolean read = false;
+    try (DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir)) {
+      if (iStream != null) {
+        read = true;
         final int oldLanguage = DataInputOutputUtil.readINT(iStream);
         String oldLanguageId = ourLanguagesEnumerator.getById(oldLanguage);
         if (value.getID().equals(oldLanguageId)) return;
       }
-      finally {
-        //noinspection ThrowFromFinallyBlock
-        iStream.close();
-      }
     }
 
-    if (value != Language.ANY || iStream != null) {
+    if (value != Language.ANY || read) {
       try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
         DataInputOutputUtil.writeINT(oStream, ourLanguagesEnumerator.getId(value.getID()));
       }

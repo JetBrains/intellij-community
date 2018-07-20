@@ -225,6 +225,11 @@ class AsyncProjectViewSupport {
   }
 
   private void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
+    // find first valid parent for removed file
+    while (!file.isValid()) {
+      file = file.getParent();
+      if (file == null) return;
+    }
     SmartList<TreePath> list = new SmartList<>();
     acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
       @NotNull

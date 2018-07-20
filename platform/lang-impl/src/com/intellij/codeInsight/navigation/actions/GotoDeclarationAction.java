@@ -64,6 +64,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -330,6 +332,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (event.getProject() == null ||
         event.getData(EditorGutter.KEY) != null ||
         Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
+      event.getPresentation().setEnabled(false);
+      return;
+    }
+
+    InputEvent inputEvent = event.getInputEvent();
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    if (editor != null && inputEvent instanceof MouseEvent &&
+        editor.getInlayModel().getElementAt(new RelativePoint((MouseEvent)inputEvent).getPoint(editor.getContentComponent())) != null) {
       event.getPresentation().setEnabled(false);
       return;
     }

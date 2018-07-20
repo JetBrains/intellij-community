@@ -57,8 +57,8 @@ public class ParametrizedDuplicates {
 
   private ParametrizedDuplicates(@NotNull PsiElement[] pattern,
                                  @NotNull ExtractMethodProcessor originalProcessor) {
-    pattern = getFilteredElements(pattern);
-    PsiElement firstElement = pattern.length != 0 ? pattern[0] : null;
+    PsiElement[] filteredPattern = getFilteredElements(pattern);
+    PsiElement firstElement = filteredPattern.length != 0 ? filteredPattern[0] : null;
     if (firstElement instanceof PsiStatement) {
       PsiElement[] copy = copyElements(pattern);
       myElements = wrapWithCodeBlock(copy, originalProcessor.getInputVariables());
@@ -79,8 +79,9 @@ public class ParametrizedDuplicates {
   }
 
   @Nullable
-  public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor) {
-    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.PARAMETRIZED);
+  public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor,
+                                                      @NotNull DuplicatesFinder.MatchType matchType) {
+    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, matchType);
     if (finder == null) {
       return null;
     }
@@ -412,6 +413,10 @@ public class ParametrizedDuplicates {
 
   public List<Match> getDuplicates() {
     return myMatches;
+  }
+
+  boolean isEmpty() {
+    return ContainerUtil.isEmpty(myMatches);
   }
 
   @NotNull

@@ -782,7 +782,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
   }
 
-  private static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
+  protected static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
     if (c1 == NULL_COLOR_MARKER) return c1 == c2;
     return Comparing.equal(c1, c2 == NULL_COLOR_MARKER ? null : c2);
   }

@@ -2,6 +2,7 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
@@ -107,6 +108,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val groupEmptyProject = "Empty Project"
 
     // libraries and frameworks
+    const val libJava = "Java"
     const val libJBoss = "JBoss"
     const val libArquillianJUnit = "Arquillian JUnit"
     const val libArquillianTestNG = "Arquillian TestNG"
@@ -168,23 +170,26 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     override fun toString() = title
   }
 
-  data class LibraryOrFramework(val mainPath: Array<out String>, val reservePath: Array<out String> = emptyArray()) {
+  class LibraryOrFramework(vararg val mainPath: String) {
+
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
       if (other !is LibraryOrFramework) return false
-      return this.mainPath.contentEquals(other.mainPath) && this.reservePath.contentEquals(other.reservePath)
+      return this.mainPath.contentEquals(other.mainPath)
     }
 
     override fun hashCode(): Int {
       val hashCodePrime = 31
-      return mainPath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc } * hashCodePrime +
-             reservePath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc }
+      return mainPath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc } * hashCodePrime
     }
 
     override fun toString(): String {
-      return "${mainPath.toList()} (${if (reservePath.isNotEmpty()) reservePath.toList().toString() else ""})"
+      fun Array<out String>.toFormattedString() = if (this.isEmpty()) ""
+        else this.joinToString(separator = "-") { it.replace(",", "").replace(" ", "") }
+      return mainPath.toFormattedString()
     }
 
+    fun isEmpty() = mainPath.isEmpty() || mainPath.first().isEmpty()
   }
 }
 
@@ -198,6 +203,8 @@ fun assertProjectPathExists(projectPath: String) {
 }
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
+fun LibrariesSet.isSetEmpty() = isEmpty() || all { it.isEmpty() }
+fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
 
 /**
  * Creates a new project from Java group
@@ -207,16 +214,14 @@ typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
  * */
 fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
   assertProjectPathExists(projectPath)
-  val setLibraries = libs.isNotEmpty()
-  val setTemplate = template.isNotEmpty()
   with(guiTestCase) {
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       list.clickItem(groupJava)
-      if (setLibraries) setLibrariesAndFrameworks(libs)
+      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
-        if(setTemplate){
+        if(template.isNotEmpty()){
           checkbox(checkCreateProjectFromTemplate).isSelected = true
           jList(template).clickItem(template)
         }
@@ -227,7 +232,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
-      if(setTemplate && basePackage.isNotEmpty()){
+      if(template.isNotEmpty() && basePackage.isNotEmpty()){
         // base package is set only for Command Line app template
         logUIStep("Set Base package to `$basePackage`")
         textfield(textBasePackage).click()
@@ -257,14 +262,14 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
       list.clickItem(groupJavaEnterprise)
-      if (libs.isEmpty()) {
+      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
+      else {
         button(buttonNext).click()
         if(template.isNotEmpty()){
           checkbox(checkCreateProjectFromTemplate).isSelected = true
           jList(template).clickItem(template)
         }
       }
-      else setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -288,9 +293,9 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
       list.clickItem(groupGradle)
       setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
       if (gradleOptions.framework.isNotEmpty()) {
-        checkboxTree(gradleOptions.framework).check(gradleOptions.framework)
+        checkboxTree(gradleOptions.framework).check()
         if (gradleOptions.isJavaShouldNotBeChecked)
-          checkboxTree(gradleOptions.framework).uncheck("Java")
+          checkboxTree(NewProjectDialogModel.Constants.libJava).uncheck()
       }
       button(buttonNext).click()
       logUIStep("Fill GroupId with `${gradleOptions.group}`")
@@ -356,10 +361,9 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: 
         }
 
         logUIStep("Double click on `${mavenOptions.archetypeGroup}` in the archetype list")
-        jTree(mavenOptions.archetypeGroup).doubleClickPath(mavenOptions.archetypeGroup)
+        jTree(mavenOptions.archetypeGroup).doubleClickPath()
         logUIStep("Select the archetype `${mavenOptions.archetypeVersion}` in the group `$mavenOptions.archetypeGroup`")
-        jTree(mavenOptions.archetypeGroup, mavenOptions.archetypeVersion).clickPath(mavenOptions.archetypeGroup,
-                                                                                    mavenOptions.archetypeVersion)
+        jTree(mavenOptions.archetypeGroup, mavenOptions.archetypeVersion).clickPath()
 
       }
       button(buttonNext).click()
@@ -504,7 +508,7 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(group)
       list.clickItem(group.toString())
-      if (libs.isNotEmpty()) setLibrariesAndFrameworks(libs)
+      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -580,14 +584,14 @@ fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
 }
 
 fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
+  if (libs.isSetEmpty()) return
   with(connectDialog()) {
     for (lib in libs) {
       guiTestCase.logUIStep("Include `${lib.mainPath.joinToString()}` to the project")
-      if (lib.reservePath.isEmpty())
-        checkboxTree(*lib.mainPath).check(*lib.mainPath)
-      else
-        checkboxTree(*lib.mainPath).checkWithReserve(lib.mainPath, lib.reservePath)
+      checkboxTree(
+        pathStrings = *lib.mainPath,
+        predicate = ExtendedJTreePathFinder.predicateWithVersion
+      ).check()
     }
   }
-
 }

@@ -78,7 +78,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public void setKindWhenDummy(@NotNull Kind kind) {
-    LOG.assertTrue(isDummy(getTreeParent().getElementType()));
+    IElementType type = getTreeParent().getElementType();
+    LOG.assertTrue(isDummy(type), type);
     myKindWhenDummy = kind;
   }
 
@@ -121,8 +122,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     if (i == JavaElementType.ANONYMOUS_CLASS) {
       if (treeParent.getChildRole(this) == ChildRole.BASE_CLASS_REFERENCE) {
-        LOG.assertTrue(treeParent.getTreeParent().getElementType() == JavaElementType.NEW_EXPRESSION);
-        final ASTNode qualifier = treeParent.getTreeParent().findChildByRole(ChildRole.QUALIFIER);
+        CompositeElement granny = treeParent.getTreeParent();
+        IElementType gType = granny.getElementType();
+        LOG.assertTrue(gType == JavaElementType.NEW_EXPRESSION, gType);
+        final ASTNode qualifier = granny.findChildByRole(ChildRole.QUALIFIER);
         return qualifier != null ? Kind.CLASS_IN_QUALIFIED_NEW_KIND : Kind.CLASS_NAME_KIND;
       }
       else {
@@ -236,7 +239,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @Override
   public final ASTNode findChildByRole(final int role) {
-    LOG.assertTrue(ChildRole.isUnique(role));
+    LOG.assertTrue(ChildRole.isUnique(role), role);
 
     switch (role) {
       case ChildRole.REFERENCE_NAME:
@@ -289,7 +292,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @NotNull
   private String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations, @NotNull PsiFile containingFile) {
-    switch (getKindEnum(containingFile)) {
+    Kind kind = getKindEnum(containingFile);
+    switch (kind) {
       case CLASS_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND:
       case CLASS_IN_QUALIFIED_NEW_KIND:
@@ -343,8 +347,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText();
 
       default:
-        //noinspection ConstantConditions
-        LOG.assertTrue(false);
+        LOG.error(kind);
         return null;
     }
   }
@@ -474,7 +477,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return JavaResolveResult.EMPTY_ARRAY;
         }
         else {
-          LOG.error("Invalid java reference!");
+          LOG.error("Invalid java reference: "+ parent);
           return JavaResolveResult.EMPTY_ARRAY;
         }
 
@@ -609,8 +612,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
 
       default:
-        //noinspection ConstantConditions
-        LOG.assertTrue(false);
+        LOG.error(kind);
         return null;
     }
   }
@@ -642,15 +644,21 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert qName != null : aClass;
     }
 
-    String text = qName;
+    StringBuilder text = new StringBuilder(qName);
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList != null) {
-      text += parameterList.getText();
+      PsiElement cur = getReferenceNameElement();
+      do {
+        assert cur != null : getText();
+        cur = cur.getNextSibling();
+        text.append(cur.getText());
+      }
+      while (cur != parameterList);
     }
 
     PsiJavaCodeReferenceElement ref;
     try {
-      ref = facade.getParserFacade().createReferenceFromText(text, getParent());
+      ref = facade.getParserFacade().createReferenceFromText(text.toString(), getParent());
     }
     catch (IncorrectOperationException e) {
       throw new IncorrectOperationException(e.getMessage() + " [qname=" + qName + " class=" + aClass + ";" + aClass.getClass().getName() + "]");
@@ -673,6 +681,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (!isQualified()) {
       PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
       if (modifierList != null) {
+        annotations = new ArrayList<>(annotations);
         PsiImplUtil.collectTypeUseAnnotations(modifierList, annotations);
       }
     }
@@ -703,7 +712,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
     if (qualifier == null) return false;
 
-    LOG.assertTrue(qualifier.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
+    IElementType qualifierElementType = qualifier.getElementType();
+    LOG.assertTrue(qualifierElementType == JavaElementType.JAVA_CODE_REFERENCE, qualifierElementType);
     PsiElement refElement = SourceTreeToPsiMap.<PsiJavaCodeReferenceElement>treeToPsiNotNull(qualifier).resolve();
     if (refElement instanceof PsiPackage) return true;
 
@@ -728,7 +738,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   private boolean isReferenceTo(PsiElement element, @NotNull PsiFile containingFile) {
-    switch (getKindEnum(containingFile)) {
+    Kind kind = getKindEnum(containingFile);
+    switch (kind) {
       case CLASS_NAME_KIND:
       case CLASS_IN_QUALIFIED_NEW_KIND:
         if (!(element instanceof PsiClass)) return false;
@@ -774,8 +785,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
         return false;
       default:
-        //noinspection ConstantConditions
-        LOG.assertTrue(false);
+        LOG.error(kind);
         return true;
     }
 
@@ -975,7 +985,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @Override
   public String getQualifiedName() {
-    switch (getKindEnum(getContainingFile())) {
+    Kind kind = getKindEnum(getContainingFile());
+    switch (kind) {
       case CLASS_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND:
       case CLASS_IN_QUALIFIED_NEW_KIND:
@@ -992,7 +1003,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return ((PsiPackage)target).getQualifiedName();
         }
         else {
-          LOG.assertTrue(target == null);
+          LOG.assertTrue(target == null, target);
           return getClassNameText();
         }
 
@@ -1002,11 +1013,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText(); // there cannot be any <...>
 
       default:
-        //noinspection ConstantConditions
-        LOG.assertTrue(false);
+        LOG.error(kind);
         return null;
     }
-
   }
 
   @Override

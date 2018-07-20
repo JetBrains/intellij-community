@@ -268,15 +268,15 @@ public class DarculaLaf extends BasicLookAndFeel {
   protected void loadDefaults(UIDefaults defaults) {
     Properties properties = new Properties();
     try {
-      InputStream stream = getClass().getResourceAsStream(getPrefix() + ".properties");
-      properties.load(stream);
-      stream.close();
+      try (InputStream stream = getClass().getResourceAsStream(getPrefix() + ".properties")) {
+        properties.load(stream);
+      }
 
       String systemPrefix = getSystemPrefix();
       if (StringUtil.isNotEmpty(systemPrefix)) {
-        stream = getClass().getResourceAsStream(systemPrefix + ".properties");
-        properties.load(stream);
-        stream.close();
+        try (InputStream stream = getClass().getResourceAsStream(systemPrefix + ".properties")) {
+          properties.load(stream);
+        }
       }
 
       HashMap<String, Object> darculaGlobalSettings = new HashMap<>();

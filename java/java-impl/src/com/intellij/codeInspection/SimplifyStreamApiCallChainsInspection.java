@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -1622,12 +1624,12 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public String getName() {
-      return "Replace with Arrays.asList().contains()";
+      return "Replace with List.contains()";
     }
 
     @Override
     public String getMessage() {
-      return "Can be replaced with Arrays.asList().contains()";
+      return "Can be replaced with List.contains()";
     }
 
     @Override
@@ -1645,7 +1647,15 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       CommentTracker ct = new CommentTracker();
       PsiReferenceParameterList typeParameters = qualifierCall.getMethodExpression().getParameterList();
       String typeParametersText = typeParameters == null ? "" : ct.text(typeParameters);
-      PsiElement result = ct.replaceAndRestoreComments(call, JAVA_UTIL_ARRAYS + "." + typeParametersText + "asList" +
+      String factory;
+      if (PsiUtil.isLanguageLevel9OrHigher(call) && MethodCallUtils.isVarArgCall(qualifierCall) &&
+          Stream.of(qualifierArgs.getExpressions())
+                .allMatch(e -> NullabilityUtil.getExpressionNullability(e, true) == Nullability.NOT_NULL)) {
+        factory = JAVA_UTIL_LIST + "." + typeParametersText + "of";
+      } else {
+        factory = JAVA_UTIL_ARRAYS + "." + typeParametersText + "asList";
+      }
+      PsiElement result = ct.replaceAndRestoreComments(call, factory +
                                                              ct.text(qualifierArgs) + ".contains(" + ct.text(value) + ")");
       return JavaCodeStyleManager.getInstance(result.getProject()).shortenClassReferences(result);
     }

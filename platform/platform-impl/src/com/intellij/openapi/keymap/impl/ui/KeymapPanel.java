@@ -62,8 +62,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -88,8 +86,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private boolean myQuickListsModified = false;
   private QuickList[] myQuickLists = QuickListsManager.getInstance().getAllQuickLists();
 
-  private boolean myShowFnInitial = false;
-  private JCheckBox myShowFnCheckbox = null;
+  private ShowFNKeysSettingWrapper myShowFN;
 
   public KeymapPanel() {
     setLayout(new BorderLayout());
@@ -219,18 +216,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     });
 
     if (TouchBarsManager.isTouchBarAvailable()) {
-      final String appId = Utils.getAppId();
-      if (appId != null && !appId.isEmpty()) {
-        myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
-        myShowFnCheckbox = new JCheckBox("Show function keys in Touch Bar", myShowFnInitial);
-        myShowFnCheckbox.addChangeListener(new ChangeListener() {
-          public void stateChanged(ChangeEvent e) {
-            NSDefaults.setShowFnKeysEnabled(appId, myShowFnCheckbox.isSelected());
-          }
-        });
-        panel.add(myShowFnCheckbox, BorderLayout.SOUTH);
-      } else
-        Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
+      myShowFN = new ShowFNKeysSettingWrapper();
+      if (myShowFN.getCheckbox() != null)
+        panel.add(myShowFN.getCheckbox(), BorderLayout.SOUTH);
+      Disposer.register(this, myShowFN);
     }
 
     return panel;
@@ -487,13 +476,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (error != null) throw new ConfigurationException(error);
     updateAllToolbarsImmediately();
 
-    if (isShowFnModified())
-      Utils.restartTouchBarServer();
+    if (myShowFN != null)
+      myShowFN.applyChanges();
   }
 
   @Override
   public boolean isModified() {
-    return myManager.isModified() || isShowFnModified();
+    return myManager.isModified() || (myShowFN != null && myShowFN.isModified());
   }
 
   public void selectAction(String actionId) {
@@ -644,13 +633,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return group;
   }
 
-  private boolean isShowFnModified() {
-    if (myShowFnCheckbox == null)
-      return false;
-
-    return myShowFnInitial != myShowFnCheckbox.isSelected();
-  }
-
   private static int showConfirmationDialog(Component parent) {
     return Messages.showYesNoCancelDialog(
       parent,
@@ -660,5 +642,71 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
       KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
       Messages.getWarningIcon());
+  }
+
+  private static class ShowFNKeysSettingWrapper implements Disposable {
+    private boolean myShowFnInitial = false;
+    private JCheckBox myCheckbox = null;
+    private volatile boolean myDisposed;
+
+    ShowFNKeysSettingWrapper() {
+      if (TouchBarsManager.isTouchBarAvailable()) {
+        final String appId = Utils.getAppId();
+        if (appId != null && !appId.isEmpty()) {
+          myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
+          myCheckbox = new JCheckBox("Always show function keys (F1-F12) on the Touch Bar", myShowFnInitial);
+        } else
+          Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
+      }
+    }
+
+    JCheckBox getCheckbox() { return myCheckbox; }
+
+    boolean isModified() { return myCheckbox == null ? false : myShowFnInitial != myCheckbox.isSelected(); }
+
+    void applyChanges() {
+      if (!TouchBarsManager.isTouchBarAvailable() || myCheckbox == null || !isModified())
+        return;
+
+      final String appId = Utils.getAppId();
+      if (appId == null || appId.isEmpty()) {
+        Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
+        return;
+      }
+
+      final boolean prevVal = myShowFnInitial;
+      myShowFnInitial = myCheckbox.isSelected();
+      NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+
+      if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId)) {
+        Logger.getInstance(KeymapPanel.class).error("can't write settings via NSDefaults.setShowFnKeysEnabled");
+        return;
+      }
+
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        final boolean result = Utils.restartTouchBarServer();
+        if (!result) {
+          // System.out.println("can't restart touchbar-server, roll back settings");
+          myShowFnInitial = prevVal;
+          NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+
+          if (!myDisposed) {
+            // System.out.println("ui wasn't disposed, invoke roll back of checkbox state");
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (!myDisposed)
+                myCheckbox.setSelected(prevVal);
+            }, ModalityState.stateForComponent(myCheckbox));
+          }
+        }
+      });
+    }
+
+    @Override
+    public void dispose() {
+      if (!myDisposed) {
+        myDisposed = true;
+        myCheckbox = null;
+      }
+    }
   }
 }

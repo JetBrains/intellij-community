@@ -75,13 +75,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
     watchedPaths += tempDir.root.path
-    startup(watcher, { path ->
+    startup(watcher) { path ->
       if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
         alarm.cancelAllRequests()
         alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
         if (path == FileWatcher.RESET) resetHappened.set(true)
       }
-    })
+    }
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
   }
@@ -187,7 +187,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val pseudoDir = File(file, "sub/zip")
     refresh(root)
 
-    watch(pseudoDir, false)
+    val checkRoots = if (SystemInfo.isLinux) WatchStatus.CHECK_NOT_WATCHED else WatchStatus.CHECK_WATCHED
+    watch(pseudoDir, false, checkRoots = checkRoots)
     assertEvents({ file.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
@@ -260,15 +261,60 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.writeText("re-creation") }, mapOf(bFilePath to 'C', cFilePath to 'C'))
   }
 
-  @Test fun testSymbolicLinkAboveWatchRoot() {
+  @Test fun testSymbolicLinkWatchRoot() {
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = File(top, "link")
-    Files.createSymbolicLink(link.toPath(), Paths.get("${top.path}/dir1/dir2"))
+    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
     val fileLink = File(top, "link/dir3/test.txt")
     refresh(top)
 
     watch(link)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+  }
+
+  @Test fun testSymbolicLinkAboveWatchRoot() {
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val watchRoot = File(link, "dir3")
+    val fileLink = File(watchRoot, file.name)
+    refresh(top)
+
+    watch(watchRoot)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+  }
+
+  @Test fun testJunctionWatchRoot() {
+    assumeTrue(SystemInfo.isWindows)
+
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
+    val fileLink = File(top, "link/dir3/test.txt")
+    refresh(top)
+
+    watch(junction)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+  }
+
+  @Test fun testJunctionAboveWatchRoot() {
+    assumeTrue(SystemInfo.isWindows)
+
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
+    val watchRoot = File(top, "link/dir3")
+    val fileLink = File(watchRoot, file.name)
+    refresh(top)
+
+    watch(watchRoot)
+
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
     assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
@@ -405,7 +451,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
 
-    val rootRequest = watch(fsRoot)
+    val checkRoots = if (SystemInfo.isLinux) WatchStatus.CHECK_NOT_WATCHED else WatchStatus.CHECK_WATCHED
+    val rootRequest = watch(fsRoot, checkRoots = checkRoots)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY)
     unwatch(rootRequest)
 
@@ -524,9 +571,23 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertThat(VfsTestUtil.print(VfsTestUtil.getEvents { vFile.refresh(false, false) })).containsOnly("U : ${vFile.path}")
   }
 
-  //<editor-fold desc="Helpers">
+  @Test fun testUncRoot() {
+    assumeTrue(SystemInfo.isWindows)
+    watch(File("\\\\SRV\\share\\path"), checkRoots = WatchStatus.CHECK_NOT_WATCHED)
+  }
 
-  private fun watch(file: File, recursive: Boolean = true) = FileWatcherTestUtil.watch(watcher, file, recursive)
+  //<editor-fold desc="Helpers">
+  private enum class WatchStatus { CHECK_WATCHED, CHECK_NOT_WATCHED, DO_NOT_CHECK }
+
+  private fun watch(file: File, recursive: Boolean = true, checkRoots: WatchStatus = WatchStatus.CHECK_WATCHED): LocalFileSystem.WatchRequest {
+    val request = FileWatcherTestUtil.watch(watcher, file, recursive)
+    @Suppress("NON_EXHAUSTIVE_WHEN")
+    when (checkRoots) {
+      WatchStatus.CHECK_WATCHED -> assertThat(watcher.manualWatchRoots).doesNotContain(file.path)
+      WatchStatus.CHECK_NOT_WATCHED -> assertThat(watcher.manualWatchRoots).contains(file.path)
+    }
+    return request
+  }
 
   private fun unwatch(request: LocalFileSystem.WatchRequest) {
     FileWatcherTestUtil.unwatch(watcher, request)

@@ -498,11 +498,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     DFSTBuilder<String> builder = new DFSTBuilder<>(GraphGenerator.generate(new InboundSemiGraph<String>() {
+      @NotNull
       @Override
       public Collection<String> getNodes() {
         return dependencies.keySet();
       }
 
+      @NotNull
       @Override
       public Iterator<String> getIn(String n) {
         return dependencies.get(n).iterator();

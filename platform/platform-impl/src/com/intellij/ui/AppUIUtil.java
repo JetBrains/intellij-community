@@ -182,15 +182,9 @@ public class AppUIUtil {
       return;
     }
 
-    try {
-      InputStream is = url.openStream();
-      try {
-        Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-        GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
-      }
-      finally {
-        is.close();
-      }
+    try (InputStream is = url.openStream()) {
+      Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+      GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
     }
     catch (Throwable t) {
       Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + url, t);

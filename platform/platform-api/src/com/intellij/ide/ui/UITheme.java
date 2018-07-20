@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import java.awt.*;
@@ -30,9 +31,12 @@ public class UITheme {
   private boolean dark;
   private String author;
   private String id;
+  private String editorScheme;
   private Map<String, Object> ui;
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
+  private Map<String, Object> background;
+  private Class providerClass;
 
   private UITheme() {
   }
@@ -49,9 +53,10 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId) throws IOException {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull Class provider) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
+    theme.providerClass = provider;
     if (!theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
@@ -69,6 +74,15 @@ public class UITheme {
     return id;
   }
 
+  @Nullable
+  public String getEditorScheme() {
+    return editorScheme;
+  }
+
+  public Map<String, Object> getBackground() {
+    return background;
+  }
+
   public void applyProperties(UIDefaults defaults) {
     if (ui == null) return;
 
@@ -79,6 +93,10 @@ public class UITheme {
 
   public IconPathPatcher getPatcher() {
     return patcher;
+  }
+
+  public Class getProviderClass() {
+    return providerClass;
   }
 
   private static void apply(String key, Object value, UIDefaults defaults) {
@@ -108,12 +126,18 @@ public class UITheme {
     if ("null".equals(value)) {
       return null;
     }
+    if ("true".equals(value)) return Boolean.TRUE;
+    if ("false".equals(value)) return Boolean.FALSE;
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
-    } else if (key.endsWith("border")) {
+    } else if (key.endsWith("Border") || key.endsWith("border")) {
       try {
-        return Class.forName(value).newInstance();
+        if (StringUtil.split(value, ",").size() == 4) {
+          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+        } else {
+          return Class.forName(value).newInstance();
+        }
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -126,7 +150,6 @@ public class UITheme {
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
-      final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
       if (color != null) {
         return  new ColorUIResource(color);
@@ -134,8 +157,6 @@ public class UITheme {
         return invVal;
       } else if (icon != null) {
         return new IconUIResource(icon);
-      } else if (boolVal != null) {
-        return boolVal;
       }
     }
     return value;
@@ -210,5 +231,14 @@ public class UITheme {
   @SuppressWarnings("unused")
   private void setIcons(Map<String, Object> icons) {
     this.icons = icons;
+  }
+
+  @SuppressWarnings("unused")
+  public void setEditorScheme(String editorScheme) {
+    this.editorScheme = editorScheme;
+  }
+
+  public void setBackground(Map<String, Object> background) {
+    this.background = background;
   }
 }

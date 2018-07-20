@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -18,7 +16,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import java.util.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
@@ -404,6 +401,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   };
   public boolean canGetBytecodes() {
     return myGetBytecodes.isAvailable();
+  }
+
+  private final Capability myGetConstantPool = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetConstantPool();
+    }
+  };
+  public boolean canGetConstantPool() {
+    return myGetConstantPool.isAvailable();
   }
 
   private final Capability myGetSyntheticAttribute = new Capability() {

@@ -30,12 +30,9 @@ public class NST {
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
   static {
-    final Application app = ApplicationManager.getApplication();
-    final boolean isUIPresented = app != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode() && !app.isCommandLine();
     final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false);
     if (
-      isUIPresented
-      && isSupportedOS()
+      isSupportedOS()
       && isRegistryKeyEnabled
       && Utils.isTouchBarServerRunning()
     ) {
@@ -63,9 +60,7 @@ public class NST {
       } else {
         LOG.error("nst library wasn't loaded");
       }
-    } else if (!isUIPresented)
-      LOG.debug("unit-test mode, skip nst loading");
-    else if (!isSupportedOS())
+    } else if (!isSupportedOS())
       LOG.info("OS doesn't support touchbar, skip nst loading");
     else if (!isRegistryKeyEnabled)
       LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
@@ -100,7 +95,6 @@ public class NST {
   }
 
   public static void selectItemsToShow(ID tbObj, String[] ids, int count) {
-    _assertIsDispatchThread();
     ourNSTLibrary.selectItemsToShow(tbObj, ids, count); // creates autorelease-pool internally
   }
 
@@ -150,7 +144,6 @@ public class NST {
                                   String text,
                                   Icon icon,
                                   NSTLibrary.Action action) {
-    _assertIsDispatchThread();
     final BufferedImage img = _getImg4ByteRGBA(icon);
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
@@ -171,7 +164,6 @@ public class NST {
                                    String text,
                                    Icon icon,
                                    ID tbObjExpand, ID tbObjTapAndHold) {
-    _assertIsDispatchThread();
     final BufferedImage img = _getImg4ByteRGBA(icon);
     final byte[] raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
@@ -180,7 +172,6 @@ public class NST {
   }
 
   public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
-    _assertIsDispatchThread();
     final NSTLibrary.ScrubberItemData[] vals = _makeItemsArray2(items);
     ourNSTLibrary.updateScrubber(scrubObj, itemWidth, vals, vals != null ? vals.length : 0); // creates autorelease-pool internally
   }
@@ -268,16 +259,8 @@ public class NST {
     // Ideal icon size	    36px × 36px (18pt × 18pt @2x)
     // Maximum icon size    44px × 44px (22pt × 22pt @2x)
 
-    final UISettings settings = UISettings.getInstance();
-    final float fMulX = settings.getPresentationMode() ? 40/icon.getIconHeight() : 40/16.f;
-    return _getImg4ByteRGBA(icon, fMulX);
-  }
-
-  private static void _assertIsDispatchThread() {
     final Application app = ApplicationManager.getApplication();
-    if (app != null)
-      app.assertIsDispatchThread();
-    else
-      assert SwingUtilities.isEventDispatchThread();
+    final float fMulX = app != null && UISettings.getInstance().getPresentationMode() ? 40.f/icon.getIconHeight() : (icon.getIconHeight() < 24 ? 40.f/16 : 44.f/icon.getIconHeight());
+    return _getImg4ByteRGBA(icon, fMulX);
   }
 }

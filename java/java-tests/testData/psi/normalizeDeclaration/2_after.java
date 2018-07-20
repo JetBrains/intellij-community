@@ -1,6 +1,6 @@
 class A{
     {
-        AAA[][][] x ;
+        AAA[][][] x;
         AAA[] y;
         AAA[] z;
     }

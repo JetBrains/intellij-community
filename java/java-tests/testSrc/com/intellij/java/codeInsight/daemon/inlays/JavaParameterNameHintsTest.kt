@@ -1037,6 +1037,35 @@ class Test {
 """)
   }
 
+  fun `test unclear expression type setting true`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(<hint text="info:"/>data);
+  }
+
+  void foo(String info) {}
+}
+""")
+  }
+
+
+  fun `test unclear expression type setting false`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(false)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(data);
+  }
+
+  void foo(String info) {}
+}
+""")
+  }
+
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
     val manager = ParameterHintsPresentationManager.getInstance()

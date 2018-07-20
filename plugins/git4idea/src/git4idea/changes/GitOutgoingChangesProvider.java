@@ -54,11 +54,11 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     LOG.debug("getOutgoingChanges root: " + vcsRoot.getPath());
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, findRemote);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
-      return new Pair<>(null, Collections.<CommittedChangeList>emptyList());
+      return new Pair<>(null, Collections.emptyList());
     }
     final GitRevisionNumber base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
     if (base == null) {
-      return new Pair<>(null, Collections.<CommittedChangeList>emptyList());
+      return new Pair<>(null, Collections.emptyList());
     }
     final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
                                                                                 handler -> handler.addParameters(base.asString() + "..HEAD"));

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -94,14 +80,18 @@ public class PluginClassLoader extends UrlClassLoader {
     "kotlin.Pair",
     "kotlin.Triple",
     "kotlin.jvm.internal.DefaultConstructorMarker",
-    "kotlin.reflect.KDeclarationContainer"
+    "kotlin.reflect.KDeclarationContainer",
+    "kotlin.properties.ReadWriteProperty",
+    "kotlin.properties.ReadOnlyProperty"
   );
 
   private static boolean mustBeLoadedByPlatform(String className) {
     //some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
-    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") || KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
+    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
+                                               className.startsWith("kotlin.reflect.KProperty") ||
+                                               KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
   @Nullable

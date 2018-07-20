@@ -11,7 +11,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -81,12 +80,6 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
   public void init(PsiElement element) {
     XmlDocument document = (XmlDocument) element;
     myFile = ((XmlFile)document.getContainingFile());
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

@@ -642,4 +642,11 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       appPrefs.setLineSpacing(currSpacing);
     }
   }
+
+  public void testEa124005() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
+    editorColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, null);
+    editorColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, new Color(255, 0, 0));
+  }
 }

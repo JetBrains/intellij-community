@@ -36,7 +36,5 @@ public interface DiffViewer {
   @Nullable
   JComponent getPreferredFocusedComponent();
 
-  int getContentsNumber();
-
   boolean acceptsType(DiffViewerType type);
 }

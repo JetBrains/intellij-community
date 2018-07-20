@@ -157,7 +157,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable);
 
   @NotNull
-  public abstract IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiLocalVariable variable);
+  public abstract IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiVariable variable);
 
   @NotNull
   public abstract IntentionAction createConvertToStringLiteralAction();

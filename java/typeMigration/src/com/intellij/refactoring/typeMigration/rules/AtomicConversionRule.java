@@ -178,7 +178,9 @@ public class AtomicConversionRule extends TypeConversionRule {
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
       if (operationSign == JavaTokenType.EQ) {
-        return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)", (PsiAssignmentExpression)parent);
+        boolean rightInfected = ((PsiAssignmentExpression)parent).getLExpression() == context;
+        String replacement = rightInfected ? "$qualifier$ = $val$.get()" : "$qualifier$.set($val$)";
+        return new TypeConversionDescriptor("$qualifier$ = $val$", replacement, (PsiAssignmentExpression)parent);
       }
     }
 

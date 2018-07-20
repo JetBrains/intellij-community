@@ -125,10 +125,10 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         "ALIGN_MULTILINE_TERNARY_OPERATION",
         //"TERNARY_OPERATION_SIGNS_ON_NEXT_LINE",
 
-        //"ARRAY_INITIALIZER_WRAP",
-        //"ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION",
-        //"ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE",
-        //"ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE",
+        "ARRAY_INITIALIZER_WRAP",
+        "ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION",
+        "ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE",
+        "ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE",
 
         "MODIFIER_LIST_WRAP",
 
@@ -181,7 +181,8 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_WITHIN_CAST_PARENTHESES",
                                    "SPACE_WITHIN_BRACKETS",
                                    "SPACE_WITHIN_BRACES",
-//                                   "SPACE_WITHIN_ARRAY_INITIALIZER_BRACES",
+                                   "SPACE_WITHIN_ARRAY_INITIALIZER_BRACES",
+                                   "SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES",
                                    "SPACE_AFTER_TYPE_CAST",
                                    "SPACE_BEFORE_METHOD_CALL_PARENTHESES",
                                    "SPACE_BEFORE_METHOD_PARENTHESES",
@@ -204,7 +205,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_BEFORE_CATCH_LBRACE",
                                    "SPACE_BEFORE_FINALLY_LBRACE",
                                    "SPACE_BEFORE_SYNCHRONIZED_LBRACE",
-//                                   "SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE",
+                                   "SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE",
 //                                   "SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE",
                                    "SPACE_BEFORE_ELSE_KEYWORD",
                                    "SPACE_BEFORE_WHILE_KEYWORD",

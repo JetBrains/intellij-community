@@ -26,9 +26,11 @@ import com.intellij.openapi.util.text.StringUtil.isNotEmpty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
@@ -41,7 +43,6 @@ import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.JdkBundle
 import com.intellij.util.PathUtil
-import com.intellij.util.Producer
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EdtInvocationManager
@@ -73,7 +74,7 @@ import java.awt.event.KeyEvent
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MINUTES
@@ -717,16 +718,6 @@ object GuiTestUtil {
     GuiRobotHolder.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
   }
 
-  fun pause(conditionString: String, producer: Producer<Boolean>, timeout: Timeout) {
-    Pause.pause(object : Condition(conditionString) {
-      override fun test(): Boolean {
-        val produce = producer.produce()
-        assertNotNull(produce)
-        return produce!!
-      }
-    }, timeout)
-  }
-
   fun getListCellRendererComponent(list: JList<*>, value: Any, index: Int): Component {
     return (list as JList<Any>).cellRenderer.getListCellRendererComponent(list, value, index, true, true)
   }
@@ -745,23 +736,27 @@ object GuiTestUtil {
     return JTextComponentFixture(GuiRobotHolder.robot, jTextComponent)
   }
 
-  fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
+  fun jTreeComponent(container: Container,
+                     timeout: Long,
+                     vararg pathStrings: String,
+                     predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): JTree {
     val myTree: JTree?
-    val pathList = pathStrings.toList()
     try {
-      myTree = if (pathList.isEmpty()) {
+      myTree = if (pathStrings.isEmpty()) {
         waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
       }
       else {
         waitUntilFound(GuiRobotHolder.robot, container,
-                       GuiTestUtilKt.typeMatcher(JTree::class.java) { ExtendedTreeFixture(GuiRobotHolder.robot, it).hasPath(pathList) },
+                       GuiTestUtilKt.typeMatcher(JTree::class.java) {
+                         ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
+                       },
                        timeout.toFestTimeout())
       }
     }
-    catch (e: WaitTimedOutError){
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
     }
-    return ExtendedTreeFixture(GuiRobotHolder.robot, myTree)
+    return myTree
   }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
@@ -802,15 +797,14 @@ object GuiTestUtil {
     return null
   }
 
-  fun fileSearchAndReplace(fileName: String, condition: (String) -> String) {
+  fun fileSearchAndReplace(fileName: Path, condition: (String) -> String) {
     val buffer = mutableListOf<String>()
-    val inputFile = Paths.get(fileName)
-    for (line in Files.readAllLines(inputFile)) {
+    for (line in Files.readAllLines(fileName)) {
       buffer.add(condition(line))
     }
-    val tmpFile = Files.createTempFile(inputFile.fileName.toString(), "tmp")
+    val tmpFile = Files.createTempFile(fileName.fileName.toString(), "tmp")
     Files.write(tmpFile, buffer)
-    Files.copy(tmpFile, inputFile, StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(tmpFile, fileName, StandardCopyOption.REPLACE_EXISTING)
     tmpFile.toFile().deleteOnExit()
   }
 

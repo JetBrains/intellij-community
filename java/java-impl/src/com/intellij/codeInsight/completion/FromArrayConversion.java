@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
@@ -41,12 +42,14 @@ class FromArrayConversion {
                              final PsiType itemType,
                              final Consumer<LookupElement> result,
                              @Nullable PsiElement qualifier,
-                             final PsiType expectedType) throws IncorrectOperationException {
+                             @NotNull PsiType expectedType) throws IncorrectOperationException {
     final String methodName = getArraysConversionMethod(itemType, expectedType);
     if (methodName == null) return;
 
     final String qualifierText = ReferenceExpressionCompletionContributor.getQualifierText(qualifier);
     final PsiExpression conversion = createExpression("java.util.Arrays." + methodName + "(" + qualifierText + prefix + ")", element);
+    if (!expectedType.isAssignableFrom(conversion.getType())) return;
+
     final String presentable = "Arrays." + methodName + "(" + qualifierText + prefix + ")";
     String[] lookupStrings = {StringUtil.isEmpty(qualifierText) ? presentable : prefix, prefix, presentable, methodName + "(" + prefix + ")"};
     result.consume(new ExpressionLookupItem(conversion, PlatformIcons.METHOD_ICON, presentable, lookupStrings) {

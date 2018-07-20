@@ -30,7 +30,7 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public abstract MoveDestination createSourceFolderPreservingMoveDestination(@NotNull String targetPackageQualifiedName);
 
   /**
-   * Creates move destination for a specified package that moves all items to a specifed source folder
+   * Creates move destination for a specified package that moves all items to a specified source folder
    */
   public abstract MoveDestination createSourceRootMoveDestination(@NotNull String targetPackageQualifiedName, @NotNull VirtualFile sourceRoot);
 
@@ -104,7 +104,7 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
    * @param parameterInitializer Initializer to use in method calls.
    * @param expressionToSearchFor expression that should be replaced with parameters
    * @param declareFinal should created parameter be declared {@code final}
-   * @param replaceAllOccurences should all occurences of expression be replaced
+   * @param replaceAllOccurrences should all occurrences of expression be replaced
    */
   public abstract IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,
                                                                                     PsiMethod methodToSearchFor,
@@ -112,5 +112,5 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
                                                                                     PsiExpression parameterInitializer,
                                                                                     PsiExpression expressionToSearchFor,
                                                                                     boolean declareFinal,
-                                                                                    final boolean replaceAllOccurences);
+                                                                                    final boolean replaceAllOccurrences);
 }

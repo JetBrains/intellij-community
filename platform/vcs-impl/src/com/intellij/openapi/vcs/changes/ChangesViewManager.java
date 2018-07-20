@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -456,12 +455,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
 
     @Override
-    public boolean isVisible(AnActionEvent event) {
-      ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
-      return toolWindow != null && toolWindow.getContentManager().getSelectedContent() == myContent;
-    }
-
-    @Override
     public void collapseAll() {
       TreeUtil.collapseAll(myView, 2);
       TreeUtil.expand(myView, 1);
@@ -538,7 +531,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
   
-    private MyChangeViewContent(JComponent component, String displayName, boolean isLockable) {
+    private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
       super(myProject, component, displayName, isLockable);
     }
 

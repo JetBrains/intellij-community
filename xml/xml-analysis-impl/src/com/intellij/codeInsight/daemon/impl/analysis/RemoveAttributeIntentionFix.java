@@ -6,10 +6,8 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -106,19 +104,10 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
 
   private static XmlAttribute getAttribute(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
-    FileViewProvider provider = file.getViewProvider();
-    for (Language language : provider.getLanguages()) {
-      PsiElement element = provider.findElementAt(offset, language);
-      XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
-      if (attribute != null) {
-        return attribute;
-      }
-      element = provider.findElementAt(offset - 1, language);
-      attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
-      if (attribute != null) {
-        return attribute;
-      }
+    XmlAttribute attribute = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlAttribute.class);
+    if (attribute == null) {
+      attribute = PsiTreeUtil.getParentOfType(file.findElementAt(offset - 1), XmlAttribute.class);
     }
-    return null;
+    return attribute;
   }
 }

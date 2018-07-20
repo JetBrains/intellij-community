@@ -234,12 +234,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     // can change if two range become the one
     if (insertedNode != node) {
       // merge happened
-      for (Getter<T> key : node.intervals) {
-        T interval = key.get();
-        if (interval != null) {
-          insertedNode.addInterval(interval);
-        }
-      }
+      insertedNode.addIntervalsFrom(node);
     }
   }
 

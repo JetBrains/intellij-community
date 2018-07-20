@@ -63,6 +63,11 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
+  @NotNull
+  public TestStatusLine getStatusLine() {
+    return myStatusLine;
+  }
+
   public void initUI() {
     myLeftPane = ScrollPaneFactory.createScrollPane();
     myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);

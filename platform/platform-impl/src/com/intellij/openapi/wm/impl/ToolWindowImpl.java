@@ -36,13 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -66,18 +62,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private boolean myHideOnEmptyContent;
   private boolean myPlaceholderMode;
   private ToolWindowFactory myContentFactory;
-
-  private static final Set<KeyStroke> FORWARD_TRAVERSAL_KEYSTROKES = new HashSet<>(Arrays.asList(
-    new KeyStroke[]{
-      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)
-    }
-  ));
-
-  private static final Set<KeyStroke> BACKWARD_TRAVERSAL_KEYSTROKES = new HashSet<>(Arrays.asList(
-    new KeyStroke[]{
-      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)
-    }
-  ));
 
   private final BusyObject.Impl myShowing = new BusyObject.Impl() {
     @Override
@@ -106,7 +90,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     myComponent = myContentManager.getComponent();
 
-    installToolwindowFocusPolicy();
+    InternalDecorator.installFocusTraversalPolicy(myComponent, new LayoutFocusTraversalPolicy());
 
     UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable.Adapter() {
       @Override
@@ -115,50 +99,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
       }
     });
     Disposer.register(myContentManager, notifyConnector);
-  }
-
-  /**
-   * Installs a focus traversal policy for the tool window.
-   * If the policy cannot handle a keystroke, it delegates the handling to
-   * the nearest ancestors focus traversal policy. For instance,
-   * this policy does not handle KeyEvent.VK_ESCAPE, so it can delegate the handling
-   * to a ThreeComponentSplitter instance.
-   */
-  private void installToolwindowFocusPolicy() {
-
-    myComponent.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, FORWARD_TRAVERSAL_KEYSTROKES);
-    myComponent.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, BACKWARD_TRAVERSAL_KEYSTROKES);
-
-    FocusTraversalPolicy layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicy();
-
-    myComponent.setFocusCycleRoot(true);
-    myComponent.setFocusTraversalPolicyProvider(true);
-    myComponent.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-      @Override
-      public Component getComponentAfter(Container container, Component component) {
-        return layoutFocusTraversalPolicy.getComponentAfter(container, component);
-      }
-
-      @Override
-      public Component getComponentBefore(Container container, Component component) {
-        return layoutFocusTraversalPolicy.getComponentBefore(container, component);
-      }
-
-      @Override
-      public Component getFirstComponent(Container container) {
-        return layoutFocusTraversalPolicy.getFirstComponent(container);
-      }
-
-      @Override
-      public Component getLastComponent(Container container) {
-        return layoutFocusTraversalPolicy.getLastComponent(container);
-      }
-
-      @Override
-      public Component getDefaultComponent(Container container) {
-        return layoutFocusTraversalPolicy.getDefaultComponent(container);
-      }
-    });
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l) {

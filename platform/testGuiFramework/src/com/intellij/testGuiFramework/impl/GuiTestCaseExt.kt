@@ -3,7 +3,7 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
@@ -14,9 +14,8 @@ import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
-import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -109,8 +108,15 @@ fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
   }
 }
 
-
-fun ExtendedTreeFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
+/**
+ * Selects specified [path] in the tree by keyboard searching
+ * @param path in string form
+ * @param testCase - test case is required only because of keyboard related functions
+ *
+ * TODO: remove [testCase] parameter (so move [shortcut] and [typeText] functions
+ * out of GuiTestCase)
+ * */
+fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
   fun currentValue(): String {
     val selectedRow = target().selectionRows.first()
     return valueAt(selectedRow) ?: throw IllegalStateException("Nothing is selected in the tree")
@@ -132,7 +138,7 @@ fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")
   ideFrame {
     toolwindow(id = "Gradle") {
-      content(tabName = "projects") {
+      content(tabName = "") {
         //        waitAMoment()
         actionButton("Refresh all external projects").click()
       }
@@ -143,7 +149,7 @@ fun GuiTestCase.gradleReimport() {
 fun GuiTestCase.mavenReimport() {
   logTestStep("Reimport maven project")
   ideFrame {
-    toolwindow(id = "Maven Projects") {
+    toolwindow(id = "Maven") {
       content(tabName = "") {
         actionButton("Reimport All Maven Projects").click()
       }
@@ -186,7 +192,7 @@ fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, varar
     }
     dialog(runDebugConfigurations) {
       assert(exists { jTree(*configuration) })
-      jTree(*configuration).clickPath(*configuration)
+      jTree(*configuration).clickPath()
       for ((field, expectedValue) in expectedValues) {
         logTestStep("Field `$field`has a value = `$expectedValue`")
         checkOneValue(this@checkRunConfiguration, field, expectedValue)
@@ -251,13 +257,12 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
   }
 }
 
-fun GuiTestCase.checkFileExists(filePath: String){
+fun GuiTestCase.checkFileExists(filePath: Path) {
   logTestStep("Going to check whether file `$filePath` created")
-  assert(File(filePath).exists()) { "Can't find a file `$filePath`" }
+  assert(filePath.toFile().exists()) { "Can't find a file `$filePath`" }
 }
 
-fun GuiTestCase.checkFileContainsLine(filePath: String, line: String){
-  val inputFile = Paths.get(filePath)
-  logTestStep("Going to check whether ${inputFile.fileName} contains line `$line`")
-  assert(Files.readAllLines(inputFile).contains(line)) { "Line `$line` not found" }
+fun GuiTestCase.checkFileContainsLine(filePath: Path, line: String) {
+  logTestStep("Going to check whether ${filePath.fileName} contains line `$line`")
+  assert(Files.readAllLines(filePath).contains(line)) { "Line `$line` not found" }
 }

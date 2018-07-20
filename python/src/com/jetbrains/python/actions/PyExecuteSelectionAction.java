@@ -120,7 +120,6 @@ public class PyExecuteSelectionAction extends AnAction {
    *
    * @param project current Project
    * @param selectionText text to execute
-   * @param sdkHome sdk path for running
    *
    */
   public static void selectConsoleAndExecuteCode(@NotNull Project project, @Nullable final String selectionText) {

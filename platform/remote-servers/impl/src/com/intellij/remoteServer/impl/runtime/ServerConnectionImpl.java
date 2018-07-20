@@ -578,7 +578,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       final DeploymentStatus finishedExternally = DeploymentStatus.NOT_DEPLOYED;
       for (LocalDeploymentImpl nextLocal : matchedLocalsBefore) {
         if (!nextLocal.hasRemoteDeloyment()) {
-          nextLocal.changeState(DeploymentStatus.DEPLOYED, finishedExternally, null, null);
+          nextLocal.changeState(nextLocal.getStatus(), finishedExternally, null, null);
         }
       }
 

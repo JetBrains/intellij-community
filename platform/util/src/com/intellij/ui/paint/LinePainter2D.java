@@ -420,7 +420,7 @@ public class LinePainter2D {
    * Returns the x (y) coordinate of the center of the stroke.
    *
    * @param g           the graphics
-   * @param coord       the x or y coordinate
+   * @param xy       the x or y coordinate
    * @param strokeType  the stroke type
    * @param strokeWidth the stroke width
    * @return the coordinate of the center of the stroke

@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import com.intellij.util.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -24,6 +25,10 @@ fun PsiElement.contexts(): Sequence<PsiElement> = generateSequence(this) {
 fun PsiElement.backwardSiblings(): Sequence<PsiElement> = generateSequence(this) {
   ProgressManager.checkCanceled()
   it.prevSibling
+}
+
+inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> {
+  return PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
 }
 
 @JvmOverloads

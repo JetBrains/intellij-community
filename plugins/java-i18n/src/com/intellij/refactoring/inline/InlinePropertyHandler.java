@@ -62,7 +62,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     final String propertyValue = property.getValue();
     if (propertyValue == null) return;
 
-    final List<PsiElement> occurrences = Collections.synchronizedList(ContainerUtil.<PsiElement>newArrayList());
+    final List<PsiElement> occurrences = Collections.synchronizedList(ContainerUtil.newArrayList());
     final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiElement.getContainingFile());
     boolean result = ReferencesSearch.search(psiElement).forEach(

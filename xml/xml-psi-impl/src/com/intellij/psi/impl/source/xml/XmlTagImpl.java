@@ -390,7 +390,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         return new Result<>(null, this, file[0] == null ? this : file[0],
                                                 ExternalResourceManager.getInstance());
       }
-      return new Result<>(descriptor, descriptor.getDependences(), this);
+      return new Result<>(descriptor, descriptor.getDependencies(), this);
     }, false));
 
     return map;

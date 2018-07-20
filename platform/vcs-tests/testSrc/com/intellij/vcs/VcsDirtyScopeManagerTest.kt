@@ -55,7 +55,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
     dirtyScopeManager.fileDirty(file)
 
-    val invalidated = dirtyScopeManager.retrieveScopes()
+    val invalidated = retrieveDirtyScopes()
     assertTrue(invalidated.isFileDirty(file))
     val scope = assertOneScope(invalidated)
     assertTrue(scope.dirtyFiles.contains(file))
@@ -67,7 +67,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
     dirtyScopeManager.dirDirtyRecursively(dir)
 
-    val invalidated = dirtyScopeManager.retrieveScopes()
+    val invalidated = retrieveDirtyScopes()
     assertTrue(invalidated.isFileDirty(file))
     val scope = assertOneScope(invalidated)
     assertTrue(scope.recursivelyDirtyDirectories.contains(dir))
@@ -81,7 +81,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
     dirtyScopeManager.filePathsDirty(listOf(file), listOf(otherRoot))
 
-    val invalidated = dirtyScopeManager.retrieveScopes()
+    val invalidated = retrieveDirtyScopes()
     assertDirtiness(invalidated, file, otherRoot, subFile)
     val scope = assertOneScope(invalidated)
     assertTrue(scope.recursivelyDirtyDirectories.contains(otherRoot))
@@ -95,7 +95,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
     dirtyScopeManager.markEverythingDirty()
 
-    val invalidated = dirtyScopeManager.retrieveScopes()
+    val invalidated = retrieveDirtyScopes()
     assertDirtiness(invalidated, file, basePath, subRoot, subFile)
   }
 
@@ -107,7 +107,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
     dirtyScopeManager.filePathsDirty(listOf(), listOf(basePath, otherRoot))
 
-    val invalidated = dirtyScopeManager.retrieveScopes()
+    val invalidated = retrieveDirtyScopes()
     assertOneScope(invalidated)
     assertDirtiness(invalidated, file, otherRoot, subFile)
   }
@@ -117,7 +117,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
     dirtyScopeManager.fileDirty(file)
 
-    val invalidated = dirtyScopeManager.retrieveScopes()
+    val invalidated = retrieveDirtyScopes()
     assertTrue(invalidated.isEmpty)
     assertFalse(invalidated.isEverythingDirty)
   }
@@ -131,7 +131,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
     dirtyScopeManager.filePathsDirty(null, listOf(basePath, subRoot))
 
-    val invalidated = dirtyScopeManager.retrieveScopes()
+    val invalidated = retrieveDirtyScopes()
     val scopes = invalidated.scopes
     assertEquals(2, scopes.size)
     val mainVcsScope = scopes.find { it.vcs.name == vcs.name }!!
@@ -139,6 +139,8 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     val otherVcsScope = scopes.find { it.vcs.name == otherVcs.name }!!
     assertTrue(otherVcsScope.recursivelyDirtyDirectories.contains(subRoot))
   }
+
+  private fun retrieveDirtyScopes() = dirtyScopeManager.retrieveScopes()!!
 
   private fun disableVcsDirtyScopeVfsListener() {
     project.service<VcsDirtyScopeVfsListener>().setForbid(true)
@@ -160,7 +162,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   private fun registerRootMapping(root: VirtualFile, vcs: AbstractVcs<*>) {
     vcsManager.setDirectoryMapping(root.path, vcs.name)
-    dirtyScopeManager.retrieveScopes() // ignore the dirty event after adding the mapping
+    retrieveDirtyScopes() // ignore the dirty event after adding the mapping
   }
 
   private fun createFile(parentDir: FilePath, name: String): FilePath {

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Comparing;
@@ -40,7 +40,16 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  TBItemButton setHasArrowIcon(boolean hasArrowIcon) { myHasArrowIcon = hasArrowIcon; return this; }
+  TBItemButton setHasArrowIcon(boolean hasArrowIcon) {
+    if (hasArrowIcon != myHasArrowIcon) {
+      myHasArrowIcon = hasArrowIcon;
+      if (myNativePeer != ID.NIL) {
+        final Icon ic = myHasArrowIcon ? IconLoader.getIcon("/mac/touchbar/popoverArrow_dark.svg") : null;
+        NST.setArrowImage(myNativePeer, ic);
+      }
+    }
+    return this;
+  }
 
   TBItemButton setText(String text) {
     if (!Comparing.equal(text, myText)) {
@@ -67,10 +76,14 @@ class TBItemButton extends TBItem {
         myNativeCallback = ()->{
           // NOTE: executed from AppKit thread
           if (executeOnEDT) {
-            if (modality != null)
-              ApplicationManager.getApplication().invokeLater(myAction, modality);
-            else
-              ApplicationManager.getApplication().invokeLater(myAction);
+            final Application app = ApplicationManager.getApplication();
+            if (app != null) {
+              if (modality != null)
+                app.invokeLater(myAction, modality);
+              else
+                app.invokeLater(myAction);
+            } else
+              SwingUtilities.invokeLater(myAction);
           } else {
             myAction.run();
           }
@@ -152,6 +165,19 @@ class TBItemButton extends TBItem {
     return this;
   }
 
+  TBItemButton setTransparentBg(boolean isTransparentBg) {
+    final int flags = _applyFlag(myFlags, isTransparentBg, NSTLibrary.BUTTON_FLAG_TRANSPARENT_BG);
+    if (flags != myFlags) {
+      myFlags = flags;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+        _updateNativePeer();
+      }
+    }
+
+    return this;
+  }
+
   void update(Icon icon, String text, boolean isSelected, boolean isDisabled) {
     if (icon != null) icon = IconLoader.getDarkIcon(icon, true);
 
@@ -203,8 +229,10 @@ class TBItemButton extends TBItem {
   synchronized protected ID _createNativePeer() {
 //    System.out.printf("_createNativePeer, button [%s]\n", myUid);
     final ID result = NST.createButton(myUid, myLayoutBits, _validateFlags(), myText, myIcon, myNativeCallback);
-    if (myHasArrowIcon)
-      NST.setArrowImage(result, AllIcons.General.ComboArrow);
+    if (myHasArrowIcon) {
+      final Icon ic = IconLoader.getIcon("/mac/touchbar/popoverArrow_dark.svg");
+      NST.setArrowImage(result, ic);
+    }
     return result;
   }
 

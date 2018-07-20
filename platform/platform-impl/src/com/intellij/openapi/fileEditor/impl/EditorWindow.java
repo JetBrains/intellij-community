@@ -314,9 +314,13 @@ public class EditorWindow {
       }
     }
     else if (parent instanceof EditorsSplitters) {
+      Component currentFocusComponent = getGlobalInstance().getFocusedDescendantFor(parent);
+
       parent.removeAll();
       parent.add(otherComponent, BorderLayout.CENTER);
       parent.revalidate();
+
+      if (currentFocusComponent != null) currentFocusComponent.requestFocusInWindow();
     }
     else {
       throw new IllegalStateException("Unknown container: " + parent);

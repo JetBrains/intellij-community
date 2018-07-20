@@ -33,6 +33,8 @@ import static java.util.Collections.singletonList;
 
 public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
+  public static final int FULL_HASH_LENGTH = 40;
+  public static final int SHORT_HASH_LENGTH = 8;
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -208,7 +210,8 @@ public class VcsLogUtil {
   }
 
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    String feature = isFromHistory ? "history." : "log." + UsageDescriptorKeyValidator.ensureProperKey(text);
+    String prefix = isFromHistory ? "history." : "log.";
+    String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
     FUSApplicationUsageTrigger.getInstance().trigger(VcsLogUsageTriggerCollector.class, feature);
   }
 
@@ -257,5 +260,10 @@ public class VcsLogUtil {
   public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
     Disposer.register(parent, () -> Disposer.dispose(disposable));
     Disposer.register(project, disposable);
+  }
+
+  @NotNull
+  public static String getShortHash(@NotNull String hashString) {
+    return hashString.substring(0, Math.min(SHORT_HASH_LENGTH, hashString.length()));
   }
 }

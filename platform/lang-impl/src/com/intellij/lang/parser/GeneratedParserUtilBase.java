@@ -1182,7 +1182,7 @@ public class GeneratedParserUtilBase {
         }
         if (tokenType == lBrace) {
           Pair<PsiBuilder.Marker, Integer> prev = siblings.peek();
-          parens.addFirst(Pair.create(builder.mark(), prev == null ? null : prev.first));
+          parens.addFirst(Pair.create(builder.mark(), Pair.getFirst(prev)));
         }
         checkSiblings(chunkType, parens, siblings);
         state.tokenAdvancer.parse(builder, level);

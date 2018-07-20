@@ -5,13 +5,11 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation;
 import git4idea.config.GitVcsApplicationSettings;
@@ -30,7 +28,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
 
   private static void resetAllAnnotations(@NotNull Project project) {
     ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().clearAnnotations();
-    BackgroundTaskUtil.syncPublisher(project, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(GitVcs.getKey());
+    ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().reloadAnnotationsForVcs(GitVcs.getKey());
   }
 
   private static class MyGroup extends ActionGroup {

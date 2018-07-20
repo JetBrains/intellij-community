@@ -36,7 +36,7 @@ import java.util.Collections;
 public abstract class AbstractProjectDataService<E, I> implements ProjectDataService<E, I> {
 
   public final Computable.PredefinedValueComputable<Collection<I>> EMPTY_LIST =
-    new Computable.PredefinedValueComputable<>(Collections.<I>emptyList());
+    new Computable.PredefinedValueComputable<>(Collections.emptyList());
 
   @NotNull
   @Override

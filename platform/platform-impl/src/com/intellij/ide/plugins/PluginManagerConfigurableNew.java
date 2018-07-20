@@ -2,9 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.HelpTooltip;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -20,6 +18,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -231,7 +230,7 @@ public class PluginManagerConfigurableNew
   @Override
   public JComponent createComponent() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setMinimumSize(new Dimension(JBUI.scale(580), -1));
+    panel.setMinimumSize(new JBDimension(580, 380));
 
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
@@ -678,12 +677,40 @@ public class PluginManagerConfigurableNew
       }
     }
 
-    List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(null);
+    List<IdeaPluginDescriptor> list = new ArrayList<>();
     Map<String, IdeaPluginDescriptor> map = new HashMap<>();
+    IOException exception = null;
 
-    for (IdeaPluginDescriptor plugin : list) {
-      map.put(plugin.getPluginId().getIdString(), plugin);
+    for (String host : RepositoryHelper.getPluginHosts()) {
+      try {
+        for (IdeaPluginDescriptor plugin : RepositoryHelper.loadPlugins(host, null)) {
+          String id = plugin.getPluginId().getIdString();
+          if (!map.containsKey(id)) {
+            list.add(plugin);
+            map.put(id, plugin);
+          }
+        }
+      }
+      catch (IOException e) {
+        if (host == null) {
+          exception = e;
+        }
+        else {
+          PluginManagerMain.LOG.info(host, e);
+        }
+      }
     }
+
+    if (exception != null) {
+      throw exception;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      InstalledPluginsState state = InstalledPluginsState.getInstance();
+      for (IdeaPluginDescriptor descriptor : list) {
+        state.onDescriptorDownload(descriptor);
+      }
+    });
 
     synchronized (myJBRepositoryLock) {
       if (myJBRepositoryList == null) {
@@ -701,7 +728,7 @@ public class PluginManagerConfigurableNew
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
-    loadPlugins(group.descriptors, jbRepositoryMap, excludeDescriptors, query, 6);
+    loadPlugins(group.descriptors, jbRepositoryMap, excludeDescriptors, query, 9);
 
     if (!group.descriptors.isEmpty()) {
       //noinspection unchecked
@@ -715,6 +742,7 @@ public class PluginManagerConfigurableNew
     PluginsGroupComponent panel =
       new PluginsGroupComponent(new PluginsListLayout(), new MultiSelectionEventHandler(), myNameListener, mySearchListener,
                                 descriptor -> new ListPluginComponent(myPluginsModel, descriptor, false));
+    registerCopyProvider(panel);
 
     PluginsGroup installing = new PluginsGroup("Installing");
     installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
@@ -773,6 +801,7 @@ public class PluginManagerConfigurableNew
       new PluginsGroupComponentWithProgress(new PluginsListLayout(), new MultiSelectionEventHandler(), myNameListener, mySearchListener,
                                             descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
     panel.getEmptyText().setText("No updates available.");
+    registerCopyProvider(panel);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
@@ -1384,6 +1413,40 @@ public class PluginManagerConfigurableNew
     public int toolbarX;
   }
 
+  private static void registerCopyProvider(@NotNull PluginsGroupComponent component) {
+    CopyProvider copyProvider = new CopyProvider() {
+      @Override
+      public void performCopy(@NotNull DataContext dataContext) {
+        StringBuilder result = new StringBuilder();
+        for (CellPluginComponent pluginComponent : component.getSelection()) {
+          result.append(pluginComponent.myPlugin.getName()).append(" (").append(pluginComponent.myPlugin.getVersion()).append(")\n");
+        }
+        CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
+      }
+
+      @Override
+      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+        return !component.getSelection().isEmpty();
+      }
+
+      @Override
+      public boolean isCopyVisible(@NotNull DataContext dataContext) {
+        return true;
+      }
+    };
+
+    DataManager.registerDataProvider(component, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(String dataId) {
+        if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+          return copyProvider;
+        }
+        return null;
+      }
+    });
+  }
+
   private static class PluginsGroupComponent extends JBPanelWithEmptyText {
     private final EventHandler myEventHandler;
     private final LinkListener<IdeaPluginDescriptor> myListener;
@@ -1412,6 +1475,11 @@ public class PluginManagerConfigurableNew
       myGroups.clear();
       myEventHandler.clear();
       removeAll();
+    }
+
+    @NotNull
+    public List<CellPluginComponent> getSelection() {
+      return myEventHandler.getSelection();
     }
 
     public void setSelection(@NotNull CellPluginComponent component) {
@@ -1720,6 +1788,11 @@ public class PluginManagerConfigurableNew
     public void initialSelection() {
     }
 
+    @NotNull
+    public List<CellPluginComponent> getSelection() {
+      return Collections.emptyList();
+    }
+
     public void setSelection(@NotNull CellPluginComponent component) {
     }
 
@@ -1953,8 +2026,9 @@ public class PluginManagerConfigurableNew
       }
     }
 
+    @Override
     @NotNull
-    private List<CellPluginComponent> getSelection() {
+    public List<CellPluginComponent> getSelection() {
       List<CellPluginComponent> selection = new ArrayList<>();
 
       for (CellPluginComponent component : myComponents) {
@@ -2249,7 +2323,7 @@ public class PluginManagerConfigurableNew
     private final int myFirstVOffset = JBUI.scale(10);
     private final int myMiddleVOffset = JBUI.scale(20);
     private final int myLastVOffset = JBUI.scale(30);
-    private final int myMiddleHOffset = JBUI.scale(20);
+    private final int myMiddleHOffset = JBUI.scale(1);
 
     private final Dimension myCellSize = new Dimension();
 
@@ -2258,6 +2332,9 @@ public class PluginManagerConfigurableNew
       calculateCellSize(parent);
 
       int width = getParentWidth(parent);
+      if (width == 0) {
+        width = JBUI.scale(740);
+      }
       int cellWidth = myCellSize.width;
       int columns = width / (cellWidth + myMiddleHOffset);
 
@@ -2407,6 +2484,8 @@ public class PluginManagerConfigurableNew
 
     public SearchResultInfo(@NotNull String query) {
       key = query;
+
+      registerCopyProvider(myInstalledPanel);
 
       myPanel = new PanelWithProgress("Nothing to show");
       myPanel.setOpaque(true);
@@ -3367,13 +3446,51 @@ public class PluginManagerConfigurableNew
           return new Dimension(width, insets.top + baseSize.height + insets.bottom);
         }
 
+        private int calculateBaseWidth(@NotNull Container parent) {
+          int parentWidth = parent.getWidth();
+
+          if (myProgressComponent != null) {
+            return parentWidth - myProgressComponent.getPreferredSize().width - myOffset.get();
+          }
+
+          if (!myVersionComponents.isEmpty() && myVersionComponents.get(0).isVisible()) {
+            for (Component component : myVersionComponents) {
+              parentWidth -= component.getPreferredSize().width;
+            }
+            parentWidth -= myOffset.get() * myVersionComponents.size();
+          }
+
+          for (Component component : myButtonComponents) {
+            parentWidth -= component.getPreferredSize().width;
+          }
+          parentWidth -= myButtonOffset.get() * (myButtonComponents.size() - 1);
+
+          if (myErrorComponent != null) {
+            if (myErrorEnableComponent != null) {
+              parentWidth -= (myOffset.get() + myErrorEnableComponent.getPreferredSize().width);
+            }
+
+            int errorPartWidth = myErrorComponent.getPreferredSize().width / 3;
+            if (myBaseComponent.getPreferredSize().width >= (parentWidth - errorPartWidth)) {
+              parentWidth -= errorPartWidth;
+            }
+          }
+
+          return parentWidth;
+        }
+
         @Override
         public void layoutContainer(Container parent) {
           Dimension baseSize = myBaseComponent.getPreferredSize();
           int top = parent.getInsets().top;
           int y = top + myBaseComponent.getBaseline(baseSize.width, baseSize.height);
           int x = 0;
+          int calcBaseWidth = calculateBaseWidth(parent);
 
+          JLabel label = (JLabel)myBaseComponent;
+          label.setToolTipText(calcBaseWidth < baseSize.width ? label.getText() : null);
+
+          baseSize.width = Math.min(baseSize.width, calcBaseWidth);
           myBaseComponent.setBounds(x, top, baseSize.width, baseSize.height);
           x += baseSize.width;
 
@@ -3597,7 +3714,7 @@ public class PluginManagerConfigurableNew
       addInstallButton();
 
       setOpaque(true);
-      setBorder(JBUI.Borders.empty(10));
+      setBorder(JBUI.Borders.empty(10, 5));
 
       setLayout(new AbstractLayoutManager() {
         @Override

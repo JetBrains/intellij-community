@@ -96,8 +96,8 @@ abstract class FirstStart(val ideType: IdeType) {
       completeInstallation()
       acceptAgreement()
       acceptDataSharing()
-      evaluateLicense(ideType.name, myRobot)
       customizeIde()
+      evaluateLicense(ideType.name, myRobot)
       waitWelcomeFrameAndClose()
   }
 
@@ -136,7 +136,8 @@ abstract class FirstStart(val ideType: IdeType) {
         myRobot.finder().find {
           it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy"))
         } as JDialog
-      } catch (cle: ComponentLookupException) {
+      }
+      catch (cle: ComponentLookupException) {
         null
       }
     }
@@ -150,7 +151,7 @@ abstract class FirstStart(val ideType: IdeType) {
         findPrivacyPolicyDialogOrLicenseAgreement()
         with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
           click()
-          while(!button("Accept").isEnabled) {
+          while (!button("Accept").isEnabled) {
             scroll(10)
           }
           LOG.info("Accept License Agreement/Privacy Policy dialog")
@@ -184,7 +185,8 @@ abstract class FirstStart(val ideType: IdeType) {
         dialog(title, timeoutSeconds = 5)
         button("Send Usage Statistics").click()
         LOG.info("Data sharing accepted")
-      } catch (e: WaitTimedOutError) {
+      }
+      catch (e: WaitTimedOutError) {
         LOG.info("Data sharing dialog hasn't been shown")
         return
       }

@@ -39,4 +39,14 @@ public class RedundantAssignment {
       <warning descr="Variable is already assigned to this value">a</warning> = b;
     }
   }
+
+  class X {
+    int a;
+    int b;
+
+    {
+      a = 0;
+      ((b)) = 0;
+    }
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
-public class PointlessArithmeticExpressionInspection
-  extends BaseInspection {
+public class PointlessArithmeticExpressionInspection extends BaseInspection {
 
-  private static final Set<IElementType> arithmeticTokens =
-    new THashSet<>(9);
+  private static final Set<IElementType> arithmeticTokens = new THashSet<>(9);
 
   static {
     arithmeticTokens.add(JavaTokenType.PLUS);
@@ -266,7 +264,7 @@ public class PointlessArithmeticExpressionInspection
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i))) {
+            (isOne(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i) && !isZero(expression))) {
           return true;
         }
         previousExpression = expression;

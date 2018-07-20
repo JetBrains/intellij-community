@@ -17,7 +17,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -28,7 +27,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
@@ -49,12 +47,14 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY =
     new TObjectHashingStrategy<FilePath>() {
       @Override
-      public int computeHashCode(@NotNull FilePath path) {
+      public int computeHashCode(@Nullable FilePath path) {
+        if (path == null) return 0;
         return Objects.hash(path.getPath(), path.isDirectory(), path.isNonLocal());
       }
 
       @Override
-      public boolean equals(@NotNull FilePath path1, @NotNull FilePath path2) {
+      public boolean equals(@Nullable FilePath path1, @Nullable FilePath path2) {
+        if (path1 == null || path2 == null) return path1 == path2;
         return path1.isDirectory() == path2.isDirectory() &&
                path1.isNonLocal() == path2.isNonLocal() &&
                path1.getPath().equals(path2.getPath());
@@ -67,39 +67,28 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private final ProjectLevelVcsManager myVcsManager;
   private final AbstractVcs myVcs;
   private final VcsDirtyScopeModifier myVcsDirtyScopeModifier;
-  private boolean myWasEverythingDirty;
+  private final boolean myWasEverythingDirty;
 
   public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project) {
+    this(vcs, project, false);
+  }
+
+  public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project, boolean wasEverythingDirty) {
     myProject = project;
     myVcs = vcs;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myWasEverythingDirty = false;
+    myWasEverythingDirty = wasEverythingDirty;
     myVcsDirtyScopeModifier = new VcsDirtyScopeModifier() {
-      @Override
-      public Collection<VirtualFile> getAffectedVcsRoots() {
-        return Collections.unmodifiableCollection(myDirtyDirectoriesRecursively.keySet());
-      }
-
+      @NotNull
       @Override
       public Iterator<FilePath> getDirtyFilesIterator() {
-        if (myDirtyFiles.isEmpty()) {
-          return Collections.<FilePath>emptyList().iterator();
-        }
-        final ArrayList<Iterator<FilePath>> iteratorList = new ArrayList<>(myDirtyFiles.size());
-        for (THashSet<FilePath> paths : myDirtyFiles.values()) {
-          iteratorList.add(paths.iterator());
-        }
-        return ContainerUtil.concatIterators(iteratorList);
+        return iterateMap(myDirtyFiles);
       }
 
       @NotNull
       @Override
-      public Iterator<FilePath> getDirtyDirectoriesIterator(final VirtualFile root) {
-        final THashSet<FilePath> filePaths = myDirtyDirectoriesRecursively.get(root);
-        if (filePaths != null) {
-          return filePaths.iterator();
-        }
-        return ContainerUtil.emptyIterator();
+      public Iterator<FilePath> getDirtyDirectoriesIterator() {
+        return iterateMap(myDirtyDirectoriesRecursively);
       }
 
       @Override
@@ -108,7 +97,12 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         recheckMap(myDirtyFiles);
       }
 
-      private void recheckMap(Map<VirtualFile, THashSet<FilePath>> map) {
+      @NotNull
+      private Iterator<FilePath> iterateMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
+        return ContainerUtil.concatIterators(ContainerUtil.map(map.values(), THashSet::iterator));
+      }
+
+      private void recheckMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
         for (Iterator<THashSet<FilePath>> iterator = map.values().iterator(); iterator.hasNext();) {
           final THashSet<FilePath> next = iterator.next();
           if (next.isEmpty()) {
@@ -121,25 +115,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
   @Override
   public Collection<VirtualFile> getAffectedContentRoots() {
-    return myAffectedContentRoots;
-  }
-
-  @Override
-  public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
-    if (myVcs.allowsNestedRoots()) {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
-      final VirtualFile[] roots = vcsManager.getRootsUnderVcs(myVcs);
-
-      final Set<VirtualFile> result = new HashSet<>(myAffectedContentRoots);
-      for (VirtualFile root : roots) {
-        for (VirtualFile dir : myDirtyDirectoriesRecursively.keySet()) {
-          if (VfsUtilCore.isAncestor(dir, root, true)) {
-            result.add(root);
-          }
-        }
-      }
-      return new SmartList<>(result);
-    }
     return myAffectedContentRoots;
   }
 
@@ -271,11 +246,14 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   private static boolean hasAncestor(@NotNull Set<FilePath> dirs, @NotNull FilePath filePath) {
-    String path = filePath.getPath();
     for (FilePath parent : dirs) {
-      if (FileUtil.startsWith(path, parent.getPath())) return true;
+      if (isAncestor(filePath, parent)) return true;
     }
     return false;
+  }
+
+  private static boolean isAncestor(@NotNull FilePath filePath, @NotNull FilePath parent) {
+    return FileUtil.startsWith(filePath.getPath(), parent.getPath());
   }
 
   @NotNull
@@ -303,7 +281,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         if (files != null) {
           for (Iterator<FilePath> it = files.iterator(); it.hasNext();) {
             FilePath oldBoy = it.next();
-            if (oldBoy.isUnder(newcomer, false)) {
+            if (isAncestor(oldBoy, newcomer)) {
               it.remove();
             }
           }
@@ -319,11 +297,11 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     else {
       for (Iterator<FilePath> it = dirsByRoot.iterator(); it.hasNext();) {
         FilePath oldBoy = it.next();
-        if (newcomer.isUnder(oldBoy, false)) {
+        if (isAncestor(newcomer, oldBoy)) {
           return;
         }
 
-        if (oldBoy.isUnder(newcomer, false)) {
+        if (isAncestor(oldBoy, newcomer)) {
           it.remove();
         }
       }
@@ -341,38 +319,37 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @Override
   public void addDirtyFile(final FilePath newcomer) {
     final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(newcomer);
+    if (vcsRoot == null) return;
     myAffectedContentRoots.add(vcsRoot);
 
     THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(vcsRoot);
-    if (dirsByRoot != null) {
-      for (FilePath oldBoy : dirsByRoot) {
-        if (newcomer.isUnder(oldBoy, false)) {
+    if (dirsByRoot != null && hasAncestor(dirsByRoot, newcomer)) {
+      return;
+    }
+
+    THashSet<FilePath> dirtyFiles = myDirtyFiles.get(vcsRoot);
+    if (dirtyFiles == null) {
+      dirtyFiles = newFilePathsSet();
+      myDirtyFiles.put(vcsRoot, dirtyFiles);
+    }
+    else {
+      if (newcomer.isDirectory()) {
+        for (Iterator<FilePath> iterator = dirtyFiles.iterator(); iterator.hasNext(); ) {
+          final FilePath oldBoy = iterator.next();
+          if (!oldBoy.isDirectory() && CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(oldBoy.getParentPath(), newcomer)) {
+            iterator.remove();
+          }
+        }
+      }
+      else if (!dirtyFiles.isEmpty()) {
+        FilePath parent = newcomer.getParentPath();
+        if (parent != null && dirtyFiles.contains(parent)) {
           return;
         }
       }
     }
 
-    final THashSet<FilePath> dirtyFiles = myDirtyFiles.get(vcsRoot);
-    if (dirtyFiles == null) {
-      final THashSet<FilePath> set = newFilePathsSet();
-      set.add(newcomer);
-      myDirtyFiles.put(vcsRoot, set);
-    } else {
-      if (newcomer.isDirectory()) {
-        for (Iterator<FilePath> iterator = dirtyFiles.iterator(); iterator.hasNext(); ) {
-          final FilePath oldBoy = iterator.next();
-          if (!oldBoy.isDirectory() && Comparing.equal(oldBoy.getVirtualFileParent(), newcomer.getVirtualFile())) {
-            iterator.remove();
-          }
-        }
-      } else if (!dirtyFiles.isEmpty()) {
-        VirtualFile parent = newcomer.getVirtualFileParent();
-        if (parent != null && dirtyFiles.contains(VcsUtil.getFilePath(parent))) {
-          return;
-        }
-        dirtyFiles.add(newcomer);
-      }
-    }
+    dirtyFiles.add(newcomer);
   }
 
   @Override
@@ -472,10 +449,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         // "affected root" -> /root with scope = /root recursively
         if (VfsUtilCore.isAncestor(contentRoot, vcsRoot, false)) {
           THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(contentRoot);
-          if (dirsByRoot != null) {
-            for (FilePath filePath : dirsByRoot) {
-              if (path.isUnder(filePath, false)) return true;
-            }
+          if (dirsByRoot != null && hasAncestor(dirsByRoot, path)) {
+            return true;
           }
         }
       }
@@ -526,10 +501,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     for (VirtualFile contentRoot : myAffectedContentRoots) {
       result.append(contentRoot.getPath()).append(" ");
     }
-    result.append("\naffected roots with check: ");
-    for (VirtualFile contentRoot : getAffectedContentRootsWithCheck()) {
-      result.append(contentRoot.getPath()).append(" ");
-    }
     result.append("]");
     return result.toString();
   }
@@ -542,10 +513,5 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @Override
   public boolean wasEveryThingDirty() {
     return myWasEverythingDirty;
-  }
-
-  @Override
-  public void setWasEverythingDirty(boolean wasEverythingDirty) {
-    myWasEverythingDirty = wasEverythingDirty;
   }
 }

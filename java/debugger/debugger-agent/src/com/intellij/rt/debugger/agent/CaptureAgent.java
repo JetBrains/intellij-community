@@ -26,17 +26,9 @@ public class CaptureAgent {
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
     try {
-      readSettings(args);
+      appendStorageJar(instrumentation);
 
-      try {
-        appendStorageJar(instrumentation);
-      }
-      catch (Throwable e) {
-        System.out.println(
-          "Critical error in IDEA Async Stacktraces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
-        e.printStackTrace();
-        return;
-      }
+      readSettings(args);
 
       instrumentation.addTransformer(new CaptureTransformer());
 
@@ -61,7 +53,7 @@ public class CaptureAgent {
       }
     }
     catch (Throwable e) {
-      System.out.println("Capture agent: unknown exception");
+      System.err.println("Critical error in IDEA Async Stack Traces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
       e.printStackTrace();
     }
   }

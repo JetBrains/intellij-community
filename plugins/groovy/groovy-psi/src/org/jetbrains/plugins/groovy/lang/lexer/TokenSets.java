@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.TokenType;
@@ -159,10 +158,6 @@ public interface TokenSets {
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
 
   TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
-
-  TokenSet PARENTHESIZED_BINARY_OP_SET = TokenSet.create(mEQUAL, mNOT_EQUAL);
-
-  TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mLOR, mPLUS, mSTAR, mLAND);
 
   TokenSet BINARY_EXPRESSIONS = TokenSet.create(ADDITIVE_EXPRESSION,
                                                 MULTIPLICATIVE_EXPRESSION,

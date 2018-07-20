@@ -24,7 +24,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-public class SvnCommittedViewTest extends Svn17TestCase {
+public class SvnCommittedViewTest extends SvnTestCase {
 
   @Test
   public void testAdd() throws Exception {
@@ -39,7 +39,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     // r1, addition without history
     checkin();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
@@ -71,7 +70,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
 
     checkin();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
@@ -103,7 +101,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
 
     checkin();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
@@ -132,7 +129,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
 
     checkin();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
@@ -164,7 +160,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
 
     checkin();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
@@ -189,7 +184,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
     runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =
@@ -219,7 +213,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
 
     checkin();
 
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
     final List<SvnChangeList> changeListList =

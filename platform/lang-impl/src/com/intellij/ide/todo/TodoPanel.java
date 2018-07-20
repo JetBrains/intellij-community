@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -253,6 +251,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
           final RangeMarker rangeMarker = value.getRangeMarker();
           if (psiFile != null) {
             infos.add(new UsageInfo(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+            for (RangeMarker additionalMarker: value.getAdditionalRangeMarkers()) {
+              if (additionalMarker.isValid()) {
+                infos.add(new UsageInfo(psiFile, additionalMarker.getStartOffset(), additionalMarker.getEndOffset()));
+              }
+            }
           }
         }
       }

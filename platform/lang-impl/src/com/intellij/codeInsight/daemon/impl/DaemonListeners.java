@@ -490,6 +490,9 @@ public class DaemonListeners implements Disposable {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
         stopDaemonAndRestartAllFiles("Todo patterns changed");
       }
+      else if (TodoConfiguration.PROP_MULTILINE.equals(evt.getPropertyName())) {
+        stopDaemonAndRestartAllFiles("Todo multi-line detection changed");
+      }
     }
   }
 
@@ -590,6 +593,7 @@ public class DaemonListeners implements Disposable {
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA && !UIUtil.isControlKeyDown(e.getMouseEvent())) {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
+          if (editor.getInlayModel().getElementAt(e.getMouseEvent().getPoint()) != null) return;
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
           if (info == null || info.getDescription() == null) {
             IdeTooltipManager.getInstance().hideCurrent(e.getMouseEvent());

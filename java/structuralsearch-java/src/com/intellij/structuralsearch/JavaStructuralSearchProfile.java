@@ -683,6 +683,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           parent instanceof PsiExpressionList || // ',' between expressions
           parent instanceof PsiParameterList || // ',' between parameters
           parent instanceof PsiPolyadicExpression || // '+', '*', '&&' etcetera
+          parent instanceof PsiReferenceExpression || // '.' between qualifier & reference
           parent instanceof PsiReferenceList || // ','
           parent instanceof PsiReferenceParameterList || // ','
           parent instanceof PsiResourceList || // ';'

@@ -1740,7 +1740,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (startY < e.getY() &&
           e.getY() <= endY &&
           renderer instanceof ActiveGutterRenderer &&
-          ((ActiveGutterRenderer)renderer).canDoAction(e)) {
+          ((ActiveGutterRenderer)renderer).canDoAction(myEditor, e)) {
         gutterRenderer[0] = (ActiveGutterRenderer)renderer;
         layer[0] = highlighter.getLayer();
       }

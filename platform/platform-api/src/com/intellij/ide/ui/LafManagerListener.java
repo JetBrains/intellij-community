@@ -19,7 +19,7 @@ import java.util.EventListener;
 
 /**
  * If you are interested in listening UI changes you have to
- * use this listener instead of registening {@code PropertyChangeListener}
+ * use this listener instead of registering {@code PropertyChangeListener}
  * into {@code UIManager}
  *
  * @author Vladimir Kondratyev

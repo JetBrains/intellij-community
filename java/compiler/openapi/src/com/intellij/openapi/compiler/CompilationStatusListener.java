@@ -20,7 +20,7 @@ import java.util.EventListener;
 /**
  * A listener for compiler events.
  *
- * @see CompilerTopics.COMPILATION_STATUS
+ * @see CompilerTopics#COMPILATION_STATUS
  */
 public interface CompilationStatusListener extends EventListener {
   /**

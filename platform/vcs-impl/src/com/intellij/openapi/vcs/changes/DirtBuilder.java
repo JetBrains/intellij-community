@@ -22,23 +22,16 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class DirtBuilder implements DirtBuilderReader {
-  private final VcsGuess myGuess;
-  private final FileTypeManager myFileTypeManager;
+  private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
-  private final MultiMap<AbstractVcs, FilePath> myFiles;
-  private final MultiMap<AbstractVcs, FilePath> myDirs;
-  private boolean myEverythingDirty;
+  private final MultiMap<AbstractVcs, FilePath> myFiles = MultiMap.createSet();
+  private final MultiMap<AbstractVcs, FilePath> myDirs = MultiMap.createSet();
+  private boolean myEverythingDirty = false;
 
-  public DirtBuilder(final VcsGuess guess) {
-    myGuess = guess;
-    myDirs = MultiMap.createSet();
-    myFiles = MultiMap.createSet();
-    myEverythingDirty = false;
-    myFileTypeManager = FileTypeManager.getInstance();
+  public DirtBuilder() {
   }
 
-  public DirtBuilder(final DirtBuilder builder) {
-    this(builder.myGuess);
+  public DirtBuilder(@NotNull DirtBuilder builder) {
     myDirs.putAllValues(builder.myDirs);
     myFiles.putAllValues(builder.myFiles);
     myEverythingDirty = builder.myEverythingDirty;

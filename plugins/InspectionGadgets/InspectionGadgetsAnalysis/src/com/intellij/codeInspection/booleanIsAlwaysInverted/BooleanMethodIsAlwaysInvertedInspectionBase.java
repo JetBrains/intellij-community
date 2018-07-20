@@ -133,17 +133,19 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
             }
           })) return null;
         }
-        return new ProblemDescriptor[]{createProblemDescriptor(manager, psiIdentifier)};
+        return new ProblemDescriptor[]{createProblemDescriptor(manager, psiIdentifier, false)};
       }
     }
     return null;
   }
 
-  protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiIdentifier psiIdentifier) {
+  protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager,
+                                                      PsiIdentifier psiIdentifier, 
+                                                      boolean onTheFly) {
     return manager.createProblemDescriptor(psiIdentifier,
                                            InspectionsBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
-                                           getInvertBooleanFix(),
-                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+                                           getInvertBooleanFix(onTheFly),
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
   }
 
   @Override
@@ -176,10 +178,10 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
 
   @Override
   public QuickFix getQuickFix(final String hint) {
-    return getInvertBooleanFix();
+    return getInvertBooleanFix(false);
   }
 
-  protected LocalQuickFix getInvertBooleanFix() {
+  protected LocalQuickFix getInvertBooleanFix(boolean onTheFly) {
     return null;
   }
 

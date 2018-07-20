@@ -22,6 +22,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,8 +35,10 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
-import com.intellij.util.LazyInitializer.MutableNotNullValue;
+import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
@@ -47,6 +50,7 @@ import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +67,9 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.net.URL;
 import java.util.Locale;
 
 /**
@@ -262,16 +268,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      if (zoomOptions.isSmartZooming()) {
-        updateZoomFactor();
-      }
-      else {
+      if (!(zoomOptions.isSmartZooming() && updateZoomFactor())) {
         zoomModel.setZoomFactor(1.0);
       }
     }
   }
 
-  private void updateZoomFactor() {
+  private boolean updateZoomFactor() {
     Options options = OptionsManager.getInstance().getOptions();
     ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
@@ -279,8 +282,10 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
       if (smartZoomFactor != null) {
         zoomModel.setZoomFactor(smartZoomFactor);
+        return true;
       }
     }
+    return false;
   }
 
   private final class ImageContainerPane extends JBLayeredPane {
@@ -367,25 +372,36 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   private class ImageZoomModelImpl implements ImageZoomModel {
     private boolean myZoomLevelChanged;
-    private final MutableNotNullValue<Double> zoomFactor = new MutableNotNullValue<Double>() {
+    private final NotNullValue<Double> IMAGE_MAX_ZOOM_FACTOR = new NotNullValue<Double>() {
       @NotNull
       @Override
       public Double initialize() {
-        Dimension size = imageComponent.getCanvasSize();
-        BufferedImage image = imageComponent.getDocument().getValue();
-        return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
+        if (editor == null) return Double.MAX_VALUE;
+        VirtualFile file = editor.getFile();
+
+        if (IfsUtil.isSVG(file)) {
+          try {
+            URL url = new File(file.getPath()).toURI().toURL();
+            return Math.max(1, SVGLoader.getMaxZoomFactor(url, new ByteArrayInputStream(file.contentsToByteArray()), ScaleContext.create(editor.getComponent())));
+          }
+          catch (Throwable t) {
+            Logger.getInstance("#org.intellij.images.editor.impl.ImageEditorUI").warn(t);
+          }
+        }
+        return Double.MAX_VALUE;
       }
     };
+    private double zoomFactor = 0.0d;
 
     public double getZoomFactor() {
-      return zoomFactor.get();
+      return zoomFactor;
     }
 
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
 
       if (Double.compare(oldZoomFactor, zoomFactor) == 0) return;
-      this.zoomFactor.set(zoomFactor);
+      this.zoomFactor = zoomFactor;
 
       // Change current size
       updateImageComponentSize();
@@ -397,9 +413,15 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       imageComponent.firePropertyChange(ZOOM_FACTOR_PROP, oldZoomFactor, zoomFactor);
     }
 
+    private double getMaximumZoomFactor() {
+      double factor = IMAGE_MAX_ZOOM_FACTOR.get();
+      return Math.min(factor, MACRO_ZOOM_LIMIT);
+    }
+
     private double getMinimumZoomFactor() {
-      BufferedImage image = imageComponent.getDocument().getValue();
-      return image != null ? 1.0d / image.getWidth() : 0.0d;
+      Rectangle bounds = imageComponent.getDocument().getBounds();
+      double factor = bounds != null ? 1.0d / bounds.getWidth() : 0.0d;
+      return Math.max(factor, MICRO_ZOOM_LIMIT);
     }
 
     public void fitZoomToWindow() {
@@ -417,49 +439,50 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     public void zoomOut() {
-      double factor = getZoomFactor();
-      if (factor > 1.0d) {
-        // Macro
-        setZoomFactor(factor / 2.0d);
-      } else {
-        // Micro
-        double minFactor = getMinimumZoomFactor();
-        double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
-        int step = (int)Math.ceil((1.0d - factor) / stepSize);
-
-        setZoomFactor(1.0d - stepSize * (step + 1));
-      }
+      setZoomFactor(getNextZoomOut());
       myZoomLevelChanged = true;
     }
 
     public void zoomIn() {
-      double factor = getZoomFactor();
-      if (factor >= 1.0d) {
-        // Macro
-        setZoomFactor(factor * 2.0d);
-      } else {
-        // Micro
-        double minFactor = getMinimumZoomFactor();
-        double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
-        double step = (1.0d - factor) / stepSize;
-
-        setZoomFactor(1.0d - stepSize * (step - 1));
-      }
+      setZoomFactor(getNextZoomIn());
       myZoomLevelChanged = true;
     }
 
-    public boolean canZoomOut() {
+    private double getNextZoomOut() {
       double factor = getZoomFactor();
-      double minFactor = getMinimumZoomFactor();
-      double stepSize = (1.0 - minFactor) / MICRO_ZOOM_LIMIT;
-      double step = Math.ceil((1.0 - factor) / stepSize);
+      if (factor > 1.0d) {
+        // Macro
+        factor /= MACRO_ZOOM_RATIO;
+        factor = Math.max(factor, 1.0d);
+      }
+      else {
+        // Micro
+        factor /= MICRO_ZOOM_RATIO;
+      }
+      return Math.max(factor, getMinimumZoomFactor());
+    }
 
-      return step < MICRO_ZOOM_LIMIT;
+    private double getNextZoomIn() {
+      double factor = getZoomFactor();
+      if (factor >= 1.0d) {
+        // Macro
+        factor *= MACRO_ZOOM_RATIO;
+      }
+      else {
+        // Micro
+        factor *= MICRO_ZOOM_RATIO;
+        factor = Math.min(factor, 1.0d);
+      }
+      return Math.min(factor, getMaximumZoomFactor());
+    }
+
+    public boolean canZoomOut() {
+      // Ignore small differences caused by floating-point arithmetic.
+      return getZoomFactor() - 1.0e-14 > getMinimumZoomFactor();
     }
 
     public boolean canZoomIn() {
-      double zoomFactor = getZoomFactor();
-      return zoomFactor < MACRO_ZOOM_LIMIT;
+      return getZoomFactor() < getMaximumZoomFactor();
     }
 
     @Override
@@ -474,15 +497,17 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   @Nullable
   private Double getSmartZoomFactor(@NotNull ZoomOptions zoomOptions) {
-    BufferedImage image = imageComponent.getDocument().getValue();
-    if (image == null) return null;
-    if (image.getWidth() == 0 || image.getHeight() == 0) return null;
+    Rectangle bounds = imageComponent.getDocument().getBounds();
+    if (bounds == null) return null;
+    if (bounds.getWidth() == 0 || bounds.getHeight() == 0) return null;
+    int width = bounds.width;
+    int height = bounds.height;
 
     Dimension preferredMinimumSize = zoomOptions.getPrefferedSize();
-    if (image.getWidth() < preferredMinimumSize.width &&
-        image.getHeight() < preferredMinimumSize.height) {
-      double factor = (preferredMinimumSize.getWidth() / (double)image.getWidth() +
-                       preferredMinimumSize.getHeight() / (double)image.getHeight()) / 2.0d;
+    if (width < preferredMinimumSize.width &&
+        height < preferredMinimumSize.height) {
+      double factor = (preferredMinimumSize.getWidth() / (double)width +
+                       preferredMinimumSize.getHeight() / (double)height) / 2.0d;
       return Math.ceil(factor);
     }
 
@@ -491,20 +516,20 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
     if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
 
-    if (canvasSize.width < image.getWidth() ||
-        canvasSize.height < image.getHeight()) {
-      return Math.min((double)canvasSize.height / image.getHeight(),
-                      (double)canvasSize.width / image.getWidth());
+    if (canvasSize.width < width ||
+        canvasSize.height < height) {
+      return Math.min((double)canvasSize.height / height,
+                      (double)canvasSize.width / width);
     }
 
     return 1.0d;
   }
 
   private void updateImageComponentSize() {
-    BufferedImage image = imageComponent.getDocument().getValue();
-    if (image != null) {
+    Rectangle bounds = imageComponent.getDocument().getBounds();
+    if (bounds != null) {
       final double zoom = getZoomModel().getZoomFactor();
-      imageComponent.setCanvasSize((int)Math.ceil(image.getWidth() * zoom), (int)Math.ceil(image.getHeight() * zoom));
+      imageComponent.setCanvasSize((int)Math.ceil(bounds.width * zoom), (int)Math.ceil(bounds.height * zoom));
     }
   }
 
@@ -527,9 +552,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   private class FocusRequester extends MouseAdapter {
     public void mousePressed(@NotNull MouseEvent e) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
     }
   }
 
@@ -625,7 +648,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     @Override
-    public Object getTransferData(DataFlavor dataFlavor) throws UnsupportedFlavorException, IOException {
+    public Object getTransferData(DataFlavor dataFlavor) throws UnsupportedFlavorException {
       if (!DataFlavor.imageFlavor.equals(dataFlavor)) {
         throw new UnsupportedFlavorException(dataFlavor);
       }

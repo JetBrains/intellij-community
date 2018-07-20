@@ -294,7 +294,7 @@ public class VcsUtil {
    * @param change "Change" description.
    * @return Return true if the "Change" object is created for "Rename" operation:
    *         in this case name of files for "before" and "after" revisions must not
-   *         coniside.
+   *         coincide.
    */
   public static boolean isRenameChange(Change change) {
     boolean isRenamed = false;
@@ -334,7 +334,7 @@ public class VcsUtil {
 
   /**
    * Sort file paths so that paths under the same root are placed from the
-   * outermost to the innermost (farest from the root).
+   * outermost to the innermost (farthest from the root).
    *
    * @param files An array of file paths to be sorted. Sorting is done over the parameter.
    * @return Sorted array of the file paths.
@@ -351,7 +351,7 @@ public class VcsUtil {
   /**
    * @param e ActionEvent object
    * @return {@code VirtualFile} available in the current context.
-   *         Returns not {@code null} if and only if exectly one file is available.
+   *         Returns not {@code null} if and only if exactly one file is available.
    */
   @Nullable
   public static VirtualFile getOneVirtualFile(AnActionEvent e) {

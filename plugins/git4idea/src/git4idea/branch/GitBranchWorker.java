@@ -33,6 +33,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.util.GitCommitCompareInfo;
+import git4idea.util.GitLocalCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -150,24 +151,25 @@ public final class GitBranchWorker {
   }
 
   private GitCommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) {
-    GitCommitCompareInfo compareInfo = new GitCommitCompareInfo();
-    for (GitRepository repository : repositories) {
+    GitCommitCompareInfo compareInfo = new GitLocalCommitCompareInfo(branchName);
+    for (GitRepository repository: repositories) {
       compareInfo.put(repository, loadCommitsToCompare(repository, branchName));
-      compareInfo.put(repository, loadTotalDiff(repository, branchName));
+
+      try {
+        compareInfo.put(repository, loadTotalDiff(repository, branchName));
+      }
+      catch (VcsException e) {
+        // we treat it as critical and report an error
+        throw new GitExecutionException("Couldn't get [git diff " + branchName + "] on repository [" + repository.getRoot() + "]", e);
+      }
     }
     return compareInfo;
   }
 
   @NotNull
-  private static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) {
-    try {
-      // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
-      return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
-    }
-    catch (VcsException e) {
-      // we treat it as critical and report an error
-      throw new GitExecutionException("Couldn't get [git diff " + branchName + "] on repository [" + repository.getRoot() + "]", e);
-    }
+  public static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) throws VcsException {
+    // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
+    return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
   }
 
   @NotNull

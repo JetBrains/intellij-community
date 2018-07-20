@@ -101,7 +101,7 @@ public class RepositoryLibraryPropertiesEditor {
     myIncludeTransitiveDepsCheckBox = new ThreeStateCheckBox(UIUtil.replaceMnemonicAmpersand("Include &transitive dependencies"));
     myIncludeTransitiveDepsCheckBox.setThirdStateEnabled(false);
     myTransitiveDependenciesPanel.add(myIncludeTransitiveDepsCheckBox);
-    myManageDependenciesLink = new SwingActionLink(new AbstractAction("Configure") {
+    myManageDependenciesLink = new SwingActionLink(new AbstractAction("Configure...") {
       @Override
       public void actionPerformed(ActionEvent e) {
         configureTransitiveDependencies();

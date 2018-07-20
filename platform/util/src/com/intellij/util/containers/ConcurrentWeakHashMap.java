@@ -16,6 +16,7 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.DeprecatedMethodException;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +49,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
       return value;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
@@ -58,6 +60,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
       return myStrategy.equals(t, u);
     }
 
+    @Override
     public int hashCode() {
       return myHash;
     }
@@ -71,15 +74,20 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
 
   public ConcurrentWeakHashMap(int initialCapacity) {
     super(initialCapacity);
+    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createConcurrentWeakMap instead");
   }
 
   public ConcurrentWeakHashMap() {
+    DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createConcurrentWeakMap instead");
   }
 
-  public ConcurrentWeakHashMap(int initialCapacity,
-                               float loadFactor,
-                               int concurrencyLevel,
-                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentWeakHashMap(float loadFactor) {
+  }
+
+  ConcurrentWeakHashMap(int initialCapacity,
+                        float loadFactor,
+                        int concurrencyLevel,
+                        @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 

@@ -16,7 +16,7 @@
 
 package com.intellij.util.containers;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,12 +29,11 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Deprecated
 public final class ConcurrentHashSet<K> implements Set<K> {
-  private static final Logger LOG = Logger.getInstance(ConcurrentHashSet.class);
   private final ConcurrentMap<K, Boolean> map;
 
   public ConcurrentHashSet() {
     map = ContainerUtil.newConcurrentMap();
-    LOG.warn("ConcurrentHashSet is deprecated and will be removed soon; please use com.intellij.util.containers.ContainerUtil.newConcurrentSet instead.");
+    DeprecatedMethodException.report("Use com.intellij.util.containers.ContainerUtil.newConcurrentSet() instead");
   }
 
   @Override

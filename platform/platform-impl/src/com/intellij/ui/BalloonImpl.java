@@ -604,7 +604,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   /**
-   * Figure out the component to focus inside the {@link myContent} field.
+   * Figure out the component to focus inside the {@link #myContent} field.
    */
   @NotNull
   private Component getContentToFocus() {

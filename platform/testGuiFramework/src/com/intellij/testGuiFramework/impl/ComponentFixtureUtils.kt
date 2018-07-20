@@ -5,10 +5,12 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
@@ -256,8 +258,17 @@ fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, time
  * @timeout in seconds to find JTree component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, timeout: Long = defaultTimeout): ExtendedTreeFixture =
-  if (target() is Container) GuiTestUtil.jTreePath(target() as Container, timeout, *pathStrings)
+fun <S, C : Component> ComponentFixture<S, C>.jTree(
+  vararg pathStrings: String,
+  timeout: Long = defaultTimeout,
+  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
+): ExtendedJTreePathFixture =
+  if (target() is Container) ExtendedJTreePathFixture(GuiTestUtil.jTreeComponent(
+    container = target() as Container,
+    timeout = timeout,
+    pathStrings = *pathStrings,
+    predicate = predicate
+  ), pathStrings.toList(), predicate)
   else throw unableToFindComponent("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
 
 /**
@@ -267,14 +278,21 @@ fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, 
  * @timeout in seconds to find JTree component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.checkboxTree(vararg pathStrings: String,
-                                                           timeout: Long = defaultTimeout): CheckboxTreeFixture =
+fun <S, C : Component> ComponentFixture<S, C>.checkboxTree(
+  vararg pathStrings: String,
+  timeout: Long = defaultTimeout,
+  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
+): CheckboxTreeFixture =
   if (target() is Container) {
-    val extendedTreeFixture = GuiTestUtil.jTreePath(target() as Container, timeout, *pathStrings)
-    if (extendedTreeFixture.tree !is CheckboxTree) throw ComponentLookupException("Found JTree but not a CheckboxTree")
-    CheckboxTreeFixture(robot(), extendedTreeFixture.tree)
+    val tree = GuiTestUtil.jTreeComponent(
+      container = target() as Container,
+      timeout = timeout,
+      predicate = predicate,
+      pathStrings = *pathStrings
+    ) as? CheckboxTree ?: throw ComponentLookupException("Found JTree but not a CheckboxTree")
+    CheckboxTreeFixture(tree, pathStrings.toList(), predicate, robot())
   }
-  else throw unableToFindComponent("""CheckboxTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
+  else throw unableToFindComponent("""CheckboxTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
 
 /**
  * Finds a JTable component in hierarchy of context component by a cellText and returns JTableFixture.

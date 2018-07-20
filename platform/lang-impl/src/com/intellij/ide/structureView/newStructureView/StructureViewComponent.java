@@ -64,12 +64,15 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher.requestFocusInNonFocusedWindow;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
@@ -851,6 +854,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public String getPlace() {
       return ActionPlaces.STRUCTURE_VIEW_TOOLBAR;
+    }
+
+    @Override
+    public void processMouseEvent(MouseEvent event) {
+      requestFocusInNonFocusedWindow(event);
+      super.processMouseEvent(event);
     }
   }
 

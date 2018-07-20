@@ -175,7 +175,7 @@ public class FileEditorFixture extends EditorFixture {
    * Opens up a different file. This will run through the "Open File..." dialog to
    * find and select the given file.
    *
-   * @param file the project-relative path (with /, not File.separator, as the path separator)
+   * @param relativePath the project-relative path (with /, not File.separator, as the path separator)
    * @param tab  which tab to open initially, if there are multiple editors
    */
   public EditorFixture open(@NotNull final String relativePath, @NotNull Tab tab) {
@@ -209,10 +209,10 @@ public class FileEditorFixture extends EditorFixture {
   }
 
   /**
-   * Like {@link #open(String, com.android.tools.idea.tests.gui.framework.fixture.EditorFixture.Tab)} but
+   * Like {@link #open(String, Tab)} but
    * always uses the default tab
    *
-   * @param file the project-relative path (with /, not File.separator, as the path separator)
+   * @param relativePath the project-relative path (with /, not File.separator, as the path separator)
    */
   public EditorFixture open(@NotNull final String relativePath) {
     return open(relativePath, Tab.DEFAULT);

@@ -19,9 +19,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.NotNull;
 
 public class SimpleAccessorScopeProvider implements CustomPropertyScopeProvider {
-  public SearchScope getScope(final Project project) {
+  @NotNull
+  public SearchScope getScope(@NotNull final Project project) {
     return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(project),
                                                            StdFileTypes.JSP, StdFileTypes.JSPX,
                                                            StdFileTypes.XML, StdFileTypes.XHTML);

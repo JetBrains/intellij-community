@@ -6,10 +6,7 @@ import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.Side
-import com.intellij.diff.util.TextDiffType
-import com.intellij.diff.util.ThreeSide
+import com.intellij.diff.util.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -289,6 +286,14 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.assertRange(start: Int, end: Int) {
       val change = change(this)
       assertEquals(Pair(start, end), Pair(change.startLine, change.endLine))
+    }
+
+    fun Int.assertRange(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int) {
+      val change = change(this)
+      assertEquals(MergeRange(start1, end1, start2, end2, start3, end3),
+                   MergeRange(change.getStartLine(ThreeSide.LEFT), change.getEndLine(ThreeSide.LEFT),
+                              change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE),
+                              change.getStartLine(ThreeSide.RIGHT), change.getEndLine(ThreeSide.RIGHT)))
     }
 
     fun Int.assertContent(expected: String, start: Int, end: Int) {

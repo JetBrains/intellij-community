@@ -37,22 +37,21 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogProperties;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
-import com.intellij.vcs.log.util.PersistentSet;
-import com.intellij.vcs.log.util.PersistentSetImpl;
-import com.intellij.vcs.log.util.StopWatch;
-import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcs.log.util.*;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -273,18 +272,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     LOG.assertTrue(myRoots.contains(root));
     if (hasRenames(commit)) return;
     mySingleTaskController.request(new IndexingRequest(root, TroveUtil.singleton(commit), false, true));
-  }
-
-  @Override
-  public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
-    return myDataGetter != null && myDataGetter.canFilter(filters);
-  }
-
-  @NotNull
-  @Override
-  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    if (myDataGetter == null) return Collections.emptySet();
-    return myDataGetter.filter(detailsFilters);
   }
 
   @Nullable
@@ -637,12 +624,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void showIndexingNotification(long time) {
+      VcsLogUtil.triggerUsage("IndexingTooLongNotification");
       Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION,
                                                                  "Log Indexing for \"" + myRoot.getName() + "\" Stopped",
                                                                  "Indexing was taking too long (" +
                                                                  StopWatch.formatTime(time - time % 1000) +
                                                                  ")", NotificationType.WARNING, null);
       notification.addAction(NotificationAction.createSimple("Resume", () -> {
+        VcsLogUtil.triggerUsage("ResumeIndexingClick");
         if (myBigRepositoriesList.isBig(myRoot)) {
           LOG.info("Resuming indexing " + myRoot.getName());
           myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());

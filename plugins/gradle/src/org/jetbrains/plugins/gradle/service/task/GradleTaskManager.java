@@ -100,28 +100,23 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       try {
         appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);
 
-        GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection, id, listener);
-        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
-          listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
-            id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
-        }
-
-        for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
-          effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
-        }
-
-        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-        launcher.forTasks(ArrayUtil.toStringArray(taskNames));
-
-        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
-          myCancellationMap.put(id, new UnsupportedCancellationToken());
-        }
-        else {
-          final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
-          launcher.withCancellationToken(cancellationTokenSource.token());
-          myCancellationMap.put(id, cancellationTokenSource);
-        }
+        CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
         try {
+          myCancellationMap.put(id, cancellationTokenSource);
+          GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection, id, listener, cancellationTokenSource);
+          if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
+            listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
+              id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
+          }
+
+          for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
+            effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+          }
+
+          BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
+          launcher.forTasks(ArrayUtil.toStringArray(taskNames));
+
+          launcher.withCancellationToken(cancellationTokenSource.token());
           launcher.run();
         }
         finally {

@@ -63,8 +63,8 @@ public class Restarter {
         else if (CreateDesktopEntryAction.getLauncherScript() == null) {
           problem = "cannot find launcher script in " + PathManager.getBinPath();
         }
-        else if (PathEnvironmentVariableUtil.findInPath("python") == null) {
-          problem = "cannot find 'python' in PATH";
+        else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
+          problem = "cannot find neither 'python' nor 'python3' in PATH";
         }
         else {
           problem = checkRestarter("restart.py");
@@ -204,11 +204,25 @@ public class Restarter {
     int pid = UnixProcessManager.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
 
+    File python = PathEnvironmentVariableUtil.findInPath("python");
+    if (python == null) python = PathEnvironmentVariableUtil.findInPath("python3");
+    if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in PATH");
+    File script = new File(PathManager.getBinPath(), "restart.py");
+
     List<String> args = new ArrayList<>();
-    args.add(String.valueOf(pid));
-    args.add(launcherScript);
-    Collections.addAll(args, beforeRestart);
-    runRestarter(new File(PathManager.getBinPath(), "restart.py"), args);
+    if ("python".equals(python.getName())) {
+      args.add(String.valueOf(pid));
+      args.add(launcherScript);
+      Collections.addAll(args, beforeRestart);
+      runRestarter(script, args);
+    }
+    else {
+      args.add(script.getPath());
+      args.add(String.valueOf(pid));
+      args.add(launcherScript);
+      Collections.addAll(args, beforeRestart);
+      runRestarter(python, args);
+    }
   }
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {

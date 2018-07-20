@@ -18,6 +18,8 @@ package com.intellij.testFramework
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.concurrency.Promise
+import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -51,6 +53,44 @@ fun assertConcurrent(vararg runnables: () -> Any?, maxTimeoutSeconds: Int = 5) {
     // start all test runners
     afterInitBlocker.countDown()
     assertThat(allDone.await(maxTimeoutSeconds.toLong(), TimeUnit.SECONDS)).isTrue()
+  }
+  finally {
+    threadPool.shutdownNow()
+  }
+  CompoundRuntimeException.throwIfNotEmpty(exceptions)
+}
+
+fun assertConcurrentPromises(vararg runnables: () -> Promise<String>, maxTimeoutSeconds: Int = 5) {
+  val numThreads = runnables.size
+  val exceptions = ContainerUtil.createLockFreeCopyOnWriteList<Throwable>()
+  val threadPool = Executors.newFixedThreadPool(numThreads)
+  try {
+    val allExecutorThreadsReady = CountDownLatch(numThreads)
+    val afterInitBlocker = CountDownLatch(1)
+    val allDone = CountDownLatch(numThreads)
+    val promises: MutableList<Promise<String>> = Collections.synchronizedList(ArrayList<Promise<String>>())
+    for (submittedTestRunnable in runnables) {
+      threadPool.submit {
+        allExecutorThreadsReady.countDown()
+        try {
+          afterInitBlocker.await()
+          promises.add(submittedTestRunnable())
+        }
+        catch (e: Throwable) {
+          exceptions.add(e)
+        }
+        finally {
+          allDone.countDown()
+        }
+      }
+    }
+
+    // wait until all threads are ready
+    assertThat(allExecutorThreadsReady.await(runnables.size.toLong(), TimeUnit.SECONDS)).isTrue()
+    // start all test runners
+    afterInitBlocker.countDown()
+    assertThat(allDone.await(maxTimeoutSeconds.toLong(), TimeUnit.SECONDS)).isTrue()
+    promises.forEach { promise -> promise.blockingGet(10, TimeUnit.SECONDS) }
   }
   finally {
     threadPool.shutdownNow()

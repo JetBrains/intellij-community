@@ -387,10 +387,13 @@ public class JarsBuilder {
   }
 
   private class JarsGraph implements InboundSemiGraph<JarInfo> {
+    @NotNull
     public Collection<JarInfo> getNodes() {
       return myJarsToBuild;
     }
 
+    @NotNull
+    @Override
     public Iterator<JarInfo> getIn(final JarInfo n) {
       Set<JarInfo> ins = new HashSet<>();
       final DestinationInfo destination = n.getDestination();

@@ -28,7 +28,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * @author Bas Leijdekkers
@@ -37,7 +36,7 @@ public class ScopePanel extends JPanel {
 
   private final Project myProject;
   private SearchScope myScope;
-  private Consumer<SearchScope> myCallback;
+  private Runnable myCallback;
   Scopes.Type myScopeType;
 
   final ActionToolbarImpl myToolbar;
@@ -59,7 +58,7 @@ public class ScopePanel extends JPanel {
                                                           !(descriptor.getScope() instanceof ModuleWithDependenciesScope));
     myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED));
     myDirectoryComboBox = new DirectoryComboBoxWithButtons(myProject);
-    myDirectoryComboBox.setCallback((vFile, recursive) -> setScopeFromUI(Scopes.Type.DIRECTORY));
+    myDirectoryComboBox.setCallback(() -> setScopeFromUI(Scopes.Type.DIRECTORY));
 
     myScopeDetailsPanel.add(Scopes.Type.PROJECT.toString(), new JLabel());
     myScopeDetailsPanel.add(Scopes.Type.MODULE.toString(), shrinkWrap(myModulesComboBox));
@@ -76,6 +75,7 @@ public class ScopePanel extends JPanel {
     myToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ScopePanel", scopeActionGroup, true);
     myToolbar.setForceMinimumSize(true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    setScope(null);
 
     final GroupLayout layout = new GroupLayout(this);
     setLayout(layout);
@@ -103,7 +103,7 @@ public class ScopePanel extends JPanel {
     myDirectoryComboBox.setRecentDirectories(recentDirectories);
   }
 
-  public void setScope(SearchScope selectedScope) {
+  public void setScope(@Nullable SearchScope selectedScope) {
     myScope = (selectedScope == null) ? GlobalSearchScope.projectScope(myProject) : selectedScope;
     myScopeType = Scopes.getType(myScope);
 
@@ -124,15 +124,16 @@ public class ScopePanel extends JPanel {
     ((JBCardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
-  public void setScopeCallback(Consumer<SearchScope> callback) {
+  public void setScopeCallback(@Nullable Runnable callback) {
     myCallback = callback;
   }
 
+  @Nullable
   public SearchScope getScope() {
     return myScope;
   }
 
-  void setScopeFromUI(Scopes.Type type) {
+  void setScopeFromUI(@NotNull Scopes.Type type) {
     switch (type) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);
@@ -150,14 +151,14 @@ public class ScopePanel extends JPanel {
         myScope = myScopesComboBox.getSelectedScope();
         break;
     }
-    if (myCallback != null) myCallback.accept(myScope);
+    if (myCallback != null) myCallback.run();
   }
 
   class ScopeToggleAction extends ToggleAction {
 
     private final Scopes.Type myScopeType;
 
-    public ScopeToggleAction(@Nullable String text, Scopes.Type scopeType) {
+    public ScopeToggleAction(@NotNull String text, @NotNull Scopes.Type scopeType) {
       super(text, null, EmptyIcon.ICON_0);
       myScopeType = scopeType;
       getTemplatePresentation().setDisabledIcon(EmptyIcon.ICON_0);
@@ -172,7 +173,9 @@ public class ScopePanel extends JPanel {
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
         ((JBCardLayout)myScopeDetailsPanel.getLayout()).swipe(myScopeDetailsPanel, myScopeType.toString(),
-                                                              ScopePanel.this.myScopeType.compareTo(myScopeType) > 0 ? JBCardLayout.SwipeDirection.FORWARD : JBCardLayout.SwipeDirection.BACKWARD);
+                                                              ScopePanel.this.myScopeType.compareTo(myScopeType) > 0
+                                                              ? JBCardLayout.SwipeDirection.BACKWARD
+                                                              : JBCardLayout.SwipeDirection.FORWARD);
         ScopePanel.this.myScopeType = myScopeType;
         setScopeFromUI(myScopeType);
         myToolbar.updateActionsImmediately();

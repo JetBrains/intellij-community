@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.components.labels.ActionLink
+import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
@@ -552,10 +553,14 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       additionalSettings.add(Pair.create(configurable, configurable.createComponent()))
     }
 
+    val touchbarActions = DefaultActionGroup(toolbarAddAction)
+    TouchbarDataKeys.putActionDescriptor(touchbarActions).setShowText(true).isCombineWithDlgButtons = true
+
     wholePanel = JPanel(BorderLayout())
     DataManager.registerDataProvider(wholePanel!!) { dataId ->
       when (dataId) {
         RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
+        TouchbarDataKeys.ACTIONS_KEY.name -> touchbarActions
         else -> null
       }
     }

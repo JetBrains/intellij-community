@@ -637,21 +637,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         myPublisher.before(events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
-        OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
         // FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
-        OutputStream persistenceStream = writeContent(file, delegate.isReadOnly());
-
-        try {
+        try (OutputStream persistenceStream = writeContent(file, delegate.isReadOnly())) {
           persistenceStream.write(buf, 0, count);
         }
         finally {
-          try {
+          try (OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp)) {
             ioFileStream.write(buf, 0, count);
           }
           finally {
             closed = true;
-            persistenceStream.close();
-            ioFileStream.close();
 
             executeTouch(file, false, event.getModificationStamp());
             myPublisher.after(events);

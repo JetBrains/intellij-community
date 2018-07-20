@@ -5,7 +5,9 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -110,7 +112,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.height
     );
 
-    if (Registry.is("suppress.focus.stealing")) {
+    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
 
@@ -259,8 +261,23 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
+      setTransferHandler(new TransferHandler(null) {
+        @Override
+        public boolean canImport(TransferSupport support) {
+          return true;
+        }
 
-      TouchbarDataKeys.putClientPropertyShowMode(myTouchbarActions, true, false);
+        @Override
+        public boolean importData(TransferSupport support) {
+          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
+          if (list != null && list.size() > 0) {
+            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+          }
+          return false;
+        }
+      });
+
+      TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
 
     @Override
@@ -425,6 +442,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
+            TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
@@ -574,14 +592,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
       } else {
 
-        try {
-          InputStream is = url.openStream();
-          try {
-            return Font.createFont(Font.TRUETYPE_FONT, is);
-          }
-          finally {
-            is.close();
-          }
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
         }
         catch (Throwable t) {
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);

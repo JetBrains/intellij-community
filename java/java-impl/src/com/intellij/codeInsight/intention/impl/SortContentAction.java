@@ -91,7 +91,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     @Override
     public boolean isSuitableEntryElement(@NotNull PsiElement element) {
-      PsiLiteralExpression expression = tryCast(element, PsiLiteralExpression.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return false;
       return ExpressionUtils.computeConstantExpression(expression) instanceof String;
     }
@@ -106,7 +106,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   private static class IntLiteralSortingStrategy implements SortingStrategy {
     @Override
     public boolean isSuitableEntryElement(@NotNull PsiElement element) {
-      PsiLiteralExpression expression = tryCast(element, PsiLiteralExpression.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return false;
       return ExpressionUtils.computeConstantExpression(expression) instanceof Integer;
     }
@@ -714,13 +714,25 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       PsiParameter last = ArrayUtil.getLastElement(parameters);
       if (last == null) return null;
       if (!last.isVarArgs()) return null;
-      PsiExpression closestExpression = getClosestExpression(originElement);
+      PsiExpression closestExpression = getTopmostExpression(getClosestExpression(originElement));
       if (closestExpression == null) return null;
       int indexOfCurrent = Arrays.asList(arguments).indexOf(closestExpression);
       if (-1 == indexOfCurrent) return null;
       if (indexOfCurrent < parameters.length - 1) return null;
       if (arguments.length < parameters.length + MIN_ELEMENTS_COUNT - 1) return null;
       return Arrays.copyOfRange(arguments, parameters.length - 1, arguments.length);
+    }
+
+    @Nullable
+    private static PsiExpression getTopmostExpression(@Nullable final PsiExpression expression) {
+      if (expression == null) return null;
+      @NotNull PsiExpression current = expression;
+      while (true) {
+        PsiExpression parentExpr = tryCast(current.getParent(), PsiExpression.class);
+        if (parentExpr == null) break;
+        current = parentExpr;
+      }
+      return current;
     }
 
     @Nullable
@@ -764,6 +776,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         child = child.getNextSibling();
       }
       sortableList.generate(sb);
+
+      List<SortableEntry> entries = sortableList.myEntries;
+      SortableEntry last = entries.get(entries.size() - 1);
+      if (!last.myBeforeSeparator.isEmpty()) {
+        sb.append("\n");
+      }
       sb.append(")");
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(origin.getProject());
       call.replace(factory.createExpressionFromText(sb.toString(), call));
@@ -807,11 +825,25 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (!aClass.isEnum()) return null;
       PsiEnumConstant[] constants = PsiTreeUtil.getChildrenOfType(aClass, PsiEnumConstant.class);
       if (constants == null || constants.length < MIN_ELEMENTS_COUNT) return null;
+      PsiEnumConstant last = constants[constants.length - 1];
+      PsiElement lastEnumRelatedElement = getLastEnumDeclarationRelatedElement(last);
+      if (lastEnumRelatedElement.getTextRange().getEndOffset() <= origin.getTextOffset()) return null;
       PsiElement lBrace = aClass.getLBrace();
       if (lBrace == null) return null;
       PsiElement nextAfterLbrace = lBrace.getNextSibling();
       if (nextAfterLbrace == null) return null;
       return new EnumContext(Arrays.asList(constants), nextAfterLbrace);
+    }
+
+    private static @NotNull PsiElement getLastEnumDeclarationRelatedElement(@NotNull PsiEnumConstant last) {
+      PsiElement current = last.getNextSibling();
+      while (current instanceof PsiWhiteSpace
+             || current instanceof PsiComment
+             || (current instanceof PsiJavaToken && (((PsiJavaToken)current).getTokenType() == JavaTokenType.COMMA))
+      ) {
+        current = current.getNextSibling();
+      }
+      return current;
     }
 
     @NotNull

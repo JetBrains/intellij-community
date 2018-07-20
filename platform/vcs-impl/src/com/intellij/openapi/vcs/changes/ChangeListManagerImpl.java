@@ -90,7 +90,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private VcsException myUpdateException;
   private Factory<JComponent> myAdditionalInfo;
-  private boolean myShowLocalChangesInvalidated;
+  private volatile boolean myShowLocalChangesInvalidated;
 
   @NotNull private ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
   private volatile String myFreezeName;
@@ -479,10 +479,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             fileHolder.notifyVcsStarted(scope.getVcs());
 
             filterOutIgnoredFiles(modifier.getDirtyFilesIterator(), fileHolder, refreshFiles);
-
-            for (VirtualFile root : modifier.getAffectedVcsRoots()) {
-              filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(root), fileHolder, refreshFiles);
-            }
+            filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(), fileHolder, refreshFiles);
 
             modifier.recheckDirtyKeys();
 
@@ -559,7 +556,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myChangesViewManager.scheduleRefresh();
 
       ProgressManager.getInstance().runProcess(() -> {
-        iterateScopes(dataHolder, scopes, wasEverythingDirty, indicator);
+        iterateScopes(dataHolder, scopes, indicator);
       }, indicator);
 
       boolean takeChanges;
@@ -648,7 +645,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private void iterateScopes(DataHolder dataHolder,
                              List<VcsDirtyScope> scopes,
-                             boolean wasEverythingDirty,
                              @NotNull ProgressIndicator indicator) {
     final ChangeListUpdater updater = dataHolder.getChangeListUpdater();
     // do actual requests about file statuses
@@ -661,7 +657,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       final AbstractVcs vcs = scope.getVcs();
       if (vcs == null) continue;
-      scope.setWasEverythingDirty(wasEverythingDirty);
 
       myChangesViewManager.setBusy(true);
 
@@ -1093,9 +1088,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean isInUpdate() {
-    synchronized (myDataLock) {
-      return myModifier.isInsideUpdate() || myShowLocalChangesInvalidated;
-    }
+    return myModifier.isInsideUpdate() || myShowLocalChangesInvalidated;
   }
 
   @Override
@@ -1608,9 +1601,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   // for users to see changes are not valid
   // (commit -> asynch synch VFS -> asynch vcs dirty scope)
   public void showLocalChangesInvalidated() {
-    synchronized (myDataLock) {
-      myShowLocalChangesInvalidated = true;
-    }
+    myShowLocalChangesInvalidated = true;
   }
 
   public ChangelistConflictTracker getConflictTracker() {
@@ -1720,7 +1711,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @TestOnly
     private void awaitAll() {
+      long start = System.currentTimeMillis();
       while (true) {
+        if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
+          throw new IllegalStateException("Too long waiting for VCS update");
+        }
         Future future;
         synchronized (myFutures) {
           future = myFutures.peek();

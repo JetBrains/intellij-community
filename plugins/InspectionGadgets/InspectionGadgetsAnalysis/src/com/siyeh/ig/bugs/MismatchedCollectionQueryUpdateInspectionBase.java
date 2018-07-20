@@ -330,7 +330,11 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
             return;
           }
         }
-        if (parent instanceof PsiInstanceOfExpression) return;
+        if (parent instanceof PsiAssertStatement && ((PsiAssertStatement)parent).getAssertDescription() == reference) {
+          makeQueried();
+          return;
+        }
+        if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiSynchronizedStatement) return;
         // Any other reference
         makeUpdated();
         makeQueried();

@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -190,7 +191,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
       });
       // Teardown should be called on main thread because fixture teardown checks for
       // thread leaks, and blocked main thread is considered as leaked
+      final Project project = myFixture.getProject();
       myFixture.tearDown();
+      if (project != null && ! project.isDisposed()) {
+        Disposer.dispose(project);
+      }
       myFixture = null;
     }
     super.tearDown();

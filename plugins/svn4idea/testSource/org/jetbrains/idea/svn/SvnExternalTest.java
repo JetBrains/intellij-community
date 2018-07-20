@@ -1,16 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.Assert;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.Test;
 
@@ -21,10 +20,9 @@ import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+import static org.junit.Assert.*;
 
-public class SvnExternalTest extends Svn17TestCase {
-  private ChangeListManagerImpl clManager;
-  private SvnVcs myVcs;
+public class SvnExternalTest extends SvnTestCase {
   private Url myMainUrl;
   private Url myExternalURL;
 
@@ -32,11 +30,8 @@ public class SvnExternalTest extends Svn17TestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    clManager = (ChangeListManagerImpl) ChangeListManager.getInstance(myProject);
-
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myVcs = SvnVcs.getInstance(myProject);
     myMainUrl = parseUrl(myRepoUrl + "/root/source", false);
     myExternalURL = parseUrl(myRepoUrl + "/root/target", false);
   }
@@ -54,9 +49,9 @@ public class SvnExternalTest extends Svn17TestCase {
   }
 
   private void externalCopyIsDetectedImpl() {
-    final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    final SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
-    Assert.assertEquals(2, infos.size());
+    assertEquals(2, infos.size());
     Set<Url> expectedUrls = new HashSet<>();
     if (myAnotherRepoUrl != null) {
       expectedUrls.add(parseUrl(myAnotherRepoUrl + "/root/target", false));
@@ -68,7 +63,7 @@ public class SvnExternalTest extends Svn17TestCase {
     for (RootUrlInfo info : infos) {
       expectedUrls.remove(info.getUrl());
     }
-    Assert.assertTrue(expectedUrls.isEmpty());
+    assertTrue(expectedUrls.isEmpty());
   }
 
   protected void prepareInnerCopy() throws Exception {
@@ -79,9 +74,9 @@ public class SvnExternalTest extends Svn17TestCase {
   public void testInnerCopyDetected() throws Exception {
     prepareInnerCopy();
 
-    final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    final SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
-    Assert.assertEquals(2, infos.size());
+    assertEquals(2, infos.size());
     Set<Url> expectedUrls = new HashSet<>();
     expectedUrls.add(myExternalURL);
     expectedUrls.add(myMainUrl);
@@ -91,8 +86,8 @@ public class SvnExternalTest extends Svn17TestCase {
       expectedUrls.remove(info.getUrl());
       sawInner |= NestedCopyType.inner.equals(info.getType());
     }
-    Assert.assertTrue(expectedUrls.isEmpty());
-    Assert.assertTrue(sawInner);
+    assertTrue(expectedUrls.isEmpty());
+    assertTrue(sawInner);
   }
 
   @Test
@@ -115,26 +110,25 @@ public class SvnExternalTest extends Svn17TestCase {
     final VirtualFile vf1 = lfs.refreshAndFindFileByIoFile(sourceFile);
     final VirtualFile vf2 = lfs.refreshAndFindFileByIoFile(externalFile);
 
-    Assert.assertNotNull(vf1);
-    Assert.assertNotNull(vf2);
+    assertNotNull(vf1);
+    assertNotNull(vf2);
 
     VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
     VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
 
-    final Change change1 = clManager.getChange(vf1);
-    final Change change2 = clManager.getChange(vf2);
+    final Change change1 = changeListManager.getChange(vf1);
+    final Change change2 = changeListManager.getChange(vf2);
 
-    Assert.assertNotNull(change1);
-    Assert.assertNotNull(change2);
+    assertNotNull(change1);
+    assertNotNull(change2);
 
-    Assert.assertNotNull(change1.getBeforeRevision());
-    Assert.assertNotNull(change2.getBeforeRevision());
+    assertNotNull(change1.getBeforeRevision());
+    assertNotNull(change2.getBeforeRevision());
 
-    Assert.assertNotNull(change1.getAfterRevision());
-    Assert.assertNotNull(change2.getAfterRevision());
+    assertNotNull(change1.getAfterRevision());
+    assertNotNull(change2.getAfterRevision());
   }
 
   @Test
@@ -156,12 +150,12 @@ public class SvnExternalTest extends Svn17TestCase {
 
     final File externalFile = new File(sourceDir, "external/t11.txt");
     final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
-    Assert.assertNotNull(externalVf);
+    assertNotNull(externalVf);
   }
 
   private void setNewDirectoryMappings(final File sourceDir) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName()))));
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> vcsManager.setDirectoryMappings(
+      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
   }
 
   @Test
@@ -180,15 +174,14 @@ public class SvnExternalTest extends Svn17TestCase {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File externalFile = new File(sourceDir, "external/t11.txt");
     final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
-    Assert.assertNotNull(externalVf);
+    assertNotNull(externalVf);
     editFileInCommand(externalVf, "some new content");
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
 
-    final Change change = clManager.getChange(externalVf);
-    Assert.assertNotNull(change);
-    Assert.assertEquals(FileStatus.MODIFIED, change.getFileStatus());
+    final Change change = changeListManager.getChange(externalVf);
+    assertNotNull(change);
+    assertEquals(FileStatus.MODIFIED, change.getFileStatus());
   }
 
   @Test

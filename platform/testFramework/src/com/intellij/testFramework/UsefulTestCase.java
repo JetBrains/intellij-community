@@ -821,7 +821,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public boolean isPerformanceTest() {
     String testName = getName();
-    String className = getClass().getName();
+    String className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 

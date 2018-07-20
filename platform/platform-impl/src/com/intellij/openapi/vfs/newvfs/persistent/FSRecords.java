@@ -294,6 +294,7 @@ public class FSRecords {
           markDirty();
         }
         scanFreeRecords();
+        getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action 
       }
       catch (Exception e) { // IOException, IllegalArgumentException
         LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
@@ -557,7 +558,7 @@ public class FSRecords {
     return DbConnection.myAttributes;
   }
 
-  public static PersistentStringEnumerator getNames() {
+  private static PersistentStringEnumerator getNames() {
     return DbConnection.getNames();
   }
 
@@ -1833,7 +1834,7 @@ public class FSRecords {
   }
 
   @Contract("_->fail")
-  static void handleError(Throwable e) throws RuntimeException, Error {
+  public static void handleError(Throwable e) throws RuntimeException, Error {
     DbConnection.handleError(e);
   }
 }

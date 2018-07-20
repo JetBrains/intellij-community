@@ -70,13 +70,19 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @Override
-  protected boolean canDoAction(@NotNull Range range, MouseEvent e) {
+  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
     return isInsideMarkerArea(e);
   }
 
   @Override
-  protected void doAction(@NotNull Editor editor, @NotNull Range range, @NotNull MouseEvent e) {
-    showHint(editor, range, e);
+  protected void doAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
+    Range range = ranges.get(0);
+    if (ranges.size() > 1) {
+      scrollAndShow(editor, range);
+    }
+    else {
+      showHint(editor, range, e);
+    }
   }
 
 

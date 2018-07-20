@@ -250,11 +250,20 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull byte[] content,
                                      @NotNull FilePath filePath) throws IOException {
-    if (isBinaryContent(content, filePath.getFileType())) {
+    return createFromBytes(project, content, filePath, null);
+  }
+
+  @NotNull
+  @Override
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull byte[] content,
+                                     @NotNull FilePath filePath,
+                                     @Nullable Charset defaultCharset) throws IOException {
+    if (defaultCharset == null && isBinaryContent(content, filePath.getFileType())) {
       return createBinaryImpl(project, content, filePath.getFileType(), filePath, filePath.getVirtualFile());
     }
 
-    return createDocumentFromBytes(project, content, filePath);
+    return createDocumentFromBytes(project, content, filePath, defaultCharset);
   }
 
   @NotNull
@@ -296,6 +305,15 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull FilePath filePath) {
     Charset charset = guessCharset(content, filePath);
+    return createFromBytesImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile(), charset);
+  }
+
+  @NotNull
+  private static DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                         @NotNull byte[] content,
+                                                         @NotNull FilePath filePath,
+                                                         @Nullable Charset defaultCharset) {
+    Charset charset = guessCharset(content, filePath.getFileType(), defaultCharset != null ? defaultCharset : filePath.getCharset());
     return createFromBytesImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile(), charset);
   }
 

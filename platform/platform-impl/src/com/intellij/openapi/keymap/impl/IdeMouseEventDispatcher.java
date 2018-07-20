@@ -419,4 +419,35 @@ public final class IdeMouseEventDispatcher {
       blockMode = mode;
     }
   }
+
+  public static void requestFocusInNonFocusedWindow(@NotNull MouseEvent event) {
+    if (event.getID() == MOUSE_PRESSED) {
+      // request focus by mouse pressed before it settles down
+      requestFocusInNonFocusedWindow(event.getComponent());
+    }
+  }
+
+  private static void requestFocusInNonFocusedWindow(@Nullable Component component) {
+    Window window = UIUtil.getWindow(component);
+    if (window != null && !UIUtil.isFocusAncestor(window)) {
+      Component focusable = UIUtil.isFocusable(component) ? component : findDefaultFocusableComponent(component);
+      if (focusable != null) focusable.requestFocus();
+    }
+  }
+
+  @Nullable
+  private static Component findDefaultFocusableComponent(@Nullable Component component) {
+    Container provider = findFocusTraversalPolicyProvider(component);
+    return provider == null ? null : provider.getFocusTraversalPolicy().getDefaultComponent(provider);
+  }
+
+  @Nullable
+  private static Container findFocusTraversalPolicyProvider(@Nullable Component component) {
+    Container container = component == null || component instanceof Container ? (Container)component : component.getParent();
+    while (container != null) {
+      if (container.isFocusCycleRoot() && container.isFocusTraversalPolicyProvider()) return container;
+      container = container.getParent();
+    }
+    return null;
+  }
 }

@@ -54,7 +54,8 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
     if (provider == null) return false;
 
-    BackgroundableActionLock lock = VcsCachingHistory.getHistoryLock(activeVcs, VcsBackgroundableActions.HISTORY_FOR_SELECTION, filePath);
+    BackgroundableActionLock lock =
+      VcsCachingHistory.getHistoryLock(activeVcs, VcsBackgroundableActions.HISTORY_FOR_SELECTION, filePath, null);
     if (lock.isLocked()) return false;
 
     if (!AbstractVcs.fileInVcsByFileStatus(project, filePath)) return false;

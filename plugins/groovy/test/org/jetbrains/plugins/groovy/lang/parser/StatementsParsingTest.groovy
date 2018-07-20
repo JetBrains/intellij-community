@@ -121,11 +121,33 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for9() throws Throwable { doTest() }
 
+  void testFor$for14() throws Throwable { doTest() }
+
   void testFor$idenfierAfterLParen() { doTest() }
 
   void testFor$keywordOnly() { doTest() }
 
   void testFor$lParen() { doTest() }
+
+  void testFor$identifierAfterParameter() { doTest() }
+
+  void testFor$multiDeclaration() { doTest() }
+
+  void testFor$multiDeclaration2() { doTest() }
+
+  void testFor$multiDeclaration3() { doTest() }
+
+  void testFor$multiDeclaration4() { doTest() }
+
+  void testFor$tupleDeclaration() { doTest() }
+
+  void testFor$tupleDeclarationCommaAfterVar() { doTest() }
+
+  void testFor$tupleDeclarationNoInitializer() { doTest() }
+
+  void testFor$tupleDeclarationNoInitializerValue() { doTest() }
+
+  void testFor$tupleDeclarationSingleVariable() { doTest() }
 
   void testIfstmt$if1() throws Throwable { doTest() }
 
@@ -216,6 +238,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
   void testLoop$dowhile4() { doTest() }
 
   void testLoop$dowhile5() { doTest() }
+
+  void testLoop$dowhile6() { doTest() }
 
   void testMethods$method1() throws Throwable { doTest() }
 
