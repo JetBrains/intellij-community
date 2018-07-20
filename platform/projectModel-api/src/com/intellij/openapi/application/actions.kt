@@ -4,15 +4,8 @@ package com.intellij.openapi.application
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Ref
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.Runnable
-import kotlinx.coroutines.experimental.withContext
-import org.jetbrains.concurrency.Obsolescent
 import java.lang.reflect.InvocationTargetException
 import javax.swing.SwingUtilities
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
-import kotlin.coroutines.experimental.CoroutineContext
 
 inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
   return ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
@@ -68,66 +61,3 @@ inline fun runInEdt(modalityState: ModalityState? = null, crossinline runnable: 
     app.invokeLater({ runnable() }, modalityState ?: ModalityState.defaultModalityState())
   }
 }
-
-
-// Coroutine API
-
-suspend fun <T> asyncOnEdt(modalityState: ModalityState = ModalityState.defaultModalityState(),
-                           block: suspend () -> T): T =
-  withContext(ModalityStateContext(modalityState) + EventThreadContext, block = block)
-
-/** Must be only used within a (direct on indirect) `asyncOnEdt { ... }` block. */
-suspend fun <T> asyncWriteAction(block: suspend () -> T): T =
-  withContext(WriteActionContext, block = block)
-
-/** Must be only used within a (direct on indirect) `asyncOnEdt { ... }` block. */
-suspend fun <T> asyncUndoTransparentWriteAction(block: suspend () -> T): T =
-  withContext(UndoTransparentWriteActionContext, block = block)
-
-
-internal abstract class ApplicationInvokeLaterDispatcher : CoroutineDispatcher() {
-
-  private val CoroutineContext.modalityState: ModalityState
-    get() {
-      val edtContext = this[ModalityStateContext] ?: throw IllegalStateException("Not within ModalityStateContext")
-      return edtContext.modalityState
-    }
-
-  override fun dispatch(context: CoroutineContext, block: Runnable) {
-    val modalityState = context.modalityState
-    val obsolescent = context[ObsolescentContext]?.obsolescent
-
-    val blockToRun = obsolescent?.let {
-      Runnable {
-        if (it.isObsolete) context[Job]!!.cancel()
-        block.run()
-      }
-    } ?: block
-    runInEdt(modalityState) { dispatchInContext(context, blockToRun) }
-  }
-
-  protected abstract fun dispatchInContext(context: CoroutineContext, block: Runnable)
-}
-
-internal object EventThreadContext : ApplicationInvokeLaterDispatcher() {
-  override fun dispatchInContext(context: CoroutineContext, block: Runnable) = block.run()
-}
-
-internal object WriteActionContext : ApplicationInvokeLaterDispatcher() {
-  override fun dispatchInContext(context: CoroutineContext, block: Runnable) = ApplicationManager.getApplication().runWriteAction(block)
-}
-
-internal object UndoTransparentWriteActionContext : ApplicationInvokeLaterDispatcher() {
-  override fun dispatchInContext(context: CoroutineContext, block: Runnable) = runUndoTransparentWriteAction { block.run() }
-}
-
-internal open class ModalityStateContext(val modalityState: ModalityState)
-  : AbstractCoroutineContextElement(ModalityStateContext) {
-  companion object Key : CoroutineContext.Key<ModalityStateContext>
-}
-
-internal open class ObsolescentContext(val obsolescent: Obsolescent) : AbstractCoroutineContextElement(ObsolescentContext) {
-  companion object Key : CoroutineContext.Key<ObsolescentContext>
-
-}
-
