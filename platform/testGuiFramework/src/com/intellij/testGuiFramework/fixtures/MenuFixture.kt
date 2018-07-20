@@ -18,10 +18,13 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.GuiTestUtil.toMs
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import org.fest.assertions.Assertions.assertThat
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
+import org.fest.swing.driver.JComponentDriver
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
@@ -128,5 +131,17 @@ class MenuFixture internal constructor(private val myRobot: Robot, private val m
   }
 
   class MenuItemFixture(selfType: Class<MenuItemFixture>, robot: Robot, target: JMenuItem) : JComponentFixture<MenuItemFixture, JMenuItem>(
-    selfType, robot, target)
+    selfType, robot, target) {
+
+    init {
+      replaceDriverWith(MenuItemFixtureDriver(robot))
+    }
+
+    //wait for component showing on screen, as a workaround for IDEA-195830
+    class MenuItemFixtureDriver(robot: Robot) : JComponentDriver<JMenuItem>(robot) {
+      override fun click(jMenuItem: JMenuItem) {
+        waitForShowing(jMenuItem, defaultTimeout.toMs())
+      }
+    }
+  }
 }

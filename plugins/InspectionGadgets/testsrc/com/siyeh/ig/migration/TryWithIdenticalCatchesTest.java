@@ -49,6 +49,18 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
     doTest(true);
   }
 
+  public void testIdenticalCatchWithComments() {
+    doTest();
+  }
+
+  public void testIdenticalCatchWithEmptyComments() {
+    doTest();
+  }
+
+  public void testIdenticalCatchDifferentCommentStyle() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(false);
   }

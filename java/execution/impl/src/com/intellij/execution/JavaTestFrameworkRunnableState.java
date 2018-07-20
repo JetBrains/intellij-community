@@ -216,7 +216,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
     for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
+      ((JUnitPatcher)patcher).patchJavaParameters(project, module, javaParameters);
     }
 
     // Append coverage parameters if appropriate

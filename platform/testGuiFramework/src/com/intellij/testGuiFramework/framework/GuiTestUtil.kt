@@ -808,4 +808,6 @@ object GuiTestUtil {
     tmpFile.toFile().deleteOnExit()
   }
 
+  fun Long.toMs(): Long = this * 1000
+
 }

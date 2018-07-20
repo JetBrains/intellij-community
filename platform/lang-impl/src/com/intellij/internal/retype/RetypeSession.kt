@@ -6,15 +6,18 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
+import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
-import com.intellij.internal.performance.latencyMap
+import com.intellij.internal.performance.currentLatencyRecordKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.LogicalPosition
@@ -25,13 +28,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.util.Alarm
 
 class RetypeSession(
   private val project: Project,
   private val editor: EditorImpl,
   private val delayMillis: Int,
-  private val threadDumpDelay: Int
+  private val threadDumpDelay: Int,
+  private val threadDumps: MutableList<String> = mutableListOf()
 ) : Disposable {
   private val document = editor.document
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
@@ -43,25 +48,47 @@ class RetypeSession(
   private var typedChars = 0
   private var completedChars = 0
   private var backtrackedChars = 0
-  private val threadDumps = mutableListOf<String>()
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
+  private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
   private var needSyncPosition = false
   private var editorLineBeforeAcceptingLookup = -1
+  var startNextCallback: (() -> Unit)? = null
+  private val disposeLock = Any()
 
   val currentLineText get() = lines[line]
 
   fun start() {
-    latencyMap.clear()
-    WriteCommandAction.runWriteCommandAction(project) { document.deleteString(0, document.textLength) }
-    CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    editor.putUserData(RETYPE_SESSION_KEY, this)
+    val vFile = FileDocumentManager.getInstance().getFile(document)
+    val keyName = "${vFile?.name ?: "Unknown file"} (${document.textLength} chars)"
+    currentLatencyRecordKey = LatencyDistributionRecordKey(keyName)
+    line = editor.caretModel.logicalPosition.line - 1
+    val currentLineStart = document.getLineStartOffset(line + 1)
+    WriteCommandAction.runWriteCommandAction(project) { document.deleteString(currentLineStart, document.textLength) }
+    CodeInsightSettings.getInstance().apply {
+      SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+      ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
+    }
     queueNext()
   }
 
-  fun stop() {
-    WriteCommandAction.runWriteCommandAction(project) { document.replaceString(0, document.textLength, originalText) }
-    Disposer.dispose(this)
+  fun stop(startNext: Boolean) {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      WriteCommandAction.runWriteCommandAction(project) { document.replaceString(0, document.textLength, originalText) }
+    }
+    synchronized(disposeLock) {
+      Disposer.dispose(this)
+    }
     editor.putUserData(RETYPE_SESSION_KEY, null)
-    CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = oldSelectAutopopup
+    CodeInsightSettings.getInstance().apply {
+      SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = oldSelectAutopopup
+      ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldAddUnambiguous
+    }
+    currentLatencyRecordKey?.details = "typed $typedChars chars, completed $completedChars chars, backtracked $backtrackedChars chars"
+    currentLatencyRecordKey = null
+    if (startNext) {
+      startNextCallback?.invoke()
+    }
   }
 
   override fun dispose() {
@@ -94,81 +121,88 @@ class RetypeSession(
       }
       syncPositionWithEditor()
     }
-    needSyncPosition = false
+
+    if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
+      TemplateManager.getInstance(project).finishTemplate(editor)
+      queueNextOrStop(true)
+      return
+    }
 
     val lookup = LookupManager.getActiveLookup(editor) as LookupImpl?
-    var lookupSelected = false
     if (lookup != null) {
-      val lookupString = lookup.currentItem?.let { LookupElementPresentation.renderElement(it).itemText }
-      val lookupStartColumn = editor.offsetToLogicalPosition(lookup.lookupStart).column
-      if (lookupString != null && isLookupElementAcceptable(lookup.currentItem) &&
-          currentLineText.drop(lookupStartColumn).take(lookupString.length) == lookupString) {
+      val currentLookupElement = lookup.currentItem
+      if (currentLookupElement?.shouldAccept(lookup.lookupStart) == true) {
         lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
         editorLineBeforeAcceptingLookup = editor.caretModel.logicalPosition.line
         executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)
-        needSyncPosition = true
-        lookupSelected = true
+        queueNextOrStop(true)
+        return
       }
     }
 
-    if (!lookupSelected) {
-      val c = currentLineText[column]
-      typedChars++
-      if (c == '\n') {
-        column = 0   // line will be incremented in next loop
+    val c = currentLineText[column]
+    typedChars++
+    if (c == '\n') {
+      column = 0   // line will be incremented in next loop
 
-        // Check if the next line was partially inserted with some insert handler (e.g. braces in java)
-        if (line + 1 < document.lineCount
-            && line + 1 < lines.size
-            && lines[line + 1].startsWith(getEditorLineText(line + 1))) {
-          // the caret will be moved right during the next position sync
-          executeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
-        }
-        else {
-          executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-        }
+      // Check if the next line was partially inserted with some insert handler (e.g. braces in java)
+      if (line + 1 < document.lineCount
+          && line + 1 < lines.size
+          && lines[line + 1].startsWith(getEditorLineText(line + 1))) {
+        // the caret will be moved right during the next position sync
+        executeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
       }
       else {
-        column++
-        editor.type(c.toString())
+        executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
       }
     }
+    else {
+      column++
+      editor.type(c.toString())
+    }
+    queueNextOrStop(false)
+  }
+
+  private fun queueNextOrStop(needSyncPosition: Boolean) {
+    this.needSyncPosition = needSyncPosition
     if ((column == 0 && line < lines.size - 1) || (column > 0 && column < currentLineText.length)) {
       queueNext()
     }
     else {
-      stop()
+      stop(true)
 
-      val message = buildString {
-        val file = FileDocumentManager.getInstance().getFile(document)
-        if (file != null) {
-          append(file.name)
-          append(" ")
-        }
-        append("Typed $typedChars chars, completed $completedChars chars, backtracked $backtrackedChars chars")
+      if (startNextCallback == null && !ApplicationManager.getApplication().isUnitTestMode) {
+        TypingLatencyReportDialog(project, threadDumps).show()
       }
-
-      TypingLatencyReportDialog(project, message, threadDumps).show()
     }
   }
 
-  private fun isLookupElementAcceptable(lookupElement: LookupElement?): Boolean {
-    if (lookupElement == null) return false
+  private fun LookupElement.shouldAccept(lookupStartOffset: Int): Boolean {
     for (retypeFileAssistant in Extensions.getExtensions(
       RetypeFileAssistant.EP_NAME)) {
-      if (!retypeFileAssistant.acceptLookupElement(lookupElement)) {
+      if (!retypeFileAssistant.acceptLookupElement(this)) {
         return false
       }
     }
-    return lookupElement !is LiveTemplateLookupElement
+    if (this is LiveTemplateLookupElement) {
+      return false
+    }
+    val lookupString = LookupElementPresentation.renderElement(this).itemText ?: return false
+    val lookupStartColumn = editor.offsetToLogicalPosition(lookupStartOffset).column
+    val textAtColumn = currentLineText.drop(lookupStartColumn)
+    if (textAtColumn.take(lookupString.length) != lookupString) {
+      return false
+    }
+    return textAtColumn.length == lookupString.length ||
+           !Character.isJavaIdentifierPart(textAtColumn[lookupString.length] + 1)
   }
 
   private fun checkPrevLineInSync(): Boolean {
     val prevLine = getEditorLineText(editor.caretModel.logicalPosition.line - 1)
     if (prevLine.trimEnd() != currentLineText.trimEnd()) {
+      stop(false)
       Messages.showErrorDialog(project, "Text has diverged. Expected:\n$currentLineText\nActual:\n$prevLine",
                                "Retype File")
-      stop()
       return true
     }
     return false
@@ -221,7 +255,11 @@ class RetypeSession(
   private fun logThreadDump() {
     if (editor.isProcessingTypedAction) {
       threadDumps.add(ThreadDumper.dumpThreadsToString())
-      threadDumpAlarm.addRequest({ logThreadDump() }, 100)
+      synchronized(disposeLock) {
+        if (!threadDumpAlarm.isDisposed) {
+          threadDumpAlarm.addRequest({ logThreadDump() }, 100)
+        }
+      }
     }
   }
 
@@ -229,3 +267,5 @@ class RetypeSession(
     val LOG = Logger.getInstance("#com.intellij.internal.retype.RetypeSession")
   }
 }
+
+val RETYPE_SESSION_KEY = Key.create<RetypeSession>("com.intellij.internal.retype.RetypeSession")

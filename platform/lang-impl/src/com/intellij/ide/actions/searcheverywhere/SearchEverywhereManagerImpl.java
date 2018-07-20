@@ -105,6 +105,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                               .setLocateWithinScreenBounds(false)
                               .createPopup();
     Disposer.register(myBalloon, mySearchEverywhereUI);
+    if (project != null) {
+      Disposer.register(project, myBalloon);
+    }
     myBalloon.pack(true, true);
 
     myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);

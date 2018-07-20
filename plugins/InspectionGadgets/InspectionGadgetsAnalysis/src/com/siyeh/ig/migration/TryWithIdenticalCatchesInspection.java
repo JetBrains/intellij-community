@@ -17,11 +17,12 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -233,6 +234,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
 
     boolean isDuplicate(@NotNull CatchSectionWrapper section) {
+      final Boolean sameComments = areSameComments(section);
+      if (sameComments != null) return sameComments;
+
       final Match match = findDuplicate(section);
       if (match == null) {
         return false;
@@ -251,6 +255,42 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
     private Match findDuplicate(@NotNull CatchSectionWrapper section) {
       return myFinder.isDuplicate(section.myCodeBlock, true);
+    }
+
+    @Nullable
+    private Boolean areSameComments(@NotNull CatchSectionWrapper section) {
+      if (!myCodeBlock.isEmpty()) {
+        return null;
+      }
+      if (!section.myCodeBlock.isEmpty()) {
+        return false;
+      }
+      final List<String> comments = getCommentTexts(myCodeBlock);
+      final List<String> otherComments = getCommentTexts(section.myCodeBlock);
+      return comments.equals(otherComments);
+    }
+
+    @NotNull
+    private static List<String> getCommentTexts(@NotNull PsiElement element) {
+      final List<String> result = new ArrayList<>();
+      for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiComment) {
+          final IElementType type = ((PsiComment)child).getTokenType();
+          if (type == JavaTokenType.END_OF_LINE_COMMENT) {
+            final String text = StringUtil.trimStart(child.getText(), "//").trim();
+            if (!text.isEmpty()) {
+              result.add(text);
+            }
+          }
+          else if (type == JavaTokenType.C_STYLE_COMMENT) {
+            final String text = StringUtil.trimStart(StringUtil.trimEnd(child.getText(), "*/"), "/*").trim();
+            if (!text.isEmpty()) {
+              result.add(text);
+            }
+          }
+        }
+      }
+      return result;
     }
 
     boolean canSwapWith(@Nullable CatchSectionWrapper section) {
