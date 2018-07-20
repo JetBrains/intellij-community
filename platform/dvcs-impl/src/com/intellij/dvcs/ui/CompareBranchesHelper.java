@@ -7,8 +7,15 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public interface CompareBranchesHelper {
-  @NotNull Project getProject();
-  @NotNull RepositoryManager getRepositoryManager();
-  @NotNull DvcsCompareSettings getDvcsCompareSettings();
-  @NotNull String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch);
+  @NotNull
+  Project getProject();
+
+  @NotNull
+  RepositoryManager getRepositoryManager();
+
+  @NotNull
+  DvcsCompareSettings getDvcsCompareSettings();
+
+  @NotNull
+  String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch);
 }

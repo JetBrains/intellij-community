@@ -6,13 +6,16 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepository;
+
 import java.util.List;
 
 public class HgBrancher {
   private final Project myProject;
+
   HgBrancher(@NotNull Project project) {
     myProject = project;
   }
+
   public void compare(@NotNull final String branchName, @NotNull final List<HgRepository> repositories,
                       @NotNull final HgRepository selectedRepository) {
     new Task.Backgroundable(myProject, "Comparing with " + branchName) {

@@ -72,34 +72,34 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
       }
     }
 
-      for (Map.Entry<Repository, Collection<FilePath>> entry : toDelete.entrySet()) {
-        Repository repository = entry.getKey();
-        Collection<FilePath> rootPaths = entry.getValue();
-        VirtualFile root = repository.getRoot();
+    for (Map.Entry<Repository, Collection<FilePath>> entry : toDelete.entrySet()) {
+      Repository repository = entry.getKey();
+      Collection<FilePath> rootPaths = entry.getValue();
+      VirtualFile root = repository.getRoot();
 
-        GitFileUtils.delete(project, root, rootPaths);
+      GitFileUtils.delete(project, root, rootPaths);
+    }
+
+    for (Map.Entry<Repository, Collection<FilePath>> entry : toCheckout.entrySet()) {
+      Repository repository = entry.getKey();
+      Collection<FilePath> rootPaths = entry.getValue();
+      VirtualFile root = repository.getRoot();
+
+      for (List<String> paths : VcsFileUtil.chunkPaths(root, rootPaths)) {
+        GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
+        handler.addParameters(branchName);
+        handler.endOptions();
+        handler.addParameters(paths);
+        GitCommandResult result = Git.getInstance().runCommand(handler);
+        result.getOutputOrThrow();
       }
 
-      for (Map.Entry<Repository, Collection<FilePath>> entry : toCheckout.entrySet()) {
-        Repository repository = entry.getKey();
-        Collection<FilePath> rootPaths = entry.getValue();
-        VirtualFile root = repository.getRoot();
+      GitFileUtils.addPaths(project, root, rootPaths);
+    }
 
-        for (List<String> paths : VcsFileUtil.chunkPaths(root, rootPaths)) {
-          GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
-          handler.addParameters(branchName);
-          handler.endOptions();
-          handler.addParameters(paths);
-          GitCommandResult result = Git.getInstance().runCommand(handler);
-          result.getOutputOrThrow();
-        }
+    RefreshVFsSynchronously.updateChanges(changes);
+    VcsDirtyScopeManager.getInstance(project).filePathsDirty(ChangesUtil.getPaths(changes), null);
 
-        GitFileUtils.addPaths(project, root, rootPaths);
-      }
-
-      RefreshVFsSynchronously.updateChanges(changes);
-      VcsDirtyScopeManager.getInstance(project).filePathsDirty(ChangesUtil.getPaths(changes), null);
-
-      reloadTotalDiff(branchName);
+    reloadTotalDiff(branchName);
   }
 }

@@ -5,5 +5,4 @@ public interface DvcsCompareSettings {
   boolean shouldSwapSidesInCompareBranches();
 
   void setSwapSidesInCompareBranches(boolean value);
-
 }

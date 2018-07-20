@@ -17,7 +17,6 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.util.CommitCompareInfo;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
@@ -50,7 +49,7 @@ class CompareBranchesLogPanel extends JPanel {
   private CommitListPanel<VcsFullCommitDetails> myBranchToHeadListPanel;
 
   public CompareBranchesLogPanel(@NotNull CompareBranchesHelper helper, @NotNull String branchName, @NotNull String currentBranchName,
-                            @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
+                                 @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     myHelper = helper;
     myBranchName = branchName;

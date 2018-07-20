@@ -33,6 +33,7 @@ public class HgBranchWorker {
     myProject = project;
     myIndicator = indicator;
   }
+
   public void compare(@NotNull final String branchName, @NotNull final List<HgRepository> repositories,
                       @NotNull final HgRepository selectedRepository) {
     final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
@@ -85,8 +86,8 @@ public class HgBranchWorker {
     final List<HgCommit> headToBranch;
     final List<HgCommit> branchToHead;
     try {
-      headToBranch = (List<HgCommit>)HgHistoryUtil.history(myProject, repository.getRoot(), 1000, Arrays.asList("-r", "reverse(" + branchName + "%" + CURRENT_REVISION + ")"), true);
-      branchToHead = (List<HgCommit>)HgHistoryUtil.history(myProject, repository.getRoot(), 1000, Arrays.asList("-r", "reverse(" + CURRENT_REVISION + "%" + branchName + ")"), true);
+      headToBranch = HgHistoryUtil.history(myProject, repository.getRoot(), 1000, Arrays.asList("-r", "reverse(" + branchName + "%" + CURRENT_REVISION + ")"), true);
+      branchToHead = HgHistoryUtil.history(myProject, repository.getRoot(), 1000, Arrays.asList("-r", "reverse(" + CURRENT_REVISION + "%" + branchName + ")"), true);
     }
     catch (VcsException e) {
       // we treat it as critical and report an error
@@ -94,6 +95,7 @@ public class HgBranchWorker {
     }
     compareInfo.put(repository, headToBranch, branchToHead);
   }
+
   @NotNull
   private static Collection<Change> loadTotalDiff(@NotNull HgRepository repository, @NotNull String branchName) {
     try {
@@ -105,6 +107,7 @@ public class HgBranchWorker {
       throw new HgExecutionException("Couldn't get [hg diff -r " + branchName + "] on repository [" + repository.getRoot() + "]", e);
     }
   }
+
   private static class HgCompareWithBranchActionCaller extends HgCompareWithBranchAction {
     public static Collection<Change> doGetDiffChanges(@NotNull Project project,
                                                       @NotNull VirtualFile file,

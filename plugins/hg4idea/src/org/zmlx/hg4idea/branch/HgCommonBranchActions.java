@@ -119,8 +119,8 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
   private static class CompareAction extends HgBranchAbstractAction {
     public CompareAction(@NotNull Project project,
-                        @NotNull List<HgRepository> repositories,
-                        @NotNull String branchName) {
+                         @NotNull List<HgRepository> repositories,
+                         @NotNull String branchName) {
       super(project, "Compare", repositories, branchName);
     }
 
