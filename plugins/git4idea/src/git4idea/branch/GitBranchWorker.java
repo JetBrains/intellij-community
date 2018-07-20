@@ -155,7 +155,7 @@ public final class GitBranchWorker {
 
   @NotNull
   private CommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) throws VcsException {
-    CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo();
+    CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo(myProject, branchName);
     for (GitRepository repository: repositories) {
       List<GitCommit> headToBranch = GitHistoryUtils.history(myProject, repository.getRoot(), ".." + branchName);
       List<GitCommit> branchToHead = GitHistoryUtils.history(myProject, repository.getRoot(), branchName + "..");

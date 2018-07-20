@@ -16,7 +16,6 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.branch.DvcsCompareSettings;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.dvcs.util.LocalCommitCompareInfo;
 import com.intellij.history.LocalHistory;
@@ -48,7 +47,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -180,9 +179,8 @@ class CompareBranchesDiffPanel extends JPanel {
       new Task.Modal(myProject, "Loading Content from Branch", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          RepositoryManager repositoryManager = myHelper.getRepositoryManager();
           try {
-            ((LocalCommitCompareInfo) myCompareInfo).reloadContentFromBranch(myProject, myBranchName, changes, swapSides, repositoryManager);
+            ((LocalCommitCompareInfo)myCompareInfo).copyChangesFromBranch(changes, swapSides);
           }
           catch (VcsException err) {
             ApplicationManager.getApplication().invokeLater(() -> {

@@ -2,7 +2,6 @@
 package git4idea.util;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.util.LocalCommitCompareInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -22,6 +21,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,22 +29,28 @@ import java.util.List;
 import java.util.Map;
 
 public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
+  @NotNull private final Project myProject;
+  @NotNull private final String myBranchName;
 
-  private void reloadTotalDiff(@NotNull String branchName) throws VcsException {
+  public GitLocalCommitCompareInfo(@NotNull Project project,
+                                   @NotNull String branchName) {
+    myProject = project;
+    myBranchName = branchName;
+  }
+
+  private void reloadTotalDiff() throws VcsException {
     Map<Repository, Collection<Change>> newDiff = new HashMap<>();
     for (Repository repository: getRepositories()) {
-      newDiff.put(repository, GitBranchWorker.loadTotalDiff(repository, branchName));
+      newDiff.put(repository, GitBranchWorker.loadTotalDiff(repository, myBranchName));
     }
 
     updateTotalDiff(newDiff);
   }
 
   @Override
-  public void reloadContentFromBranch(@NotNull Project project,
-                                      @NotNull String branchName,
-                                      @NotNull List<Change> changes,
-                                      boolean swapSides,
-                                      @NotNull RepositoryManager repositoryManager) throws VcsException {
+  public void copyChangesFromBranch(@NotNull List<Change> changes,
+                                    boolean swapSides) throws VcsException {
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myProject);
 
     MultiMap<Repository, FilePath> toCheckout = MultiMap.createSet();
     MultiMap<Repository, FilePath> toDelete = MultiMap.createSet();
@@ -77,7 +83,7 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
       Collection<FilePath> rootPaths = entry.getValue();
       VirtualFile root = repository.getRoot();
 
-      GitFileUtils.delete(project, root, rootPaths);
+      GitFileUtils.delete(myProject, root, rootPaths);
     }
 
     for (Map.Entry<Repository, Collection<FilePath>> entry : toCheckout.entrySet()) {
@@ -86,20 +92,20 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
       VirtualFile root = repository.getRoot();
 
       for (List<String> paths : VcsFileUtil.chunkPaths(root, rootPaths)) {
-        GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
-        handler.addParameters(branchName);
+        GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
+        handler.addParameters(myBranchName);
         handler.endOptions();
         handler.addParameters(paths);
         GitCommandResult result = Git.getInstance().runCommand(handler);
         result.getOutputOrThrow();
       }
 
-      GitFileUtils.addPaths(project, root, rootPaths);
+      GitFileUtils.addPaths(myProject, root, rootPaths);
     }
 
     RefreshVFsSynchronously.updateChanges(changes);
-    VcsDirtyScopeManager.getInstance(project).filePathsDirty(ChangesUtil.getPaths(changes), null);
+    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(changes), null);
 
-    reloadTotalDiff(branchName);
+    reloadTotalDiff();
   }
 }
