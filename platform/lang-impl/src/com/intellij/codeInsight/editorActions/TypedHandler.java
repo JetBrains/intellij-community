@@ -289,7 +289,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
         for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(element.getLanguage(), file.getProject())) {
-          if (contributor.invokeAutoPopup(element, charTyped)) {
+          if (contributor.invokeAutoPopup(element, charTyped, offset + 1)) {
             LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
             return true;
           }
