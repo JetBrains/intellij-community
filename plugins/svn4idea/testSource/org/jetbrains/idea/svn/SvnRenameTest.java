@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -21,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 /**
  * @author yole
@@ -442,17 +443,11 @@ public class SvnRenameTest extends SvnTestCase {
     verifySorted(runSvn("status"), "A child", "A + child" + File.separatorChar + "a.txt", "D a.txt");
   }
 
-  private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) {
-    final VirtualFile[] dir = new VirtualFile[1];
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      try {
-        dir[0] = myWorkingCopyDir.createChildDirectory(this, packageName);
-        file.move(this, dir[0]);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+  private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) throws IOException {
+    return writeCommandAction(myProject).compute(() -> {
+      VirtualFile packageDirectory = myWorkingCopyDir.createChildDirectory(this, packageName);
+      file.move(this, packageDirectory);
+      return packageDirectory;
     });
-    return dir[0];
   }
 }
