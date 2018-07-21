@@ -41,7 +41,7 @@ public class SvnRenameTest extends SvnTestCase {
     checkin();
 
     renameFileInCommand(a, "b.txt");
-    verifySorted(runSvn("status"), "A + b.txt", "D a.txt");
+    runAndVerifyStatusSorted("A + b.txt", "D a.txt");
   }
 
   // IDEADEV-18844
@@ -54,8 +54,7 @@ public class SvnRenameTest extends SvnTestCase {
 
     renameFileInCommand(a, "aOld.txt");
     renameFileInCommand(aNew, "a.txt");
-    final ProcessOutput result = runSvn("status");
-    verifySorted(result, "A + aOld.txt", "D aNew.txt", "R + a.txt");
+    runAndVerifyStatusSorted("A + aOld.txt", "D aNew.txt", "R + a.txt");
   }
 
   // IDEADEV-16251
@@ -65,7 +64,7 @@ public class SvnRenameTest extends SvnTestCase {
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
     renameFileInCommand(dir, "newchild");
-    verifySorted(runSvn("status"), "A newchild", "A newchild" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A newchild", "A newchild" + File.separatorChar + "a.txt");
   }
 
   // IDEADEV-8091
@@ -77,7 +76,7 @@ public class SvnRenameTest extends SvnTestCase {
 
     renameFileInCommand(a, "b.txt");
     renameFileInCommand(a, "c.txt");
-    verifySorted(runSvn("status"), "A + c.txt", "D a.txt");
+    runAndVerifyStatusSorted("A + c.txt", "D a.txt");
   }
 
   // IDEADEV-15876
@@ -86,12 +85,9 @@ public class SvnRenameTest extends SvnTestCase {
     final VirtualFile child = prepareDirectoriesForRename();
 
     renameFileInCommand(child, "childnew");
-    final ProcessOutput result = runSvn("status");
-    verifySorted(result, "A + childnew",
-                 "D child",
-                 "D child" + File.separatorChar + "a.txt",
-                 "D child" + File.separatorChar + "grandChild",
-                 "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
+    runAndVerifyStatusSorted("A + childnew", "D child", "D child" + File.separatorChar + "a.txt",
+                             "D child" + File.separatorChar + "grandChild",
+                             "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
 
     refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
     insideInitializedChangeListManager(() -> {
@@ -252,8 +248,10 @@ public class SvnRenameTest extends SvnTestCase {
     renameFileInCommand(f, "anew.txt");
     renameFileInCommand(child, "newchild");
 
-    verifySorted(runSvn("status"), "A + newchild", "A + newchild" + File.separatorChar + "anew.txt",
-                 "D child", "D child" + File.separatorChar + "a.txt", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D + newchild" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A + newchild", "A + newchild" + File.separatorChar + "anew.txt",
+                             "D child", "D child" + File.separatorChar + "a.txt", "D child" + File.separatorChar + "grandChild",
+                             "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt",
+                             "D + newchild" + File.separatorChar + "a.txt");
 
     insideInitializedChangeListManager(() -> {
       refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
@@ -303,7 +301,7 @@ public class SvnRenameTest extends SvnTestCase {
     renameFileInCommand(file, "b.txt");
     checkin();
     undo();
-    verifySorted(runSvn("status"), "A + a.txt", "D b.txt");
+    runAndVerifyStatusSorted("A + a.txt", "D b.txt");
   }
 
   // IDEADEV-19336
@@ -321,7 +319,7 @@ public class SvnRenameTest extends SvnTestCase {
     checkin();
 
     undo();
-    verifySorted(runSvn("status"), "A + parent1" + File.separatorChar + "child",
+    runAndVerifyStatusSorted("A + parent1" + File.separatorChar + "child",
                  "D parent2" + File.separatorChar + "child",
                  "D parent2" + File.separatorChar + "child" + File.separatorChar + "a.txt");
   }
@@ -331,15 +329,15 @@ public class SvnRenameTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     final VirtualFile child = moveToNewPackage(file, "child");
-    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
     checkin();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    verifySorted(runSvn("status"), "? unversioned");
+    runAndVerifyStatusSorted("? unversioned");
 
     moveFileInCommand(child, unversioned);
-    verifySorted(runSvn("status"), "? unversioned", "D child", "D child" + File.separator + "a.txt");
+    runAndVerifyStatusSorted("? unversioned", "D child", "D child" + File.separator + "a.txt");
   }
 
   @Test
@@ -347,18 +345,18 @@ public class SvnRenameTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     final VirtualFile child = moveToNewPackage(file, "child");
-    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
     checkin();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    verifySorted(runSvn("status"), "? unversioned");
+    runAndVerifyStatusSorted("? unversioned");
 
     moveFileInCommand(child, unversioned);
-    verifySorted(runSvn("status"), "? unversioned", "D child", "D child" + File.separator + "a.txt");
+    runAndVerifyStatusSorted("? unversioned", "D child", "D child" + File.separator + "a.txt");
 
     undo();
-    verifySorted(runSvn("status"), "? unversioned");
+    runAndVerifyStatusSorted("? unversioned");
   }
 
   @Test
@@ -367,12 +365,12 @@ public class SvnRenameTest extends SvnTestCase {
 
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
-    verifySorted(runSvn("status"), "? a.txt");
+    runAndVerifyStatusSorted("? a.txt");
     final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
     moveFileInCommand(file, unversioned);
-    verifySorted(runSvn("status"), "? unversioned");
+    runAndVerifyStatusSorted("? unversioned");
     undo();
-    verifySorted(runSvn("status"), "? a.txt", "? unversioned");
+    runAndVerifyStatusSorted("? a.txt", "? unversioned");
   }
 
   @Test
@@ -380,13 +378,13 @@ public class SvnRenameTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
-    verifySorted(runSvn("status"), "A a.txt");
+    runAndVerifyStatusSorted("A a.txt");
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
     moveFileInCommand(file, unversioned);
-    verifySorted(runSvn("status"), "? unversioned");
+    runAndVerifyStatusSorted("? unversioned");
     undo();
-    verifySorted(runSvn("status"), "? a.txt", "? unversioned");
+    runAndVerifyStatusSorted("? a.txt", "? unversioned");
   }
 
   @Test
@@ -394,19 +392,19 @@ public class SvnRenameTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     final VirtualFile child = moveToNewPackage(file, "child");
-    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
     checkin();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile unversioned = createDirInCommand(myWorkingCopyDir, "unversioned");
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    verifySorted(runSvn("status"), "? unversioned");
+    runAndVerifyStatusSorted("? unversioned");
 
     moveFileInCommand(child, unversioned);
-    verifySorted(runSvn("status"), "? unversioned", "D child", "D child" + File.separator + "a.txt");
+    runAndVerifyStatusSorted("? unversioned", "D child", "D child" + File.separator + "a.txt");
     checkin();
 
     undo();
-    verifySorted(runSvn("status"), "? child", "? unversioned");
+    runAndVerifyStatusSorted("? child", "? unversioned");
   }
 
   // IDEA-92941
@@ -415,14 +413,14 @@ public class SvnRenameTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile sink = createDirInCommand(myWorkingCopyDir, "sink");
     final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
-    verifySorted(runSvn("status"), "A child", "A sink");
+    runAndVerifyStatusSorted("A child", "A sink");
     checkin();
     final VirtualFile file = createFileInCommand(child, "a.txt", "A");
-    verifySorted(runSvn("status"), "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child" + File.separatorChar + "a.txt");
     moveFileInCommand(file, sink);
-    verifySorted(runSvn("status"), "A sink" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A sink" + File.separatorChar + "a.txt");
     undo();
-    verifySorted(runSvn("status"), "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child" + File.separatorChar + "a.txt");
   }
 
   // todo undo, undo committed?
@@ -431,7 +429,7 @@ public class SvnRenameTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     moveToNewPackage(file, "child");
-    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
   }
 
   @Test
@@ -440,7 +438,7 @@ public class SvnRenameTest extends SvnTestCase {
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     checkin();
     moveToNewPackage(file, "child");
-    verifySorted(runSvn("status"), "A child", "A + child" + File.separatorChar + "a.txt", "D a.txt");
+    runAndVerifyStatusSorted("A child", "A + child" + File.separatorChar + "a.txt", "D a.txt");
   }
 
   private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) throws IOException {
