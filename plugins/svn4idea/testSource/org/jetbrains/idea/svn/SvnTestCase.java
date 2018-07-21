@@ -56,7 +56,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
@@ -232,7 +231,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void undo() {
-    invokeAndWaitIfNeeded((Runnable)() -> {
+    runInEdtAndWait(() -> {
       final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
       try {
         UndoManager.getInstance(myProject).undo(null);
