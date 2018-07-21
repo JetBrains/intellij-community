@@ -49,10 +49,10 @@ public class DvcsBranchUtil {
   @NotNull
   public static List<Change> swapRevisions(@NotNull List<Change> changes) {
     return ContainerUtil.map(changes, change -> {
-      ContentRevision beforeRevision = change.getAfterRevision();
-      ContentRevision afterRevision = change.getBeforeRevision();
-      if (beforeRevision == null || afterRevision == null) return new Change(beforeRevision, afterRevision);
-      return new Change(beforeRevision, afterRevision, change.getFileStatus());
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision == null || afterRevision == null) return new Change(afterRevision, beforeRevision);
+      return new Change(afterRevision, beforeRevision, change.getFileStatus());
     });
   }
 }
