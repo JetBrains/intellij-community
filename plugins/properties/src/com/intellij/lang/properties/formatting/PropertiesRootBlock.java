@@ -20,9 +20,8 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.PropertiesLanguage;
+import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
-import com.intellij.lang.properties.parsing.PropertyListStubElementType;
-import com.intellij.lang.properties.parsing.PropertyStubElementType;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
@@ -39,13 +38,12 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public class PropertiesRootBlock extends AbstractBlock {
-
+class PropertiesRootBlock extends AbstractBlock {
   private final CodeStyleSettings mySettings;
   private final Alignment mySeparatorAlignment;
 
-  protected PropertiesRootBlock(@NotNull ASTNode node,
-                                CodeStyleSettings settings) {
+  PropertiesRootBlock(@NotNull ASTNode node,
+                      CodeStyleSettings settings) {
     super(node, null, Alignment.createAlignment());
     mySettings = settings;
     mySeparatorAlignment = Alignment.createAlignment(true, Alignment.Anchor.LEFT);
@@ -57,10 +55,10 @@ public class PropertiesRootBlock extends AbstractBlock {
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
       if (!(child instanceof PsiWhiteSpace)) {
-        if (child.getElementType() instanceof PropertyListStubElementType) {
+        if (child.getElementType() == PropertiesElementTypes.PROPERTIES_LIST) {
           ASTNode propertyNode = child.getFirstChildNode();
           while (propertyNode != null) {
-            if (propertyNode.getElementType() instanceof PropertyStubElementType) {
+            if (propertyNode.getElementType() == PropertiesElementTypes.PROPERTY) {
               collectPropertyBlock(propertyNode, result);
             }
             else if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(propertyNode.getElementType()) ||
@@ -82,7 +80,7 @@ public class PropertiesRootBlock extends AbstractBlock {
     return result;
   }
 
-  private void collectPropertyBlock(ASTNode propertyNode, List<Block> collector) {
+  private void collectPropertyBlock(ASTNode propertyNode, List<? super Block> collector) {
     final ASTNode[] nonWhiteSpaces = propertyNode.getChildren(TokenSet.create(PropertiesTokenTypes.KEY_CHARACTERS,
                                                                               PropertiesTokenTypes.KEY_VALUE_SEPARATOR,
                                                                               PropertiesTokenTypes.VALUE_CHARACTERS));
@@ -107,8 +105,8 @@ public class PropertiesRootBlock extends AbstractBlock {
     if (child1 == null) {
       return null;
     }
-    return (mySettings.getCustomSettings(PropertiesCodeStyleSettings.class).SPACES_AROUND_KEY_VALUE_DELIMITER &&
-            (isSeparator(child1) || isSeparator(child2))) || isKeyValue(child1, child2)
+    return mySettings.getCustomSettings(PropertiesCodeStyleSettings.class).SPACES_AROUND_KEY_VALUE_DELIMITER &&
+            (isSeparator(child1) || isSeparator(child2)) || isKeyValue(child1, child2)
            ? Spacing.createSpacing(1, 1, 0, true, 0)
            : Spacing.createSpacing(0, 0, 0, true,
                                    mySettings.getCustomSettings(PropertiesCodeStyleSettings.class).KEEP_BLANK_LINES ? 999 : 0);
@@ -119,11 +117,8 @@ public class PropertiesRootBlock extends AbstractBlock {
         !PropertiesTokenTypes.KEY_CHARACTERS.equals(((PropertyBlock)maybeKey).getNode().getElementType())) {
       return false;
     }
-    if (!(maybeValue instanceof PropertyBlock) ||
-        !PropertiesTokenTypes.VALUE_CHARACTERS.equals(((PropertyBlock)maybeValue).getNode().getElementType())) {
-      return false;
-    }
-    return true;
+    return maybeValue instanceof PropertyBlock &&
+           PropertiesTokenTypes.VALUE_CHARACTERS.equals(((PropertyBlock)maybeValue).getNode().getElementType());
   }
 
   private static boolean isSeparator(Block block) {

@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
 public class ContainerUtilTest {
   @Test
   public void testFindInstanceOf() {
-    Iterator<Object> iterator = Arrays.<Object>asList(new Integer(1), new ArrayList(), "1").iterator();
+    Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList(), "1").iterator();
     String string = (String)ContainerUtil.find(iterator, FilteringIterator.instanceOf(String.class));
     assertEquals("1", string);
   }
@@ -86,7 +86,7 @@ public class ContainerUtilTest {
     assertIterating(Collections.singletonList(4), cond, 4);
   }
 
-  private static void assertIterating(List<Integer> collection, Condition<Integer> condition, Integer... expected) {
+  private static void assertIterating(List<Integer> collection, Condition<? super Integer> condition, Integer... expected) {
     List<Integer> actual = ContainerUtil.newArrayList(ContainerUtil.iterate(collection, condition));
     assertEquals(Arrays.asList(expected), actual);
   }
