@@ -189,11 +189,16 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     }
   }
 
+  private void copyUnknownElements(CodeStyleSettings from) {
+    myUnknownElementWriter = from.myUnknownElementWriter.clone();
+  }
+
   public void copyFrom(CodeStyleSettings from) {
     CommonCodeStyleSettings.copyPublicFields(from, this);
     CommonCodeStyleSettings.copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
     mySoftMargins.setValues(from.getDefaultSoftMargins());
     copyCustomSettingsFrom(from);
+    copyUnknownElements(from);
   }
 
 
