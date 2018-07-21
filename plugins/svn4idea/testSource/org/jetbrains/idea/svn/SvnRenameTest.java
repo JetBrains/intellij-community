@@ -34,9 +34,15 @@ public class SvnRenameTest extends SvnTestCase {
     myInitChangeListManager = false;
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+  }
+
   @Test
   public void testSimpleRename() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "test");
     checkin();
 
@@ -47,7 +53,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-18844
   @Test
   public void testRenameReplace() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "old");
     final VirtualFile aNew = createFileInCommand("aNew.txt", "new");
     checkin();
@@ -60,7 +65,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-16251
   @Test
   public void testRenameAddedPackage() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
     renameFileInCommand(dir, "newchild");
@@ -70,7 +74,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-8091
   @Test
   public void testDoubleRename() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile a = createFileInCommand("a.txt", "test");
     checkin();
 
@@ -119,7 +122,6 @@ public class SvnRenameTest extends SvnTestCase {
   }
 
   private VirtualFile prepareDirectoriesForRename() throws IOException {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
     final VirtualFile grandChild = createDirInCommand(child, "grandChild");
     createFileInCommand(child, "a.txt", "a");
@@ -175,7 +177,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-7697
   @Test
   public void testMovePackageToParent() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
     final VirtualFile grandChild = createDirInCommand(child, "grandChild");
     createFileInCommand(grandChild, "a.txt", "a");
@@ -200,7 +201,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-19223
   @Test
   public void testRollbackRenameWithUnversioned() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(child, "a.txt", "a");
     checkin();
@@ -265,7 +265,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-19364
   @Test
   public void testUndoMovePackage() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
     final VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "parent2");
     final VirtualFile child = createDirInCommand(parent1, "child");
@@ -282,7 +281,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-19552
   @Test
   public void testUndoRename() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     checkin();
 
@@ -294,7 +292,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   @Test
   public void testUndoCommittedRenameFile() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     checkin();
 
@@ -307,7 +304,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEADEV-19336
   @Test
   public void testUndoMoveCommittedPackage() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "parent1");
     final VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "parent2");
@@ -326,7 +322,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   @Test
   public void testMoveToUnversioned() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     final VirtualFile child = moveToNewPackage(file, "child");
     runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
@@ -342,7 +337,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   @Test
   public void testUndoMoveToUnversioned() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     final VirtualFile child = moveToNewPackage(file, "child");
     runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
@@ -361,8 +355,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   @Test
   public void testUndoMoveUnversionedToUnversioned() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     runAndVerifyStatusSorted("? a.txt");
@@ -375,8 +367,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   @Test
   public void testUndoMoveAddedToUnversioned() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     runAndVerifyStatusSorted("A a.txt");
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -389,7 +379,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   @Test
   public void testUndoMoveToUnversionedCommitted() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     final VirtualFile child = moveToNewPackage(file, "child");
     runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
@@ -410,7 +399,6 @@ public class SvnRenameTest extends SvnTestCase {
   // IDEA-92941
   @Test
   public void testUndoNewMove() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile sink = createDirInCommand(myWorkingCopyDir, "sink");
     final VirtualFile child = createDirInCommand(myWorkingCopyDir, "child");
     runAndVerifyStatusSorted("A child", "A sink");
@@ -426,7 +414,6 @@ public class SvnRenameTest extends SvnTestCase {
   // todo undo, undo committed?
   @Test
   public void testMoveToNewPackage() throws Throwable {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     moveToNewPackage(file, "child");
     runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
@@ -434,7 +421,6 @@ public class SvnRenameTest extends SvnTestCase {
 
   @Test
   public void testMoveToNewPackageCommitted() throws Throwable {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     checkin();
     moveToNewPackage(file, "child");
