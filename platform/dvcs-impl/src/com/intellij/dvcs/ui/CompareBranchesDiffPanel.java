@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.dvcs.util.LocalCommitCompareInfo;
@@ -109,13 +110,8 @@ class CompareBranchesDiffPanel extends JPanel {
                                   swapSides ? currentBranchText : otherBranchText));
 
     List<Change> diff = myCompareInfo.getTotalDiff();
-    if (swapSides) diff = swapRevisions(diff);
+    if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
     myChangesBrowser.setChangesToDisplay(diff);
-  }
-
-  @NotNull
-  private static List<Change> swapRevisions(@NotNull List<Change> changes) {
-    return ContainerUtil.map(changes, change -> new Change(change.getAfterRevision(), change.getBeforeRevision()));
   }
 
   private class MyChangesBrowser extends SimpleChangesBrowser {
@@ -128,7 +124,7 @@ class CompareBranchesDiffPanel extends JPanel {
     public void setChangesToDisplay(@NotNull Collection<? extends Change> changes) {
       List<Change> oldSelection = getSelectedChanges();
       super.setChangesToDisplay(changes);
-      myViewer.setSelectedChanges(swapRevisions(oldSelection));
+      myViewer.setSelectedChanges(DvcsBranchUtil.swapRevisions(oldSelection));
     }
 
     @NotNull

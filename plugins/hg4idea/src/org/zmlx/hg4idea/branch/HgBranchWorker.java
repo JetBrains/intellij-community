@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.branch;
 
+import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.dvcs.ui.CompareBranchesDialog;
 import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -99,6 +100,7 @@ public class HgBranchWorker {
     // return diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
     HgRevisionNumber branchRevisionNumber = HgCompareWithBranchAction.getBranchRevisionNumber(repository, branchName);
     VirtualFile root = repository.getRoot();
-    return HgUtil.getDiff(repository.getProject(), root, VcsUtil.getFilePath(root), branchRevisionNumber, null);
+    List<Change> changes = HgUtil.getDiff(repository.getProject(), root, VcsUtil.getFilePath(root), branchRevisionNumber, null);
+    return DvcsBranchUtil.swapRevisions(changes);
   }
 }
