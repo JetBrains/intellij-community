@@ -256,17 +256,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
-  protected void previewRefactoring(@NotNull UsageInfo[] usages) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
-      ensureElementsWritable(usages, createUsageViewDescriptor(usages));
-      execute(usages);
-      return;
-    }
-    final UsageViewDescriptor viewDescriptor = createUsageViewDescriptor(usages);
+  // Android Studio: Workaround for b/80407667
+  /**
+   * Allows custom refactorings to provide their own {@link Factory<UsageSearcher>} implementation. The created
+   * {@link UsageSearcher} will be called when a refactoring is re-run for the preview. This will happen on
+   * a pooled thread.
+   */
+  @NotNull
+  protected Factory<UsageSearcher> getUsageSearcherFactory(@NotNull UsageViewDescriptor viewDescriptor) {
     final PsiElement[] elements = viewDescriptor.getElements();
     final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
-    Factory<UsageSearcher> factory = () -> new UsageInfoSearcherAdapter() {
+    return () -> new UsageInfoSearcherAdapter() {
       @Override
       public void generate(@NotNull final Processor<Usage> processor) {
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -284,6 +284,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         return BaseRefactoringProcessor.this.findUsages();
       }
     };
+  }
+
+  protected void previewRefactoring(@NotNull UsageInfo[] usages) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
+      ensureElementsWritable(usages, createUsageViewDescriptor(usages));
+      execute(usages);
+      return;
+    }
+    final UsageViewDescriptor viewDescriptor = createUsageViewDescriptor(usages);
+    Factory<UsageSearcher> factory = getUsageSearcherFactory(viewDescriptor);
 
     showUsageView(viewDescriptor, factory, usages);
   }
@@ -494,8 +505,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
       for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
-        //noinspection unchecked
-        e.getKey().performOperation(myProject, e.getValue());
+        // Android Studio: Workaround for b/79220682
+        if (shouldApplyRefactoringHelper(e.getKey())) {
+          //noinspection unchecked
+          e.getKey().performOperation(myProject, e.getValue());
+        }
       }
       myTransaction.commit();
       if (Registry.is("run.refactorings.under.progress")) {
@@ -518,6 +532,14 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
       }
     }
+  }
+
+  // Android Studio: Workaround for b/79220682
+  /**
+   * Allows custom refactorings to decide whether a specific helper should apply or not
+   */
+  protected boolean shouldApplyRefactoringHelper(@NotNull RefactoringHelper key) {
+    return true;
   }
 
   protected boolean isToBeChanged(@NotNull UsageInfo usageInfo) {
