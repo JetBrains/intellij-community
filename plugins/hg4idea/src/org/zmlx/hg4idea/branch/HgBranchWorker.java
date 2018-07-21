@@ -91,7 +91,7 @@ public class HgBranchWorker {
 
   @NotNull
   private List<HgCommit> loadCommitsBetween(HgRepository repository, String fromRev, String toRev) throws VcsException {
-    List<String> parameters = Arrays.asList("-r", "reverse(" + toRev + "%" + fromRev + ")");
+    List<String> parameters = Arrays.asList("-r", "reverse(\"" + toRev + "\"%\"" + fromRev + "\")");
     return HgHistoryUtil.history(myProject, repository.getRoot(), -1, parameters, true);
   }
 
