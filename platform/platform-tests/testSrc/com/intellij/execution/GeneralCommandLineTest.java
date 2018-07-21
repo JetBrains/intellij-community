@@ -170,6 +170,20 @@ public class GeneralCommandLineTest {
       FileUtil.delete(script);
     }
   }
+  
+  @Test(timeout = 60000)
+  public void unicodeCommand() throws Exception {
+    String mark = String.valueOf(new Random().nextInt()) + UNICODE_RU;
+    String command = SystemInfo.isWindows ? "@echo " + mark + '\n' : "#!/bin/sh\necho " + mark + '\n';
+    File script = ExecUtil.createTempExecutableScript("test", ".cmd", command);
+    try {
+      String output = execAndGetOutput(createCommandLine(script.getPath()));
+      assertEquals(mark + '\n', StringUtil.convertLineSeparators(output));
+    }
+    finally {
+      FileUtil.delete(script);
+    }
+  }
 
   @Test(timeout = 60000)
   public void unicodeClassPath() throws Exception {
