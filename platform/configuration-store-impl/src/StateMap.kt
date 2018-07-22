@@ -72,7 +72,7 @@ class StateMap private constructor(private val names: Array<String>, private val
   override fun toString(): String = if (this == EMPTY) "EMPTY" else states.toString()
 
   companion object {
-    val EMPTY: StateMap = StateMap(emptyArray(), AtomicReferenceArray(0))
+    val EMPTY: StateMap = StateMap(ArrayUtil.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
 
     fun fromMap(map: Map<String, Any>): StateMap {
       if (map.isEmpty()) {
