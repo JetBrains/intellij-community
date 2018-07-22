@@ -177,90 +177,6 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   }
 }
 
-fun GuiTestCase.openRunConfiguration(vararg configuration: String){
-  val cfgName = configuration.last()
-  val runDebugConfigurations = "Run/Debug Configurations"
-  ideFrame {
-    logTestStep("Going to check presence of $runDebugConfigurations `$cfgName`")
-    navigationBar {
-      assert(exists { button(cfgName) }) { "Button `$cfgName` not found on Navigation bar" }
-      button(cfgName).click()
-      popupClick("Edit Configurations...")
-    }
-  }
-}
-
-fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
-  openRunConfiguration(*configuration)
-  val runDebugConfigurations = "Run/Debug Configurations"
-  ideFrame {
-    dialog(runDebugConfigurations) {
-      assert(exists { jTree(*configuration) })
-      jTree(*configuration).clickPath()
-      for ((field, expectedValue) in expectedValues) {
-        logTestStep("Field `$field`has a value = `$expectedValue`")
-        checkOneValue(this@checkRunConfiguration, field, expectedValue)
-      }
-      button("Cancel").click()
-    }
-  }
-}
-
-fun GuiTestCase.changeRunConfiguration(changedValues: Map<String, String>, vararg configuration: String) {
-  openRunConfiguration(*configuration)
-  val runDebugConfigurations = "Run/Debug Configurations"
-  ideFrame {
-    dialog(runDebugConfigurations) {
-      assert(exists { jTree(*configuration) })
-      jTree(*configuration).clickPath()
-      for ((field, changedValue) in changedValues) {
-        logTestStep("Going to set field `$field`to a value = `$changedValue`")
-        changeOneValue(this@changeRunConfiguration, field, changedValue)
-      }
-      button("OK").click()
-    }
-  }
-}
-
-fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String, expectedValue: String){
-  val actualValue = when {
-    guiTestCase.exists { textfield(expectedField, timeout = 1) } -> {
-      textfield(expectedField).text()
-    }
-    guiTestCase.exists { combobox(expectedField, timeout = 1) } -> {
-      val combo = combobox(expectedField)
-      println("combo = $combo")
-      println("listItems() = ${combo.listItems()}")
-      combo.selectedItem()
-    }
-    guiTestCase.exists { checkbox(expectedField, timeout = 1) } -> {
-      checkbox(expectedField).isSelected.toString()
-    }
-    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
-  }
-  println("Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`")
-    assert(actualValue == expectedValue) {
-      "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
-    }
-}
-
-fun JDialogFixture.changeOneValue(guiTestCase: GuiTestCase, expectedField: String, newValue: String){
-  when {
-    guiTestCase.exists { textfield(expectedField, timeout = 1) } -> {
-      textfield(expectedField).setText(newValue)
-    }
-    guiTestCase.exists { combobox(expectedField, timeout = 1) } -> {
-      combobox(expectedField).selectItem(newValue)
-    }
-    guiTestCase.exists { checkbox(expectedField, timeout = 1) } -> {
-      val newBooleanValue = newValue.toBoolean()
-      if(checkbox(expectedField).isSelected != newBooleanValue)
-        checkbox(expectedField).isSelected = newBooleanValue
-    }
-    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
-  }
-}
-
 fun GuiTestCase.checkProjectIsRun(configuration: String, message: String) {
   val buttonRun = "Run"
   logTestStep("Going to run configuration `$configuration`")
@@ -303,14 +219,4 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
       }
     }
   }
-}
-
-fun GuiTestCase.checkFileExists(filePath: Path) {
-  logTestStep("Going to check whether file `$filePath` created")
-  assert(filePath.toFile().exists()) { "Can't find a file `$filePath`" }
-}
-
-fun GuiTestCase.checkFileContainsLine(filePath: Path, line: String) {
-  logTestStep("Going to check whether ${filePath.fileName} contains line `$line`")
-  assert(Files.readAllLines(filePath).contains(line)) { "Line `$line` not found" }
 }

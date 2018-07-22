@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
@@ -198,10 +197,6 @@ val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
   testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, defaultTimeout)
 
-fun assertProjectPathExists(projectPath: String) {
-  assert(FileUtil.exists(projectPath)) { "Test project $projectPath should be created before test starting" }
-}
-
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 fun LibrariesSet.isSetEmpty() = isEmpty() || all { it.isEmpty() }
 fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
@@ -213,8 +208,8 @@ fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
  * Note: only one library/framework can be checked!
  * */
 fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       list.clickItem(groupJava)
@@ -256,8 +251,8 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
  * Note: only one library/framework can be checked!
  * */
 fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "") {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
@@ -286,8 +281,8 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
 }
 
 fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       val list: JListFixture = jList(groupGradle)
       list.clickItem(groupGradle)
@@ -344,8 +339,8 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
 }
 
 fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions) {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       val list: JListFixture = jList(groupMaven)
       list.clickItem(groupMaven)
@@ -502,8 +497,8 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
 internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
                                                         projectPath: String,
                                                         libs: LibrariesSet) {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(group)
