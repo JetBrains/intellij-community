@@ -31,13 +31,15 @@ import java.util.regex.Pattern;
  *   </li>
  * </ul>
  */
-public class FileSetEntry {
+public class FileSetDescriptor {
 
+  private final String mySpec;
   private @Nullable Pattern myPathPattern;
   private @Nullable Pattern myFileNamePattern;
 
-  public FileSetEntry(@NotNull String spec) {
-    compileSpec(spec);
+  public FileSetDescriptor(@NotNull String spec) {
+    mySpec = spec;
+    compileSpec(mySpec);
   }
 
   private void compileSpec(@NotNull String spec) {
@@ -135,5 +137,9 @@ public class FileSetEntry {
 
   private static boolean patternMatches(@Nullable Pattern pattern, @NotNull String str) {
     return pattern == null || pattern.matcher(str).matches();
+  }
+
+  public String getSpec() {
+    return mySpec;
   }
 }
