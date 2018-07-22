@@ -533,7 +533,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
-    public void removeTransientDataForKeys(int inputId, Collection<Integer> keys) {
+    public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Integer> keys) {
       super.removeTransientDataForKeys(inputId, keys);
       if (keys instanceof StubUpdatingIndexKeys) {
         Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = ((StubUpdatingIndexKeys)keys).myStubIndicesValueMap;

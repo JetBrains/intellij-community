@@ -192,13 +192,15 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     }
   }
 
-  public void removeTransientDataForKeys(int inputId, Collection<Key> keys) {
+  public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
     MemoryIndexStorage memoryIndexStorage = (MemoryIndexStorage)getStorage();
-    for(Key key:keys) memoryIndexStorage.clearMemoryMapForId(key, inputId);
+    for (Key key : keys) {
+      memoryIndexStorage.clearMemoryMapForId(key, inputId);
+    }
   }
 
   @Override
-  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
+  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     lock.lock();
     try {

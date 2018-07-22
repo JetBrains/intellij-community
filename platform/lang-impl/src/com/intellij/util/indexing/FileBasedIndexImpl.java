@@ -2401,7 +2401,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     @Override
-    protected void onThrowable(Throwable t) {
+    protected void onThrowable(@NotNull Throwable t) {
       LOG.error(t);
     }
 
