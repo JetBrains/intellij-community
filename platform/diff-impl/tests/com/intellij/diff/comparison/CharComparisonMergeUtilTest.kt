@@ -15,7 +15,7 @@
  */
 package com.intellij.diff.comparison
 
-class ComparisonMergeUtilTest : ComparisonMergeUtilTestBase() {
+class CharComparisonMergeUtilTest : ComparisonMergeUtilTestBase() {
   fun testSimpleCases() {
     chars {
       ("" - "" - "")

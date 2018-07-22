@@ -33,7 +33,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -72,11 +71,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
-import com.intellij.openapi.vcs.ex.Range;
-
 public class TextMergeViewer implements MergeTool.MergeViewer {
-  private static final Logger LOG = Logger.getInstance(TextMergeViewer.class);
-
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final TextMergeRequest myMergeRequest;
 
@@ -433,8 +428,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
 
         ComparisonManager manager = ComparisonManager.getInstance();
-        List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),
-                                                                     ignorePolicy.getComparisonPolicy(), indicator);
+        List<MergeLineFragment> lineFragments = manager.mergeLines(sequences.get(0), sequences.get(1), sequences.get(2),
+                                                                   ignorePolicy.getComparisonPolicy(), indicator);
 
         List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment -> {
           return DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy());
