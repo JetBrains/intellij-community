@@ -1,14 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
+import static com.intellij.openapi.actionSystem.ex.ActionUtil.recursiveRegisterShortcutSet;
 
 public class UnversionedViewDialog extends SpecificFilesViewDialog {
   private static final String TOOLBAR_GROUP = "Unversioned.Files.Dialog";
@@ -21,15 +27,8 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
 
   @Override
   protected void addCustomActions(@NotNull DefaultActionGroup group) {
-    ActionGroup popupGroup = getUnversionedPopupGroup();
-    ActionGroup toolbarGroup = getUnversionedToolbarGroup();
-
-    ActionUtil.recursiveRegisterShortcutSet(popupGroup, myView, null);
-    EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), myView);
-
-    group.add(toolbarGroup);
-
-    myView.installPopupHandler(popupGroup);
+    group.add(getUnversionedToolbarGroup());
+    myView.installPopupHandler(registerUnversionedPopupGroup(myView));
   }
 
   @NotNull
@@ -40,6 +39,16 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   @NotNull
   public static ActionGroup getUnversionedPopupGroup() {
     return (ActionGroup)ActionManager.getInstance().getAction(POPUP_GROUP);
+  }
+
+  @NotNull
+  public static ActionGroup registerUnversionedPopupGroup(@NotNull JComponent component) {
+    ActionGroup popupGroup = getUnversionedPopupGroup();
+
+    recursiveRegisterShortcutSet(popupGroup, component, null);
+    registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), component);
+
+    return popupGroup;
   }
 
   @NotNull
