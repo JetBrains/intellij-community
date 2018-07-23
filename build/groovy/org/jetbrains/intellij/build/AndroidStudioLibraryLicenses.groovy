@@ -30,6 +30,9 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Baksmali", libraryName: "baksmali", version: "2.2.1", url: "https://github.com/JesusFreke/smali",
                        additionalLibraryNames: ["baksmali-2.2.1.jar"], license: "New BSD License",
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
+    // for bouncycastle module library in android.sdktools.sdk-common
+    new LibraryLicense(name: "bouncycastle", version: "1.56", license: "MIT License", url: "http://bouncycastle.org",
+                       licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CDT", libraryName: "org.eclipse.cdt", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "Dexlib 2", libraryName: "dexlib2", version: "2.2.1", url: "https://github.com/JesusFreke/smali",
                        additionalLibraryNames: ["dexlib2-2.2.1.jar", "util-2.2.1.jar"],
