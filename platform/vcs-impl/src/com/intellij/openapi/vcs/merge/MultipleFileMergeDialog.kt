@@ -36,6 +36,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.NonNls
@@ -212,7 +213,7 @@ open class MultipleFileMergeDialog(
         size -= columnModel.getColumn(i).preferredWidth
       }
 
-      columnModel.getColumn(fileColumn).preferredWidth = size
+      columnModel.getColumn(fileColumn).preferredWidth = Math.max(size, JBUI.scale(200))
     }
 
     private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
