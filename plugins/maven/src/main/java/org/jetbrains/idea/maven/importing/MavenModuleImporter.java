@@ -388,6 +388,10 @@ public class MavenModuleImporter {
     if (cfg != null) {
       level = MAVEN_IDEA_PLUGIN_LEVELS.get(cfg.getChildTextTrim("jdkLevel"));
     }
+    
+    if (level == null) {
+      level = LanguageLevel.parse(myMavenProject.getReleaseLevel());
+    }
 
     if (level == null) {
       String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
