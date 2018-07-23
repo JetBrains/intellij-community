@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
  */
 @Tag("server")
 public class GithubServerPath {
+  public static final String DEFAULT_HOST = "github.com";
+
   @Attribute("useHttp")
   @Nullable private final Boolean myUseHttp;
   @Attribute("host")

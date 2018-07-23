@@ -10,7 +10,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import git4idea.DialogManager
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubApiUtil
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.GithubTask
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -33,7 +32,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
   internal fun getOldServer(): GithubServerPath? {
     try {
       if (hasOldAccount()) {
-        return GithubServerPath.from(settings.host ?: GithubApiUtil.DEFAULT_GITHUB_HOST)
+        return GithubServerPath.from(settings.host ?: GithubServerPath.DEFAULT_HOST)
       }
     }
     catch (ignore: Exception) {
@@ -66,7 +65,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
     var dialogCancelled = false
 
     if (accountManager.accounts.isEmpty()) {
-      val hostToUse = host ?: GithubApiUtil.DEFAULT_GITHUB_HOST
+      val hostToUse = host ?: GithubServerPath.DEFAULT_HOST
       when (authType) {
         GithubAuthData.AuthType.TOKEN -> {
           LOG.debug("Migrating token auth")

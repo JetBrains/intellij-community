@@ -18,8 +18,8 @@ package org.jetbrains.plugins.github.util;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 
 /**
  * @author Aleksey Pivovarov
@@ -87,10 +87,10 @@ public class GithubUrlUtil {
     final String API_PREFIX = "api.";
     final String ENTERPRISE_API_SUFFIX = "/api/v3";
 
-    if (url.equals(GithubApiUtil.DEFAULT_GITHUB_HOST)) {
+    if (url.equals(GithubServerPath.DEFAULT_HOST)) {
       return API_PREFIX + url;
     }
-    else if (url.equals(API_PREFIX + GithubApiUtil.DEFAULT_GITHUB_HOST)) {
+    else if (url.equals(API_PREFIX + GithubServerPath.DEFAULT_HOST)) {
       return url;
     }
     else if (url.endsWith(ENTERPRISE_API_SUFFIX)) {

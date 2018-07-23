@@ -43,8 +43,6 @@ import java.util.*;
 public class GithubApiUtil {
   private static final Logger LOG = GithubUtil.LOG;
 
-  public static final String DEFAULT_GITHUB_HOST = "github.com";
-
   private static final String PER_PAGE = "per_page=100";
 
   private static final Header ACCEPT_V3_JSON_HTML_MARKUP = new BasicHeader("Accept", "application/vnd.github.v3.html+json");

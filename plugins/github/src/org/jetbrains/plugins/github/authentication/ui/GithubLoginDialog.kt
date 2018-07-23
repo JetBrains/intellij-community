@@ -27,7 +27,6 @@ import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubApiUtil
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.GithubTask
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -49,7 +48,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
                                                   private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
-  private val serverTextField = ExtendableTextField(GithubApiUtil.DEFAULT_GITHUB_HOST)
+  private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST)
   private var centerPanel = Wrapper()
 
   private var southAdditionalPanel = Wrapper().apply { JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP) }
