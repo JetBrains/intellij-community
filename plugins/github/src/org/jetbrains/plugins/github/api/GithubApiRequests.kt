@@ -123,6 +123,11 @@ object GithubApiRequests {
       fun get(server: GithubServerPath, username: String, repoName: String, id: String) =
         Get.Optional.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id))
 
+      @JvmStatic
+      fun updateState(server: GithubServerPath, username: String, repoName: String, id: String, open: Boolean) =
+        Patch.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id),
+                                GithubChangeIssueStateRequest(if (open) "open" else "closed"))
+
       object Comments : Entity("/comments") {
         @JvmStatic
         fun pages(server: GithubServerPath, username: String, repoName: String, issueId: String) =

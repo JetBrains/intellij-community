@@ -32,7 +32,10 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
 import org.jetbrains.plugins.github.api.data.GithubIssueComment;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
@@ -41,7 +44,6 @@ import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
-import org.jetbrains.plugins.github.util.GithubAuthData;
 
 import javax.swing.*;
 import java.util.Date;
@@ -288,24 +290,25 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @Override
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    GithubConnection connection = getConnection();
-    try {
-      boolean isOpen;
-      switch (state) {
-        case OPEN:
-          isOpen = true;
-          break;
-        case RESOLVED:
-          isOpen = false;
-          break;
-        default:
-          throw new IllegalStateException("Unknown state: " + state);
-      }
-      GithubApiUtil.setIssueState(connection, getRepoAuthor(), getRepoName(), task.getNumber(), isOpen);
+    boolean isOpen;
+    switch (state) {
+      case OPEN:
+        isOpen = true;
+        break;
+      case RESOLVED:
+        isOpen = false;
+        break;
+      default:
+        throw new IllegalStateException("Unknown state: " + state);
     }
-    finally {
-      connection.close();
-    }
+    GithubApiRequestExecutor executor = getExecutor();
+    GithubServerPath server = getServer();
+    String repoAuthor = getRepoAuthor();
+    String repoName = getRepoName();
+
+    ProgressIndicator indicator = getProgressIndicator();
+    executor.execute(indicator,
+                     GithubApiRequests.Repos.Issues.updateState(server, repoAuthor, repoName, task.getNumber(), isOpen));
   }
 
   @NotNull
@@ -373,14 +376,6 @@ public class GithubRepository extends BaseRepositoryImpl {
     catch (NumberFormatException e) {
       LOG.warn("Can't decode token", e);
     }
-  }
-
-  private GithubAuthData getAuthData() {
-    return GithubAuthData.createTokenAuth(getUrl(), getToken(), isUseProxy());
-  }
-
-  private GithubConnection getConnection() {
-    return new GithubConnection(getAuthData(), true);
   }
 
   @NotNull

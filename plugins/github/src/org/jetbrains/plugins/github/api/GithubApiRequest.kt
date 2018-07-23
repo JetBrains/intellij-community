@@ -103,9 +103,21 @@ sealed class GithubApiRequest<T>(val url: String) {
     }
   }
 
-  companion object {
-    private fun <T> parseJsonResponse(response: GithubApiResponse, typeToken: TypeToken<T>): T {
-      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJson(it, typeToken) })
+  abstract class Patch<T> @JvmOverloads constructor(override val body: String,
+                                                    override val bodyMimeType: String,
+                                                    url: String,
+                                                    override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
+    companion object {
+      inline fun <reified T> json(url: String, body: Any): Post<T> = Json(url, body, T::class.java)
+    }
+
+    open class Json<T>(url: String, body: Any, clazz: Class<T>) : Post<T>(GithubApiContentHelper.toJson(body),
+                                                                          GithubApiContentHelper.JSON_MIME_TYPE,
+                                                                          url,
+                                                                          GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+      private val typeToken = TypeToken.get(clazz)
+
+      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
     }
   }
 
@@ -113,5 +125,11 @@ sealed class GithubApiRequest<T>(val url: String) {
     override val acceptMimeType: String? = null
 
     override fun extractResult(response: GithubApiResponse) {}
+  }
+
+  companion object {
+    private fun <T> parseJsonResponse(response: GithubApiResponse, typeToken: TypeToken<T>): T {
+      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJson(it, typeToken) })
+    }
   }
 }
