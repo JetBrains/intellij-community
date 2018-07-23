@@ -380,7 +380,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @NotNull
   private GithubApiRequestExecutor getExecutor() {
-    return GithubApiRequestExecutor.Factory.getInstance().create(getToken());
+    return GithubApiRequestExecutor.Factory.getInstance().create(getToken(), myUseProxy);
   }
 
   @NotNull

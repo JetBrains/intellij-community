@@ -34,12 +34,15 @@ sealed class GithubApiRequestExecutor {
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
-  class WithTokenAuth internal constructor(githubSettings: GithubSettings, private val token: String) : Base(githubSettings) {
+  class WithTokenAuth internal constructor(githubSettings: GithubSettings,
+                                           private val token: String,
+                                           private val useProxy: Boolean) : Base(githubSettings) {
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
       indicator.checkCanceled()
       return createRequestBuilder(request)
         .tuner { connection -> connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token") }
+        .useProxy(useProxy)
         .execute(request, indicator)
     }
   }
@@ -187,7 +190,12 @@ sealed class GithubApiRequestExecutor {
   class Factory internal constructor(private val githubSettings: GithubSettings) {
     @CalledInAny
     fun create(token: String): WithTokenAuth {
-      return GithubApiRequestExecutor.WithTokenAuth(githubSettings, token)
+      return create(token, true)
+    }
+
+    @CalledInAny
+    fun create(token: String, useProxy: Boolean = true): WithTokenAuth {
+      return GithubApiRequestExecutor.WithTokenAuth(githubSettings, token, useProxy)
     }
 
     @CalledInAny
