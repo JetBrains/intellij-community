@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -653,8 +656,6 @@ public class ChangeListWorker {
         myChangeMappings.put(change, newList);
       }
     }
-
-    FileStatusManager.getInstance(myProject).fileStatusesChanged();
 
     if (myMainWorker) {
       myDelayedNotificator.allChangeListsMappingsChanged();

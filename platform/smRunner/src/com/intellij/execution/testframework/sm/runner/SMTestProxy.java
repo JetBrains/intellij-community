@@ -254,6 +254,9 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    if (myLocator == null) {
+      return null;
+    }
     if (myLocationCachedValue == null) {
       myLocationCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
         Location value = getLocation(project, searchScope, myLocationUrl);

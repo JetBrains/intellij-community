@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
+import com.intellij.concurrency.JobScheduler
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertConcurrentPromises
 import org.assertj.core.api.Assertions.assertThat
@@ -10,6 +11,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class AsyncPromiseTest {
@@ -144,4 +146,19 @@ class AsyncPromiseTest {
     r()
     assertThat(count.get()).isEqualTo(numThreads + 1)
   }
+
+  @Test
+  fun collectResultsMustReturnArrayWithTheSameOrder() {
+    val promise0 = AsyncPromise<String>()
+    val promise1 = AsyncPromise<String>()
+    val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 10, TimeUnit.SECONDS)
+    val f1 = JobScheduler.getScheduler().schedule({ promise1.setResult("1") }, 1, TimeUnit.SECONDS)
+    val list = Arrays.asList(promise0, promise1)
+    val results = list.collectResults()
+    val l = results.blockingGet(1, TimeUnit.MINUTES)
+    assertEquals(listOf("0", "1"), l)
+    f0.get();
+    f1.get();
+  }
+
 }

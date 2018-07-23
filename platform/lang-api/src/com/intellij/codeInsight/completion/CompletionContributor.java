@@ -190,9 +190,18 @@ public abstract class CompletionContributor {
 
   /**
    * Allow autoPopup to appear after custom symbol
+   * @deprecated use {@link CompletionContributor#invokeAutoPopup(PsiElement, char, int)}
    */
+  @Deprecated
   public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
     return false;
+  }
+
+  /**
+   * Allow autoPopup to appear after custom symbol
+   */
+  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar, int offset) {
+    return invokeAutoPopup(position, typeChar);
   }
 
   /**

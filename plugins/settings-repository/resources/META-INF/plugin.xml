@@ -4,7 +4,7 @@
   <description><![CDATA[
   <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
   <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>
-  <p>See <a href="https://github.com/develar/settings-repository">project page</a> for more info.</p>]]></description>
+  <p>See the <a href="https://github.com/JetBrains/intellij-community/tree/master/plugins/settings-repository">README file</a> on Github for more info.</p>]]></description>
   <vendor>JetBrains</vendor>
 
   <!-- otherwise plugin will be not loaded in tests -->

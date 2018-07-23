@@ -72,10 +72,19 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   public static void doCompletion(@NotNull final CompletionParameters parameters,
                                   @NotNull final CompletionResultSet result,
                                   @NotNull final JsonSchemaObject rootSchema) {
+    doCompletion(parameters, result, rootSchema, true);
+  }
+
+  public static void doCompletion(@NotNull final CompletionParameters parameters,
+                                  @NotNull final CompletionResultSet result,
+                                  @NotNull final JsonSchemaObject rootSchema,
+                                  boolean stop) {
     final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
     new Worker(rootSchema, parameters.getPosition(), completionPosition, result).work();
-    result.stopHere();
+    if (stop) {
+      result.stopHere();
+    }
   }
 
   @TestOnly

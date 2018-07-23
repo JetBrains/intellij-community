@@ -185,7 +185,7 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.STATIC)) {
         break;
       }
-      if (element instanceof PsiMethod || element instanceof PsiClass) {
+      if (element instanceof PsiMethod || (element instanceof PsiClass && !(element instanceof PsiTypeParameter))) {
         if (((PsiMember)element).getName() != null) {
           parents.add((PsiNameIdentifierOwner)element);
           if (findFirstOnly) {

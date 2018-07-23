@@ -25,14 +25,14 @@ import javax.swing.text.Position
 class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(robot, pluginDialog), ContainerFixture<JDialog> {
   fun isPluginInstalled(pluginName: String): Boolean = findPluginsAppearedOnTheScreen().find { it.name == pluginName } != null
 
-  fun isPluginEnabled(pluginName: String): Boolean = findEnableDisableCheckBox(pluginName).isSelected
+  fun isPluginEnabled(pluginName: String): Boolean = findCheckBox(pluginName).isSelected
 
   fun enablePlugin(pluginName: String) {
-    if (!isPluginEnabled(pluginName)) robot().click(findEnableDisableCheckBox(pluginName))
+    if (!isPluginEnabled(pluginName)) robot().click(findCheckBox(pluginName))
   }
 
   fun disablePlugin(pluginName: String) {
-    if (isPluginEnabled(pluginName)) robot().click(findEnableDisableCheckBox(pluginName))
+    if (isPluginEnabled(pluginName)) robot().click(findCheckBox(pluginName))
   }
 
   fun showInstalledPlugins() {
@@ -64,7 +64,7 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
   fun findPluginsAppearedOnTheScreen(): Iterable<IdeaPluginDescriptor> =
     waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java, defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
 
-  private fun findEnableDisableCheckBox(pluginName: String) =
+  private fun findCheckBox(pluginName: String) =
     waitUntilFound(findCellPluginComponent(pluginName), JCheckBox::class.java, defaultTimeout) { true }
 
   private fun findTabHeader(): TabHeaderComponent =
