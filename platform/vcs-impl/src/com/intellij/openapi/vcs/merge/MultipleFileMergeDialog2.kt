@@ -183,6 +183,11 @@ open class MultipleFileMergeDialog2(
   }
 
   private class MyTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
+
+    init {
+      getTableHeader().reorderingAllowed = false
+    }
+
     override fun doLayout() {
       if (getTableHeader().resizingColumn == null) {
         updateColumnSizes()
