@@ -176,10 +176,11 @@ open class MultipleFileMergeDialog2(
   }
 
   private class ColumnInfoAdapter(private val base: ColumnInfo<Any, Any>,
-                                  columnName: String) : ColumnInfo<DefaultMutableTreeNode, Any>(columnName) {
+                                  private val columnName: String) : ColumnInfo<DefaultMutableTreeNode, Any>(columnName) {
     override fun valueOf(node: DefaultMutableTreeNode) = (node.userObject as? VirtualFile)?.let { base.valueOf(it) }
     override fun getMaxStringValue() = base.maxStringValue
     override fun getAdditionalWidth() = base.additionalWidth
+    override fun getTooltipText() = base.tooltipText ?: columnName
   }
 
   private class MyTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
