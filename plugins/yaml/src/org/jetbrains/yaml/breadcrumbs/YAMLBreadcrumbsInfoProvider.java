@@ -88,7 +88,7 @@ public class YAMLBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
     if (!(element instanceof YAMLKeyValue || element instanceof YAMLSequenceItem)) {
       return super.getContextActions(element);
     }
-    String configName = YAMLUtil.getConfigFullName(element);
+    String configName = YAMLUtil.getConfigFullName((YAMLPsiElement)element);
     if (configName.isEmpty()) {
       return super.getContextActions(element);
     }
