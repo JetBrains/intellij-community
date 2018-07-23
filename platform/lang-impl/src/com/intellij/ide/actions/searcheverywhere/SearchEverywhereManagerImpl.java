@@ -126,7 +126,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   @Override
   public boolean isShown() {
-    return myBalloon != null && !myBalloon.isDisposed();
+    return mySearchEverywhereUI != null && myBalloon != null && !myBalloon.isDisposed();
   }
 
   @Override
@@ -183,7 +183,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void saveSearchText() {
-    if (mySearchEverywhereUI == null) {
+    if (!isShown()) {
       return;
     }
 
@@ -195,6 +195,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void saveLocation() {
+    if (!isShown()) {
+      return;
+    }
+
     Dimension size = myBalloon.getSize();
     Point location = myBalloon.getLocationOnScreen();
     DimensionService service = DimensionService.getInstance();
@@ -203,7 +207,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void showHistoryItem(boolean next) {
-    if (mySearchEverywhereUI == null) {
+    if (!isShown()) {
       return;
     }
 
@@ -214,6 +218,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void updateHistoryIterator() {
+    if (!isShown()) {
+      return;
+    }
+
     String selectedContributorID = mySearchEverywhereUI.getSelectedContributorID();
     if (myHistoryIterator == null || !myHistoryIterator.getContributorID().equals(selectedContributorID)) {
       myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
