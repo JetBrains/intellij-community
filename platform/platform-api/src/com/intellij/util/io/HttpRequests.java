@@ -185,6 +185,25 @@ public final class HttpRequests {
     });
   }
 
+  /**
+   * Java does not support "newer" HTTP methods so we have to rely on server-side support of `X-HTTP-Method-Override` header to invoke PATCH
+   * For reasoning see {@link HttpURLConnection#setRequestMethod(String)}
+   * <p>
+   * TODO: either fiddle with reflection or patch JDK to avoid server reliance
+   */
+  @NotNull
+  public static RequestBuilder patch(@NotNull String url, @Nullable String contentType) {
+    return new RequestBuilderImpl(url, rawConnection -> {
+      HttpURLConnection connection = (HttpURLConnection)rawConnection;
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("X-HTTP-Method-Override", "PATCH");
+      connection.setDoOutput(true);
+      if (contentType != null) {
+        connection.setRequestProperty("Content-Type", contentType);
+      }
+    });
+  }
+
   @NotNull
   public static String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) {
     StringBuilder builder = new StringBuilder();
