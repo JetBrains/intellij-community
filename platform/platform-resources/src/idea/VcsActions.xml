@@ -224,7 +224,7 @@
       <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangeListAction"
               icon="AllIcons.Actions.Rollback"/>
       <action id="CommittedChanges.Clear" class="com.intellij.openapi.vcs.changes.committed.ClearCommittedAction"
-              icon="AllIcons.Vcs.Remove"/>
+              icon="AllIcons.Actions.GC"/>
     </group>
 
     <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
