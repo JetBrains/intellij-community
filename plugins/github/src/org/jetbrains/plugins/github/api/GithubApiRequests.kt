@@ -122,6 +122,24 @@ object GithubApiRequests {
       @JvmStatic
       fun get(server: GithubServerPath, username: String, repoName: String, id: String) =
         Get.Optional.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id))
+
+      object Comments : Entity("/comments") {
+        @JvmStatic
+        fun pages(server: GithubServerPath, username: String, repoName: String, issueId: String) =
+          GithubApiPagesLoader.Request(get(server, username, repoName, issueId), ::get)
+
+        @JvmStatic
+        fun get(server: GithubServerPath, username: String, repoName: String, issueId: String,
+                pagination: GithubRequestPagination? = null) =
+          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix,
+                     GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
+
+        @JvmStatic
+        fun get(url: String) = object : Get.JsonPage<GithubIssueComment>(url, GithubIssueComment::class.java) {
+          override val acceptMimeType: String
+            get() = GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE
+        }.withOperationName("get comments for issue")
+      }
     }
 
     object PullRequests : Entity("/pulls") {

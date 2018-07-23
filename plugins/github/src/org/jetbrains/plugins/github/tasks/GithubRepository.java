@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
 import org.jetbrains.plugins.github.api.data.GithubIssueComment;
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
@@ -249,19 +250,18 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   private Comment[] fetchComments(final long id) throws Exception {
-    GithubConnection connection = getConnection();
-    try {
-      List<GithubIssueComment> result = GithubApiUtil.getIssueComments(connection, getRepoAuthor(), getRepoName(), id);
+    GithubApiRequestExecutor executor = getExecutor();
+    ProgressIndicator indicator = getProgressIndicator();
 
-      return ContainerUtil.map2Array(result, Comment.class, comment -> new GithubComment(comment.getCreatedAt(),
-                                                                                         comment.getUser().getLogin(),
-                                                                                         comment.getBodyHtml(),
-                                                                                         comment.getUser().getAvatarUrl(),
-                                                                                         comment.getUser().getHtmlUrl()));
-    }
-    finally {
-      connection.close();
-    }
+    List<GithubIssueComment> result = GithubApiPagesLoader
+      .loadAll(executor, indicator, GithubApiRequests.Repos.Issues.Comments.pages(getServer(),
+                                                                                  getRepoAuthor(), getRepoName(), Long.toString(id)));
+
+    return ContainerUtil.map2Array(result, Comment.class, comment -> new GithubComment(comment.getCreatedAt(),
+                                                                                       comment.getUser().getLogin(),
+                                                                                       comment.getBodyHtml(),
+                                                                                       comment.getUser().getAvatarUrl(),
+                                                                                       comment.getUser().getHtmlUrl()));
   }
 
   @Nullable
