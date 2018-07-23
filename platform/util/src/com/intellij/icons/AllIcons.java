@@ -242,7 +242,11 @@ public class AllIcons {
     public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.svg"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.svg"); // 16x16
     public static final Icon Rerun = IconLoader.getIcon("/actions/rerun.svg"); // 16x16
-    public static final Icon Reset_to_default = IconLoader.getIcon("/actions/reset-to-default.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Rollback */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Reset_to_default = IconLoader.getIcon("/actions/rollback.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Rollback */
     @SuppressWarnings("unused")
@@ -266,7 +270,11 @@ public class AllIcons {
     public static final Icon ShortcutFilter = IconLoader.getIcon("/actions/shortcutFilter.svg"); // 16x16
     public static final Icon Show = IconLoader.getIcon("/actions/show.svg"); // 16x16
     public static final Icon ShowAsTree = IconLoader.getIcon("/actions/showAsTree.svg"); // 16x16
-    public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/showChangesOnly.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/preview.svg"); // 16x16
     public static final Icon ShowHiddens = IconLoader.getIcon("/actions/showHiddens.svg"); // 16x16
     public static final Icon ShowImportStatements = IconLoader.getIcon("/actions/showImportStatements.svg"); // 16x16
     public static final Icon ShowReadAccess = IconLoader.getIcon("/actions/showReadAccess.svg"); // 16x16
@@ -309,7 +317,7 @@ public class AllIcons {
     public static final Icon TraceInto = IconLoader.getIcon("/actions/traceInto.svg"); // 16x16
     public static final Icon TraceOver = IconLoader.getIcon("/actions/traceOver.svg"); // 16x16
     public static final Icon Undo = IconLoader.getIcon("/actions/undo.svg"); // 16x16
-    public static final Icon Uninstall = IconLoader.getIcon("/actions/uninstall.png"); // 16x16
+    public static final Icon Uninstall = IconLoader.getIcon("/actions/uninstall.svg"); // 16x16
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.svg"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
 
