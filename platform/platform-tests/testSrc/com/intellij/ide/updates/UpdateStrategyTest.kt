@@ -29,15 +29,15 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `patch exclusions`() {
-    val result = check("IU-145.258", ChannelStatus.RELEASE, """
+    val channels = """
       <channel id="IDEA_Release" status="release" licensing="release">
         <build number="145.597" version="2016.1.1">
           <patch from="145.596"/>
           <patch from="145.258" exclusions="win,mac,unix"/>
         </build>
-      </channel>""")
-    assertNotNull(result.newBuild?.patch(BuildNumber.fromString("145.596")))
-    assertNull(result.newBuild?.patch(BuildNumber.fromString("145.258")))
+      </channel>"""
+    assertNotNull(check("IU-145.596", ChannelStatus.RELEASE, channels).patch)
+    assertNull(check("IU-145.258", ChannelStatus.RELEASE, channels).patch)
   }
 
   @Test fun `order of builds does not matter`() {

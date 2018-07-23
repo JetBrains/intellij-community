@@ -28,7 +28,10 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
       .filter { p -> isApplicable(p.first, ignoredBuilds) }                               // filters out inapplicable builds
       .maxWith(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
 
-    return CheckForUpdateResult(result?.first, result?.second)
+    val newBuild = result?.first
+    val updatedChannel = result?.second
+    val patch = newBuild?.patch(currentBuild)
+    return CheckForUpdateResult(newBuild, updatedChannel, patch)
   }
 
   private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>) =

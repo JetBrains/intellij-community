@@ -8,12 +8,14 @@ public class CheckForUpdateResult {
   private final UpdateStrategy.State myState;
   private final BuildInfo myNewBuild;
   private final UpdateChannel myUpdatedChannel;
+  private final PatchInfo myPatch;
   private final Exception myError;
 
-  CheckForUpdateResult(@Nullable BuildInfo newBuild, @Nullable UpdateChannel updatedChannel) {
+  CheckForUpdateResult(@Nullable BuildInfo newBuild, @Nullable UpdateChannel updatedChannel, @Nullable PatchInfo patch) {
     myState = UpdateStrategy.State.LOADED;
     myNewBuild = newBuild;
     myUpdatedChannel = updatedChannel;
+    myPatch = patch;
     myError = null;
   }
 
@@ -21,6 +23,7 @@ public class CheckForUpdateResult {
     myState = state;
     myNewBuild = null;
     myUpdatedChannel = null;
+    myPatch = null;
     myError = e;
   }
 
@@ -34,6 +37,10 @@ public class CheckForUpdateResult {
 
   public @Nullable UpdateChannel getUpdatedChannel() {
     return myUpdatedChannel;
+  }
+
+  public @Nullable PatchInfo getPatch() {
+    return myPatch;
   }
 
   public @Nullable Exception getError() {

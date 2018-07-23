@@ -390,7 +390,7 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        val patch = newBuild.patch(ApplicationInfo.getInstance().build)
+        val patch = checkForUpdateResult.patch
         val forceHttps = updateSettings.canUseSecureConnection()
         UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
@@ -561,7 +561,7 @@ object UpdateChecker {
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild
-      patch = newBuild?.patch(ApplicationInfo.getInstance().build)
+      patch = checkForUpdateResult.patch
     }
 
     if (channel != null && newBuild != null) {
