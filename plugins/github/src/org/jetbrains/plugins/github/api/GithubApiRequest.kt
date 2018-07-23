@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api
 import com.google.gson.reflect.TypeToken
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
+import org.jetbrains.plugins.github.api.data.GithubSearchResult
 import java.io.IOException
 
 /**
@@ -41,6 +42,8 @@ sealed class GithubApiRequest<T>(val url: String) {
       inline fun <reified T> jsonList(url: String): Get<List<T>> = JsonList(url, T::class.java)
 
       inline fun <reified T> jsonPage(url: String): Get<GithubResponsePage<T>> = JsonPage(url, T::class.java)
+
+      inline fun <reified T> jsonSearchPage(url: String): Get<GithubResponsePage<T>> = JsonSearchPage(url, T::class.java)
     }
 
     open class Json<T>(url: String, clazz: Class<T>) : Get<T>(url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
@@ -60,6 +63,15 @@ sealed class GithubApiRequest<T>(val url: String) {
 
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
         return GithubResponsePage.parseFromHeader(parseJsonResponse(response, typeToken),
+                                                  response.findHeader(GithubResponsePage.HEADER_NAME))
+      }
+    }
+
+    open class JsonSearchPage<T>(url: String, clazz: Class<T>) : Get<GithubResponsePage<T>>(url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+      private val typeToken = TypeToken.getParameterized(GithubSearchResult::class.java, clazz) as TypeToken<GithubSearchResult<T>>
+
+      override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
+        return GithubResponsePage.parseFromHeader(parseJsonResponse(response, typeToken).items,
                                                   response.findHeader(GithubResponsePage.HEADER_NAME))
       }
     }

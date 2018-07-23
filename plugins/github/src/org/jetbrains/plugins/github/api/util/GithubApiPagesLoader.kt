@@ -35,6 +35,22 @@ object GithubApiPagesLoader {
     return null
   }
 
+  @Throws(IOException::class)
+  @JvmStatic
+  fun <T> load(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, pagesRequest: Request<T>, maximum: Int): List<T> {
+    val result = mutableListOf<T>()
+    var request: GithubApiRequest<GithubResponsePage<T>>? = pagesRequest.initialRequest
+    while (request != null) {
+      val page = executor.execute(indicator, request)
+      for (item in page.items) {
+        result.add(item)
+        if (result.size == maximum) return result
+      }
+      request = page.nextLink?.let(pagesRequest.urlRequestProvider)
+    }
+    return result
+  }
+
   class Request<T>(val initialRequest: GithubApiRequest<GithubResponsePage<T>>,
                    val urlRequestProvider: (String) -> GithubApiRequest<GithubResponsePage<T>>)
 }

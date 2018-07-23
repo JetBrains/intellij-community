@@ -6,6 +6,8 @@ import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.requests.*
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.api.util.GithubApiSearchTermBuilder
+import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
 import java.awt.Image
 
 /**
@@ -102,6 +104,26 @@ object GithubApiRequests {
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get forks")
     }
 
+    object Issues : Entity("/issues") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String,
+                state: String? = null, assignee: String? = null) = GithubApiPagesLoader.Request(get(server, username, repoName,
+                                                                                                    state, assignee), ::get)
+
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String,
+              state: String? = null, assignee: String? = null, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix,
+                   GithubApiUrlQueryBuilder.urlQuery { param("state", state); param("assignee", assignee); param(pagination) }))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubIssue>(url).withOperationName("get issues in repository")
+
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, id: String) =
+        Get.Optional.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", id))
+    }
+
     object PullRequests : Entity("/pulls") {
       @JvmStatic
       fun create(server: GithubServerPath,
@@ -127,6 +149,32 @@ object GithubApiRequests {
     @JvmStatic
     fun delete(server: GithubServerPath, id: String) = Delete(getUrl(server, urlSuffix, "/$id"))
       .withOperationName("delete gist $id")
+  }
+
+  object Search : Entity("/search") {
+    object Issues : Entity("/issues") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, repoPath: GithubFullPath?, state: String?, assignee: String?, query: String?) =
+        GithubApiPagesLoader.Request(get(server, repoPath, state, assignee, query), ::get)
+
+      @JvmStatic
+      fun get(server: GithubServerPath, repoPath: GithubFullPath?, state: String?, assignee: String?, query: String?,
+              pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Search.urlSuffix, urlSuffix,
+                   GithubApiUrlQueryBuilder.urlQuery {
+                     param("q", GithubApiSearchTermBuilder.searchQuery {
+                       qualifier("repo", repoPath?.fullName.orEmpty())
+                       qualifier("state", state)
+                       qualifier("assignee", assignee)
+                       query(query)
+                     })
+                     param(pagination)
+                   }))
+
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonSearchPage<GithubIssue>(url).withOperationName("search issues in repository")
+    }
   }
 
   object Auth : Entity("/authorizations") {
