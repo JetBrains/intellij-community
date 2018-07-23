@@ -102,6 +102,10 @@ public class AllIcons {
     public static final Icon Dump = IconLoader.getIcon("/actions/dump.svg"); // 16x16
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg"); // 16x16
     public static final Icon EditSource = IconLoader.getIcon("/actions/editSource.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon ErDiagram = IconLoader.getIcon("/actions/erDiagram.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Remove */
