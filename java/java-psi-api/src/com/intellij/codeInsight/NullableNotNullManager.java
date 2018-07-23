@@ -26,12 +26,6 @@ public abstract class NullableNotNullManager {
   protected static final Logger LOG = Logger.getInstance(NullableNotNullManager.class);
   protected final Project myProject;
 
-  // Android Studio: hard-code to Android annotation classes
-  public String myDefaultNullable = "android.support.annotation.Nullable";
-  public String myDefaultNotNull = "android.support.annotation.NonNull";
-  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
-  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
-
   protected static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   protected static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
 
