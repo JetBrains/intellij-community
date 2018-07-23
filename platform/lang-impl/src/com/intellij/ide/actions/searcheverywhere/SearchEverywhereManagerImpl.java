@@ -183,6 +183,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void saveSearchText() {
+    if (mySearchEverywhereUI == null) {
+      return;
+    }
+
     updateHistoryIterator();
     String searchText = mySearchEverywhereUI.getSearchField().getText();
     if (!searchText.isEmpty()) {
@@ -199,6 +203,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void showHistoryItem(boolean next) {
+    if (mySearchEverywhereUI == null) {
+      return;
+    }
+
     updateHistoryIterator();
     JTextField searchField = mySearchEverywhereUI.getSearchField();
     searchField.setText(next ? myHistoryIterator.next() : myHistoryIterator.prev());
