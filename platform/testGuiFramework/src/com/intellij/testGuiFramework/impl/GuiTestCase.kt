@@ -336,6 +336,9 @@ open class GuiTestCase {
     }
   }
 
+  /**
+   * Finds JDialog with a specific title (if title is null showing dialog should be only one)
+   */
   private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeoutInSeconds: Long): JDialog =
     waitUntilFound(null, JDialog::class.java, timeoutInSeconds) {
       title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
