@@ -19,7 +19,79 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val runConfigTitle = "Run/Debug Configurations"
     const val buttonCancel = "Cancel"
     const val buttonOK = "OK"
+  }
 
+  enum class FieldKind {
+    Text, Check, Choice, List, Tree, Combo, Custom
+  }
+
+  data class ConfigurationField(val title: String, val kind: FieldKind, val type: String? = null) {
+    fun RunConfigurationModel.isFieldPresent(): Boolean {
+      with(connectDialog()) {
+        return when (kind) {
+          RunConfigurationModel.FieldKind.Text -> guiTestCase.exists { textfield(title, timeout = 1) }
+          RunConfigurationModel.FieldKind.Check -> guiTestCase.exists { checkbox(title, timeout = 1) }
+          RunConfigurationModel.FieldKind.Choice -> TODO()
+          RunConfigurationModel.FieldKind.List -> TODO()
+          RunConfigurationModel.FieldKind.Tree -> TODO()
+          RunConfigurationModel.FieldKind.Combo -> guiTestCase.exists { combobox(title, timeout = 1) }
+          RunConfigurationModel.FieldKind.Custom -> TODO()
+        }
+      }
+    }
+
+    fun RunConfigurationModel.getFieldValue(): String {
+      with(connectDialog()) {
+        val actualValue = when (kind) {
+          FieldKind.Text -> textfield(title).text()
+          FieldKind.Check -> checkbox(title).isSelected.toString()
+          FieldKind.Choice -> TODO()
+          FieldKind.List -> TODO()
+          FieldKind.Tree -> TODO()
+          FieldKind.Combo -> combobox(title).selectedItem()
+          FieldKind.Custom -> TODO()
+        }
+        return actualValue ?: throw ComponentLookupException("Cannot find component with label `$title`")
+      }
+    }
+
+    fun RunConfigurationModel.setFieldValue(value: String) {
+      with(connectDialog()) {
+        when (kind) {
+          FieldKind.Text -> textfield(title).setText(value)
+          FieldKind.Check -> checkbox(title).isSelected = value.toBoolean()
+          FieldKind.Choice -> TODO()
+          FieldKind.List -> TODO()
+          FieldKind.Tree -> TODO()
+          FieldKind.Combo -> combobox(title).selectItem(value)
+          FieldKind.Custom -> TODO()
+        }
+      }
+    }
+  }
+
+  enum class ApplicationFields(val conf: ConfigurationField) {
+    MainClass(ConfigurationField("Main class:", FieldKind.Text)),
+    VMOptions(ConfigurationField("VM options:", FieldKind.Text)),
+    ProgramArgs(ConfigurationField("Program arguments:", FieldKind.Text)),
+    WorkingDir(ConfigurationField("Working directory:", FieldKind.Text)),
+    EnvVars(ConfigurationField("Environment variables:", FieldKind.Text)),
+    UseModule(ConfigurationField("Use classpath of module:", FieldKind.Combo)),
+    ProvidedScope(ConfigurationField("Include dependencies with \"Provided\" scope", FieldKind.Check)),
+    JRE(ConfigurationField("JRE:", FieldKind.Combo)),
+    ShortenCmdLine(ConfigurationField("Shorten command line:", FieldKind.Combo)),
+    CapturingSnapshots(ConfigurationField("Enable capturing form snapshots", FieldKind.Check)),
+    BeforeLaunch(ConfigurationField("Before launch:", FieldKind.List))
+  }
+
+  enum class GlassfishFields(val conf: ConfigurationField){
+    AppServer(ConfigurationField("Application server:", FieldKind.Combo)),
+    URL(ConfigurationField("URL:", FieldKind.Text)),
+    AfterLaunchCheck(ConfigurationField("After launch", FieldKind.Check)),
+    OnUpdateAction(ConfigurationField("On 'Update' action:", FieldKind.Combo)),
+    ServerDomain(ConfigurationField("Server Domain:", FieldKind.Combo)),
+    Username(ConfigurationField("Username:", FieldKind.Text)),
+    Password(ConfigurationField("Password:", FieldKind.Text))
   }
 }
 
@@ -48,22 +120,11 @@ fun RunConfigurationModel.closeWithOK() {
   }
 }
 
-fun RunConfigurationModel.checkOneValue(expectedField: String, expectedValue: String) {
-  guiTestCase.logTestStep("Going to check that field `$expectedField`has a value = `$expectedValue`")
-  with(connectDialog()) {
-    val actualValue = when {
-      guiTestCase.exists { textfield(expectedField, timeout = 1) } -> {
-        textfield(expectedField).text()
-      }
-      guiTestCase.exists { combobox(expectedField, timeout = 1) } -> {
-        val combo = combobox(expectedField)
-        combo.selectedItem()
-      }
-      guiTestCase.exists { checkbox(expectedField, timeout = 1) } -> {
-        checkbox(expectedField).isSelected.toString()
-      }
-      else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
-    }
+fun RunConfigurationModel.checkOneValue(expectedField: RunConfigurationModel.ConfigurationField, expectedValue: String) {
+  with(expectedField) {
+    if (!isFieldPresent()) throw ComponentLookupException("Cannot find component with label `$title`")
+    guiTestCase.logTestStep("Going to check that field `${expectedField.title}`has a value = `$expectedValue`")
+    val actualValue = getFieldValue()
     guiTestCase.logInfo("Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`")
     assert(actualValue == expectedValue) {
       "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
@@ -71,21 +132,16 @@ fun RunConfigurationModel.checkOneValue(expectedField: String, expectedValue: St
   }
 }
 
-fun RunConfigurationModel.changeOneValue(expectedField: String, newValue: String) {
-  guiTestCase.logTestStep("Going to set field `$expectedField`to a value = `$newValue`")
-  val dialog = connectDialog()
-  when {
-    guiTestCase.exists { dialog.textfield(expectedField, timeout = 1) } -> {
-      dialog.textfield(expectedField).setText(newValue)
-    }
-    guiTestCase.exists { dialog.combobox(expectedField, timeout = 1) } -> {
-      dialog.combobox(expectedField).selectItem(newValue)
-    }
-    guiTestCase.exists { dialog.checkbox(expectedField, timeout = 1) } -> {
-      val newBooleanValue = newValue.toBoolean()
-      if (dialog.checkbox(expectedField).isSelected != newBooleanValue)
-        dialog.checkbox(expectedField).isSelected = newBooleanValue
-    }
-    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
+fun RunConfigurationModel.changeOneValue(expectedField: RunConfigurationModel.ConfigurationField, newValue: String) {
+  with(expectedField) {
+    if (!isFieldPresent()) throw ComponentLookupException("Cannot find component with label `$title`")
+    guiTestCase.logTestStep("Going to set field `${expectedField.title}`to a value = `$newValue`")
+    setFieldValue(newValue)
+  }
+}
+
+fun RunConfigurationModel.printHierarchy() {
+  with(connectDialog()) {
+    println(robot().hierarchy())
   }
 }
