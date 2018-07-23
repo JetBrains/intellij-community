@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
@@ -193,8 +194,7 @@ open class MultipleFileMergeDialog(
       for ((index, columnInfo) in tableModel.columns.withIndex()) {
         val column = columnModel.getColumn(index)
         columnInfo.maxStringValue?.let {
-          val width = Math.max(getFontMetrics(font).stringWidth(it),
-                               getFontMetrics(tableHeader.font).stringWidth(columnInfo.name)) + columnInfo.additionalWidth
+          val width = calcColumnWidth(it, columnInfo)
           column.preferredWidth = width
         }
       }
@@ -207,6 +207,12 @@ open class MultipleFileMergeDialog(
       }
 
       columnModel.getColumn(fileColumn).preferredWidth = size
+    }
+
+    private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
+      val columnName = StringUtil.shortenTextWithEllipsis(columnInfo.name, 15, 7, true)
+      return Math.max(getFontMetrics(font).stringWidth(maxStringValue),
+                      getFontMetrics(tableHeader.font).stringWidth(columnName)) + columnInfo.additionalWidth
     }
   }
 
