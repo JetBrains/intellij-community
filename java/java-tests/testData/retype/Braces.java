@@ -1,9 +1,9 @@
 class Braces {
-  void bar() {
+    void bar() {
 
-  }
+    }
 
-  void baz() {
+    void baz() {
 
-  }
+    }
 }

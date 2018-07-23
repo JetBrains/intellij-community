@@ -20,13 +20,11 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.Alarm
@@ -41,30 +39,35 @@ class RetypeSession(
   private val document = editor.document
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-  private val originalText = editor.document.text
-  private val lines = editor.document.text.split('\n').map { it + "\n" }
-  private var line = -1
-  private var column = 0
+  private val originalText = document.text
+  private var pos = 0
+  private val endPos: Int
+  private val tailLength: Int
   private var typedChars = 0
   private var completedChars = 0
-  private var backtrackedChars = 0
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
-  private var needSyncPosition = false
-  private var editorLineBeforeAcceptingLookup = -1
   var startNextCallback: (() -> Unit)? = null
   private val disposeLock = Any()
 
-  val currentLineText get() = lines[line]
+  init {
+    if (editor.selectionModel.hasSelection()) {
+      pos = editor.selectionModel.selectionStart
+      endPos = editor.selectionModel.selectionEnd
+    }
+    else {
+      pos = editor.caretModel.offset
+      endPos = document.textLength
+    }
+    tailLength = document.textLength - endPos
+  }
 
   fun start() {
     editor.putUserData(RETYPE_SESSION_KEY, this)
     val vFile = FileDocumentManager.getInstance().getFile(document)
     val keyName = "${vFile?.name ?: "Unknown file"} (${document.textLength} chars)"
     currentLatencyRecordKey = LatencyDistributionRecordKey(keyName)
-    line = editor.caretModel.logicalPosition.line - 1
-    val currentLineStart = document.getLineStartOffset(line + 1)
-    WriteCommandAction.runWriteCommandAction(project) { document.deleteString(currentLineStart, document.textLength) }
+    WriteCommandAction.runWriteCommandAction(project) { document.deleteString(pos, endPos) }
     CodeInsightSettings.getInstance().apply {
       SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
@@ -84,7 +87,7 @@ class RetypeSession(
       SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = oldSelectAutopopup
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldAddUnambiguous
     }
-    currentLatencyRecordKey?.details = "typed $typedChars chars, completed $completedChars chars, backtracked $backtrackedChars chars"
+    currentLatencyRecordKey?.details = "typed $typedChars chars, completed $completedChars chars"
     currentLatencyRecordKey = null
     if (startNext) {
       startNextCallback?.invoke()
@@ -103,28 +106,27 @@ class RetypeSession(
   private fun typeNext() {
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
-    if (column == 0) {
-      if (line >= 0) {
-        if (checkPrevLineInSync()) return
-      }
-      line++
-      syncPositionWithEditor()
-    }
-    else if (needSyncPosition) {
-      val lineDelta = editor.caretModel.logicalPosition.line - editorLineBeforeAcceptingLookup
-      if (lineDelta > 0) {
-        if (lineDelta == 1) {
-          checkPrevLineInSync()
+    var expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
+    if (document.text != expectedText) {
+      if (document.textLength >= pos && document.text.substring(0, pos) == originalText.substring(0, pos)) {
+        while (pos + 1 < document.textLength - tailLength && originalText[pos] == document.text[pos]) {
+          pos++
+          completedChars++
         }
-        line += lineDelta
-        column = 0
+        expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
       }
-      syncPositionWithEditor()
+
+      if (document.text != expectedText) {
+        WriteCommandAction.runWriteCommandAction(project) {
+          document.replaceText(expectedText, document.modificationStamp + 1)
+        }
+      }
+      editor.caretModel.moveToOffset(pos)
     }
 
     if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       TemplateManager.getInstance(project).finishTemplate(editor)
-      queueNextOrStop(true)
+      queueNextOrStop()
       return
     }
 
@@ -133,39 +135,25 @@ class RetypeSession(
       val currentLookupElement = lookup.currentItem
       if (currentLookupElement?.shouldAccept(lookup.lookupStart) == true) {
         lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
-        editorLineBeforeAcceptingLookup = editor.caretModel.logicalPosition.line
         executeEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)
-        queueNextOrStop(true)
+        queueNextOrStop()
         return
       }
     }
 
-    val c = currentLineText[column]
+    val c = originalText[pos++]
     typedChars++
     if (c == '\n') {
-      column = 0   // line will be incremented in next loop
-
-      // Check if the next line was partially inserted with some insert handler (e.g. braces in java)
-      if (line + 1 < document.lineCount
-          && line + 1 < lines.size
-          && lines[line + 1].startsWith(getEditorLineText(line + 1))) {
-        // the caret will be moved right during the next position sync
-        executeEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
-      }
-      else {
-        executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-      }
+      executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     }
     else {
-      column++
       editor.type(c.toString())
     }
-    queueNextOrStop(false)
+    queueNextOrStop()
   }
 
-  private fun queueNextOrStop(needSyncPosition: Boolean) {
-    this.needSyncPosition = needSyncPosition
-    if ((column == 0 && line < lines.size - 1) || (column > 0 && column < currentLineText.length)) {
+  private fun queueNextOrStop() {
+    if (pos < endPos) {
       queueNext()
     }
     else {
@@ -188,55 +176,12 @@ class RetypeSession(
       return false
     }
     val lookupString = LookupElementPresentation.renderElement(this).itemText ?: return false
-    val lookupStartColumn = editor.offsetToLogicalPosition(lookupStartOffset).column
-    val textAtColumn = currentLineText.drop(lookupStartColumn)
-    if (textAtColumn.take(lookupString.length) != lookupString) {
+    val textAtLookup = originalText.substring(lookupStartOffset)
+    if (textAtLookup.take(lookupString.length) != lookupString) {
       return false
     }
-    return textAtColumn.length == lookupString.length ||
-           !Character.isJavaIdentifierPart(textAtColumn[lookupString.length] + 1)
-  }
-
-  private fun checkPrevLineInSync(): Boolean {
-    val prevLine = getEditorLineText(editor.caretModel.logicalPosition.line - 1)
-    if (prevLine.trimEnd() != currentLineText.trimEnd()) {
-      stop(false)
-      Messages.showErrorDialog(project, "Text has diverged. Expected:\n$currentLineText\nActual:\n$prevLine",
-                               "Retype File")
-      return true
-    }
-    return false
-  }
-
-  private fun getEditorLineText(line: Int): String {
-    val prevLineStart = document.getLineStartOffset(line)
-    val prevLineEnd = document.getLineEndOffset(line)
-    return document.text.substring(prevLineStart, prevLineEnd)
-  }
-
-  private fun syncPositionWithEditor(): Boolean {
-    var result = false
-    val editorLine = editor.caretModel.logicalPosition.line
-    val editorLineText = getEditorLineText(editorLine)
-    while (column < editorLineText.length && column < currentLineText.length && editorLineText[column] == currentLineText[column]) {
-      result = true
-      completedChars++
-      column++
-    }
-    if (editor.caretModel.logicalPosition.column < column) {
-      editor.caretModel.moveToLogicalPosition(LogicalPosition(line, column))
-    }
-    else if (editor.caretModel.logicalPosition.column > column) {
-      // unwanted completion, backtrack
-      println("Text has diverged, backtracking. Editor text:\n$editorLineText\nBuffer text:\n$currentLineText")
-      val startOffset = document.getLineStartOffset(editorLine) + column
-      val endOffset = document.getLineEndOffset(editorLine)
-      backtrackedChars += endOffset - startOffset
-      WriteCommandAction.runWriteCommandAction(project) {
-        editor.document.deleteString(startOffset, endOffset)
-      }
-    }
-    return result
+    return textAtLookup.length == lookupString.length ||
+           !Character.isJavaIdentifierPart(textAtLookup[lookupString.length] + 1)
   }
 
   private fun executeEditorAction(actionId: String) {

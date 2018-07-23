@@ -9,14 +9,14 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author yole
  */
-abstract class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
+class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
 
-  fun _testBraces() {
+  fun testBraces() {
     doTest()
   }
 
-  fun _testImport() {
+  fun testImport() {
     doTest()
   }
 
