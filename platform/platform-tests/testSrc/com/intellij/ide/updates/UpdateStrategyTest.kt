@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
@@ -36,8 +36,8 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
           <patch from="145.258" exclusions="win,mac,unix"/>
         </build>
       </channel>""")
-    assertNotNull(result.findPatchForBuild(BuildNumber.fromString("145.596")))
-    assertNull(result.findPatchForBuild(BuildNumber.fromString("145.258")))
+    assertNotNull(result.newBuild?.patch(BuildNumber.fromString("145.596")))
+    assertNull(result.newBuild?.patch(BuildNumber.fromString("145.258")))
   }
 
   @Test fun `order of builds does not matter`() {

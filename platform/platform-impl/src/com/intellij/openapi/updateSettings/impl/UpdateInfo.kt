@@ -17,7 +17,7 @@ class UpdatesInfo(node: Element) {
   operator fun get(code: String): Product? = products.find { code in it.codes }
 }
 
-class Product(node: Element) {
+class Product internal constructor (node: Element) {
   val name: String = node.getMandatoryAttributeValue("name")
   val codes: Set<String> = node.getChildren("code").map { it.value.trim() }.toSet()
   val channels: List<UpdateChannel> = node.getChildren("channel").map(::UpdateChannel)
@@ -25,7 +25,7 @@ class Product(node: Element) {
   override fun toString(): String = codes.firstOrNull() ?: "-"
 }
 
-class UpdateChannel(node: Element) {
+class UpdateChannel internal constructor (node: Element) {
   companion object {
     const val LICENSING_EAP: String = "eap"
     const val LICENSING_RELEASE: String = "release"
@@ -40,7 +40,7 @@ class UpdateChannel(node: Element) {
   override fun toString(): String = id
 }
 
-class BuildInfo(node: Element) {
+class BuildInfo internal constructor (node: Element) {
   val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"))
   val apiVersion: BuildNumber = BuildNumber.fromStringWithProductCode(node.getAttributeValue("apiVersion"), number.productCode) ?: number
   val version: String = node.getAttributeValue("version") ?: ""
@@ -72,10 +72,12 @@ class BuildInfo(node: Element) {
   val downloadUrl: String?
     get() = buttons.find(ButtonInfo::isDownload)?.url
 
+  fun patch(to: BuildNumber) = patches.find { it.isAvailable && it.fromBuild.compareTo(to) == 0 }
+
   override fun toString(): String = "${number}/${version}"
 }
 
-class ButtonInfo(node: Element) {
+class ButtonInfo internal constructor (node: Element) {
   val name: String = node.getMandatoryAttributeValue("name")
   val url: String = node.getMandatoryAttributeValue("url")
   val isDownload: Boolean = node.getAttributeValue("download") != null  // a button marked with this attribute is hidden when a patch is available
@@ -83,7 +85,7 @@ class ButtonInfo(node: Element) {
   override fun toString(): String = name
 }
 
-class PatchInfo(node: Element) {
+class PatchInfo internal constructor (node: Element) {
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))
   val size: String? = node.getAttributeValue("size")
   val isAvailable: Boolean = node.getAttributeValue("exclusions")?.splitToSequence(",")?.none { it.trim() == osSuffix } ?: true
