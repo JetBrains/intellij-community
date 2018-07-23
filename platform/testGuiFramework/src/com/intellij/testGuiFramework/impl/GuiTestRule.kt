@@ -22,12 +22,14 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.IdeTestApplication.getFailedTestVideoDirPath
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.lang.UrlClassLoader
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
@@ -49,6 +51,8 @@ import java.awt.Dialog
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
 import java.io.File
+import java.net.URL
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
@@ -70,6 +74,7 @@ class GuiTestRule : TestRule {
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
+    .aroundIfNotNull(createScreenRecordingRuleIfNeeded())
 
   private val timeoutRule = Timeout(20, TimeUnit.MINUTES)
 
@@ -84,6 +89,40 @@ class GuiTestRule : TestRule {
   }
 
   fun robot(): Robot = myRobotTestRule.getRobot()
+
+  private fun RuleChain.aroundIfNotNull(rule: TestRule?): RuleChain = if (rule == null) this else this.around(rule)
+
+  private fun createScreenRecordingRuleIfNeeded(): TestRule? {
+    try {
+      val screenRecorderJarUrl: URL? = getScreenRecorderJarUrl()
+      if (screenRecorderJarUrl == null) return null
+
+      val testsToRecord: List<String>? = System.getenv("TESTS_TO_RECORD")?.split(";")
+      if (testsToRecord == null) return null
+
+      val classLoader: ClassLoader = UrlClassLoader.build().urls(screenRecorderJarUrl).parent(javaClass.classLoader).get()
+      return Class.forName("org.jetbrains.intellij.deps.screenrecorder.ScreenRecorderRule", true, classLoader)
+        .constructors
+        .singleOrNull { it.parameterCount == 3 }
+        ?.newInstance(Duration.ofMinutes(getVideoDuration()), getFailedTestVideoDirPath().absolutePath, testsToRecord) as TestRule?
+    }
+    catch (e: Exception) {
+      return null
+    }
+  }
+
+  private fun getScreenRecorderJarUrl(): URL? {
+    val jarDir: String? = System.getenv("SCREEN_RECORDER_JAR_DIR")
+    if (jarDir == null) return null
+
+    return File(jarDir)
+        .listFiles { f -> f.name.startsWith("ui-screenrecorder") && f.name.endsWith("jar") }
+        .firstOrNull()
+        ?.toURI()
+        ?.toURL()
+  }
+
+  private fun getVideoDuration(): Long = System.getenv("VIDEO_DURATION_IN_MINUTES")?.toLong() ?: 3
 
   inner class IdeHandling : TestRule {
     override fun apply(base: Statement, description: Description): Statement {
