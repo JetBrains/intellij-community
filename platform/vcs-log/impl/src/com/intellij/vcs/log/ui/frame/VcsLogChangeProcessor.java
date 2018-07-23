@@ -38,8 +38,8 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull
   @Override
   protected List<Wrapper> getSelectedChanges() {
-    List<Change> changes = myBrowser.getSelectedChanges();
-    if (changes.isEmpty()) changes = myBrowser.getAllChanges();
+    boolean hasSelection = myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
+    List<Change> changes = hasSelection ? myBrowser.getSelectedChanges() : myBrowser.getAllChanges();
     return ContainerUtil.map(changes, MyChangeWrapper::new);
   }
 

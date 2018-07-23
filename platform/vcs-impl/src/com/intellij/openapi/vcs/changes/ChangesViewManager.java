@@ -503,9 +503,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @NotNull
     @Override
     protected List<Wrapper> getSelectedChanges() {
-      List<Wrapper> result = wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
-      if (result.isEmpty()) result = getAllChanges();
-      return result;
+      boolean hasSelection = myView.getSelectionCount() != 0;
+      if (hasSelection) {
+        return wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
+      }
+      else {
+        return getAllChanges();
+      }
     }
 
     @NotNull
