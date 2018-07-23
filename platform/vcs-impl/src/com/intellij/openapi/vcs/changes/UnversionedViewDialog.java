@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.actionSystem.ex.ActionUtil.recursiveRegisterShortcutSet;
 
 public class UnversionedViewDialog extends SpecificFilesViewDialog {
@@ -44,10 +42,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   @NotNull
   public static ActionGroup registerUnversionedPopupGroup(@NotNull JComponent component) {
     ActionGroup popupGroup = getUnversionedPopupGroup();
-
     recursiveRegisterShortcutSet(popupGroup, component, null);
-    registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), component);
-
     return popupGroup;
   }
 
