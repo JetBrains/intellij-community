@@ -10,7 +10,6 @@ import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.winp.WinProcess;
 
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -112,13 +111,16 @@ public class OSProcessUtil {
   }
 
   private static String getCurrentProcessId() {
-    try {
-      String name = ManagementFactory.getRuntimeMXBean().getName();
-      return name.split("@")[0];
+    int pid;
+
+    if (SystemInfo.isWindows) {
+      pid = WinProcessManager.getCurrentProcessId();
     }
-    catch (Exception e) {
-      return "-1";
+    else {
+      pid = UnixProcessManager.getCurrentProcessId();
     }
+
+    return String.valueOf(pid);
   }
 
   public static String getApplicationPid() {
@@ -126,7 +128,7 @@ public class OSProcessUtil {
       ourPid = getCurrentProcessId();
     }
 
-    return String.valueOf(ourPid);
+    return ourPid;
   }
 
   /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */
