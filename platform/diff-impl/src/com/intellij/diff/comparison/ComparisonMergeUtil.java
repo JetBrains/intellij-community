@@ -51,7 +51,8 @@ public class ComparisonMergeUtil {
         Side side = add(unchanged1.peek(), unchanged2.peek());
         side.select(unchanged1, unchanged2).next();
       }
-      return finish(fragments1, fragments2);
+
+      return myChangesBuilder.finish(fragments1.getLength2(), fragments1.getLength1(), fragments2.getLength2());
     }
 
     @NotNull
@@ -67,29 +68,19 @@ public class ComparisonMergeUtil {
 
       int startBase = Math.max(start1, start2);
       int endBase = Math.min(end1, end2);
+      int count = endBase - startBase;
 
       int startShift1 = startBase - start1;
-      int endCut1 = end1 - endBase;
       int startShift2 = startBase - start2;
-      int endCut2 = end2 - endBase;
 
       int startLeft = range1.start2 + startShift1;
-      int endLeft = range1.end2 - endCut1;
+      int endLeft = startLeft + count;
       int startRight = range2.start2 + startShift2;
-      int endRight = range2.end2 - endCut2;
+      int endRight = startRight + count;
 
       myChangesBuilder.markEqual(startLeft, startBase, startRight, endLeft, endBase, endRight);
 
       return Side.fromLeft(end1 <= end2);
-    }
-
-    @NotNull
-    private List<MergeRange> finish(@NotNull FairDiffIterable fragments1, @NotNull FairDiffIterable fragments2) {
-      int length1 = fragments1.getLength2();
-      int length2 = fragments1.getLength1();
-      int length3 = fragments2.getLength2();
-
-      return myChangesBuilder.finish(length1, length2, length3);
     }
   }
 
