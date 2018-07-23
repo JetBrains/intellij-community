@@ -26,6 +26,7 @@ import java.io.File;
  */
 public abstract class IdeaModuleBase extends LayoutFileSet {
   private String name;
+  private File output;
 
   protected IdeaModuleBase() {
     setExcludes("classpath.index");
@@ -41,10 +42,15 @@ public abstract class IdeaModuleBase extends LayoutFileSet {
 
   public void setName(String name) {
     this.name = name;
-    setDir(getOutputDir());
+    output = getOutputDir();
+    if (output != null && output.getName().endsWith(".jar")) {
+      setSrc(output);
+    } else {
+      setDir(output);
+    }
   }
 
-  protected File getOutputDir() {
+  private File getOutputDir() {
     String adhoc = getProject().getProperty(getOutputDirProperty());
     return adhoc != null ? new File(adhoc) : null;
   }
@@ -71,11 +77,11 @@ public abstract class IdeaModuleBase extends LayoutFileSet {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    IdeaModule that = (IdeaModule) o;
-    return getDir(getProject()).equals(that.getDir(getProject()));
+    IdeaModuleBase that = (IdeaModuleBase) o;
+    return output == null ? super.equals(that) : output.equals(that.output);
   }
 
   public int hashCode() {
-    return getDir(getProject()).hashCode();
+    return output == null ? super.hashCode() : output.hashCode();
   }
 }
