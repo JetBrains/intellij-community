@@ -931,7 +931,7 @@ public class AbstractPopup implements JBPopup {
 
     final Window window = getContentWindow(myContent);
     if (window instanceof IdeFrame) {
-      LOG.warn("LightWeight popup is used but heavyWeight is supposed");
+      LOG.warn("Lightweight popup is shown using AbstractPopup class. But this class is not supposed to work with lightweight popups.");
     }
 
     window.setFocusableWindowState(myRequestFocus);
