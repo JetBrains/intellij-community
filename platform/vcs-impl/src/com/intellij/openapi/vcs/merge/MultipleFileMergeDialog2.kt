@@ -82,7 +82,6 @@ open class MultipleFileMergeDialog2(
     @Suppress("LeakingThis")
     init()
 
-    updateColumnSizes()
     updateTree()
     table.tree.selectionModel.addTreeSelectionListener { updateButtonState() }
     selectFirstFile()
@@ -115,7 +114,7 @@ open class MultipleFileMergeDialog2(
       }
 
       row {
-        scrollPane(TreeTable(tableModel).also {
+        scrollPane(MyTable(tableModel).also {
           table = it
           it.tree.isRootVisible = false
           it.setTreeCellRenderer(virtualFileRenderer)
@@ -182,15 +181,32 @@ open class MultipleFileMergeDialog2(
     override fun getAdditionalWidth() = base.additionalWidth
   }
 
-  private fun updateColumnSizes() {
-    for ((index, columnInfo) in tableModel.columns.withIndex()) {
-      val column = table.columnModel.getColumn(index)
-      columnInfo.maxStringValue?.let {
-        val width = Math.max(table.getFontMetrics(table.font).stringWidth(it),
-                             table.getFontMetrics(table.tableHeader.font).stringWidth(columnInfo.name)) + columnInfo.additionalWidth
-        column.maxWidth = width
-        column.preferredWidth = width
+  private class MyTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
+    override fun doLayout() {
+      if (getTableHeader().resizingColumn == null) {
+        updateColumnSizes()
       }
+      super.doLayout()
+    }
+
+    private fun updateColumnSizes() {
+      for ((index, columnInfo) in tableModel.columns.withIndex()) {
+        val column = columnModel.getColumn(index)
+        columnInfo.maxStringValue?.let {
+          val width = Math.max(getFontMetrics(font).stringWidth(it),
+                               getFontMetrics(tableHeader.font).stringWidth(columnInfo.name)) + columnInfo.additionalWidth
+          column.preferredWidth = width
+        }
+      }
+
+      var size = width
+      val fileColumn = 0
+      for (i in 0 until tableModel.columns.size) {
+        if (i == fileColumn) continue
+        size -= columnModel.getColumn(i).preferredWidth
+      }
+
+      columnModel.getColumn(fileColumn).preferredWidth = size
     }
   }
 
