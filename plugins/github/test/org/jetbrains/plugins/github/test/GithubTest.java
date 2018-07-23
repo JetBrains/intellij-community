@@ -30,10 +30,9 @@ import git4idea.test.GitHttpAuthTestService;
 import git4idea.test.GitPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
@@ -62,7 +61,6 @@ public abstract class GithubTest extends GitPlatformTest {
 
   @NotNull private GitHttpAuthTestService myHttpAuthService;
   @NotNull protected GithubAuthenticationManager myAuthenticationManager;
-  @NotNull protected GithubApiTaskExecutor myApiTaskExecutor;
 
   @NotNull protected GithubAccount myAccount;
   @NotNull protected GithubApiRequestExecutor myExecutor;
@@ -178,7 +176,6 @@ public abstract class GithubTest extends GitPlatformTest {
     assumeTrue(token1 != null && token2 != null);
     myAuthenticationManager = GithubAuthenticationManager.getInstance();
     GithubApiRequestExecutorManager executorManager = GithubApiRequestExecutorManager.getInstance();
-    myApiTaskExecutor = GithubApiTaskExecutor.getInstance();
     myAccount = myAuthenticationManager.registerAccount("account1", host, token1);
     myExecutor = executorManager.getExecutor(myAccount);
     myAccount2 = myAuthenticationManager.registerAccount("account2", host, token2);

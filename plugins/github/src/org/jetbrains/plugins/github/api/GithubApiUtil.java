@@ -28,6 +28,7 @@ import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 
 import java.io.IOException;
 
+@Deprecated
 public class GithubApiUtil {
 
   private static final Header ACCEPT_V3_JSON = new BasicHeader("Accept", "application/vnd.github.v3+json");
