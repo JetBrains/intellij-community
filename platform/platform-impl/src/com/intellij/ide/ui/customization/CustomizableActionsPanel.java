@@ -470,7 +470,7 @@ public class CustomizableActionsPanel {
         }
         else if (userObject instanceof QuickList) {
           setText(((QuickList)userObject).getName());
-          icon = AllIcons.Actions.QuickList;
+          icon = null; // AllIcons.Actions.QuickList;
         }
         else if (userObject != null) {
           throw new IllegalArgumentException("unknown userObject: " + userObject);

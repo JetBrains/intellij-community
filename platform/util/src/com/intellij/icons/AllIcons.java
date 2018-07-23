@@ -237,6 +237,10 @@ public class AllIcons {
     public static final Icon Properties = IconLoader.getIcon("/actions/properties.svg"); // 16x16
     public static final Icon QuickfixBulb = IconLoader.getIcon("/actions/quickfixBulb.svg"); // 16x16
     public static final Icon QuickfixOffBulb = IconLoader.getIcon("/actions/quickfixOffBulb.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon QuickList = IconLoader.getIcon("/actions/quickList.png"); // 16x16
     public static final Icon RealIntentionBulb = IconLoader.getIcon("/actions/realIntentionBulb.svg"); // 16x16
     public static final Icon RealIntentionOffBulb = IconLoader.getIcon("/actions/realIntentionOffBulb.png"); // 16x16
