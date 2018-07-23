@@ -10,25 +10,16 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 
 class ClearCommittedAction : AnAction("Clear", "Clears cached revisions", AllIcons.Vcs.Remove), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT)
-    val panel = ChangesViewContentManager.getInstance(project!!).getActiveComponent(CommittedChangesPanel::class.java)!!
-    if (panel.isInLoad) return
-    if (panel.repositoryLocation == null) {
-      panel.clearCaches()
-    }
+    val project = e.getData(CommonDataKeys.PROJECT)!!
+    val panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel::class.java)!!
+
+    panel.clearCaches()
   }
 
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    if (project != null) {
-      val panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel::class.java)
-      val rl = panel?.repositoryLocation
-      e.presentation.isVisible = rl == null
-      e.presentation.isEnabled = panel != null && !panel.isInLoad
-    }
-    else {
-      e.presentation.isVisible = false
-      e.presentation.isEnabled = false
-    }
+    val panel = project?.let { ChangesViewContentManager.getInstance(it).getActiveComponent(CommittedChangesPanel::class.java) }
+
+    e.presentation.isEnabledAndVisible = panel != null && !panel.isInLoad && panel.repositoryLocation == null
   }
 }
