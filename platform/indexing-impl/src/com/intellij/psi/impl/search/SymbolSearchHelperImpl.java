@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
+import com.intellij.model.Symbol;
 import com.intellij.model.SymbolReference;
+import com.intellij.model.search.SearchScopeOptimizer;
 import com.intellij.model.search.SymbolReferenceSearchParameters;
 import com.intellij.model.search.SymbolSearchHelper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,10 +18,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.*;
 import com.intellij.util.Preprocessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import static com.intellij.psi.impl.search.PsiSearchHelperImpl.*;
 import static com.intellij.util.Processors.cancelableCollectProcessor;
@@ -389,5 +389,21 @@ public class SymbolSearchHelperImpl implements SymbolSearchHelper {
   @NotNull
   private static ProgressIndicator getIndicatorOrEmpty() {
     return EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator());
+  }
+
+  @Nullable
+  static SearchScope getRestrictedScope(@NotNull SearchScopeOptimizer[] optimizers, @NotNull Project project, @NotNull Symbol symbol) {
+    return Stream.of(optimizers)
+      .peek(it -> ProgressManager.checkCanceled())
+      .map(it -> it.getRestrictedUseScope(project, symbol))
+      .reduce(SymbolSearchHelperImpl::intersectNullable)
+      .orElse(null);
+  }
+
+  @Nullable
+  private static SearchScope intersectNullable(@Nullable SearchScope scope1, @Nullable SearchScope scope2) {
+    if (scope1 == null) return scope2;
+    if (scope2 == null) return scope1;
+    return scope1.intersectWith(scope2);
   }
 }

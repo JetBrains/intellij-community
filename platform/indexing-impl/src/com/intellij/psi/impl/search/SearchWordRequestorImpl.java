@@ -4,15 +4,19 @@ package com.intellij.psi.impl.search;
 import com.intellij.model.Symbol;
 import com.intellij.model.search.OccurenceSearchRequestor;
 import com.intellij.model.search.SearchWordRequestor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.model.search.SearchScopeOptimizer.CODE_USE_SCOPE_EP;
 import static com.intellij.psi.search.UsageSearchContext.*;
 
 final class SearchWordRequestorImpl implements SearchWordRequestor {
@@ -110,7 +114,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   }
 
   @NotNull
-  private static Collection<SearchWordRequest> createRequests(@NotNull SearchWordRequestorImpl requestor) {
+  private Collection<SearchWordRequest> createRequests(@NotNull SearchWordRequestorImpl requestor) {
     SearchScope searchScope = requestor.getSearchScope();
     if (!makesSenseToSearch(searchScope)) {
       return Collections.emptyList();
@@ -122,20 +126,14 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     boolean caseSensitive = requestor.myCaseSensitive;
 
     if (targetHint != null && searchScope instanceof GlobalSearchScope && (searchContext & IN_CODE) != 0) {
-      SearchScope restrictedCodeUsageSearchScope = null;
-      // ReadAction.compute(() -> ScopeOptimizer.calculateOverallRestrictedUseScope(CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget));
-      //noinspection ConstantConditions
+      Project project = myCollector.getParameters().getProject();
+      SearchScope restrictedCodeUsageSearchScope = getRestrictedScope(project, targetHint);
       if (restrictedCodeUsageSearchScope != null) {
         short nonCodeSearchContext = searchContext == ANY ? IN_COMMENTS | IN_STRINGS | IN_FOREIGN_LANGUAGES | IN_PLAIN_TEXT
                                                           : (short)(searchContext ^ IN_CODE);
         SearchScope codeScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
-        SearchWordRequest codeRequest = new SearchWordRequest(
-          word, codeScope, caseSensitive, IN_CODE, null
-        );
-        SearchWordRequest nonCodeRequest = new SearchWordRequest(
-          word, searchScope, caseSensitive, nonCodeSearchContext, null
-        );
-
+        SearchWordRequest codeRequest = new SearchWordRequest(word, codeScope, caseSensitive, IN_CODE, null);
+        SearchWordRequest nonCodeRequest = new SearchWordRequest(word, searchScope, caseSensitive, nonCodeSearchContext, null);
         return Arrays.asList(codeRequest, nonCodeRequest);
       }
     }
@@ -149,5 +147,10 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     else {
       return searchScope != GlobalSearchScope.EMPTY_SCOPE;
     }
+  }
+
+  @Nullable
+  private static SearchScope getRestrictedScope(@NotNull Project project, @NotNull Symbol symbol) {
+    return ReadAction.compute(() -> SymbolSearchHelperImpl.getRestrictedScope(CODE_USE_SCOPE_EP.getExtensions(), project, symbol));
   }
 }
