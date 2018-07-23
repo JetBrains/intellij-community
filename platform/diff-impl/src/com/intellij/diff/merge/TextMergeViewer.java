@@ -30,7 +30,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diff.DiffBundle;
@@ -41,7 +40,11 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -564,7 +567,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         if (myEnabled) {
           putChanges(myAllMergeChanges);
-          launchRediff();
+          launchRediff(true);
         }
         else {
           myStatusPanel.setBusy(false);
@@ -597,13 +600,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         if (myScheduled.isEmpty()) return;
 
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(this::launchRediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+        myAlarm.addRequest(() -> launchRediff(false), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
       }
 
       @CalledInAwt
-      private void launchRediff() {
+      private void launchRediff(boolean trySync) {
         myStatusPanel.setBusy(true);
-        myProgress = new EmptyProgressIndicator();
 
         final List<TextMergeChange> scheduled = ContainerUtil.newArrayList(myScheduled);
         myScheduled.clear();
@@ -611,23 +613,28 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
         final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
-        final ProgressIndicator indicator = myProgress;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          performRediff(scheduled, data, indicator);
-        });
+        int waitMillis = trySync ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+        ProgressIndicator progress = BackgroundTaskUtil.executeAndTryWait(indicator -> {
+          return performRediff(scheduled, data, indicator);
+        }, null, waitMillis, false);
+
+        if (progress.isRunning()) {
+          myProgress = progress;
+        }
       }
 
+      @NotNull
       @CalledInBackground
-      private void performRediff(@NotNull final List<TextMergeChange> scheduled,
-                                 @NotNull final List<InnerChunkData> data,
-                                 @NotNull final ProgressIndicator indicator) {
+      private Runnable performRediff(@NotNull final List<TextMergeChange> scheduled,
+                                     @NotNull final List<InnerChunkData> data,
+                                     @NotNull final ProgressIndicator indicator) {
         ComparisonPolicy comparisonPolicy = myTextDiffProvider.getIgnorePolicy().getComparisonPolicy();
         final List<MergeInnerDifferences> result = new ArrayList<>(data.size());
         for (InnerChunkData chunkData : data) {
           result.add(DiffUtil.compareThreesideInner(chunkData.text, comparisonPolicy, indicator));
         }
 
-        ApplicationManager.getApplication().invokeLater(() -> {
+        return () -> {
           if (!myEnabled || indicator.isCanceled()) return;
           myProgress = null;
 
@@ -639,9 +646,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
           myStatusPanel.setBusy(false);
           if (!myScheduled.isEmpty()) {
-            launchRediff();
+            launchRediff(false);
           }
-        }, ModalityState.any());
+        };
       }
     }
 
