@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a test result tree node.
@@ -72,7 +74,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myConfig = false;
   //false:: printables appear as soon as they are discovered in the output; true :: predefined test structure
   private boolean myTreeBuildBeforeStart = false;
-  private CachedValue<Location> myLocationCachedValue;
+  private CachedValue<Map<GlobalSearchScope, Ref<Location>>> myLocationMapCachedValue;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
@@ -96,6 +98,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setLocator(@NotNull SMTestLocator testLocator) {
     myLocator = testLocator;
+    myLocationMapCachedValue = null;
   }
 
   public void setConfig(boolean config) {
@@ -254,16 +257,19 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-    if (myLocator == null) {
+    if (myLocationUrl == null || myLocator == null) {
       return null;
     }
-    if (myLocationCachedValue == null) {
-      myLocationCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
-        Location value = getLocation(project, searchScope, myLocationUrl);
+    if (myLocationMapCachedValue == null) {
+      myLocationMapCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
+        Map<GlobalSearchScope, Ref<Location>> value = ContainerUtil.newConcurrentMap(1);
         return CachedValueProvider.Result.create(value, myLocator.getLocationCacheModificationTracker(project));
       }, false);
     }
-    return myLocationCachedValue.getValue();
+    Map<GlobalSearchScope, Ref<Location>> value = myLocationMapCachedValue.getValue();
+    // Ref<Location> allows to cache null locations
+    Ref<Location> ref = value.computeIfAbsent(searchScope, scope -> Ref.create(getLocation(project, searchScope, myLocationUrl)));
+    return ref.get();
   }
 
   protected Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, String locationUrl) {

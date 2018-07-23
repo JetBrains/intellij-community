@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
@@ -248,6 +249,12 @@ public class SMTestRunnerConnectionUtil {
     @Override
     public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       return myLocator.getLocation(stacktraceLine, project, scope);
+    }
+
+    @NotNull
+    @Override
+    public ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+      return myLocator.getLocationCacheModificationTracker(project);
     }
   }
 
