@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,6 +216,9 @@ public class ParametersFolder {
   private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope, final List<? extends PsiVariable> inputVariables) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
     final PsiElement[] scopeElements = scope.getScope();
+    final PsiExpression scopeExpression =
+      PsiUtil.skipParenthesizedExprDown(scopeElements.length == 1 ? ObjectUtils.tryCast(scopeElements[0], PsiExpression.class) : null);
+
     List<PsiExpression> expressions = null;
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
@@ -224,7 +228,7 @@ public class ParametersFolder {
           if (isAccessedForWriting((PsiExpression)expression)) {
             return null;
           }
-          if (isAncestor(expression, scopeElements)) {
+          if (expression == scopeExpression || isAncestor(expression, scopeElements)) {
             break;
           }
           if (dependsOnLocals(expression, inputVariables)) {
