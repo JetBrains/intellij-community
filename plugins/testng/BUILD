@@ -41,5 +41,6 @@ iml_module(
         "//tools/idea/xml/impl:intellij.xml.impl[module, test]",
         "//tools/idea/platform/smRunner:intellij.platform.smRunner[module]",
         "//tools/idea/java/typeMigration:intellij.java.typeMigration[module]",
+        "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
     ],
 )

@@ -43,5 +43,6 @@ iml_module(
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/.idea/libraries:miglayout-swing",
+        "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
     ],
 )

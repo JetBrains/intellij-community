@@ -34,5 +34,6 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module, test]",
         "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
+        "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
     ],
 )

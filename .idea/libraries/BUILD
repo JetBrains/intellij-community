@@ -407,15 +407,9 @@ java_library(
     name = "Xerces",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar",
-        "//prebuilts/tools/common/m2/repository/xml-apis/xml-apis/1.4.01:jar",
-    ],
+    exports = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar"],
     # do not sort: must match IML order
-    runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar",
-        "//prebuilts/tools/common/m2/repository/xml-apis/xml-apis/1.4.01:jar",
-    ],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/xerces/xercesImpl/2.11.0:jar"],
 )
 
 # managed by go/iml_to_build
