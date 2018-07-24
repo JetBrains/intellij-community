@@ -54,7 +54,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @NotNull
   @Override
-  public SearchWordRequestor restrictSearchScopeTo(@NotNull FileType... fileTypes) {
+  public SearchWordRequestor restrictScopeTo(@NotNull FileType... fileTypes) {
     myFileTypes = fileTypes;
     return this;
   }

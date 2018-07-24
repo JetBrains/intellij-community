@@ -16,7 +16,7 @@ class AccessorReferenceSearchRequestor : SearchRequestor {
     val target = collector.parameters.target
     if (target is JvmMethod) {
       val propertyName = runReadAction { getPropertyName(target) } ?: return
-      collector.searchWord(propertyName).restrictSearchScopeTo(*getGroovyEnabledFileTypes()).search(target)
+      collector.searchWord(propertyName).restrictScopeTo(*getGroovyEnabledFileTypes()).search(target)
     }
     else if (target is GrField) {
       for (accessor in runReadAction { getFieldAccessors(target) }) {

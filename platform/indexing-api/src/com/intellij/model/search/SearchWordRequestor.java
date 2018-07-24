@@ -22,7 +22,7 @@ public interface SearchWordRequestor {
    */
   @Contract("_ -> this")
   @NotNull
-  SearchWordRequestor restrictSearchScopeTo(@NotNull FileType... fileTypes);
+  SearchWordRequestor restrictScopeTo(@NotNull FileType... fileTypes);
 
   @Contract("-> this")
   @NotNull
