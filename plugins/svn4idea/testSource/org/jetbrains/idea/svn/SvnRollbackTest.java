@@ -117,7 +117,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File was = virtualToIoFile(deepUnverioned);
 
     checkin();
-    runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" + File.separator + deepUnverioned.getName());
+    runAndVerifyStatus("? root/source/inner/" + deepUnverioned.getName());
     update();
 
     renameFileInCommand(tree.mySourceDir, "newName");
@@ -183,9 +183,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasInnerFile1 = virtualToIoFile(innerFile1);
     final File wasInnerFile = virtualToIoFile(innerFile);
     checkin();
-    runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" +
-                      File.separator + "inner1" + File.separator + "inner2" + File.separator +
-                      "inner3" + File.separator + "deep.txt");
+    runAndVerifyStatus("? root/source/inner/inner1/inner2/inner3/deep.txt");
     update();
 
     editFileInCommand(innerFile, "some content");
@@ -545,20 +543,18 @@ public class SvnRollbackTest extends SvnTestCase {
 
     deleteFileInCommand(tree.mySourceDir);
     runAndVerifyStatus(
-      "D root" + File.separator + "source",
-      "> moved to root" + File.separator + "target" + File.separator + "source",
-      "D root" + File.separator + "source" + File.separator + "s1.txt",
-      "D root" + File.separator + "source" + File.separator + "s2.txt",
-      "! root" + File.separator + "target" + File.separator + "source",
-      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s1.txt",
-      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s2.txt"
+      "D root/source",
+      "> moved to root/target/source",
+      "D root/source/s1.txt",
+      "D root/source/s2.txt",
+      "! root/target/source",
+      "! root/target/source/s1.txt",
+      "! root/target/source/s2.txt"
     );
 
     assertRollbackLocallyDeleted(singletonList(getFilePath(was, true)), emptyList());
 
-    runAndVerifyStatusSorted("D root" + File.separator + "source",
-               "D root" + File.separator + "source" + File.separator + "s1.txt",
-               "D root" + File.separator + "source" + File.separator + "s2.txt");
+    runAndVerifyStatusSorted("D root/source", "D root/source/s1.txt", "D root/source/s2.txt");
   }
 
   private void assertRollback(List<Change> changes, final List<Change> allowedAfter) throws VcsException {

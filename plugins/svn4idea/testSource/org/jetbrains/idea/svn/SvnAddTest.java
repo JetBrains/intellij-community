@@ -35,7 +35,7 @@ public class SvnAddTest extends SvnTestCase {
       dir.createChildData(this, "a.txt");
     });
 
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child/a.txt");
   }
 
   // IDEADEV-19308

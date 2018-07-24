@@ -56,6 +56,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
@@ -400,11 +401,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void runAndVerifyStatusSorted(final String... stdoutLines) throws IOException {
-    runStatusAcrossLocks(myWcRoot, true, stdoutLines);
+    runStatusAcrossLocks(myWcRoot, true, map2Array(stdoutLines, String.class, it -> toSystemDependentName(it)));
   }
 
   protected void runAndVerifyStatus(final String... stdoutLines) throws IOException {
-    runStatusAcrossLocks(myWcRoot, false, stdoutLines);
+    runStatusAcrossLocks(myWcRoot, false, map2Array(stdoutLines, String.class, it -> toSystemDependentName(it)));
   }
 
   private void runStatusAcrossLocks(@Nullable File workingDir, final boolean sorted, final String... stdoutLines) throws IOException {

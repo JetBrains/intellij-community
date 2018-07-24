@@ -58,7 +58,7 @@ class SvnRenameTest : SvnTestCase() {
     val dir = createDirInCommand(myWorkingCopyDir, "child")
     createFileInCommand(dir, "a.txt", "content")
     renameFileInCommand(dir, "newchild")
-    runAndVerifyStatusSorted("A newchild", "A newchild" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A newchild", "A newchild/a.txt")
   }
 
   // IDEADEV-8091
@@ -78,9 +78,9 @@ class SvnRenameTest : SvnTestCase() {
     val child = prepareDirectoriesForRename()
 
     renameFileInCommand(child, "childnew")
-    runAndVerifyStatusSorted("A + childnew", "D child", "D child" + File.separatorChar + "a.txt",
-                             "D child" + File.separatorChar + "grandChild",
-                             "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt")
+    runAndVerifyStatusSorted("A + childnew", "D child", "D child/a.txt",
+                             "D child/grandChild",
+                             "D child/grandChild/b.txt")
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
@@ -223,10 +223,10 @@ class SvnRenameTest : SvnTestCase() {
     renameFileInCommand(f, "anew.txt")
     renameFileInCommand(child, "newchild")
 
-    runAndVerifyStatusSorted("A + newchild", "A + newchild" + File.separatorChar + "anew.txt",
-                             "D child", "D child" + File.separatorChar + "a.txt", "D child" + File.separatorChar + "grandChild",
-                             "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt",
-                             "D + newchild" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A + newchild", "A + newchild/anew.txt",
+                             "D child", "D child/a.txt", "D child/grandChild",
+                             "D child/grandChild/b.txt",
+                             "D + newchild/a.txt")
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
@@ -288,16 +288,14 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     undo()
-    runAndVerifyStatusSorted("A + parent1" + File.separatorChar + "child",
-                             "D parent2" + File.separatorChar + "child",
-                             "D parent2" + File.separatorChar + "child" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A + parent1/child", "D parent2/child", "D parent2/child/a.txt")
   }
 
   @Test
   fun testMoveToUnversioned() {
     val file = createFileInCommand(myWorkingCopyDir, "a.txt", "A")
     val child = moveToNewPackage(file, "child")
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A child", "A child/a.txt")
     checkin()
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
@@ -305,14 +303,14 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("? unversioned")
 
     moveFileInCommand(child, unversioned)
-    runAndVerifyStatusSorted("? unversioned", "D child", "D child" + File.separator + "a.txt")
+    runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
   }
 
   @Test
   fun testUndoMoveToUnversioned() {
     val file = createFileInCommand(myWorkingCopyDir, "a.txt", "A")
     val child = moveToNewPackage(file, "child")
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A child", "A child/a.txt")
     checkin()
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
@@ -320,7 +318,7 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("? unversioned")
 
     moveFileInCommand(child, unversioned)
-    runAndVerifyStatusSorted("? unversioned", "D child", "D child" + File.separator + "a.txt")
+    runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
 
     undo()
     runAndVerifyStatusSorted("? unversioned")
@@ -354,7 +352,7 @@ class SvnRenameTest : SvnTestCase() {
   fun testUndoMoveToUnversionedCommitted() {
     val file = createFileInCommand(myWorkingCopyDir, "a.txt", "A")
     val child = moveToNewPackage(file, "child")
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A child", "A child/a.txt")
     checkin()
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     val unversioned = createDirInCommand(myWorkingCopyDir, "unversioned")
@@ -362,7 +360,7 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("? unversioned")
 
     moveFileInCommand(child, unversioned)
-    runAndVerifyStatusSorted("? unversioned", "D child", "D child" + File.separator + "a.txt")
+    runAndVerifyStatusSorted("? unversioned", "D child", "D child/a.txt")
     checkin()
 
     undo()
@@ -377,11 +375,11 @@ class SvnRenameTest : SvnTestCase() {
     runAndVerifyStatusSorted("A child", "A sink")
     checkin()
     val file = createFileInCommand(child, "a.txt", "A")
-    runAndVerifyStatusSorted("A child" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A child/a.txt")
     moveFileInCommand(file, sink)
-    runAndVerifyStatusSorted("A sink" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A sink/a.txt")
     undo()
-    runAndVerifyStatusSorted("A child" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A child/a.txt")
   }
 
   // todo undo, undo committed?
@@ -389,7 +387,7 @@ class SvnRenameTest : SvnTestCase() {
   fun testMoveToNewPackage() {
     val file = createFileInCommand(myWorkingCopyDir, "a.txt", "A")
     moveToNewPackage(file, "child")
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt")
+    runAndVerifyStatusSorted("A child", "A child/a.txt")
   }
 
   @Test
@@ -397,7 +395,7 @@ class SvnRenameTest : SvnTestCase() {
     val file = createFileInCommand(myWorkingCopyDir, "a.txt", "A")
     checkin()
     moveToNewPackage(file, "child")
-    runAndVerifyStatusSorted("A child", "A + child" + File.separatorChar + "a.txt", "D a.txt")
+    runAndVerifyStatusSorted("A child", "A + child/a.txt", "D a.txt")
   }
 
   private fun moveToNewPackage(file: VirtualFile, packageName: String): VirtualFile {
