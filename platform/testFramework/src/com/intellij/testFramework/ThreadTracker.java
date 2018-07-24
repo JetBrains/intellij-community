@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,11 +26,13 @@ import org.junit.Assert;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 /**
  * @author cdr
@@ -62,35 +65,42 @@ public class ThreadTracker {
 
   private static final Set<String> wellKnownOffenders = new THashSet<>();
   static {
-    wellKnownOffenders.add("AWT-EventQueue-");
-    wellKnownOffenders.add("AWT-Shutdown");
-    wellKnownOffenders.add("AWT-Windows");
-    wellKnownOffenders.add("Batik CleanerThread");
-    wellKnownOffenders.add("CompilerThread0");
-    wellKnownOffenders.add("External compiler");
-    wellKnownOffenders.add("Finalizer");
-    wellKnownOffenders.add("IDEA Test Case Thread");
-    wellKnownOffenders.add("Image Fetcher ");
-    wellKnownOffenders.add("Java2D Disposer");
-    wellKnownOffenders.add("JobScheduler FJ pool ");
-    wellKnownOffenders.add("JPS thread pool");
-    wellKnownOffenders.add("Keep-Alive-Timer");
-    wellKnownOffenders.add("main");
-    wellKnownOffenders.add("Monitor Ctrl-Break");
-    wellKnownOffenders.add("Netty ");
-    wellKnownOffenders.add("ObjectCleanerThread");
-    wellKnownOffenders.add("Reference Handler");
-    wellKnownOffenders.add("RMI TCP Connection");
-    wellKnownOffenders.add("Signal Dispatcher");
-    wellKnownOffenders.add("timer-int"); //serverImpl
-    wellKnownOffenders.add("timer-sys"); //clientimpl
-    wellKnownOffenders.add("TimerQueue");
-    wellKnownOffenders.add("UserActivityMonitor thread");
-    wellKnownOffenders.add("VM Periodic Task Thread");
-    wellKnownOffenders.add("VM Thread");
-    wellKnownOffenders.add("YJPAgent-Telemetry");
-    wellKnownOffenders.add(FlushingDaemon.NAME);
-
+    List<String> offenders = Arrays.asList(
+    "AWT-EventQueue-",
+    "AWT-Shutdown",
+    "AWT-Windows",
+    "Batik CleanerThread",
+    "CompilerThread0",
+    "External compiler",
+    "Finalizer",
+    FlushingDaemon.NAME,
+    "IDEA Test Case Thread",
+    "Image Fetcher ",
+    "Java2D Disposer",
+    "JobScheduler FJ pool ",
+    "JPS thread pool",
+    "Keep-Alive-Timer",
+    "main",
+    "Monitor Ctrl-Break",
+    "Netty ",
+    "ObjectCleanerThread",
+    "Reference Handler",
+    "RMI TCP Connection",
+    "Signal Dispatcher",
+    "timer-int", //serverIm,
+    "timer-sys", //clientim,
+    "TimerQueue",
+    "UserActivityMonitor thread",
+    "VM Periodic Task Thread",
+    "VM Thread",
+    "YJPAgent-Telemetry"
+    );
+    List<String> sorted = offenders.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
+    if (!offenders.equals(sorted)) {
+      String proper = StringUtil.join(ContainerUtil.map(sorted, s -> '"' + s + '"'), ",\n").replaceAll('"'+FlushingDaemon.NAME+'"', "FlushingDaemon.NAME");
+      throw new AssertionError("The thread names must be sorted. Something like this will do:\n" + proper);
+    }
+    wellKnownOffenders.addAll(offenders);
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).
     if (!application.isDisposed()) {
