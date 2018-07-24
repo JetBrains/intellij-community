@@ -157,6 +157,6 @@ fun RunConfigurationModel.changeOneValue(expectedField: RunConfigurationModel.Co
 
 fun RunConfigurationModel.printHierarchy() {
   with(connectDialog()) {
-    println(robot().hierarchy())
+    println(ScreenshotOnFailure.getHierarchy())
   }
 }
