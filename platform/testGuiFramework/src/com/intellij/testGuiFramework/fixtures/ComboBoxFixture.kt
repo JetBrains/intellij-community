@@ -70,4 +70,8 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
       }
     }
   }
+
+  fun getSelectedVisibleValue() = getVisibleValueAtIndex(target().selectedIndex)
+
+  fun getVisibleValueAtIndex(index: Int) = driver().value(target(), index)
 }
