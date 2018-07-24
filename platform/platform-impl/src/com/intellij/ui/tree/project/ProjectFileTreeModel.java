@@ -30,7 +30,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
-import static com.intellij.ui.tree.project.ProjectFileListener.findArea;
+import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 import static java.util.Collections.emptyList;
 
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
@@ -96,7 +96,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     if (children.isEmpty()) return emptyList();
     List<ProjectFileNode> result = new SmartList<>();
     VirtualFileFilter filter = root.filter;
-    for (Object child: children) {
+    for (Object child : children) {
       if (child instanceof FileNode && isVisible((FileNode)child, filter)) {
         result.add((FileNode)child);
       }
@@ -244,8 +244,8 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
           list.add(mapper.apply(ancestor, project));
         }
       }
-      for (Module module: getModules(project)) {
-        for (VirtualFile file: getContentRoots(module)) {
+      for (Module module : getModules(project)) {
+        for (VirtualFile file : getContentRoots(module)) {
           if (collector != null) {
             collector.add(file);
           }
@@ -305,7 +305,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
       List<FileNode> list = new SmartList<>();
       Mapper<FileNode> mapper = new Mapper<>(oldList, FileNode::new);
-      for (VirtualFile child: children) {
+      for (VirtualFile child : children) {
         if (child.is(VFileProperty.SYMLINK) && VfsUtilCore.isInvalidLink(child)) {
           continue; // ignore invalid symlink
         }
@@ -324,7 +324,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
           validator = null; // all children will be invalid
           valid = false;
         }
-        for (FileNode node: children) {
+        for (FileNode node : children) {
           node.invalidateChildren(validator);
         }
       }
@@ -348,7 +348,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     boolean invalidate(VirtualFile file) {
       List<VirtualFile> list = accumulator;
       if (!list.isEmpty()) {
-        for (VirtualFile ancestor: list) {
+        for (VirtualFile ancestor : list) {
           if (isAncestor(ancestor, file, false)) {
             return false; // the file or its parent is already added
           }
@@ -374,7 +374,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
             List<FileNode> list = new SmartList<>();
             invalidateNow(node -> list.add(node));
             if (parent.filter == null) {
-              for (FileNode node: list) {
+              for (FileNode node : list) {
                 TreePath path = pathToCustomNode((Node)node, child -> child.parent);
                 if (path != null) consumer.accept(path);
               }

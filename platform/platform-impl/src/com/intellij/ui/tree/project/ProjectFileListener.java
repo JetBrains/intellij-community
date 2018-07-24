@@ -2,12 +2,9 @@
 package com.intellij.ui.tree.project;
 
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -20,10 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.ProjectTopics.PROJECT_ROOTS;
-import static com.intellij.openapi.util.registry.Registry.is;
-import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
+import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 
 public abstract class ProjectFileListener {
   private final Project project;
@@ -43,7 +39,7 @@ public abstract class ProjectFileListener {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         invoker.invokeLaterIfNeeded(() -> {
-          for (VFileEvent event: events) {
+          for (VFileEvent event : events) {
             if (event instanceof VFileCreateEvent) {
               VFileCreateEvent create = (VFileCreateEvent)event;
               updateFromFile(create.getParent());
@@ -126,16 +122,5 @@ public abstract class ProjectFileListener {
     if (file != null && !file.isDirectory()) {
       updateFromFile(file.getParent());
     }
-  }
-
-  @Nullable
-  public static AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
-    if (project == null || project.isDisposed() || !file.isValid()) return null;
-    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
-    if (module != null) return module.isDisposed() ? null : module;
-    if (!is("projectView.show.base.dir")) return null;
-    VirtualFile ancestor = project.getBaseDir();
-    // file does not belong to any content root, but it is located under the project directory and not ignored
-    return ancestor == null || FileTypeRegistry.getInstance().isFileIgnored(file) || !isAncestor(ancestor, file, false) ? null : project;
   }
 }
