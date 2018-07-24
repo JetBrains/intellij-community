@@ -76,7 +76,8 @@ except:
     pass
 
 # Pull in runfile, the interface to UMD that wraps execfile
-from _pydev_bundle.pydev_umd import runfile, _set_globals_function
+from _pydev_bundle.pydev_umd import runfile
+
 if sys.version_info[0] >= 3:
     import builtins  # @UnresolvedImport
     builtins.runfile = runfile
@@ -282,12 +283,12 @@ def start_server(port):
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    from pydev_console.thrift_communication import console_thrift
+    from pydev_console.protocol import PythonConsoleBackendService, PythonConsoleFrontendService
 
     enable_thrift_logging()
 
-    server_service = console_thrift.PythonConsoleBackendService
-    client_service = console_thrift.PythonConsoleFrontendService
+    server_service = PythonConsoleBackendService
+    client_service = PythonConsoleFrontendService
 
     # 1. Start Python console server
 
@@ -315,11 +316,11 @@ def start_client(host, port):
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    from pydev_console.thrift_communication import console_thrift
+    from pydev_console.protocol import PythonConsoleBackendService, PythonConsoleFrontendService
 
     enable_thrift_logging()
 
-    client_service = console_thrift.PythonConsoleFrontendService
+    client_service = PythonConsoleFrontendService
 
     client, server_transport = make_rpc_client(client_service, host, port)
 
@@ -332,7 +333,7 @@ def start_client(host, port):
     # # Tell UMD the proper default namespace
     # _set_globals_function(interpreter.get_namespace)
 
-    server_service = console_thrift.PythonConsoleBackendService
+    server_service = PythonConsoleBackendService
 
     # `InterpreterInterface` implements all methods required for the handler
     server_handler = interpreter

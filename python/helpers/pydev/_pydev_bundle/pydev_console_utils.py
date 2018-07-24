@@ -9,7 +9,7 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
-from pydev_console.thrift_communication import console_thrift
+from pydev_console.protocol import CompletionOption, CompletionOptionType
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -21,21 +21,21 @@ except:
 
 # translation to Thrift `CompletionOptionType` enumeration
 COMPLETION_OPTION_TYPES = {
-    _pydev_imports_tipper.TYPE_IMPORT: console_thrift.CompletionOptionType.IMPORT,
-    _pydev_imports_tipper.TYPE_CLASS: console_thrift.CompletionOptionType.CLASS,
-    _pydev_imports_tipper.TYPE_FUNCTION: console_thrift.CompletionOptionType.FUNCTION,
-    _pydev_imports_tipper.TYPE_ATTR: console_thrift.CompletionOptionType.ATTR,
-    _pydev_imports_tipper.TYPE_BUILTIN: console_thrift.CompletionOptionType.BUILTIN,
-    _pydev_imports_tipper.TYPE_PARAM: console_thrift.CompletionOptionType.PARAM,
-    _pydev_imports_tipper.TYPE_IPYTHON: console_thrift.CompletionOptionType.IPYTHON,
-    _pydev_imports_tipper.TYPE_IPYTHON_MAGIC: console_thrift.CompletionOptionType.IPYTHON_MAGIC,
+    _pydev_imports_tipper.TYPE_IMPORT: CompletionOptionType.IMPORT,
+    _pydev_imports_tipper.TYPE_CLASS: CompletionOptionType.CLASS,
+    _pydev_imports_tipper.TYPE_FUNCTION: CompletionOptionType.FUNCTION,
+    _pydev_imports_tipper.TYPE_ATTR: CompletionOptionType.ATTR,
+    _pydev_imports_tipper.TYPE_BUILTIN: CompletionOptionType.BUILTIN,
+    _pydev_imports_tipper.TYPE_PARAM: CompletionOptionType.PARAM,
+    _pydev_imports_tipper.TYPE_IPYTHON: CompletionOptionType.IPYTHON,
+    _pydev_imports_tipper.TYPE_IPYTHON_MAGIC: CompletionOptionType.IPYTHON_MAGIC,
 }
 
 
 def _to_completion_option(word):
     name, documentation, args, ret_type = word
     completion_option_type = COMPLETION_OPTION_TYPES[ret_type]
-    return console_thrift.CompletionOption(name, documentation, args.split(), completion_option_type)
+    return CompletionOption(name, documentation, args.split(), completion_option_type)
 
 
 # =======================================================================================================================

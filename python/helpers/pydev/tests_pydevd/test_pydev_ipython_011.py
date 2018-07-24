@@ -9,7 +9,7 @@ from _pydev_bundle.pydev_console_utils import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_comm.rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
-from pydev_console.thrift_communication import console_thrift
+from pydev_console.protocol import PythonConsoleFrontendService, PythonConsoleBackendService
 from pydevconsole import enable_thrift_logging
 
 try:
@@ -228,13 +228,13 @@ class TestRunningCode(TestBase):
 
         # here we start the test server
         server_socket = start_rpc_server_and_make_client(get_localhost(), 0,
-                                                         console_thrift.PythonConsoleFrontendService,
-                                                         console_thrift.PythonConsoleBackendService,
+                                                         PythonConsoleFrontendService,
+                                                         PythonConsoleBackendService,
                                                          server_handler)
 
         host, port = server_socket.getsockname()
 
-        rpc_client, _ = make_rpc_client(console_thrift.PythonConsoleFrontendService, host, port)
+        rpc_client, _ = make_rpc_client(PythonConsoleFrontendService, host, port)
 
         # PyDevFrontEnd depends on singleton in IPython, so you
         # can't make multiple versions. So we reuse self.front_end for
