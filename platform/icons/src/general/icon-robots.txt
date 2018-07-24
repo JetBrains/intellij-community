@@ -13,6 +13,7 @@ deprecated: editColors.png -> /general/settings.svg; to be removed in IDEA 2020 
 deprecated: expandAll.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
 deprecated: expandAllHover.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
 deprecated: externalTools.png -> /general/externalToolsSmall.png; to be removed in IDEA 2020 - use AllIcons.General.ExternalToolsSmall
+deprecated: gearHover.png; to be removed in IDEA 2020
 deprecated: getProjectfromVCS.png -> /welcome/fromVCS.svg; to be removed in IDEA 2020 - use AllIcons.Welcome.FromVCS
 deprecated: ijLogo.png; to be removed in IDEA 2020
 deprecated: importProject.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
