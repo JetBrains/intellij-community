@@ -833,9 +833,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   @Override
   public void doHelpAction() {
     FindModel myModel = myHelper.getModel();
-    String id = myModel.isReplaceState()
-                ? myModel.isMultipleFiles() ? HelpID.REPLACE_IN_PATH : HelpID.REPLACE_OPTIONS
-                : myModel.isMultipleFiles() ? HelpID.FIND_IN_PATH : HelpID.FIND_OPTIONS;
+    String id = myModel.isReplaceState() ? HelpID.REPLACE_IN_PATH : HelpID.FIND_IN_PATH;
     HelpManager.getInstance().invokeHelp(id);
   }
 
