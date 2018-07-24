@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -52,10 +53,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public boolean isSnapshot() {
-    for (int each : myComponents) {
-      if (each == SNAPSHOT_VALUE) return true;
-    }
-    return false;
+    return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) >= 0;
   }
 
   public String asString() {
