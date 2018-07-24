@@ -5,7 +5,7 @@ import unittest
 import pydevconsole
 from _pydev_comm.rpc import make_rpc_client, start_rpc_server_and_make_client, start_rpc_server
 from _pydevd_bundle import pydevd_io
-from pydev_console.thrift_communication import console_thrift
+from pydev_console.protocol import PythonConsoleFrontendService, PythonConsoleBackendService
 from pydevconsole import enable_thrift_logging
 
 try:
@@ -164,8 +164,8 @@ class Test(unittest.TestCase):
 
         # here we start the test server
         server_socket = start_rpc_server_and_make_client(pydev_localhost.get_localhost(), 0,
-                                                         console_thrift.PythonConsoleFrontendService,
-                                                         console_thrift.PythonConsoleBackendService,
+                                                         PythonConsoleFrontendService,
+                                                         PythonConsoleBackendService,
                                                          server_handler)
 
         host, port = server_socket.getsockname()
@@ -173,7 +173,7 @@ class Test(unittest.TestCase):
         import time
         time.sleep(1)
 
-        rpc_client, _ = make_rpc_client(console_thrift.PythonConsoleFrontendService, host, port)
+        rpc_client, _ = make_rpc_client(PythonConsoleFrontendService, host, port)
 
         return rpc_client
 
@@ -203,7 +203,7 @@ class Test(unittest.TestCase):
         socket_names = get_socket_names(2, True)
         port0 = socket_names[0][1]
         port1 = socket_names[1][1]
-        
+
         assert port0 != port1
         assert port0 > 0
         assert port1 > 0
@@ -234,9 +234,9 @@ class Test(unittest.TestCase):
             import time
             time.sleep(1)  #let's give it some time to start the threads
 
-            rpc_client, server_transport = make_rpc_client(console_thrift.PythonConsoleBackendService, host, port)
+            rpc_client, server_transport = make_rpc_client(PythonConsoleBackendService, host, port)
 
-            server_service = console_thrift.PythonConsoleFrontendService
+            server_service = PythonConsoleFrontendService
 
             server_handler = self.create_frontend_handler()
 

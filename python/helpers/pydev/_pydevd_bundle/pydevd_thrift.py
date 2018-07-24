@@ -14,7 +14,7 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
     BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_vars import get_label, VariableError, array_default_format, MAXIMUM_ARRAY_SIZE
-from pydev_console.thrift_communication import console_thrift
+from pydev_console.protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader
 
 try:
     import types
@@ -272,7 +272,7 @@ def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
 def var_to_struct(val, name, do_trim=True, evaluate_full_value=True):
     """ single variable or dictionary to Thrift struct representation """
 
-    debug_value = console_thrift.DebugValue()
+    debug_value = DebugValue()
 
     try:
         # This should be faster than isinstance (but we have to protect against not having a '__class__' attribute).
@@ -460,7 +460,7 @@ def array_to_meta_thrift_struct(array, name, format):
     bounds = (0, 0)
     if type in "biufc":
         bounds = (array.min(), array.max())
-    array_chunk = console_thrift.GetArrayResponse()
+    array_chunk = GetArrayResponse()
     array_chunk.slice = slice
     array_chunk.rows = rows
     array_chunk.cols = cols
@@ -485,7 +485,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     dim = len(df.axes)
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
-    array_chunk = console_thrift.GetArrayResponse()
+    array_chunk = GetArrayResponse()
     array_chunk.slice = name
     array_chunk.rows = num_rows
     array_chunk.cols = num_cols
@@ -532,7 +532,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
 
 def array_data_to_thrift_struct(rows, cols, get_row):
-    array_data = console_thrift.ArrayData()
+    array_data = ArrayData()
     array_data.rows = rows
     array_data.cols = cols
     # `ArrayData.data`
@@ -545,13 +545,13 @@ def array_data_to_thrift_struct(rows, cols, get_row):
 
 
 def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
-    array_headers = console_thrift.ArrayHeaders()
+    array_headers = ArrayHeaders()
     col_headers = []
     for col in range(cols):
         col_label = get_label(df.axes[1].values[col]) if dim > 1 else str(col)
         bounds = col_bounds[col]
         col_format = "%" + col_to_format(col)
-        col_header = console_thrift.ColHeader()
+        col_header = ColHeader()
         # col_header.index = col
         col_header.label = col_label
         col_header.type = dtypes[col]
@@ -561,7 +561,7 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
         col_headers.append(col_header)
     row_headers = []
     for row in range(rows):
-        row_header = console_thrift.RowHeader()
+        row_header = RowHeader()
         row_header.index = row
         row_header.label = get_label(df.axes[0].values[row])
         row_headers.append(row_header)
