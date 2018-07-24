@@ -649,7 +649,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     throws PyDebuggerException {
     if (myClient != null) {
       try {
-        // @alexander todo add specific exception to the method (previously processed by `checkError()`)
         GetArrayResponse ret = myClient.getArray(var.getName(), rowOffset, colOffset, rows, cols, format);
         return createArrayChunk(ret, this);
       }

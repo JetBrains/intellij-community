@@ -108,6 +108,10 @@ typedef string AttributeDescription
 
 typedef list<DebugValue> DebugValues
 
+exception UnsupportedArrayTypeException {
+  1: string type,
+}
+
 service PythonConsoleBackendService {
   /**
    * Returns `true` if Python console script needs more code to evaluate it.
@@ -159,7 +163,8 @@ service PythonConsoleBackendService {
 
   DebugValues evaluate(1: string expression),
 
-  GetArrayResponse getArray(1: string vars, 2: i32 rowOffset, 3: i32 colOffset, 4: i32 rows, 5: i32 cols, 6: string format),
+  GetArrayResponse getArray(1: string vars, 2: i32 rowOffset, 3: i32 colOffset, 4: i32 rows, 5: i32 cols, 6: string format)
+    throws (1: UnsupportedArrayTypeException unsupported),
 
   /**
    * The result is returned asyncronously with `PythonConsoleFrontendService.returnFullValue`.
