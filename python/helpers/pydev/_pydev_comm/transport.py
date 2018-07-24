@@ -5,7 +5,7 @@ import threading
 
 from _jetbrains_thriftpy.thrift import TClient
 from _jetbrains_thriftpy.transport import TTransportBase, readall
-from pydev_console.io import PipeIO
+from _pydev_comm.io import PipeIO
 
 REQUEST = 0
 RESPONSE = 1
