@@ -49,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.DataStructure;
 import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.IntDistribution;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -211,7 +210,7 @@ public class MadTestingUtil {
   @NotNull
   public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
                                                                   FileFilter fileFilter,
-                                                                  Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
+                                                                  Function<PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll()
       .append(() -> {
@@ -219,17 +218,19 @@ public class MadTestingUtil {
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
         PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
         if (psiFile instanceof PsiBinaryFile || psiFile instanceof PsiPlainTextFile) {
+          //noinspection UseOfSystemOutOrSystemErr
           System.err.println("Can't check " + vFile + " due to incorrect file type: " + psiFile + " of " + psiFile.getClass());
           return;
         }
         env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile)))));
       })
       .append(() -> WriteAction.run(() -> {
-        for (VirtualFile file : fixture.getTempDirFixture().getFile("").getChildren()) {
+        for (VirtualFile file : Objects.requireNonNull(fixture.getTempDirFixture().getFile("")).getChildren()) {
           file.delete(fixture);
         }
       }))
       .append(() -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments())
+      .append(() -> UIUtil.dispatchAllInvocationEvents())
       .run();
   }
 
@@ -287,7 +288,7 @@ public class MadTestingUtil {
 
   private static class FileGenerator implements Function<DataStructure, File> {
     private static final com.intellij.util.Function<File, JBIterable<File>> FS_TRAVERSAL =
-      TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(f.listFiles()) : Collections.emptyList());
+      TreeTraversal.PRE_ORDER_DFS.traversal((File f) -> f.isDirectory() ? Arrays.asList(Objects.requireNonNull(f.listFiles())) : Collections.emptyList());
     private final File myRoot;
     private final FileFilter myFilter;
 
@@ -315,8 +316,8 @@ public class MadTestingUtil {
 
         List<File> toChoose = preferDirs(data, children);
         Collections.sort(toChoose, Comparator.comparing(File::getName));
-        int index = data.drawInt(IntDistribution.uniform(0, toChoose.size() - 1));
-        File generated = generateRandomFile(data, toChoose.get(index), exhausted);
+        File chosen = data.generate(Generator.sampledFrom(toChoose));
+        File generated = generateRandomFile(data, chosen, exhausted);
         if (generated != null) {
           return generated;
         }
@@ -339,7 +340,7 @@ public class MadTestingUtil {
       }
 
       int ratio = Math.max(100, dirs.size() / files.size());
-      return data.drawInt() % ratio != 0 ? dirs : files;
+      return data.generate(Generator.integers(0, ratio - 1)) != 0 ? dirs : files;
     }
   }
 }

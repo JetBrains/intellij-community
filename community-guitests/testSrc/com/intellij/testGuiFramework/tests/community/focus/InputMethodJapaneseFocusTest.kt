@@ -3,8 +3,10 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil.textfield
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
@@ -67,7 +69,7 @@ class InputMethodJapaneseFocusTest : GuiTestCase() {
       findSearchWindow()
     }
     with(this) {
-      val textfield = textfield("", searchWindow, this.defaultTimeout)
+      val textfield = textfield("", searchWindow, defaultTimeout)
       Assert.assertEquals(textfield.target().text, it)
     }
   }

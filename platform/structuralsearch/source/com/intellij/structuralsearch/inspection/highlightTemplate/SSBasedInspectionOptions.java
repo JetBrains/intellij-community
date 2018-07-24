@@ -53,7 +53,7 @@ public class SSBasedInspectionOptions {
       return;
     }
 
-    configurationsChanged(dialog.getSearchContext());
+    configurationsChanged(dialog.getProject());
   }
 
   private static SearchDialog createDialog(final SearchDialogFactory searchDialogFactory) {
@@ -67,9 +67,9 @@ public class SSBasedInspectionOptions {
     return SearchContext.buildFromDataContext(event.getDataContext());
   }
 
-  public void configurationsChanged(final SearchContext searchContext) {
+  public void configurationsChanged(Project project) {
     ((MyListModel)myTemplatesList.getModel()).fireContentsChanged();
-    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).restart();
+    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
   public JPanel getComponent() {
@@ -112,7 +112,10 @@ public class SSBasedInspectionOptions {
         }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          performEditAction();
+          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
+          if (project != null && !DumbService.isDumb(project)) {
+            performEditAction(project);
+          }
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
@@ -123,12 +126,13 @@ public class SSBasedInspectionOptions {
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          final SearchContext context = createSearchContext();
+          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
+          if (project == null) return;
           for (Configuration configuration : myTemplatesList.getSelectedValuesList()) {
             myConfigurations.remove(configuration);
-            SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
+            SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, project);
           }
-          configurationsChanged(context);
+          configurationsChanged(project);
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
@@ -156,7 +160,7 @@ public class SSBasedInspectionOptions {
       protected boolean onDoubleClick(MouseEvent e) {
         final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
         if (project != null && !DumbService.isDumb(project)) {
-          performEditAction();
+          performEditAction(project);
         }
         return true;
       }
@@ -183,7 +187,7 @@ public class SSBasedInspectionOptions {
     }
   }
 
-  void performEditAction() {
+  void performEditAction(Project project) {
     final Configuration configuration = myTemplatesList.getSelectedValue();
     if (configuration == null) return;
 
@@ -216,9 +220,8 @@ public class SSBasedInspectionOptions {
     final Configuration newConfiguration = dialog.getConfiguration();
     final int index = myConfigurations.indexOf(configuration);
     myConfigurations.set(index, newConfiguration);
-    final SearchContext context = dialog.getSearchContext();
-    SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
-    configurationsChanged(context);
+    SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, project);
+    configurationsChanged(project);
   }
 
   private class MyListModel extends AbstractListModel<Configuration> {

@@ -126,9 +126,13 @@ public class TestScaleHelper {
   }
 
   public static BufferedImage loadImage(String path) {
+    return loadImage(path, ScaleContext.createIdentity());
+  }
+
+  public static BufferedImage loadImage(String path, ScaleContext ctx) {
     try {
       Image img = ImageLoader.loadFromUrl(
-        new File(path).toURI().toURL(), false, false, null, ScaleContext.createIdentity());
+        new File(path).toURI().toURL(), true, false, null, ctx);
       return ImageUtil.toBufferedImage(img);
     }
     catch (MalformedURLException e) {

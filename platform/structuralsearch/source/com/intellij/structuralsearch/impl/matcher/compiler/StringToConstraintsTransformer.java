@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -391,7 +392,8 @@ public class StringToConstraintsTransformer {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
       }
-      checkRegex(argument);
+      if (Registry.is("ssr.use.regexp.to.specify.type")) checkRegex(argument);
+      else argument = unescape(argument);
       constraint.setNameOfExprType(argument);
       constraint.setInvertExprType(invert);
     }
@@ -400,7 +402,8 @@ public class StringToConstraintsTransformer {
         argument = argument.substring(1);
         constraint.setFormalArgTypeWithinHierarchy(true);
       }
-      checkRegex(argument);
+      if (Registry.is("ssr.use.regexp.to.specify.type")) checkRegex(argument);
+      else argument = unescape(argument);
       constraint.setNameOfFormalArgType(argument);
       constraint.setInvertFormalType(invert);
     }
@@ -431,5 +434,21 @@ public class StringToConstraintsTransformer {
     catch (PatternSyntaxException e) {
       throw new MalformedPatternException(SSRBundle.message("invalid.regular.expression", e.getMessage()));
     }
+  }
+
+  private static String unescape(String s) {
+    StringBuilder result = new StringBuilder();
+    boolean escaped = false;
+    for (int i = 0, length = s.length(); i < length; i++) {
+      int c = s.codePointAt(i);
+      if (c == '\\' && !escaped) {
+        escaped = true;
+      }
+      else {
+        escaped = false;
+        result.appendCodePoint(c);
+      }
+    }
+    return result.toString();
   }
 }

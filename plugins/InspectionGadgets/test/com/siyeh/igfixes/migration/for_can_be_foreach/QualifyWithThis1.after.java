@@ -4,7 +4,7 @@ class QualifyWithThis1 {
     int size = values.length;
     String[] values = new String[10]);  // Let's hide filed "values" with local variable
 
-      for (String value : this.values) {
+      for (String value: this.values) {
       }
   }
 }

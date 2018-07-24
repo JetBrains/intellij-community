@@ -93,7 +93,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       Icon icon = theme.getIcon();
       int maxThumbnailSize = 400 / myThemes.size();
       final JLabel label = new JLabel(
-        myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, maxThumbnailSize * 2, maxThumbnailSize * 2), .5) : icon);
+        myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, maxThumbnailSize * 2, maxThumbnailSize * 2), this, .5f) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);
       label.setHorizontalAlignment(SwingConstants.RIGHT);
       panel.add(label, BorderLayout.CENTER);

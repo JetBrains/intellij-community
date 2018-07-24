@@ -37,6 +37,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -94,6 +95,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final UIDefaults ourDefaults;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
+
+  // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
+  public static final String WINDOW_ALPHA = "Window.alpha";
 
   private static final Map<String, String> ourLafClassesAliases = ContainerUtil.newHashMap();
   static {
@@ -402,7 +406,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
       try {
-        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getDefaults());
+        ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).installTheme(UIManager.getLookAndFeelDefaults());
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -415,7 +419,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfo.isMacOSYosemite) {
-      installMacOSXFonts(UIManager.getDefaults());
+      installMacOSXFonts(UIManager.getLookAndFeelDefaults());
     }
 
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
@@ -896,22 +900,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         UIUtil.markAsTypeAheadAware(window);
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
-        ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, cleanupKey);
+        final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+        rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
+        rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {
           @Override
           public void windowOpened(WindowEvent e) {
             // cleanup will be handled by AbstractPopup wrapper
-            if (PopupUtil.getPopupContainerFor(((RootPaneContainer)window).getRootPane()) != null) {
+            if (PopupUtil.getPopupContainerFor(rootPane) != null) {
               window.removeWindowListener(this);
-              ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
+              rootPane.putClientProperty(cleanupKey, null);
             }
           }
 
           @Override
           public void windowClosed(WindowEvent e) {
             window.removeWindowListener(this);
-            ((RootPaneContainer)window).getRootPane().putClientProperty(cleanupKey, null);
-            DialogWrapper.cleanupRootPane(((RootPaneContainer)window).getRootPane());
+            rootPane.putClientProperty(cleanupKey, null);
+            DialogWrapper.cleanupRootPane(rootPane);
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
@@ -1018,5 +1024,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             LafIconLookup.getSelectedIcon(NAME),
             LafIconLookup.getDisabledIcon(NAME));
     }
+  }
+
+  private static LafManagerImpl ourTestInstance;
+  @TestOnly
+  public static LafManagerImpl getTestInstance() {
+    if (ourTestInstance == null) {
+      ourTestInstance = new LafManagerImpl();
+    }
+    return ourTestInstance;
   }
 }

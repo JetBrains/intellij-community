@@ -125,9 +125,11 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     });
     indicator.setFraction(++count / (double)total); // +1
 
+    ExtractMethodSnapshot copySnapshot = ReadAction.compute(() -> new ExtractMethodSnapshot(mySnapshot, pattern, patternCopy));
+
     JavaDuplicatesExtractMethodProcessor copyProcessor = ReadAction.compute(() -> {
       JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy, REFACTORING_NAME);
-      return processor.prepareFromSnapshot(mySnapshot, false) ? processor : null;
+      return processor.prepareFromSnapshot(copySnapshot, false) ? processor : null;
     });
 
     List<Match> copyDuplicates = ReadAction.compute(() -> {

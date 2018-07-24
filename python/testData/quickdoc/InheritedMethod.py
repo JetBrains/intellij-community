@@ -1,7 +1,7 @@
 # copied doc of inherited method
 class A:
   def foo(self):
-    "<the_doc>Doc from A.foo."
+    "Doc from A.foo."
     pass
 
 class B(A):

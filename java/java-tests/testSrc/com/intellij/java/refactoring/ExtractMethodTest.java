@@ -299,6 +299,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testDuplicatesFullyQualifiedType() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testCodeDuplicatesWithContinueNoReturn() throws Exception {
     doDuplicatesTest();
   }
@@ -1440,7 +1444,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     if (doRefactor) {
       processor.testTargetClass(targetClass);
       processor.testPrepare(returnType, makeStatic);
-      processor.testNullness();
+      processor.testNullability();
       if (disabledParams != null) {
         for (int param : disabledParams) {
           processor.doNotPassParameter(param);

@@ -6,7 +6,7 @@ class QualifyWithThis2 {
     int size = values.size();
     List<String> values = new ArrayList<>();  // Let's hide filed "values" with local variable
 
-      for (String value : this.values) {
+      for (String value: this.values) {
       }
   }
 }

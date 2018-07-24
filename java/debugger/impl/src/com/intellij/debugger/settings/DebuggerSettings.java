@@ -114,10 +114,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       // Running on a JRE: we've already warned in the system health detector
       return null;
     }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-      return null;
-    }
 
     for (ContentState eachState : myContentStates.values()) {
       final Element content = new Element("content");

@@ -70,7 +70,7 @@ public class ColorIconCache {
 
     @NotNull
     @Override
-    protected ColorIcon copy() {
+    public ColorIcon copy() {
       return new ColorIcon(this);
     }
 

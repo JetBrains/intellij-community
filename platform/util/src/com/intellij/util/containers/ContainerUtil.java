@@ -2304,9 +2304,9 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<E>> collections) {
+  public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<? extends E>> collections) {
     List<E> result = new ArrayList<E>();
-    for (Collection<E> list : collections) {
+    for (Collection<? extends E> list : collections) {
       result.addAll(list);
     }
 

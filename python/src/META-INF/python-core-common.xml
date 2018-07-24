@@ -430,6 +430,7 @@
     <localInspection language="Python" shortName="PyDataclassInspection" suppressId="PyDataclass" displayName="Dataclass definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDataclassInspection"/>
     <localInspection language="Python" shortName="PyProtocolInspection" suppressId="PyProtocol" displayName="Protocol definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyProtocolInspection"/>
     <localInspection language="Python" shortName="PyTypeHintsInspection" suppressId="PyTypeHints" displayName="Type hints definitions and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeHintsInspection"/>
+    <localInspection language="Python" shortName="PyAsyncCallInspection" suppressId="PyAsyncCall" displayName="Coroutine is not awaited" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAsyncCallInspection"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>

@@ -12,6 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
 
+/**
+ * @deprecated Use {@link SimpleChangesBrowser}
+ */
 public class ChangesBrowser extends OldChangesBrowserBase<Change> {
 
   public ChangesBrowser(@NotNull Project project,

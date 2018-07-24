@@ -25,9 +25,17 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
   public void tokenize(@NotNull PsiLiteralExpression element, TokenConsumer consumer) {
     PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl)element;
     IElementType literalElementType = literalExpression.getLiteralElementType();
-    if (literalElementType != JavaTokenType.STRING_LITERAL && literalElementType != JavaTokenType.RAW_STRING_LITERAL) return;  // not a string literal
-
-    String text = literalExpression.getInnerText();
+    String text;
+    if (literalElementType == JavaTokenType.STRING_LITERAL) {
+      text = literalExpression.getInnerText();
+    }
+    else if (literalElementType == JavaTokenType.RAW_STRING_LITERAL) {
+      text = literalExpression.getRawString();
+    }
+    else {
+      text = null;
+    }
+    
     if (StringUtil.isEmpty(text) || text.length() <= 2) { // optimisation to avoid expensive injection check
       return;
     }

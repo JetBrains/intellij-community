@@ -6,7 +6,7 @@ public class C {
     }
 
     void foo(List<Inner> inners) {
-        for (Inner <selection>inner<caret></selection> : inners) {
+        for (Inner inner: inners) {
             
         }
     }

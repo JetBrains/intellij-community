@@ -15,7 +15,7 @@ Groovy script
             PsiElement(identifier)('MyClass')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('c')
-      PsiErrorElement:';' expected
+      PsiErrorElement:';' expected, got '['
         <empty list>
       PsiWhiteSpace('  ')
       Generalized list
@@ -29,7 +29,7 @@ Groovy script
         Literal
           PsiElement(Integer)('3')
         PsiElement(])(']')
-      PsiErrorElement:';' expected
+      PsiErrorElement:';' expected, got ')'
         <empty list>
     PsiElement())(')')
     PsiWhiteSpace(' ')

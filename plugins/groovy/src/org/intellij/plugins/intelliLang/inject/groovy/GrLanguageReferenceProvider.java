@@ -27,6 +27,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiteralExpression;
 
+/**
+ * @deprecated {@link org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider} now serves Groovy.
+ * Will be removed in IDEA 2019.1
+ */
+@Deprecated
 public class GrLanguageReferenceProvider extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

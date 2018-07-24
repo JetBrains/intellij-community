@@ -99,7 +99,7 @@ def start_new_instance(args):
     if sys.platform == 'darwin':
         if len(args) > 0:
             args.insert(0, '--args')
-        os.execvp('open', ['-a', RUN_PATH] + args)
+        os.execvp('/usr/bin/open', ['-a', RUN_PATH] + args)
     else:
         bin_file = os.path.split(RUN_PATH)[1]
         os.execv(RUN_PATH, [bin_file] + args)

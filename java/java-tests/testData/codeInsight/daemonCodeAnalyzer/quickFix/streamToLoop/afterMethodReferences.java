@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public class Main {
   private static void test(List<String> names) {
-      for (String name : names) {
+      for (String name: names) {
           if (name != null) {
               System.out.println(name);
           }
@@ -19,7 +19,7 @@ public class Main {
 
   private static boolean testBound(List<String> strings) {
       String s = getString();
-      for (String string : strings) {
+      for (String string: strings) {
           if (s.equals(string)) {
               return true;
           }

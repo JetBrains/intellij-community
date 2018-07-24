@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 public class Main {
   private static void getMap(List<String> strings) {
       List<Integer> list = new ArrayList<>();
-      for (String string : strings) {
+      for (String string: strings) {
           Integer len = string.length();
           Integer integer = len * 2;
           list.add(integer);

@@ -28,12 +28,10 @@ import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 
 public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, ActionButton> {
@@ -104,7 +102,7 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
   public static ActionButtonFixture findByActionId(@NotNull final String actionId,
                                                    @NotNull final Robot robot,
                                                    @NotNull final Container container) {
-    return findByActionId(actionId, robot, container, SHORT_TIMEOUT);
+    return findByActionId(actionId, robot, container, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   public void waitUntilEnabledAndShowing() {
@@ -122,12 +120,12 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
           }
         });
       }
-    }, GuiTestUtil.LONG_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
   }
 
   @NotNull
   public static ActionButtonFixture findByText(@NotNull final String text, @NotNull Robot robot, @NotNull Container container) {
-    return findByText(text, robot, container, SHORT_TIMEOUT);
+    return findByText(text, robot, container, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   @NotNull

@@ -27,6 +27,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatemen
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -247,7 +249,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
-      createParenthSpace(true, false);
+      myResult = Spacing.createDependentLFSpacing(0, 0, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
+                                                  mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+    }
+    else if (myRole1 == ChildRole.COMMA && aClass.isEnum() && isJavadocHoldingEnumConstant(myChild2)) {
+      createParenthSpace(true, true);
     }
     else if (aClass instanceof PsiAnonymousClass && ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(myChild1.getElementType())) {
       ASTNode prev = myChild1.getTreePrev();
@@ -262,12 +268,22 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         processClassBody();
       }
     }
+    else if (myChild1.getElementType() == JavaTokenType.COMMA && myChild2.getElementType() == JavaTokenType.SEMICOLON && aClass.isEnum()) {
+      createParenthSpace(true, false);
+    }
     else if (aClass instanceof PsiAnonymousClass && myRole2 == ChildRole.ARGUMENT_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
     else {
       processClassBody();
     }
+  }
+
+  private static boolean isJavadocHoldingEnumConstant(@NotNull ASTNode node) {
+    if (!(node instanceof EnumConstantElement)) return false;
+    ASTNode firstChildNode = node.getFirstChildNode();
+    if (!(firstChildNode instanceof PsiDocComment)) return false;
+    return true;
   }
 
   @NotNull
@@ -780,7 +796,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
     }
-    else if (myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON ||
+    else if ((myRole1 == ChildRole.FOR_ITERATION_PARAMETER && myRole2 == ChildRole.COLON && myJavaSettings.SPACE_BEFORE_COLON_IN_FOREACH) ||
              myRole1 == ChildRole.COLON && myRole2 == ChildRole.FOR_ITERATED_VALUE) {
       createSpaceInCode(true);
     }
@@ -987,7 +1003,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return Spacing.createDependentLFSpacing(spaces, spaces, dependantRange, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
-      return Spacing.createSpacing(spaces, spaces, 0, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      return Spacing.createSpacing(spaces, spaces, 0, false, 0);
     }
   }
 
@@ -1130,7 +1146,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.TYPE
              && myChild1.getLastChildNode() != null
              && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION
-             || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE) {
+             || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE
+             || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.CLASS_OR_INTERFACE_KEYWORD) {
       createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, 0);
     }
     else {
@@ -1726,6 +1743,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.NAME) {
       createSpaceInCode(true);
+    }
+    else if (myRole1 == ChildRole.DOC_COMMENT && myRole2 == ChildRole.NAME) {
+      createParenthSpace(true, true);
     }
   }
 

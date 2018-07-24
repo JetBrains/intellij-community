@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
@@ -17,6 +18,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -60,16 +62,25 @@ public class DfaUtil {
     });
   }
 
+  /**
+   * @deprecated for removal; use {@link #checkNullability(PsiVariable, PsiElement)}
+   */
+  @Deprecated
   @NotNull
   public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
-    Nullness nullness = tryCheckNullness(variable, context, null);
-    return nullness != null ? nullness : Nullness.UNKNOWN;
+    return Nullness.fromNullability(checkNullability(variable, context));
+  }
+
+  @NotNull
+  public static Nullability checkNullability(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
+    Nullability nullability = tryCheckNullability(variable, context, null);
+    return nullability != null ? nullability : Nullability.UNKNOWN;
   }
 
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
-  public static Nullness tryCheckNullness(@Nullable final PsiVariable variable,
-                                          @Nullable final PsiElement context,
-                                          @Nullable final PsiElement outerBlock) {
+  public static Nullability tryCheckNullability(@Nullable final PsiVariable variable,
+                                             @Nullable final PsiElement context,
+                                             @Nullable final PsiElement outerBlock) {
     if (variable == null || context == null) return null;
 
     final PsiElement codeBlock = outerBlock == null ? DfaPsiUtil.getEnclosingCodeBlock(variable, context) : outerBlock;
@@ -78,9 +89,9 @@ public class DfaUtil {
     if (placeResult == null) {
       return null;
     }
-    if (placeResult.myNulls.contains(variable) && !placeResult.myNotNulls.contains(variable)) return Nullness.NULLABLE;
-    if (placeResult.myNotNulls.contains(variable) && !placeResult.myNulls.contains(variable)) return Nullness.NOT_NULL;
-    return Nullness.UNKNOWN;
+    if (placeResult.myNulls.contains(variable) && !placeResult.myNotNulls.contains(variable)) return Nullability.NULLABLE;
+    if (placeResult.myNotNulls.contains(variable) && !placeResult.myNulls.contains(variable)) return Nullability.NOT_NULL;
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
@@ -125,28 +136,37 @@ public class DfaUtil {
     return null;
   }
 
+  /**
+   * @deprecated for removal; use {@link #inferMethodNullability(PsiMethod)}
+   */
+  @Deprecated
   @NotNull
   public static Nullness inferMethodNullity(PsiMethod method) {
+    return Nullness.fromNullability(inferMethodNullability(method));
+  }
+
+  @NotNull
+  public static Nullability inferMethodNullability(PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     if (body == null || PsiUtil.resolveClassInType(method.getReturnType()) == null) {
-      return Nullness.UNKNOWN;
+      return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullity(body, InferenceFromSourceUtil.suppressNullable(method));
+    return inferBlockNullability(body, InferenceFromSourceUtil.suppressNullable(method));
   }
 
   @NotNull
-  public static Nullness inferLambdaNullity(PsiLambdaExpression lambda) {
+  public static Nullability inferLambdaNullability(PsiLambdaExpression lambda) {
     final PsiElement body = lambda.getBody();
     if (body == null || LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
-      return Nullness.UNKNOWN;
+      return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullity(body, false);
+    return inferBlockNullability(body, false);
   }
 
   @NotNull
-  private static Nullness inferBlockNullity(PsiElement body, boolean suppressNullable) {
+  private static Nullability inferBlockNullability(PsiElement body, boolean suppressNullable) {
     final AtomicBoolean hasNulls = new AtomicBoolean();
     final AtomicBoolean hasNotNulls = new AtomicBoolean();
     final AtomicBoolean hasUnknowns = new AtomicBoolean();
@@ -175,14 +195,14 @@ public class DfaUtil {
 
     if (rc == RunnerResult.OK) {
       if (hasNulls.get()) {
-        return suppressNullable ? Nullness.UNKNOWN : Nullness.NULLABLE;
+        return suppressNullable ? Nullability.UNKNOWN : Nullability.NULLABLE;
       }
       if (hasNotNulls.get() && !hasUnknowns.get()) {
-        return Nullness.NOT_NULL;
+        return Nullability.NOT_NULL;
       }
     }
 
-    return Nullness.UNKNOWN;
+    return Nullability.UNKNOWN;
   }
 
   static DfaValue getPossiblyNonInitializedValue(@NotNull DfaValueFactory factory, @NotNull PsiField target, @NotNull PsiElement context) {
@@ -195,7 +215,7 @@ public class DfaUtil {
     if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (getAccessOffset(placeMethod) >= getWriteOffset(target)) return null;
 
-    return factory.createTypeValue(target.getType(), Nullness.NULLABLE);
+    return factory.createTypeValue(target.getType(), Nullability.NULLABLE);
   }
 
   private static int getWriteOffset(PsiField target) {

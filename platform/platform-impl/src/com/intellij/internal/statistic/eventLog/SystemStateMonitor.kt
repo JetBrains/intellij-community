@@ -10,7 +10,7 @@ import com.intellij.util.lang.JavaVersion
 import java.util.concurrent.TimeUnit
 
 class SystemStateMonitor : StartupActivity {
-  private val INITIAL_DELAY = 5
+  private val INITIAL_DELAY = 0
   private val PERIOD_DELAY = 24 * 60
 
   override fun runActivity(project: Project) {
@@ -25,18 +25,11 @@ class SystemStateMonitor : StartupActivity {
   }
 
   private fun logSystemEvent() {
-    val os = HashMap<String, Any>()
-    os["name"] = getOSName()
-    os["version"] = getOSVersion()
+    FeatureUsageLogger.logState("system.os.name", getOSName())
+    FeatureUsageLogger.logState("system.os.version", getOSVersion())
 
-    val jvm = HashMap<String, Any>()
-    jvm["vendor"] = System.getProperty("java.vendor", "Unknown")
-    jvm["version"] = "1." + JavaVersion.current().feature
-
-    val info = HashMap<String, Any>()
-    info["os"] = os
-    info["jvm"] = jvm
-    FeatureUsageLogger.log("state-monitoring", "system", info)
+    FeatureUsageLogger.logState("system.jvm.vendor", System.getProperty("java.vendor", "Unknown"))
+    FeatureUsageLogger.logState("system.jvm.version", "1." + JavaVersion.current().feature)
   }
 
   private fun getOSName() : String {

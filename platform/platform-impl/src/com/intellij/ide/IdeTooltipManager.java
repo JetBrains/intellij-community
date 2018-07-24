@@ -321,11 +321,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
 
     Color bg = tooltip.getTextBackground() != null ? tooltip.getTextBackground() : getTextBackground(true);
     Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
-    Color border = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
+    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
 
     BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
       .setFillColor(bg)
-      .setBorderColor(border)
+      .setBorderColor(borderColor)
       .setBorderInsets(tooltip.getBorderInsets())
       .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
@@ -337,7 +337,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
       .setRequestFocus(tooltip.isRequestFocus())
       .setLayer(tooltip.getLayer());
     tooltip.getTipComponent().setForeground(fg);
-    tooltip.getTipComponent().setBorder(JBUI.Borders.empty(1, 3, 2, 3));
+    tooltip.getTipComponent().setBorder(tooltip.getComponentBorder());
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
 

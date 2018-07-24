@@ -33,14 +33,14 @@ public enum JavaFeature {
   }
 
   public boolean isFeatureSupported(@NotNull PsiFile context) {
-
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
+    if (!languageLevel.isAtLeast(myMinLevel)) return false;
     LanguageFeatureProvider[] extensions = LanguageFeatureProvider.EXTENSION_POINT_NAME.getExtensions();
     for (LanguageFeatureProvider extension : extensions) {
       ThreeState threeState = extension.isFeatureSupported(this, context);
       if (threeState != ThreeState.UNSURE)
         return threeState.toBoolean();
     }
-    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
-    return languageLevel.isAtLeast(myMinLevel);
+    return true;
   }
 }

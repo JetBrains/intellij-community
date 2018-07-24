@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryAdapter
@@ -634,7 +635,9 @@ class LineStatusTrackerManager(
     }
 
     private fun isTrackedEditor(editor: Editor): Boolean {
-      return editor.project == null || editor.project == project
+      if (editor.project != null && editor.project != project) return false
+      if (editor.editorKind == EditorKind.PREVIEW_UNDER_READ_ACTION) return false
+      return true
     }
   }
 

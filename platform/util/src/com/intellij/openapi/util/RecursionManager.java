@@ -82,7 +82,7 @@ public class RecursionManager {
 
         if (stack.checkReentrancy(realKey)) {
           if (ourAssertOnPrevention) {
-            throw new AssertionError("Endless recursion prevention occurred");
+            throw new StackOverflowPreventedException("Endless recursion prevention occurred");
           }
           return null;
         }

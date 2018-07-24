@@ -490,6 +490,12 @@ public class TemplateImpl extends Template implements SchemeElement {
     return new ArrayList<>(myVariables);
   }
 
+  @SuppressWarnings("unused")
+  //used is cases when building templates without PSI and TemplateBuilder
+  public void setPrimarySegment(int segmentNumber) {
+    Collections.swap(mySegments, 0, segmentNumber);
+  }
+
   private static class Segment {
     public final String name;
     public final int offset;

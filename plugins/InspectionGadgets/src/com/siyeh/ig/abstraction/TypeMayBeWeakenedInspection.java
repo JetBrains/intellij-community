@@ -29,6 +29,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -41,6 +42,8 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
@@ -58,7 +61,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -240,6 +245,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   @NotNull
   public JComponent createOptionsPanel() {
     VerticalBox verticalBox = new VerticalBox();
+    JBScrollPane scrollPane = new JBScrollPane(verticalBox, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option"),
                              "useRighthandTypeAsWeakestTypeInAssignments");
@@ -260,7 +266,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       UiUtils.createAddRemoveTreeClassChooserPanel(stopClassesTable, InspectionGadgetsBundle
         .message("inspection.type.may.be.weakened.add.stop.class.selection.table"), CommonClassNames.JAVA_LANG_OBJECT);
     verticalBox.add(stopClassesPanel);
-    return verticalBox;
+    return scrollPane;
   }
 
   private static class TypeMayBeWeakenedFix implements LocalQuickFix {

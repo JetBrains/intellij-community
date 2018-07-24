@@ -6,7 +6,7 @@ public class Main {
   private static String testOrElse(List<String> list) {
     if (list == null) return null;
     else {
-        for (String str : list) {
+        for (String str: list) {
             if (str.contains("x")) {
                 return str;
             }
@@ -18,7 +18,7 @@ public class Main {
   private static String testOrElseGet(List<String> list) {
     if (list == null) return null;
     else {
-        for (String str : list) {
+        for (String str: list) {
             if (str.contains("x")) {
                 return str;
             }
@@ -28,7 +28,7 @@ public class Main {
   }
 
   private static void testIfPresent(List<String> list) {
-      for (String str : list) {
+      for (String str: list) {
           if (str.contains("x")) {
               System.out.println(str);
               break;
@@ -37,9 +37,9 @@ public class Main {
   }
 
   public static boolean testIsPresent(List<List<String>> list) {
-      for (List<String> strings : list) {
+      for (List<String> strings: list) {
           if (strings != null) {
-              for (String string : strings) {
+              for (String string: strings) {
                   return true;
               }
           }
@@ -48,9 +48,9 @@ public class Main {
   }
 
   static String testIsPresentNotTernary(List<List<String>> strings) {
-      for (List<String> string : strings) {
+      for (List<String> string: strings) {
           if (string != null) {
-              for (String s : string) {
+              for (String s: string) {
                   return "abc";
               }
           }

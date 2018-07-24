@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -33,10 +34,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ExceptionUtils;
-import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.MethodMatcher;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -158,14 +156,12 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement ||
-          parent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent))) {
+      if (ExpressionUtils.isVoidContext(expression)) {
         final PsiMethod method = expression.resolveMethod();
         if (method == null || method.isConstructor()) {
           return;
         }
-        visitCalledExpression(expression, method, parent);
+        visitCalledExpression(expression, method, expression.getParent());
       }
     }
 

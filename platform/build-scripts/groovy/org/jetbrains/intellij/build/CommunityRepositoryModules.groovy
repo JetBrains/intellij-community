@@ -258,6 +258,10 @@ class CommunityRepositoryModules {
       withModule("intellij.android.rt", "android-rt.jar", null)
 
       withModule("intellij.android", "android.jar", null)
+      withModule("intellij.android.android-adb", "android.jar")
+      withModule("intellij.android.android-debuggers", "android.jar")
+      withModule("intellij.android.android-lang", "android.jar")
+      withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
@@ -270,6 +274,9 @@ class CommunityRepositoryModules {
       withModule("intellij.android.perfdHost", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
+      withModule("intellij.android.apkanalyzer", "android.jar")
+      withModule("intellij.android.project-system", "android.jar")
+      withModule("intellij.android.project-system-gradle", "android.jar")
       */
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       /* Android Studio: exclude
@@ -306,14 +313,14 @@ class CommunityRepositoryModules {
       withModule("instant-run-common", "sdk-tools.jar")  // Android Studio
       withModule("instant-run-client", "sdk-tools.jar")  // Android Studio
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
+      withModule("android.sdktools.java-lib-model", "sdk-tools.jar")
+      withModule("android.sdktools.java-lib-model-builder", "sdk-tools.jar")
+      withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      /* Android Studio: exclude
-      withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
-      */
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
       withResource("lib/asm-5.0.3.jar", "lib")  // Android Studio
@@ -335,17 +342,15 @@ class CommunityRepositoryModules {
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 
       /* Android Studio: exclude
-      // we put it to plugin instead of ide in original Android Studio layout
-      withModule("android.sdktools.common", "android-base-common.jar")
-
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       withProjectLibrary("archive-patcher")
-      withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
-      withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
-      withProjectLibrary("com.android.tools:annotations:26.0.0")
-      withProjectLibrary("com.android.tools:sdk-common:26.0.0")
-      withProjectLibrary("com.android.tools.ddms:ddmlib:26.0.0")
-      withProjectLibrary("com.android.tools.build:manifest-merger:26.0.0")
+      withProjectLibrary("com.android.tools.analytics-library:shared:26.1.2")
+      withProjectLibrary("com.android.tools.analytics-library:tracker:26.1.2")
+      withProjectLibrary("com.android.tools:annotations:26.1.2")
+      withProjectLibrary("com.android.tools:sdk-common:26.1.2")
+      withProjectLibrary("com.android.tools:common:26.1.2")
+      withProjectLibrary("com.android.tools.ddms:ddmlib:26.1.2")
+      withProjectLibrary("com.android.tools.build:manifest-merger:26.1.2")
       withProjectLibrary("analytics-protos")
       */
 

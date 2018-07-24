@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
@@ -28,11 +29,21 @@ object JavaInlayHintsProvider {
       val trailingOffset = argumentList.textRange.endOffset - 1
 
       val infos = ArrayList<InlayInfo>()
+      var lastIndex = 0
       (if (arguments.isEmpty()) listOf(trailingOffset) else arguments.map { inlayOffset(it) }).forEachIndexed { i, offset ->
         if (i < params.size) {
           params[i].name?.let {
             infos.add(InlayInfo(it, offset, false, params.size == 1, false))
           }
+          lastIndex = i
+        }
+      }
+      if (Registry.`is`("editor.completion.hints.virtual.comma")) {
+        for (i in lastIndex + 1 until minOf(params.size, limit)) {
+          params[i].name?.let {
+            infos.add(InlayInfo(", $it", trailingOffset, false, false, true))
+          }
+          lastIndex = i
         }
       }
       if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || !arguments.isEmpty() && arguments.size == params.size - 1)) {
@@ -40,7 +51,9 @@ object JavaInlayHintsProvider {
           infos.add(InlayInfo(", $it", trailingOffset, false, false, true))
         }
       }
-      else if (limit == 1 && arguments.isEmpty() && params.size > 1 || limit <= arguments.size && arguments.size < params.size) {
+      else if (Registry.`is`("editor.completion.hints.virtual.comma") && lastIndex < (params.size - 1) ||
+               limit == 1 && arguments.isEmpty() && params.size > 1 ||
+               limit <= arguments.size && arguments.size < params.size) {
         infos.add(InlayInfo("...more", trailingOffset, false, false, true))
       }
       return infos.toSet()

@@ -178,7 +178,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   }
 
   private void logErrorForUser(@NotNull final String error) {
-    JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.ERROR).notify(myProject);
+    JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.WARNING).notify(myProject);
   }
 
   @Override

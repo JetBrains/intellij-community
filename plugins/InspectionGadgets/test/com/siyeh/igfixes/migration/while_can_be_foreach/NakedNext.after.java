@@ -7,7 +7,7 @@ class NakedNext implements Iterable {
 
     void m(List<String> ss) {
         int count = 0;
-        for (String s : ss) {
+        for (String s: ss) {
             count++;
         }
     }

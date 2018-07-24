@@ -641,9 +641,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
       final PsiModifierList modifierList = field.getModifierList();
       LOG.assertTrue(modifierList != null);
-      final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-      if (manager.isNullable(parameter, false)) {
-        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), field), null);
+      if (NullableNotNullManager.isNullable(parameter)) {
+        final String annotationName = NullableNotNullManager.getInstance(myProject).getDefaultNullable();
+        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + annotationName, field), null);
       }
       modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 

@@ -227,8 +227,8 @@ object GuiTestUtilKt {
 
   }
 
-  fun <ComponentType : Component?> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
-    return GuiTestUtil.waitUntilGone(robot, root, timeoutInSeconds, matcher)
+  fun <ComponentType : Component> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
+    return GuiTestUtil.waitUntilGone(root, timeoutInSeconds, matcher)
   }
 
   fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
@@ -269,11 +269,11 @@ object GuiTestUtilKt {
   fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
     val result = GuiActionRunner.execute(object : GuiQuery<Pair<ReturnType?, Throwable?>>() {
       override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
-        try {
-          return Pair(query(), null)
+        return try {
+          Pair(query(), null)
         }
         catch (e: Exception) {
-          return Pair(null, e)
+          Pair(null, e)
         }
       }
     })

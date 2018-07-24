@@ -22,6 +22,7 @@ import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -81,6 +82,7 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends PlatformTestCase {
@@ -753,6 +755,21 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> assertEquals(document.getText(), copy.getText()));
     DocumentCommitThread.getInstance().waitForAllCommits();
     assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+  }
+
+  public void testPerformWhenAllCommittedWorksAfterFileDeletion() throws Exception {
+    PsiFile file = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    Document document = file.getViewProvider().getDocument();
+    assertNotNull(document);
+
+    AtomicBoolean invoked = new AtomicBoolean();
+    WriteAction.run(() -> {
+      document.setText("class A{}");
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> invoked.set(true));
+      file.getVirtualFile().delete(this);
+    });
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertTrue(invoked.get());
   }
 
   @SuppressWarnings("ConstantConditions")

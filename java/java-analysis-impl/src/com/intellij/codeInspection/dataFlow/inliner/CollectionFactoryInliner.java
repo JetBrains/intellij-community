@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -99,7 +100,7 @@ public class CollectionFactoryInliner implements CallInliner {
     }
     DfaValueFactory factory = builder.getFactory();
     DfaValue result =
-      factory.withFact(factory.createTypeValue(call.getType(), Nullness.NOT_NULL), DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+      factory.withFact(factory.createTypeValue(call.getType(), Nullability.NOT_NULL), DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
     if (factoryInfo.mySize == -1) {
       builder.push(result);
     } else {

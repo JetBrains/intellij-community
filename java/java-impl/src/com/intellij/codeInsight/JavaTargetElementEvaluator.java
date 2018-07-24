@@ -85,8 +85,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
     return element != null &&
            element.getParent() instanceof PsiEnumConstant &&
-           referenceOrReferencedElement instanceof PsiMethod &&
-           ((PsiMethod)referenceOrReferencedElement).isConstructor();
+           (referenceOrReferencedElement instanceof PsiMethod && ((PsiMethod)referenceOrReferencedElement).isConstructor() || 
+            referenceOrReferencedElement instanceof PsiClass);
   }
 
   @Nullable

@@ -96,7 +96,7 @@ public class FileTypesTest extends PlatformTestCase {
       String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
       names[i] = name + name + name + name;
     }
-    PlatformTestUtil.startPerformanceTest("isFileIgnored", 17_000, () -> {
+    PlatformTestUtil.startPerformanceTest("isFileIgnored", 19_000, () -> {
       for (int i = 0; i < 100_000; i++) {
         for (String name : names) {
           myFileTypeManager.isFileIgnored(name);

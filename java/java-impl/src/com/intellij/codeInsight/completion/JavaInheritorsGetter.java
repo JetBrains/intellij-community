@@ -230,7 +230,8 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
                                        final PrefixMatcher matcher, final Consumer<PsiType> consumer) {
     final PsiElement context = parameters.getPosition();
     GlobalSearchScope scope = context.getResolveScope();
-    expectedClassTypes = ContainerUtil.mapNotNull(expectedClassTypes, type -> PsiClassImplUtil.correctType(type, scope));
+    expectedClassTypes = ContainerUtil.mapNotNull(expectedClassTypes, type -> 
+      type.resolve() instanceof PsiTypeParameter ? null : PsiClassImplUtil.correctType(type, scope));
 
     //quick
     if (!processMostProbableInheritors(parameters.getOriginalFile(), context, expectedClassTypes, consumer)) return;

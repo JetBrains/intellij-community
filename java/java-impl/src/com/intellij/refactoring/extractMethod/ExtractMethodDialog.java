@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -76,7 +76,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private final PsiType[] myExceptions;
   private final boolean myStaticFlag;
   private final boolean myCanBeStatic;
-  private final Nullness myNullness;
+  private final @Nullable Nullability myNullability;
   private final PsiElement[] myElementsToExtract;
   private final String myHelpId;
 
@@ -107,7 +107,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
                              final boolean canBeChainedConstructor,
                              String title,
                              String helpId,
-                             Nullness nullness,
+                             @Nullable Nullability nullability,
                              final PsiElement[] elementsToExtract,
                              @Nullable Supplier<Integer> duplicatesCountSupplier) {
     super(project, true);
@@ -118,7 +118,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     myExceptions = exceptions;
     myStaticFlag = isStatic;
     myCanBeStatic = canBeStatic;
-    myNullness = nullness;
+    myNullability = nullability;
     myElementsToExtract = elementsToExtract;
     myVariableData = inputVariables;
     myHelpId = helpId;
@@ -282,7 +282,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   
   @Nullable
   private JPanel createReturnTypePanel() {
-    if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullness == Nullness.NULLABLE) {
+    if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullability == Nullability.NULLABLE) {
       return null;
     }
     final TypeSelectorManagerImpl manager = new TypeSelectorManagerImpl(myProject, myReturnType, findOccurrences(), areTypesDirected()) {
@@ -375,7 +375,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       optionsPanel.add(myMakeVarargs);
     }
 
-    if (myNullness != null && myNullness != Nullness.UNKNOWN) {
+    if (myNullability != null && myNullability != Nullability.UNKNOWN) {
       final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
       myGenerateAnnotations = new JCheckBox(RefactoringBundle.message("declare.generated.annotations"), isSelected);
       myGenerateAnnotations.addItemListener(e -> updateSignature());
@@ -501,7 +501,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
         new Task.Backgroundable(myProject, RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            int count = ReadAction.compute(() -> myDuplicatesCountSupplier.get());
+            int count = ReadAction.compute(myDuplicatesCountSupplier::get);
             ApplicationManager.getApplication().invokeLater(
               () -> {
                 if (count != 0) {
@@ -607,7 +607,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected()) {
       final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       buffer.append("@");
-      buffer.append(StringUtil.getShortName(myNullness == Nullness.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
+      buffer.append(
+        StringUtil.getShortName(myNullability == Nullability.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
       buffer.append("\n");
     }
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());

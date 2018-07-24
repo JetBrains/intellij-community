@@ -41,6 +41,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -94,30 +95,33 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
 
     boolean lineNumberColumn = column == 1;
-    JPanel panel = new JPanel(new FlowLayout(lineNumberColumn ? FlowLayout.RIGHT : FlowLayout.LEFT, 0, 0) {
+    // want to be able to right-align the "current" word
+    LayoutManager layout = column == 2 ? new BorderLayout() : new FlowLayout(lineNumberColumn ? FlowLayout.RIGHT : FlowLayout.LEFT, 0, 0) {
       @Override
       public void layoutContainer(Container container) {
         super.layoutContainer(container);
-        for (Component component : container.getComponents()) { // align inner components
+        for (Component component: container.getComponents()) { // align inner components
           Rectangle b = component.getBounds();
           Insets insets = container.getInsets();
           component.setBounds(b.x, b.y, b.width, container.getSize().height - insets.top - insets.bottom);
         }
       }
-    });
+    };
+    JPanel panel = new JPanel(layout);
     panel.setFont(null);
-    panel.setBackground(panelBackground);
-    panel.setForeground(panelForeground);
 
     // greying the current usage the "find usages" was originated from
     boolean isOriginUsage = myUsageView.isOriginUsage(usage);
     if (isOriginUsage) {
-      panel.setBackground(slightlyDifferentColor(panelBackground));
+      //panelBackground = EditorColorsManager.getInstance().isDarkEditor() ? new Color(0x464a4d) : new Color(0xf5f5f5);
+      panelBackground = slightlyDifferentColor(panelBackground);
       if (fileBgColor != null) {
         fileBgColor = slightlyDifferentColor(fileBgColor);
       }
       selectionBg = slightlyDifferentColor(selectionBg);
     }
+    panel.setBackground(panelBackground);
+    panel.setForeground(panelForeground);
 
     if (column == 0) {
       appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
@@ -153,8 +157,9 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SimpleColoredComponent origin = new SimpleColoredComponent();
         origin.setIconTextGap(JBUI.scale(5)); // for this particular icon it looks better
         origin.setIcon(isSelected ? slightlyDifferentColor(AllIcons.General.ComboArrowLeftPassive) : AllIcons.General.ComboArrowLeftPassive);
-        origin.append("Current");
-        panel.add(origin);
+        origin.append("Current");//, SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null));
+        origin.appendTextPadding(JBUI.scale(45));
+        panel.add(origin, BorderLayout.EAST);
       }
     }
 
@@ -177,7 +182,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     SimpleTextAttributes background = chunk.getSimpleAttributesIgnoreBackground();
     return isSelected
            ? new SimpleTextAttributes(selectionBg, selectionFg, null, background.getStyle())
-           : deriveAttributesWithColor(background, fileBgColor);
+           : deriveBgColor(background, fileBgColor);
   }
 
   @NotNull
@@ -229,7 +234,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return component;
   }
 
-  private static SimpleTextAttributes deriveAttributesWithColor(SimpleTextAttributes attributes, Color fileBgColor) {
+  @NotNull
+  private static SimpleTextAttributes deriveBgColor(@NotNull SimpleTextAttributes attributes, @Nullable Color fileBgColor) {
     if (fileBgColor != null) {
       attributes = attributes.derive(-1,null, fileBgColor,null);
     }
@@ -264,9 +270,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     if (node.canNavigateToSource()) {
       SimpleColoredComponent renderer = new SimpleColoredComponent();
       renderer.setIcon(group.getIcon(false));
-      SimpleTextAttributes attributes = deriveAttributesWithColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
+      SimpleTextAttributes attributes = deriveBgColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
       renderer.append(group.getText(myUsageView), attributes);
-      renderer.setBorder(null);
       SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
       panel.add(renderer);
     }

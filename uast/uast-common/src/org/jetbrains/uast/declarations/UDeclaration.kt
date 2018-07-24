@@ -60,6 +60,13 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitDeclaration(this, data)
 }
 
+/**
+ * @since 2018.2
+ */
+interface UDeclarationEx : UDeclaration {
+  override val javaPsi: PsiModifierListOwner
+}
+
 fun UElement.getContainingDeclaration(): UDeclaration? = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
 
 /**

@@ -74,7 +74,7 @@ public class SphinxDocString extends TagBasedDocString {
   @Nullable
   @Override
   public String getParamDescription(@Nullable String paramName) {
-    return paramName != null ? concatTrimmedLines(getTagValue("param", paramName)) : null;
+    return paramName != null ? concatTrimmedLines(getTagValue(PARAM_TAGS, paramName)) : null;
   }
 
   @Override

@@ -5,7 +5,7 @@ import java.util.List;
 public class Main {
   public long test(List<String> list) {
       long count = 0L;
-      for (String s : list) {
+      for (String s: list) {
           count++;
       }
       return count;
@@ -13,7 +13,7 @@ public class Main {
 
   public void testAssign(List<String> list) {
       long x = 0L;
-      for (String s : list) {
+      for (String s: list) {
           x++;
       }
       System.out.println(x);
@@ -24,7 +24,7 @@ public class Main {
 
   public long testNameConflict(List<Count> count) {
       long result = 0L;
-      for (Count count1 : count) {
+      for (Count count1: count) {
           result++;
       }
       return result;
@@ -33,7 +33,7 @@ public class Main {
   public long testNoBlock(List<String> list) {
     if(!list.isEmpty()) {
         long count = 0L;
-        for (String s : list) {
+        for (String s: list) {
             count++;
         }
         return count;

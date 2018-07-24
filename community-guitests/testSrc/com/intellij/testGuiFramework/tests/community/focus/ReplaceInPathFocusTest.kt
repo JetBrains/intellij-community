@@ -3,6 +3,8 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.button
+import com.intellij.testGuiFramework.impl.message
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.Key.R

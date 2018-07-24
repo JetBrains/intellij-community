@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +40,8 @@ public class EnterAction extends EditorAction implements LatencyAwareEditorActio
   public static void insertNewLineAtCaret(Editor editor) {
     EditorUIUtil.hideCursorInEditor(editor);
     Document document = editor.getDocument();
-    int caretLine = editor.getCaretModel().getLogicalPosition().line;
     if(!editor.isInsertMode()) {
+      int caretLine = editor.getCaretModel().getLogicalPosition().line;
       int lineCount = document.getLineCount();
       if(caretLine < lineCount) {
         if (caretLine == lineCount - 1) {
@@ -57,7 +58,7 @@ public class EnterAction extends EditorAction implements LatencyAwareEditorActio
     // Smart indenting here:
     CharSequence text = document.getCharsSequence();
     int caretOffset = editor.getCaretModel().getOffset();
-    int lineStartOffset = document.getLineStartOffset(caretLine);
+    int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, document);
     int lineStartWsEndOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t");
     String s = "\n" + text.subSequence(lineStartOffset, Math.min(caretOffset, lineStartWsEndOffset));
     document.insertString(caretOffset, s);

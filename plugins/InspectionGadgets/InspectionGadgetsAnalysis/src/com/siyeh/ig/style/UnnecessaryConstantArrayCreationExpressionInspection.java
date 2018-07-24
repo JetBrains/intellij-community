@@ -52,8 +52,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     return null;
   }
 
-  private static class UnnecessaryConstantArrayCreationExpressionFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryConstantArrayCreationExpressionFix extends InspectionGadgetsFix {
     private final String myType;
 
     private UnnecessaryConstantArrayCreationExpressionFix(String type) {
@@ -81,8 +80,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)element;
-      final PsiArrayInitializerExpression arrayInitializer =
-        newExpression.getArrayInitializer();
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       if (arrayInitializer == null) {
         return;
       }
@@ -95,8 +93,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     return new UnnecessaryConstantArrayCreationExpressionVisitor();
   }
 
-  private static class UnnecessaryConstantArrayCreationExpressionVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryConstantArrayCreationExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
@@ -112,6 +109,10 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
       final PsiVariable variable = (PsiVariable)grandParent;
       final PsiType expressionType = expression.getType();
       if (!variable.getType().equals(expressionType)) {
+        return;
+      }
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
         return;
       }
       if (hasGenericTypeParameters(variable)) {

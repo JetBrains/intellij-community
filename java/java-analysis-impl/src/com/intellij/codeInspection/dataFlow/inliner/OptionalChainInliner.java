@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
@@ -111,8 +111,8 @@ public class OptionalChainInliner implements CallInliner {
 
   private static final CallMapper<BiConsumer<CFGBuilder, PsiExpression>> INTERMEDIATE_MAPPER =
     new CallMapper<BiConsumer<CFGBuilder, PsiExpression>>()
-      .register(OPTIONAL_MAP, (builder, function) -> inlineMap(builder, function, Nullness.NULLABLE))
-      .register(GUAVA_TRANSFORM, (builder, function) -> inlineMap(builder, function, Nullness.NOT_NULL))
+      .register(OPTIONAL_MAP, (builder, function) -> inlineMap(builder, function, Nullability.NULLABLE))
+      .register(GUAVA_TRANSFORM, (builder, function) -> inlineMap(builder, function, Nullability.NOT_NULL))
       .register(OPTIONAL_FILTER, (builder, function) -> builder
         .evaluateFunction(function)
         .dup()
@@ -197,7 +197,7 @@ public class OptionalChainInliner implements CallInliner {
       .checkNotNull(dereferenceContext, problem)
       .push(presentOptional)
       .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
-      .push(builder.getFactory().createTypeValue(optionalElementType, Nullness.NOT_NULL))
+      .push(builder.getFactory().createTypeValue(optionalElementType, Nullability.NOT_NULL))
       .elseBranch()
       .pushNull()
       .end()
@@ -240,17 +240,17 @@ public class OptionalChainInliner implements CallInliner {
     }
     builder
       .evaluateFunction(function)
-      .invokeFunction(argCount, function, Nullness.NOT_NULL)
+      .invokeFunction(argCount, function, Nullability.NOT_NULL)
       .pop()
       .pushUnknown();
   }
 
-  private static void inlineMap(CFGBuilder builder, PsiExpression function, Nullness resultNullness) {
+  private static void inlineMap(CFGBuilder builder, PsiExpression function, Nullability resultNullability) {
     builder
       .evaluateFunction(function)
       .dup()
       .ifNotNull()
-      .invokeFunction(1, function, resultNullness)
+      .invokeFunction(1, function, resultNullability)
       .end();
   }
 

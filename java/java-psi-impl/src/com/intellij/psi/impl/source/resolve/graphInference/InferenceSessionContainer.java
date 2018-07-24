@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -77,22 +76,25 @@ public class InferenceSessionContainer {
           //traversing down would stop at lambda level and won't take into account overloaded method
           !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argumentList)) {
         final PsiCall topLevelCall = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(parent, false,
-            () -> {
-              if (parent instanceof PsiExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
-                return null;
-              }
-              return LambdaUtil.treeWalkUp(parent);
-            });
-
+                                                                                          () -> {
+                                                                                            if (parent instanceof PsiExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+                                                                                              return null;
+                                                                                            }
+                                                                                            return LambdaUtil.treeWalkUp(parent);
+                                                                                          });
         if (topLevelCall != null) {
+
           InferenceSession session;
           if (MethodCandidateInfo.isOverloadCheck() || !PsiDiamondType.ourDiamondGuard.currentStack().isEmpty() ||
               LambdaUtil.isLambdaParameterCheck() || !policy.equals(DefaultParameterTypeInferencePolicy.INSTANCE)) {
             session = startTopLevelInference(topLevelCall, policy);
           }
           else {
-            session = JavaResolveCache.getInstance(parent.getProject()).getTopLevelInferenceSession(topLevelCall,
-                       call -> startTopLevelInference(call, DefaultParameterTypeInferencePolicy.INSTANCE));
+            session = CachedValuesManager.getCachedValue(topLevelCall,
+                                                         () -> new CachedValueProvider.Result<>(
+                                                           startTopLevelInference(topLevelCall, DefaultParameterTypeInferencePolicy.INSTANCE),
+                                                           PsiModificationTracker.MODIFICATION_COUNT));
+
             if (session != null) {
               //reject cached top level session if it was based on wrong candidate: check nested session if candidate (it's type parameters) are the same
               //such situations are avoided when overload resolution is performed (MethodCandidateInfo.isOverloadCheck above)

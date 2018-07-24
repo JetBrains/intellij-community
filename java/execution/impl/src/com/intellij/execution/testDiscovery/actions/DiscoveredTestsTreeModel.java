@@ -98,6 +98,10 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myTests.values().stream().mapToInt(ms -> ms.size()).sum();
   }
 
+  synchronized int getTestClassesCount() {
+    return myTests.size();
+  }
+
   public static abstract class Node<Psi extends PsiMember> {
     @NotNull
     private final SmartPsiElementPointer<Psi> myPointer;

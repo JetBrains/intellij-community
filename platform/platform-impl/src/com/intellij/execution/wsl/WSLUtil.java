@@ -71,7 +71,7 @@ public class WSLUtil {
    */
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
-    if (!SystemInfo.isWin10OrNewer) return Collections.emptyList();
+    if (!isSystemCompatible()) return Collections.emptyList();
 
     final Path executableRoot = getExecutableRootPath();
     if (executableRoot == null) return Collections.emptyList();
@@ -124,5 +124,9 @@ public class WSLUtil {
     processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
     processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
     return processHandler;
+  }
+
+  public static boolean isSystemCompatible() {
+    return SystemInfo.isWin10OrNewer;
   }
 }

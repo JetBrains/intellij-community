@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -60,7 +62,7 @@ class PsiReflectionAccessUtil {
 
   @Nullable
   public static String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiType type) {
-    String expectedType = tryGetExpectedType(expression);
+    String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
     PsiType nearestAccessibleBaseType = nearestAccessedType(type);
@@ -71,24 +73,43 @@ class PsiReflectionAccessUtil {
 
   @Nullable
   public static String getAccessibleReturnType(@NotNull PsiExpression expression, @Nullable PsiClass psiClass) {
-    String expectedType = tryGetExpectedType(expression);
+    String expectedType = tryGetWeakestAccessibleExpectedType(expression);
     if (expectedType != null) return expectedType;
 
     return nearestAccessibleBaseClass(psiClass);
   }
 
   @Nullable
-  private static String tryGetExpectedType(@NotNull PsiExpression expression) {
+  private static String tryGetWeakestAccessibleExpectedType(@NotNull PsiExpression expression) {
     PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
-    if (expectedType != null && isAccessible(expectedType)) {
-      // java allows implicit conversions to java.lang.String. In this case we cannot use java.lang.String as a return type because
-      // it will produce ClassCastException
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(expectedType.getCanonicalText())) {
-        return expectedType.getCanonicalText();
+    PsiType realType = expression.getType();
+    if (expectedType != null && realType != null) {
+      for (PsiType type: getAllAssignableSupertypes(realType, expectedType)) {
+        if (isAccessible(type)) {
+          return type.getCanonicalText();
+        }
       }
     }
 
     return null;
+  }
+
+  @NotNull
+  private static List<PsiType> getAllAssignableSupertypes(@NotNull PsiType from, @NotNull PsiType to) {
+    Set<PsiType> types = new LinkedHashSet<>();
+    Queue<PsiType> queue = new LinkedList<>();
+    queue.offer(from);
+    while (!queue.isEmpty()) {
+      PsiType type = queue.poll();
+      if (to.isAssignableFrom(type)) {
+        types.add(type);
+        Arrays.stream(type.getSuperTypes()).forEach(queue::offer);
+      }
+    }
+
+    List<PsiType> result = new ArrayList<>(types);
+    Collections.reverse(result);
+    return result;
   }
 
   @NotNull

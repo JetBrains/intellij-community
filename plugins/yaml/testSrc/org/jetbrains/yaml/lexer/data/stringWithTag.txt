@@ -1,4 +1,5 @@
-scalar key ('foo:')
+scalar key ('foo')
+: (':')
 whitespace (' ')
 tag ('!')
 whitespace (' ')

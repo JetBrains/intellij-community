@@ -47,7 +47,7 @@ internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement>
 
 private fun GrCodeReferenceElement.resolveAsPackageReference(): Collection<GroovyResolveResult> {
   val aPackage = resolvePackageFqn() ?: return emptyList()
-  return listOf(ElementGroovyResult(aPackage))
+  return listOf(ElementResolveResult(aPackage))
 }
 
 private fun GrCodeReferenceElement.resolveAsImportReference(): Collection<GroovyResolveResult> {
@@ -82,12 +82,12 @@ private fun GrCodeReferenceElement.resolveAsImportReference(): Collection<Groovy
 private fun resolveStaticImportReference(file: GroovyFile, import: StaticImport): Collection<GroovyResolveResult> {
   val processor = CollectElementsProcessor()
   import.processDeclarations(processor, ResolveState.initial(), file, file)
-  return processor.results.collapseReflectedMethods().collapseAccessors().map(::ElementGroovyResult)
+  return processor.results.collapseReflectedMethods().collapseAccessors().map(::ElementResolveResult)
 }
 
 private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Collection<GroovyResolveResult> {
   val resolved = import.resolveImport(file) ?: return emptyList()
-  return listOf(ElementGroovyResult(resolved))
+  return listOf(ElementResolveResult(resolved))
 }
 
 private fun GrCodeReferenceElement.resolveReference(): Collection<GroovyResolveResult> {

@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,9 +61,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
       if (element instanceof PsiReferenceExpression) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiMethodCallExpression) {
-          PsiElement gParent = parent.getParent();
-          return gParent instanceof PsiExpressionStatement ||
-                 gParent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)gParent));
+          return ExpressionUtils.isVoidContext((PsiExpression)parent);
         }
       }
       return element instanceof PsiMethodReferenceExpression &&

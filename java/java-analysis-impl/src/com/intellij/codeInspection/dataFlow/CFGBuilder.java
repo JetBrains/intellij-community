@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
@@ -534,7 +535,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression) {
-    return invokeFunction(argCount, functionalExpression, Nullness.UNKNOWN);
+    return invokeFunction(argCount, functionalExpression, Nullability.UNKNOWN);
   }
 
   /**
@@ -544,17 +545,17 @@ public class CFGBuilder {
    *
    * @param argCount             number of stack arguments to consume
    * @param functionalExpression a functional expression to invoke
-   * @param resultNullness       an expected nullness of the lambda result
+   * @param resultNullability       an expected nullability of the lambda result
    * @return this builder
    */
-  public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression, Nullness resultNullness) {
+  public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression, Nullability resultNullability) {
     PsiExpression stripped = PsiUtil.deparenthesizeExpression(functionalExpression);
     if (stripped instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)stripped;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length == argCount && lambda.getBody() != null) {
         StreamEx.ofReversed(parameters).forEach(p -> assignTo(p).pop());
-        return inlineLambda(lambda, resultNullness);
+        return inlineLambda(lambda, resultNullability);
       }
     }
     if (stripped instanceof PsiMethodReferenceExpression) {
@@ -580,7 +581,7 @@ public class CFGBuilder {
           myAnalyzer.addBareCall(null, methodRef);
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
                                                           LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
-          if (resultNullness == Nullness.NOT_NULL) {
+          if (resultNullability == Nullability.NOT_NULL) {
             checkNotNull(methodRef, NullabilityProblemKind.nullableFunctionReturn);
           }
           return this;
@@ -590,7 +591,7 @@ public class CFGBuilder {
       if(qualifier instanceof PsiTypeElement && ((PsiTypeElement)qualifier).getType() instanceof PsiArrayType) {
         // like String[]::new
         splice(argCount)
-          .push(getFactory().createTypeValue(((PsiTypeElement)qualifier).getType(), Nullness.NOT_NULL));
+          .push(getFactory().createTypeValue(((PsiTypeElement)qualifier).getType(), Nullability.NOT_NULL));
         return this;
       }
     }
@@ -617,7 +618,7 @@ public class CFGBuilder {
                                                                    PsiClassObjectAccessExpression.class);
     if (qualifier == null) return false;
     PsiType type = qualifier.getOperand().getType();
-    push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
+    push(getFactory().createTypeValue(type, Nullability.NOT_NULL));
     add(new InstanceofInstruction(methodRef, null, type));
     return true;
   }
@@ -649,21 +650,21 @@ public class CFGBuilder {
    * Stack after: ... lambdaResult
    *
    * @param lambda lambda to inline
-   * @param resultNullness a required return value nullness
+   * @param resultNullability a required return value nullability
    * @return this builder
    */
-  public CFGBuilder inlineLambda(PsiLambdaExpression lambda, Nullness resultNullness) {
+  public CFGBuilder inlineLambda(PsiLambdaExpression lambda, Nullability resultNullability) {
     PsiElement body = lambda.getBody();
     PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
     if (expression != null) {
       pushExpression(expression);
       boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-      if(resultNullness == Nullness.NOT_NULL) {
+      if(resultNullability == Nullability.NOT_NULL) {
         checkNotNull(expression, NullabilityProblemKind.nullableFunctionReturn);
       }
     } else if(body instanceof PsiCodeBlock) {
       DfaVariableValue variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-      myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullness, variable);
+      myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullability, variable);
       push(variable);
     } else {
       pushUnknown();
@@ -721,7 +722,7 @@ public class CFGBuilder {
    * @param operation to execute on this builder
    * @return this builder
    */
-  public CFGBuilder chain(Consumer<CFGBuilder> operation) {
+  public CFGBuilder chain(Consumer<? super CFGBuilder> operation) {
     operation.accept(this);
     return this;
   }

@@ -112,7 +112,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
   @NotNull
   @Override
-  protected EmptyIcon copy() {
+  public EmptyIcon copy() {
     return new EmptyIcon(this);
   }
 
@@ -186,7 +186,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
     @NotNull
     @Override
-    protected EmptyIconUIResource copy() {
+    public EmptyIconUIResource copy() {
       return new EmptyIconUIResource(this);
     }
   }

@@ -6,7 +6,7 @@ import java.util.List;
 public class Main {
   public boolean testCond(List<String> list) {
       boolean b = true;
-      for (String s : list) {
+      for (String s: list) {
           if (s.isEmpty()) {
               b = false;
               break;

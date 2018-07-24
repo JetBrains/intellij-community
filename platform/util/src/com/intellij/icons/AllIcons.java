@@ -134,6 +134,7 @@ public class AllIcons {
     public static final Icon Menu_saveall = IconLoader.getIcon("/actions/menu-saveall.svg"); // 16x16
     public static final Icon Minimize = IconLoader.getIcon("/actions/minimize.png"); // 16x16
     public static final Icon Module = IconLoader.getIcon("/actions/module.png"); // 16x16
+    public static final Icon More = IconLoader.getIcon("/actions/more.svg"); // 16x16
     public static final Icon Move_to_button_top = IconLoader.getIcon("/actions/move-to-button-top.png"); // 11x12
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.png"); // 11x10
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.svg"); // 16x16

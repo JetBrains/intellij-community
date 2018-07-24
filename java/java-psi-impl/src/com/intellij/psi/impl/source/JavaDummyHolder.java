@@ -80,6 +80,16 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     return true;
   }
 
+  @FunctionalInterface
+  public interface InjectedDeclarations {
+    boolean process(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place);
+  }
+  private InjectedDeclarations myInjectedDeclarations;
+
+  public void setInjectedDeclarations(@NotNull InjectedDeclarations injectedDeclarations) {
+    myInjectedDeclarations = injectedDeclarations;
+  }
+
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
@@ -101,6 +111,9 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
       if (getContext() == null) {
         return JavaResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager());
       }
+    }
+    if (myInjectedDeclarations != null) {
+      return myInjectedDeclarations.process(processor, state, lastParent, place);
     }
     return true;
   }

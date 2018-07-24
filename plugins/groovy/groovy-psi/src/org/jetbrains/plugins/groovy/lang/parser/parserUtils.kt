@@ -10,6 +10,7 @@ import com.intellij.lang.PsiBuilder.Marker
 import com.intellij.lang.PsiBuilderUtil.parseBlockLazy
 import com.intellij.lang.parser.GeneratedParserUtilBase.*
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS
 import org.jetbrains.plugins.groovy.util.get
 import org.jetbrains.plugins.groovy.util.set
 import org.jetbrains.plugins.groovy.util.withKey
+import java.util.*
 
 private val PsiBuilder.groovyParser: GroovyParser get() = (this as Builder).parser as GroovyParser
 
@@ -44,7 +46,7 @@ fun extendedStatement(builder: PsiBuilder, level: Int): Boolean = builder.groovy
 
 fun extendedSeparator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf { builder.groovyParser.isExtendedSeparator(tokenType) }
 
-private val currentClassName: Key<String> = Key.create("groovy.parse.class.name")
+private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("groovy.parse.class.name") { LinkedList<String>() }
 private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
@@ -59,8 +61,8 @@ private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.w
 
 @Suppress("LiftReturnOrAssignment")
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  if (builder.tokenType == IDENTIFIER) {
-    builder[currentClassName] = builder.tokenText
+  if (builder.tokenType === IDENTIFIER) {
+    builder[currentClassNames]!!.push(builder.tokenText)
     builder.advanceLexer()
     return true
   }
@@ -69,13 +71,15 @@ fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   }
 }
 
-fun resetClassIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  builder[currentClassName] = null
+fun popClassIdentifier(builder: PsiBuilder, level: Int): Boolean {
+  builder[currentClassNames]!!.pop()
   return true
 }
 
 fun constructorIdentifier(builder: PsiBuilder, level: Int): Boolean {
-  return builder.advanceIf { tokenType == IDENTIFIER && tokenText == this[currentClassName] }
+  return builder.advanceIf {
+    tokenType === IDENTIFIER && tokenText == this[currentClassNames]!!.peek()
+  }
 }
 
 fun allowDiamond(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
@@ -206,7 +210,7 @@ fun notApplicationArguments(builder: PsiBuilder, level: Int, parser: Parser): Bo
 fun isApplicationArguments(builder: PsiBuilder, level: Int): Boolean = builder[parseApplicationArguments]
 
 fun closureArgumentSeparator(builder: PsiBuilder, level: Int, closureArguments: Parser): Boolean {
-  if (builder.tokenType == NL) {
+  if (builder.tokenType === NL) {
     if (isApplicationArguments(builder, level)) {
       return false
     }

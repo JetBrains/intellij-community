@@ -491,6 +491,7 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
 "*."                                      { return storeToken(T_SPREAD_DOT); }
 "?."                                      { return storeToken(T_SAFE_DOT); }
 ".&"                                      { return storeToken(T_METHOD_CLOSURE); }
+"::"                                      { return storeToken(T_METHOD_REFERENCE); }
 "=~"                                      { return storeToken(T_REGEX_FIND); }
 "==~"                                     { return storeToken(T_REGEX_MATCH); }
 "**"                                      { return storeToken(T_POW); }

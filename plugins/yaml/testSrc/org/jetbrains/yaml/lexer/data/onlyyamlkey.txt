@@ -1,1 +1,2 @@
-scalar key ('foo:')
+scalar key ('foo')
+: (':')

@@ -1148,8 +1148,8 @@ public class PsiClassImplUtil {
       return true;
     }
 
-    final PsiFile file1 = aClass.getContainingFile().getOriginalFile();
-    final PsiFile file2 = another.getContainingFile().getOriginalFile();
+    final PsiFile file1 = getOriginalFile(aClass);
+    final PsiFile file2 = getOriginalFile((PsiClass)another);
 
     //see com.intellij.openapi.vcs.changes.PsiChangeTracker
     //see com.intellij.psi.impl.PsiFileFactoryImpl#createFileFromText(CharSequence,PsiFile)
@@ -1166,6 +1166,13 @@ public class PsiClassImplUtil {
     boolean lib2 = fileIndex.isInLibraryClasses(vfile2);
 
     return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex.isInSource(vfile2) || lib2);
+  }
+
+  @NotNull
+  private static PsiFile getOriginalFile(@NotNull PsiClass aClass) {
+    PsiFile file = aClass.getContainingFile();
+    if (file == null) throw new IllegalStateException("No containing file for " + aClass.getLanguage() + " " + aClass.getClass());
+    return file.getOriginalFile();
   }
 
   private static boolean compareClassSeqNumber(@NotNull PsiClass aClass, @NotNull PsiClass another) {

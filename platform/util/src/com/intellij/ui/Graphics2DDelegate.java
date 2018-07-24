@@ -188,6 +188,11 @@ public class Graphics2DDelegate extends Graphics2D{
   }
 
   @Override
+  public void drawChars(char data[], int offset, int length, int x, int y) {
+    myDelegate.drawChars(data, offset, length, x, y);
+  }
+
+  @Override
   public void fill(Shape s) {
     myDelegate.fill(s);
   }

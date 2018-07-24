@@ -3,7 +3,7 @@ class Test2 {
 
     void foo(final List<PatchLogger> loggers) {
         final PatchLogger logger = logger1 -> {
-            for (PatchLogger logger2 : loggers) {
+            for (PatchLogger logger2: loggers) {
                 logger2.logOperation(logger1);
             }
         };

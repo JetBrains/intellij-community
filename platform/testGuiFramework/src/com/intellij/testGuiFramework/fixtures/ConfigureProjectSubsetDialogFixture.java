@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.fixtures;
 
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.Robot;
 import org.fest.swing.core.matcher.DialogMatcher;
 import org.fest.swing.fixture.DialogFixture;
@@ -24,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton;
 import static org.fest.swing.core.matcher.DialogMatcher.withTitle;
 import static org.fest.swing.data.TableCell.row;
 import static org.fest.swing.finder.WindowFinder.findDialog;
@@ -37,7 +36,7 @@ public class ConfigureProjectSubsetDialogFixture {
   @NotNull
   public static ConfigureProjectSubsetDialogFixture find(@NotNull Robot robot) {
     DialogMatcher matcher = withTitle("Select Modules to Include in Project Subset").andShowing();
-    DialogFixture dialog = findDialog(matcher).withTimeout(SHORT_TIMEOUT.duration()).using(robot);
+    DialogFixture dialog = findDialog(matcher).withTimeout(GuiTestUtil.INSTANCE.getSHORT_TIMEOUT().duration()).using(robot);
     return new ConfigureProjectSubsetDialogFixture(dialog);
   }
 
@@ -55,6 +54,6 @@ public class ConfigureProjectSubsetDialogFixture {
   }
 
   public void clickOk() {
-    findAndClickOkButton(myDialog);
+    GuiTestUtil.INSTANCE.findAndClickOkButton(myDialog);
   }
 }

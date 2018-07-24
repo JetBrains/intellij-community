@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
+import com.jetbrains.jsonSchema.extension.JsonSchemaEnabler;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.extension.SchemaType;
@@ -25,6 +27,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,14 +63,22 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
   }
 
+  private boolean hasAccessToSymbols() {
+    return !DumbService.getInstance(myProject).isDumb();
+  }
+
   @NotNull
   @Override
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
     if (file == null) {
       return WidgetState.HIDDEN;
     }
-    FileType fileType = file.getFileType();
-    if (!(fileType instanceof LanguageFileType) || !(((LanguageFileType)fileType).getLanguage() instanceof JsonLanguage)) {
+
+    if (!hasAccessToSymbols()) {
+      return WidgetState.DUMB_MODE;
+    }
+
+    if (Arrays.stream(JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions()).noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
       return WidgetState.HIDDEN;
     }
 
@@ -148,7 +159,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   private boolean isValidSchemaFile(VirtualFile schemaFile) {
-    if (schemaFile == null || !myService.isSchemaFile(schemaFile)) return false;
+    if (schemaFile == null || !myService.isApplicableToFile(schemaFile) || !myService.isSchemaFile(schemaFile)) return false;
     FileType type = schemaFile.getFileType();
     return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() instanceof JsonLanguage;
   }
@@ -234,6 +245,24 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   protected void registerCustomListeners() {
+    class Listener implements DumbService.DumbModeListener {
+      volatile boolean isDumbMode;
+
+      @Override
+      public void enteredDumbMode() {
+        isDumbMode = true;
+        update();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        isDumbMode = false;
+        update();
+      }
+    }
+
+    Listener listener = new Listener();
+    myConnection.subscribe(DumbService.DUMB_MODE, listener);
   }
 
   @NotNull

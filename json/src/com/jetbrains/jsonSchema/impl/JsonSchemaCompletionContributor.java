@@ -59,6 +59,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     if (file == null) return;
 
     final JsonSchemaService service = JsonSchemaService.Impl.get(position.getProject());
+    if (!service.isApplicableToFile(file)) return;
     final JsonSchemaObject rootSchema = service.getSchemaObject(file);
     if (rootSchema == null) return;
 
@@ -221,10 +222,14 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
     private void suggestByType(JsonSchemaObject schema, JsonSchemaType type) {
+      if (JsonSchemaType._string.equals(type)) {
+        addPossibleStringValue(schema);
+      }
+      if (myInsideStringLiteral){
+        return;
+      }
       if (JsonSchemaType._boolean.equals(type)) {
         addPossibleBooleanValue(type);
-      } else if (JsonSchemaType._string.equals(type)) {
-        addPossibleStringValue(schema);
       } else if (JsonSchemaType._null.equals(type)) {
         addValueVariant("null", null);
       } else if (JsonSchemaType._array.equals(type)) {

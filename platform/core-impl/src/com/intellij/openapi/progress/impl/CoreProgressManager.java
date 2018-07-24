@@ -471,14 +471,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       exception = e;
     }
 
+    final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+    final Throwable finalException = exception;
+
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      finishTask(task, processCanceled || progressIndicator.isCanceled(), exception);
+      finishTask(task, finalCanceled, finalException);
     }
     else {
-      final boolean finalCanceled = processCanceled;
-      final Throwable finalException = exception;
-      ApplicationManager.getApplication().invokeAndWait(
-        () -> finishTask(task, finalCanceled || progressIndicator.isCanceled(), finalException), modalityState);
+      ApplicationManager.getApplication().invokeAndWait(() -> finishTask(task, finalCanceled, finalException), modalityState);
     }
   }
 

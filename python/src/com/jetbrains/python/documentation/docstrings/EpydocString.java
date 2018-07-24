@@ -283,12 +283,7 @@ public class EpydocString extends TagBasedDocString {
 
   @Nullable
   private static String inlineMarkupToHTML(@Nullable Substring s) {
-    String text = "";
-    if (s != null) {
-      text = s.concatTrimmedLines(" ");
-      if (!text.endsWith(".")) text +=".";
-    }
-    return inlineMarkupToHTML(text);
+    return s != null ? inlineMarkupToHTML(s.concatTrimmedLines(" ")) : null;
   }
 
   public List<String> getAdditionalTags() {

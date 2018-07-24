@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -75,8 +76,9 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     final LafManager lafManager = LafManager.getInstance();
     if (isDarkEditorTheme && !UIUtil.isUnderDarcula()) {
       if (applyAlways || Messages.showYesNoDialog(
-        "Looks like you have set a dark editor theme. Would you like to set dark theme for entire " + productName,
-        "Change " + productName + " theme", Messages.YES_BUTTON, Messages.NO_BUTTON,
+        ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
+        ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
+        Messages.YES_BUTTON, Messages.NO_BUTTON,
         Messages.getQuestionIcon(), doNotAskOption) == Messages.YES) {
         lafManager.setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
         lafManager.updateUI();
@@ -88,8 +90,9 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
       if (lafManager instanceof LafManagerImpl
           &&
           (applyAlways || Messages.showYesNoDialog(
-            "Looks like you have set a bright editor theme. Would you like to set bright theme for entire " + productName,
-            "Change " + productName + " theme", Messages.YES_BUTTON, Messages.NO_BUTTON,
+            ApplicationBundle.message("color.scheme.theme.change.confirmation", "bright", productName),
+            ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
+            Messages.YES_BUTTON, Messages.NO_BUTTON,
             Messages.getQuestionIcon(), doNotAskOption) == Messages.YES)) {
         lafManager.setCurrentLookAndFeel(((LafManagerImpl)lafManager).getDefaultLaf());
         lafManager.updateUI();

@@ -94,7 +94,8 @@ public class AntTestContentHandler extends DefaultHandler {
       myStatus = null;
       myDuration = attributes.getValue(DURATION);
       String classname = StringUtil.unescapeXml(attributes.getValue(CLASSNAME));
-      final TestStartedEvent startedEvent = new TestStartedEvent(name, "java:test://" + StringUtil.getQualifiedName(classname, name));
+      String location = StringUtil.isEmpty(classname) ? name : classname + "/" + name;
+      final TestStartedEvent startedEvent = new TestStartedEvent(name, "java:test://" + location);
       myProcessor.onTestStarted(startedEvent);
     }
     else if (ERR.equals(qName)) {

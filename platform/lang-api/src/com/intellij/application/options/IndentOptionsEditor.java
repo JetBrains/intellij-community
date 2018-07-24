@@ -18,9 +18,11 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.components.fields.IntegerField;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,15 +32,29 @@ import static com.intellij.psi.codeStyle.CodeStyleConstraints.*;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 
-@SuppressWarnings("Duplicates")
-public class IndentOptionsEditor extends OptionGroup {
+@SuppressWarnings({"Duplicates", "deprecation", "DeprecatedIsStillUsed"})
+public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
   private static final String INDENT_LABEL = ApplicationBundle.message("editbox.indent.indent");
   private static final String TAB_SIZE_LABEL = ApplicationBundle.message("editbox.indent.tab.size");
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JTextField myIndentField;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JCheckBox myCbUseTab;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JTextField myTabSizeField;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JLabel myTabSizeLabel;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JLabel myIndentLabel;
 
   @Override
@@ -86,6 +102,31 @@ public class IndentOptionsEditor extends OptionGroup {
     myCbUseTab = new JCheckBox(ApplicationBundle.message("checkbox.indent.use.tab.character"));
     add(myCbUseTab);
   }
+
+  @Override
+  public void showAllStandardOptions() {
+    setVisible(true);
+  }
+
+  @Override
+  public void showStandardOptions(String... optionNames) {
+    setVisible(false);
+    for (String optionName : optionNames) {
+      if (IndentOption.INDENT_SIZE.toString().equals(optionName)) {
+        myIndentLabel.setVisible(true);
+        myIndentField.setVisible(true);
+      }
+      else if (IndentOption.TAB_SIZE.toString().equals(optionName)) {
+        myTabSizeField.setVisible(true);
+        myTabSizeLabel.setVisible(true);
+      }
+      else if (IndentOption.USE_TAB_CHARACTER.toString().equals(optionName)) {
+        myCbUseTab.setVisible(true);
+      }
+    }
+  }
+
+
 
   protected static boolean isFieldModified(JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
@@ -158,4 +199,13 @@ public class IndentOptionsEditor extends OptionGroup {
     myTabSizeLabel.setEnabled(enabled);
     myCbUseTab.setEnabled(enabled);
   }
+
+  protected void setVisible(boolean visible) {
+    myIndentField.setVisible(visible);
+    myIndentLabel.setVisible(visible);
+    myTabSizeField.setVisible(visible);
+    myTabSizeLabel.setVisible(visible);
+    myCbUseTab.setVisible(visible);
+  }
+
 }

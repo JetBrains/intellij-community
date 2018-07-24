@@ -6,7 +6,7 @@ public class Main {
   private static Optional<String> max(List<?> list) {
       boolean seen = false;
       String best = null;
-      for (Object o : list) {
+      for (Object o: list) {
           if (o instanceof String[]) {
               String[] x = (String[]) o;
               String s = x[0];

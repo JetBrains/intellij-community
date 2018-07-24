@@ -5,7 +5,7 @@ import java.util.List;
 
 class Cast {
   void m(List ss) {
-      for (String s : (Iterable<String>) ss) {
+      for (String s: (Iterable<String>) ss) {
           System.out.println(s);
       }
   }

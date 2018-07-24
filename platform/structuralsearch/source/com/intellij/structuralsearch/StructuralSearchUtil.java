@@ -143,21 +143,24 @@ public class StructuralSearchUtil {
     return s.chars().anyMatch(StructuralSearchUtil::isRegExpMetaChar);
   }
 
-  private static boolean isRegExpMetaChar(int ch) {
+  public static boolean isRegExpMetaChar(int ch) {
     return REG_EXP_META_CHARS.indexOf(ch) >= 0;
   }
 
   public static String shieldRegExpMetaChars(String word) {
-    final StringBuilder buf = new StringBuilder(word.length());
+    return shieldRegExpMetaChars(word, new StringBuilder(word.length())).toString();
+  }
 
-    for (int i = 0; i < word.length(); ++i) {
+  @NotNull
+  public static StringBuilder shieldRegExpMetaChars(String word, StringBuilder out) {
+    for (int i = 0, length = word.length(); i < length; ++i) {
       if (isRegExpMetaChar(word.charAt(i))) {
-        buf.append("\\");
+        out.append("\\");
       }
-      buf.append(word.charAt(i));
+      out.append(word.charAt(i));
     }
 
-    return buf.toString();
+    return out;
   }
 
   public static List<Configuration> getPredefinedTemplates() {

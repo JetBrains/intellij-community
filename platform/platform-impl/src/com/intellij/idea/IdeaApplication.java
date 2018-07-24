@@ -382,7 +382,7 @@ public class IdeaApplication {
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
         //safe for headless and unit test modes
-        UsageTrigger.trigger(app.getName() + "app.started");
+        UsageTrigger.trigger("lifecycle", app.getName() + "app.started");
       });
     }
 

@@ -4,12 +4,14 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.CompoundTreeStructureProvider;
+import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.projectView.impl.ShowModulesAction;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -20,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -66,6 +69,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public final class ScopeViewPane extends AbstractProjectViewPane {
   @NonNls public static final String ID = "Scope";
   private static final Logger LOG = Logger.getInstance(ScopeViewPane.class);
+  private final IdeView myIdeView = new IdeViewForProjectViewPane(() -> this);
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
   private final NamedScopesHolder.ScopeListener myScopeListener = new NamedScopesHolder.ScopeListener() {
@@ -316,7 +320,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Nullable
   @Override
   public Object getElementFromTreeNode(@Nullable Object node) {
-    return myTreeModel.getPsiElement(node);
+    return myTreeModel.getContent(node);
   }
 
   @Override
@@ -324,6 +328,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     Object data = super.getData(dataId);
     if (data != null) return data;
     //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);
+    if (LangDataKeys.IDE_VIEW.is(dataId)) return myIdeView;
     return null;
   }
 

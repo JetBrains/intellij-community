@@ -76,7 +76,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
 
   @NotNull
   @Override
-  protected LayeredIcon copy() {
+  public LayeredIcon copy() {
     return new LayeredIcon(this);
   }
 

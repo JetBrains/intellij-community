@@ -31,14 +31,19 @@ public class AbstractExpectedPatterns {
 
   protected static ComparisonFailureData createExceptionNotification(String message, List patterns) {
     for (int i = 0; i < patterns.size(); i++) {
-      final Matcher matcher = ((Pattern)patterns.get(i)).matcher(message);
-      if (matcher.find()) {
-        String expected = matcher.group(1).replaceAll("\\\\n", "\n");
-        String actual = matcher.group(2).replaceAll("\\\\n", "\n");
-        if (!matcher.find()) {
-          return new ComparisonFailureData(expected, actual);
-        }
+      ComparisonFailureData notification = createExceptionNotification(message, (Pattern)patterns.get(i));
+      if (notification != null) {
+        return notification;
       }
+    }
+    return null;
+  }
+
+  protected static ComparisonFailureData createExceptionNotification(String message, Pattern pattern) {
+    final Matcher matcher = pattern.matcher(message);
+    if (matcher.find()) {
+      return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), 
+                                       matcher.group(2).replaceAll("\\\\n", "\n"));
     }
     return null;
   }

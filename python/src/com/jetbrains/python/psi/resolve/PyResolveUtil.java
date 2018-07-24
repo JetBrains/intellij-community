@@ -320,8 +320,19 @@ public class PyResolveUtil {
 
   @Nullable
   public static ScopeOwner parentScopeForUnresolvedClassLevelName(@NotNull PyClass cls, @NotNull String name) {
-    return ControlFlowCache.getScope(cls).containsDeclaration(name)
-           ? PyUtil.as(cls.getContainingFile(), PyFile.class)
-           : ScopeUtil.getScopeOwner(cls);
+    // com.jetbrains.python.codeInsight.dataflow.scope.Scope.containsDeclaration could not be used
+    // because it runs resolve on imports that is forbidden while indexing
+    return containsDeclaration(cls, name) ? PyUtil.as(cls.getContainingFile(), PyFile.class) : ScopeUtil.getScopeOwner(cls);
+  }
+
+  private static boolean containsDeclaration(@NotNull PyClass cls, @NotNull String name) {
+    final Scope scope = ControlFlowCache.getScope(cls);
+
+    if (!scope.getNamedElements(name, false).isEmpty()) return true;
+
+    return StreamEx
+      .of(scope.getImportedNameDefiners())
+      .select(PyImportElement.class)
+      .anyMatch(e -> name.equals(e.getVisibleName()));
   }
 }

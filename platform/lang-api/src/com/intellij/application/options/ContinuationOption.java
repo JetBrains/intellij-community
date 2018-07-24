@@ -90,4 +90,11 @@ public class ContinuationOption implements CodeStyleConstraints {
       myField.setDefaultValueText(Integer.toString(value));
     }
   }
+
+  public void setVisible(boolean visible) {
+    if (myField != null && myLabel != null) {
+      myLabel.setVisible(visible);
+      myField.setVisible(visible);
+    }
+  }
 }

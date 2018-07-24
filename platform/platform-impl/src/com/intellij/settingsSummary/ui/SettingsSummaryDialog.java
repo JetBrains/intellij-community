@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -50,9 +51,16 @@ public class SettingsSummaryDialog extends DialogWrapper {
       }
     });
     summary.setText(extensions[0].collectInfo(project));
+    summary.setLineWrap(true);
 
     init();
     pack();
+  }
+
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
   }
 
   @NotNull
@@ -70,6 +78,7 @@ public class SettingsSummaryDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
+    centerPanel.setMinimumSize(new Dimension(500, 600));
     return centerPanel;
   }
 }

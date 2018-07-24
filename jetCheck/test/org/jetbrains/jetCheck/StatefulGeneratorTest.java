@@ -24,7 +24,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     Generator<List<InsertChar>> gen = from(data -> {
       AtomicInteger modelLength = new AtomicInteger(0);
       Generator<List<InsertChar>> cmds = listsOf(from(cmdData -> {
-        int index = cmdData.drawInt(IntDistribution.uniform(0, modelLength.getAndIncrement()));
+        int index = cmdData.generate(integers(0, modelLength.getAndIncrement()));
         char c = cmdData.generate(asciiLetters());
         return new InsertChar(c, index);
       }));
@@ -104,7 +104,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     AtomicBoolean shouldFail = new AtomicBoolean(true);
     Supplier<ImperativeCommand> command = () -> env -> {
       for (int i = 0; i < 100; i++) {
-        int value = env.generateValue(integers(0, 100), null);
+        env.generateValue(integers(0, 100), null);
         if (shouldFail.get()) {
           throw new AssertionError();
         }

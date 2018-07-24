@@ -50,7 +50,7 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon {
 
   @NotNull
   @Override
-  protected SizedIcon copy() {
+  public SizedIcon copy() {
     return new SizedIcon(this);
   }
 

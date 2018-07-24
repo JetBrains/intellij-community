@@ -3,16 +3,12 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 
 class DefaultMethodSupportTest extends GroovyResolveTestCase {
-  @Override
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_3_0
-  }
+
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
 
   void testSuperReferenceWithQualifier() {
     def method = resolveByText('''

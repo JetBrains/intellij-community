@@ -257,7 +257,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public void reinitSettings() {
-    updateSize(false, true);
+    updateSize(false, !Boolean.TRUE.equals(myEditor.getUserData(EditorImpl.DONT_SHRINK_GUTTER_SIZE)));
     repaint();
   }
 

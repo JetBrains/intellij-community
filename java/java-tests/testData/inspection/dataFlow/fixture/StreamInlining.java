@@ -201,7 +201,7 @@ public class StreamInlining {
     }
   }
 
-  void testReduceNullness() {
+  void testReduceNullability() {
     Optional<String> res1 = Stream.of("foo", "bar", null).reduce((a, b) -> a); // a is never null - ok
     Optional<String> res2 = Stream.of("foo", null, "bar").reduce((a, b) -> a); // wrong, but not supported yet
     Optional<String> res3 = Stream.of("foo", "bar", null).reduce((a, b) -> <warning descr="Function may return null, but it's not allowed here">b</warning>);

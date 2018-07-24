@@ -577,7 +577,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
         ReferenceType type = allTypes.get(i);
         if (type.isPrepared()) {
-          supertypes(type).forEach(st -> inheritance.putValue(st, type));
+          try {
+            supertypes(type).forEach(st -> inheritance.putValue(st, type));
+          }
+          catch (ObjectCollectedException ignored) {
+          }
         }
         progressIndicator.setText2(i + "/" + allTypes.size());
         progressIndicator.setFraction((double)i / allTypes.size());

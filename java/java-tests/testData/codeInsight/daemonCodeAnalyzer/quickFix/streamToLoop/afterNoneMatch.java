@@ -6,9 +6,9 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static boolean test(List<List<String>> list) {
-      for (List<String> x : list) {
+      for (List<String> x: list) {
           if (x != null) {
-              for (String str : x) {
+              for (String str: x) {
                   if (str.startsWith("a")) {
                       return false;
                   }

@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
@@ -162,6 +163,10 @@ public class AnnotateVcsVirtualFileAction {
       revisionNumber = revision.getRevisionNumber();
     }
     if (filePath == null || revisionNumber == null) return null;
+    if (revisionNumber instanceof TextRevisionNumber ||
+        revisionNumber == VcsRevisionNumber.NULL) {
+      return null;
+    }
 
     AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
     return vcs != null ? new AnnotationData(vcs, filePath, revisionNumber) : null;

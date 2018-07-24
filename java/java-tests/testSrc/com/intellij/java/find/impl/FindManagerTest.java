@@ -26,7 +26,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -596,10 +595,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       ThrowableRunnable test = () -> assertSize(lineCount, findUsages(findModel));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in global", 400, test).attempts(2).usesAllCPUCores().assertTiming();
+      int timeout = 400;
+      PlatformTestUtil.startPerformanceTest("find usages in global", timeout, test).attempts(2).assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in local", 200, test).attempts(2).usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("find usages in local", timeout, test).attempts(2).assertTiming();
     }
     finally {
       fixture.tearDown();

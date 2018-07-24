@@ -59,6 +59,7 @@ class BuildInfo(node: Element) {
   val apiVersion: BuildNumber = BuildNumber.fromStringWithProductCode(node.getAttributeValue("apiVersion"), number.productCode) ?: number
   val version: String = node.getAttributeValue("version") ?: ""
   val message: String = node.getChild("message")?.value ?: ""
+  val blogPost: String? = node.getChild("blogPost")?.getAttributeValue("url")
   val releaseDate: Date? = parseDate(node.getAttributeValue("releaseDate"))
   val target: BuildRange? = BuildRange.fromStrings(node.getAttributeValue("targetSince"), node.getAttributeValue("targetUntil"))
   val buttons: List<ButtonInfo> = node.getChildren("button").map(::ButtonInfo)

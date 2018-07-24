@@ -109,7 +109,7 @@ fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incom
   return processor.candidates
 }
 
-private fun GrReferenceExpression.resolvePackageOrClass() = doResolvePackageOrClass()?.let(::ElementGroovyResult)
+private fun GrReferenceExpression.resolvePackageOrClass() = doResolvePackageOrClass()?.let(::ElementResolveResult)
 
 private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   val facade = JavaPsiFacade.getInstance(project)
@@ -193,7 +193,7 @@ private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
  * @receiver call site
  * @return empty collection or a collection with 1 local variable result
  */
-private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementGroovyResult<GrVariable>> {
+private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementResolveResult<GrVariable>> {
   return treeWalkUpAndGet(LocalVariableProcessor(name))
 }
 
@@ -204,7 +204,7 @@ private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementG
  * @receiver call site
  * @return empty collection or a collection with 1 code field result
  */
-private fun PsiElement.resolveToField(name: String): Collection<ElementGroovyResult<GrField>> {
+private fun PsiElement.resolveToField(name: String): Collection<ElementResolveResult<GrField>> {
   return treeWalkUpAndGet(CodeFieldProcessor(name, this))
 }
 
@@ -232,13 +232,4 @@ private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReference
   val processor = ReferenceExpressionClassProcessor(name, this)
   classQualifier.processDeclarations(processor, ResolveState.initial(), null, this)
   return processor.result
-}
-
-internal fun GrReferenceExpression.resolveMethodReference(): Collection<GroovyResolveResult> {
-  val name = referenceName ?: return emptyList()
-  val type = qualifier?.type ?: return emptyList()
-  val place = this
-  val processor = MethodReferenceProcessor(name)
-  type.processReceiverType(processor, ResolveState.initial(), place)
-  return processor.results
 }

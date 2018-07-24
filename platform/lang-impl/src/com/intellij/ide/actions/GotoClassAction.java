@@ -139,7 +139,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   }
 
   @Nullable
-  private static Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
+  public static Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
@@ -205,30 +205,35 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   private static PsiElement getElement(@NotNull PsiElement element, ChooseByNamePopup popup) {
     final String path = popup.getPathToAnonymous();
     if (path != null) {
-      final String[] classes = path.split("\\$");
-      List<Integer> indexes = new ArrayList<>();
-      for (String cls : classes) {
-        if (cls.isEmpty()) continue;
-        try {
-          indexes.add(Integer.parseInt(cls) - 1);
-        }
-        catch (Exception e) {
-          return element;
-        }
-      }
-      PsiElement current = element;
-      for (int index : indexes) {
-        final PsiElement[] anonymousClasses = getAnonymousClasses(current);
-        if (index >= 0 && index < anonymousClasses.length) {
-          current = anonymousClasses[index];
-        }
-        else {
-          return current;
-        }
-      }
-      return current;
+      return getElement(element, path);
     }
     return element;
+  }
+
+  @NotNull
+  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
+    final String[] classes = path.split("\\$");
+    List<Integer> indexes = new ArrayList<>();
+    for (String cls : classes) {
+      if (cls.isEmpty()) continue;
+      try {
+        indexes.add(Integer.parseInt(cls) - 1);
+      }
+      catch (Exception e) {
+        return element;
+      }
+    }
+    PsiElement current = element;
+    for (int index : indexes) {
+      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+      if (index >= 0 && index < anonymousClasses.length) {
+        current = anonymousClasses[index];
+      }
+      else {
+        return current;
+      }
+    }
+    return current;
   }
 
   @NotNull

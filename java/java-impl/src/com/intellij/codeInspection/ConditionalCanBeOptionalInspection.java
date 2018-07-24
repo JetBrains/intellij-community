@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -45,7 +45,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         }
         if (!areTypesCompatible(nullBranch, notNullBranch)) return;
         boolean mayChangeSemantics =
-          !ExpressionUtils.isNullLiteral(nullBranch) && NullnessUtil.getExpressionNullness(notNullBranch, true) != Nullness.NOT_NULL;
+          !ExpressionUtils.isNullLiteral(nullBranch) && NullabilityUtil.getExpressionNullability(notNullBranch, true) != Nullability.NOT_NULL;
         if (!isOnTheFly && mayChangeSemantics) return;
         holder.registerProblem(ternary.getCondition(),
                                "Can be replaced with Optional.ofNullable()",

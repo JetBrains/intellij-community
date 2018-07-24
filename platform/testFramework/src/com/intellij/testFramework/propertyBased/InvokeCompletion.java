@@ -18,14 +18,13 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupEx;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -46,10 +45,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -90,12 +86,13 @@ public class InvokeCompletion extends ActionOnFile {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
         //noinspection deprecation
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
-        performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project), completionChar, env);
+        performCompletion(caretEditor, Objects.requireNonNull(PsiUtilBase.getPsiFileInEditor(caretEditor, project)), completionChar, env);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
       }
       catch (Throwable e) {
         LOG.debug("Text before completion:\n" + textBefore);
         env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'Text before completion' there");
+        throw e;
       }
       finally {
         Disposer.dispose(raiseCompletionLimit);
@@ -110,10 +107,9 @@ public class InvokeCompletion extends ActionOnFile {
                                  char completionChar,
                                  Environment env) {
     int caretOffset = editor.getCaretModel().getOffset();
-    int adjustedOffset = TargetElementUtil.adjustOffset(file, getDocument(), caretOffset);
 
-    PsiElement leaf = file.findElementAt(adjustedOffset);
-    PsiReference ref = file.findReferenceAt(adjustedOffset);
+    PsiElement leaf = file.findElementAt(TargetElementUtil.adjustOffset(file, getDocument(), caretOffset));
+    PsiReference ref = TargetElementUtil.findReference(editor);
 
     String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
     boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
@@ -148,7 +144,12 @@ public class InvokeCompletion extends ActionOnFile {
 
     LookupElement item = env.generateValue(Generator.sampledFrom(items), null);
     env.logMessage("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
-    ((LookupImpl)lookup).finishLookup(completionChar, item);
+
+    if (LookupEvent.isSpecialCompletionChar(completionChar)) {
+      ((LookupImpl)lookup).finishLookup(completionChar, item);
+    } else {
+      EditorActionManager.getInstance().getTypedAction().actionPerformed(editor, completionChar, ((EditorImpl)lookup.getTopLevelEditor()).getDataContext());
+    }
   }
 
   private boolean isPrefixEqualToExpectedVariant(int caretOffset, PsiElement leaf, PsiReference ref, String expectedVariant) {

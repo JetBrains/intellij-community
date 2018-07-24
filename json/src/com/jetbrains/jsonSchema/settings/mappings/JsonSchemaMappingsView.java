@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.settings.mappings;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -225,7 +226,20 @@ public class JsonSchemaMappingsView implements Disposable {
                                                        int column) {
           JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           label.setIcon(item.mappingKind.getIcon());
-          return label;
+
+          String error = item.getError();
+          if (error == null) {
+            return label;
+          }
+
+          JPanel panel = new JPanel();
+          panel.setLayout(new BorderLayout());
+          panel.add(label, BorderLayout.CENTER);
+          JLabel warning = new JLabel(AllIcons.General.Warning);
+          panel.setBackground(label.getBackground());
+          panel.setToolTipText(error);
+          panel.add(warning, BorderLayout.LINE_END);
+          return panel;
         }
       };
     }

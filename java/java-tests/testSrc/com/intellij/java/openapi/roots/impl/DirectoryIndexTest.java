@@ -790,7 +790,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   public void testFileModuleExcludeRootUnderFileRoot() {
     VirtualFile fileRoot = createChildData(myRootVFile, "fileRoot.txt");
     PsiTestUtil.addContentRoot(myModule, fileRoot);
-    checkInfo(fileRoot, myModule, false, false, "", null);
+    checkInfo(fileRoot, myModule, false, false, null, null);
     assertTrue(myFileIndex.isInContent(fileRoot));
     assertIteratedContent(myFileIndex, Collections.singletonList(fileRoot), null);
 
@@ -801,7 +801,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     // removing file exclude root
     PsiTestUtil.removeExcludedRoot(myModule, fileRoot);
-    checkInfo(fileRoot, myModule, false, false, "", null);
+    checkInfo(fileRoot, myModule, false, false, null, null);
     assertTrue(myFileIndex.isInContent(fileRoot));
     assertIteratedContent(myFileIndex, Collections.singletonList(fileRoot), null);
   }

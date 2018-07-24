@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -182,7 +182,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     PsiExpression expression = (PsiExpression)lambdaCandidate;
     if (falseExpression != null) {
       // falseExpression == null is "consumer" case (to be replaced with ifPresent())
-      if (!ExpressionUtils.isNullLiteral(falseExpression) && NullnessUtil.getExpressionNullness(expression, true) != Nullness.NOT_NULL) {
+      if (!ExpressionUtils.isNullLiteral(falseExpression) &&
+          NullabilityUtil.getExpressionNullability(expression, true) != Nullability.NOT_NULL) {
         // if falseExpression is null literal, then semantics is preserved
         return ProblemType.INFO;
       }

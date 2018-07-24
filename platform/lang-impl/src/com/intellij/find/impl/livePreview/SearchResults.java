@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 
@@ -269,7 +269,8 @@ public class SearchResults implements DocumentListener {
   private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<FindResult> results) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
 
-    CharSequence charSequence = editor.getDocument().getCharsSequence();
+    // Document can change even while we're holding read lock (example case - console), so we're taking an immutable snapshot of text here
+    CharSequence charSequence = editor.getDocument().getImmutableCharSequence();
 
     int offset = range.getStartOffset();
     int maxOffset = Math.min(range.getEndOffset(), charSequence.length());

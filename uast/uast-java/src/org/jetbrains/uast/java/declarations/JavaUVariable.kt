@@ -21,7 +21,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElement(
-  givenParent), PsiVariable, UVariable, JavaUElementWithComments, UAnchorOwner {
+  givenParent), PsiVariable, UVariableEx, JavaUElementWithComments, UAnchorOwner {
 
   abstract override val javaPsi: PsiVariable
 
@@ -47,7 +47,7 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElem
 open class JavaUVariable(
   psi: PsiVariable,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UVariable, PsiVariable by psi {
+) : AbstractJavaUVariable(givenParent), UVariableEx, PsiVariable by psi {
   override val psi: PsiVariable
     get() = javaPsi
 
@@ -69,7 +69,7 @@ open class JavaUVariable(
 open class JavaUParameter(
   psi: PsiParameter,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UParameter, PsiParameter by psi {
+) : AbstractJavaUVariable(givenParent), UParameterEx, PsiParameter by psi {
   override val psi: PsiParameter
     get() = javaPsi
 
@@ -79,7 +79,7 @@ open class JavaUParameter(
 open class JavaUField(
   psi: PsiField,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UField, PsiField by psi {
+) : AbstractJavaUVariable(givenParent), UFieldEx, PsiField by psi {
   override val psi: PsiField
     get() = javaPsi
 
@@ -89,7 +89,7 @@ open class JavaUField(
 open class JavaULocalVariable(
   psi: PsiLocalVariable,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), ULocalVariable, PsiLocalVariable by psi {
+) : AbstractJavaUVariable(givenParent), ULocalVariableEx, PsiLocalVariable by psi {
   override val psi: PsiLocalVariable
     get() = javaPsi
 
@@ -107,7 +107,7 @@ open class JavaULocalVariable(
 open class JavaUEnumConstant(
   psi: PsiEnumConstant,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UEnumConstant, UCallExpressionEx, PsiEnumConstant by psi {
+) : AbstractJavaUVariable(givenParent), UEnumConstantEx, UCallExpressionEx, PsiEnumConstant by psi {
   override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
   override val psi: PsiEnumConstant

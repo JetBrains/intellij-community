@@ -98,7 +98,7 @@ public class FailedLineTest extends LightCodeInsightFixtureTestCase {
                                                "    public void assertEquals() {}\n" +
                                                "  }");
 
-    String url = "java:test://MainTest.testFoo";
+    String url = "java:test://MainTest/testFoo";
     TestStackTraceParser pair = new TestStackTraceParser(url, "\tat junit.framework.Assert.fail(Assert.java:47)\n" +
                                                               "\tat MainTest.assertEquals(Assert.java:207)\n" +
                                                               "\tat MainTest.testFoo(MainTest.java:3)", "oops", JavaTestLocator.INSTANCE, getProject());

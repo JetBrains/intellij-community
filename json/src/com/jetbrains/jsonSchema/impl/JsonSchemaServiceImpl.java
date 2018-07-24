@@ -17,10 +17,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
-import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
-import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
-import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
-import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
@@ -240,11 +237,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return JsonCachedValues.getSchemaObject(schemaFile, myProject);
   }
 
-  @NotNull
-  public JsonSchemaCatalogManager getCatalogManager() {
-    return myCatalogManager;
-  }
-
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
     return myState.getFiles().contains(file)
@@ -324,6 +316,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   public void triggerUpdateRemote() {
     myCatalogManager.triggerUpdateCatalog(myProject);
+  }
+
+  @Override
+  public boolean isApplicableToFile(@Nullable VirtualFile file) {
+    if (file == null) return false;
+    return Arrays.stream(JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions()).anyMatch(e -> e.isEnabledForFile(file));
   }
 
   private static class MyState {

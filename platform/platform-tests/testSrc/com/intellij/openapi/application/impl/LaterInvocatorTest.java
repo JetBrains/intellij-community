@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.Application;
@@ -39,6 +25,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotEquals;
 
 @SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
@@ -448,8 +437,9 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     }
 
+    @Override
     public String toString() {
-      return "myrun " + myId;
+      return "run #" + myId;
     }
   }
 
@@ -556,7 +546,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
       fail("should fail");
     }
     catch (ExecutionException e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("Access is allowed from event dispatch thread only"));
+      assertThat(e.getMessage()).contains("EventQueue.isDispatchThread()=false");
     }
   }
 
@@ -592,11 +582,10 @@ public class LaterInvocatorTest extends PlatformTestCase {
   public void testDifferentStatesAreNotEqualAfterGc() {
     ModalityStateEx state1 = new ModalityStateEx("common", new String("foo"));
     ModalityStateEx state2 = new ModalityStateEx("common", new String("bar"));
-    
-    assertFalse(state1.equals(state2));
+    assertNotEquals(state1, state2);
 
     GCUtil.tryGcSoftlyReachableObjects();
-    assertFalse(state1.equals(state2));
+    assertNotEquals(state1, state2);
   }
 
   public void testStateForComponentIdentity() {

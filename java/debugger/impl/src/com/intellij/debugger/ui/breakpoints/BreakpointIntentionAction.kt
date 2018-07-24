@@ -24,7 +24,8 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
 
   internal class AddCallerNotFilter(breakpoint: XBreakpoint<*>, private val myCaller: String) :
     BreakpointIntentionAction(breakpoint,
-                              "Do not stop if called from: ${StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(")!!)}") {
+                              "Do not stop if called from: " +
+                              StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(") ?: myCaller)) {
 
     override fun update(e: AnActionEvent?) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {
@@ -45,7 +46,8 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
 
   internal class AddCallerFilter(breakpoint: XBreakpoint<*>, private val myCaller: String) :
     BreakpointIntentionAction(breakpoint,
-                              "Stop only if called from: ${StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(")!!)}") {
+                              "Stop only if called from: " +
+                              StringUtil.getShortName(StringUtil.substringBefore(myCaller, "(") ?: myCaller)) {
 
     override fun update(e: AnActionEvent?) {
       with(myBreakpoint.properties as JavaBreakpointProperties<*>) {

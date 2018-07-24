@@ -42,7 +42,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     if (state == null) return;
 
     String key = ConvertUsagesUtil.escapeDescriptorName(toolWindowId);
-    FeatureUsageLogger.INSTANCE.log("toolwindow-stats", key);
+    FeatureUsageLogger.INSTANCE.log("toolwindow", key);
     final Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
     state.myValues.put(key, value);

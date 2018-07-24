@@ -33,11 +33,11 @@ public abstract class PsiNavigationSupport {
   }
 
   @Nullable
-  public abstract Navigatable getDescriptor(final PsiElement element);
+  public abstract Navigatable getDescriptor(@NotNull PsiElement element);
 
   @NotNull
-  public abstract Navigatable createNavigatable(Project project, VirtualFile vFile, int offset);
+  public abstract Navigatable createNavigatable(@NotNull Project project, @NotNull VirtualFile vFile, int offset);
 
-  public abstract boolean canNavigate(final PsiElement element);
-  public abstract void navigateToDirectory(PsiDirectory psiDirectory, boolean requestFocus);
+  public abstract boolean canNavigate(@NotNull PsiElement element);
+  public abstract void navigateToDirectory(@NotNull PsiDirectory psiDirectory, boolean requestFocus);
 }

@@ -73,7 +73,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element,
                                                                                        PsiFile containingFile,
                                                                                        boolean forInjected) {
-    ensureValid(element, containingFile);  // Android Studio: manually merged cherry-pick of commit 8861206
+    ensureValid(element, containingFile);
     SmartPointerTracker.processQueue();
     SmartPsiElementPointerImpl<E> pointer = getCachedPointer(element);
     if (pointer != null &&

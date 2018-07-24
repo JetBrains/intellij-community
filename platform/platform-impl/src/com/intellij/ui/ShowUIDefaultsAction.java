@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -90,7 +91,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             Object value = getValueAt(row, column);
             return column == 1 && (value instanceof Color ||
                                    value instanceof Integer ||
-                                   value instanceof Border);
+                                   value instanceof Border ||
+                                   value instanceof UIUtil.GrayFilter);
           }
         }) {
           @Override
@@ -121,6 +123,15 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 Insets i = ((Border)value).getBorderInsets(null);
                 String oldBorder = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
                 Border newValue = editBorder(key.toString(), oldBorder);
+                if (newValue != null) {
+                  UIManager.getDefaults().remove(key);
+                  UIManager.getDefaults().put(key, newValue);
+                  setValueAt(newValue, row, column);
+                }
+              } else if (value instanceof UIUtil.GrayFilter) {
+                UIUtil.GrayFilter f = (UIUtil.GrayFilter)value;
+                String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
+                UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
                 if (newValue != null) {
                   UIManager.getDefaults().remove(key);
                   UIManager.getDefaults().put(key, newValue);
@@ -201,7 +212,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? Integer.valueOf(newValue) : null;
       }
 
-      private @Nullable Border editBorder(String key, String value) {
+      @Nullable
+      private Border editBorder(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
            "Enter new value for " + key + "\nin form top,left,bottom,right",
            "Border Editor", null, value,
@@ -220,7 +232,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return newValue != null ? parseBorder(newValue) : null;
       }
 
-      private @Nullable Border parseBorder(String value) {
+      @Nullable
+      private Border parseBorder(String value) {
         String[] parts = value.split(",");
         if(parts.length != 4) {
           return null;
@@ -233,6 +246,42 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           return null;
         }
       }
+
+      @Nullable
+      private UIUtil.GrayFilter editGrayFilter(String key, String value) {
+        String newValue = Messages.showInputDialog(getRootPane(),
+                                                   "Enter new value for " + key + "\nin form brightness,contrast,alpha",
+                                                   "Gray Filter Editor", null, value,
+                                                   new InputValidator() {
+                                                     @Override
+                                                     public boolean checkInput(String inputString) {
+                                                       return parseGrayFilter(inputString) != null;
+                                                     }
+
+                                                     @Override
+                                                     public boolean canClose(String inputString) {
+                                                       return checkInput(inputString);
+                                                     }
+                                                   });
+
+        return newValue != null ? parseGrayFilter(newValue) : null;
+      }
+
+      @Nullable
+      private UIUtil.GrayFilter parseGrayFilter(String value) {
+        String[] parts = value.split(",");
+        if(parts.length != 3) {
+          return null;
+        }
+
+        try {
+          List<Integer> v = Arrays.stream(parts).map(p -> Integer.parseInt(p)).collect(Collectors.toList());
+          return new UIUtil.GrayFilter(v.get(0), v.get(1), v.get(2));
+        } catch (NumberFormatException nex) {
+          return null;
+        }
+      }
+
     }.show();
   }
 

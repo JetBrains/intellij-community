@@ -59,7 +59,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
 
   @NotNull
   @Override
-  protected RowIcon copy() {
+  public RowIcon copy() {
     return new RowIcon(this);
   }
 

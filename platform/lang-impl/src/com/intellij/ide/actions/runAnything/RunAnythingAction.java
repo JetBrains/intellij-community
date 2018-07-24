@@ -122,6 +122,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
   private AnActionEvent myActionEvent;
+  private boolean myIsUsedTrigger;
   private Component myContextComponent;
   private CalcThread myCalcThread;
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
@@ -278,6 +279,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        myIsUsedTrigger = true;
+
         final String pattern = editor.getText();
         if (editor.hasFocus()) {
           ApplicationManager.getApplication().invokeLater(() -> myIsItemSelected = false);
@@ -426,6 +429,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       onDone = () -> RunAnythingUtil.executeMatched(dataContext, pattern);
     }
     finally {
+      triggerUsed();
+
       final ActionCallback callback = onPopupFocusLost();
       if (onDone != null) {
         callback.doWhenDone(onDone);
@@ -761,7 +766,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
     focusManager.requestFocus(editor, true);
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(RUN_ANYTHING);
   }
 
   public static void adjustEmptyText(@NotNull JBTextField textEditor,
@@ -857,6 +861,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                    .registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(e -> {
+      triggerUsed();
+
       if (myBalloon != null && myBalloon.isVisible()) {
         myBalloon.cancel();
       }
@@ -913,6 +919,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         e.getPresentation().setEnabled(editor.getCaretPosition() == 0);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), editor, balloon);
+  }
+
+  private void triggerUsed() {
+    if (myIsUsedTrigger) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(RUN_ANYTHING);
+    }
+    myIsUsedTrigger = false;
   }
 
 

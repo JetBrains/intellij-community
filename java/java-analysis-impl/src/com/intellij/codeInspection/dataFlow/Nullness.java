@@ -15,9 +15,39 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
+import org.jetbrains.annotations.Contract;
+
 /**
-* @author cdr
+* @deprecated for removal; use {@link Nullability} since 2018.2
 */
+@Deprecated
 public enum Nullness {
-  NOT_NULL, NULLABLE,UNKNOWN
+  NOT_NULL, NULLABLE, UNKNOWN;
+
+  @Contract(pure = true)
+  public Nullability toNullability() {
+    switch (this) {
+      case NOT_NULL:
+        return Nullability.NOT_NULL;
+      case NULLABLE:
+        return Nullability.NULLABLE;
+      case UNKNOWN:
+        return Nullability.UNKNOWN;
+    }
+    throw new InternalError("Unexpected enum value");
+  }
+
+  @Contract(pure = true)
+  public static Nullness fromNullability(Nullability nullability) {
+    switch (nullability) {
+      case NOT_NULL:
+        return NOT_NULL;
+      case NULLABLE:
+        return NULLABLE;
+      case UNKNOWN:
+        return UNKNOWN;
+    }
+    throw new InternalError("Unexpected enum value");
+  }
 }

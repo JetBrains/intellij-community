@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
 
 import java.io.IOException;
 
@@ -42,11 +44,17 @@ public class Utils {
     if (appEx == null) // unit-test case
       return null;
 
-    return appEx.isEAP() ? "com.jetbrains.intellij-EAP" : "com.jetbrains.intellij";
+    String appId = null;
+    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+      final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
+      final ID dict = Foundation.invoke(bundle, "infoDictionary");
+      final ID nsAppID = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleIdentifier"));
+      appId = Foundation.toStringViaUTF8(nsAppID);
+    }
 
-    // TODO: obtain "OS X Application identifier' via platform api or use next table:
-    // IDEA: com.jetbrains.intellij
-    // AppCode: com.jetbrains.AppCode
-    // PyCharm: com.jetbrains.pycharm
+    if (appId == null || appId.isEmpty())
+      LOG.error("can't obtain application id from NSBundle.mainBundle");
+
+    return appId;
   }
 }

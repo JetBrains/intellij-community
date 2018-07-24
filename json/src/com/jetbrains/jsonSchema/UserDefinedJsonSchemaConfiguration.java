@@ -155,8 +155,9 @@ public class UserDefinedJsonSchemaConfiguration {
         case Directory:
           result.add((project, vfile) -> {
             final VirtualFile relativeFile = getRelativeFile(project, patternText);
-            return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true)
-                   && !JsonSchemaService.Impl.get(project).isSchemaFile(vfile);
+            if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
+            JsonSchemaService service = JsonSchemaService.Impl.get(project);
+            return service.isApplicableToFile(vfile) && !service.isSchemaFile(vfile);
           });
           break;
       }
@@ -249,6 +250,19 @@ public class UserDefinedJsonSchemaConfiguration {
 
     public void setPath(String path) {
       this.path = normalizePath(path);
+    }
+
+    public String getError() {
+      switch (mappingKind) {
+        case File:
+          return !StringUtil.isEmpty(path) ? null : "Empty file path doesn't match anything";
+        case Pattern:
+          return !StringUtil.isEmpty(path) ? null : "Empty pattern matches everything";
+        case Directory:
+          return null;
+      }
+
+      return "Unknown mapping kind";
     }
 
     public boolean isPattern() {

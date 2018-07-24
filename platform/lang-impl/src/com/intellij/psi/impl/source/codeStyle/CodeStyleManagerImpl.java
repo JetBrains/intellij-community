@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -236,7 +237,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       caretKeeper.restoreCaretPosition();
     }
     if (editor instanceof EditorEx && isFullReformat) {
-      ((EditorEx)editor).reinitSettings();
+      editor.putUserData(EditorImpl.DONT_SHRINK_GUTTER_SIZE, Boolean.TRUE);
+      try {
+        ((EditorEx)editor).reinitSettings();
+      }
+      finally {
+        editor.putUserData(EditorImpl.DONT_SHRINK_GUTTER_SIZE, null);
+      }
       DetectedIndentOptionsNotificationProvider.updateIndentNotification(file, true);
     }
   }

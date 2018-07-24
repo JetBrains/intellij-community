@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
@@ -658,7 +659,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   private fun fireShortcutChanged(actionId: String) {
-    (keymapManager as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
+    (KeymapManager.getInstance() as? KeymapManagerImpl)?.fireShortcutChanged(this, actionId)
     for (listener in listeners) {
       listener.onShortcutChanged(actionId)
     }

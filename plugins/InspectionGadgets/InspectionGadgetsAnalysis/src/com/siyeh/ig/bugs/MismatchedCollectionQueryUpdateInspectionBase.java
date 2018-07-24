@@ -2,7 +2,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -16,7 +15,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
@@ -150,7 +152,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
           }
         }
       }
-      registerVariableError(variable, Boolean.valueOf(written));
+      registerVariableError(variable, written);
     }
 
     @Override
@@ -189,7 +191,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       final boolean written = info.updated || updatedViaInitializer(variable);
       final boolean read = info.queried || queriedViaInitializer(variable);
       if (read != written) {
-        register(variable, Boolean.valueOf(written));
+        register(variable, written);
       }
     }
 
@@ -343,14 +345,11 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
           makeUpdated();
         }
         final PsiMethod method = ObjectUtils.tryCast(expression.resolve(), PsiMethod.class);
-        if (method == null) return;
-        final PsiType returnType = method.getReturnType();
-        if (PsiType.VOID.equals(returnType)) return;
-        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
-        final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expectedType);
-        if (aClass == null || LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) return;
-        PsiMethod functionalMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
-        if (functionalMethod == null || PsiType.VOID.equals(functionalMethod.getReturnType())) return;
+        if (method == null ||
+            PsiType.VOID.equals(method.getReturnType()) ||
+            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
+          return;
+        }
         makeQueried();
       }
 
@@ -376,17 +375,17 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       }
 
       private void processQualifiedCall(PsiMethodCallExpression call) {
-        boolean isStatement = call.getParent() instanceof PsiExpressionStatement;
+        boolean voidContext = ExpressionUtils.isVoidContext(call);
         String name = call.getMethodExpression().getReferenceName();
         boolean queryQualifier = isQueryMethodName(name);
         boolean updateQualifier = isUpdateMethodName(name);
         if (queryQualifier &&
-            (!isStatement || PsiType.VOID.equals(call.getType()) || "toArray".equals(name) && !call.getArgumentList().isEmpty())) {
+            (!voidContext || PsiType.VOID.equals(call.getType()) || "toArray".equals(name) && !call.getArgumentList().isEmpty())) {
           makeQueried();
         }
         if (updateQualifier) {
           makeUpdated();
-          if (!isStatement) {
+          if (!voidContext) {
             makeQueried();
           }
         }

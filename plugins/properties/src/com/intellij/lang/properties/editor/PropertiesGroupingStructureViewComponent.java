@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.EmptyIcon;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -77,6 +78,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
       presentation.setText("Group by: " + separator, false);
+      presentation.setIcon(EmptyIcon.ICON_16);
     }
 
     private String getCurrentSeparator() {

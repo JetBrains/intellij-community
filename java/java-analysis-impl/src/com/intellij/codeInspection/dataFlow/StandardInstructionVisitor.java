@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -80,10 +81,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       PsiModifierListOwner psi = var.getPsiVariable();
       boolean forceDeclaredNullity = !(psi instanceof PsiParameter && psi.getParent() instanceof PsiParameterList);
-      if (psi instanceof PsiField && !psi.hasModifierProperty(PsiModifier.FINAL) && var.getInherentNullability() == Nullness.UNKNOWN) {
+      if (psi instanceof PsiField && !psi.hasModifierProperty(PsiModifier.FINAL) && var.getInherentNullability() == Nullability.UNKNOWN) {
         checkNotNullable(memState, dfaSource, NullabilityProblemKind.assigningNullableValueToNonAnnotatedField.problem(rValue));        
       }
-      else if (forceDeclaredNullity && var.getInherentNullability() == Nullness.NOT_NULL) {
+      else if (forceDeclaredNullity && var.getInherentNullability() == Nullability.NOT_NULL) {
         checkNotNullable(memState, dfaSource, kind.problem(rValue));
       }
       if (dfaSource instanceof DfaFactMapValue &&
@@ -94,7 +95,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
-      if (var.getInherentNullability() == Nullness.NULLABLE && !memState.isNotNull(dfaSource) && instruction.isVariableInitializer()) {
+      if (var.getInherentNullability() == Nullability.NULLABLE && !memState.isNotNull(dfaSource) && instruction.isVariableInitializer()) {
         DfaMemoryStateImpl stateImpl = (DfaMemoryStateImpl)memState;
         stateImpl.setVariableState(var, stateImpl.getVariableState(var).withFact(DfaFactType.CAN_BE_NULL, true));
       }
@@ -389,7 +390,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          argValues[paramCount - 1] = runner.getFactory().createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullness.NOT_NULL);
+          argValues[paramCount - 1] =
+            runner.getFactory().createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullability.NOT_NULL);
         }
       } else {
         argValues = null;
@@ -402,11 +404,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       dropLocality(arg, memState);
       PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
-      Nullness requiredNullability = instruction.getArgRequiredNullability(paramIndex);
-      if (requiredNullability == Nullness.NOT_NULL) {
+      Nullability requiredNullability = instruction.getArgRequiredNullability(paramIndex);
+      if (requiredNullability == Nullability.NOT_NULL) {
         arg = dereference(memState, arg, NullabilityProblemKind.passingNullableToNotNullParameter.problem(anchor));
       }
-      else if (requiredNullability == Nullness.UNKNOWN) {
+      else if (requiredNullability == Nullability.UNKNOWN) {
         checkNotNullable(memState, arg, NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter.problem(anchor));
       }
       if (sig.mutatesArg(paramIndex) && !memState.applyFact(arg, DfaFactType.MUTABILITY, Mutability.MUTABLE)) {
@@ -545,7 +547,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (methodType == MethodCallInstruction.MethodType.BOXING) {
       DfaValue boxed = factory.getBoxedFactory().createBoxed(qualifierValue);
-      return boxed == null ? factory.createTypeValue(type, Nullness.NOT_NULL) : boxed;
+      return boxed == null ? factory.createTypeValue(type, Nullability.NOT_NULL) : boxed;
     }
 
     if (methodType == MethodCallInstruction.MethodType.CAST) {
@@ -558,7 +560,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
-      Nullness nullability = instruction.getReturnNullability();
+      Nullability nullability = instruction.getReturnNullability();
       PsiMethod targetMethod = instruction.getTargetMethod();
       Mutability mutable = Mutability.UNKNOWN;
       if (targetMethod != null) {
@@ -573,7 +575,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
             type = returnType;
           }
         }
-        if (nullability == Nullness.UNKNOWN) {
+        if (nullability == Nullability.UNKNOWN) {
           nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
         }
       }
@@ -641,7 +643,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     if (result == null && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
-      result = runner.getFactory().createTypeValue(type, Nullness.NOT_NULL);
+      result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
     }
     memState.push(result == null ? DfaUnknownValue.getInstance() : result);
 
@@ -725,7 +727,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         condition = factory.createCondition(dfaLeft, RelationType.NE, aNull);
         unknownTargetType = true;
       } else {
-        dfaRight = factory.createTypeValue(type, Nullness.NOT_NULL);
+        dfaRight = factory.createTypeValue(type, Nullability.NOT_NULL);
       }
     }
     if (condition == null) {

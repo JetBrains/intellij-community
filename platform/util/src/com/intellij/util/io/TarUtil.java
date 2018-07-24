@@ -1,33 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -142,114 +124,5 @@ public class TarUtil {
       }
     }
     return true;
-  }
-
-  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter) throws IOException {
-    extract(file, outputDir, filenameFilter, true);
-  }
-
-  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter, boolean overwrite)
-    throws IOException {
-    FileInputStream fis = new FileInputStream(file);
-    GzipCompressorInputStream gcis = new GzipCompressorInputStream(fis);
-    TarArchiveInputStream tis = new TarArchiveInputStream(gcis);
-    try {
-      extract(tis, outputDir, filenameFilter, overwrite);
-    }
-    finally {
-      fis.close();
-    }
-  }
-
-  public static void extract(@NotNull final TarArchiveInputStream tis,
-                             @NotNull File outputDir,
-                             @Nullable FilenameFilter filenameFilter) throws IOException {
-    extract(tis, outputDir, filenameFilter, true);
-  }
-
-  public static void extract(@NotNull final TarArchiveInputStream tis,
-                             @NotNull File outputDir,
-                             @Nullable FilenameFilter filenameFilter,
-                             boolean overwrite) throws IOException {
-    TarArchiveEntry entry;
-    while ((entry = tis.getNextTarEntry()) != null) {
-      final File file = new File(outputDir, entry.getName());
-      if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
-        extractEntry(entry, tis, outputDir, overwrite);
-      }
-    }
-  }
-
-  public static void extractEntry(TarArchiveEntry entry, final InputStream inputStream, File outputDir) throws IOException {
-    extractEntry(entry, inputStream, outputDir, true);
-  }
-
-  public static void extractEntry(TarArchiveEntry entry, final InputStream inputStream, File outputDir, boolean overwrite)
-    throws IOException {
-    final boolean isDirectory = entry.isDirectory();
-    final String relativeName = entry.getName();
-    final File file = new File(outputDir, relativeName);
-    if (file.exists() && !overwrite) return;
-
-    FileUtil.createParentDirs(file);
-    if (isDirectory) {
-      file.mkdir();
-    }
-    else {
-      FileOutputStream fileOutputStream = new FileOutputStream(file);
-      try {
-        IOUtils.copy(inputStream, fileOutputStream);
-      }
-      finally {
-        fileOutputStream.close();
-      }
-    }
-  }
-
-  /*
-   * update an existing jar file. Adds/replace files specified in relpathToFile map
-   */
-  public static void update(InputStream in, OutputStream out, Map<String, File> relpathToFile) throws IOException {
-    TarArchiveInputStream tis = new TarArchiveInputStream(in);
-    TarArchiveOutputStream tos = new TarArchiveOutputStream(out);
-
-    try {
-      // put the old entries first, replace if necessary
-      TarArchiveEntry e;
-      while ((e = tis.getNextTarEntry()) != null) {
-        String name = e.getName();
-
-        if (!relpathToFile.containsKey(name)) { // copy the old stuff
-          // do our own compression
-          TarArchiveEntry e2 = new TarArchiveEntry(name);
-          //e2.setMethod(e.getMethod());
-          e2.setModTime(e.getModTime());
-          //e2.setComment(e.getComment());
-          //e2.setExtra(e.getExtra());
-          //if (e.getMethod() == ZipEntry.STORED) {
-          e2.setSize(e.getSize());
-          //e2.setCrc(e.getCrc());
-          //}
-          tos.putArchiveEntry(e2);
-          FileUtil.copy(tis, tos);
-        }
-        else { // replace with the new files
-          final File file = relpathToFile.get(name);
-          //addFile(file, name, tos);
-          relpathToFile.remove(name);
-          addFileToTar(tos, file, name, null, null);
-        }
-      }
-
-      // add the remaining new files
-      for (final String path : relpathToFile.keySet()) {
-        File file = relpathToFile.get(path);
-        addFileToTar(tos, file, path, null, null);
-      }
-    }
-    finally {
-      tis.close();
-      tos.close();
-    }
   }
 }

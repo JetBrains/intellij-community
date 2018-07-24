@@ -580,7 +580,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
   }
 
-  private static final Key<Document> DOCUMENT_WAS_SAVED_TEMPORARILY = Key.create("DOCUMENT_WAS_RESURRECTED_TEMPORARILY");
+  private static final Key<Document> DOCUMENT_WAS_SAVED_TEMPORARILY = Key.create("DOCUMENT_WAS_SAVED_TEMPORARILY");
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();

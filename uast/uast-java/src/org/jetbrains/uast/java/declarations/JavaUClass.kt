@@ -21,7 +21,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement(
-  givenParent), UClassTypeSpecific, JavaUElementWithComments, UAnchorOwner {
+  givenParent), UClassTypeSpecific, JavaUElementWithComments, UAnchorOwner, UDeclarationEx {
 
   abstract override val javaPsi: PsiClass
 

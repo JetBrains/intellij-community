@@ -17,6 +17,8 @@ import java.util.Map;
 public class ExpressionTypeActionTest extends JavaCodeInsightFixtureTestCase {
   public void testSimpleStr1() { doSimpleTest("\"\"<caret>", "String, int"); }
   public void testSimpleStr2() { doSimpleTest("<selection>\"\"</selection><caret>", "String"); }
+  public void testSimpleStr3() { doSimpleTest("\"\"<caret>,", "String, int"); }
+  public void testSimpleStr4() { doSimpleTest("\"\"<caret>\n", "String, int"); }
   public void testSimpleChr1() { doSimpleTest("\"\" + 'x'<caret>", "char, String, int"); }
   public void testSimpleChr2() { doSimpleTest("\"\" + <selection>'x'</selection><caret>", "char"); }
   public void testSimpleInt1() { doSimpleTest("111<caret>", "int, int"); }

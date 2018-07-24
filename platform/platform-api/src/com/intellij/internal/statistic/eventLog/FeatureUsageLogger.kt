@@ -8,11 +8,19 @@ object FeatureUsageLogger {
   private val ourLogger = if (isEnabled()) getLogger() else FeatureUsageEmptyEventLogger()
 
   fun log(recorderId: String, action: String) {
-    return ourLogger.log(recorderId, action)
+    return ourLogger.log(recorderId, action, false)
   }
 
   fun log(recorderId: String, action: String, data: Map<String, Any>) {
-    return ourLogger.log(recorderId, action, data)
+    return ourLogger.log(recorderId, action, data, false)
+  }
+
+  fun logState(recorderId: String, action: String) {
+    return ourLogger.log(recorderId, action, true)
+  }
+
+  fun logState(recorderId: String, action: String, data: Map<String, Any>) {
+    return ourLogger.log(recorderId, action, data, true)
   }
 
   fun getLogFiles() : List<File> {

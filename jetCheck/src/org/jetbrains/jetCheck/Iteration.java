@@ -59,6 +59,9 @@ class Iteration<T> {
         session.notifier.eofException();
         return null;
       }
+      catch (WrongDataStructure e) {
+        throw e;
+      }
       catch (Throwable e) {
         //noinspection InstanceofCatchParameter
         if (e instanceof CannotRestoreValue && session.parameters.serializedData != null) {

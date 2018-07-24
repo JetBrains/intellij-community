@@ -135,9 +135,10 @@ public enum Mutability {
       if (initializers.isEmpty() && !owner.hasModifierProperty(PsiModifier.STATIC)) {
         initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       }
+      initializers = StreamEx.of(initializers).flatMap(ExpressionUtils::nonStructuralChildren).toList();
       if (initializers.isEmpty()) return UNKNOWN;
       Mutability mutability = UNMODIFIABLE;
-      for (PsiExpression initializer : StreamEx.of(initializers).flatMap(ExpressionUtils::nonStructuralChildren)) {
+      for (PsiExpression initializer : initializers) {
         Mutability newMutability = UNKNOWN;
         if (ClassUtils.isImmutable(initializer.getType())) {
           newMutability = UNMODIFIABLE;

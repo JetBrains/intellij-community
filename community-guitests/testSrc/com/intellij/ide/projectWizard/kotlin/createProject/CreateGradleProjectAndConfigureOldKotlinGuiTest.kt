@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
 
 class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
@@ -9,9 +10,10 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("gradle_cfg_jvm_old1231")
   fun createGradleAndConfigureKotlinJvmOldVersion1231() {
+    KotlinTestProperties.kotlin_artifact_version = "1.2.31"
     testCreateGradleAndConfigureKotlin(
       kotlinKind = KotlinKind.JVM,
-      kotlinVersion = "1.2.31",
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
       expectedFacet = FacetStructure(
         targetPlatform = TargetPlatform.JVM18,
@@ -19,16 +21,19 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
         apiVersion = LanguageVersion.L12,
         jvmOptions = FacetStructureJVM()
       ),
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
   }
 
   @Test
   @JvmName("gradle_cfg_jvm_old1161")
   fun createGradleAndConfigureKotlinJvmOldVersion1161() {
+    KotlinTestProperties.kotlin_artifact_version = "1.1.61"
     testCreateGradleAndConfigureKotlin(
       kotlinKind = KotlinKind.JVM,
-      kotlinVersion = "1.1.61",
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
       expectedFacet = FacetStructure(
         targetPlatform = TargetPlatform.JVM18,
@@ -36,7 +41,9 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
         apiVersion = LanguageVersion.L11,
         jvmOptions = FacetStructureJVM()
       ),
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
   }
 }

@@ -275,6 +275,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
+  private static List<Runnable> getAndClearActionsAfterCommit(@NotNull Document document) {
+    List<Runnable> list;
+    synchronized (ACTION_AFTER_COMMIT) {
+      list = document.getUserData(ACTION_AFTER_COMMIT);
+      if (list != null) {
+        list = new ArrayList<>(list);
+        document.putUserData(ACTION_AFTER_COMMIT, null);
+      }
+    }
+    return list;
+  }
+
   @Override
   public void commitDocument(@NotNull final Document doc) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
@@ -428,6 +440,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
       myUncommittedDocuments.remove(document);
+      runAfterCommitActions(document);
       return; // the project must be closing or file deleted
     }
 
@@ -575,15 +588,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private void runAfterCommitActions(@NotNull Document document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    List<Runnable> list;
-    synchronized (ACTION_AFTER_COMMIT) {
-      list = document.getUserData(ACTION_AFTER_COMMIT);
-      if (list != null) {
-        list = new ArrayList<>(list);
-        document.putUserData(ACTION_AFTER_COMMIT, null);
-      }
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      // have to run in EDT to guarantee data structure safe access and "execute in EDT" callbacks contract
+      ApplicationManager.getApplication().invokeLater(()-> {
+        if (!myProject.isDisposed() && isCommitted(document)) runAfterCommitActions(document);
+      });
+      return;
     }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    List<Runnable> list = getAndClearActionsAfterCommit(document);
     if (list != null) {
       for (final Runnable runnable : list) {
         runnable.run();
@@ -862,11 +875,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
+      runAfterCommitActions(document);
       return;
     }
 
     final PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
+      runAfterCommitActions(document);
       return;
     }
 

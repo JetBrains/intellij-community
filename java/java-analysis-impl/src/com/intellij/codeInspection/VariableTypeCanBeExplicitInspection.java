@@ -3,8 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
@@ -46,11 +44,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiTypeElement) {
-        PsiTypeElement typeElementByExplicitType = JavaPsiFacade.getElementFactory(project)
-          .createTypeElement(((PsiTypeElement)element).getType());
-        PsiElement explicitTypeElement = element.replace(typeElementByExplicitType);
-        explicitTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(explicitTypeElement);
-        CodeStyleManager.getInstance(project).reformat(explicitTypeElement);
+        PsiTypesUtil.replaceWithExplicitType((PsiTypeElement)element);
       }
     }
   }

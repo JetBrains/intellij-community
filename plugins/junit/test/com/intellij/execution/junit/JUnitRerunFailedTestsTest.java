@@ -50,7 +50,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
                        "}");
     myFixture.addClass("public class ChildTest extends ATest {}");
 
-    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest.testMe");
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest/testMe");
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     testProxy.setLocator(JavaTestLocator.INSTANCE);
@@ -99,7 +99,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     final SMTestProxy proxyParam = new SMTestProxy("[0.java]", true, "java:suite://MyTest.[0.java]");
     proxyParam.setLocator(locationProvider);
 
-    final SMTestProxy parameterizedTestProxy = new SMTestProxy("testName1[0.java]", false, "java:test://MyTest.testName1[0.java]");
+    final SMTestProxy parameterizedTestProxy = new SMTestProxy("testName1[0.java]", false, "java:test://MyTest/testName1[0.java]");
     parameterizedTestProxy.setLocator(locationProvider);
 
     final Location rootLocation = rootProxy.getLocation(project, searchScope);
@@ -127,7 +127,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
                                                  "}");
     myFixture.addClass("public class ChildTest extends ATest {}");
 
-    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest.testMe");
+    final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest/testMe");
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     testProxy.setLocator(JavaTestLocator.INSTANCE);
@@ -146,7 +146,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
                        "    }\n" +
                        "}");
 
-    final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass$Tests.testFoo");
+    final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass$Tests/testFoo");
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     testProxy.setLocator(JavaTestLocator.INSTANCE);
@@ -164,7 +164,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
                                          "    @org.junit.Test" +
                                          "    public void testFoo() throws Exception {}\n" +
                                          "}");
-    final SMTestProxy testProxy = new SMTestProxy("TestClass", false, "java:test://TestClass.TestClass");
+    final SMTestProxy testProxy = new SMTestProxy("TestClass", false, "java:test://TestClass/TestClass");
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     testProxy.setLocator(JavaTestLocator.INSTANCE);
@@ -180,7 +180,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
                        "    @org.junit.platform.commons.annotation.Testable" +
                        "    public void testFoo(A a) throws Exception {}\n" +
                        "}");
-    final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass.testFoo");
+    final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass/testFoo");
     testProxy.setLocator(JavaTestLocator.INSTANCE);
     final String presentation = TestMethods.getTestPresentation(testProxy, myFixture.getProject(), GlobalSearchScope.projectScope(myFixture.getProject()));
     assertEquals("TestClass,testFoo(A)", presentation);

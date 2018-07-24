@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.controlflow;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.ConditionalExpressionInspection;
@@ -18,8 +20,10 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testThisCall() { assertQuickfixNotAvailable(); }
   public void testBrokenCode() { assertQuickfixNotAvailable(); }
   public void testField() { assertQuickfixNotAvailable(); }
+  public void testNonDenotableVar() { assertQuickfixNotAvailable(); }
 
   public void testArrayInitializer() { doTest(); }
+  public void testExpandVar() { doTest(); }
   public void testCastNeeded() { doTest(); }
   public void testComment() { doTest(); }
   public void testCommentWithDeclaration() { doTest(); }
@@ -31,4 +35,9 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testParentheses() { doTest(); }
   public void testNestedConditional() { doTest(); }
   public void testNestedConditionalChangesSemantics() { doTest(InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")); }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+    builder.setLanguageLevel(LanguageLevel.JDK_10);
+  }
 }

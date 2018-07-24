@@ -146,14 +146,15 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
       PsiIfStatement ifStatement = (PsiIfStatement)ct.replaceAndRestoreComments(loopStatement, replacement);
       ct = new CommentTracker();
       PsiExpression condition = ifStatement.getCondition();
+      String simplified = JavaPsiMathUtil.simplifyComparison(condition, ct);
+      if (simplified != null) {
+        condition = (PsiExpression)ct.replaceAndRestoreComments(condition, simplified);
+        ct = new CommentTracker();
+      }
       if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(condition))) {
         PsiStatement nakedSubListClear = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
         assert nakedSubListClear != null;
         ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(nakedSubListClear));
-      }
-      String simplified = JavaPsiMathUtil.simplifyComparison(condition, ct);
-      if (simplified != null) {
-        ct.replaceAndRestoreComments(condition, simplified);
       }
     }
 

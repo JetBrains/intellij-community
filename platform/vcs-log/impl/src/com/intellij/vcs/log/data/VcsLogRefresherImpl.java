@@ -95,7 +95,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   protected SingleTaskController.SingleTask startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
     LOG.debug("Starting a background task...");
-    ProgressIndicator indicator = myProgress.createProgressIndicator();
+    ProgressIndicator indicator = myProgress.createProgressIndicator(VcsLogData.DATA_PACK_REFRESH);
     Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask, indicator,
                                                                                                                  null);
     return new SingleTaskController.SingleTaskImpl(future, indicator);

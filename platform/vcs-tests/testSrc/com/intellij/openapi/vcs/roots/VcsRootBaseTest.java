@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,7 +34,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected String myVcsName;
   protected VirtualFile myRepository;
 
-  private VcsRootChecker myExtension;
+  protected MockRootChecker myRootChecker;
   protected RootModelImpl myRootModel;
 
   @Override
@@ -51,24 +50,8 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
 
     myVcs = new MockAbstractVcs(myProject);
     ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
-    myExtension = new VcsRootChecker() {
-      @NotNull
-      @Override
-      public VcsKey getSupportedVcs() {
-        return myVcs.getKeyInstanceMethod();
-      }
-
-      @Override
-      public boolean isRoot(@NotNull String path) {
-        return new File(path, DOT_MOCK).exists();
-      }
-
-      @Override
-      public boolean isVcsDir(@NotNull String path) {
-        return path.toLowerCase().endsWith(DOT_MOCK);
-      }
-    };
-    point.registerExtension(myExtension);
+    myRootChecker = new MockRootChecker(myVcs);
+    point.registerExtension(myRootChecker);
     vcsManager.registerVcs(myVcs);
     myVcsName = myVcs.getName();
     myRepository.refresh(false, true);
@@ -81,7 +64,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   @Override
   protected void tearDown() throws Exception {
     try {
-      getExtensionPoint().unregisterExtension(myExtension);
+      getExtensionPoint().unregisterExtension(myRootChecker);
       vcsManager.unregisterVcs(myVcs);
     }
     finally {

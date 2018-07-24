@@ -3,8 +3,7 @@ package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.Key.A
 import com.intellij.testGuiFramework.util.Key.V
 import com.intellij.testGuiFramework.util.Modifier.CONTROL

@@ -5,7 +5,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.sun.jdi.*;
@@ -55,6 +54,6 @@ public class BoxingEvaluator implements Evaluator{
 
     Method finalMethod = method;
     List<PrimitiveValue> args = Collections.singletonList(value);
-    return DebuggerUtilsEx.computeAndKeep(() -> process.invokeMethod(context, wrapperClass, finalMethod, args), context);
+    return context.computeAndKeep(() -> process.invokeMethod(context, wrapperClass, finalMethod, args));
   }
 }

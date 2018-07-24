@@ -168,12 +168,18 @@ public class UIUtil {
 
   @NotNull
   public static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
-    final JLabel completeMatchInfo = new JLabel(AllIcons.RunConfigurations.Variables);
-    final Point location = completeMatchInfo.getLocation();
+    return installCompleteMatchInfo(new JLabel(AllIcons.RunConfigurations.Variables), configurationProducer);
+  }
+
+  @NotNull
+  public static JComponent installCompleteMatchInfo(JLabel completeMatchInfo,
+                                                    Producer<? extends Configuration> configurationProducer) {
+    final Rectangle bounds = completeMatchInfo.getBounds();
+    final Point location = new Point(bounds.x + (bounds.width / 2) , bounds.y);
     final JLabel label = new JLabel(SSRBundle.message("complete.match.variable.tooltip.message",
                                                       SSRBundle.message("no.constraints.specified.tooltip.message")));
     final IdeTooltip tooltip = new IdeTooltip(completeMatchInfo, location, label);
-    tooltip.setPreferredPosition(Balloon.Position.atRight).setCalloutShift(6).setHint(true).setExplicitClose(true);
+    tooltip.setHint(true).setExplicitClose(true);
 
     completeMatchInfo.addMouseListener(new MouseAdapter() {
       @Override
@@ -189,6 +195,10 @@ public class UIUtil {
         }
         label.setText(SSRBundle.message("complete.match.variable.tooltip.message",
                                         SubstitutionShortInfoHandler.getShortParamString(constraint)));
+        tooltip.setPreferredPosition(Balloon.Position.below);
+        final Rectangle bounds = completeMatchInfo.getBounds();
+        final Point location = new Point(bounds.x + (bounds.width / 2) , bounds.y + bounds.height);
+        tooltip.setPoint(location);
         IdeTooltipManager.getInstance().show(tooltip, true);
         configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
       }

@@ -71,11 +71,7 @@ public class ConstructorReflectionAccessor extends ReflectionAccessorBase<Constr
 
   @NotNull
   private static String methodName(@NotNull String jvmClassName) {
-    String name = StringUtil.substringAfterLast(jvmClassName, ".");
-    if (name == null) {
-      name = jvmClassName;
-    }
-
+    String name = StringUtil.getShortName(jvmClassName);
     return "new" + StringUtil.capitalize(name);
   }
 

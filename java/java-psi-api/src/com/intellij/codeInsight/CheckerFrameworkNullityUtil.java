@@ -16,7 +16,7 @@ class CheckerFrameworkNullityUtil {
   private static final String DEFAULT_QUALIFIERS = "org.checkerframework.framework.qual.DefaultQualifiers";
 
   @Nullable
-  static NullityDefault isCheckerDefault(PsiAnnotation anno, PsiAnnotation.TargetType[] types) {
+  static NullabilityAnnotationInfo isCheckerDefault(PsiAnnotation anno, PsiAnnotation.TargetType[] types) {
     String qName = anno.getQualifiedName();
     if (DEFAULT_QUALIFIER.equals(qName)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
@@ -26,10 +26,10 @@ class CheckerFrameworkNullityUtil {
         if (valueClass != null) {
           NullableNotNullManager instance = NullableNotNullManager.getInstance(value.getProject());
           if (instance.getNullables().contains(valueClass.getQualifiedName())) {
-            return new NullityDefault(anno, true);
+            return new NullabilityAnnotationInfo(anno, Nullability.NULLABLE, true);
           }
           if (instance.getNotNulls().contains(valueClass.getQualifiedName())) {
-            return new NullityDefault(anno, true);
+            return new NullabilityAnnotationInfo(anno, Nullability.NULLABLE, true);
           }
         }
       }
@@ -40,7 +40,7 @@ class CheckerFrameworkNullityUtil {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       for (PsiAnnotationMemberValue initializer : AnnotationUtil.arrayAttributeValues(value)) {
         if (initializer instanceof PsiAnnotation) {
-          NullityDefault result = isCheckerDefault((PsiAnnotation)initializer, types);
+          NullabilityAnnotationInfo result = isCheckerDefault((PsiAnnotation)initializer, types);
           if (result != null) {
             return result;
           }

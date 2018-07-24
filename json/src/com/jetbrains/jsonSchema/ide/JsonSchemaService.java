@@ -26,7 +26,8 @@ public interface JsonSchemaService {
 
   static boolean isSchemaFile(@NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getViewProvider().getVirtualFile();
-    return Impl.get(psiFile.getProject()).isSchemaFile(file);
+    JsonSchemaService service = Impl.get(psiFile.getProject());
+    return service.isApplicableToFile(file) && service.isSchemaFile(file);
   }
 
   boolean isSchemaFile(@NotNull VirtualFile file);
@@ -61,6 +62,8 @@ public interface JsonSchemaService {
   ModificationTracker getAnySchemaChangeTracker();
 
   List<JsonSchemaInfo> getAllUserVisibleSchemas();
+
+  boolean isApplicableToFile(@Nullable VirtualFile file);
 
   @NotNull
   static String normalizeId(@NotNull String id) {

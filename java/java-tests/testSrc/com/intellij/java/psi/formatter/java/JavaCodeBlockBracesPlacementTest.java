@@ -131,25 +131,25 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testForEachStatement() {
-    String before = "for (String arg : args) {\n" +
+    String before = "for (String arg: args) {\n" +
                     "        System.out.println(\"AAA!\");\n" +
                     "}";
 
-    String endOfLine = "for (String arg : args) {\n" +
+    String endOfLine = "for (String arg: args) {\n" +
                        "    System.out.println(\"AAA!\");\n" +
                        "}";
 
-    String nextLine = "for (String arg : args)\n" +
+    String nextLine = "for (String arg: args)\n" +
                       "{\n" +
                       "    System.out.println(\"AAA!\");\n" +
                       "}";
 
-    String nextLineShifted = "for (String arg : args)\n" +
+    String nextLineShifted = "for (String arg: args)\n" +
                              "    {\n" +
                              "    System.out.println(\"AAA!\");\n" +
                              "    }";
 
-    String nextLineShiftedEach = "for (String arg : args)\n" +
+    String nextLineShiftedEach = "for (String arg: args)\n" +
                                  "    {\n" +
                                  "        System.out.println(\"AAA!\");\n" +
                                  "    }";
@@ -163,8 +163,8 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   public void testSimpleForEachStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
-    String before = "for (String arg : args) {     System.out.println(\"AAA!\"); }";
-    String after = "for (String arg : args) { System.out.println(\"AAA!\"); }";
+    String before = "for (String arg: args) {     System.out.println(\"AAA!\"); }";
+    String after = "for (String arg: args) { System.out.println(\"AAA!\"); }";
 
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }

@@ -18,13 +18,12 @@ package com.intellij.codeInsight.hint;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.Html;
@@ -58,6 +57,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   //is used for suppressing some events while processing links  
   private volatile boolean myActiveLink = false;
+  //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
 
   protected interface TooltipReloader {
@@ -81,10 +81,12 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     GridBag bag = new GridBag()
       .anchor(GridBagConstraints.CENTER)
       .fillCellHorizontally();
-    
+
+    pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
     grid.add(pane, bag);
     grid.setBackground(hintHint.getTextBackground());
     grid.setBorder(JBUI.Borders.empty());
+    grid.setOpaque(hintHint.isOpaqueAllowed());
 
     return grid;
   }
@@ -111,7 +113,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     JEditorPane editorPane = IdeTooltipManager.initPane(new Html(dressedText).setKeepFont(true), hintHint, layeredPane);
-    hintHint.setContentActive(isActiveHtml(dressedText));
+    hintHint.setContentActive(isContentAction(dressedText));
     if (!hintHint.isAwtTooltip()) {
       correctLocation(editor, editorPane, p, alignToRight, expanded, myCurrentWidth);
     }
@@ -135,14 +137,14 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     }
 
     ArrayList<AnAction> actions = ContainerUtil.newArrayList();
-    JPanel component = createMainPanel(hintHint, scrollPane);
-    final LightweightHint hint = new LightweightHint(component) {
+    JPanel grid = createMainPanel(hintHint, scrollPane);
+    final LightweightHint hint = new LightweightHint(grid) {
 
       @Override
       public void hide() {
         onHide(editorPane);
         super.hide();
-        for (AnAction action : actions) {
+        for (AnAction action: actions) {
           action.unregisterCustomShortcutSet(contentComponent);
         }
       }
@@ -170,6 +172,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void actionPerformed(final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
         hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
+        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut");
         reloader.reload(!expanded);
       }
     });
@@ -197,14 +200,17 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return;
           }
 
+          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink");
+
           reloader.reload(!expanded);
         }
       }
     });
 
-    fillPanel(editor, component, hint, hintHint, actions, reloader);
+    fillPanel(editor, grid, hint, hintHint, actions, reloader);
 
-    component.addMouseListener(new MouseAdapter() {
+
+    grid.addMouseListener(new MouseAdapter() {
 
       // This listener makes hint transparent for mouse events. It means that hint is closed
       // by MousePressed and this MousePressed goes into the underlying editor component.
@@ -216,25 +222,41 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
           contentComponent.dispatchEvent(newMouseEvent);
         }
       }
+    });
+
+    ListenerUtil.addMouseListener(grid, new MouseAdapter() {
 
       @Override
       public void mouseExited(final MouseEvent e) {
-        if (component.getBounds().contains(e.getPoint())) {
+        if (expanded) return;
+
+        Container parentContainer = grid;
+        //ComponentWithMnemonics is top balloon component
+        while (!(parentContainer instanceof ComponentWithMnemonics)) {
+          Container candidate = parentContainer.getParent();
+          if (candidate == null) break;
+          parentContainer = candidate;
+        }
+
+        MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, parentContainer);
+
+        if (parentContainer.contains(newMouseEvent.getPoint())) {
           return;
         }
 
-        if (!expanded) {
-          hint.hide();
-        }
+        hint.hide();
       }
     });
-
 
     hintManager.showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY |
                                                 HintManager.HIDE_BY_TEXT_CHANGE |
                                                 HintManager.HIDE_BY_OTHER_HINT |
                                                 HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     return hint;
+  }
+
+  protected boolean isContentAction(String dressedText) {
+    return isActiveHtml(dressedText);
   }
 
   protected boolean canAutoHideOn(@NotNull TooltipEvent event) {
@@ -264,7 +286,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull HintHint hintHint,
                            @NotNull ArrayList<AnAction> actions,
                            @NotNull TooltipReloader expandCallback) {
-
+    hintHint.setComponentBorder(JBUI.Borders.empty());
+    hintHint.setBorderInsets(JBUI.insets(0));
   }
 
   private static boolean handle(@NotNull final String ref, @NotNull final Editor editor) {
@@ -362,6 +385,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   protected void onHide(@NotNull JComponent contentComponent) {
   }
 
+  @NotNull
   protected LineTooltipRenderer createRenderer(@Nullable String text, int width) {
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }

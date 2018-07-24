@@ -5,3 +5,4 @@ class A {
 private
 protected
 public
+strictfp

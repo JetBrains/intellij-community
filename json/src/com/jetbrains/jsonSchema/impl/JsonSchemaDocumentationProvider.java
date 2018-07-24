@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -44,7 +45,9 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
-    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
+    VirtualFile virtualFile = containingFile.getViewProvider().getVirtualFile();
+    if (!service.isApplicableToFile(virtualFile)) return null;
+    final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
     if (rootSchema == null) return null;
 
     return generateDoc(element, rootSchema, preferShort);

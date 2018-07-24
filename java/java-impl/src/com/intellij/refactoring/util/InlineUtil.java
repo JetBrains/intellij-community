@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -216,7 +217,8 @@ public class InlineUtil {
         arrayCreation.delete();
         return;
       }
-
+      
+      CommentTracker cm = new CommentTracker();
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       if (initializers.length > 0) {
         PsiElement lastInitializerSibling = initializers[initializers.length - 1];
@@ -240,8 +242,9 @@ public class InlineUtil {
           firstElement = leadingComment;
         }
         argumentList.addRange(firstElement, lastInitializerSibling);
+        cm.markRangeUnchanged(firstElement, lastInitializerSibling);
       }
-      args[args.length - 1].delete();
+      cm.deleteAndRestoreComments(args[args.length - 1]);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

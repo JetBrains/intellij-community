@@ -61,10 +61,8 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -622,7 +620,7 @@ public class RecentProjectPanel extends JPanel {
         final long startTime = System.currentTimeMillis();
         boolean pathIsValid;
         try {
-          pathIsValid = new File(path).exists();
+          pathIsValid = isFileAvailable(new File(path));
         }
         catch (Exception e) {
           pathIsValid = false;
@@ -639,5 +637,17 @@ public class RecentProjectPanel extends JPanel {
         scheduleCheck(path, Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * (System.currentTimeMillis() - startTime)));
       }, delay, TimeUnit.MILLISECONDS);
     }
+  }
+
+  private static boolean isFileAvailable(File file) {
+    List<File> roots = Arrays.asList(File.listRoots());
+    File tmp = file;
+    while(tmp != null) {
+      if (roots.contains(tmp)) {
+        return file.exists();
+      }
+      tmp = tmp.getParentFile();
+    }
+    return false;
   }
 }

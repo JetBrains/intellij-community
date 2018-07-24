@@ -44,7 +44,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   NodeRenderer myAutoRenderer = null;
 
   private Value myValue;
-  private boolean myValueReady;
+  private volatile boolean myValueReady;
 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
@@ -131,6 +131,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public void setShowIdLabel(boolean showIdLabel) {
     myShowIdLabel = showIdLabel;
+  }
+
+  public boolean isValueReady() {
+    return myValueReady;
   }
 
   @Override

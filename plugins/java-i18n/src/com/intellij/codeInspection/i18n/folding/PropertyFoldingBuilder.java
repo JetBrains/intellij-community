@@ -62,7 +62,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     final List<FoldingDescriptor> result = new ArrayList<>();
     boolean hasJsp = ContainerUtil.intersects(Arrays.asList(StdLanguages.JSP, StdLanguages.JSPX), file.getViewProvider().getLanguages());
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
-    file.accept(hasJsp ? new JavaRecursiveElementVisitor() {
+    file.accept(hasJsp ? new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         ULiteralExpression uLiteralExpression = UastContextKt.toUElement(expression, ULiteralExpression.class);
@@ -70,7 +70,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           checkLiteral(uLiteralExpression, result);
         }
       }
-    } : new PsiRecursiveElementVisitor() {
+    } : new PsiRecursiveElementWalkingVisitor() {
 
       @Override
       public void visitElement(PsiElement element) {

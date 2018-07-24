@@ -39,7 +39,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
   public TreeChangeImpl(@NotNull CompositeElement parent) {
     myParent = parent;
-    assert myParent.getPsi() != null;
+    assert myParent.getPsi() != null : myParent.getElementType() + " of " + myParent.getClass();
     mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
     for (TreeElement child : getCurrentChildren()) {
       myInitialChildren.add(child);

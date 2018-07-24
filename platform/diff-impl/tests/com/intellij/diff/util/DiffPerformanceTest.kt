@@ -84,13 +84,13 @@ class DiffPerformanceTest : TestCase() {
   }
 
   fun `test heavy altered 200000`() {
-    testCpu(1, 2900) {
+    testCpu(1, 3500) {
       Diff.buildChanges(arr_200000, heavy_altered_200000)
     }
   }
 
   fun `test reversed 50000 failure`() {
-    testCpu(1, 8000) {
+    testCpu(1, 10_000) {
       try {
         Diff.buildChanges(arr_50000, reversed_50000)
       }
@@ -102,7 +102,7 @@ class DiffPerformanceTest : TestCase() {
   }
 
   fun `test reversed 5000`() {
-    testCpu(1, 2000) {
+    testCpu(1, 2500) {
       Diff.buildChanges(arr_5000, reversed_5000)
     }
   }
@@ -114,7 +114,7 @@ class DiffPerformanceTest : TestCase() {
   }
 
   fun `test heavy altered 50000`() {
-    testCpu(3, 600) {
+    testCpu(3, 750) {
       Diff.buildChanges(arr_50000, heavy_altered_50000)
     }
   }
@@ -126,49 +126,49 @@ class DiffPerformanceTest : TestCase() {
   }
 
   fun `test heavy altered 20000`() {
-    testCpu(15, 600) {
+    testCpu(15, 650) {
       Diff.buildChanges(arr_20000, heavy_altered_20000)
     }
   }
 
   fun `test altered 2000`() {
-    testCpu(400, 450) {
+    testCpu(400, 550) {
       Diff.buildChanges(arr_2000, altered_2000)
     }
   }
 
   fun `test heavy altered 2000`() {
-    testCpu(400, 600) {
+    testCpu(400, 650) {
       Diff.buildChanges(arr_2000, heavy_altered_2000)
     }
   }
 
   fun `test shuffled 2000`() {
-    testCpu(1, 500) {
+    testCpu(1, 650) {
       Diff.buildChanges(arr_2000, shuffled_2000)
     }
   }
 
   fun `test reversed 2000`() {
-    testCpu(1, 500) {
+    testCpu(1, 550) {
       Diff.buildChanges(arr_2000, reversed_2000)
     }
   }
 
   fun `test altered 1000`() {
-    testCpu(700, 400) {
+    testCpu(700, 450) {
       Diff.buildChanges(arr_1000, altered_1000)
     }
   }
 
   fun `test heavy altered 1000`() {
-    testCpu(700, 500) {
+    testCpu(700, 550) {
       Diff.buildChanges(arr_1000, heavy_altered_1000)
     }
   }
 
   fun `test shuffled 1000`() {
-    testCpu(10, 750) {
+    testCpu(10, 850) {
       Diff.buildChanges(arr_1000, shuffled_1000)
     }
   }
@@ -180,25 +180,25 @@ class DiffPerformanceTest : TestCase() {
   }
 
   fun `test altered 100`() {
-    testCpu(10000, 550) {
+    testCpu(10000, 600) {
       Diff.buildChanges(arr_100, altered_100)
     }
   }
 
   fun `test heavy altered 100`() {
-    testCpu(10000, 600) {
+    testCpu(10000, 650) {
       Diff.buildChanges(arr_100, heavy_altered_100)
     }
   }
 
   fun `test shuffled 100`() {
-    testCpu(2000, 500) {
+    testCpu(2000, 550) {
       Diff.buildChanges(arr_100, shuffled_100)
     }
   }
 
   fun `test reversed 100`() {
-    testCpu(1000, 500) {
+    testCpu(1000, 650) {
       Diff.buildChanges(arr_100, reversed_100)
     }
   }

@@ -15,6 +15,8 @@ import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -29,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -124,13 +127,14 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
     }
 
     @Nullable
-    protected JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
+    private static JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
         if (shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file)) {
           group.add(new ApplyIntentionAction(action, action.getText(), editor, file));
         }
       }
+      addParameterAnnotationActions(file, project, editor, group);
 
       if (group.getChildrenCount() > 0) {
         final DataContext context = SimpleDataContext.getProjectContext(null);
@@ -139,6 +143,30 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
       }
 
       return null;
+    }
+
+    private static void addParameterAnnotationActions(PsiFile file, Project project, Editor editor, DefaultActionGroup group) {
+      final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+      if (leaf == null) return;
+      PsiMethod method = ObjectUtils.tryCast(leaf.getParent(), PsiMethod.class);
+      if (method == null) return;
+      boolean hasSeparator = false;
+      for (PsiParameter parameter: method.getParameterList().getParameters()) {
+        MakeInferredAnnotationExplicit intention = new MakeInferredAnnotationExplicit();
+        if (intention.isAvailable(project, file, parameter)) {
+          if (!hasSeparator) {
+            hasSeparator = true;
+            group.addSeparator();
+            group.add(new AnAction(intention.getText() + " before parameter '" + parameter.getName() + "'") {
+              @Override
+              public void actionPerformed(AnActionEvent e) {
+                PsiDocumentManager.getInstance(project).commitAllDocuments();
+                intention.makeAnnotationsExplicit(project, file, parameter);
+              }
+            });
+          }
+        }
+      }
     }
 
     private static boolean shouldShowInGutterPopup(IntentionAction action) {

@@ -1,6 +1,9 @@
 p<caret> class A {}
 -----
+import
 package
 private
 protected
 public
+strictfp
+super

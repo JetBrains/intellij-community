@@ -1868,4 +1868,10 @@ class Bar {{
     checkResult()
   }
 
+  void "test no duplication after new with expected type parameter"() {
+    myFixture.configureByText 'a.java', 'class Foo<T> { T t = new <caret> }'
+    complete()
+    assert myFixture.lookupElements.findAll { it.allLookupStrings.contains('T') }.size() < 2
+  }
+
 }

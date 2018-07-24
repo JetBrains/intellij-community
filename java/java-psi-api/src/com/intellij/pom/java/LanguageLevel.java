@@ -30,7 +30,6 @@ public enum LanguageLevel {
   JDK_1_9(JavaCoreBundle.message("jdk.1.9.language.level.description"), 9),
   JDK_10(JavaCoreBundle.message("jdk.10.language.level.description"), 10),
   JDK_11(JavaCoreBundle.message("jdk.11.language.level.description"), 11),
-  JDK_11_PREVIEW(JavaCoreBundle.message("jdk.11.preview.language.level.description"), 11),
   JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"), 12);
 
   public static final LanguageLevel HIGHEST = JDK_10;

@@ -6,9 +6,9 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static boolean test(List<List<String>> list) {
-      for (List<String> x : list) {
+      for (List<String> x: list) {
           if (x != null) {
-              for (String s : x) {
+              for (String s: x) {
                   if (!s.startsWith("a")) {
                       return false;
                   }
@@ -19,7 +19,7 @@ public class Main {
   }
 
   private static boolean testEqEq(List<String> list) {
-      for (String s : list) {
+      for (String s: list) {
           if (s.trim() != s.toLowerCase()) {
               return false;
           }
@@ -30,9 +30,9 @@ public class Main {
   public static void testIf(List<List<String>> list) {
       boolean b = true;
       OUTER:
-      for (List<String> x : list) {
+      for (List<String> x: list) {
           if (x != null) {
-              for (String s : x) {
+              for (String s: x) {
                   if (!s.startsWith("a")) {
                       b = false;
                       break OUTER;
@@ -46,7 +46,7 @@ public class Main {
   }
 
   boolean testNot(String... strings) {
-      for (String s : strings) {
+      for (String s: strings) {
           if (s != null) {
               if (!s.startsWith("xyz")) {
                   return true;
@@ -58,7 +58,7 @@ public class Main {
 
   public void testVar(List<Integer> list) {
       boolean x = false;
-      for (Integer i : list) {
+      for (Integer i: list) {
           if (i <= 2) {
               x = true;
               break;

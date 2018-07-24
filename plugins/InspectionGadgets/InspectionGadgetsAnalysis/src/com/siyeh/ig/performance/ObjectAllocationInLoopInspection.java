@@ -15,8 +15,12 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -93,7 +97,7 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
       if (assignedRef == null) return false;
       // to support cases like if(foo == null) foo = new Foo(new Bar());
       if (assignment.getRExpression() != expression &&
-          NullnessUtil.getExpressionNullness(assignment.getRExpression()) != Nullness.NOT_NULL) {
+          NullabilityUtil.getExpressionNullability(assignment.getRExpression()) != Nullability.NOT_NULL) {
         return false;
       }
       final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(assignment, PsiIfStatement.class);

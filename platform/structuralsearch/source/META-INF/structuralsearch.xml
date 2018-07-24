@@ -16,6 +16,8 @@
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager"/>
 
     <typedHandler implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler"/>
+    <completion.contributor language="any" implementationClass="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplatesCompletionContributor"/>
+    <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
   </extensions>
 
   <actions>

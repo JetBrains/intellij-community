@@ -582,6 +582,12 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           }
         });
       }
+      result.add(new ActionWrapper("Delete", AllIcons.Actions.Cancel) {
+        @Override
+        public void perform() {
+          deleteConfiguration(project, settings);
+        }
+      });
 
       return result.toArray(new ActionWrapper[0]);
     }

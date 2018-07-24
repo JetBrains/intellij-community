@@ -22,6 +22,9 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
@@ -33,9 +36,9 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
   private static final long serialVersionUID = 1L;
 
   @NotNull
-  private final ProjectSystemId myProjectSystemId;
+  private ProjectSystemId myProjectSystemId;
   @NotNull
-  private final String myExternalProjectPath;
+  private String myExternalProjectPath;
   @Nullable
   private DataNode<ProjectData> myExternalProjectStructure;
   private long lastSuccessfulImportTimestamp = -1;
@@ -115,5 +118,22 @@ public class InternalExternalProjectInfo implements ExternalProjectInfo, Seriali
            ", lastSuccessfulImportTimestamp=" + lastSuccessfulImportTimestamp +
            ", lastImportTimestamp=" + lastImportTimestamp +
            '}';
+  }
+
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    out.writeObject(myProjectSystemId);
+    out.writeObject(myExternalProjectPath);
+    out.writeObject(myExternalProjectStructure);
+    out.writeLong(lastSuccessfulImportTimestamp);
+    out.writeLong(lastImportTimestamp);
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    myProjectSystemId = (ProjectSystemId)in.readObject();
+    myExternalProjectPath = (String)in.readObject();
+    //noinspection unchecked
+    myExternalProjectStructure = (DataNode<ProjectData>)in.readObject();
+    lastSuccessfulImportTimestamp = in.readLong();
+    lastImportTimestamp = in.readLong();
   }
 }

@@ -7,7 +7,7 @@ public class Main {
   private static OptionalDouble testDouble(long... numbers) {
       double sum = 0;
       long count = 0;
-      for (long x : numbers) {
+      for (long x: numbers) {
           if (x > 0) {
               double v = x;
               sum += v;
@@ -20,7 +20,7 @@ public class Main {
   private static OptionalDouble testInt(int... numbers) {
       long sum = 0;
       long count = 0;
-      for (int x : numbers) {
+      for (int x: numbers) {
           if (x > 0) {
               sum += x;
               count++;
@@ -32,7 +32,7 @@ public class Main {
   private static OptionalDouble testLong(long... numbers) {
       long sum = 0;
       long count = 0;
-      for (long x : numbers) {
+      for (long x: numbers) {
           if (x > 0) {
               sum += x;
               count++;

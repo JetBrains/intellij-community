@@ -14,7 +14,7 @@ public class Main {
   public static OptionalInt min(IndexSet<?> set) {
       boolean seen = false;
       int best = 0;
-      for (Index index : set.asList()) {
+      for (Index index: set.asList()) {
           int asInteger = index.asInteger();
           if (!seen || asInteger < best) {
               seen = true;

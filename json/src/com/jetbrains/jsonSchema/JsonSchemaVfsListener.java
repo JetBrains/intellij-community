@@ -74,7 +74,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         myDirtySchemas.removeAll(scope);
 
-        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isSchemaFile(file));
+        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file) && myService.isSchemaFile(file));
         if (finalScope.isEmpty()) return;
         myProject.getMessageBus().syncPublisher(JSON_SCHEMA_CHANGED).run();
 

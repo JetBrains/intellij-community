@@ -3,7 +3,7 @@ class Test {
       new Object() {
           private void InnerClass(int i, int[] j) {
               if (i == 0) {
-                  for (int idx : j) {
+                  for (int idx: j) {
 
                   }
               }

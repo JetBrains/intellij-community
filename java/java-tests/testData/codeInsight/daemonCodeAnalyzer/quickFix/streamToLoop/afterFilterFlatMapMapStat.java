@@ -7,9 +7,9 @@ import java.util.LongSummaryStatistics;
 public class Main {
   public static LongSummaryStatistics test(List<List<String>> list) {
       LongSummaryStatistics stat = new LongSummaryStatistics();
-      for (List<String> a : list) {
+      for (List<String> a: list) {
           if (a != null) {
-              for (String s : a) {
+              for (String s: a) {
                   long length = s.length();
                   stat.accept(length);
               }

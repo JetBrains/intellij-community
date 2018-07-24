@@ -26,7 +26,7 @@ def format_rest(docstring):
     from docutils import nodes
     from docutils.core import publish_string
     from docutils.frontend import OptionParser
-    from docutils.nodes import Text, field_body, field_name
+    from docutils.nodes import Text, field_body, field_name, SkipNode
     from docutils.parsers.rst import directives
     from docutils.parsers.rst.directives.admonitions import BaseAdmonition
     from docutils.writers import Writer
@@ -70,37 +70,6 @@ def format_rest(docstring):
 
         def unimplemented_visit(self, node):
             pass
-
-        def visit_field_name(self, node):
-            atts = {}
-            if self.in_docinfo:
-                atts['class'] = 'docinfo-name'
-            else:
-                atts['class'] = 'field-name'
-
-            self.context.append('')
-            atts['align'] = "right"
-            self.body.append(self.starttag(node, 'th', '', **atts))
-
-        def visit_field_body(self, node):
-            self.body.append(self.starttag(node, 'td', '', CLASS='field-body'))
-            if hasattr(node.parent, "type"):
-                self.body.append("(")
-                self.body.append(self.starttag(node, 'a', '',
-                                               href='psi_element://#typename#' + node.parent.type))
-                self.body.append(node.parent.type)
-                self.body.append("</a>")
-                self.body.append(") ")
-
-            self.set_class_on_child(node, 'first', 0)
-            field = node.parent
-            if (self.compact_field_list or
-                    isinstance(field.parent, nodes.docinfo) or
-                        field.parent.index(field) == len(field.parent) - 1):
-                # If we are in a compact list, the docinfo, or if this is
-                # the last field of the field list, do not add vertical
-                # space after last element.
-                self.set_class_on_child(node, 'last', -1)
 
         def visit_reference(self, node):
             atts = {}
@@ -174,61 +143,7 @@ def format_rest(docstring):
             pass
 
         def visit_field_list(self, node):
-            fields = {}
-            for field_node in node.children:
-                if not field_node.children:
-                    continue
-                field_name_node = field_node.children[0]
-                field_name_raw = field_name_node.rawsource
-                if field_name_raw.startswith("param "):
-                    if not field_name_node.children:
-                        continue
-                    param_name = field_name_raw[len("param "):]
-                    param_type = None
-                    parts = param_name.rsplit(None, 1)
-                    if len(parts) == 2:
-                        param_type, param_name = parts
-                    # Strip leading escaped asterisks for vararg parameters in Google code style docstrings
-                    param_name = re.sub(r'\\\*', '*', param_name)
-                    field_name_node.children[0] = Text(param_name)
-                    fields[param_name] = field_node
-                    if param_type:
-                        field_node.type = param_type
-                if field_name_raw in ("return", "returns"):
-                    fields[field_name_raw] = field_node
-
-            for field_node in list(node.children):
-                if len(field_node.children) < 2:
-                    continue
-                field_name_node, field_body_node = field_node.children[:2]
-                param_type = self._strip_markup(field_body_node.astext())[1]
-                field_name_raw = field_name_node.rawsource
-                if field_name_raw.startswith("type "):
-                    param_name = re.sub(r'\\\*', '*', field_name_raw[len("type "):])
-                    if param_name in fields:
-                        node.children.remove(field_node)
-                    else:
-                        fields[param_name] = field_node
-                        field_name_node.children[0] = Text(param_name)
-                        field_body_node.children[:] = []
-                    fields[param_name].type = param_type
-                elif field_name_raw == "rtype":
-                    existing_return_tag = None
-                    if "returns" in fields:
-                        existing_return_tag = "returns"
-                    elif "return" in fields:
-                        existing_return_tag = "return"
-
-                    if existing_return_tag:
-                        node.children.remove(field_node)
-                    else:
-                        existing_return_tag = "return"
-                        fields[existing_return_tag] = field_node
-                        field_name_node.children[0] = Text(existing_return_tag)
-                        field_body_node.children[:] = []
-                    fields[existing_return_tag].type = param_type
-
-            HTMLTranslator.visit_field_list(self, node)
+            raise SkipNode
 
         def unknown_visit(self, node):
             """ Ignore unknown nodes """

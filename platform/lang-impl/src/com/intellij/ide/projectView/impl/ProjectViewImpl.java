@@ -16,8 +16,6 @@ import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -141,7 +139,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private final MyAutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
-  private final IdeView myIdeView = new MyIdeView();
+  private final IdeView myIdeView = new IdeViewForProjectViewPane(this::getCurrentProjectViewPane);
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
@@ -1300,48 +1298,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     return result;
-  }
-
-  private final class MyIdeView implements IdeView {
-    @Override
-    public void selectElement(PsiElement element) {
-      selectPsiElement(element, false);
-      boolean requestFocus = true;
-      if (element != null) {
-        final boolean isDirectory = element instanceof PsiDirectory;
-        if (!isDirectory) {
-          FileEditor editor = EditorHelper.openInEditor(element, false);
-          if (editor != null) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-            JComponent component = editor.getPreferredFocusedComponent();
-            if (component != null) {
-              component.requestFocus();
-            }
-            requestFocus = false;
-          }
-        }
-      }
-
-      if (requestFocus) {
-        selectPsiElement(element, true);
-      }
-    }
-
-    @NotNull
-    @Override
-    public PsiDirectory[] getDirectories() {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      if (viewPane != null) {
-        return viewPane.getSelectedDirectories();
-      }
-
-      return PsiDirectory.EMPTY_ARRAY;
-    }
-
-    @Override
-    public PsiDirectory getOrChooseDirectory() {
-      return DirectoryChooserUtil.getOrChooseDirectory(this);
-    }
   }
 
   @Override

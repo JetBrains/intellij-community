@@ -84,7 +84,7 @@ public class ImageUtil {
     return bufferedImage;
   }
 
-  public static double getImageScale(BufferedImage image) {
+  public static double getImageScale(Image image) {
     if (image instanceof JBHiDPIScaledImage) {
       return ((JBHiDPIScaledImage)image).getScale();
     }

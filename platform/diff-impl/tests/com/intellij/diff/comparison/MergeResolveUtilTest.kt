@@ -192,26 +192,98 @@ class MergeResolveUtilTest : DiffTestCase() {
       "i\n",
       "i",
       "\ni",
-      "i\n",
+      "i",
       "i"
+    )
+
+    testSimple(
+      "Y X Y",
+      "Y C\nX\nC Y",
+      "Y \nX\n Y",
+      "Y \nC\nX\nC Y"
+    )
+
+    test(
+      """
+  public static class ChangeData {
+    @NotNull public final ChangeKind kind;
+    public final int otherPath;
+
+    public ChangeData(@NotNull ChangeKind kind, int otherPath) {
+      this.kind = kind;
+      this.otherPath = otherPath;
+    }
+
+    public boolean isRename() {
+      return kind.equals(ChangeKind.RENAMED_FROM) || kind.equals(ChangeKind.RENAMED_TO);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(kind, otherPath);
+    }
+  }
+
+  private enum ChangeKind {
+    MODIFIED((byte)0),
+    RENAMED_FROM((byte)1),
+    RENAMED_TO((byte)2);""",
+      """
+  public enum ChangeKind {
+    NOT_CHANGED((byte)-1),
+    MODIFIED((byte)0),
+    ADDED((byte)1),
+    REMOVED((byte)2);""",
+      """
+  public static class ChangeData {
+  @NotNull public final ChangeKind kind;
+  public final int otherPath;
+
+  public ChangeData(@NotNull ChangeKind kind, int otherPath) {
+    this.kind = kind;
+    this.otherPath = otherPath;
+  }
+
+  public boolean isRename() {
+    return kind.equals(ChangeKind.RENAMED_FROM) || kind.equals(ChangeKind.RENAMED_TO);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(kind, otherPath);
+  }
+}
+
+private enum ChangeKind {
+  MODIFIED((byte)0),
+  RENAMED_FROM((byte)1),
+  RENAMED_TO((byte)2);""",
+      """
+  public enum ChangeKind {
+    NOT_CHANGED((byte)-1),
+  MODIFIED((byte)0),
+  ADDED((byte)1),
+  REMOVED((byte)2);"""
     )
   }
 
-  private fun testGreedy(base: String, left: String, right: String, expected: String?) {
-    test(base, left, right, expected, true)
+  private fun testSimple(base: String, left: String, right: String, expected: String?) {
+    val simpleResult = MergeResolveUtil.tryResolve(left, base, right)
+    assertEquals(expected, simpleResult)
   }
 
-  private fun test(base: String, left: String, right: String, expected: String?, isGreedy: Boolean = false) {
-    val expectedSimple = if (isGreedy) null else expected
-    val expectedGreedy = expected
-    test(base, left, right, expectedSimple, expectedGreedy)
+  private fun testGreedy(base: String, left: String, right: String, expected: String?) {
+    val greedyResult = MergeResolveUtil.tryGreedyResolve(left, base, right)
+    assertEquals(expected, greedyResult)
+  }
+
+  private fun test(base: String, left: String, right: String, expected: String?) {
+    testSimple(base, left, right, expected)
+    testGreedy(base, left, right, expected)
   }
 
   private fun test(base: String, left: String, right: String, expectedSimple: String?, expectedGreedy: String?) {
-    val simpleResult = MergeResolveUtil.tryResolve(left, base, right)
-    val greedyResult = MergeResolveUtil.tryGreedyResolve(left, base, right)
-
-    assertEquals(expectedSimple, simpleResult, "Simple")
-    assertEquals(expectedGreedy, greedyResult, "Greedy")
+    testSimple(base, left, right, expectedSimple)
+    testGreedy(base, left, right, expectedGreedy)
   }
 }

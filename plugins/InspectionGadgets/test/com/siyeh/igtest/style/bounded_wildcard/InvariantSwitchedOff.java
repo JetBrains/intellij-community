@@ -14,7 +14,7 @@ public class InvariantSwitchedOff<T> {
   }
 
   public void foooo(Processor<<warning descr="Can generalize to '? super Number'">Number</warning>> pass) {
-    pass.process(null);
+    pass.process(1);
   }
 
   ////////////// field assigned from method
@@ -25,13 +25,12 @@ public class InvariantSwitchedOff<T> {
       this.myProcessor = myProcessor;
     }
 
-    boolean foo() {
-      return myProcessor.process(null);
+    boolean foo(S s) {
+      return myProcessor.process(s);
     }
   }
 
-  ////// even Function with compose methods
-  Number foo(Function<<warning descr="Can generalize to '? super Number'">Number</warning>, <warning descr="Can generalize to '? extends Number'">Number</warning>> f) {
-    return f.apply(null);
+  Number foo(Supplier<<warning descr="Can generalize to '? extends Number'">Number</warning>> f) {
+    return f.get();
   }
 }

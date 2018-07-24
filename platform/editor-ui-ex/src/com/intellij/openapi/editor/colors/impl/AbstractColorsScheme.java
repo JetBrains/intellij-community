@@ -15,7 +15,10 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeState;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
@@ -645,7 +648,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
+  private void writeAttributes(@NotNull Element attrElements) {
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     list.sort(null);
     for (TextAttributesKey key : list) {

@@ -10,7 +10,7 @@ public class Main {
     DoubleSupplier s = () -> {
         long sum = 0;
         long count = 0;
-        for (String s1 : list) {
+        for (String s1: list) {
             if (s1 != null) {
                 sum += s1.length();
                 count++;

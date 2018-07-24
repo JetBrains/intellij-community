@@ -36,7 +36,7 @@ public class RestLexerTest extends TestCase {
            "[.. , EXPLISIT_MARKUP_START]",
            "[note::, DIRECTIVE]",
            "[\n, WHITESPACE]",
-           "[    , WHITESPACE]",
+           "[    , LINE]",
            "[Please, LINE]"
     );
   }
@@ -58,7 +58,7 @@ public class RestLexerTest extends TestCase {
            "[figure::, DIRECTIVE]",
            "[ image.png, LINE]",
            "[\n, WHITESPACE]",
-           "[   , WHITESPACE]",
+           "[   , LINE]",
            "[:width:, FIELD]",
            "[ , LINE]",
            "[300pt, LINE]"

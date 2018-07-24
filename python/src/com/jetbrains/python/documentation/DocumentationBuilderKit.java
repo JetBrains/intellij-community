@@ -30,12 +30,11 @@ import java.util.function.Function;
 
 class DocumentationBuilderKit {
   static final TagWrapper TagBold = new TagWrapper("b");
-  static final TagWrapper TagItalic = new TagWrapper("i");
   static final TagWrapper TagSmall = new TagWrapper("small");
   static final TagWrapper TagCode = new TagWrapper("code");
   static final TagWrapper TagSpan = new TagWrapper("span");
 
-  final static @NonNls String BR = "<br>";
+  public final static @NonNls String BR = "<br>";
 
   @NotNull
   static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXml;
@@ -49,9 +48,6 @@ class DocumentationBuilderKit {
 
   @NotNull
   static final Function<String, String> WRAP_IN_ITALIC = s -> "<i>" + s + "</i>";
-
-  @NotNull
-  static final Function<String, String> WRAP_IN_CODE = s -> "<code>" + s + "</code>";
 
   @NotNull
   static final Function<String, String> WRAP_IN_BOLD = s -> "<b>" + s + "</b>";

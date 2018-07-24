@@ -26,9 +26,8 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Weak hash map.
+ * Weak hash set.
  * Null keys are NOT allowed
- *
  */
 final class WeakHashSet<T> extends AbstractSet<T> {
   private final Set<MyRef<T>> set = new THashSet<MyRef<T>>();
@@ -37,7 +36,7 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   private static class MyRef<T> extends WeakReference<T> {
     private final int myHashCode;
 
-    public MyRef(@NotNull T referent, ReferenceQueue<? super T> q) {
+    MyRef(@NotNull T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
       myHashCode = referent.hashCode();
     }
@@ -69,11 +68,11 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   @Override
   public Iterator<T> iterator() {
     return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), new Function<MyRef<T>, T>() {
-                                                                    @Override
-                                                                    public T fun(MyRef<T> ref) {
-                                                                      return ref.get();
-                                                                    }
-                                                                  }
+          @Override
+          public T fun(MyRef<T> ref) {
+            return ref.get();
+          }
+       }
     ), new Condition<T>() {
       @Override
       public boolean value(T t) {
@@ -97,12 +96,14 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   @Override
   public boolean remove(@NotNull Object o) {
     processQueue();
+    //noinspection unchecked
     return set.remove(new HardRef<T>((T)o));
   }
 
   @Override
   public boolean contains(@NotNull Object o) {
     processQueue();
+    //noinspection unchecked
     return set.contains(new HardRef<T>((T)o));
   }
 
@@ -113,6 +114,7 @@ final class WeakHashSet<T> extends AbstractSet<T> {
 
   private void processQueue() {
     MyRef<T> ref;
+    //noinspection unchecked
     while ((ref = (MyRef<T>)queue.poll()) != null) {
       set.remove(ref);
     }

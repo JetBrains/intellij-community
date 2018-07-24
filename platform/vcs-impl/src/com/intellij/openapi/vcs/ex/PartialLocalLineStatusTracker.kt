@@ -565,7 +565,7 @@ class PartialLocalLineStatusTracker(project: Project,
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
       : RangeMarkerAction(editor, range, null) {
       init {
-        templatePresentation.text = "New..."
+        templatePresentation.text = "New Changelist..."
       }
 
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange

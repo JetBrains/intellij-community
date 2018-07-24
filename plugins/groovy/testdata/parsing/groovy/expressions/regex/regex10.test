@@ -17,27 +17,29 @@ Groovy script
           PsiElement({)('{')
           Parameter list
             <empty list>
-          PsiErrorElement:'->', ';', <statement>, identifier or new line expected, got 'do'
+          do-while statement
             PsiElement(do)('do')
-          PsiWhiteSpace(' ')
-          Compound Gstring
-            PsiElement(Gstring begin)('"')
-            GrStringContentImpl(STRING_CONTENT)
-              PsiElement(Gstring content)('def ')
-            GString injection
-              PsiElement($)('$')
-              Closable block
-                PsiElement({)('{')
-                Parameter list
-                  <empty list>
-                Additive expression
-                  Reference expression
-                    PsiElement(identifier)('a')
-                  PsiElement(+)('+')
-                  Reference expression
-                    PsiElement(identifier)('b')
-                PsiElement(})('}')
-            PsiElement(Gstring end)('"')
+            PsiWhiteSpace(' ')
+            Compound Gstring
+              PsiElement(Gstring begin)('"')
+              GrStringContentImpl(STRING_CONTENT)
+                PsiElement(Gstring content)('def ')
+              GString injection
+                PsiElement($)('$')
+                Closable block
+                  PsiElement({)('{')
+                  Parameter list
+                    <empty list>
+                  Additive expression
+                    Reference expression
+                      PsiElement(identifier)('a')
+                    PsiElement(+)('+')
+                    Reference expression
+                      PsiElement(identifier)('b')
+                  PsiElement(})('}')
+              PsiElement(Gstring end)('"')
+            PsiErrorElement:while expected, got '}'
+              <empty list>
           PsiElement(})('}')
       GrStringContentImpl(STRING_CONTENT)
         PsiElement(regex content)(' fgh')

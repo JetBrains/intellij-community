@@ -23,30 +23,26 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GrAnnotatorImpl implements Annotator {
 
   private static final ThreadLocal<GroovyStaticTypeCheckVisitor> myTypeCheckVisitorThreadLocal =
-    new ThreadLocal<GroovyStaticTypeCheckVisitor>() {
-      @Override
-      protected GroovyStaticTypeCheckVisitor initialValue() {
-        return new GroovyStaticTypeCheckVisitor();
-      }
-    };
+    ThreadLocal.withInitial(() -> new GroovyStaticTypeCheckVisitor());
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (FileIndexFacade.getInstance(element.getProject()).isInLibrarySource(element.getContainingFile().getVirtualFile())) return;
     final GroovyConfigUtils groovyConfig = GroovyConfigUtils.getInstance();
     if (element instanceof GroovyPsiElement) {
-      final GroovyAnnotator annotator = new GroovyAnnotator(holder);
-      boolean atLeast30 = groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY3_0);
-      final GroovyAnnotator30 annotator30 = new GroovyAnnotator30(holder, atLeast30);
-      ((GroovyPsiElement)element).accept(annotator);
-      ((GroovyPsiElement)element).accept(annotator30);
-      if (!atLeast30) {
-        ((GroovyPsiElement)element).accept(new GroovyAnnotatorPre30(holder));
+      GroovyPsiElement grElement = (GroovyPsiElement)element;
+      grElement.accept(new GroovyAnnotator(holder));
+
+      if (groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY3_0)) {
+        grElement.accept(new GroovyAnnotator30(holder));
+      } else {
+        grElement.accept(new GroovyAnnotatorPre30(holder));
       }
-      if (PsiUtil.isCompileStatic(element)) {
+
+      if (PsiUtil.isCompileStatic(grElement)) {
         final GroovyStaticTypeCheckVisitor typeCheckVisitor = myTypeCheckVisitorThreadLocal.get();
         assert typeCheckVisitor != null;
-        typeCheckVisitor.accept((GroovyPsiElement)element, holder);
+        typeCheckVisitor.accept(grElement, holder);
       }
     }
     else if (element instanceof PsiComment) {

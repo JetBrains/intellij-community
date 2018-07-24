@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.wm;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -81,6 +82,11 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
 
   public Class<? extends ToolWindowFactory> getFactoryClass() {
     if (myFactoryClass == null) {
+      if (factoryClass == null) {
+        LOG.error(new PluginException("No toolwindow factory specified for " + id, getPluginId()));
+        return null;
+      }
+
       try {
         myFactoryClass = findClass(factoryClass);
       }

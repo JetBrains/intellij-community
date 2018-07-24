@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -138,8 +137,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
     PsiElement parent = leaf.getParent();
     if (leaf instanceof PsiKeyword) {
-      if (parent instanceof PsiClassObjectAccessExpression &&
-          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)parent).getOperand().getType()) == null) {
+      if (parent instanceof PsiExpression && hasUnresolvedRefsBefore(leaf, parent)) {
         return false;
       }
       if (parent instanceof PsiModifierList) {
@@ -154,12 +152,6 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
     }
-    if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null) {
-      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
-      if (reference == null || reference.resolve() == null) {
-        return false; // this.new Foo isn't completed when there's no "Foo"
-      }
-    }
     if (leaf.textMatches(PsiKeyword.IMPLEMENTS)) {
       PsiClass cls = PsiTreeUtil.getParentOfType(leaf, PsiClass.class);
       if (cls == null || cls.isInterface()) {
@@ -169,4 +161,10 @@ class JavaCompletionPolicy extends CompletionPolicy {
     return true;
   }
 
+  private static boolean hasUnresolvedRefsBefore(PsiElement leaf, PsiElement parent) {
+    return SyntaxTraverser.psiTraverser(parent)
+                          .filter(PsiJavaCodeReferenceElement.class)
+                          .filter(r -> r.getTextRange().getEndOffset() < leaf.getTextRange().getEndOffset() && r.resolve() == null)
+                          .isNotEmpty();
+  }
 }

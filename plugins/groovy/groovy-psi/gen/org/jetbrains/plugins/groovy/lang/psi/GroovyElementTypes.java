@@ -81,6 +81,7 @@ public interface GroovyElementTypes {
   GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("CONTINUE_STATEMENT");
   GroovyElementType DISJUNCTION_TYPE_ELEMENT = new GroovyElementType("DISJUNCTION_TYPE_ELEMENT");
   GroovyElementType DOLLAR_SLASHY_LITERAL = new GroovyElementType("DOLLAR_SLASHY_LITERAL");
+  GroovyElementType DO_WHILE_STATEMENT = new GroovyElementType("DO_WHILE_STATEMENT");
   GroovyElementType ELVIS_EXPRESSION = new GroovyElementType("ELVIS_EXPRESSION");
   GrEnumDefinitionBodyElementType ENUM_BODY = new GrEnumDefinitionBodyElementType("ENUM_BODY");
   GrEnumConstantElementType ENUM_CONSTANT = new GrEnumConstantElementType("ENUM_CONSTANT");
@@ -270,6 +271,7 @@ public interface GroovyElementTypes {
   IElementType T_LSH_ASSIGN = new GroovyElementType("<<=");
   IElementType T_LT = new GroovyElementType("<");
   IElementType T_METHOD_CLOSURE = new GroovyElementType(".&");
+  IElementType T_METHOD_REFERENCE = new GroovyElementType("::");
   IElementType T_MINUS = new GroovyElementType("-");
   IElementType T_MINUS_ASSIGN = new GroovyElementType("-=");
   IElementType T_NEQ = new GroovyElementType("!=");

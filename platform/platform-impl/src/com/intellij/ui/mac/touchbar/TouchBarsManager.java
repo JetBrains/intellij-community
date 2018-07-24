@@ -30,8 +30,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBOptionButton;
-import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,8 +99,6 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
-    final ID app = Foundation.invoke("NSApplication", "sharedApplication");
-
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
@@ -116,7 +112,7 @@ public class TouchBarsManager {
           public void stateChanged() {
             final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
             final String activeId = twm.getActiveToolWindowId();
-            if (activeId != null && activeId.equals(ToolWindowId.DEBUG)) {
+            if (activeId != null && (activeId.equals(ToolWindowId.DEBUG) || activeId.equals(ToolWindowId.RUN_DASHBOARD))) {
               // System.out.println("stateChanged, dbgSessionsCount=" + pd.getDbgSessions());
               if (pd.getDbgSessions() <= 0)
                 return;
@@ -141,7 +137,7 @@ public class TouchBarsManager {
               curr = top.get();
               final boolean isDebugger = top.getType() == BarType.DEBUGGER;
               if (isDebugger) {
-                if (executorId.equals(ToolWindowId.DEBUG)) {
+                if (executorId.equals(ToolWindowId.DEBUG) || executorId.equals(ToolWindowId.RUN_DASHBOARD)) {
                   // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
                   final boolean hasDebugSession = _hasAnyActiveSession(project, handler);
                   if (!hasDebugSession || pd.getDbgSessions() <= 0)
@@ -198,25 +194,29 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
-    // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focuse
+    // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focused
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
+      if (!(e.getSource() instanceof Component))
+        return;
+
       ourProjectData.forEach((project, data) -> {
         final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
         if (twm == null)
           return;
 
         final ToolWindow dtw = twm.getToolWindow(ToolWindowId.DEBUG);
-        if (dtw == null)
+        final ToolWindow rtw = twm.getToolWindow(ToolWindowId.RUN_DASHBOARD);
+
+        final Component compD = dtw != null ? dtw.getComponent() : null;
+        final Component compR = rtw != null ? rtw.getComponent() : null;
+        if (compD == null && compR == null)
           return;
 
-        final Component comp = dtw.getComponent();
-        if (comp == null)
-          return;
-
-        if (!(e.getSource() instanceof Component))
-          return;
-
-        if (e.getSource() == comp || SwingUtilities.isDescendingFrom((Component)e.getSource(), comp))
+        if (
+          e.getSource() == compD || e.getSource() == compR
+          || (compD != null && SwingUtilities.isDescendingFrom((Component)e.getSource(), compD))
+          || (compR != null && SwingUtilities.isDescendingFrom((Component)e.getSource(), compR))
+        )
           showTouchBar(data.get(BarType.DEBUGGER));
       });
     }

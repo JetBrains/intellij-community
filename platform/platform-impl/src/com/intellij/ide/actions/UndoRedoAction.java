@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -22,6 +23,10 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(UndoRedoAction.class);
+
+  private boolean myActionInProgress;
+
   public UndoRedoAction() {
     setEnabledInModalContext(true);
   }
@@ -30,7 +35,14 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    perform(editor, undoManager);
+
+    myActionInProgress = true;
+    try {
+      perform(editor, undoManager);
+    }
+    finally {
+      myActionInProgress = false;
+    }
   }
 
   public void update(AnActionEvent event) {
@@ -50,20 +62,27 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     presentation.setDescription(pair.second);
   }
 
-  private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+  private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     Editor e = dataContext.getData(CommonDataKeys.EDITOR);
     if (component instanceof JTextComponent && (e == null || component != e.getContentComponent())) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
     }
+    JRootPane rootPane = null;
+    JBPopup popup = null;
     if (editor == null) {
-      JRootPane rootPane = UIUtil.getRootPane(component);
-      JBPopup popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
+      rootPane = UIUtil.getRootPane(component);
+      popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
       boolean modalPopup = popup != null && popup.isModalContext();
       boolean modalContext = Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext));
       if (modalPopup || modalContext) {
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
+    }
+    if (myActionInProgress) {
+      LOG.error("Recursive undo invocation attempt, component: " + component + ", fileEditor: " + editor + ", editor: " + e +
+                ", rootPane: " + rootPane + ", popup: " + popup);
+      return null;
     }
 
     Project project = getProject(editor, dataContext);

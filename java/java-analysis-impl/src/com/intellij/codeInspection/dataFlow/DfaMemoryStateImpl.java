@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -271,8 +272,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
     if (value instanceof DfaVariableValue && (value == flushed || flushed.getDependentVariables().contains(value))) {
-      Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL :
-                             isUnknownState(value) ? Nullness.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
+      Nullability nullability = isNotNull(value) ? Nullability.NOT_NULL :
+                                isUnknownState(value) ? Nullability.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
       return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
     }
     return value;
@@ -375,7 +376,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean isSuperStateOf(DfaMemoryStateImpl that) {
     if (myEphemeral && !that.myEphemeral) return false;
     if (myStack.size() != that.myStack.size()) return false;
-    if (StreamEx.zip(myStack, that.myStack, DfaMemoryStateImpl::isSuperValue).has(false)) return false;
+    for (int i = 0; i < myStack.size(); i++) {
+      if (!isSuperValue(myStack.get(i), that.myStack.get(i))) return false;
+    }
     if (!equalsByUnknownVariables(that) ||
         !that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) {
       return false;
@@ -384,10 +387,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     Set<EqClass> thatClasses = that.getNonTrivialEqClasses();
     if(!thisClasses.equals(thatClasses)) {
       // If any two values are equivalent in this, they also must be equivalent in that
-      if(thisClasses.stream().anyMatch(
-        thisClass -> thatClasses.stream().noneMatch(
-          thatClass -> thisClass.forEach(thatClass::contains)))) {
-        return false;
+      for (EqClass thisClass: thisClasses) {
+        if (thatClasses.stream().noneMatch(thatClass -> thisClass.forEach(thatClass::contains))) {
+          return false;
+        }
       }
     }
     Set<DfaVariableValue> values = new HashSet<>(this.myVariableStates.keySet());
@@ -748,7 +751,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           relation.getRightOperand() == myFactory.getConstFactory().getNull() &&
           (relation.getLeftOperand() instanceof DfaUnknownValue ||
            (relation.getLeftOperand() instanceof DfaVariableValue &&
-            getVariableState((DfaVariableValue)relation.getLeftOperand()).getNullability() == Nullness.UNKNOWN))) {
+            getVariableState((DfaVariableValue)relation.getLeftOperand()).getNullability() == Nullability.UNKNOWN))) {
         markEphemeral();
       }
     }
@@ -1096,7 +1099,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue varValue = (DfaVariableValue)value;
       if (varValue.getVariableType() instanceof PsiPrimitiveType) return true;
       if (isNotNull(varValue)) return true;
-      return getVariableState(varValue).getNullability() != Nullness.NULLABLE;
+      return getVariableState(varValue).getNullability() != Nullability.NULLABLE;
     }
     return true;
   }

@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.Mutability
-import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -81,34 +81,33 @@ data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>
 
 
 interface MethodReturnInferenceResult {
-  fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness
+  fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability
   fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability = Mutability.UNKNOWN
 
   @Suppress("EqualsOrHashCode")
-  data class Predefined(internal val value: Nullness) : MethodReturnInferenceResult {
+  data class Predefined(internal val value: Nullability) : MethodReturnInferenceResult {
     override fun hashCode(): Int = value.ordinal
-    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness = when {
-      value == Nullness.NULLABLE && InferenceFromSourceUtil.suppressNullable(
-        method) -> Nullness.UNKNOWN
+    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability = when {
+      value == Nullability.NULLABLE && InferenceFromSourceUtil.suppressNullable(
+        method) -> Nullability.UNKNOWN
       else -> value
     }
   }
 
-  data class FromDelegate(internal val value: Nullness, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
-    override fun getNullness(method: PsiMethod, body: () -> PsiCodeBlock): Nullness {
-      if (value == Nullness.NULLABLE) {
-        return if (InferenceFromSourceUtil.suppressNullable(
-            method)) Nullness.UNKNOWN
-        else Nullness.NULLABLE
+  data class FromDelegate(internal val value: Nullability, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
+    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability {
+      if (value == Nullability.NULLABLE) {
+        return if (InferenceFromSourceUtil.suppressNullable(method)) Nullability.UNKNOWN
+        else Nullability.NULLABLE
       }
       return when {
-        delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullness.NOT_NULL
-        else -> Nullness.UNKNOWN
+        delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullability.NOT_NULL
+        else -> Nullability.UNKNOWN
       }
     }
 
     override fun getMutability(method: PsiMethod, body: () -> PsiCodeBlock): Mutability {
-      if (value == Nullness.NOT_NULL) {
+      if (value == Nullability.NOT_NULL) {
         return Mutability.UNKNOWN
       }
       return delegateCalls.stream().map { range -> getDelegateMutability(range, body()) }.reduce(

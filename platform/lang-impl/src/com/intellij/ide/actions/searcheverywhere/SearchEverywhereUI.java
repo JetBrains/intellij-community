@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
@@ -58,6 +59,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author Konstantin Bulenkov
@@ -115,7 +117,20 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     JPanel suggestionsPanel = createSuggestionsPanel();
 
     myResultsList.setModel(myListModel);
+    myResultsList.setFocusable(false);
     myResultsList.setCellRenderer(new CompositeCellRenderer());
+    myResultsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    myResultsList.addListSelectionListener(e -> {
+      int[] selectedIndices = myResultsList.getSelectedIndices();
+      if (selectedIndices.length > 1) {
+        boolean multiselectAllowed = Arrays.stream(selectedIndices)
+                                           .allMatch(i -> myListModel.getContributorForIndex(i).isMultiselectSupported());
+        if (!multiselectAllowed) {
+          int index = myResultsList.getLeadSelectionIndex();
+          myResultsList.setSelectedIndex(index);
+        }
+      }
+    });
 
     ScrollingUtil.installActions(myResultsList, getSearchField());
 
@@ -150,7 +165,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
                                     KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
                                     KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
-    JLabel hintLabel = new JLabel(hint);
+    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.empty(), SwingConstants.LEFT);
     hintLabel.setOpaque(false);
     hintLabel.setForeground(JBColor.GRAY);
     pnl.add(hintLabel, BorderLayout.SOUTH);
@@ -229,17 +244,31 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   @Nullable
   @Override
   public Object getData(String dataId) {
-    //common data section---------------------
-    //todo
+    IntStream indicesStream = Arrays.stream(myResultsList.getSelectedIndices())
+                                    .filter(i -> !myListModel.isMoreElement(i));
 
-    //item-specific data section--------------
-    int index = myResultsList.getSelectedIndex();
-    if (index < 0 || myListModel.isMoreElement(index)) {
-      return null;
+    //common data section---------------------
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      List<PsiElement> elements = indicesStream.mapToObj(i -> {
+                                                  SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
+                                                  Object item = myListModel.getElementAt(i);
+                                                  Object psi = contributor.getDataForItem(item, CommonDataKeys.PSI_ELEMENT.getName());
+                                                  return (PsiElement)psi;
+                                                })
+                                                .filter(Objects::nonNull)
+                                                .collect(Collectors.toList());
+      return PsiUtilCore.toPsiElementArray(elements);
     }
 
-    SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-    return contributor.getDataForItem(myListModel.getElementAt(index), dataId);
+    //item-specific data section--------------
+    return indicesStream.mapToObj(i -> {
+                          SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
+                          Object item = myListModel.getElementAt(i);
+                          return contributor.getDataForItem(item, dataId);
+                        })
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(null);
   }
 
   @Override
@@ -275,7 +304,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private boolean isAllTabSelected() {
-    return SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
+    return SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID.equals(getSelectedContributorID());
   }
 
   private JTextField createSearchField() {
@@ -382,7 +411,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     public String getID() {
       return getContributor()
         .map(SearchEverywhereContributor::getSearchProviderId)
-        .orElse(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID);
+        .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
     }
 
     public Optional<SearchEverywhereContributor> getContributor() {
@@ -419,8 +448,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     String pattern = getSearchPattern();
+    String matcherString = mySelectedTab.getContributor()
+                                        .map(contributor -> contributor.filterControlSymbols(pattern))
+                                        .orElse(pattern);
 
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + matcherString, NameUtil.MatchingCaseSensitivity.NONE);
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
     //assert project != null;
@@ -458,8 +490,22 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           }
         }
 
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          elementSelected(myResultsList.getSelectedIndex(), e.getModifiers());
+        if (e.isShiftDown()) {
+          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            //ScrollingUtil.moveDown(myResultsList, e.getModifiersEx());
+            myResultsList.dispatchEvent(e);
+            e.consume();
+          }
+          if (e.getKeyCode() == KeyEvent.VK_UP) {
+            //ScrollingUtil.moveUp(myResultsList, e.getModifiersEx());
+            myResultsList.dispatchEvent(e);
+            e.consume();
+          }
+        }
+
+        int[] indices = myResultsList.getSelectedIndices();
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && indices.length != 0) {
+          elementsSelected(indices, e.getModifiers());
         }
       }
     });
@@ -484,12 +530,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1) {
+        boolean multiSelectMode = e.isShiftDown() || e.isControlDown();
+        if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
           e.consume();
           final int i = myResultsList.locationToIndex(e.getPoint());
-          if (i != -1) {
+          if (i > -1) {
             myResultsList.setSelectedIndex(i);
-            elementSelected(i, e.getModifiers());
+            elementsSelected(new int[]{i}, e.getModifiers());
           }
         }
       }
@@ -510,12 +557,29 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     });
   }
 
-  private void elementSelected(int i, int modifiers) {
-    SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
-    if (myListModel.isMoreElement(i)) {
+  private void elementsSelected(int[] indexes, int modifiers) {
+    if (indexes.length == 1 && myListModel.isMoreElement(indexes[0])) {
+      SearchEverywhereContributor contributor = myListModel.getContributorForIndex(indexes[0]);
       showMoreElements(contributor);
+      return;
+    }
+
+    indexes = Arrays.stream(indexes)
+                    .filter(i -> !myListModel.isMoreElement(i))
+                    .toArray();
+
+    boolean closePopup = false;
+    for (int i: indexes) {
+      SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
+      Object value = myListModel.getElementAt(i);
+      closePopup |= contributor.processSelectedItem(value, modifiers, getSearchPattern());
+    }
+
+    if (closePopup) {
+      stopSearching();
+      searchFinishedHandler.run();
     } else {
-      gotoSelectedItem(myListModel.getElementAt(i), contributor, modifiers);
+      myResultsList.repaint();
     }
   }
 
@@ -535,8 +599,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
   }
 
-  private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers) {
-    boolean closePopup = contributor.processSelectedItem(value, modifiers);
+  private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers, String searchText) {
+    boolean closePopup = contributor.processSelectedItem(value, modifiers, searchText);
     if (closePopup) {
       stopSearching();
       searchFinishedHandler.run();
@@ -621,7 +685,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       } else {
         boolean clearBefore = true;
         for (SearchEverywhereContributor contributor : getUsedContributors()) {
-          anyFound |= addContributorItems(contributor, MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT, clearBefore);
+          int count = myServiceContributors.contains(contributor) ? -1 : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT; //show ALL items for service contributors
+          anyFound |= addContributorItems(contributor, count, clearBefore);
           clearBefore = false;
         }
       }
@@ -638,36 +703,34 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     private boolean addContributorItems(SearchEverywhereContributor contributor, int count, boolean clearBefore) {
-      boolean[] found = {false};
-      ApplicationManager.getApplication().runReadAction(() -> {
-        ContributorSearchResult<Object> results = contributor.search(pattern, isUseNonProjectItems(), myContributorFilters.get(contributor.getSearchProviderId()), myProgressIndicator, count);
-        found[0] = !results.isEmpty();
+      ContributorSearchResult<Object> results =
+        contributor.search(pattern, isUseNonProjectItems(), myContributorFilters.get(contributor.getSearchProviderId()), myProgressIndicator, count);
+      boolean found = !results.isEmpty();
 
-        if (clearBefore) {
-          listOperationsAlarm.cancelAllRequests();
+      if (clearBefore) {
+        listOperationsAlarm.cancelAllRequests();
+      }
+
+      listOperationsAlarm.addRequest(() -> {
+        if (isCanceled()) {
+          return;
         }
 
-        listOperationsAlarm.addRequest(() -> {
-          if (isCanceled()) {
-            return;
-          }
+        Dimension oldSize = getPreferredSize();
+        if (clearBefore) {
+          myListModel.clear();
+        }
+        List<Object> itemsToAdd = results.getItems().stream()
+                                         .filter(o -> !myListModel.contains(o))
+                                         .collect(Collectors.toList());
+        if (!itemsToAdd.isEmpty()) {
+          myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
+          ScrollingUtil.ensureSelectionExists(myResultsList);
+        }
+        firePropertyChange("preferredSize", oldSize, getPreferredSize());
+      }, 0);
 
-          Dimension oldSize = getPreferredSize();
-          if (clearBefore) {
-            myListModel.clear();
-          }
-          List<Object> itemsToAdd = results.getItems().stream()
-                                           .filter(o -> !myListModel.contains(o))
-                                           .collect(Collectors.toList());
-          if (!itemsToAdd.isEmpty()) {
-            myListModel.addElements(itemsToAdd, contributor, results.hasMoreItems());
-            ScrollingUtil.ensureSelectionExists(myResultsList);
-          }
-          firePropertyChange("preferredSize", oldSize, getPreferredSize());
-        }, 0);
-      });
-
-      return found[0];
+      return found;
     }
 
     protected void check() {
@@ -695,7 +758,8 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   @NotNull
   private List<SearchEverywhereContributor> getUsedContributors() {
     SearchEverywhereContributorFilter<String> contributorsFilter =
-      (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereContributor.ALL_CONTRIBUTORS_GROUP_ID);
+      (SearchEverywhereContributorFilter<String>) myContributorFilters.get(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
+
     List<SearchEverywhereContributor> contributors = new ArrayList<>(myServiceContributors);
     myShownContributors.stream()
                        .filter(contributor -> contributorsFilter.isSelected(contributor.getSearchProviderId()))
@@ -708,18 +772,30 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (myListModel.isMoreElement(index)) {
-        return moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component cmp = moreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return wrap(cmp, 1, 7);
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-      Component component = contributor.getElementsRenderer()
+      Component component = contributor.getElementsRenderer(myResultsList)
                                        .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
-        return groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
+        component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
       }
 
-      return component;
+      return wrap(component, 1, 0);
+    }
+
+    private Component wrap(Component cmp, int verticalGap, int hotizontalGap) {
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.setOpaque(cmp.isOpaque());
+      if (cmp.isOpaque()) {
+        panel.setBackground(cmp.getBackground());
+      }
+      panel.add(cmp, BorderLayout.CENTER);
+      panel.setBorder(JBUI.Borders.empty(verticalGap, hotizontalGap));
+      return panel;
     }
   }
 
@@ -752,13 +828,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       setLayout(myLayout);
       setBackground(UIUtil.getListBackground(false));
       titleLabel = groupInfoLabel("Group");
-      SeparatorComponent separatorComponent = new SeparatorComponent(titleLabel.getPreferredSize().height / 2, UIUtil.getLabelDisabledForeground(), null);
-
+      SeparatorComponent separatorComponent =
+        new SeparatorComponent(titleLabel.getPreferredSize().height / 2, JBUI.CurrentTheme.SearchEverywhere.listSeparatorColor(),null);
 
       JPanel topPanel = JBUI.Panels.simplePanel(5, 0)
                                            .addToCenter(separatorComponent)
                                            .addToLeft(titleLabel)
-                                           .withBorder(JBUI.Borders.empty())
+                                           .withBorder(JBUI.Borders.empty(0, 7))
                                            .withBackground(UIUtil.getListBackground());
       add(topPanel, BorderLayout.NORTH);
     }
@@ -944,11 +1020,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           public void run(@NotNull ProgressIndicator indicator) {
             contributorsForAdditionalSearch.forEach(contributor -> {
               if (!progressIndicator.isCanceled()) {
-                ApplicationManager.getApplication().runReadAction(() -> {
-                  //todo overflow #UX-1
-                  List<Object> foundElements = contributor.search(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator);
-                  fillUsages(foundElements, usages, targets);
-                });
+                //todo overflow #UX-1
+                List<Object> foundElements =
+                  contributor.search(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator);
+                fillUsages(foundElements, usages, targets);
               }
             });
           }
@@ -1053,7 +1128,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                                     .setResizable(true)
                                     .setCancelOnClickOutside(false)
                                     .setMinSize(new Dimension(200, 200))
-                                    .setDimensionServiceKey(myProject, "GotoFile_FileTypePopup", false)
+                                    .setDimensionServiceKey(myProject, "Search_Everywhere_Filter_Popup", false)
                                     .addListener(popupCloseListener)
                                     .createPopup();
       Disposer.register(SearchEverywhereUI.this, myFilterPopup);

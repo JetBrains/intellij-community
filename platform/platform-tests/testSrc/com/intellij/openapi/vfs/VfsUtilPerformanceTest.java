@@ -156,7 +156,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           assertEquals(findRoot(vDir), findRoot(leafDir));
         }
       };
-      int time = 1200;
+      int time = 1500;
       PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
       VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
       VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");

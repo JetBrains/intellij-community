@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -28,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.OnePixelSplitter;
@@ -43,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -215,19 +202,6 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    if (!Registry.is("show.new.plugin.page")) {
-      mySearchPanel.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent event) {
-          Dimension size = myBanner.getPreferredSize();
-          size.height = mySearchPanel.getHeight() - 5;
-          myBanner.setPreferredSize(size);
-          myBanner.setSize(size);
-          myBanner.revalidate();
-          myBanner.repaint();
-        }
-      });
-    }
     JComponent left = new JPanel(new BorderLayout());
     left.add(BorderLayout.NORTH, mySearchPanel);
     left.add(BorderLayout.CENTER, myTreeView);

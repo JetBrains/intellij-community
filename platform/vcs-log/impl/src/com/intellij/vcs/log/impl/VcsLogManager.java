@@ -238,7 +238,7 @@ public class VcsLogManager implements Disposable {
         new VisiblePackRefresherImpl(project, logData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE),
                                      new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
                                                             logData.getTopCommitsCache(),
-                                                            logData.getCommitDetailsGetter(), logData.getIndex()));
+                                                            logData.getCommitDetailsGetter(), logData.getIndex()), myLogId);
       return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher);
     }
   }

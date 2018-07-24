@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionManager;
@@ -34,58 +34,58 @@ public class JavaSourceInference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.inference.JavaSourceInference");
 
   /**
-   * Infer method return type nullity
+   * Infer method return type nullability
    *
    * @param method method to analyze
-   * @return inferred return type nullity; {@link Nullness#UNKNOWN} if cannot be inferred or non-applicable
+   * @return inferred return type nullability; {@link Nullability#UNKNOWN} if cannot be inferred or non-applicable
    */
   @NotNull
-  public static Nullness inferNullity(PsiMethodImpl method) {
+  public static Nullability inferNullability(PsiMethodImpl method) {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
-      return Nullness.UNKNOWN;
+      return Nullability.UNKNOWN;
     }
 
     PsiType type = method.getReturnType();
     if (type == null || type instanceof PsiPrimitiveType) {
-      return Nullness.UNKNOWN;
+      return Nullability.UNKNOWN;
     }
 
     return CachedValuesManager.getCachedValue(method, () -> {
       MethodData data = ContractInferenceIndexKt.getIndexedData(method);
       MethodReturnInferenceResult result = data == null ? null : data.getMethodReturn();
-      Nullness nullness = result == null ? null : RecursionManager
-        .doPreventingRecursion(method, true, () -> result.getNullness(method, data.methodBody(method)));
-      if (nullness == null) nullness = Nullness.UNKNOWN;
-      return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      Nullability nullability = result == null ? null : RecursionManager
+        .doPreventingRecursion(method, true, () -> result.getNullability(method, data.methodBody(method)));
+      if (nullability == null) nullability = Nullability.UNKNOWN;
+      return CachedValueProvider.Result.create(nullability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
   /**
-   * Infer method parameter nullity
+   * Infer method parameter nullability
    *
    * @param parameter parameter to analyze
-   * @return inferred parameter nullity; {@link Nullness#UNKNOWN} if cannot be inferred or non-applicable
+   * @return inferred parameter nullability; {@link Nullability#UNKNOWN} if cannot be inferred or non-applicable
    */
-  public static Nullness inferNullity(@NotNull PsiParameter parameter) {
-    if (!parameter.isPhysical() || parameter.getType() instanceof PsiPrimitiveType) return Nullness.UNKNOWN;
+  public static Nullability inferNullability(@NotNull PsiParameter parameter) {
+    if (!parameter.isPhysical() || parameter.getType() instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
     PsiParameterList parent = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
-    if (parent == null) return Nullness.UNKNOWN;
+    if (parent == null) return Nullability.UNKNOWN;
     PsiMethodImpl method = ObjectUtils.tryCast(parent.getParent(), PsiMethodImpl.class);
-    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method)) return Nullness.UNKNOWN;
+    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method)) return Nullability.UNKNOWN;
 
     return CachedValuesManager.getCachedValue(parameter, () -> {
-      Nullness nullness = Nullness.UNKNOWN;
+      Nullability nullability = Nullability.UNKNOWN;
       MethodData data = ContractInferenceIndexKt.getIndexedData(method);
       if (data != null) {
         BitSet notNullParameters = data.getNotNullParameters();
         if (!notNullParameters.isEmpty()) {
           int index = ArrayUtil.indexOf(parent.getParameters(), parameter);
           if (notNullParameters.get(index)) {
-            nullness = Nullness.NOT_NULL;
+            nullability = Nullability.NOT_NULL;
           }
         }
       }
-      return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(nullability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 

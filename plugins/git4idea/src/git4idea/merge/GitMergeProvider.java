@@ -13,10 +13,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.*;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -528,7 +530,7 @@ public class GitMergeProvider implements MergeProvider2 {
   /**
    * The merge session, it queries conflict information.
    */
-  private class MyMergeSession implements MergeSession {
+  private class MyMergeSession implements MergeSessionEx {
     Map<VirtualFile, Conflict> myConflicts = new HashMap<>();
     String currentBranchName;
     String mergeHeadBranchName;
@@ -613,74 +615,96 @@ public class GitMergeProvider implements MergeProvider2 {
 
     @Override
     public void conflictResolvedForFile(@NotNull VirtualFile file, @NotNull Resolution resolution) {
-      Conflict c = myConflicts.get(file);
-      if (c == null) {
-        LOG.error("Conflict was not loaded for the file: " + file.getPath());
-        return;
-      }
-      try {
-        Conflict.Status status;
-        switch (resolution) {
-          case AcceptedTheirs:
-            status = c.myStatusTheirs;
-            break;
-          case AcceptedYours:
-            status = c.myStatusYours;
-            break;
-          case Merged:
-            status = Conflict.Status.MODIFIED;
-            break;
-          default:
-            throw new IllegalArgumentException("Unsupported resolution for unmergable files(" + file.getPath() + "): " + resolution);
+      conflictResolvedForFiles(Collections.singletonList(file), resolution);
+    }
+
+    @Override
+    public void conflictResolvedForFiles(@NotNull List<VirtualFile> files, @NotNull Resolution resolution) {
+      MultiMap<VirtualFile, Conflict> byRoot = groupConflictsByRoot(files);
+
+      for (VirtualFile root : byRoot.keySet()) {
+        Collection<Conflict> conflicts = byRoot.get(root);
+
+        List<VirtualFile> toAdd = new ArrayList<>();
+        List<VirtualFile> toDelete = new ArrayList<>();
+
+        for (Conflict c: conflicts) {
+          Conflict.Status status;
+          switch (resolution) {
+            case AcceptedTheirs:
+              status = c.myStatusTheirs;
+              break;
+            case AcceptedYours:
+              status = c.myStatusYours;
+              break;
+            case Merged:
+              status = Conflict.Status.MODIFIED;
+              break;
+            default:
+              throw new IllegalArgumentException("Unsupported resolution: " + resolution);
+          }
+
+          if (status == Conflict.Status.MODIFIED) {
+            toAdd.add(c.myFile);
+          }
+          else {
+            toDelete.add(c.myFile);
+          }
         }
-        switch (status) {
-          case MODIFIED:
-            GitFileUtils.addFiles(myProject, c.myRoot, file);
-            break;
-          case DELETED:
-            GitFileUtils.deleteFiles(myProject, c.myRoot, file);
-            break;
-          default:
-            throw new IllegalArgumentException("Unsupported status(" + file.getPath() + "): " + status);
+
+        try {
+          GitFileUtils.addFiles(myProject, root, toAdd);
+          GitFileUtils.deleteFiles(myProject, root, toDelete);
         }
-      }
-      catch (VcsException e) {
-        LOG.error("Unexpected exception during the git operation (" + file.getPath() + ")", e);
+        catch (VcsException e) {
+          LOG.error(String.format("Unexpected exception during the git operation: modified - %s deleted - %s)", toAdd, toDelete), e);
+        }
       }
     }
 
     @Override
-    public boolean acceptFileRevision(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) throws VcsException {
-      if (resolution != Resolution.AcceptedYours && resolution != Resolution.AcceptedTheirs) return false;
+    public void acceptFilesRevisions(@NotNull List<VirtualFile> files, @NotNull Resolution resolution) throws VcsException {
+      assert resolution == Resolution.AcceptedYours || resolution == Resolution.AcceptedTheirs;
+
+      MultiMap<VirtualFile, Conflict> byRoot = groupConflictsByRoot(files);
       boolean isCurrent = resolution == Resolution.AcceptedYours;
 
-      Conflict c = myConflicts.get(file);
-      if (c == null) {
-        LOG.error("Conflict was not loaded for the file: " + file.getPath());
-        return false;
-      }
+      for (VirtualFile root : byRoot.keySet()) {
+        Collection<Conflict> conflicts = byRoot.get(root);
 
-      Conflict.Status status = isCurrent ? c.myStatusYours : c.myStatusTheirs;
-      switch (status) {
-        case MODIFIED:
-          String parameter = myReverseRoots.contains(c.myRoot)
-                             ? isCurrent ? "--theirs" : "--ours"
-                             : isCurrent ? "--ours" : "--theirs";
+        List<VirtualFile> filesToCheckout = ContainerUtil.mapNotNull(conflicts, c -> {
+          Conflict.Status status = isCurrent ? c.myStatusYours : c.myStatusTheirs;
+          return status == Conflict.Status.MODIFIED ? c.myFile : null;
+        });
 
-          GitLineHandler handler = new GitLineHandler(myProject, c.myRoot, GitCommand.CHECKOUT);
+        String parameter = myReverseRoots.contains(root)
+                           ? isCurrent ? "--theirs" : "--ours"
+                           : isCurrent ? "--ours" : "--theirs";
+
+        for (List<String> paths : VcsFileUtil.chunkFiles(root, filesToCheckout)) {
+          GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
           handler.addParameters(parameter);
           handler.endOptions();
-          handler.addRelativeFiles(Collections.singletonList(c.myFile));
+          handler.addParameters(paths);
           GitCommandResult result = Git.getInstance().runCommand(handler);
           if (!result.success()) throw new VcsException(result.getErrorOutputAsJoinedString());
-          break;
-        case DELETED:
-          break;
-        default:
-          throw new IllegalArgumentException("Unsupported status(" + file.getPath() + "): " + status);
+        }
       }
+    }
 
-      return true;
+    @NotNull
+    private MultiMap<VirtualFile, Conflict> groupConflictsByRoot(@NotNull List<VirtualFile> files) {
+      MultiMap<VirtualFile, Conflict> byRoot = MultiMap.create();
+      for (VirtualFile file: files) {
+        Conflict c = myConflicts.get(file);
+        if (c == null) {
+          LOG.error("Conflict was not loaded for the file: " + file.getPath());
+          continue;
+        }
+
+        byRoot.putValue(c.myRoot, c);
+      }
+      return byRoot;
     }
 
     /**

@@ -3,8 +3,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection
 
 /**
@@ -12,11 +11,7 @@ import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethod
  */
 class ClashingTraitMethodsTest extends GrHighlightingTestBase {
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    GroovyLightProjectDescriptor.GROOVY_3_0
-  }
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
 
   @Override
   InspectionProfileEntry[] getCustomInspections() {

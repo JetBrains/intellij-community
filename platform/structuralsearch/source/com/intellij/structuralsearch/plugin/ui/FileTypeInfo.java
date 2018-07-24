@@ -21,11 +21,19 @@ public class FileTypeInfo {
 
   private final FileType myFileType;
   private final Language myDialect;
+  private final String myContext;
+  private final boolean myEnabled;
   private final String myDescription;
 
-  public FileTypeInfo(@NotNull FileType fileType, @Nullable Language dialect, boolean duplicated) {
+  public FileTypeInfo(@NotNull FileType fileType,
+                      @Nullable Language dialect,
+                      @Nullable String context,
+                      boolean enabled,
+                      boolean duplicated) {
     myFileType = fileType;
     myDialect = dialect;
+    myContext = context;
+    myEnabled = enabled;
     myDescription = getDescription(fileType, duplicated);
   }
 
@@ -39,8 +47,24 @@ public class FileTypeInfo {
     return myDialect;
   }
 
+  @Nullable
+  public String getContext() {
+    return myContext;
+  }
+
   @NotNull
   public String getText() {
+    if (myDialect != null) {
+      return myDialect.getDisplayName();
+    }
+    if (myContext != null) {
+      return myContext + " Context";
+    }
+    return myFileType.getName();
+  }
+
+  @NotNull
+  public String getSearchText() {
     if (myDialect != null) {
       return myDialect.getDisplayName();
     }
@@ -49,14 +73,27 @@ public class FileTypeInfo {
 
   @NotNull
   public String getFullText() {
-    if (myDialect == null) {
-      return myDescription;
+    if (myDialect != null) {
+      return myDescription + " - " + myDialect.getDisplayName();
     }
-    return myDescription + " - " + myDialect.getDisplayName();
+    if (myContext != null) {
+      return myDescription + " - " + myContext + " Context";
+    }
+    return myDescription;
   }
 
-  public boolean isDialect() {
-    return myDialect != null;
+  public boolean isNested() {
+    return myDialect != null || myContext != null;
+  }
+
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
+  public boolean isEqualTo(@NotNull FileType fileType, @Nullable Language dialect, @Nullable String context) {
+    return Objects.equals(myFileType, fileType) &&
+           Objects.equals(myDialect, dialect) &&
+           Objects.equals(myContext, context);
   }
 
   @NotNull
@@ -75,11 +112,17 @@ public class FileTypeInfo {
     if (!(o instanceof FileTypeInfo)) return false;
     FileTypeInfo info = (FileTypeInfo)o;
     return Objects.equals(myFileType, info.myFileType) &&
-           Objects.equals(myDialect, info.myDialect);
+           Objects.equals(myDialect, info.myDialect) &&
+           Objects.equals(myContext, info.myContext);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myFileType, myDialect);
+    return Objects.hash(myFileType, myDialect, myContext);
+  }
+
+  @Override
+  public String toString() {
+    return getFullText();
   }
 }

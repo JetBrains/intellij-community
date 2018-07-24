@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -147,6 +148,12 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (initializer == null) {
           return;
         }
+        PsiTypeElement typeElement = variable.getTypeElement();
+        if (typeElement != null && 
+            typeElement.isInferredType() && 
+            PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+          return;
+        }
         if (initializer instanceof PsiArrayInitializerExpression) {
           final int conditionIdx = ArrayUtilRt.find(((PsiArrayInitializerExpression)initializer).getInitializers(), expression);
           if (conditionIdx >= 0) {
@@ -262,11 +269,19 @@ public class ConditionalExpressionInspection extends BaseInspection {
         // can't be fixed
         return;
       }
-      if (ignoreSimpleAssignmentsAndReturns) {
-        PsiElement parent = expression.getParent();
-        while (parent instanceof PsiParenthesizedExpression) {
-          parent = parent.getParent();
+      PsiElement parent = expression.getParent();
+      while (parent instanceof PsiParenthesizedExpression) {
+        parent = parent.getParent();
+      }
+      
+      if (parent instanceof PsiLocalVariable) {
+        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        if (typeElement.isInferredType() && !PsiTypesUtil.isDenotableType(typeElement.getType(), typeElement)) {
+          return;
         }
+      }
+      
+      if (ignoreSimpleAssignmentsAndReturns) {
         if (parent instanceof PsiAssignmentExpression ||
             parent instanceof PsiReturnStatement ||
             parent instanceof PsiLocalVariable ||
