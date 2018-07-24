@@ -46,7 +46,6 @@ public abstract class AbstractVcsTestCase {
   protected VirtualFile myWorkingCopyDir;
   protected File myClientBinaryPath;
   protected IdeaProjectTestFixture myProjectFixture;
-  protected boolean myInitChangeListManager = true;
 
   protected TestClientRunner createClientRunner() {
     return createClientRunner(null);

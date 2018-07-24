@@ -142,9 +142,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       refreshSvnMappingsSynchronously();
     });
 
-    if (myInitChangeListManager) {
-      refreshChanges();
-    }
+    refreshChanges();
   }
 
   @NotNull
@@ -161,9 +159,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void refreshSvnMappingsSynchronously() {
-    if (! myInitChangeListManager) {
-      return;
-    }
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(() -> semaphore.up());

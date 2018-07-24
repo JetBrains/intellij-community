@@ -30,10 +30,6 @@ public class SvnRenameTest extends SvnTestCase {
   @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\n";
   @NonNls private static final String LOG_SEPARATOR_START = "-------------";
 
-  public SvnRenameTest() {
-    myInitChangeListManager = false;
-  }
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
