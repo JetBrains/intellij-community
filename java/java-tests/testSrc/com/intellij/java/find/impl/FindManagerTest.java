@@ -595,7 +595,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       ThrowableRunnable test = () -> assertSize(lineCount, findUsages(findModel));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      int timeout = 400;
+      int timeout = 600;
       PlatformTestUtil.startPerformanceTest("find usages in global", timeout, test).attempts(2).assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
