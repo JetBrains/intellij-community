@@ -291,9 +291,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     else if (myIcon == null || IconLoader.isGoodSize(myIcon)) {
       myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
     }
-    else if (myIcon == EmptyIcon.ICON_0) {
-      myDisabledIcon = EmptyIcon.ICON_0;
-    }
     else {
       myDisabledIcon = null;
       Logger.getInstance(ActionButton.class).error("invalid icon for action " + myAction);
