@@ -99,10 +99,10 @@ public class JavaArrangementParseInfo {
 
     private Frame(@NotNull PsiMethod method,
                   @NotNull ArrangementEntryDependencyInfo info,
-                  @NotNull Iterator<PsiMethod> iterator) {
+                  @NotNull Collection<PsiMethod> collection) {
       myMethod = method;
       myDependencyInfo = info;
-      myDependentMethodsIterator = iterator;
+      myDependentMethodsIterator = collection.iterator();
     }
   }
 
@@ -119,7 +119,8 @@ public class JavaArrangementParseInfo {
 
     Set<PsiMethod> startingMethodDependencies = myMethodDependencies.get(method);
     if (startingMethodDependencies == null) return result;
-    toProcess.push(new Frame(method, result, startingMethodDependencies.iterator()));
+    toProcess.push(new Frame(method, result, startingMethodDependencies));
+
     while (!toProcess.empty()) {
       Frame frame = toProcess.peek();
       PsiMethod currentMethod = frame.myMethod;
@@ -140,7 +141,7 @@ public class JavaArrangementParseInfo {
           methodToStatus.put(dependentMethod, PASSED);
         }
         else {
-          toProcess.add(new Frame(dependentMethod, dependentMethodInfo, dependentMethodDependencies.iterator()));
+          toProcess.add(new Frame(dependentMethod, dependentMethodInfo, dependentMethodDependencies));
         }
       }
       else {

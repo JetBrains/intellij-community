@@ -519,5 +519,127 @@ public class Q {
     )
   }
 
+  void "test cycle simple"() {
+    doTest(
+      initial: '''
+    public class Q {
+      void a() {
+        c();
+      }
+
+      void b() {
+        a();
+      }
+
+      void c() {
+        b();
+      }
+      
+      void d(){
+        b();
+      }
+    }''',
+      expected: '''
+    public class Q {
+      void a() {
+        c();
+      }
+
+      void b() {
+        a();
+      }
+
+      void c() {
+        b();
+      }
+      
+      void d(){
+        b();
+      }
+    }''',
+      groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
+  void "test recursive"() {
+    doTest(
+      initial: '''
+    public class Q {
+      void a() {
+        a();
+        b();
+      }
+
+      void b() {
+      }
+    }''',
+      expected: '''
+    public class Q {
+      void a() {
+        a();
+        b();
+      }
+
+      void b() {
+      }
+    }''',
+      groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
+  void "test recursive not first"() {
+    doTest(
+      initial: '''
+    public class Q {
+      void a() {
+        a();
+        b();
+      }
+
+      void b() {
+      }
+    }''',
+      expected: '''
+    public class Q {
+      void a() {
+        a();
+        b();
+      }
+
+      void b() {
+      }
+    }''',
+      groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
+
+
+  void "test cycle with side branch passing"() {
+    doTest(
+      initial: '''
+    public class Q {
+      void a() {
+        a();
+        b();
+      }
+
+      void b() {
+      }
+    }''',
+      expected: '''
+    public class Q {
+      void a() {
+        a();
+        b();
+      }
+
+      void b() {
+      }
+    }''',
+      groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
 
 }
