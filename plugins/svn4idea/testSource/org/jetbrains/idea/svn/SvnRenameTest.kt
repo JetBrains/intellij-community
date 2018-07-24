@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.NonNls
-import org.junit.Assert
+import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
 import java.io.IOException
@@ -85,7 +85,7 @@ class SvnRenameTest : SvnTestCase() {
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
     val changes = ArrayList(changeListManager.defaultChangeList.changes)
-    Assert.assertEquals(4, changes.size.toLong())
+    assertEquals(4, changes.size.toLong())
     AbstractVcsTestCase.sortChanges(changes)
     verifyChange(changes[0], "child", "childnew")
     verifyChange(changes[1], "child" + File.separatorChar + "a.txt", "childnew" + File.separatorChar + "a.txt")
@@ -129,9 +129,9 @@ class SvnRenameTest : SvnTestCase() {
         iterator.remove()
       }
     }
-    Assert.assertEquals(2, lines.size.toLong())
-    Assert.assertTrue(lines[0].startsWith("r2 |"))
-    Assert.assertTrue(lines[1].startsWith("r1 |"))
+    assertEquals(2, lines.size.toLong())
+    assertTrue(lines[0].startsWith("r2 |"))
+    assertTrue(lines[1].startsWith("r1 |"))
   }
 
   // todo - undo; undo after commit
@@ -143,13 +143,13 @@ class SvnRenameTest : SvnTestCase() {
 
     changeListManager.ensureUpToDate(false)
     val change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)
-    Assert.assertNotNull(change)
+    assertNotNull(change)
 
     val exceptions = ArrayList<VcsException>()
     vcs.rollbackEnvironment!!.rollbackChanges(listOf(change!!), exceptions, RollbackProgressListener.EMPTY)
-    Assert.assertTrue(exceptions.isEmpty())
-    Assert.assertFalse(File(myWorkingCopyDir.path, "newchild").exists())
-    Assert.assertTrue(File(myWorkingCopyDir.path, "child").exists())
+    assertTrue(exceptions.isEmpty())
+    assertFalse(File(myWorkingCopyDir.path, "newchild").exists())
+    assertTrue(File(myWorkingCopyDir.path, "child").exists())
   }
 
   // todo undo; undo after commit
@@ -164,7 +164,7 @@ class SvnRenameTest : SvnTestCase() {
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
     val changes = ArrayList(changeListManager.defaultChangeList.changes)
-    Assert.assertEquals(listToString(changes), 2, changes.size.toLong())
+    assertEquals(listToString(changes), 2, changes.size.toLong())
     AbstractVcsTestCase.sortChanges(changes)
     verifyChange(changes[0], "child" + File.separatorChar + "grandChild", "grandChild")
     verifyChange(changes[1], "child" + File.separatorChar + "grandChild" + File.separatorChar + "a.txt",
@@ -187,14 +187,14 @@ class SvnRenameTest : SvnTestCase() {
     createFileInCommand(unversionedDir, "c.txt", "c")
 
     changeListManager.ensureUpToDate(false)
-    Assert.assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned))
+    assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned))
 
     renameFileInCommand(child, "newchild")
     val childPath = File(myWorkingCopyDir.path, "child")
     val newChildPath = File(myWorkingCopyDir.path, "newchild")
-    Assert.assertTrue(File(newChildPath, "a.txt").exists())
-    Assert.assertTrue(File(newChildPath, "u.txt").exists())
-    Assert.assertFalse(File(childPath, "u.txt").exists())
+    assertTrue(File(newChildPath, "a.txt").exists())
+    assertTrue(File(newChildPath, "u.txt").exists())
+    assertFalse(File(childPath, "u.txt").exists())
 
     refreshVfs()
     changeListManager.ensureUpToDate(false)
@@ -205,14 +205,14 @@ class SvnRenameTest : SvnTestCase() {
     val exceptions = ArrayList<VcsException>()
     vcs.rollbackEnvironment!!.rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY)
     TimeoutUtil.sleep(300)
-    Assert.assertTrue(exceptions.isEmpty())
+    assertTrue(exceptions.isEmpty())
     val fileA = File(childPath, "a.txt")
-    Assert.assertTrue(fileA.absolutePath, fileA.exists())
+    assertTrue(fileA.absolutePath, fileA.exists())
     val fileU = File(childPath, "u.txt")
-    Assert.assertTrue(fileU.absolutePath, fileU.exists())
+    assertTrue(fileU.absolutePath, fileU.exists())
     val unversionedDirFile = File(childPath, "uc")
-    Assert.assertTrue(unversionedDirFile.exists())
-    Assert.assertTrue(File(unversionedDirFile, "c.txt").exists())
+    assertTrue(unversionedDirFile.exists())
+    assertTrue(File(unversionedDirFile, "c.txt").exists())
   }
 
   // IDEA-13824
@@ -232,7 +232,7 @@ class SvnRenameTest : SvnTestCase() {
     changeListManager.ensureUpToDate(false)
     val changes = ArrayList(changeListManager.defaultChangeList.changes)
     val list = vcs.checkinEnvironment!!.commit(changes, "test")
-    Assert.assertEquals(0, list!!.size.toLong())
+    assertEquals(0, list!!.size.toLong())
   }
 
   // IDEADEV-19364
@@ -247,8 +247,8 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, parent2)
     undo()
     val childPath = File(parent1.path, "child")
-    Assert.assertTrue(childPath.exists())
-    Assert.assertTrue(File(childPath, "a.txt").exists())
+    assertTrue(childPath.exists())
+    assertTrue(File(childPath, "a.txt").exists())
   }
 
   // IDEADEV-19552
@@ -259,8 +259,8 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(file, "b.txt")
     undo()
-    Assert.assertTrue(File(myWorkingCopyDir.path, "a.txt").exists())
-    Assert.assertFalse(File(myWorkingCopyDir.path, "b.txt").exists())
+    assertTrue(File(myWorkingCopyDir.path, "a.txt").exists())
+    assertFalse(File(myWorkingCopyDir.path, "b.txt").exists())
   }
 
   @Test

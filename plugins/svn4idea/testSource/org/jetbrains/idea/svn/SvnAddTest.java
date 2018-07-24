@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -12,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author yole
@@ -51,7 +52,7 @@ public class SvnAddTest extends SvnTestCase {
     files.add(file);
     files.add(dir);
     final List<VcsException> errors = vcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
-    Assert.assertEquals(0, errors.size());
+    assertEquals(0, errors.size());
   }
 
   @Test
@@ -62,6 +63,6 @@ public class SvnAddTest extends SvnTestCase {
     checkin();
     undo();
     runAndVerifyStatusSorted("D a.txt");
-    Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
+    assertFalse(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
   }
 }
