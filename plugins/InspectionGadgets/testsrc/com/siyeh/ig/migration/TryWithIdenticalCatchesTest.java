@@ -29,6 +29,9 @@ import java.util.List;
  * @author yole
  */
 public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase {
+  private static final String PATH = "com/siyeh/igtest/errorhandling/try_identical_catches/";
+  private static final String HINT = "Collapse 'catch' blocks";
+
   public void testTryIdenticalCatches() {
     doTest();
   }
@@ -38,7 +41,7 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testMethodQualifier() {
-    highlightTest();
+    highlightTest(false);
   }
 
   public void testIdenticalCatchUnrelatedExceptions() {
@@ -46,7 +49,7 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testIdenticalCatchThreeOutOfFour() {
-    doTest(true);
+    doTest(true, false);
   }
 
   public void testIdenticalCatchWithComments() {
@@ -57,16 +60,20 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testIdenticalCatchWithDifferentComments() {
+    doTest(false, true);
+  }
+
   public void testIdenticalCatchDifferentCommentStyle() {
     doTest();
   }
 
   public void doTest() {
-    doTest(false);
+    doTest(false, false);
   }
 
-  public void doTest(boolean processAll) {
-    highlightTest();
+  public void doTest(boolean processAll, boolean checkInfos) {
+    highlightTest(checkInfos);
     String name = getTestName(false);
     if (processAll) {
       PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiTryStatement.class);
@@ -75,7 +82,7 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
       List<IntentionAction> intentions = new ArrayList<>();
       for (PsiCatchSection section : catchSections) {
         getEditor().getCaretModel().moveToOffset(section.getTextOffset());
-        intentions.addAll(myFixture.filterAvailableIntentions("Collapse 'catch' blocks"));
+        intentions.addAll(myFixture.filterAvailableIntentions(HINT));
       }
       assertFalse("intentions.isEmpty", intentions.isEmpty());
       for (IntentionAction intention : intentions) {
@@ -83,18 +90,18 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
       }
     }
     else {
-      IntentionAction intention = myFixture.findSingleIntention("Collapse 'catch' blocks");
+      IntentionAction intention = myFixture.findSingleIntention(HINT);
       assertNotNull(intention);
       myFixture.launchAction(intention);
     }
-    myFixture.checkResultByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".after.java");
+    myFixture.checkResultByFile(PATH + name + ".after.java");
   }
 
-  private void highlightTest() {
+  private void highlightTest(boolean checkInfos) {
     String name = getTestName(false);
     myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
-    myFixture.configureByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".java");
-    myFixture.checkHighlighting(true, false, false);
+    myFixture.configureByFile(PATH + name + ".java");
+    myFixture.checkHighlighting(true, checkInfos, false);
   }
 
   @Override

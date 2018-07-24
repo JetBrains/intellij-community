@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiPredicate;
 
 /**
  * @author yole, Bas Leijdekkers
@@ -97,28 +99,48 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final CatchSectionWrapper[] sections = CatchSectionWrapper.createWrappers(statement);
       if (sections == null) return;
 
-      final CatchSectionIndices[] catchSectionIndices = getCatchSectionIndices(sections);
-      if (catchSectionIndices == null) return;
+      final boolean[][] canSwap = collectCanSwap(sections);
+      final CatchSectionIndices[] duplicateIndices = getCatchSectionIndices(sections, canSwap, CatchSectionWrapper::areDuplicates);
+      final CatchSectionIndices[] emptyIndices = getCatchSectionIndices(sections, canSwap, CatchSectionWrapper::areEmpty);
+      if (duplicateIndices == null && emptyIndices == null) return;
 
-      for (int index = 0; index < catchSectionIndices.length; index++) {
-        int collapseIntoIndex = catchSectionIndices[index].myCollapseIntoIndex;
+      final boolean[] problems = new boolean[sections.length];
+      registerProblems(sections, duplicateIndices, problems, false);
+      registerProblems(sections, emptyIndices, problems, true);
+    }
+
+    private void registerProblems(@NotNull CatchSectionWrapper[] sections,
+                                  @Nullable CatchSectionIndices[] sectionIndices,
+                                  @NotNull boolean[] problems,
+                                  boolean empty) {
+      if (sectionIndices == null) return;
+
+      for (int index = 0; index < sections.length; index++) {
+        if (problems[index]) continue;
+
+        int collapseIntoIndex = sectionIndices[index].myCollapseIntoIndex;
         if (collapseIntoIndex >= 0) {
-          registerProblem(sections, index, collapseIntoIndex);
+          registerProblem(sections, index, collapseIntoIndex, empty);
+          problems[index] = true;
         }
       }
     }
 
-    private void registerProblem(@NotNull CatchSectionWrapper[] sections, int at, int collapseIntoIndex) {
+    private void registerProblem(@NotNull CatchSectionWrapper[] sections, int at, int collapseIntoIndex, boolean empty) {
       final PsiCatchSection section = sections[at].myCatchSection;
       final PsiJavaToken rParenth = section.getRParenth();
       if (rParenth != null) {
-        registerErrorAtOffset(section, 0, rParenth.getStartOffsetInParent() + 1, sections[collapseIntoIndex].myParameter.getType());
+        registerErrorAtOffset(section, 0, rParenth.getStartOffsetInParent() + 1,
+                              empty ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                              sections[collapseIntoIndex].myParameter.getType(), empty);
       }
     }
   }
 
   @Nullable
-  static CatchSectionIndices[] getCatchSectionIndices(@NotNull CatchSectionWrapper[] sections) {
+  static CatchSectionIndices[] getCatchSectionIndices(@NotNull CatchSectionWrapper[] sections,
+                                                      @NotNull boolean[][] canSwap,
+                                                      @NotNull BiPredicate<CatchSectionWrapper, CatchSectionWrapper> equals) {
     final CatchSectionIndices[] indices = new CatchSectionIndices[sections.length];
     for (int index = 0; index < sections.length; index++) {
       indices[index] = new CatchSectionIndices(index);
@@ -133,20 +155,13 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       for (int to = from + 1; to < sections.length; to++) {
         if (indices[to].myHasDuplicate) continue;
         final CatchSectionWrapper otherSection = sections[to];
-        if (otherSection == null || !section.isDuplicate(otherSection)) continue;
+        if (otherSection == null || !equals.test(section, otherSection)) continue;
 
         indices[from].addDuplicate(indices[to]);
         duplicateFound = true;
       }
     }
     if (!duplicateFound) return null;
-
-    final boolean[][] canSwap = new boolean[sections.length][sections.length];
-    for (int from = 0; from < sections.length; from++) {
-      for (int to = from + 1; to < sections.length; to++) {
-        canSwap[from][to] = canSwap[to][from] = sections[from] != null && sections[from].canSwapWith(sections[to]);
-      }
-    }
 
     for (int index = 0; index < sections.length; index++) {
       indices[index].computeInsertionRange(canSwap);
@@ -163,6 +178,16 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       }
     }
     return indices;
+  }
+
+  private static boolean[][] collectCanSwap(@NotNull CatchSectionWrapper[] sections) {
+    final boolean[][] canSwap = new boolean[sections.length][sections.length];
+    for (int from = 0; from < sections.length; from++) {
+      for (int to = from + 1; to < sections.length; to++) {
+        canSwap[from][to] = canSwap[to][from] = sections[from] != null && sections[from].canSwapWith(sections[to]);
+      }
+    }
+    return canSwap;
   }
 
   private static class CatchSectionIndices {
@@ -233,45 +258,43 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       myFinder = finder;
     }
 
-    boolean isDuplicate(@NotNull CatchSectionWrapper section) {
-      final Boolean sameComments = areSameComments(section);
-      if (sameComments != null) return sameComments;
+    static boolean areEmpty(@NotNull CatchSectionWrapper s1, @NotNull CatchSectionWrapper s2) {
+      return s1.myCodeBlock.isEmpty() && s2.myCodeBlock.isEmpty();
+    }
 
-      final Match match = findDuplicate(section);
-      if (match == null) {
+    static boolean areDuplicates(@NotNull CatchSectionWrapper s1, @NotNull CatchSectionWrapper s2) {
+      final boolean empty1 = s1.myCodeBlock.isEmpty();
+      final boolean empty2 = s2.myCodeBlock.isEmpty();
+      if (empty1 != empty2) return false;
+
+      if (empty1) {
+        final List<String> comments1 = collectCommentTexts(s1.myCodeBlock);
+        final List<String> comments2 = collectCommentTexts(s2.myCodeBlock);
+        return comments1.equals(comments2);
+      }
+
+      final Match match1 = s1.findDuplicate(s2);
+      if (match1 == null) {
         return false;
       }
-      final Match otherMatch = section.findDuplicate(this);
-      if (otherMatch == null) {
+      final Match match2 = s2.findDuplicate(s1);
+      if (match2 == null) {
         return false;
       }
-      final ReturnValue returnValue = match.getReturnValue();
-      final ReturnValue otherReturnValue = otherMatch.getReturnValue();
-      if (returnValue == null) {
-        return otherReturnValue == null;
+      final ReturnValue returnValue1 = match1.getReturnValue();
+      final ReturnValue returnValue2 = match2.getReturnValue();
+      if (returnValue1 == null) {
+        return returnValue2 == null;
       }
-      return returnValue.isEquivalent(otherReturnValue);
+      return returnValue1.isEquivalent(returnValue2);
     }
 
     private Match findDuplicate(@NotNull CatchSectionWrapper section) {
       return myFinder.isDuplicate(section.myCodeBlock, true);
     }
 
-    @Nullable
-    private Boolean areSameComments(@NotNull CatchSectionWrapper section) {
-      if (!myCodeBlock.isEmpty()) {
-        return null;
-      }
-      if (!section.myCodeBlock.isEmpty()) {
-        return false;
-      }
-      final List<String> comments = getCommentTexts(myCodeBlock);
-      final List<String> otherComments = getCommentTexts(section.myCodeBlock);
-      return comments.equals(otherComments);
-    }
-
     @NotNull
-    private static List<String> getCommentTexts(@NotNull PsiElement element) {
+    private static List<String> collectCommentTexts(@NotNull PsiElement element) {
       final List<String> result = new ArrayList<>();
       for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiComment) {
@@ -363,10 +386,15 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new CollapseCatchSectionsFix();
+    return new CollapseCatchSectionsFix((Boolean)infos[1]);
   }
 
   private static class CollapseCatchSectionsFix extends InspectionGadgetsFix {
+    private final boolean myEmpty;
+
+    CollapseCatchSectionsFix(boolean empty) {
+      myEmpty = empty;
+    }
 
     @Override
     @NotNull
@@ -390,7 +418,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       CatchSectionWrapper duplicateSection = sections[sectionIndex];
       if (duplicateSection == null) return;
 
-      final CatchSectionIndices[] duplicatesIndices = getCatchSectionIndices(sections);
+      final boolean[][] canSwap = collectCanSwap(sections);
+      final CatchSectionIndices[] duplicatesIndices =
+        getCatchSectionIndices(sections, canSwap, myEmpty ? CatchSectionWrapper::areEmpty : CatchSectionWrapper::areDuplicates);
       if (duplicatesIndices == null) return;
 
       final int collapseIntoIndex = duplicatesIndices[sectionIndex].myCollapseIntoIndex;
