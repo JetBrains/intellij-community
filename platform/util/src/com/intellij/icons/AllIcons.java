@@ -836,7 +836,11 @@ public class AllIcons {
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
-    public static final Icon Gear = IconLoader.getIcon("/general/gear.png"); // 21x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Gear = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
