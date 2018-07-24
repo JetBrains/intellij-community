@@ -74,7 +74,9 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -400,18 +402,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    // Run Tab typed action, as EditorImpl.processKeyTyped(java.awt.event.KeyEvent) doesn't handle Tab characters.
-    if (!myIsViewer && e.getID() == KeyEvent.KEY_TYPED && e.getModifiers() == 0 && e.getKeyChar() == '\t') {
-      EditorEx editor = (EditorEx)getEditor();
-      TypedAction action = EditorActionManager.getInstance().getTypedAction();
-      action.actionPerformed(editor, e.getKeyChar(), editor.getDataContext());
-      return true;
-    }
-    return super.processKeyBinding(ks, e, condition, pressed);
-  }
-
-  @Override
   @NotNull
   public JComponent getComponent() {
     if (myMainPanel == null) {
@@ -425,16 +415,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       initConsoleEditor();
       requestFlushImmediately();
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
-      disableFocusTraversalKeys(myEditor);
     }
     return this;
-  }
-
-  private static void disableFocusTraversalKeys(@NotNull Editor editor) {
-    // Tab key should be handled as a typed character, not as a focus traversal key.
-    JComponent component = editor.getContentComponent();
-    component.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, new HashSet<>());
-    component.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, new HashSet<>());
   }
 
   /**
@@ -913,6 +895,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
+      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_TAB, new TabHandler());
 
       registerActionHandler(myEditor, EOFAction.ACTION_ID);
     }
@@ -1324,6 +1307,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     private static EditorActionHandler getDefaultActionHandler() {
       return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+    }
+  }
+
+  private static class TabHandler extends ConsoleAction {
+    @Override
+    protected void execute(@NotNull ConsoleViewImpl console, @NotNull DataContext context) {
+      console.type(console.myEditor, "\t");
     }
   }
 
