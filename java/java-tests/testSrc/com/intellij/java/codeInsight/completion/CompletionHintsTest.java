@@ -1383,7 +1383,22 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   public void testHintsAreNotShownInImproperContext() {
     configureJava("class C { void m() { int a = Math.ma<caret>5; } }");
     complete("max(int a, int b)");
-    checkResult("class C { void m() { int a = Math.max(<caret>)5; } }");
+    checkResultWithInlays("class C { void m() { int a = Math.max(<caret>)5; } }");
+  }
+
+  public void testConstructorInvocationInsideMethodInvocation() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
+    type("new Strin");
+    complete("String(byte[] bytes, String charsetName)");
+    checkResultWithInlays("class C { void m() { System.getProperty(new String(<HINT text=\"bytes:\"/><caret><Hint text=\",charsetName:\"/>)) } }");
+    type("null");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.getProperty(new String(<Hint text=\"bytes:\"/>null, <HINT text=\"charsetName:\"/><caret>)) } }");
   }
 
   private void checkResultWithInlays(String text) {
