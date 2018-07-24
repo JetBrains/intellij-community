@@ -7,9 +7,9 @@ import pytest
 
 from _pydev_bundle.pydev_console_utils import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
+from _pydev_comm.rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
 from pydev_console.thrift_communication import console_thrift
-from pydev_console.thrift_rpc import make_rpc_client
 from pydevconsole import enable_thrift_logging
 
 try:
@@ -205,7 +205,7 @@ class TestRunningCode(TestBase):
             return
 
         from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
-        from pydev_console.thrift_rpc import start_rpc_server_and_make_client
+        from _pydev_comm.rpc import start_rpc_server_and_make_client
 
         called_RequestInput = [False]
         called_IPythonEditor = [False]
