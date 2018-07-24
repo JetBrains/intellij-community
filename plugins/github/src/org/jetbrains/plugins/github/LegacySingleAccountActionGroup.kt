@@ -20,8 +20,7 @@ import org.jetbrains.plugins.github.util.GithubGitHelper
 import javax.swing.Icon
 
 abstract class LegacySingleAccountActionGroup(text: String?, description: String?, icon: Icon?) : DumbAwareAction(text, description, icon) {
-  override fun update(e: AnActionEvent?) {
-    if (e == null) return
+  override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
     if (project == null || project.isDefault) {
@@ -44,8 +43,7 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
     e.presentation.isEnabledAndVisible = true
   }
 
-  override fun actionPerformed(e: AnActionEvent?) {
-    if (e == null) return
+  override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
     if (project == null || project.isDefault) return

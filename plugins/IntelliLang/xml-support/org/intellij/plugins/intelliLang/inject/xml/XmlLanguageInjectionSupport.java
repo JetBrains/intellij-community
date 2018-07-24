@@ -376,7 +376,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
           }
         }
         else {
-          createDefaultEditAction(project, producer).actionPerformed(null);
+          perform(project, producer);
         }
       }
     };

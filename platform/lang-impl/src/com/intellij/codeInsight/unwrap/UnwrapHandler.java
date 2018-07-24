@@ -62,13 +62,13 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    List<AnAction> options = collectOptions(project, editor, file);
+    List<MyUnwrapAction> options = collectOptions(project, editor, file);
     selectOption(options, editor, file);
   }
 
   @NotNull
-  private static List<AnAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    List<AnAction> result = new ArrayList<>();
+  private static List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    List<MyUnwrapAction> result = new ArrayList<>();
 
     UnwrapDescriptor descriptor = getUnwrapDescription(file);
 
@@ -88,24 +88,24 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return LanguageUnwrappers.INSTANCE.forLanguage(file.getLanguage());
   }
 
-  private static AnAction createUnwrapAction(@NotNull Unwrapper u, @NotNull PsiElement el, @NotNull Editor ed, @NotNull Project p) {
+  private static MyUnwrapAction createUnwrapAction(@NotNull Unwrapper u, @NotNull PsiElement el, @NotNull Editor ed, @NotNull Project p) {
     return new MyUnwrapAction(p, ed, u, el);
   }
 
-  protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
+  protected void selectOption(List<MyUnwrapAction> options, Editor editor, PsiFile file) {
     if (options.isEmpty()) return;
 
     if (!getUnwrapDescription(file).showOptionsDialog() ||
         ApplicationManager.getApplication().isUnitTestMode()
        ) {
-      options.get(0).actionPerformed(null);
+      options.get(0).perform();
       return;
     }
 
     showPopup(options, editor);
   }
 
-  private static void showPopup(final List<AnAction> options, Editor editor) {
+  private static void showPopup(final List<? extends AnAction> options, Editor editor) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
     List<String> model = options.stream().map(a -> ((MyUnwrapAction)a).getName()).collect(Collectors.toList());
@@ -122,7 +122,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback((selectedValue) -> optionByName.apply(selectedValue).actionPerformed(null))
+      .setItemChosenCallback((selectedValue) -> optionByName.apply(selectedValue).perform())
       .setItemSelectedCallback(s -> {
         if (s != null) {
           MyUnwrapAction a = optionByName.apply(s);
@@ -145,7 +145,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }
 
-  private static class MyUnwrapAction extends AnAction {
+  protected static class MyUnwrapAction extends AnAction {
     private static final Key<Integer> CARET_POS_KEY = new Key<>("UNWRAP_HANDLER_CARET_POSITION");
 
     private final Project myProject;
@@ -164,6 +164,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      perform();
+    }
+
+    void perform() {
       final PsiFile file = myElement.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 

@@ -21,7 +21,7 @@ import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 
 class ShowGuiEditorWindowAction : AnAction() {
 
-  override fun actionPerformed(p0: AnActionEvent?) {
+  override fun actionPerformed(p0: AnActionEvent) {
     val frame = GuiRecorderManager.frame
     if (!frame.isShowing) {
       StartPauseRecAction().setSelected(null, true)
