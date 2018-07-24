@@ -62,8 +62,8 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @NotNull
   @Override
-  public SearchWordRequestor setCaseSensitive(boolean caseSensitive) {
-    myCaseSensitive = caseSensitive;
+  public SearchWordRequestor caseInsensitive() {
+    myCaseSensitive = false;
     return this;
   }
 

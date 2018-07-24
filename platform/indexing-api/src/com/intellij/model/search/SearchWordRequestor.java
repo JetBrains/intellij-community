@@ -29,7 +29,7 @@ public interface SearchWordRequestor {
    * @return this object
    */
   @NotNull
-  SearchWordRequestor setCaseSensitive(boolean caseSensitive);
+  SearchWordRequestor caseInsensitive();
 
   /**
    * @return this object
