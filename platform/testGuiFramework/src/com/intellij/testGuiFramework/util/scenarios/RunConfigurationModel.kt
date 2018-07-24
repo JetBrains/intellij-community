@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
+import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.*
-import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
@@ -25,7 +25,21 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     Text, Check, Choice, List, Tree, Combo, Custom
   }
 
-  data class ConfigurationField(val title: String, val kind: FieldKind, val type: String? = null) {
+  data class ConfigurationField(
+    val title: String,
+    val kind: FieldKind,
+    val type: String? = null,
+    val predicate: FinderPredicate = predicateEquality) {
+
+    companion object {
+      val predicateEquality: FinderPredicate = { left: String, right: String -> left == right }
+      val predicateStartsWith: FinderPredicate = { left: String, right: String -> left.startsWith(right) }
+    }
+
+    override fun toString(): String {
+      return "$title : $kind${if (type != null) " ($type)" else ""}"
+    }
+
     fun RunConfigurationModel.isFieldPresent(): Boolean {
       with(connectDialog()) {
         return when (kind) {
@@ -78,13 +92,15 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     EnvVars(ConfigurationField("Environment variables:", FieldKind.Text)),
     UseModule(ConfigurationField("Use classpath of module:", FieldKind.Combo)),
     ProvidedScope(ConfigurationField("Include dependencies with \"Provided\" scope", FieldKind.Check)),
-    JRE(ConfigurationField("JRE:", FieldKind.Combo)),
-    ShortenCmdLine(ConfigurationField("Shorten command line:", FieldKind.Combo)),
+    JRE(ConfigurationField("JRE:", FieldKind.Combo, predicate = ConfigurationField.predicateStartsWith)),
+    ShortenCmdLine(ConfigurationField("Shorten command line:", FieldKind.Combo,
+                                      type = "com.intellij.execution.ui.ShortenCommandLineModeCombo",
+                                      predicate = ConfigurationField.predicateStartsWith)),
     CapturingSnapshots(ConfigurationField("Enable capturing form snapshots", FieldKind.Check)),
     BeforeLaunch(ConfigurationField("Before launch:", FieldKind.List))
   }
 
-  enum class GlassfishFields(val conf: ConfigurationField){
+  enum class GlassfishFields(val conf: ConfigurationField) {
     AppServer(ConfigurationField("Application server:", FieldKind.Combo)),
     URL(ConfigurationField("URL:", FieldKind.Text)),
     AfterLaunchCheck(ConfigurationField("After launch", FieldKind.Check)),
@@ -123,11 +139,10 @@ fun RunConfigurationModel.closeWithOK() {
 fun RunConfigurationModel.checkOneValue(expectedField: RunConfigurationModel.ConfigurationField, expectedValue: String) {
   with(expectedField) {
     if (!isFieldPresent()) throw ComponentLookupException("Cannot find component with label `$title`")
-    guiTestCase.logTestStep("Going to check that field `${expectedField.title}`has a value = `$expectedValue`")
     val actualValue = getFieldValue()
-    guiTestCase.logInfo("Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`")
-    assert(actualValue == expectedValue) {
-      "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
+    guiTestCase.logTestStep("Field `$title`: actual value = `$actualValue`, expected value = `$expectedValue`")
+    assert(predicate(actualValue, expectedValue)) {
+      "Field `$title`: actual value = `$actualValue`, expected value = `$expectedValue`"
     }
   }
 }
