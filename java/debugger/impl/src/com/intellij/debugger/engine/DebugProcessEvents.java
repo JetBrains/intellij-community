@@ -79,7 +79,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private static void showStatusText(DebugProcessEvents debugProcess,  Event event) {
-    Requestor requestor = debugProcess.getRequestsManager().findRequestor(event.request());
+    Requestor requestor = RequestManagerImpl.findRequestor(event.request());
     Breakpoint breakpoint = null;
     if(requestor instanceof Breakpoint) {
       breakpoint = (Breakpoint)requestor;
