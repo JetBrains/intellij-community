@@ -74,9 +74,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -402,6 +400,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
+  protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+    // Run Tab typed action, as EditorImpl.processKeyTyped(java.awt.event.KeyEvent) doesn't handle Tab characters.
+    if (!myIsViewer && e.getID() == KeyEvent.KEY_TYPED && e.getModifiers() == 0 && e.getKeyChar() == '\t') {
+      EditorEx editor = (EditorEx)getEditor();
+      TypedAction action = EditorActionManager.getInstance().getTypedAction();
+      action.actionPerformed(editor, e.getKeyChar(), editor.getDataContext());
+      return true;
+    }
+    return super.processKeyBinding(ks, e, condition, pressed);
+  }
+
+  @Override
   @NotNull
   public JComponent getComponent() {
     if (myMainPanel == null) {
@@ -415,8 +425,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       initConsoleEditor();
       requestFlushImmediately();
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
+      disableFocusTraversalKeys(myEditor);
     }
     return this;
+  }
+
+  private static void disableFocusTraversalKeys(@NotNull Editor editor) {
+    // Tab key should be handled as a typed character, not as a focus traversal key.
+    JComponent component = editor.getContentComponent();
+    component.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, new HashSet<>());
+    component.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, new HashSet<>());
   }
 
   /**
