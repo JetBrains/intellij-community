@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Preprocessor;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,17 +17,15 @@ public interface SearchTargetRequestor {
   /**
    * Sets search scope.<br/>
    * If search scope is left unset then {@link SearchRequestCollector#getParameters() original} scope will be used.
-   *
-   * @return this object
    */
+  @Contract("_ -> this")
   @NotNull
   SearchTargetRequestor inScope(@NotNull SearchScope scope);
 
   /**
    * Restricts search scope to include only selected file types.
-   *
-   * @return this object
    */
+  @Contract("_ -> this")
   @NotNull
   SearchTargetRequestor restrictSearchScopeTo(@NotNull FileType... fileTypes);
 

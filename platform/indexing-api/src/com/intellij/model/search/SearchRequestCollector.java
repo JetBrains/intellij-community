@@ -5,6 +5,7 @@ import com.intellij.model.Symbol;
 import com.intellij.model.SymbolReference;
 import com.intellij.util.Preprocessor;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public interface SearchRequestCollector {
@@ -45,12 +46,14 @@ public interface SearchRequestCollector {
   /**
    * Starts sub search forming by creating builder-like object with handy methods
    */
+  @Contract("_ -> new")
   @NotNull
   SearchTargetRequestor searchTarget(@NotNull Symbol target);
 
   /**
    * Starts sub search forming by creating builder-like object with handy methods
    */
+  @Contract("_ -> new")
   @NotNull
   SearchWordRequestor searchWord(@NotNull String word);
 }

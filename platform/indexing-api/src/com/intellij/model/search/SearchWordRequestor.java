@@ -4,6 +4,7 @@ package com.intellij.model.search;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public interface SearchWordRequestor {
@@ -11,41 +12,35 @@ public interface SearchWordRequestor {
   /**
    * Sets search scope.<br/>
    * If search scope is left unset then {@link SearchRequestCollector#getParameters() original} scope will be used.
-   *
-   * @return this object
    */
+  @Contract("_ -> this")
   @NotNull
   SearchWordRequestor inScope(@NotNull SearchScope searchScope);
 
   /**
    * Restricts search scope to include only selected file types.
-   *
-   * @return this object
    */
+  @Contract("_ -> this")
   @NotNull
   SearchWordRequestor restrictSearchScopeTo(@NotNull FileType... fileTypes);
 
-  /**
-   * @return this object
-   */
+  @Contract("-> this")
   @NotNull
   SearchWordRequestor caseInsensitive();
 
-  /**
-   * @return this object
-   */
+  @Contract("_, _ -> this")
   @NotNull
   SearchWordRequestor inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts);
 
+  @Contract("-> this")
   @NotNull
   SearchWordRequestor inAllContexts();
 
   /**
    * Sets target hint which is used for optimizing search requests.
    * Target is automatically set when using {@link #search(Symbol)}.
-   *
-   * @return this object
    */
+  @Contract("_ -> this")
   @NotNull
   SearchWordRequestor withTargetHint(@NotNull Symbol target);
 
