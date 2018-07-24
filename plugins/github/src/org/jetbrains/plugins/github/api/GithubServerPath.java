@@ -49,7 +49,7 @@ public class GithubServerPath {
     myUseHttp = useHttp;
     myHost = host.toLowerCase(Locale.ENGLISH);
     myPort = port;
-    mySuffix = suffix != null ? suffix.toLowerCase(Locale.ENGLISH) : null;
+    mySuffix = suffix;
   }
 
   @NotNull
