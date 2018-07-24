@@ -30,6 +30,7 @@ interface AppUIExecutorEx : AppUIExecutor {
   override fun <T> submit(task: Callable<T>): CancellablePromise<T> {
     val deferred = runAsync { task.call() }
     return AsyncPromise<T>().apply {
+      onError { cause -> deferred.cancel(cause) }
       deferred.invokeOnCompletion {
         try {
           val result = deferred.getCompleted()
