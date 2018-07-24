@@ -82,6 +82,8 @@ public class SheetController implements Disposable {
   private final JEditorPane messageTextPane = new JEditorPane();
   private final Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
 
+  private final JEditorPane headerLabel = new JEditorPane();
+
   SheetController(final SheetMessage sheetMessage,
                   final String title,
                   final String message,
@@ -264,11 +266,6 @@ public class SheetController implements Disposable {
       }
     };
 
-
-    JEditorPane headerLabel = new JEditorPane();
-
-
-
     headerLabel.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     headerLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     headerLabel.setEditable(false);
@@ -422,6 +419,7 @@ public class SheetController implements Disposable {
     int buttonsRowWidth = LEFT_SHEET_OFFSET + buttonWidth + RIGHT_OFFSET;
 
     // update the pane if the sheet is going to be wider
+    headerLabel.setSize(Math.max(headerLabel.getWidth(), buttonWidth), headerLabel.getHeight());
     messageTextPane.setSize(Math.max(messageTextPane.getWidth(), buttonWidth), messageTextPane.getHeight());
 
     SHEET_WIDTH = Math.max(buttonsRowWidth, SHEET_WIDTH);
