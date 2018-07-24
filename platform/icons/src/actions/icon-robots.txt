@@ -10,7 +10,7 @@ deprecated: delete.png -> /actions/cancel.svg; to be removed in IDEA 2020 - use 
 deprecated: diffPreview.png -> /actions/diff.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Diff
 deprecated: diffWithCurrent.png -> /actions/diff.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Diff
 deprecated: down.png -> /general/splitDown.png; to be removed in IDEA 2020 - use AllIcons.General.SplitDown
-deprecated: erDiagram.png; to be removed in IDEA 2020
+deprecated: erDiagram.png; to be removed in IDEA 2020 - use J2EEIcons.ErDiagram
 deprecated: exclude.png -> /general/remove.svg; to be removed in IDEA 2020 - use AllIcons.General.Remove
 deprecated: export.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export
 deprecated: fileStatus.png
