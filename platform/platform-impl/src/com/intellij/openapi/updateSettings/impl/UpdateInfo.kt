@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -31,21 +17,21 @@ class UpdatesInfo(node: Element) {
   operator fun get(code: String): Product? = products.find { code in it.codes }
 }
 
-class Product(node: Element) {
-  val name: String = node.getAttributeValue("name") ?: throw JDOMException("product@name missing")
+class Product internal constructor (node: Element) {
+  val name: String = node.getMandatoryAttributeValue("name")
   val codes: Set<String> = node.getChildren("code").map { it.value.trim() }.toSet()
   val channels: List<UpdateChannel> = node.getChildren("channel").map(::UpdateChannel)
 
   override fun toString(): String = codes.firstOrNull() ?: "-"
 }
 
-class UpdateChannel(node: Element) {
+class UpdateChannel internal constructor (node: Element) {
   companion object {
     const val LICENSING_EAP: String = "eap"
     const val LICENSING_RELEASE: String = "release"
   }
 
-  val id: String = node.getAttributeValue("id") ?: throw JDOMException("channel@id missing")
+  val id: String = node.getMandatoryAttributeValue("id")
   val status: ChannelStatus = ChannelStatus.fromCode(node.getAttributeValue("status"))
   val licensing: String = node.getAttributeValue("licensing", LICENSING_RELEASE)
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
@@ -54,8 +40,8 @@ class UpdateChannel(node: Element) {
   override fun toString(): String = id
 }
 
-class BuildInfo(node: Element) {
-  val number: BuildNumber = parseBuildNumber(node)
+class BuildInfo internal constructor (node: Element) {
+  val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"))
   val apiVersion: BuildNumber = BuildNumber.fromStringWithProductCode(node.getAttributeValue("apiVersion"), number.productCode) ?: number
   val version: String = node.getAttributeValue("version") ?: ""
   val message: String = node.getChild("message")?.value ?: ""
@@ -65,41 +51,51 @@ class BuildInfo(node: Element) {
   val buttons: List<ButtonInfo> = node.getChildren("button").map(::ButtonInfo)
   val patches: List<PatchInfo> = node.getChildren("patch").map(::PatchInfo)
 
-  private fun parseBuildNumber(node: Element) = let {
-    val buildNumber = BuildNumber.fromString(
-      node.getAttributeValue("fullNumber") ?: node.getAttributeValue("number") ?: throw JDOMException("build@number missing"))
-    if (buildNumber.productCode.isNotEmpty()) buildNumber else BuildNumber(ApplicationInfoImpl.getShadowInstance().build.productCode, *buildNumber.components)
+  private fun parseBuildNumber(value: String): BuildNumber {
+    var buildNumber = BuildNumber.fromString(value)
+    if (buildNumber.productCode.isEmpty()) {
+      buildNumber = BuildNumber(ApplicationInfoImpl.getShadowInstance().build.productCode, *buildNumber.components)
+    }
+    return buildNumber
   }
 
-  private fun parseDate(value: String?): Date? = value?.let {
-    try {
-      SimpleDateFormat("yyyyMMdd", Locale.US).parse(it)  // same as the 'majorReleaseDate' in ApplicationInfo.xml
+  private fun parseDate(value: String?): Date? =
+    if (value == null) null
+    else try {
+      SimpleDateFormat("yyyyMMdd", Locale.US).parse(value)  // same as the 'majorReleaseDate' in ApplicationInfo.xml
     }
     catch (e: ParseException) {
-      Logger.getInstance(BuildInfo::class.java).info("Failed to parse build release date " + it)
+      Logger.getInstance(BuildInfo::class.java).info("invalid build release date: ${value}")
       null
     }
-  }
 
   val downloadUrl: String?
     get() = buttons.find(ButtonInfo::isDownload)?.url
 
+  fun patch(from: BuildNumber) = patches.find { it.isAvailable && it.fromBuild.compareTo(from) == 0 }
+
   override fun toString(): String = "${number}/${version}"
 }
 
-class ButtonInfo(node: Element) {
-  val name: String = node.getAttributeValue("name") ?: throw JDOMException("button@name missing")
-  val url: String = node.getAttributeValue("url") ?: throw JDOMException("button@url missing")
+class ButtonInfo internal constructor (node: Element) {
+  val name: String = node.getMandatoryAttributeValue("name")
+  val url: String = node.getMandatoryAttributeValue("url")
   val isDownload: Boolean = node.getAttributeValue("download") != null  // a button marked with this attribute is hidden when a patch is available
 
   override fun toString(): String = name
 }
 
-class PatchInfo(node: Element) {
-  val fromBuild: BuildNumber = BuildNumber.fromString(node.getAttributeValue("fullFrom") ?: node.getAttributeValue("from") ?: throw JDOMException("patch@from missing"))
+class PatchInfo internal constructor (node: Element) {
+  val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))
   val size: String? = node.getAttributeValue("size")
   val isAvailable: Boolean = node.getAttributeValue("exclusions")?.splitToSequence(",")?.none { it.trim() == osSuffix } ?: true
 
   val osSuffix: String
     get() = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
 }
+
+private fun Element.getMandatoryAttributeValue(attribute: String) =
+  getAttributeValue(attribute) ?: throw JDOMException("${name}@${attribute} missing")
+
+private fun Element.getMandatoryAttributeValue(attribute: String, fallback: String) =
+  getAttributeValue(attribute) ?: getMandatoryAttributeValue(fallback)

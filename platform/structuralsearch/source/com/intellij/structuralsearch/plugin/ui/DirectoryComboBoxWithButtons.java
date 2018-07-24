@@ -70,9 +70,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     descriptor.setForcedToUseIdeaFileChooser(true);
     final Component editorComponent = comboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
-      final JTextField field = (JTextField)editorComponent;
-      field.setColumns(40);
-      FileChooserFactory.getInstance().installFileCompletion(field, descriptor, true, null);
+      FileChooserFactory.getInstance().installFileCompletion((JTextField)editorComponent, descriptor, true, null);
     }
     comboBox.setMaximumRowCount(8);
 
@@ -94,6 +92,10 @@ public class DirectoryComboBoxWithButtons extends JPanel {
 
     add(myDirectoryComboBox, BorderLayout.CENTER);
     add(FindPopupPanel.createToolbar(recursiveDirectoryAction), BorderLayout.EAST);
+  }
+
+  public ComboBox<String> getComboBox() {
+    return myDirectoryComboBox.getChildComponent();
   }
 
   public void setCallback(Runnable callback) {

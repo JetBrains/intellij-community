@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,12 +36,18 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   private final JPanel myPanel;
   private final WizardContext myContext;
   private final SdkType myType;
+  private final String myHelpId;
   private boolean myInitialized = false;
   private final JButton mySetAsDefaultButton;
 
   public ProjectJdkForModuleStep(final WizardContext context, final SdkType type) {
+    this(context, type, null);
+  }
+
+  public ProjectJdkForModuleStep(final WizardContext context, final SdkType type, @Nullable @NonNls String helpId) {
     myContext = context;
     myType = type;
+    myHelpId = helpId;
     myJdkChooser = new JdkChooserPanel(getProject(context, type));
 
     myPanel = new JPanel(new GridBagLayout());
@@ -127,7 +134,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
 
   @Override
   public String getHelpId() {
-    return "project.new.page2";
+    return myHelpId;
   }
 
   @Override

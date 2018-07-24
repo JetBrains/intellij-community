@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -124,12 +123,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         if (perModule != null && psiElement != null) {
           final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
           if (module != null) {
-            List<String> list = perModule.get(module);
-            if (list == null) {
-              list = new ArrayList<>();
-              perModule.put(module, list);
-            }
-            list.add(name);
+            fillForkModule(perModule, module, name);
           }
         }
         else {
@@ -158,6 +152,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  protected void fillForkModule(Map<Module, List<String>> perModule, Module module, String name) {
+    perModule.computeIfAbsent(module, elemList -> new ArrayList<>()).add(name);
   }
 
   public Module[] getModulesToCompile() {

@@ -36,7 +36,8 @@ public class UITheme {
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
-  private Class providerClass;
+  private ClassLoader providerClassLoader = getClass().getClassLoader();
+  private String editorSchemeName;
 
   private UITheme() {
   }
@@ -53,10 +54,10 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull Class provider) throws IOException {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull ClassLoader provider) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
-    theme.providerClass = provider;
+    theme.providerClassLoader = provider;
     if (!theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
@@ -95,8 +96,9 @@ public class UITheme {
     return patcher;
   }
 
-  public Class getProviderClass() {
-    return providerClass;
+  @NotNull
+  public ClassLoader getProviderClassLoader() {
+    return providerClassLoader;
   }
 
   private static void apply(String key, Object value, UIDefaults defaults) {
@@ -202,6 +204,14 @@ public class UITheme {
   private static Dimension parseSize(String value) {
     final List<String> numbers = StringUtil.split(value, ",");
     return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
+  }
+
+  public String getEditorSchemeName() {
+    return editorSchemeName;
+  }
+
+  public void setEditorSchemeName(String editorSchemeName) {
+    this.editorSchemeName = editorSchemeName;
   }
 
   //

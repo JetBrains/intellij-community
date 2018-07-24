@@ -190,7 +190,7 @@ public class TestPackage extends TestObject {
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
-    final JavaParameters javaParameters = super.createJavaParameters();
+    final JavaParameters javaParameters = createDefaultJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
@@ -201,6 +201,10 @@ public class TestPackage extends TestObject {
 
     createServerSocket(javaParameters);
     return javaParameters;
+  }
+
+  protected JavaParameters createDefaultJavaParameters() throws ExecutionException {
+    return super.createJavaParameters();
   }
 
   @Override

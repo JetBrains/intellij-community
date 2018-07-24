@@ -17,7 +17,13 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -35,12 +41,52 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
     highlightTest();
   }
 
+  public void testIdenticalCatchUnrelatedExceptions() {
+    doTest();
+  }
+
+  public void testIdenticalCatchThreeOutOfFour() {
+    doTest(true);
+  }
+
+  public void testIdenticalCatchWithComments() {
+    doTest();
+  }
+
+  public void testIdenticalCatchWithEmptyComments() {
+    doTest();
+  }
+
+  public void testIdenticalCatchDifferentCommentStyle() {
+    doTest();
+  }
+
   public void doTest() {
+    doTest(false);
+  }
+
+  public void doTest(boolean processAll) {
     highlightTest();
     String name = getTestName(false);
-    IntentionAction intention = myFixture.findSingleIntention("Collapse 'catch' blocks");
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
+    if (processAll) {
+      PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiTryStatement.class);
+      assertNotNull("tryStatement", tryStatement);
+      PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+      List<IntentionAction> intentions = new ArrayList<>();
+      for (PsiCatchSection section : catchSections) {
+        getEditor().getCaretModel().moveToOffset(section.getTextOffset());
+        intentions.addAll(myFixture.filterAvailableIntentions("Collapse 'catch' blocks"));
+      }
+      assertFalse("intentions.isEmpty", intentions.isEmpty());
+      for (IntentionAction intention : intentions) {
+        myFixture.launchAction(intention);
+      }
+    }
+    else {
+      IntentionAction intention = myFixture.findSingleIntention("Collapse 'catch' blocks");
+      assertNotNull(intention);
+      myFixture.launchAction(intention);
+    }
     myFixture.checkResultByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".after.java");
   }
 

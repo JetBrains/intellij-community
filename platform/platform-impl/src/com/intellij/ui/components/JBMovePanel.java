@@ -43,6 +43,7 @@ import java.util.Map;
  * 
  * @author Konstantin Bulenkov
  */
+@Deprecated
 public class JBMovePanel extends JBPanel {
 
   public static final String MOVE_PANEL_PLACE = "MOVE_PANEL";

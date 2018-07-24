@@ -113,7 +113,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libArquillianJUnit = "Arquillian JUnit"
     const val libArquillianTestNG = "Arquillian TestNG"
     const val libJBossDrools = "JBoss Drools"
-    const val libJBossDroolsReserved = "JBoss Drools,  (6.2.0)"
+    const val libWebApplication = "Web Application"
     const val itemKotlinMpp = "Kotlin (Multiplatform - Experimental)"
   }
 

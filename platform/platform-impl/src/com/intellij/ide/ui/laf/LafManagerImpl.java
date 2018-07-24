@@ -101,10 +101,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
 
-  public static boolean useIntelliJInsteadOfAqua() {
-    return Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled() && SystemInfo.isMacOSYosemite;
-  }
-
   /**
    * Invoked via reflection.
    */
@@ -113,8 +109,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
     if (SystemInfo.isMac) {
-      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
-      lafList.add(new UIManager.LookAndFeelInfo("Light", className));
+      lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
     }
     else {
       if (isIntelliJLafEnabled()) {
@@ -307,7 +302,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     if (SystemInfo.isMac) {
-      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
+      String className = IntelliJLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) return laf;
       LOG.error("Could not find OS X L&F: " + className);

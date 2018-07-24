@@ -41,7 +41,7 @@ internal class XmlSerializerTest {
   @Test fun annotatedInternalVar() {
     class Bean {
       @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-      internal var PLACES_MAP = TreeMap<String, String>()
+      var PLACES_MAP = TreeMap<String, String>()
     }
 
     val data = Bean()
@@ -61,17 +61,25 @@ internal class XmlSerializerTest {
     }
   }
 
-  @Test fun emptyBeanSerialization() {
+// commented for now, error level changed to WARN
+//  @Test fun emptyBeanSerialization() {
+//    class EmptyBean
+//
+//    try {
+//      testSerializer("<EmptyBean />", EmptyBean())
+//    }
+//    catch (e: AssertionError) {
+//      assertThat(e.message).startsWith("no accessors for class ")
+//    }
+//
+//    Assertions.fail("error expected")
+//  }
+
+  @Test fun `supress no accessors warn`() {
+    @Property(assertIfNoBindings = false)
     class EmptyBean
 
     testSerializer("<EmptyBean />", EmptyBean())
-  }
-
-  @Tag("Bean")
-  private class EmptyBeanWithCustomName
-
-  @Test fun emptyBeanSerializationWithCustomName() {
-    testSerializer("<Bean />", EmptyBeanWithCustomName())
   }
 
   @Test fun publicFieldSerialization() {
@@ -107,17 +115,43 @@ internal class XmlSerializerTest {
   }
 
   private class BeanWithSubBean {
-    var BEAN1: EmptyBeanWithCustomName? = EmptyBeanWithCustomName()
-    var BEAN2: BeanWithPublicFields? = BeanWithPublicFields()
+    var bean1: BeanWithPublicFields? = BeanWithPublicFields()
+    var bean2: BeanWithPublicFields? = BeanWithPublicFields()
   }
 
   @Test fun subBeanSerialization() {
     val bean = BeanWithSubBean()
-    testSerializer("<BeanWithSubBean>\n" + "  <option name=\"BEAN1\">\n" + "    <Bean />\n" + "  </option>\n" + "  <option name=\"BEAN2\">\n" + "    <BeanWithPublicFields>\n" + "      <option name=\"INT_V\" value=\"1\" />\n" + "      <option name=\"STRING_V\" value=\"hello\" />\n" + "    </BeanWithPublicFields>\n" + "  </option>\n" + "</BeanWithSubBean>", bean)
-    bean.BEAN2!!.INT_V = 2
-    bean.BEAN2!!.STRING_V = "bye"
+    testSerializer("""<BeanWithSubBean>
+  <option name="bean1">
+    <BeanWithPublicFields>
+      <option name="INT_V" value="1" />
+      <option name="STRING_V" value="hello" />
+    </BeanWithPublicFields>
+  </option>
+  <option name="bean2">
+    <BeanWithPublicFields>
+      <option name="INT_V" value="1" />
+      <option name="STRING_V" value="hello" />
+    </BeanWithPublicFields>
+  </option>
+</BeanWithSubBean>""", bean)
+    bean.bean2!!.INT_V = 2
+    bean.bean2!!.STRING_V = "bye"
 
-    testSerializer("<BeanWithSubBean>\n" + "  <option name=\"BEAN1\">\n" + "    <Bean />\n" + "  </option>\n" + "  <option name=\"BEAN2\">\n" + "    <BeanWithPublicFields>\n" + "      <option name=\"INT_V\" value=\"2\" />\n" + "      <option name=\"STRING_V\" value=\"bye\" />\n" + "    </BeanWithPublicFields>\n" + "  </option>\n" + "</BeanWithSubBean>", bean)
+    testSerializer("""<BeanWithSubBean>
+  <option name="bean1">
+    <BeanWithPublicFields>
+      <option name="INT_V" value="1" />
+      <option name="STRING_V" value="hello" />
+    </BeanWithPublicFields>
+  </option>
+  <option name="bean2">
+    <BeanWithPublicFields>
+      <option name="INT_V" value="2" />
+      <option name="STRING_V" value="bye" />
+    </BeanWithPublicFields>
+  </option>
+</BeanWithSubBean>""", bean)
   }
 
   @Test fun subBeanSerializationAndSkipDefaults() {
@@ -140,7 +174,7 @@ internal class XmlSerializerTest {
     @Tag("bean")
     class BeanWithSubBeanWithEquals {
       @Suppress("unused")
-      var bean1: EmptyBeanWithCustomName = EmptyBeanWithCustomName()
+      var bean1: BeanWithPublicFields = BeanWithPublicFields()
       var bean2: BeanWithEquals = BeanWithEquals()
     }
 
@@ -155,17 +189,26 @@ internal class XmlSerializerTest {
   @Test fun nullFieldValue() {
     val bean1 = BeanWithPublicFields()
 
-    testSerializer("<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "  <option name=\"STRING_V\" value=\"hello\" />\n" + "</BeanWithPublicFields>", bean1)
+    testSerializer("""<BeanWithPublicFields>
+  <option name="INT_V" value="1" />
+  <option name="STRING_V" value="hello" />
+</BeanWithPublicFields>""", bean1)
 
     bean1.STRING_V = null
 
-    testSerializer("<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "  <option name=\"STRING_V\" />\n" + "</BeanWithPublicFields>", bean1)
+    testSerializer("""<BeanWithPublicFields>
+  <option name="INT_V" value="1" />
+  <option name="STRING_V" />
+</BeanWithPublicFields>""", bean1)
 
     val bean2 = BeanWithSubBean()
-    bean2.BEAN1 = null
-    bean2.BEAN2 = null
+    bean2.bean1 = null
+    bean2.bean2 = null
 
-    testSerializer("<BeanWithSubBean>\n" + "  <option name=\"BEAN1\" />\n" + "  <option name=\"BEAN2\" />\n" + "</BeanWithSubBean>", bean2)
+    testSerializer("""<BeanWithSubBean>
+  <option name="bean1" />
+  <option name="bean2" />
+</BeanWithSubBean>""", bean2)
   }
 
   private data class BeanWithOption(@OptionTag("path") var PATH: String? = null)
@@ -270,9 +313,13 @@ internal class XmlSerializerTest {
       @Suppress("unused")
       @Transient
       fun getValue(): String = "foo"
+
+      var foo: String? = null
     }
 
-    testSerializer("<Bean />", Bean())
+    testSerializer("""<Bean>
+  <option name="foo" />
+</Bean>""", Bean())
   }
 
   @Test fun propertyWithoutTagWithPrimitiveType() {
@@ -447,10 +494,18 @@ internal class XmlSerializerTest {
     val element = BeanWithJDOMElement()
     element.STRING_V = "a"
     element.actions = Element("x").addContent(Element("a")).addContent(Element("b"))
-    assertSerializer(element, "<BeanWithJDOMElement>\n" + "  <option name=\"STRING_V\" value=\"a\" />\n" + "  <actions>\n" + "    <a />\n" + "    <b />\n" + "  </actions>\n" + "</BeanWithJDOMElement>", null)
+    assertSerializer(element, """<BeanWithJDOMElement>
+  <option name="STRING_V" value="a" />
+  <actions>
+    <a />
+    <b />
+  </actions>
+</BeanWithJDOMElement>""", null)
 
     element.actions = null
-    assertSerializer(element, "<BeanWithJDOMElement>\n" + "  <option name=\"STRING_V\" value=\"a\" />\n" + "</BeanWithJDOMElement>", null)
+    assertSerializer(element, """<BeanWithJDOMElement>
+  <option name="STRING_V" value="a" />
+</BeanWithJDOMElement>""", null)
   }
 
   @Test fun deserializeJDOMElementField() {
@@ -541,7 +596,7 @@ internal class XmlSerializerTest {
     testSerializer("<bean>\n  <condition expression=\"2+2\" />\n" + "</bean>", bean)
   }
 
-  @Test fun `no_wrap`() {
+  @Test fun `no wrap`() {
     @Tag("bean")
     class Bean {
       @Property(flat = true)

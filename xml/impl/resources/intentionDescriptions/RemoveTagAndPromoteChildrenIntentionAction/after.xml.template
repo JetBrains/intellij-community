@@ -1,5 +1,5 @@
 <root>
+  <spot><child></child>
   <child></child>
-  <child></child>
-  <child></child>
+  <child></child></spot>
 </root>

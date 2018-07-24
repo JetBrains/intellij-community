@@ -25,7 +25,13 @@ public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingT
     Collection<HighlightInfo> infos = doDoTest(true, false);
     PsiFile psiFile = getPsiFile(editors.get(0).getDocument());
     findAndInvokeIntentionAction(infos, fixName, editors.get(0), psiFile);
-    assertEquals(afterFix, getFile().getText());
+    String fileText = getFile().getText();
+    int caretIndex = afterFix.indexOf("<caret>");
+    if (caretIndex >= 0) {
+      int caretOffset = getEditor().getCaretModel().getOffset();
+      fileText = fileText.substring(0, caretOffset - 1) + "<caret>" + fileText.substring(caretOffset - 1);
+    }
+    assertEquals(afterFix, fileText);
   }
 
   @NotNull

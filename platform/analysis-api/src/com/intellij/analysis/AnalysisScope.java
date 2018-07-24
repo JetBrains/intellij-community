@@ -51,7 +51,7 @@ public class AnalysisScope {
   public static final int DIRECTORY = 2;
   public static final int FILE = 3;
   public static final int MODULE = 4;
-  static final int PACKAGE = 5;
+  protected static final int PACKAGE = 5;
   public static final int INVALID = 6;
   public static final int MODULES = 7;
   public static final int CUSTOM = 8;
@@ -71,7 +71,7 @@ public class AnalysisScope {
   @Type protected int myType;
 
   private final Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
-  Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  protected Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
 

@@ -6,8 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.util.ui.UIUtil;
-import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
-import com.sun.java.swing.plaf.windows.WindowsTreeUI;
+
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -78,11 +77,11 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("OptionPane.informationIcon", AllIcons.General.InformationDialog);
     defaults.put("OptionPane.warningIcon", AllIcons.General.WarningDialog);
     defaults.put("OptionPane.questionIcon", AllIcons.General.QuestionDialog);
-    defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
-    defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
-    defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
-    defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
-    defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
+    //defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
+    //defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
+    //defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
+    //defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
+    //defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
                        "ctrl C", "copy",
                        "ctrl V", "paste",

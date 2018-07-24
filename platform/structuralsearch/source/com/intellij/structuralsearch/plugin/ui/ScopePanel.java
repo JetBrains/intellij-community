@@ -19,7 +19,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
-import com.intellij.ui.JBCardLayout;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -46,7 +45,7 @@ public class ScopePanel extends JPanel {
   Scopes.Type myScopeType;
 
   final ActionToolbarImpl myToolbar;
-  final JPanel myScopeDetailsPanel = new JPanel(new JBCardLayout());
+  final JPanel myScopeDetailsPanel = new JPanel(new CardLayout());
   private final ModulesComboBox myModulesComboBox = new ModulesComboBox();
   private final DirectoryComboBoxWithButtons myDirectoryComboBox;
   private final ScopeChooserCombo myScopesComboBox = new ScopeChooserCombo();
@@ -129,7 +128,7 @@ public class ScopePanel extends JPanel {
       myScopesComboBox.init(myProject, true, false, selectedScope.getDisplayName(), SCOPE_FILTER);
     }
     myToolbar.updateActionsImmediately();
-    ((JBCardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
+    ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
   public void setScopeCallback(@Nullable Runnable callback) {
@@ -150,13 +149,16 @@ public class ScopePanel extends JPanel {
         final Module module = myModulesComboBox.getSelectedModule();
         if (module == null) return;
         myScope = GlobalSearchScope.moduleScope(module);
+        myModulesComboBox.requestFocus();
         break;
       case DIRECTORY:
         final VirtualFile directory = myDirectoryComboBox.getDirectory();
         myScope = (directory == null) ? null : GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
+        myDirectoryComboBox.getComboBox().requestFocus();
         break;
       case NAMED:
         myScope = myScopesComboBox.getSelectedScope();
+        myScopesComboBox.requestFocus();
         break;
     }
     if (myCallback != null) myCallback.run();
@@ -180,10 +182,7 @@ public class ScopePanel extends JPanel {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
-        ((JBCardLayout)myScopeDetailsPanel.getLayout()).swipe(myScopeDetailsPanel, myScopeType.toString(),
-                                                              ScopePanel.this.myScopeType.compareTo(myScopeType) > 0
-                                                              ? JBCardLayout.SwipeDirection.BACKWARD
-                                                              : JBCardLayout.SwipeDirection.FORWARD);
+        ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
         ScopePanel.this.myScopeType = myScopeType;
         setScopeFromUI(myScopeType);
         myToolbar.updateActionsImmediately();

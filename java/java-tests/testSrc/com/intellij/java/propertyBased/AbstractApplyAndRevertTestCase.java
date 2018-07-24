@@ -26,7 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.jetCheck.Generator;
@@ -53,14 +52,6 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   protected Generator<PsiJavaFile> psiJavaFiles() {
     return javaFiles().map(vf -> (PsiJavaFile)PsiManager.getInstance(myProject).findFile(vf));
-  }
-
-  @Override
-  protected boolean shouldRunTest() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return false;
-    }
-    return super.shouldRunTest();
   }
 
   protected abstract String getTestDataPath();

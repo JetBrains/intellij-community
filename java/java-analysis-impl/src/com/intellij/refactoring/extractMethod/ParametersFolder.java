@@ -215,6 +215,7 @@ public class ParametersFolder {
   private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope, final List<? extends PsiVariable> inputVariables) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
     final PsiElement[] scopeElements = scope.getScope();
+
     List<PsiExpression> expressions = null;
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
@@ -281,7 +282,7 @@ public class ParametersFolder {
 
   private static boolean isAncestor(PsiElement expression, PsiElement[] scopeElements) {
     for (PsiElement scopeElement : scopeElements) {
-      if (PsiTreeUtil.isAncestor(expression, scopeElement, true)) {
+      if (PsiTreeUtil.isAncestor(expression, scopeElement, false)) {
         return true;
       }
     }

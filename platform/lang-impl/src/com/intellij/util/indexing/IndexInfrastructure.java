@@ -165,7 +165,8 @@ public class IndexInfrastructure {
         prepare();
         runParallelNestedInitializationTasks();
         return finish();
-      } finally {
+      }
+      finally {
         Logger.getInstance(getClass().getName()).info("Initialization done:" + (System.nanoTime() - started) / 1000000);
       }
     }
@@ -175,9 +176,9 @@ public class IndexInfrastructure {
     }
 
     protected void prepare() {}
-    protected abstract void onThrowable(Throwable t);
+    protected abstract void onThrowable(@NotNull Throwable t);
 
-    public void addNestedInitializationTask(ThrowableRunnable nestedInitializationTask) {
+    protected void addNestedInitializationTask(ThrowableRunnable nestedInitializationTask) {
       myNestedInitializationTasks.add(nestedInitializationTask);
     }
 

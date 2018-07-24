@@ -334,7 +334,7 @@ bool LocateJVM()
   }
 
   std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
-  MessageBoxA(NULL, jvmError.c_str(),  error.c_str(), MB_OK);
+  MessageBoxA(NULL, jvmError.c_str(), error.c_str(), MB_OK);
   return false;
 }
 
@@ -711,6 +711,24 @@ jobjectArray ArgsToJavaArray(std::vector<LPWSTR> args)
   return result;
 }
 
+void PrintUsage()
+{
+  char fullPath[_MAX_PATH];
+  GetModuleFileNameA(NULL, fullPath, _MAX_PATH);
+  std::string::size_type pos = std::string(fullPath).find_last_of("\\/");
+  std::string fileName = std::string(fullPath).substr(pos+1);
+
+  std::stringstream buf;
+  buf << "Usage:\n   ";
+  buf << fileName + " -h | -? | --help\n   ";
+  buf << fileName + " [project_dir]\n   ";
+  buf << fileName + " [-l|--line line] [project_dir|--temp-project] file[:line]\n   ";
+  buf << fileName + " diff <left> <right>\n   ";
+  buf << fileName + " merge <local> <remote> [base] <merged>";
+  std::string title = "Command line options.";
+  MessageBoxA(NULL, buf.str().c_str(), title.c_str(), MB_OK);
+}
+
 std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
 {
   int numArgs;
@@ -720,6 +738,13 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
   std::vector<LPWSTR> result;
   for (int i = 1; i < numArgs; i++)
   {
+    if ((wcscmp(L"-h", argv[i]) == 0) ||
+        (wcscmp(L"-?", argv[i]) == 0) ||
+        (wcscmp(L"--help", argv[i]) == 0))
+    {
+      PrintUsage();
+      std::exit(0);
+    }
     result.push_back(argv[i]);
   }
   return result;

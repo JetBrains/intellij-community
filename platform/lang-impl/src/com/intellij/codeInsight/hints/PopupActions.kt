@@ -45,8 +45,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file, editor) ?: return
-
+    val info = getHintInfoFromProvider(offset, file, editor)
     if (info is HintInfo.MethodInfo) {
       e.presentation.setText(CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()), false)
     }

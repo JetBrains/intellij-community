@@ -185,7 +185,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Show Ignored Files", true);
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
     ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
     ignoreGroup.add(new ToggleShowIgnoredAction());
     ignoreGroup.add(new IgnoredSettingsAction());
@@ -503,9 +503,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @NotNull
     @Override
     protected List<Wrapper> getSelectedChanges() {
-      List<Wrapper> result = wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
-      if (result.isEmpty()) result = getAllChanges();
-      return result;
+      boolean hasSelection = myView.getSelectionCount() != 0;
+      if (hasSelection) {
+        return wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
+      }
+      else {
+        return getAllChanges();
+      }
     }
 
     @NotNull

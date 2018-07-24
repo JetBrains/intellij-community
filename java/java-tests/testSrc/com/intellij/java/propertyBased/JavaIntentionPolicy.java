@@ -38,6 +38,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.equals("Remove") || // IDEA-177220
            actionText.equals("Add \"use strict\" pragma") || // IDEA-187427
+           actionText.equals("Suppress for statement in injection") || // IDEA-187427
            super.shouldSkipIntention(actionText);
   }
 

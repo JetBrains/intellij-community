@@ -175,7 +175,8 @@ public class ModuleHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkModuleReference(@Nullable PsiJavaModuleReferenceElement refElement, @NotNull PsiJavaModule container) {
+  static HighlightInfo checkModuleReference(@NotNull PsiRequiresStatement statement) {
+    PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
     if (refElement != null) {
       PsiPolyVariantReference ref = refElement.getReference();
       assert ref != null : refElement.getParent();
@@ -183,7 +184,8 @@ public class ModuleHighlightUtil {
       if (!(target instanceof PsiJavaModule)) {
         return moduleResolveError(refElement, ref);
       }
-      else if (target == container) {
+      PsiJavaModule container = (PsiJavaModule)statement.getParent();
+      if (target == container) {
         String message = JavaErrorMessages.message("module.cyclic.dependence", container.getName());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
       }

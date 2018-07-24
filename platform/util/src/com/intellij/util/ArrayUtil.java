@@ -971,4 +971,49 @@ public class ArrayUtil extends ArrayUtilRt {
     }
     return min;
   }
+
+  @Contract(pure = true)
+  public static int[] mergeSortedArrays(int[] a1, int[] a2, boolean mergeEqualItems) {
+    int newSize = a1.length + a2.length;
+    if (newSize == 0) return EMPTY_INT_ARRAY;
+    int[] r = new int[newSize];
+    int o = 0;
+    int index1 = 0;
+    int index2 = 0;
+    while (index1 < a1.length || index2 < a2.length) {
+      int e;
+      if (index1 >= a1.length) {
+        e = a2[index2++];
+      }
+      else if (index2 >= a2.length) {
+        e = a1[index1++];
+      }
+      else {
+        int element1 = a1[index1];
+        int element2 = a2[index2];
+        if (element1 == element2) {
+          index1++;
+          index2++;
+          if (mergeEqualItems) {
+            e = element1;
+          }
+          else {
+            r[o++] = element1;
+            e = element2;
+          }
+        }
+        else if (element1 < element2) {
+          e = element1;
+          index1++;
+        }
+        else {
+          e = element2;
+          index2++;
+        }
+      }
+      r[o++] = e;
+    }
+
+    return o == newSize ? r : Arrays.copyOf(r, o);
+  }
 }

@@ -105,10 +105,17 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                               .setLocateWithinScreenBounds(false)
                               .createPopup();
     Disposer.register(myBalloon, mySearchEverywhereUI);
+    if (project != null) {
+      Disposer.register(project, myBalloon);
+    }
     myBalloon.pack(true, true);
 
     myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
-    Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
+    Disposer.register(myBalloon, () -> {
+      myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null);
+      mySearchEverywhereUI = null;
+      myBalloon = null;
+    });
 
     if (project != null) {
       myBalloon.showCenteredInCurrentWindow(project);
@@ -119,7 +126,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   @Override
   public boolean isShown() {
-    return myBalloon != null && !myBalloon.isDisposed();
+    return mySearchEverywhereUI != null && myBalloon != null && !myBalloon.isDisposed();
   }
 
   @Override
@@ -176,6 +183,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void saveSearchText() {
+    if (!isShown()) {
+      return;
+    }
+
     updateHistoryIterator();
     String searchText = mySearchEverywhereUI.getSearchField().getText();
     if (!searchText.isEmpty()) {
@@ -184,6 +195,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void saveLocation() {
+    if (!isShown()) {
+      return;
+    }
+
     Dimension size = myBalloon.getSize();
     Point location = myBalloon.getLocationOnScreen();
     DimensionService service = DimensionService.getInstance();
@@ -192,6 +207,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void showHistoryItem(boolean next) {
+    if (!isShown()) {
+      return;
+    }
+
     updateHistoryIterator();
     JTextField searchField = mySearchEverywhereUI.getSearchField();
     searchField.setText(next ? myHistoryIterator.next() : myHistoryIterator.prev());
@@ -199,6 +218,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private void updateHistoryIterator() {
+    if (!isShown()) {
+      return;
+    }
+
     String selectedContributorID = mySearchEverywhereUI.getSelectedContributorID();
     if (myHistoryIterator == null || !myHistoryIterator.getContributorID().equals(selectedContributorID)) {
       myHistoryIterator = myHistoryList.getIterator(selectedContributorID);

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
 public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListener {
 
@@ -67,23 +71,37 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
       if (file != null && file.isDirectory()) {
-        checkFilesRecursivelyWithoutExcluded(file);
+        visitDirsRecursivelyWithoutExcluded(myProject, myProjectManager, file, dir -> {
+          if (isVcsDir(dir.getPath())) {
+            scheduleScan();
+            return skipTo(file);
+          }
+          return CONTINUE;
+        });
       }
     }
   }
 
-  private void checkFilesRecursivelyWithoutExcluded(@NotNull VirtualFile root) {
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+  static void visitDirsRecursivelyWithoutExcluded(@NotNull Project project,
+                                                  @NotNull ProjectRootManager projectRootManager,
+                                                  @NotNull VirtualFile root,
+                                                  @NotNull Function<VirtualFile, Result> dirFound) {
+    Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor(NO_FOLLOW_SYMLINKS, depthLimit) {
       @NotNull
       @Override
       public VirtualFileVisitor.Result visitFileEx(@NotNull VirtualFile file) {
         ProgressManager.checkCanceled();
-        if (isVcsDir(file.getPath())) {
-          scheduleScan();
-          return skipTo(root);
+        if (!file.isDirectory()) {
+          return CONTINUE;
         }
 
-        if (ReadAction.compute(() -> myProject.isDisposed() || myProjectManager.getFileIndex().isExcluded(file))) {
+        VirtualFileVisitor.Result result = dirFound.apply(file);
+        if (result != CONTINUE) {
+          return result;
+        }
+
+        if (ReadAction.compute(() -> project.isDisposed() || projectRootManager.getFileIndex().isExcluded(file))) {
           return SKIP_CHILDREN;
         }
 
