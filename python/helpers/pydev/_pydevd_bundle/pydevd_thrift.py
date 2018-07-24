@@ -13,8 +13,9 @@ from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_vars import get_label, VariableError, array_default_format, MAXIMUM_ARRAY_SIZE
-from pydev_console.protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader
+from _pydevd_bundle.pydevd_vars import get_label, array_default_format, MAXIMUM_ARRAY_SIZE
+from pydev_console.protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
+    UnsupportedArrayTypeException
 
 try:
     import types
@@ -583,4 +584,4 @@ def table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols
     if type_name in TYPE_TO_THRIFT_STRUCT_CONVERTERS:
         return TYPE_TO_THRIFT_STRUCT_CONVERTERS[type_name](array, name, roffset, coffset, rows, cols, format)
     else:
-        raise VariableError("type %s not supported" % type_name)
+        raise UnsupportedArrayTypeException(type_name)

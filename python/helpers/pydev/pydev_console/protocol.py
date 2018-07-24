@@ -15,5 +15,7 @@ ArrayHeaders = _console_thrift.ArrayHeaders
 ColHeader = _console_thrift.ColHeader
 RowHeader = _console_thrift.RowHeader
 
+UnsupportedArrayTypeException = _console_thrift.UnsupportedArrayTypeException
+
 PythonConsoleFrontendService = _console_thrift.PythonConsoleFrontendService
 PythonConsoleBackendService = _console_thrift.PythonConsoleBackendService
