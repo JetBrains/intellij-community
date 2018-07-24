@@ -33,9 +33,7 @@ class ImportProjectFromScriptAction: ExternalSystemAction() {
     return ExternalSystemApiUtil.getExternalRootProjectPath(containingModule) == null
   }
 
-  override fun actionPerformed(e: AnActionEvent?) {
-    if (e == null) return
-
+  override fun actionPerformed(e: AnActionEvent) {
     val virtualFile = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE) ?: return
     val project = e.getData<Project>(CommonDataKeys.PROJECT) ?: return
 
