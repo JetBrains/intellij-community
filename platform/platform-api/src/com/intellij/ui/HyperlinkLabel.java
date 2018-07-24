@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
@@ -202,6 +203,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     myListeners.remove(listener);
   }
 
+  @NotNull
   public String getText() {
     return myHighlightedText.getText();
   }
