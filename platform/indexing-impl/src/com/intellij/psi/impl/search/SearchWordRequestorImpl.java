@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.model.Symbol;
 import com.intellij.model.search.OccurrenceSearchRequestor;
+import com.intellij.model.search.SearchContext;
 import com.intellij.model.search.SearchWordRequestor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
@@ -12,12 +13,10 @@ import com.intellij.psi.search.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
+import static com.intellij.model.search.SearchContext.*;
 import static com.intellij.model.search.SearchScopeOptimizer.CODE_USE_SCOPE_EP;
-import static com.intellij.psi.search.UsageSearchContext.*;
 
 final class SearchWordRequestorImpl implements SearchWordRequestor {
 
@@ -27,7 +26,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   private SearchScope mySearchScope;
   private FileType[] myFileTypes;
   private boolean myCaseSensitive = true;
-  private Short mySearchContext;
+  private Set<SearchContext> mySearchContexts;
   private Symbol myTargetHint;
 
   SearchWordRequestorImpl(@NotNull SearchRequestCollectorImpl collector, @NotNull String word) {
@@ -67,20 +66,30 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     return this;
   }
 
-  private short getSearchContext() {
-    if (mySearchContext != null) {
-      return mySearchContext;
+  private Set<SearchContext> getSearchContexts() {
+    if (mySearchContexts != null) {
+      return mySearchContexts;
     }
     else {
-      int context = IN_CODE | IN_FOREIGN_LANGUAGES | IN_COMMENTS;
-      return (short)(context | (myTargetHint instanceof PsiFileSystemItem ? IN_STRINGS : 0));
+      EnumSet<SearchContext> result = EnumSet.of(IN_CODE, IN_FOREIGN_LANGUAGES, IN_COMMENTS);
+      if (myTargetHint instanceof PsiFileSystemItem) {
+        result.add(IN_STRINGS);
+      }
+      return result;
     }
   }
 
   @NotNull
   @Override
-  public SearchWordRequestor setSearchContext(short searchContext) {
-    mySearchContext = searchContext;
+  public SearchWordRequestor inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts) {
+    mySearchContexts = EnumSet.of(context, otherContexts);
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public SearchWordRequestor inAllContexts() {
+    mySearchContexts = EnumSet.allOf(SearchContext.class);
     return this;
   }
 
@@ -122,22 +131,22 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
     String word = requestor.myWord;
     Symbol targetHint = requestor.myTargetHint;
-    short searchContext = requestor.getSearchContext();
+    Set<SearchContext> contexts = requestor.getSearchContexts();
+    short contextMask = mask(contexts);
     boolean caseSensitive = requestor.myCaseSensitive;
 
-    if (targetHint != null && searchScope instanceof GlobalSearchScope && (searchContext & IN_CODE) != 0) {
+    if (targetHint != null && searchScope instanceof GlobalSearchScope && contexts.contains(IN_CODE)) {
       Project project = myCollector.getParameters().getProject();
       SearchScope restrictedCodeUsageSearchScope = getRestrictedScope(project, targetHint);
       if (restrictedCodeUsageSearchScope != null) {
-        short nonCodeSearchContext = searchContext == ANY ? IN_COMMENTS | IN_STRINGS | IN_FOREIGN_LANGUAGES | IN_PLAIN_TEXT
-                                                          : (short)(searchContext ^ IN_CODE);
+        short nonCodeContextMask = (short)(contextMask ^ IN_CODE.mask);
         SearchScope codeScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
-        SearchWordRequest codeRequest = new SearchWordRequest(word, codeScope, caseSensitive, IN_CODE, null);
-        SearchWordRequest nonCodeRequest = new SearchWordRequest(word, searchScope, caseSensitive, nonCodeSearchContext, null);
+        SearchWordRequest codeRequest = new SearchWordRequest(word, codeScope, caseSensitive, IN_CODE.mask, null);
+        SearchWordRequest nonCodeRequest = new SearchWordRequest(word, searchScope, caseSensitive, nonCodeContextMask, null);
         return Arrays.asList(codeRequest, nonCodeRequest);
       }
     }
-    return Collections.singleton(new SearchWordRequest(word, searchScope, caseSensitive, searchContext, null));
+    return Collections.singleton(new SearchWordRequest(word, searchScope, caseSensitive, contextMask, null));
   }
 
   private static boolean makesSenseToSearch(@NotNull SearchScope searchScope) {
@@ -147,6 +156,10 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     else {
       return searchScope != GlobalSearchScope.EMPTY_SCOPE;
     }
+  }
+
+  private static short mask(@NotNull Set<SearchContext> contexts) {
+    return (short)contexts.stream().mapToInt(context -> context.mask).reduce(0, (a, b) -> a | b);
   }
 
   @Nullable

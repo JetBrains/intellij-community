@@ -33,10 +33,12 @@ public interface SearchWordRequestor {
 
   /**
    * @return this object
-   * @see com.intellij.psi.search.UsageSearchContext
    */
   @NotNull
-  SearchWordRequestor setSearchContext(short searchContext);
+  SearchWordRequestor inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts);
+
+  @NotNull
+  SearchWordRequestor inAllContexts();
 
   /**
    * Sets target hint which is used for optimizing search requests.
