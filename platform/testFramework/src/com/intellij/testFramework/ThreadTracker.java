@@ -65,6 +65,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("AWT-EventQueue-");
     wellKnownOffenders.add("AWT-Shutdown");
     wellKnownOffenders.add("AWT-Windows");
+    wellKnownOffenders.add("Batik CleanerThread");
     wellKnownOffenders.add("CompilerThread0");
     wellKnownOffenders.add("External compiler");
     wellKnownOffenders.add("Finalizer");
@@ -88,7 +89,6 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Periodic Task Thread");
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
-    wellKnownOffenders.add("Batik CleanerThread");
     wellKnownOffenders.add(FlushingDaemon.NAME);
 
     Application application = ApplicationManager.getApplication();
