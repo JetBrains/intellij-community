@@ -25,6 +25,7 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     // for jetifier-core module library in db-compilerCommon
     new LibraryLicense(name: "Android Jetifier Core", libraryName: "jetifier-core", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Studio Analytics Protos", libraryName: "studio-analytics-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.4", license: "Apache 2.0",
