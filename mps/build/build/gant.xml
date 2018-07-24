@@ -164,6 +164,18 @@
             <arg value="apply"/>
             <arg value="${patchFile}"/>
         </exec>
+
+        <property name="patchFile2"
+                  value="${basedir}/patches/Patch_while_waiting_for_IDEA-195678__fixes_MPS-26052_and_MPS-23075.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchFile2}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchFile2}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->
