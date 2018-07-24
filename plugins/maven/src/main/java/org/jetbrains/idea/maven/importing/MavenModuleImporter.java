@@ -419,12 +419,6 @@ public class MavenModuleImporter {
         options.add("-parameters");
       }
 
-      String release = myMavenProject.getReleaseLevel();
-      if (release != null) {
-        options.add("--release");
-        options.add(release);
-      }
-
       Element compilerArguments = compilerConfiguration.getChild("compilerArguments");
       if (compilerArguments != null) {
         for (Element compilerArgument : compilerArguments.getChildren()) {
