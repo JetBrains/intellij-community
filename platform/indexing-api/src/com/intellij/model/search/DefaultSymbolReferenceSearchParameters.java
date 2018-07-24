@@ -16,19 +16,19 @@ public class DefaultSymbolReferenceSearchParameters implements SymbolReferenceSe
   private final Project myProject;
   private final Symbol myTarget;
   private final SearchScope myScope;
-  private final boolean myIgnoreAccessScope;
+  private final boolean myIgnoreUseScope;
 
   private final NotNullLazyValue<SearchScope> myEffectiveScope;
 
   public DefaultSymbolReferenceSearchParameters(@NotNull Project project,
                                                 @NotNull Symbol target,
                                                 @NotNull SearchScope scope,
-                                                boolean ignoreAccessScope) {
+                                                boolean ignoreUseScope) {
     myProject = project;
     myTarget = target;
     myScope = scope;
-    myIgnoreAccessScope = ignoreAccessScope;
-    if (myIgnoreAccessScope || !(myTarget instanceof PsiElement)) {
+    myIgnoreUseScope = ignoreUseScope;
+    if (myIgnoreUseScope || !(myTarget instanceof PsiElement)) {
       myEffectiveScope = NotNullLazyValue.createConstantValue(myScope);
     }
     else {
@@ -55,8 +55,8 @@ public class DefaultSymbolReferenceSearchParameters implements SymbolReferenceSe
   }
 
   @Override
-  public boolean isIgnoreAccessScope() {
-    return myIgnoreAccessScope;
+  public boolean isIgnoreUseScope() {
+    return myIgnoreUseScope;
   }
 
   @NotNull

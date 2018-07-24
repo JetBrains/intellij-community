@@ -21,8 +21,8 @@ public interface SymbolReferenceQuery extends Query<SymbolReference> {
   SymbolReferenceQuery inScope(@NotNull SearchScope scope);
 
   /**
-   * @return new query instance which will ignore access scope or this instance if access scope is already ignored
+   * @return new query instance which will ignore use scope or this instance if use scope is already ignored
    */
   @NotNull
-  SymbolReferenceQuery ignoreAccessScope();
+  SymbolReferenceQuery ignoreUseScope();
 }

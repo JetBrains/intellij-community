@@ -19,7 +19,7 @@ public interface SymbolReferenceSearchParameters extends DumbAwareSearchParamete
   @NotNull
   SearchScope getOriginalSearchScope();
 
-  boolean isIgnoreAccessScope();
+  boolean isIgnoreUseScope();
 
   @NotNull
   SearchScope getEffectiveSearchScope();

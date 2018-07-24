@@ -45,14 +45,14 @@ final class SymbolReferenceQueryImpl extends AbstractQuery<SymbolReference> impl
       myParameters.getProject(),
       myParameters.getTarget(),
       scope,
-      myParameters.isIgnoreAccessScope()
+      myParameters.isIgnoreUseScope()
     ));
   }
 
   @NotNull
   @Override
-  public SymbolReferenceQuery ignoreAccessScope() {
-    if (myParameters.isIgnoreAccessScope()) {
+  public SymbolReferenceQuery ignoreUseScope() {
+    if (myParameters.isIgnoreUseScope()) {
       return this;
     }
     return new SymbolReferenceQueryImpl(new DefaultSymbolReferenceSearchParameters(

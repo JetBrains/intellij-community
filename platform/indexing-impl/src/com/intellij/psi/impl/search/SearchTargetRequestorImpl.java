@@ -69,7 +69,7 @@ final class SearchTargetRequestorImpl implements SearchTargetRequestor {
       parameters.getProject(),
       myTarget,
       searchScope,
-      parameters.isIgnoreAccessScope()
+      parameters.isIgnoreUseScope()
     );
   }
 }

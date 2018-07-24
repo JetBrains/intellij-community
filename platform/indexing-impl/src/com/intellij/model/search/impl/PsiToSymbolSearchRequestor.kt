@@ -37,6 +37,6 @@ class PsiToSymbolSearchRequestor : SearchRequestor {
   ) : ReferencesSearch.SearchParameters(
     target,
     parameters.originalSearchScope,
-    parameters.isIgnoreAccessScope
+    parameters.isIgnoreUseScope
   )
 }
