@@ -72,7 +72,7 @@ class BuildInfo internal constructor (node: Element) {
   val downloadUrl: String?
     get() = buttons.find(ButtonInfo::isDownload)?.url
 
-  fun patch(to: BuildNumber) = patches.find { it.isAvailable && it.fromBuild.compareTo(to) == 0 }
+  fun patch(from: BuildNumber) = patches.find { it.isAvailable && it.fromBuild.compareTo(from) == 0 }
 
   override fun toString(): String = "${number}/${version}"
 }
