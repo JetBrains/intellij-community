@@ -39,6 +39,9 @@ class AndroidStudioLibraryLicenses {
                        license: "New BSD License", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     // for eclipse-layout-kernel module library in intellij.android.designer
     new LibraryLicense(name: "Eclipse Layout Kernel", libraryName: "eclipse-layout-kernel", license: "Eclipse Public License 1.0"),
+    // for LSP4J module libraries in intellij.c
+    new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j:0.3.0", license: "Eclipse Public License 1.0"),
+    new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.3.0", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "fetchasgoogle.jar", libraryName: "fetchasgoogle.jar", license: "Apache 2.0"),
     new LibraryLicense(name: "Google APIs Client Library for Java", version: "min-repackaged-1.20.0",
                        libraryName: "google-api-java-client", url: "https://developers.google.com/api-client-library/java/",
