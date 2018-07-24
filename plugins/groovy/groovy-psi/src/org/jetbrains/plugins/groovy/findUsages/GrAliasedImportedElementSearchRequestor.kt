@@ -28,10 +28,10 @@ class GrAliasedImportedElementSearchRequestor : SearchRequestor {
     if (name == null || StringUtil.isEmptyOrSpaces(name)) return
 
     val groovyScope = restrictScopeToGroovyFiles(parameters.effectiveSearchScope)
-    collector.searchWord(name).inScope(groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, null))
+    collector.searchWord(name).inScope(groovyScope).withTargetHint(target).searchRequests(MyProcessor(target, null))
     if (target is JvmMethod) {
       val (propertyName, kind) = runReadAction { getPropertyNameAndKind(target) } ?: return
-      collector.searchWord(propertyName).inScope(groovyScope).setTargetHint(target).searchRequests(MyProcessor(target, kind.prefix))
+      collector.searchWord(propertyName).inScope(groovyScope).withTargetHint(target).searchRequests(MyProcessor(target, kind.prefix))
     }
   }
 

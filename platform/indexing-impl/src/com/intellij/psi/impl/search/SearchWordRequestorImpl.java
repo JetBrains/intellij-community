@@ -86,7 +86,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @NotNull
   @Override
-  public SearchWordRequestor setTargetHint(@NotNull Symbol target) {
+  public SearchWordRequestor withTargetHint(@NotNull Symbol target) {
     myTargetHint = target;
     return this;
   }
@@ -105,7 +105,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @Override
   public void search(@NotNull Symbol target) {
-    setTargetHint(target);
+    withTargetHint(target);
     search(processor -> new SingleTargetOccurrenceProcessor(target, processor));
   }
 

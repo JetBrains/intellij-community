@@ -45,7 +45,7 @@ public interface SearchWordRequestor {
    * @return this object
    */
   @NotNull
-  SearchWordRequestor setTargetHint(@NotNull Symbol target);
+  SearchWordRequestor withTargetHint(@NotNull Symbol target);
 
   /**
    * Orders to search for word occurrences and process them with passed requestor. <br/>
