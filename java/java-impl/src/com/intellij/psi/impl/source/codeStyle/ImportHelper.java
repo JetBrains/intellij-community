@@ -381,7 +381,7 @@ public class ImportHelper{
       String packageOrClassName = getPackageOrClassName(name);
       final boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
-      if (useOnDemand && namesToUseSingle.remove(name)) {
+      if (namesToUseSingle.remove(name)) {
         useOnDemand = false;
       }
       final Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
