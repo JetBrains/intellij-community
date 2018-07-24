@@ -138,10 +138,10 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     if (myEnableUnversioned) {
       result.add(new ShowHideUnversionedFilesAction());
 
-      // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck checkboxes in the tree.
       ActionGroup unversionedGroup = UnversionedViewDialog.getUnversionedPopupGroup();
       result.add(unversionedGroup);
       ActionUtil.recursiveRegisterShortcutSet(unversionedGroup, myViewer, null);
+      EmptyAction.registerWithShortcutSet(IdeActions.DELETE_UNVERSIONED, CommonShortcuts.getDelete(), myViewer);
     }
     else {
       // avoid duplicated actions on toolbar
