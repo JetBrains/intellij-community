@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * Essentially the function: {@code SearchRequestCollector -> TextOccurenceProcessor}.
  * The difference is that it returns {@code void} instead of {@code boolean} preventing accidental search cancelling.
  */
-public interface OccurenceSearchRequestor {
+public interface OccurrenceSearchRequestor {
 
   /**
    * Queues other search requests by the word occurence,

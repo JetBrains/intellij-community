@@ -16,13 +16,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-final class SingleTargetOccurenceProcessor implements TextOccurenceProcessor {
+final class SingleTargetOccurrenceProcessor implements TextOccurenceProcessor {
 
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final Symbol myTarget;
   private final Processor<? super SymbolReference> myProcessor;
 
-  SingleTargetOccurenceProcessor(@NotNull Symbol target, @NotNull Processor<? super SymbolReference> processor) {
+  SingleTargetOccurrenceProcessor(@NotNull Symbol target, @NotNull Processor<? super SymbolReference> processor) {
     myTarget = target;
     myProcessor = processor;
   }
@@ -46,7 +46,7 @@ final class SingleTargetOccurenceProcessor implements TextOccurenceProcessor {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    SingleTargetOccurenceProcessor processor = (SingleTargetOccurenceProcessor)o;
+    SingleTargetOccurrenceProcessor processor = (SingleTargetOccurrenceProcessor)o;
 
     if (!myTarget.equals(processor.myTarget)) return false;
     if (!myProcessor.equals(processor.myProcessor)) return false;

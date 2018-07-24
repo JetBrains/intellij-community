@@ -51,7 +51,7 @@ public interface SearchWordRequestor {
    * Orders to search for word occurrences and process them with passed requestor. <br/>
    * {@link SearchRequestCollector} is passed into the requestor allowing to order more sub searches.
    */
-  void searchRequests(@NotNull OccurenceSearchRequestor occurenceSearchRequestor);
+  void searchRequests(@NotNull OccurrenceSearchRequestor occurrenceSearchRequestor);
 
   /**
    * Orders to search for references with word that resolve into target and pass them as is into result processor.

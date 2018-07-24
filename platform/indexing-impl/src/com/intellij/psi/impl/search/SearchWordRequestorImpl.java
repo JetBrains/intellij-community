@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.model.Symbol;
-import com.intellij.model.search.OccurenceSearchRequestor;
+import com.intellij.model.search.OccurrenceSearchRequestor;
 import com.intellij.model.search.SearchWordRequestor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
@@ -92,9 +92,9 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   }
 
   @Override
-  public void searchRequests(@NotNull OccurenceSearchRequestor occurenceSearchRequestor) {
+  public void searchRequests(@NotNull OccurrenceSearchRequestor occurrenceSearchRequestor) {
     searchRequests((element, offsetInElement) -> {
-      occurenceSearchRequestor.collectRequests(myCollector, element, offsetInElement);
+      occurrenceSearchRequestor.collectRequests(myCollector, element, offsetInElement);
       return true;
     });
   }
@@ -106,7 +106,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   @Override
   public void search(@NotNull Symbol target) {
     setTargetHint(target);
-    search(processor -> new SingleTargetOccurenceProcessor(target, processor));
+    search(processor -> new SingleTargetOccurrenceProcessor(target, processor));
   }
 
   public void search(@NotNull TextOccurenceProcessorProvider f) {
