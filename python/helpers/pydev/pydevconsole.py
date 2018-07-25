@@ -2,8 +2,8 @@
 Entry point module to start the interactive console.
 '''
 from _pydev_bundle._pydev_getopt import gnu_getopt
-from _pydev_imps._pydev_saved_modules import thread
 from _pydev_comm.rpc import make_rpc_client, start_rpc_server, start_rpc_server_and_make_client
+from _pydev_imps._pydev_saved_modules import thread
 
 start_new_thread = thread.start_new_thread
 
@@ -273,6 +273,13 @@ def enable_thrift_logging():
     logger.addHandler(ch)
 
 
+def create_server_handler_factory(interpreter):
+    def server_handler_factory(rpc_client):
+        interpreter.rpc_client = rpc_client
+        return interpreter
+
+    return server_handler_factory
+
 def start_server(port):
     if port is None:
         port = 0
@@ -292,14 +299,10 @@ def start_server(port):
 
     # 1. Start Python console server
 
+    # `InterpreterInterface` implements all methods required for `server_handler`
+    interpreter = InterpreterInterface(threading.currentThread())
 
-    interpreter = InterpreterInterface(threading.currentThread(), None, rpc_client=client_service)
-
-    # `InterpreterInterface` implements all methods required for the handler
-    server_handler = interpreter
-
-    server_socket = start_rpc_server_and_make_client('', port, server_service, client_service, server_handler)
-
+    server_socket = start_rpc_server_and_make_client('', port, server_service, client_service, create_server_handler_factory(interpreter))
 
     # 2. Print server port for the IDE
 

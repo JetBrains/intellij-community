@@ -6,7 +6,7 @@ import pydevconsole
 from _pydev_comm.rpc import make_rpc_client, start_rpc_server_and_make_client, start_rpc_server
 from _pydevd_bundle import pydevd_io
 from pydev_console.protocol import PythonConsoleFrontendService, PythonConsoleBackendService
-from pydevconsole import enable_thrift_logging
+from pydevconsole import enable_thrift_logging, create_server_handler_factory
 
 try:
     raw_input
@@ -140,7 +140,6 @@ class Test(unittest.TestCase):
             def __init__(self):
                 self.requested_input = False
                 self.notified_finished = 0
-                # todo not the best way
                 self.rpc_client = None
 
             def requestInput(self, path):
@@ -158,15 +157,13 @@ class Test(unittest.TestCase):
     def start_client_thread(self):
         from _pydev_bundle import pydev_localhost
 
-        server_handler = self.create_frontend_handler()
-
         enable_thrift_logging()
 
         # here we start the test server
         server_socket = start_rpc_server_and_make_client(pydev_localhost.get_localhost(), 0,
                                                          PythonConsoleFrontendService,
                                                          PythonConsoleBackendService,
-                                                         server_handler)
+                                                         create_server_handler_factory(self.create_frontend_handler()))
 
         host, port = server_socket.getsockname()
 
