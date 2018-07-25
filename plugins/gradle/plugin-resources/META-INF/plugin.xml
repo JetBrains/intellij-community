@@ -130,12 +130,6 @@
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"
             text="Refresh dependencies" description="Refresh dependencies in the Gradle cache using --refresh-dependencies argument"/>
 
-    <action id="Gradle.ImportExternalProject" class = "org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction"
-            text="Import Gradle project" description="Import Gradle project described by this file"
-            icon="GradleIcons.Gradle">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-    </action>
-
     <group>
       <separator/>
       <reference id="Gradle.ExecuteTask"/>

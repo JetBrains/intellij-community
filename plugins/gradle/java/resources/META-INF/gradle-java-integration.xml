@@ -69,4 +69,11 @@
     <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
                               implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
   </extensions>
+  <actions>
+    <action id="Gradle.ImportExternalProject" class = "org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction"
+            text="Import Gradle project" description="Import Gradle project described by this file"
+            icon="GradleIcons.Gradle">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>
