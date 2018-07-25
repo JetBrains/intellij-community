@@ -59,7 +59,7 @@ class RetypeFileAction : AnAction() {
       {
         ProjectRootManager.getInstance(project).fileIndex.iterateContent { file ->
           ProgressManager.checkCanceled()
-          if (file.extension == extension) {
+          if (file.extension == extension && file.length > 0) {
             candidates.add(CandidateFile(file, file.length))
           }
           true
