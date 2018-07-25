@@ -14,44 +14,63 @@ import java.util.stream.Collectors;
 
 public class ExcludedFiles {
   private final List<FileSetDescriptor> myDescriptors = ContainerUtil.newArrayList();
-
-  @SuppressWarnings("unused") // Serialization
-  public List<String> getDO_NOT_FORMAT() {
-    return myDescriptors.stream()
-      .map(descriptor -> descriptor.getSpec()).collect(Collectors.toList());
-  }
-
-  @SuppressWarnings("unused") // Serialization
-  public void setDO_NOT_FORMAT(@NotNull List<String> specList) {
-    myDescriptors.clear();
-    for (String spec : specList) {
-      myDescriptors.add(new FileSetDescriptor(spec));
-    }
-  }
+  private final State myState = new State();
 
   public void serializeInto(@NotNull Element element) {
     if (myDescriptors.size() > 0) {
-      XmlSerializer.serializeInto(this, element);
+      XmlSerializer.serializeInto(myState, element);
     }
   }
 
   public void deserializeFrom(@NotNull Element element) {
-    XmlSerializer.deserializeInto(this, element);
+    XmlSerializer.deserializeInto(myState, element);
   }
 
-  public void addDescriptor(@NotNull String fileSpec) {
-    myDescriptors.add(new FileSetDescriptor(fileSpec));
+  public void addDescriptor(@NotNull String pattern) {
+    myDescriptors.add(new FileSetDescriptor(pattern));
   }
 
   public List<FileSetDescriptor> getDescriptors() {
     return myDescriptors;
   }
 
+
+  public void setDescriptors(@NotNull List<FileSetDescriptor> descriptors) {
+    myDescriptors.clear();
+    myDescriptors.addAll(descriptors);
+  }
+
   public boolean contains(@NotNull PsiFile file) {
-    Project project = file.getProject();
-    for (FileSetDescriptor descriptor : myDescriptors) {
-      if (descriptor.matches(project, file.getVirtualFile())) return true;
+    if (file.isPhysical()) {
+      Project project = file.getProject();
+      for (FileSetDescriptor descriptor : myDescriptors) {
+        if (descriptor.matches(project, file.getVirtualFile())) return true;
+      }
     }
     return false;
+  }
+
+  public void clear() {
+    myDescriptors.clear();
+  }
+
+  public boolean equals(@NotNull Object o) {
+    return o instanceof ExcludedFiles && myDescriptors.equals(((ExcludedFiles)o).myDescriptors);
+  }
+
+  public class State {
+    @SuppressWarnings("unused") // Serialization
+    public List<String> getDO_NOT_FORMAT() {
+      return myDescriptors.stream()
+        .map(descriptor -> descriptor.getPattern()).collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unused") // Serialization
+    public void setDO_NOT_FORMAT(@NotNull List<String> specList) {
+      myDescriptors.clear();
+      for (String spec : specList) {
+        myDescriptors.add(new FileSetDescriptor(spec));
+      }
+    }
   }
 }

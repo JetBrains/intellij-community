@@ -33,13 +33,14 @@ import java.util.regex.Pattern;
  */
 public class FileSetDescriptor {
 
-  private final String mySpec;
+  private final String myRawPattern;
   private @Nullable Pattern myPathPattern;
   private @Nullable Pattern myFileNamePattern;
+  private final static String FORBIDDEN_CHARS = "<>:\"\\;";
 
-  public FileSetDescriptor(@NotNull String spec) {
-    mySpec = spec;
-    compileSpec(mySpec);
+  public FileSetDescriptor(@NotNull String pattern) {
+    myRawPattern = pattern;
+    compileSpec(myRawPattern);
   }
 
   private void compileSpec(@NotNull String spec) {
@@ -139,7 +140,19 @@ public class FileSetDescriptor {
     return pattern == null || pattern.matcher(str).matches();
   }
 
-  public String getSpec() {
-    return mySpec;
+  public String getPattern() {
+    return myRawPattern;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof FileSetDescriptor && myRawPattern.equals(((FileSetDescriptor)obj).getPattern());
+  }
+
+  public static boolean isValidPattern(@NotNull String pattern) {
+    for (int i = 0; i < pattern.length(); i ++) {
+      if (FORBIDDEN_CHARS.indexOf(pattern.charAt(i)) >= 0) return false;
+    }
+    return true;
   }
 }
