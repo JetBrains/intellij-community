@@ -12,6 +12,7 @@ import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.RootsProvider;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
@@ -362,30 +363,40 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @NotNull
   public final PsiElement[] getSelectedPSIElements() {
+    TreePath[] paths = getSelectionPaths();
+    if (paths == null) return PsiElement.EMPTY_ARRAY;
     List<PsiElement> psiElements = new ArrayList<>();
-    for (Object element : getSelectedElements()) {
-      final PsiElement psiElement = getPSIElement(element);
-      if (psiElement != null) {
-        psiElements.add(psiElement);
-      }
+    for (TreePath path : paths) {
+      PsiElement psiElement = getElementFromNode(path.getLastPathComponent());
+      ContainerUtil.addIfNotNull(psiElements, psiElement);
     }
     return PsiUtilCore.toPsiElementArray(psiElements);
   }
 
   @Nullable
-  protected PsiElement getPSIElement(@Nullable final Object element) {
-    if (element instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)element;
-      if (psiElement.isValid()) {
-        return psiElement;
+  public PsiElement getElementFromNode(@Nullable Object node) {
+    Object o = getValueFromNode(node);
+    if (o instanceof PsiElement) {
+      return ((PsiElement)o).isValid() ? (PsiElement)o : null;
+    }
+    else if (o instanceof VirtualFile) {
+      return PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o);
+    }
+    Object userObject = TreeUtil.getUserObject(node);
+    if (userObject instanceof RootsProvider) {
+      for (VirtualFile root : ((RootsProvider)userObject).getRoots()) {
+        PsiFileSystemItem item = PsiUtilCore.findFileSystemItem(myProject, root);
+        if (item != null) return item;
       }
     }
     return null;
   }
 
+  /** @deprecated use {@link AbstractProjectViewPane#getElementFromNode(Object)}**/
+  @Deprecated
   @Nullable
   public PsiElement getPSIElementFromNode(TreeNode node) {
-    return getPSIElement(getElementFromTreeNode(node));
+    return getElementFromNode((Object)node);
   }
 
   @Nullable
@@ -404,7 +415,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     ArrayList<Object> list = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
-      Object element = getElementFromTreeNode(lastPathComponent);
+      Object element = getValueFromNode(lastPathComponent);
       if (element instanceof Object[]) {
         Collections.addAll(list, (Object[])element);
       }
@@ -416,34 +427,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Nullable
-  public Object getElementFromTreeNode(@Nullable final Object treeNode) {
-    if (treeNode instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)treeNode;
-      return exhumeElementFromNode(node);
-    }
-    return null;
+  public Object getValueFromNode(@Nullable Object node) {
+    return extractValueFromNode(node);
   }
 
-  private TreeNode[] getSelectedTreeNodes(){
-    TreePath[] paths = getSelectionPaths();
-    if (paths == null) return null;
-    final List<TreeNode> result = new ArrayList<>();
-    for (TreePath path : paths) {
-      Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        result.add ( (TreeNode) lastPathComponent);
-      }
-    }
-    return result.toArray(new TreeNode[0]);
+  /** @deprecated use {@link AbstractProjectViewPane#getValueFromNode(Object)} **/
+  @Deprecated
+  protected Object exhumeElementFromNode(DefaultMutableTreeNode node) {
+    return getValueFromNode(node);
   }
 
-
-  protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {
-    return extractUserObject(node);
-  }
-
-  public static Object extractUserObject(DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
+  @Nullable
+  public static Object extractValueFromNode(@Nullable Object node) {
+    Object userObject = TreeUtil.getUserObject(node);
     Object element = null;
     if (userObject instanceof AbstractTreeNode) {
       AbstractTreeNode descriptor = (AbstractTreeNode)userObject;
@@ -668,7 +664,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         @Nullable
         @Override
         protected PsiElement getPsiElement(@NotNull TreePath path) {
-          return getPSIElement(getElementFromTreeNode(path.getLastPathComponent()));
+          return getElementFromNode(path.getLastPathComponent());
         }
 
         @Nullable
