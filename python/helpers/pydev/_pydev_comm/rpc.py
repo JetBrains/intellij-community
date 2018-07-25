@@ -27,7 +27,7 @@ def start_rpc_server(server_transport, server_service, server_handler, proto_fac
 
     client = server.trans.accept()
     t = threading.Thread(target=server.handle, args=(client,))
-    # t.setDaemon(self.daemon)
+    t.setDaemon(True)
     t.start()
 
     return server
@@ -42,7 +42,7 @@ def start_rpc_server_and_make_client(host, port, server_service, client_service,
     server_socket.listen(1)
 
     t = threading.Thread(target=_rpc_server, args=(server_socket, server_service, client_service, server_handler, proto_factory))
-    # t.setDaemon(self.daemon)
+    t.setDaemon(True)
     t.start()
 
     return server_socket
@@ -61,7 +61,7 @@ def _rpc_server(server_socket, server_service, client_service, server_handler, p
 
     client = server.trans.accept()
     t = threading.Thread(target=server.handle, args=(client,))
-    # t.setDaemon(self.daemon)
+    t.setDaemon(True)
     t.start()
 
     client_protocol = proto_factory.get_protocol(client_transport)
