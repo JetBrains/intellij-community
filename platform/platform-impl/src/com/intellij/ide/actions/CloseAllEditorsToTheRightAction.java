@@ -12,6 +12,11 @@ public class CloseAllEditorsToTheRightAction extends CloseAllEditorsToTheLeftAct
   }
 
   @Override
+  protected String getAlternativeTextKey() {
+    return "action.close.all.editors.below";
+  }
+
+  @Override
   protected String getPresentationText(boolean inSplitter) {
     return IdeBundle.message("action.close.all.editors.to.the.right");
   }
