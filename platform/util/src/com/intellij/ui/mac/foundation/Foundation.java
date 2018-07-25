@@ -399,6 +399,23 @@ public class Foundation {
     }
   }
 
+  public static class NSData {
+    private final ID myDelegate;
+
+    public NSData(ID delegate) {
+      myDelegate = delegate;
+    }
+
+    public int length() {
+      return invoke(myDelegate, "length").intValue();
+    }
+
+    public byte[] bytes() {
+      Pointer data = new Pointer(invoke(myDelegate, "bytes").longValue());
+      return data.getByteArray(0, length());
+    }
+  }
+
   public static class NSAutoreleasePool {
     private final ID myDelegate;
 
