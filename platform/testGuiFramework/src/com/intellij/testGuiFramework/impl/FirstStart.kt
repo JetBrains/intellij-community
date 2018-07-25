@@ -12,7 +12,7 @@ import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.waitFrame
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.silentWaitUntil
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
@@ -93,6 +93,8 @@ abstract class FirstStart(val ideType: IdeType) {
     var DEFAULT_TIMEOUT: Long = defaultTimeout
   }
 
+
+  // In case we found WelcomeFrame we don't need to make completeInstallation.
   private fun completeFirstStart() {
     findWelcomeFrame()?.close() ?: let {
       completeInstallation()
@@ -104,7 +106,7 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  private val checkIsWelcomeFramePredicate: (Frame) -> Boolean = { frame ->
+  private val checkIsWelcomeFrame: (Frame) -> Boolean = { frame ->
     frame.javaClass.simpleName == "FlatWelcomeFrame"
     && frame.isShowing
     && frame.isEnabled
@@ -114,15 +116,10 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private fun findWelcomeFrame(seconds: Int = 5): Frame? {
     LOG.info("Waiting for a Welcome Frame")
-    return try {
-      waitUntil("Welcome Frame to show up", seconds) {
-        Frame.getFrames().any { checkIsWelcomeFramePredicate(it) }
-      }
-      Frame.getFrames().first { checkIsWelcomeFramePredicate(it) }
+    silentWaitUntil("Welcome Frame to show up", seconds) {
+      Frame.getFrames().any { checkIsWelcomeFrame(it) }
     }
-    catch (e: WaitTimedOutError) {
-      null
-    }
+    return Frame.getFrames().firstOrNull { checkIsWelcomeFrame(it) }
   }
 
 
