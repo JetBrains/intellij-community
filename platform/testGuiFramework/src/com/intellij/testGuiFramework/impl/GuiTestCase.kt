@@ -140,7 +140,7 @@ open class GuiTestCase {
     else {
       val fileChooserDialog: JDialog
       try {
-        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeout.toInt()) {
+        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeout.toInt()) {
           robot().finder()
             .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
             .firstOrNull {
@@ -320,7 +320,7 @@ open class GuiTestCase {
     }
     else {
       try {
-        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds.toInt()) {
+        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeoutInSeconds.toInt()) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
             if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
           }).filter { it.isShowing && it.isEnabled && it.isVisible }

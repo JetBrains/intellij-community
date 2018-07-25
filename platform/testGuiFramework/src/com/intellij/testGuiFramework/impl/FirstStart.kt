@@ -124,7 +124,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
 
   private fun findPrivacyPolicyDialogOrLicenseAgreement(): JDialog {
-    return GuiTestUtilKt.withPauseWhenNull(120) {
+    return GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = 120) {
       try {
         myRobot.finder().find {
           it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy"))

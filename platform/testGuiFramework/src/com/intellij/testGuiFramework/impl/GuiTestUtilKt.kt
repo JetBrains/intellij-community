@@ -3,7 +3,6 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
@@ -193,18 +192,17 @@ object GuiTestUtilKt {
   }
 
   /**
-   * waits for 30 sec timeout when testWithPause() not return null
+   * waits for 30 sec timeout when functionProbeToNull() not return null
+   *
+   * @throws WaitTimedOutError with the text: "Timed out waiting for $timeoutInSeconds second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(timeoutInSeconds: Int = 30, testWithPause: () -> ReturnType?): ReturnType {
-    val ref = Ref<ReturnType>()
-    Pause.pause(object : Condition("With pause...") {
-      override fun test(): Boolean {
-        val testWithPauseResult = testWithPause()
-        if (testWithPauseResult != null) ref.set(testWithPauseResult)
-        return (testWithPauseResult != null)
-      }
-    }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
-    return ref.get()
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will", timeoutInSeconds: Int = 30, functionProbeToNull: () -> ReturnType?): ReturnType {
+    var result: ReturnType? = null
+    waitUntil("$conditionText will be not null", timeoutInSeconds) {
+      result = functionProbeToNull()
+      result != null
+    }
+    return result!!
   }
 
   fun waitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
