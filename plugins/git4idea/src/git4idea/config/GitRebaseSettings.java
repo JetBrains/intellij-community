@@ -56,14 +56,6 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
     myState.SHOW_TAGS = showTags;
   }
 
-  public boolean showRemoteBranches() {
-    return myState.SHOW_REMOTE_BRANCHES;
-  }
-
-  public void setShowRemoteBranches(boolean showRemoteBranches) {
-    myState.SHOW_REMOTE_BRANCHES = showRemoteBranches;
-  }
-
   @Nullable
   public String getOnto() {
     return myState.ONTO;

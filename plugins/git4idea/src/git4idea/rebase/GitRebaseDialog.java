@@ -95,10 +95,6 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   private JPanel myPanel;
   /**
-   * If selected, remote branches are shown as well
-   */
-  protected JCheckBox myShowRemoteBranchesCheckBox;
-  /**
    * Preserve merges checkbox
    */
   private JCheckBox myPreserveMergesCheckBox;
@@ -164,10 +160,9 @@ public class GitRebaseDialog extends DialogWrapper {
     myInteractiveCheckBox.setSelected(mySettings.isInteractive());
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
     myShowTagsCheckBox.setSelected(mySettings.showTags());
-    myShowRemoteBranchesCheckBox.setSelected(mySettings.showRemoteBranches());
+
     setupBranches();
     overwriteOntoForCurrentBranch(mySettings);
-
     myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
 
     validateFields();
@@ -216,7 +211,6 @@ public class GitRebaseDialog extends DialogWrapper {
     mySettings.setInteractive(myInteractiveCheckBox.isSelected());
     mySettings.setPreserveMerges(myPreserveMergesCheckBox.isSelected());
     mySettings.setShowTags(myShowTagsCheckBox.isSelected());
-    mySettings.setShowRemoteBranches(myShowRemoteBranchesCheckBox.isSelected());
     String onto = StringUtil.nullize(GitUIUtil.getTextField(myOntoComboBox).getText(), true);
     if (onto != null && !onto.equals(myOriginalOntoBranch)) {
       mySettings.setOnto(onto);
@@ -271,8 +265,6 @@ public class GitRebaseDialog extends DialogWrapper {
         updateOntoFrom();
       }
     };
-    myShowRemoteBranchesCheckBox.addActionListener(showListener);
-    myShowTagsCheckBox.addActionListener(showListener);
     rootListener.actionPerformed(null);
     myGitRootComboBox.addActionListener(rootListener);
     myBranchComboBox.addActionListener(new ActionListener() {
@@ -312,12 +304,10 @@ public class GitRebaseDialog extends DialogWrapper {
       myFromComboBox.addItem(b);
       myOntoComboBox.addItem(b);
     }
-    if (myShowRemoteBranchesCheckBox.isSelected()) {
       for (GitBranch b : myRemoteBranches) {
         myFromComboBox.addItem(b);
         myOntoComboBox.addItem(b);
       }
-    }
     if (myShowTagsCheckBox.isSelected()) {
       for (GitTag t : myTags) {
         myFromComboBox.addItem(t);
