@@ -7,7 +7,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
-import java.io.OutputStreamWriter
+import java.io.Writer
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -32,7 +32,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
         else -> object : StringDataWriter() {
           override fun hasData(filter: DataWriterFilter) = dataWriter.hasData(filter)
 
-          override fun write(writer: OutputStreamWriter, lineSeparator: String, filter: DataWriterFilter?) {
+          override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
             val lineSeparatorWithIndent = "$lineSeparator    "
             writer.append("<application>").append(lineSeparator)
             writer.append("""  <component name="ProjectManager">""")

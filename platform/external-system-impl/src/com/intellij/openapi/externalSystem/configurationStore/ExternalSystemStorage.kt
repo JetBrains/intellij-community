@@ -40,7 +40,7 @@ internal class ExternalProjectFilteringStorage(fileSpec: String,
                                                storageManager: StateStorageManager,
                                                private val componentName: String,
                                                private val inProjectStorage: DirectoryBasedStorage) : ExternalProjectStorage(fileSpec, project, storageManager, rootElementName = null /* the only component per file */) {
-  private val filter = DataWriterFilter.requireAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
+  private val filter = DataWriterFilter.requireAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE, DataWriterFilter.ElementLevel.FIRST)
 
   override fun loadLocalData(): Element? {
     val externalData = super.loadLocalData()

@@ -15,14 +15,12 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.io.delete
 import com.intellij.util.loadElement
-import com.intellij.util.write
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
 import java.io.FileNotFoundException
 import java.io.OutputStream
-import java.io.OutputStreamWriter
-import java.nio.charset.StandardCharsets
+import java.io.Writer
 import java.nio.file.Path
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
@@ -218,11 +216,10 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
 private class XmlDataWriter(private val rootElementName: String?, private val elements: List<Element>, private val rootAttributes: Map<String, String>) : StringDataWriter() {
   override fun hasData(filter: DataWriterFilter): Boolean {
-    val elementFilter = filter.toElementFilter()
-    return elements.any { elementFilter.accept(it, 1) }
+    return elements.any { filter.hasData(it) }
   }
 
-  override fun write(writer: OutputStreamWriter, lineSeparator: String, filter: DataWriterFilter?) {
+  override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
     var lineSeparatorWithIndent = lineSeparator
     val hasRootElement = rootElementName != null
     if (hasRootElement) {
@@ -246,15 +243,13 @@ private class XmlDataWriter(private val rootElementName: String?, private val el
       writer.append('>')
     }
 
-    val elementFilter = filter?.toElementFilter()
-    val xmlOutputter = JDOMUtil.createOutputter(lineSeparatorWithIndent)
+    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter())
+    val namespaceStack = JbXmlOutputter.NamespaceStack()
     for (element in elements) {
-      if (elementFilter == null || elementFilter.accept(element, 1)) {
-        if (hasRootElement) {
-          writer.append(lineSeparatorWithIndent)
-        }
-        JDOMUtil.writeElement(element, writer, xmlOutputter)
+      if (hasRootElement) {
+        writer.append(lineSeparatorWithIndent)
       }
+      xmlOutputter.printElement(writer, element, 0, namespaceStack)
     }
 
     if (rootElementName != null) {
@@ -262,19 +257,6 @@ private class XmlDataWriter(private val rootElementName: String?, private val el
       writer.append("</").append(rootElementName).append('>')
     }
   }
-}
-
-private fun createWriterForStreamThatWillNotCloseUnderlyingStream(output: OutputStream): OutputStreamWriter {
-  return OutputStreamWriter(object : OutputStream() {
-    override fun write(b: Int) {
-      output.write(b)
-    }
-
-    override fun write(b: ByteArray?, off: Int, len: Int) {
-      output.write(b, off, len)
-    }
-    // close and flush not delegated because must be ignored
-  }, StandardCharsets.UTF_8)
 }
 
 private fun save(states: StateMap, newLiveStates: Map<String, Element>? = null): MutableList<Element>? {
@@ -366,17 +348,31 @@ enum class DataStateChanged {
 }
 
 interface DataWriterFilter {
+  enum class ElementLevel {
+    ZERO, FIRST
+  }
+
   companion object {
-    fun requireAttribute(name: String): DataWriterFilter {
+    fun requireAttribute(name: String, onLevel: ElementLevel): DataWriterFilter {
       return object: DataWriterFilter {
         override fun toElementFilter(): JDOMUtil.ElementOutputFilter {
-          return JDOMUtil.ElementOutputFilter { childElement, level -> level != 1 || childElement.getAttribute(name) != null }
+          return JDOMUtil.ElementOutputFilter { childElement, level -> level != onLevel.ordinal || childElement.getAttribute(name) != null }
+        }
+
+        override fun hasData(element: Element): Boolean {
+          val elementFilter = toElementFilter()
+          if (onLevel == ElementLevel.ZERO && elementFilter.accept(element, 0)) {
+            return true
+          }
+          return element.children.any { elementFilter.accept(it, 1) }
         }
       }
     }
   }
 
   fun toElementFilter(): JDOMUtil.ElementOutputFilter
+
+  fun hasData(element: Element): Boolean
 }
 
 interface DataWriter {
@@ -397,12 +393,12 @@ internal fun DataWriter?.writeTo(file: Path, lineSeparator: String = LineSeparat
 
 internal abstract class StringDataWriter : DataWriter {
   override final fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
-    createWriterForStreamThatWillNotCloseUnderlyingStream(output).use {
+    output.bufferedWriter().use {
       write(it, lineSeparator, filter)
     }
   }
 
-  internal abstract fun write(writer: OutputStreamWriter, lineSeparator: String, filter: DataWriterFilter?)
+  internal abstract fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?)
 }
 
 internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
@@ -414,12 +410,10 @@ internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator =
 // use ONLY for non-ordinal usages (default project, deprecated directoryBased storage)
 internal fun createDataWriterForElement(element: Element): DataWriter {
   return object: DataWriter {
-    override fun hasData(filter: DataWriterFilter): Boolean {
-      return filter.toElementFilter().accept(element, 1)
-    }
+    override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
 
     override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
-      element.write(output, lineSeparator, filter?.toElementFilter())
+      output.bufferedWriter().use { JbXmlOutputter(lineSeparator, filter?.toElementFilter()).output(element, it) }
     }
   }
 }
