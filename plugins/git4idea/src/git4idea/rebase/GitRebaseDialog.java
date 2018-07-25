@@ -365,7 +365,7 @@ public class GitRebaseDialog extends DialogWrapper {
         String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
         String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
         if (remote == null || mergeBranch == null) {
-          trackedBranch = null;
+          trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
         }
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
