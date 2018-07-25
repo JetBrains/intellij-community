@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn
 
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
+import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -11,11 +12,19 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.io.systemIndependentPath
+import org.hamcrest.CoreMatchers.allOf
+import org.hamcrest.CoreMatchers.nullValue
+import org.hamcrest.FeatureMatcher
+import org.hamcrest.Matcher
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.equalToIgnoringCase
 import org.jetbrains.annotations.NonNls
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
 import java.io.IOException
+import java.nio.file.Paths
 import java.util.*
 
 @NonNls
@@ -98,15 +107,12 @@ class SvnRenameTest : SvnTestCase() {
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
-    val changes = ArrayList(changeListManager.defaultChangeList.changes)
-    assertEquals(4, changes.size.toLong())
-    AbstractVcsTestCase.sortChanges(changes)
-    verifyChange(changes[0], "child", "childnew")
-    verifyChange(changes[1], "child" + File.separatorChar + "a.txt", "childnew" + File.separatorChar + "a.txt")
-    verifyChange(changes[2], "child" + File.separatorChar + "grandChild", "childnew" + File.separatorChar + "grandChild")
-    verifyChange(changes[3], "child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt",
-                 "childnew" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt")
-
+    assertChanges(
+      "child" to "childnew",
+      "child/a.txt" to "childnew/a.txt",
+      "child/grandChild" to "childnew/grandChild",
+      "child/grandChild/b.txt" to "childnew/grandChild/b.txt"
+    )
     // there is no such directory any more
     /*VirtualFile oldChild = myWorkingCopyDir.findChild("child");
     if (oldChild == null) {
@@ -177,16 +183,7 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(grandChild, myWorkingCopyDir)
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
-    val changes = ArrayList(changeListManager.defaultChangeList.changes)
-    assertEquals(listToString(changes), 2, changes.size.toLong())
-    AbstractVcsTestCase.sortChanges(changes)
-    verifyChange(changes[0], "child" + File.separatorChar + "grandChild", "grandChild")
-    verifyChange(changes[1], "child" + File.separatorChar + "grandChild" + File.separatorChar + "a.txt",
-                 "grandChild" + File.separatorChar + "a.txt")
-  }
-
-  private fun listToString(changes: List<Change>): String {
-    return "{" + StringUtil.join(changes, StringUtil.createToStringFunction(Change::class.java), ",") + "}"
+    assertChanges("child/grandChild" to "grandChild", "child/grandChild/a.txt" to "grandChild/a.txt")
   }
 
   // IDEADEV-19223
@@ -435,4 +432,24 @@ class SvnRenameTest : SvnTestCase() {
       packageDirectory
     }
   }
+
+  private fun assertChanges(vararg expected: Pair<String?, String?>) {
+    val changes = changeListManager.defaultChangeList.changes.toMutableList()
+    assertThat(changes, containsInAnyOrder(expected.map { changeMatcher(it) }))
+  }
+
+  private fun changeMatcher(paths: Pair<String?, String?>) = allOf(beforePathMatcher(paths.first), afterPathMatcher(paths.second))
+
+  private fun beforePathMatcher(beforePath: String?) =
+    object : FeatureMatcher<Change, String?>(pathMatcher(beforePath), "before path", "before path") {
+      override fun featureValueOf(actual: Change) = actual.beforeRevision?.file?.path
+    }
+
+  private fun afterPathMatcher(afterPath: String?) =
+    object : FeatureMatcher<Change, String?>(pathMatcher(afterPath), "after path", "after path") {
+      override fun featureValueOf(actual: Change) = actual.afterRevision?.file?.path
+    }
+
+  fun pathMatcher(path: String?): Matcher<in String?> = if (path == null) nullValue()
+  else equalToIgnoringCase(Paths.get(myWorkingCopyDir.path).resolve(toSystemDependentName(path)).systemIndependentPath)
 }
