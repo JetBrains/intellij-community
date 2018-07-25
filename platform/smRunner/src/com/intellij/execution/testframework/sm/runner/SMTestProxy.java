@@ -952,11 +952,6 @@ public class SMTestProxy extends AbstractTestProxy {
       return myRootLocationUrl;
     }
 
-    @Override
-    public String getRootLocation() {
-      return myRootLocationUrl;
-    }
-
     public ProcessHandler getHandler() {
       return myHandler;
     }
