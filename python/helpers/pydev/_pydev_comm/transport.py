@@ -56,6 +56,7 @@ class MultiplexedSocketReader(object):
 
     def start_reading(self):
         t = threading.Thread(target=self._read_forever)
+        t.setDaemon(True)
         t.start()
 
     def _read_forever(self):
