@@ -3,8 +3,8 @@ import struct
 import sys
 import threading
 
-from _jetbrains_thriftpy.thrift import TClient
-from _jetbrains_thriftpy.transport import TTransportBase, readall
+from _shaded_thriftpy.thrift import TClient
+from _shaded_thriftpy.transport import TTransportBase, readall
 from _pydev_comm.io import PipeIO
 
 REQUEST = 0

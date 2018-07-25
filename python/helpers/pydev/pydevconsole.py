@@ -256,7 +256,7 @@ def enable_thrift_logging():
     import logging
 
     # create logger
-    logger = logging.getLogger('_jetbrains_thriftpy')
+    logger = logging.getLogger('_shaded_thriftpy')
     logger.setLevel(logging.DEBUG)
 
     # create console handler and set level to debug

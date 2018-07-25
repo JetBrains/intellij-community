@@ -7,7 +7,7 @@ from .json import TJSONProtocol, TJSONProtocolFactory
 from .compact import TCompactProtocol, TCompactProtocolFactory
 from .multiplex import TMultiplexedProtocol, TMultiplexedProtocolFactory
 
-from _jetbrains_thriftpy._compat import PYPY, CYTHON
+from _shaded_thriftpy._compat import PYPY, CYTHON
 if not PYPY:
     # enable cython binary by default for CPython.
     if CYTHON:
