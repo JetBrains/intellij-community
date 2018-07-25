@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.waitFrame
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
@@ -93,42 +94,37 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   private fun completeFirstStart() {
+    findWelcomeFrame()?.close() ?: let {
       completeInstallation()
       acceptAgreement()
       acceptDataSharing()
       customizeIde()
       evaluateLicense(ideType.name, myRobot)
-      waitWelcomeFrameAndClose()
-  }
-
-  private val checkIsFrameFunction: (Frame) -> Boolean
-    get() {
-      return { frame ->
-        frame.javaClass.simpleName == "FlatWelcomeFrame"
-        && frame.isShowing
-        && frame.isEnabled
-      }
+      findWelcomeFrame()?.close()
     }
-
-  private fun waitWelcomeFrameAndClose() {
-    waitWelcomeFrame()
-    LOG.info("Closing Welcome Frame")
-    val welcomeFrame = Frame.getFrames().find(checkIsFrameFunction)
-    myRobot.close(welcomeFrame!!)
-    Pause.pause(object : Condition("Welcome Frame is gone") {
-      override fun test(): Boolean {
-        if (Frame.getFrames().any { checkIsFrameFunction(it) }) myRobot.close(welcomeFrame)
-        return false
-      }
-    }, Timeout.timeout(180, TimeUnit.SECONDS))
   }
 
-  private fun waitWelcomeFrame() {
+  private val checkIsWelcomeFramePredicate: (Frame) -> Boolean = { frame ->
+    frame.javaClass.simpleName == "FlatWelcomeFrame"
+    && frame.isShowing
+    && frame.isEnabled
+  }
+
+  private fun Frame.close() = myRobot.close(this)
+
+  private fun findWelcomeFrame(seconds: Int = 5): Frame? {
     LOG.info("Waiting for a Welcome Frame")
-    Pause.pause(object : Condition("Welcome Frame to show up") {
-      override fun test() = Frame.getFrames().any { checkIsFrameFunction(it) }
-    }, Timeout.timeout(180, TimeUnit.SECONDS))
+    return try {
+      waitUntil("Welcome Frame to show up", seconds) {
+        Frame.getFrames().any { checkIsWelcomeFramePredicate(it) }
+      }
+      Frame.getFrames().first { checkIsWelcomeFramePredicate(it) }
+    }
+    catch (e: WaitTimedOutError) {
+      null
+    }
   }
+
 
   private fun findPrivacyPolicyDialogOrLicenseAgreement(): JDialog {
     return GuiTestUtilKt.withPauseWhenNull(120) {
