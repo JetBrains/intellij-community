@@ -15,7 +15,7 @@
  */
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -39,6 +39,11 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -218,8 +223,8 @@ public class FSOperations {
       if (filter == null) {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
-      final FSCache fsCache = rd.canUseFileCache() ? context.getProjectDescriptor().getFSCache() : FSCache.NO_CACHE;
-      completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter, fsCache);
+      //final FSCache fsCache = rd.canUseFileCache() ? context.getProjectDescriptor().getFSCache() : FSCache.NO_CACHE;
+      completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), timestamps, forceMarkDirty, currentFiles, filter);
     }
 
     if (completelyMarkedDirty) {
@@ -238,41 +243,50 @@ public class FSOperations {
                                              final File file,
                                              @NotNull final Timestamps tsStorage,
                                              final boolean forceDirty,
-                                             @Nullable Set<File> currentFiles, @Nullable FileFilter filter, @NotNull FSCache fsCache) throws IOException {
-    BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
-    final File[] children = fsCache.getChildren(file);
-    if (children != null) { // is directory
-      boolean allMarkedDirty = true;
-      if (children.length > 0 && rootIndex.isDirectoryAccepted(file, rd)) {
-        for (File child : children) {
-          allMarkedDirty &= traverseRecursively(context, rd, round, child, tsStorage, forceDirty, currentFiles, filter, fsCache);
-        }
+                                             @Nullable Set<File> currentFiles, @Nullable FileFilter filter) throws IOException {
+
+    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
+    final Ref<Boolean> allFilesMarked = Ref.create(Boolean.TRUE);
+
+    Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        return rootIndex.isDirectoryAccepted(dir.toFile(), rd)? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
       }
-      return allMarkedDirty;
-    }
-    // is file
 
-    if (!rootIndex.isFileAccepted(file, rd)) {
-      return true;
-    }
-    if (filter != null && !filter.accept(file)) {
-      return false;
-    }
+      @Override
+      public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
+        final File _file = f.toFile();
+        if (!rootIndex.isFileAccepted(_file, rd)) { // ignored file
+          return FileVisitResult.CONTINUE;
+        }
+        if (filter != null && !filter.accept(_file)) {
+          allFilesMarked.set(Boolean.FALSE);
+        }
+        else {
+          boolean markDirty = forceDirty;
+          if (!markDirty) {
+            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != attrs.lastModifiedTime().toMillis();
+          }
+          if (markDirty) {
+            // if it is full project rebuild, all storages are already completely cleared;
+            // so passing null because there is no need to access the storage to clear non-existing data
+            final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
+            context.getProjectDescriptor().fsState.markDirty(context, round, _file, rd, marker, false);
+          }
+          if (currentFiles != null) {
+            currentFiles.add(_file);
+          }
+          if (!markDirty) {
+            allFilesMarked.set(Boolean.FALSE);
+          }
+        }
+        return FileVisitResult.CONTINUE;
+      }
 
-    boolean markDirty = forceDirty;
-    if (!markDirty) {
-      markDirty = tsStorage.getStamp(file, rd.getTarget()) != FileSystemUtil.lastModified(file);
-    }
-    if (markDirty) {
-      // if it is full project rebuild, all storages are already completely cleared;
-      // so passing null because there is no need to access the storage to clear non-existing data
-      final Timestamps marker = context.isProjectRebuild() ? null : tsStorage;
-      context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
-    }
-    if (currentFiles != null) {
-      currentFiles.add(file);
-    }
-    return markDirty;
+    });
+
+    return allFilesMarked.get();
   }
 
   public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
