@@ -19,6 +19,7 @@ class PythonCommunityPluginModules {
     "intellij.python.psi",
     "intellij.python.pydev",
     "intellij.python.community.impl",
+    "intellij.python.console",
   ]
   public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin.resources"
   static final List<String> PYCHARM_ONLY_PLUGIN_MODULES = [
