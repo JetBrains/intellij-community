@@ -66,7 +66,7 @@ public class ManageRepoDialog extends DialogWrapper {
       @Override
       public void run(AnActionButton button) {
         String url = Messages.showInputDialog("Please input repository URL", "Repository URL", null);
-        if (!repoModel.contains(url) && !StringUtil.isEmptyOrSpaces(url)) {
+        if (!StringUtil.isEmptyOrSpaces(url) && !repoModel.contains(url)) {
           repoModel.addElement(url);
           controller.addRepository(url);
         }

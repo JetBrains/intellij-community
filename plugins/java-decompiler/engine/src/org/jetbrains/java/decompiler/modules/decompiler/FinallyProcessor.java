@@ -321,7 +321,7 @@ public class FinallyProcessor {
 
       for (BasicBlock dest : lstSucc) {
         // break out
-        if (!setCopy.contains(dest) && dest != graph.getLast()) {
+        if (dest != graph.getLast() && !setCopy.contains(dest)) {
           // disable semaphore
           SimpleInstructionSequence seq = new SimpleInstructionSequence();
           seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);

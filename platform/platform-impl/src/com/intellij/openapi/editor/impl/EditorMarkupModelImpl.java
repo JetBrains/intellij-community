@@ -180,7 +180,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
     int visualY = myEditor.getLineHeight() * visualLine;
-    boolean isVisible = area.contains(area.x, visualY) && myWheelAccumulator == 0;
+    boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
     if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
       final Set<RangeHighlighter> highlighters = new THashSet<>();

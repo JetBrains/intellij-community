@@ -75,7 +75,7 @@ public class CatchAllStatement extends Statement {
     for (StatEdge edge : head.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
       Statement exc = edge.getDestination();
 
-      if (edge.getExceptions() == null && setHandlers.contains(exc) && exc.getLastBasicType() == LASTBASICTYPE_GENERAL) {
+      if (edge.getExceptions() == null && exc.getLastBasicType() == LASTBASICTYPE_GENERAL && setHandlers.contains(exc)) {
         List<StatEdge> lstSuccs = exc.getSuccessorEdges(STATEDGE_DIRECT_ALL);
         if (lstSuccs.isEmpty() || lstSuccs.get(0).getType() != StatEdge.TYPE_REGULAR) {
 
