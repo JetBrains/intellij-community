@@ -10,7 +10,7 @@ from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_comm.rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
 from pydev_console.protocol import PythonConsoleFrontendService, PythonConsoleBackendService
-from pydevconsole import enable_thrift_logging
+from pydevconsole import enable_thrift_logging, create_server_handler_factory
 
 try:
     xrange
@@ -222,15 +222,13 @@ class TestRunningCode(TestBase):
                 called_IPythonEditor[0] = (name, line)
                 return True
 
-        server_handler = RequestInputHandler()
-
         enable_thrift_logging()
 
         # here we start the test server
         server_socket = start_rpc_server_and_make_client(get_localhost(), 0,
                                                          PythonConsoleFrontendService,
                                                          PythonConsoleBackendService,
-                                                         server_handler)
+                                                         create_server_handler_factory(RequestInputHandler()))
 
         host, port = server_socket.getsockname()
 
