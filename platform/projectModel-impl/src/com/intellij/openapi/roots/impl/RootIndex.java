@@ -37,7 +37,7 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 import java.util.*;
 
 public class RootIndex {
-  public static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
+  static final Comparator<OrderEntry> BY_OWNER_MODULE = (o1, o2) -> {
     String name1 = o1.getOwnerModule().getName();
     String name2 = o2.getOwnerModule().getName();
     return name1.compareTo(name2);
@@ -54,8 +54,7 @@ public class RootIndex {
   private final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
 
-  // made public for Upsource
-  public RootIndex(@NotNull Project project) {
+  RootIndex(@NotNull Project project) {
     myProject = project;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -312,7 +311,7 @@ public class RootIndex {
     private MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
     private MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
 
-    public OrderEntryGraph(Project project, RootInfo rootInfo) {
+    OrderEntryGraph(Project project, RootInfo rootInfo) {
       myProject = project;
       myRootInfo = rootInfo;
       myAllRoots = myRootInfo.getAllRoots();
@@ -431,7 +430,6 @@ public class RootIndex {
       if (roots == null) {
         return Collections.emptyList();
       }
-      List<OrderEntry> result = new ArrayList<>();
       Stack<Node> stack = new Stack<>();
       for (VirtualFile root : roots) {
         Collection<Node> nodes = myRoots.get(root);
@@ -441,6 +439,7 @@ public class RootIndex {
       }
 
       Set<Node> seen = new HashSet<>();
+      List<OrderEntry> result = new ArrayList<>();
       while (!stack.isEmpty()) {
         Node node = stack.pop();
         if (seen.contains(node)) {
@@ -475,7 +474,7 @@ public class RootIndex {
       return result;
     }
 
-    public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+    Set<String> getDependentUnloadedModules(@NotNull Module module) {
       return myDependentUnloadedModulesCache.get(module);
     }
 
@@ -483,9 +482,9 @@ public class RootIndex {
      * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
      */
     private Set<String> collectDependentUnloadedModules(@NotNull Module module) {
-      ArrayDeque<OrderEntryGraph.Node> stack = new ArrayDeque<>();
       Node start = myGraph.myNodes.get(module);
       if (start == null) return Collections.emptySet();
+      Deque<Node> stack = new ArrayDeque<>();
       stack.push(start);
       Set<Node> seen = new HashSet<>();
       Set<String> result = null;
@@ -574,7 +573,7 @@ public class RootIndex {
   }
 
   @Nullable
-  protected static String getPackageNameForSubdir(@Nullable String parentPackageName, @NotNull String subdirName) {
+  private static String getPackageNameForSubdir(@Nullable String parentPackageName, @NotNull String subdirName) {
     if (parentPackageName == null) return null;
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
@@ -899,7 +898,7 @@ public class RootIndex {
   }
 
   @NotNull
-  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  Set<String> getDependentUnloadedModules(@NotNull Module module) {
     return getOrderEntryGraph().getDependentUnloadedModules(module);
   }
 
@@ -910,7 +909,7 @@ public class RootIndex {
   abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K, V> {
     protected final Object myLock = new Object();
 
-    protected SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
+    SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
       super(protectedQueueSize, probationalQueueSize);
     }
 
