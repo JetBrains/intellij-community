@@ -36,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,8 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.execution.SuggestUsingRunDashBoardUtil.promptUserToUseRunDashboard;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
@@ -104,6 +107,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         for (ConfigurationFromContext configuration : configurationsFromContext) {
           RunConfigurationGroupUtil.setGroupRunId(configuration.getConfiguration(), groupRunId);
         }
+
+        List<ConfigurationType> types = ContainerUtil.map(configurationsFromContext, context1 -> context1.getConfiguration().getType());
+        promptUserToUseRunDashboard(context.getProject(), types);
 
         for (ConfigurationFromContext configuration : configurationsFromContext) {
           perform(configuration, context);
