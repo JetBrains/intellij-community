@@ -143,7 +143,7 @@ open class GithubOpenInBrowserActionGroup
       }
 
       private fun openCommitInBrowser(path: GithubRepositoryPath, revisionHash: String) {
-        BrowserUtil.browse("https://$path/commit/$revisionHash")
+        BrowserUtil.browse("${path.toUrl()}/commit/$revisionHash")
       }
 
       private fun openFileInBrowser(project: Project,
@@ -186,13 +186,13 @@ open class GithubOpenInBrowserActionGroup
                                 relativePath: String,
                                 branch: String,
                                 path: GithubRepositoryPath): String? {
-        val builder = StringBuilder("https://")
+        val builder = StringBuilder()
 
         if (StringUtil.isEmptyOrSpaces(relativePath)) {
-          builder.append(path).append("/tree/").append(branch)
+          builder.append(path.toUrl()).append("/tree/").append(branch)
         }
         else {
-          builder.append(path).append("/blob/").append(branch).append('/').append(relativePath)
+          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(relativePath)
         }
 
         if (editor != null && editor.document.lineCount >= 1) {
