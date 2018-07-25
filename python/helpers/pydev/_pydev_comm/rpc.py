@@ -1,9 +1,9 @@
 import socket
 import threading
 
+from _pydev_comm.server import TSingleThreadedServer
 from _pydev_comm.transport import TSyncClient, open_transports_as_client, _create_client_server_transports
 from _shaded_thriftpy.protocol import TBinaryProtocolFactory
-from _shaded_thriftpy.server import TThreadedServer
 from _shaded_thriftpy.thrift import TProcessor
 
 
@@ -21,15 +21,8 @@ def start_rpc_server(server_transport, server_service, server_handler, proto_fac
                                                                                                             strict_write=False)):
     # setup server
     processor = TProcessor(server_service, server_handler)
-
-    # todo as `server.serve()` is excessive we may want to get rid of `server` as `TThreadedServer`
-    server = TThreadedServer(processor, server_transport, iprot_factory=proto_factory)
-
-    client = server.trans.accept()
-    t = threading.Thread(target=server.handle, args=(client,))
-    t.setDaemon(True)
-    t.start()
-
+    server = TSingleThreadedServer(processor, server_transport, daemon=True, iprot_factory=proto_factory)
+    server.serve()
     return server
 
 
@@ -61,11 +54,5 @@ def _rpc_server(server_socket, server_service, client_service, server_handler_fa
 
     # setup server
     processor = TProcessor(server_service, server_handler)
-
-    # todo as `server.serve()` is excessive we may want to get rid of `server` as `TThreadedServer`
-    server = TThreadedServer(processor, server_transport, iprot_factory=proto_factory)
-
-    client = server.trans.accept()
-    t = threading.Thread(target=server.handle, args=(client,))
-    t.setDaemon(True)
-    t.start()
+    server = TSingleThreadedServer(processor, server_transport, daemon=True, iprot_factory=proto_factory)
+    server.serve()
