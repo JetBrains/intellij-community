@@ -141,8 +141,6 @@ class StdIn(BaseStdIn):
     def readline(self, *args, **kwargs):
         # Ok, callback into the client to get the new input
         try:
-            # server = xmlrpclib.Server('http://%s:%s' % (self.host, self.client_port))
-            # requested_input = server.RequestInput()
             requested_input = self.rpc_client.requestInput()
             if not requested_input:
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
@@ -516,7 +514,6 @@ class BaseInterpreterInterface:
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         name = attr.split("\t")[-1]
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
-        # return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
         return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
@@ -586,7 +583,6 @@ class BaseInterpreterInterface:
                 var_objects.append((var_object, name))
 
         from _pydevd_bundle.pydevd_comm import ThriftGetValueAsyncThreadConsole
-        # @alexander here `self.get_server()` is `frame_accessor` parameter with
         t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
         t.start()
 
