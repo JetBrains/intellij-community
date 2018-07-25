@@ -5,7 +5,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConsta
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -256,12 +255,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
       return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
-    }
-
-    @Override
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override

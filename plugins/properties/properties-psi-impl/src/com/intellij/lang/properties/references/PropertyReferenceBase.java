@@ -29,7 +29,6 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -195,12 +194,6 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   @Nullable
   protected abstract List<PropertiesFile> getPropertiesFiles();
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
 
   private static boolean isProperty(PsiElement element) {
     if (element instanceof IProperty) {

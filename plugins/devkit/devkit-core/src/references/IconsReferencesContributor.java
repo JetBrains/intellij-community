@@ -197,12 +197,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor
               parent.setValue(fqn.substring(pckg.length()) + "." + newName);
               return parent.getValueElement();
             }
-
-            @NotNull
-            @Override
-            public Object[] getVariants() {
-              return EMPTY_ARRAY;
-            }
           }
         };
       }
@@ -301,12 +295,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           private PsiElement replace(String newElementName, String fqn, String packageName) {
             String newValue = fqn.substring(packageName.length()) + "." + newElementName;
             return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
-          }
-
-          @NotNull
-          @Override
-          public Object[] getVariants() {
-            return EMPTY_ARRAY;
           }
         }
       }), PsiReferenceRegistrar.HIGHER_PRIORITY);

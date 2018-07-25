@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.spi.SPIFileType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,12 +117,6 @@ public class SPIFile extends PsiFileBase {
       }
       return getElement();
     }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
   }
 
   private static class SPIFileName2PackageReference extends PsiReferenceBase<PsiFile> {
@@ -164,12 +157,6 @@ public class SPIFile extends PsiFileBase {
         }
       }
       return getElement();
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
   }
 }

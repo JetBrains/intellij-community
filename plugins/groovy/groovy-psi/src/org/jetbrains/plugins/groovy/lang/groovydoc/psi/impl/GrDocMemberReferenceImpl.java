@@ -169,11 +169,5 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return multiResolveImpl();
   }
 
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return PsiElement.EMPTY_ARRAY;
-  }
-
   protected abstract ResolveResult[] multiResolveImpl();
 }

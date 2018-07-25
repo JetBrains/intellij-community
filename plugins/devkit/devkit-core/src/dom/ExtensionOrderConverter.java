@@ -145,12 +145,6 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
 
     @NotNull
     @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @NotNull
-    @Override
     public String getUnresolvedMessagePattern() {
       return DevKitBundle.message("invalid.order.attribute.part", myOrderPart.trim());
     }

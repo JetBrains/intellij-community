@@ -3,7 +3,6 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,12 +73,6 @@ public class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAt
   @Override
   public String getPropertyName() {
     return myPropertyName;
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

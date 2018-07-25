@@ -67,9 +67,6 @@ public abstract class ReferenceBase implements PsiReference {
         return Comparing.equal(resolve(), element);
     }
 
-    @NotNull
-    public abstract Object[] getVariants();
-
     public boolean isSoft() {
         return true;
     }

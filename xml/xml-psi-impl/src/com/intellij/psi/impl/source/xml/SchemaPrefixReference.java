@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.xml.XmlExtension;
@@ -77,12 +76,6 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   @Override
   public SchemaPrefix resolve() {
     return myPrefix == null ? resolvePrefix(myElement, myName) : myPrefix;
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

@@ -457,12 +457,6 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
           }
 
           @Override
-          @NotNull
-          public Object[] getVariants() {
-            return EMPTY_ARRAY;
-          }
-
-          @Override
           public boolean isSoft() {
             return true;
           }

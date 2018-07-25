@@ -34,7 +34,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -248,12 +247,6 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       throw new IncorrectOperationException("Invalid operation");
-    }
-
-    @Override
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override

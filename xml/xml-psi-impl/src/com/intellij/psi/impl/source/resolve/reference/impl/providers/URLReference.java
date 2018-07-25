@@ -194,12 +194,6 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     return myElement.getManager().areElementsEquivalent(resolve(),element);
   }
 
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return EMPTY_ARRAY;
-  }
-
   public boolean isSchemaLocation() { return false; }
 
   @Override

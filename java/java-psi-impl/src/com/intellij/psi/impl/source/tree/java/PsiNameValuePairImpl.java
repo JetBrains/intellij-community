@@ -31,7 +31,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,12 +196,6 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       @Override
       public boolean isReferenceTo(@NotNull PsiElement element) {
         return element instanceof PsiMethod && element.equals(resolve());
-      }
-
-      @Override
-      @NotNull
-      public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       @Override

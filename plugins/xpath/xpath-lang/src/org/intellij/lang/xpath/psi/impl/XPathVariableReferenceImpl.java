@@ -22,7 +22,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
@@ -143,11 +142,6 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
             return context.isReferenceTo(element, this);
         }
         return false;
-    }
-
-    @NotNull
-    public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     public boolean isSoft() {

@@ -221,12 +221,6 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
     public boolean isSoft() {
       return false;
     }

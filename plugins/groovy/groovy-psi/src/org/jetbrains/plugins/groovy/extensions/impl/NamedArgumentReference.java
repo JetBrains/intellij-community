@@ -21,7 +21,6 @@ import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -70,12 +69,6 @@ public class NamedArgumentReference extends PsiPolyVariantReferenceBase<GrArgume
     }
 
     return super.handleElementRename(newElementName);
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @NotNull

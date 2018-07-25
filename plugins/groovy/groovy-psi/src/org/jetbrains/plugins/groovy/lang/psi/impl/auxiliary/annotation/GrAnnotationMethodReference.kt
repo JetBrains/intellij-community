@@ -7,7 +7,6 @@ import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import com.intellij.util.ArrayUtil
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
@@ -79,8 +78,6 @@ internal class GrAnnotationMethodReference(private val element: GrAnnotationName
   }
 
   override fun bindToElement(element: PsiElement): PsiElement = throw IncorrectOperationException("NYI")
-
-  override fun getVariants(): Array<Any> = ArrayUtil.EMPTY_OBJECT_ARRAY
 
   override fun isSoft(): Boolean = false
 }

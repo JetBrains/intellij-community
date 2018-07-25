@@ -214,12 +214,6 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     public PsiElement resolve() {
       return myResolveTo;
     }
-
-    @Override
-    @NotNull
-    public Object[] getVariants() {
-      return EMPTY_ARRAY;
-    }
   }
 
   @Override

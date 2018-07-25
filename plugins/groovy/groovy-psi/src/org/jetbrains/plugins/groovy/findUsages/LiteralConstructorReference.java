@@ -181,10 +181,4 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     }
     return constructorCandidates;
   }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return EMPTY_ARRAY;
-  }
 }
