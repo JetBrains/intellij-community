@@ -72,7 +72,7 @@ private fun <T> Lifetimed.updater(name: String, update: suspend (T) -> Unit): Ch
     val channel = boundedChannel<T>(0, lifetime)
 
     launch(ApplicationUiDispatch.contextWithExplicitLog, start = CoroutineStart.UNDISPATCHED) {
-        channel.forEach {
+        channel.consumeEach {
             try {
                 update(it)
             }
