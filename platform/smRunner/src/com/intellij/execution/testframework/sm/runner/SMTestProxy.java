@@ -263,7 +263,9 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myLocationMapCachedValue == null) {
       myLocationMapCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
         Map<GlobalSearchScope, Ref<Location>> value = ContainerUtil.newConcurrentMap(1);
-        // we need `put` here to has actual counts of modification tracker AFTER `getLocation` call
+        // In some implementations calling `SMTestLocator.getLocation` might update the `ModificationTracker` from
+        // `SMTestLocator.getLocationCacheModificationTracker` call.
+        // Thus, calculate the first result in advance to cache with the updated modification tracker.
         value.put(searchScope, Ref.create(getLocation(project, searchScope, myLocationUrl)));
         return CachedValueProvider.Result.create(value, myLocator.getLocationCacheModificationTracker(project));
       }, false);
