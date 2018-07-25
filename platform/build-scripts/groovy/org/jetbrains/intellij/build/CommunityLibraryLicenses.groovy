@@ -100,6 +100,8 @@ class CommunityLibraryLicenses {
                        url: "http://coverage.readthedocs.org/"),
     new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "1.2.4", license: "MIT License",
                        url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
+    new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "3.0.2", license: "MIT License",
+                       url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
     new LibraryLicense(name: "Cucumber-Groovy", libraryName: "cucumber-groovy", version: "1.2.4", license: "MIT License",
                        url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
     new LibraryLicense(name: "Cucumber-Java", libraryName: "cucumber-java", version: "1.2.4", license: "MIT License",
