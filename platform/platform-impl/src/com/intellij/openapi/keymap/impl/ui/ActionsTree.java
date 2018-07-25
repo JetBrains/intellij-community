@@ -569,7 +569,7 @@ public class ActionsTree {
         }
         else if (userObject instanceof QuickList) {
           QuickList list = (QuickList)userObject;
-          icon = AllIcons.Actions.QuickList;
+          icon = null; // AllIcons.Actions.QuickList;
           text = list.getName();
 
           changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);

@@ -395,7 +395,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void perform() {
       // TODO: This setVisible() is necessary because MoreXAction shows "Loading..." text when disabled
       myMore500Action.setVisible(false);
       myMore100Action.setEnabled(false);

@@ -144,6 +144,7 @@ public class InvokeCompletion extends ActionOnFile {
     LookupElement item = env.generateValue(Generator.sampledFrom(items), null);
     env.logMessage("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
 
+    lookup.setCurrentItem(item);
     if (LookupEvent.isSpecialCompletionChar(completionChar)) {
       ((LookupImpl)lookup).finishLookup(completionChar, item);
     } else {

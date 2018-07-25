@@ -809,7 +809,6 @@ class Foo {{
     Expression expr = new EmptyExpression() {
       @Override
       LookupElement[] calculateLookupItems(ExpressionContext context) {
-        LookupElement[] res = new LookupElement[1]
         def finishTemplateHandler = new InsertHandler<LookupElement>() {
           @Override
           void handleInsert(InsertionContext insertCtx, LookupElement item) {
@@ -820,7 +819,7 @@ class Foo {{
             stateRef.considerNextTabOnLookupItemSelected(item)
           }
         }
-        return res[0] = LookupElementBuilder.create("com").withInsertHandler(finishTemplateHandler)
+        return LookupElementBuilder.create("com").withInsertHandler(finishTemplateHandler) as LookupElement[]
       }
     }
     template.addVariable('PKG', expr, true)

@@ -569,7 +569,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     AnActionEvent event = AnActionEvent.createFromAnAction(changeAction, null, ActionPlaces.UNKNOWN, dataContext);
     changeAction.update(event);
     panel.revalidate();
-    if (!editor) myResetRunnables.add(() -> changeAction.update(null));
+    if (!editor) myResetRunnables.add(() -> changeAction.update(event));
     return panel;
   }
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.xmlb.annotations.Property;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@Property(assertIfNoBindings = false)
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
 
@@ -41,7 +39,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * If you want to change suppression id you have to define it in XML as well.
-   * 
+   *
    * <p>Inspection tool ID is a descriptive name to be used in "suppress" comments and annotations.
    * <p>It must satisfy {@link #VALID_ID_PATTERN} regexp pattern.
    * <p>If not defined {@link #getShortName()} is used as tool ID.

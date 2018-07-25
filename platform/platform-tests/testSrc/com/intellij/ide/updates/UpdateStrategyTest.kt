@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
@@ -29,15 +29,15 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `patch exclusions`() {
-    val result = check("IU-145.258", ChannelStatus.RELEASE, """
+    val channels = """
       <channel id="IDEA_Release" status="release" licensing="release">
         <build number="145.597" version="2016.1.1">
           <patch from="145.596"/>
           <patch from="145.258" exclusions="win,mac,unix"/>
         </build>
-      </channel>""")
-    assertNotNull(result.findPatchForBuild(BuildNumber.fromString("145.596")))
-    assertNull(result.findPatchForBuild(BuildNumber.fromString("145.258")))
+      </channel>"""
+    assertNotNull(check("IU-145.596", ChannelStatus.RELEASE, channels).patch)
+    assertNull(check("IU-145.258", ChannelStatus.RELEASE, channels).patch)
   }
 
   @Test fun `order of builds does not matter`() {

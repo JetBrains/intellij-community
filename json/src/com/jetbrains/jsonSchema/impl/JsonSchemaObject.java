@@ -10,14 +10,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -50,7 +48,7 @@ public class JsonSchemaObject {
   @Nullable private Object myDefault;
   @Nullable private String myRef;
   @Nullable private String myFormat;
-  @Nullable private List<JsonSchemaType> myTypeVariants;
+  @Nullable private Set<JsonSchemaType> myTypeVariants;
   @Nullable private Number myMultipleOf;
   @Nullable private Number myMaximum;
   private boolean myExclusiveMaximum;
@@ -123,7 +121,7 @@ public class JsonSchemaObject {
     if (other.myDefault != null) myDefault = other.myDefault;
     if (other.myRef != null) myRef = other.myRef;
     if (other.myFormat != null) myFormat = other.myFormat;
-    myTypeVariants = copyList(myTypeVariants, other.myTypeVariants);
+    myTypeVariants = copySet(myTypeVariants, other.myTypeVariants);
     if (other.myMultipleOf != null) myMultipleOf = other.myMultipleOf;
     if (other.myMaximum != null) myMaximum = other.myMaximum;
     if (other.myExclusiveMaximumNumber != null) myExclusiveMaximumNumber = other.myExclusiveMaximumNumber;
@@ -186,7 +184,16 @@ public class JsonSchemaObject {
   @Nullable
   private static <T> List<T> copyList(@Nullable List<T> target, @Nullable List<T> source) {
     if (source == null || source.isEmpty()) return target;
-    if (target == null) target = new ArrayList<>();
+    if (target == null) target = ContainerUtil.newArrayListWithCapacity(source.size());
+    target.addAll(source);
+    return target;
+  }
+
+  @Nullable
+  private static <T> Set<T> copySet(@Nullable Set<T> target, @Nullable Set<T> source) {
+    if (source == null || source.isEmpty()) return target;
+    if (target != null && source.containsAll(target)) return target;
+    if (target == null) target = ContainerUtil.newHashSet(source.size());
     target.addAll(source);
     return target;
   }
@@ -194,7 +201,7 @@ public class JsonSchemaObject {
   @Nullable
   private static <K, V> Map<K, V> copyMap(@Nullable Map<K, V> target, @Nullable Map<K, V> source) {
     if (source == null || source.isEmpty()) return target;
-    if (target == null) target = new HashMap<>();
+    if (target == null) target = ContainerUtilRt.newHashMap(source.size());
     target.putAll(source);
     return target;
   }
@@ -548,11 +555,11 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  public List<JsonSchemaType> getTypeVariants() {
+  public Set<JsonSchemaType> getTypeVariants() {
     return myTypeVariants;
   }
 
-  public void setTypeVariants(@Nullable List<JsonSchemaType> typeVariants) {
+  public void setTypeVariants(@Nullable Set<JsonSchemaType> typeVariants) {
     myTypeVariants = typeVariants;
   }
 
@@ -782,7 +789,7 @@ public class JsonSchemaObject {
     JsonSchemaType type = getType();
     if (type != null) return type.getDescription();
 
-    List<JsonSchemaType> possibleTypes = getTypeVariants();
+    Set<JsonSchemaType> possibleTypes = getTypeVariants();
 
     String description = getTypesDescription(shortDesc, possibleTypes);
     if (description != null) return description;
@@ -796,9 +803,9 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  static String getTypesDescription(boolean shortDesc, @Nullable List<JsonSchemaType> possibleTypes) {
+  static String getTypesDescription(boolean shortDesc, @Nullable Collection<JsonSchemaType> possibleTypes) {
     if (possibleTypes == null || possibleTypes.size() == 0) return null;
-    if (possibleTypes.size() == 1) return possibleTypes.get(0).getDescription();
+    if (possibleTypes.size() == 1) return possibleTypes.iterator().next().getDescription();
     if (possibleTypes.contains(JsonSchemaType._any)) return JsonSchemaType._any.getDescription();
 
     Stream<String> typeDescriptions = possibleTypes.stream().map(t -> t.getDescription()).distinct().sorted();

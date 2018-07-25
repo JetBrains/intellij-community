@@ -102,6 +102,10 @@ public class AllIcons {
     public static final Icon Dump = IconLoader.getIcon("/actions/dump.svg"); // 16x16
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.svg"); // 16x16
     public static final Icon EditSource = IconLoader.getIcon("/actions/editSource.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use J2EEIcons.ErDiagram */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon ErDiagram = IconLoader.getIcon("/actions/erDiagram.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Remove */
@@ -233,6 +237,10 @@ public class AllIcons {
     public static final Icon Properties = IconLoader.getIcon("/actions/properties.svg"); // 16x16
     public static final Icon QuickfixBulb = IconLoader.getIcon("/actions/quickfixBulb.svg"); // 16x16
     public static final Icon QuickfixOffBulb = IconLoader.getIcon("/actions/quickfixOffBulb.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon QuickList = IconLoader.getIcon("/actions/quickList.png"); // 16x16
     public static final Icon RealIntentionBulb = IconLoader.getIcon("/actions/realIntentionBulb.svg"); // 16x16
     public static final Icon RealIntentionOffBulb = IconLoader.getIcon("/actions/realIntentionOffBulb.png"); // 16x16
@@ -242,7 +250,11 @@ public class AllIcons {
     public static final Icon RemoveMulticaret = IconLoader.getIcon("/actions/RemoveMulticaret.svg"); // 16x16
     public static final Icon Replace = IconLoader.getIcon("/actions/replace.svg"); // 16x16
     public static final Icon Rerun = IconLoader.getIcon("/actions/rerun.svg"); // 16x16
-    public static final Icon Reset_to_default = IconLoader.getIcon("/actions/reset-to-default.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Rollback */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Reset_to_default = IconLoader.getIcon("/actions/rollback.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Rollback */
     @SuppressWarnings("unused")
@@ -266,7 +278,11 @@ public class AllIcons {
     public static final Icon ShortcutFilter = IconLoader.getIcon("/actions/shortcutFilter.svg"); // 16x16
     public static final Icon Show = IconLoader.getIcon("/actions/show.svg"); // 16x16
     public static final Icon ShowAsTree = IconLoader.getIcon("/actions/showAsTree.svg"); // 16x16
-    public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/showChangesOnly.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/preview.svg"); // 16x16
     public static final Icon ShowHiddens = IconLoader.getIcon("/actions/showHiddens.svg"); // 16x16
     public static final Icon ShowImportStatements = IconLoader.getIcon("/actions/showImportStatements.svg"); // 16x16
     public static final Icon ShowReadAccess = IconLoader.getIcon("/actions/showReadAccess.svg"); // 16x16
@@ -309,7 +325,7 @@ public class AllIcons {
     public static final Icon TraceInto = IconLoader.getIcon("/actions/traceInto.svg"); // 16x16
     public static final Icon TraceOver = IconLoader.getIcon("/actions/traceOver.svg"); // 16x16
     public static final Icon Undo = IconLoader.getIcon("/actions/undo.svg"); // 16x16
-    public static final Icon Uninstall = IconLoader.getIcon("/actions/uninstall.png"); // 16x16
+    public static final Icon Uninstall = IconLoader.getIcon("/actions/uninstall.svg"); // 16x16
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.svg"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
 
@@ -820,8 +836,16 @@ public class AllIcons {
     public static final Icon Filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon FitContent = IconLoader.getIcon("/general/fitContent.svg"); // 16x16
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
-    public static final Icon Gear = IconLoader.getIcon("/general/gear.png"); // 21x16
-    public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 21x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.GearPlain */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Gear = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 16x16
     public static final Icon GearPlain = IconLoader.getIcon("/general/gearPlain.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Welcome.FromVCS */

@@ -13,7 +13,7 @@ import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 
 abstract class AbstractLanguageInjectionTestCase : LightCodeInsightFixtureTestCase() {
 
-  private val injectionTestFixture by lazy { InjectionTestFixture(myFixture) }
+  private val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
 
   fun assertInjectedLangAtCaret(lang: String?) {
     injectionTestFixture.assertInjectedLangAtCaret(lang)

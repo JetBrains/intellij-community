@@ -42,6 +42,10 @@ public class CloseAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    perform();
+  }
+
+  public void perform() {
     final RunContentDescriptor contentDescriptor = getContentDescriptor();
     if (contentDescriptor == null) {
       return;

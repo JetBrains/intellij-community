@@ -62,6 +62,10 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@Nullable AnActionEvent e) {
     Project project = e != null ? e.getProject() : null;
+    perform(project);
+  }
+
+  public void perform(Project project) {
     new Task.Modal(project, "Looking for Available JDKs", true) {
       private JdkBundleList myBundleList;
       private File myConfigFile;

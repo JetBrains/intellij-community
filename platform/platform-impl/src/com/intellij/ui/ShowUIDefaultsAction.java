@@ -48,6 +48,11 @@ import java.util.stream.Collectors;
 public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
+    final Project project = getEventProject(e);
+    perform(project);
+  }
+
+  public void perform(Project project) {
     final UIDefaults defaults = UIManager.getDefaults();
     Enumeration keys = defaults.keys();
     final Object[][] data = new Object[defaults.size()][2];
@@ -61,7 +66,6 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
     Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(o1[0 ].toString(), o2[0].toString()));
 
-    final Project project = getEventProject(e);
     new DialogWrapper(project) {
       {
         setTitle("Edit LaF Defaults");
@@ -200,7 +204,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       private @Nullable Integer editNumber(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(), "Enter new value for " + key, "Number Editor", null, value,
-                                   new InputValidator() {
+                                                   new InputValidator() {
                                      @Override
                                      public boolean checkInput(String inputString) {
                                        try {
