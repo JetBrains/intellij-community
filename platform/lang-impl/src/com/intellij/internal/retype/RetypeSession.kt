@@ -2,6 +2,7 @@
 package com.intellij.internal.retype
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
@@ -10,6 +11,7 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
 import com.intellij.internal.performance.currentLatencyRecordKey
@@ -47,6 +49,7 @@ class RetypeSession(
   private var completedChars = 0
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+  private val oldOptimize = CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly
   var startNextCallback: (() -> Unit)? = null
   private val disposeLock = Any()
 
@@ -72,6 +75,7 @@ class RetypeSession(
       SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
     }
+    CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
     queueNext()
   }
 
@@ -87,6 +91,8 @@ class RetypeSession(
       SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = oldSelectAutopopup
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldAddUnambiguous
     }
+    CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = oldOptimize
+
     currentLatencyRecordKey?.details = "typed $typedChars chars, completed $completedChars chars"
     currentLatencyRecordKey = null
     if (startNext) {
@@ -123,6 +129,8 @@ class RetypeSession(
       }
       editor.caretModel.moveToOffset(pos)
     }
+
+    IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
     if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       TemplateManager.getInstance(project).finishTemplate(editor)

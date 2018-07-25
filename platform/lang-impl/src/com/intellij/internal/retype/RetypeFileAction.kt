@@ -3,6 +3,7 @@ package com.intellij.internal.retype
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
+import com.intellij.internal.performance.latencyMap
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -32,13 +33,14 @@ class RetypeFileAction : AnAction() {
       existingSession.stop(false)
     }
     else {
-      val retypeOptionsDialog = RetypeOptionsDialog(project, editor != null)
+      val retypeOptionsDialog = RetypeOptionsDialog(project, editor)
       if (!retypeOptionsDialog.showAndGet()) return
       if (retypeOptionsDialog.isRetypeCurrentFile) {
         val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay)
         session.start()
       }
       else {
+        latencyMap.clear()
         val queue = RetypeQueue(project, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay)
         if (!collectSizeSampledFiles(project,
                                      retypeOptionsDialog.retypeExtension.removePrefix("."),
