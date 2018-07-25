@@ -5,10 +5,10 @@ from __future__ import absolute_import
 import contextlib
 import warnings
 
-from _jetbrains_thriftpy.protocol import TBinaryProtocolFactory
-from _jetbrains_thriftpy.server import TThreadedServer
-from _jetbrains_thriftpy.thrift import TProcessor, TClient
-from _jetbrains_thriftpy.transport import (
+from _shaded_thriftpy.protocol import TBinaryProtocolFactory
+from _shaded_thriftpy.server import TThreadedServer
+from _shaded_thriftpy.thrift import TProcessor, TClient
+from _shaded_thriftpy.transport import (
     TBufferedTransportFactory,
     TServerSocket,
     TSocket,

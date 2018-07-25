@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import struct
 from io import BytesIO
 
-from _jetbrains_thriftpy._compat import CYTHON
+from _shaded_thriftpy._compat import CYTHON
 from .. import TTransportBase, readall
 from ..buffered import TBufferedTransport
 

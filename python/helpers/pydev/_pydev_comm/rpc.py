@@ -1,9 +1,9 @@
 import socket
 import threading
 
-from _jetbrains_thriftpy.protocol import TBinaryProtocolFactory
-from _jetbrains_thriftpy.server import TThreadedServer
-from _jetbrains_thriftpy.thrift import TProcessor
+from _shaded_thriftpy.protocol import TBinaryProtocolFactory
+from _shaded_thriftpy.server import TThreadedServer
+from _shaded_thriftpy.thrift import TProcessor
 from _pydev_comm.transport import TSyncClient, open_transports_as_client, _create_client_server_transports
 
 

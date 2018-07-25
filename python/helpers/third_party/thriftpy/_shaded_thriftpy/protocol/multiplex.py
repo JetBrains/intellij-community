@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from _jetbrains_thriftpy.thrift import TMultiplexedProcessor, TMessageType
+from _shaded_thriftpy.thrift import TMultiplexedProcessor, TMessageType
 
 
 class TMultiplexedProtocol(object):

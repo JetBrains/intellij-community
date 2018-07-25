@@ -1,10 +1,10 @@
 import os
 
-import _jetbrains_thriftpy
+import _shaded_thriftpy
 
 # dynamically import console.thrift classes into `console_thrift` module
-_console_thrift = _jetbrains_thriftpy.load(os.path.join(os.path.dirname(os.path.realpath(__file__)), "console.thrift"),
-                                           module_name="console_thrift")
+_console_thrift = _shaded_thriftpy.load(os.path.join(os.path.dirname(os.path.realpath(__file__)), "console.thrift"),
+                                        module_name="console_thrift")
 
 CompletionOption = _console_thrift.CompletionOption
 CompletionOptionType = _console_thrift.CompletionOptionType

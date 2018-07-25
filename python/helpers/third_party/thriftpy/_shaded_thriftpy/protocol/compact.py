@@ -9,7 +9,7 @@ from .exc import TProtocolException
 from ..thrift import TException
 from ..thrift import TType
 
-from _jetbrains_thriftpy._compat import PY3
+from _shaded_thriftpy._compat import PY3
 
 CLEAR = 0
 FIELD_WRITE = 1
