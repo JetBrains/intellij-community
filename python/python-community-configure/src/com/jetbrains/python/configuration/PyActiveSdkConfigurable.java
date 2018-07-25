@@ -253,7 +253,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkSettingsWereModified = false;
     final Sdk selectedSdk = getSelectedSdk();
 
-    if (myInitialSdkSet.contains(selectedSdk) && selectedSdk != null) {
+    if (selectedSdk != null && myInitialSdkSet.contains(selectedSdk)) {
       PythonSdkUpdater.updateOrShowError(selectedSdk, null, myProject, null);
     }
 
