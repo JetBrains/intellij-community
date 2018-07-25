@@ -16,43 +16,55 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 import static java.util.Collections.emptyList;
 
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
   private final Invoker invoker = new Invoker.BackgroundThread(this);
+  private final ProjectFileNodeUpdater updater;
   private final ProjectNode root;
 
   public ProjectFileTreeModel(@NotNull Project project) {
     root = new ProjectNode(project);
-    new ProjectFileListener(project, invoker) {
+    updater = new ProjectFileNodeUpdater(project, invoker) {
       @Override
-      protected void updateFromRoot() {
-        root.valid = false; // need to reload content roots
-        pathChanged(null);
-      }
-
-      @Override
-      protected void updateFromFile(@NotNull VirtualFile file, @NotNull AreaInstance area) {
-        root.children.stream().filter(node -> node.contains(file, area, false)).forEach(node -> {
-          if (node.invalidate(file) && node.valid && root.valid) {
-            node.invalidateLater(invoker, ProjectFileTreeModel.this::pathChanged);
+      protected void update(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+        boolean filtered = root.filter != null;
+        SmartHashSet<Node> nodes = fromRoot || filtered ? null : new SmartHashSet<>();
+        root.children.forEach(root -> root.invalidateChildren(node -> {
+          if (!updatedFiles.contains(node.file)) return true;
+          if (filtered) node.resetParentVisibility();
+          if (nodes == null) return false;
+          Node n = node.file.isDirectory() ? node : node.parent;
+          if (n == null) return false;
+          for (Node p = n.parent; p != null; p = p.parent) {
+            if (nodes.contains(p)) return false;
           }
-        });
+          nodes.add(n);
+          return false;
+        }));
+        if (nodes != null) {
+          nodes.forEach(node -> {
+            TreePath path = pathToCustomNode(node, child -> child.parent);
+            if (path != null) pathChanged(path);
+          });
+        }
+        else {
+          if (fromRoot) root.valid = false; // need to reload content roots
+          pathChanged(null);
+        }
       }
     };
   }
@@ -146,8 +158,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     onValidThread(() -> {
       if (root.showModules == showModules) return;
       root.showModules = showModules;
-      root.valid = false; // need to reload content roots
-      pathChanged(null);
+      updater.updateFromRoot();
     });
   }
 
@@ -255,8 +266,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
         }
       }
       if (collector != null) collector.get().forEach(file -> list.add(mapper.apply(file, file)));
-      // invalidate all changed file nodes without notifications
-      list.forEach(node -> node.invalidateNow(null));
       return list;
     }
   }
@@ -333,9 +342,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
 
   private static class RootNode extends FileNode {
-    final AtomicLong counter = new AtomicLong();
-    final List<VirtualFile> accumulator = new SmartList<>();
-
     RootNode(@NotNull VirtualFile file, @NotNull Object id) {
       super(file, id);
     }
@@ -343,63 +349,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     @Override
     public String toString() {
       return file.getPath();
-    }
-
-    boolean invalidate(VirtualFile file) {
-      List<VirtualFile> list = accumulator;
-      if (!list.isEmpty()) {
-        for (VirtualFile ancestor : list) {
-          if (isAncestor(ancestor, file, false)) {
-            return false; // the file or its parent is already added
-          }
-        }
-        Iterator<VirtualFile> iterator = list.iterator();
-        while (iterator.hasNext()) {
-          if (isAncestor(file, iterator.next(), false)) {
-            iterator.remove(); // remove all children of the file
-          }
-        }
-      }
-      list.add(file);
-      return true;
-    }
-
-    void invalidateLater(@NotNull Invoker invoker, @NotNull Consumer<? super TreePath> consumer) {
-      long count = counter.incrementAndGet();
-      invoker.invokeLater(() -> {
-        // is this request still actual after 10 ms?
-        if (count == counter.get()) {
-          ProjectNode parent = findParent(ProjectNode.class);
-          if (parent != null && !parent.project.isDisposed()) {
-            List<FileNode> list = new SmartList<>();
-            invalidateNow(node -> list.add(node));
-            if (parent.filter == null) {
-              for (FileNode node : list) {
-                TreePath path = pathToCustomNode((Node)node, child -> child.parent);
-                if (path != null) consumer.accept(path);
-              }
-            }
-            else if (!list.isEmpty()) {
-              list.forEach(Node::resetParentVisibility);
-              consumer.accept(null);
-            }
-          }
-        }
-      }, 10);
-    }
-
-    void invalidateNow(Consumer<? super FileNode> consumer) {
-      List<VirtualFile> list = accumulator;
-      if (!list.isEmpty()) {
-        HashMap<VirtualFile, VirtualFile> map = new HashMap<>();
-        list.forEach(file -> map.put(file, file));
-        list.clear();
-        invalidateChildren(node -> {
-          if (!map.containsKey(node.file)) return true;
-          if (consumer != null) consumer.accept(node);
-          return false;
-        });
-      }
     }
   }
 }
