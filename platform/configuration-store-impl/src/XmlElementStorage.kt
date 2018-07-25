@@ -224,7 +224,8 @@ private class XmlDataWriter(private val rootElementName: String?, private val el
 
   override fun write(writer: OutputStreamWriter, lineSeparator: String, filter: DataWriterFilter?) {
     var lineSeparatorWithIndent = lineSeparator
-    if (rootElementName != null) {
+    val hasRootElement = rootElementName != null
+    if (hasRootElement) {
       lineSeparatorWithIndent += "  "
       writer.append('<').append(rootElementName)
       for (entry in rootAttributes) {
@@ -243,13 +244,15 @@ private class XmlDataWriter(private val rootElementName: String?, private val el
       }
 
       writer.append('>')
-      writer.append(lineSeparatorWithIndent)
     }
 
     val elementFilter = filter?.toElementFilter()
     val xmlOutputter = JDOMUtil.createOutputter(lineSeparatorWithIndent)
     for (element in elements) {
       if (elementFilter == null || elementFilter.accept(element, 1)) {
+        if (hasRootElement) {
+          writer.append(lineSeparatorWithIndent)
+        }
         JDOMUtil.writeElement(element, writer, xmlOutputter)
       }
     }
