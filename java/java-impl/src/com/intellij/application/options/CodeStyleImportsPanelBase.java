@@ -27,6 +27,8 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
@@ -34,7 +36,7 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
   private JCheckBox myCbUseFQClassNames;
   private JCheckBox myCbUseSingleClassImports;
-  private JCheckBox myCbInsertInnerClassImports;
+  protected JCheckBox myCbInsertInnerClassImports;
   private JTextField myClassCountField;
   private JTextField myNamesCountField;
   private JBTable myPackageTable;
@@ -185,7 +187,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
 
     return isModified;
   }
-
   private void stopTableEditing() {
     TableUtil.stopEditing(myImportLayoutPanel.getImportLayoutTable());
     TableUtil.stopEditing(myPackageTable);

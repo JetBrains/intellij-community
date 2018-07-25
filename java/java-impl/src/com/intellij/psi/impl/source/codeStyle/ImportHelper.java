@@ -478,7 +478,7 @@ public class ImportHelper{
 
     if (useOnDemand &&
         refClass.getContainingClass() != null &&
-        mySettings.INSERT_INNER_CLASS_IMPORTS &&
+        mySettings.isInsertInnerClassImportsFor(PsiNameHelper.getShortClassName(className)) &&
         containsInCurrentPackage(file, curRefClass)) {
       return false;
     }
