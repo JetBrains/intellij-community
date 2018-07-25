@@ -37,7 +37,10 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     renameFileInCommand(a, "b.txt")
-    runAndVerifyStatusSorted("A + b.txt", "D a.txt")
+    runAndVerifyStatus(
+      "D a.txt", "> moved to b.txt",
+      "A + b.txt", "> moved from a.txt"
+    )
   }
 
   // IDEADEV-18844
@@ -49,7 +52,11 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(a, "aOld.txt")
     renameFileInCommand(aNew, "a.txt")
-    runAndVerifyStatusSorted("A + aOld.txt", "D aNew.txt", "R + a.txt")
+    runAndVerifyStatus(
+      "R + a.txt", "> moved to aOld.txt", "> moved from aNew.txt",
+      "D aNew.txt", "> moved to a.txt",
+      "A + aOld.txt", "> moved from a.txt"
+    )
   }
 
   // IDEADEV-16251
@@ -69,7 +76,10 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(a, "b.txt")
     renameFileInCommand(a, "c.txt")
-    runAndVerifyStatusSorted("A + c.txt", "D a.txt")
+    runAndVerifyStatus(
+      "D a.txt", "> moved to c.txt",
+      "A + c.txt", "> moved from a.txt"
+    )
   }
 
   // IDEADEV-15876
@@ -78,9 +88,13 @@ class SvnRenameTest : SvnTestCase() {
     val child = prepareDirectoriesForRename()
 
     renameFileInCommand(child, "childnew")
-    runAndVerifyStatusSorted("A + childnew", "D child", "D child/a.txt",
-                             "D child/grandChild",
-                             "D child/grandChild/b.txt")
+    runAndVerifyStatus(
+      "D child", "> moved to childnew",
+      "D child/a.txt",
+      "D child/grandChild",
+      "D child/grandChild/b.txt",
+      "A + childnew", "> moved from child"
+    )
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
@@ -223,10 +237,15 @@ class SvnRenameTest : SvnTestCase() {
     renameFileInCommand(f, "anew.txt")
     renameFileInCommand(child, "newchild")
 
-    runAndVerifyStatusSorted("A + newchild", "A + newchild/anew.txt",
-                             "D child", "D child/a.txt", "D child/grandChild",
-                             "D child/grandChild/b.txt",
-                             "D + newchild/a.txt")
+    runAndVerifyStatus(
+      "D child", "> moved to newchild",
+      "D child/a.txt",
+      "D child/grandChild",
+      "D child/grandChild/b.txt",
+      "A + newchild", "> moved from child",
+      "D + newchild/a.txt", "> moved to newchild/anew.txt",
+      "A + newchild/anew.txt", "> moved from newchild/a.txt"
+    )
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
@@ -271,7 +290,10 @@ class SvnRenameTest : SvnTestCase() {
     renameFileInCommand(file, "b.txt")
     checkin()
     undo()
-    runAndVerifyStatusSorted("A + a.txt", "D b.txt")
+    runAndVerifyStatus(
+      "A + a.txt", "> moved from b.txt",
+      "D b.txt", "> moved to a.txt"
+    )
   }
 
   // IDEADEV-19336
@@ -288,7 +310,11 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     undo()
-    runAndVerifyStatusSorted("A + parent1/child", "D parent2/child", "D parent2/child/a.txt")
+    runAndVerifyStatus(
+      "A + parent1/child", "> moved from parent2/child",
+      "D parent2/child", "> moved to parent1/child",
+      "D parent2/child/a.txt"
+    )
   }
 
   @Test
@@ -395,7 +421,11 @@ class SvnRenameTest : SvnTestCase() {
     val file = createFileInCommand(myWorkingCopyDir, "a.txt", "A")
     checkin()
     moveToNewPackage(file, "child")
-    runAndVerifyStatusSorted("A child", "A + child/a.txt", "D a.txt")
+    runAndVerifyStatus(
+      "D a.txt", "> moved to child/a.txt",
+      "A child",
+      "A + child/a.txt", "> moved from a.txt"
+    )
   }
 
   private fun moveToNewPackage(file: VirtualFile, packageName: String): VirtualFile {
