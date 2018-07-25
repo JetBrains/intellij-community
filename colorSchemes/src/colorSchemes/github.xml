@@ -3,7 +3,7 @@
     <option name="CONSOLE_BACKGROUND_KEY" value="F8F8FF" />
     <option name="INDENT_GUIDE" value="BFBFBF" />
     <option name="SELECTION_BACKGROUND" value="BCD5FA" />
-    <option name="CARET_ROW_COLOR" value="e6e6ed" />
+    <option name="CARET_ROW_COLOR" value="E6E6ED" />
     <option name="WHITESPACES" value="BFBFBF" />
     <option name="CARET_COLOR" value="000000" />
     <option name="LINE_NUMBERS_COLOR" value="000000" />
@@ -13,12 +13,12 @@
   <attributes>
     <option name="BAD_CHARACTER">
       <value>
-        <option name="BACKGROUND" value="ffcccc" />
+        <option name="BACKGROUND" value="FFCCCC" />
       </value>
     </option>
     <option name="BREAKPOINT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ffc8c8" />
+        <option name="BACKGROUND" value="FFC8C8" />
       </value>
     </option>
     <option name="BUILDOUT.KEY">
@@ -47,7 +47,7 @@
     <option name="BUILDOUT.VALUE">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="TEXT" name="CLASS_NAME_ATTRIBUTES" />
@@ -59,7 +59,7 @@
     </option>
     <option name="COFFEESCRIPT.BAD_CHARACTER">
       <value>
-        <option name="BACKGROUND" value="ffcccc" />
+        <option name="BACKGROUND" value="FFCCCC" />
       </value>
     </option>
     <option name="COFFEESCRIPT.BLOCK_COMMENT">
@@ -123,13 +123,13 @@
     <option name="COFFEESCRIPT.HEREDOC_CONTENT">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="COFFEESCRIPT.HEREDOC_ID">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="COFFEESCRIPT.HEREGEX_CONTENT">
@@ -145,13 +145,13 @@
     <option baseAttributes="TEXT" name="COFFEESCRIPT.IDENTIFIER" />
     <option name="COFFEESCRIPT.JAVASCRIPT_CONTENT">
       <value>
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="COFFEESCRIPT.JAVASCRIPT_ID">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="COFFEESCRIPT.KEYWORD">
@@ -207,13 +207,13 @@
     <option name="COFFEESCRIPT.STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="COFFEESCRIPT.STRING_LITERAL">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="COFFEESCRIPT.THIS">
@@ -228,7 +228,7 @@
     </option>
     <option name="CONSOLE_BLUE_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ff" />
+        <option name="FOREGROUND" value="FF" />
       </value>
     </option>
     <option name="CONSOLE_CYAN_OUTPUT">
@@ -238,7 +238,7 @@
     </option>
     <option name="CONSOLE_ERROR_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="7f0000" />
+        <option name="FOREGROUND" value="7F0000" />
       </value>
     </option>
     <option name="CONSOLE_GRAY_OUTPUT">
@@ -253,7 +253,7 @@
     </option>
     <option name="CONSOLE_MAGENTA_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ff00ff" />
+        <option name="FOREGROUND" value="FF00FF" />
       </value>
     </option>
     <option name="CONSOLE_NORMAL_OUTPUT">
@@ -263,23 +263,23 @@
     </option>
     <option name="CONSOLE_RED_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ff0000" />
+        <option name="FOREGROUND" value="FF0000" />
       </value>
     </option>
     <option name="CONSOLE_SYSTEM_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="00007f" />
+        <option name="FOREGROUND" value="00007F" />
       </value>
     </option>
     <option name="CONSOLE_USER_INPUT">
       <value>
-        <option name="FOREGROUND" value="007f00" />
+        <option name="FOREGROUND" value="007F00" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="CONSOLE_YELLOW_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="ffcc00" />
+        <option name="FOREGROUND" value="FFCC00" />
       </value>
     </option>
     <option name="CSS.COMMENT">
@@ -327,7 +327,7 @@
     <option name="CUSTOM_INVALID_STRING_ESCAPE_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="8000" />
-        <option name="BACKGROUND" value="ffcccc" />
+        <option name="BACKGROUND" value="FFCCCC" />
       </value>
     </option>
     <option name="CUSTOM_KEYWORD1_ATTRIBUTES">
@@ -338,7 +338,7 @@
     </option>
     <option name="CUSTOM_KEYWORD2_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="660e7a" />
+        <option name="FOREGROUND" value="660E7A" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -374,7 +374,7 @@
     <option name="CUSTOM_STRING_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -393,7 +393,7 @@
     <option name="Clojure Character">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="RUBY_IDENTIFIER" name="Clojure Keyword" />
@@ -416,7 +416,7 @@
     <option name="Clojure Strings">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="DEFAULT_ATTRIBUTE">
@@ -549,7 +549,7 @@
     <option name="DEFAULT_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="DEFAULT_TAG">
@@ -594,7 +594,7 @@
     <option name="DJANGO_STRING_LITERAL">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="DJANGO_TAG_NAME">
@@ -606,7 +606,7 @@
     <option baseAttributes="DEFAULT_BRACES" name="DJANGO_TAG_START_END" />
     <option name="DUPLICATE_FROM_SERVER">
       <value>
-        <option name="BACKGROUND" value="f5f7f0" />
+        <option name="BACKGROUND" value="F5F7F0" />
       </value>
     </option>
     <option name="ENUM_CONST">
@@ -617,17 +617,17 @@
     <option name="ERRORS_ATTRIBUTES">
       <value>
         <option name="EFFECT_TYPE" value="2" />
-        <option name="EFFECT_COLOR" value="ff0000" />
-        <option name="ERROR_STRIPE_COLOR" value="ff0000" />
+        <option name="EFFECT_COLOR" value="FF0000" />
+        <option name="ERROR_STRIPE_COLOR" value="FF0000" />
       </value>
     </option>
     <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="0000ff" />
-        <option name="BACKGROUND" value="e9e9e9" />
+        <option name="FOREGROUND" value="0000FF" />
+        <option name="BACKGROUND" value="E9E9E9" />
         <option name="FONT_TYPE" value="2" />
         <option name="EFFECT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="0000ff" />
+        <option name="EFFECT_COLOR" value="0000FF" />
       </value>
     </option>
     <option name="First symbol in list">
@@ -638,8 +638,8 @@
     <option name="GENERIC_SERVER_ERROR_OR_WARNING">
       <value>
         <option name="EFFECT_TYPE" value="2" />
-        <option name="EFFECT_COLOR" value="f49810" />
-        <option name="ERROR_STRIPE_COLOR" value="f49810" />
+        <option name="EFFECT_COLOR" value="F49810" />
+        <option name="ERROR_STRIPE_COLOR" value="F49810" />
       </value>
     </option>
     <option name="GHERKIN_COMMENT">
@@ -662,13 +662,13 @@
     <option name="GHERKIN_PYSTRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="GHERKIN_REGEXP_PARAMETER">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="GHERKIN_TEXT" name="GHERKIN_TABLE_CELL" />
@@ -709,7 +709,7 @@
     <option name="GQL_STRING_LITERAL">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="HAML_CLASS">
@@ -741,13 +741,13 @@
     <option name="HAML_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="HAML_STRING_INTERPOLATED">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="HAML_TAG">
@@ -771,7 +771,7 @@
     <option name="HTML_ATTRIBUTE_VALUE">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -782,7 +782,7 @@
     </option>
     <option name="HTML_ENTITY_REFERENCE">
       <value>
-        <option name="FOREGROUND" value="ff" />
+        <option name="FOREGROUND" value="FF" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -799,38 +799,38 @@
     </option>
     <option name="HYPERLINK_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="0000ff" />
+        <option name="FOREGROUND" value="0000FF" />
         <option name="FONT_TYPE" value="2" />
         <option name="EFFECT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="0000ff" />
+        <option name="EFFECT_COLOR" value="0000FF" />
       </value>
     </option>
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="e4e4ff" />
-        <option name="ERROR_STRIPE_COLOR" value="ccccff" />
+        <option name="BACKGROUND" value="E4E4FF" />
+        <option name="ERROR_STRIPE_COLOR" value="CCCCFF" />
       </value>
     </option>
     <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="660e7a" />
+        <option name="FOREGROUND" value="660E7A" />
       </value>
     </option>
     <option name="INFO_ATTRIBUTES">
       <value>
         <option name="EFFECT_TYPE" value="2" />
-        <option name="EFFECT_COLOR" value="cccccc" />
-        <option name="ERROR_STRIPE_COLOR" value="ffffcc" />
+        <option name="EFFECT_COLOR" value="CCCCCC" />
+        <option name="ERROR_STRIPE_COLOR" value="FFFFCC" />
       </value>
     </option>
     <option name="INJECTED_LANGUAGE_FRAGMENT">
       <value>
-        <option name="BACKGROUND" value="edfced" />
+        <option name="BACKGROUND" value="EDFCED" />
       </value>
     </option>
     <option name="INSTANCE_FIELD_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="660e7a" />
+        <option name="FOREGROUND" value="660E7A" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -842,7 +842,7 @@
     <option name="JADE_FILE_PATH">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="DEFAULT_LABEL" name="JADE_FILTER_NAME" />
@@ -883,7 +883,7 @@
     <option name="JAVA_INVALID_STRING_ESCAPE">
       <value>
         <option name="FOREGROUND" value="008000" />
-        <option name="BACKGROUND" value="ffcccc" />
+        <option name="BACKGROUND" value="FFCCCC" />
       </value>
     </option>
     <option name="JAVA_KEYWORD">
@@ -914,7 +914,7 @@
     <option name="JAVA_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="JAVA_VALID_STRING_ESCAPE">
@@ -981,7 +981,7 @@
     <option baseAttributes="TEXT" name="MACRO_PARAMETER" />
     <option name="MATCHED_BRACE_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="99ccff" />
+        <option name="BACKGROUND" value="99CCFF" />
       </value>
     </option>
     <option name="NOT_USED_ELEMENT_ATTRIBUTES">
@@ -1076,7 +1076,7 @@
     <option name="OC.STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="OC.STRUCT_FIELD">
@@ -1087,7 +1087,7 @@
     <option name="OC_FORMAT_TOKEN">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="TEXT" name="PARAMETER_ATTRIBUTES" />
@@ -1109,7 +1109,7 @@
     </option>
     <option name="PUPPET_BAD_CHARACTER">
       <value>
-        <option name="BACKGROUND" value="ffcccc" />
+        <option name="BACKGROUND" value="FFCCCC" />
       </value>
     </option>
     <option name="PUPPET_BLOCK_COMMENT">
@@ -1163,13 +1163,13 @@
     <option name="PUPPET_SQ_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="PUPPET_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="PUPPET_VARIABLE">
@@ -1180,7 +1180,7 @@
     <option name="PUPPET_VARIABLE_INTERPOLATION">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="DEFAULT_BRACES" name="PY.BRACES" />
@@ -1250,7 +1250,7 @@
     <option name="PY.STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="DEFAULT_VALID_STRING_ESCAPE" name="PY.VALID_STRING_ESCAPE" />
@@ -1273,17 +1273,17 @@
     </option>
     <option name="REST.FIXED">
       <value>
-        <option name="BACKGROUND" value="d9d9f0" />
+        <option name="BACKGROUND" value="D9D9F0" />
       </value>
     </option>
     <option name="REST.INLINE">
       <value>
-        <option name="BACKGROUND" value="edfced" />
+        <option name="BACKGROUND" value="EDFCED" />
       </value>
     </option>
     <option name="REST.INTERPRETED">
       <value>
-        <option name="BACKGROUND" value="cadaba" />
+        <option name="BACKGROUND" value="CADABA" />
       </value>
     </option>
     <option name="REST.ITALIC">
@@ -1300,7 +1300,7 @@
     <option name="REST.REF.NAME">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="REST.SECTION.HEADER">
@@ -1375,7 +1375,7 @@
     <option name="RUBY_EXPR_IN_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="RUBY_GVAR">
@@ -1392,20 +1392,20 @@
     <option name="RUBY_HEREDOC_CONTENT">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="RUBY_HEREDOC_ID">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="TEXT" name="RUBY_IDENTIFIER" />
     <option name="RUBY_INTERPOLATED_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="DEFAULT_INVALID_STRING_ESCAPE" name="RUBY_INVALID_ESCAPE_SEQUENCE" />
@@ -1470,7 +1470,7 @@
     <option name="RUBY_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="RUBY_SYMBOL">
@@ -1481,7 +1481,7 @@
     <option name="RUBY_WORDS">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="SASS_COMMENT">
@@ -1549,7 +1549,7 @@
     <option name="SASS_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="SASS_TAG_NAME">
@@ -1570,7 +1570,7 @@
     </option>
     <option name="SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ccccff" />
+        <option name="BACKGROUND" value="CCCCFF" />
       </value>
     </option>
     <option baseAttributes="SLIM_STATIC_CONTENT" name="SLIM_BAD_CHARACTER" />
@@ -1605,7 +1605,7 @@
     <option name="SLIM_INTERPOLATION">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option baseAttributes="DEFAULT_PARENTHS" name="SLIM_PARENTHS" />
@@ -1618,7 +1618,7 @@
     <option name="SLIM_STRING_INTERPOLATED">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="SLIM_TAG">
@@ -1638,14 +1638,14 @@
     </option>
     <option name="SPY-JS.EXCEPTION">
       <value>
-        <option name="BACKGROUND" value="fecccc" />
+        <option name="BACKGROUND" value="FECCCC" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="EFFECT_COLOR" value="000000" />
       </value>
     </option>
     <option name="SPY-JS.FUNCTION_SCOPE">
       <value>
-        <option name="BACKGROUND" value="fefef0" />
+        <option name="BACKGROUND" value="FEFEF0" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="EFFECT_COLOR" value="000000" />
       </value>
@@ -1665,7 +1665,7 @@
     </option>
     <option name="SPY-JS.PROGRAM_SCOPE">
       <value>
-        <option name="BACKGROUND" value="fefeff" />
+        <option name="BACKGROUND" value="FEFEFF" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="EFFECT_COLOR" value="000000" />
       </value>
@@ -1673,7 +1673,7 @@
     <option baseAttributes="TEXT" name="SPY-JS.VALUE_HINT" />
     <option name="STATIC_FIELD_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="660e7a" />
+        <option name="FOREGROUND" value="660E7A" />
         <option name="FONT_TYPE" value="3" />
       </value>
     </option>
@@ -1695,15 +1695,15 @@
     </option>
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ffff00" />
-        <option name="ERROR_STRIPE_COLOR" value="00ff00" />
+        <option name="BACKGROUND" value="FFFF00" />
+        <option name="ERROR_STRIPE_COLOR" value="00FF00" />
       </value>
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="ff" />
+        <option name="FOREGROUND" value="FF" />
         <option name="FONT_TYPE" value="3" />
-        <option name="ERROR_STRIPE_COLOR" value="ff" />
+        <option name="ERROR_STRIPE_COLOR" value="FF" />
       </value>
     </option>
     <option name="TYPEDEF">
@@ -1714,26 +1714,26 @@
     </option>
     <option name="UNMATCHED_BRACE_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ffdcdc" />
+        <option name="BACKGROUND" value="FFDCDC" />
       </value>
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="f6ebbc" />
+        <option name="BACKGROUND" value="F6EBBC" />
         <option name="EFFECT_TYPE" value="1" />
         <option name="EFFECT_COLOR" value="000000" />
-        <option name="ERROR_STRIPE_COLOR" value="ffff00" />
+        <option name="ERROR_STRIPE_COLOR" value="FFFF00" />
       </value>
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ffe4ff" />
-        <option name="ERROR_STRIPE_COLOR" value="ffcdff" />
+        <option name="BACKGROUND" value="FFE4FF" />
+        <option name="ERROR_STRIPE_COLOR" value="FFCDFF" />
       </value>
     </option>
     <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ffcdff" />
+        <option name="BACKGROUND" value="FFCDFF" />
       </value>
     </option>
     <option name="XML_ATTRIBUTE_NAME">
@@ -1744,7 +1744,7 @@
     <option name="XML_ATTRIBUTE_VALUE">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="XML_ENTITY_REFERENCE">
@@ -1782,7 +1782,7 @@
     <option name="YAML_SCALAR_DSTRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="YAML_SCALAR_KEY">
@@ -1793,19 +1793,19 @@
     <option name="YAML_SCALAR_LIST">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="YAML_SCALAR_STRING">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="YAML_SCALAR_VALUE">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
     <option name="YAML_SIGN">
@@ -1817,7 +1817,7 @@
     <option name="YAML_TEXT">
       <value>
         <option name="FOREGROUND" value="DD1144" />
-        <option name="BACKGROUND" value="f7e7f1" />
+        <option name="BACKGROUND" value="F7E7F1" />
       </value>
     </option>
   </attributes>
