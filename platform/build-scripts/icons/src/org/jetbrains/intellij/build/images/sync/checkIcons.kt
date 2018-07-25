@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -32,7 +33,7 @@ fun main(args: Array<String>) {
 
 private fun ignoreCaseInDirName(path: String) = File(path).let {
   it.parentFile.listFiles().first {
-    it.absolutePath.equals(path, ignoreCase = true)
+    it.absolutePath.equals(FileUtil.toSystemDependentName(path), ignoreCase = true)
   }.absolutePath
 }
 
