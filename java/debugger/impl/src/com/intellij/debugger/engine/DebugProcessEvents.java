@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
@@ -10,13 +9,14 @@ import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.breakpoints.*;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
+import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -50,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
@@ -357,35 +356,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
       createStackCapturingBreakpoints();
-
-      if (DebuggerUtilsImpl.isRemote(this) && AsyncStacksUtils.isAgentEnabled()) {
-        Properties properties = CaptureSettingsProvider.getPointsProperties();
-        if (!properties.isEmpty()) {
-          addDebugProcessListener(new DebugProcessAdapterImpl() {
-            @Override
-            public void paused(SuspendContextImpl suspendContext) {
-              if (getSuspendManager().getPausedContext() != null) { // evaluation is possible
-                try {
-                  StackCapturingLineBreakpoint.deleteAll(DebugProcessEvents.this);
-
-                  try {
-                    AsyncStacksUtils.addAgentCapturePoints(new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy()),
-                                                           properties);
-                    removeDebugProcessListener(this);
-                  }
-                  finally {
-                    onHotSwapFinished();
-                    StackCapturingLineBreakpoint.createAll(DebugProcessEvents.this);
-                  }
-                }
-                catch (Exception e) {
-                  LOG.debug(e);
-                }
-              }
-            }
-          });
-        }
-      }
+      AsyncStacksUtils.setupAgent(this);
 
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {

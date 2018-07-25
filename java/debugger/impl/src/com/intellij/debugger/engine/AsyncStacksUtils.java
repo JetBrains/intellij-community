@@ -3,12 +3,17 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.GeneratedLocation;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -119,6 +124,72 @@ public class AsyncStacksUtils {
 
   private static String getStringRefValue(StringReference ref) {
     return ref != null ? ref.value() : null;
+  }
+
+  public static void setupAgent(DebugProcessImpl process) {
+    if (!isAgentEnabled()) {
+      return;
+    }
+
+    // set debug mode
+    if (Registry.is("debugger.capture.points.agent.debug")) {
+      enableAgentDebug(process);
+    }
+
+    // add points
+    if (DebuggerUtilsImpl.isRemote(process)) {
+      Properties properties = CaptureSettingsProvider.getPointsProperties();
+      if (!properties.isEmpty()) {
+        process.addDebugProcessListener(new DebugProcessAdapterImpl() {
+          @Override
+          public void paused(SuspendContextImpl suspendContext) {
+            if (process.getSuspendManager().getPausedContext() != null) { // evaluation is possible
+              try {
+                StackCapturingLineBreakpoint.deleteAll(process);
+
+                try {
+                  addAgentCapturePoints(new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy()), properties);
+                  process.removeDebugProcessListener(this);
+                }
+                finally {
+                  process.onHotSwapFinished();
+                  StackCapturingLineBreakpoint.createAll(process);
+                }
+              }
+              catch (Exception e) {
+                LOG.debug(e);
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private static void enableAgentDebug(DebugProcessImpl process) {
+    final RequestManagerImpl requestsManager = process.getRequestsManager();
+    ClassPrepareRequestor requestor = new ClassPrepareRequestor() {
+      @Override
+      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+        try {
+          requestsManager.deleteRequest(this);
+          ((ClassType)referenceType).setValue(referenceType.fieldByName("DEBUG"), process.getVirtualMachineProxy().mirrorOf(true));
+        }
+        catch (Exception e) {
+          LOG.warn("Error setting agent debug mode", e);
+        }
+      }
+    };
+    requestsManager.callbackOnPrepareClasses(requestor, CAPTURE_STORAGE_CLASS_NAME);
+    try {
+      ClassType captureClass = (ClassType)process.findClass(null, CAPTURE_STORAGE_CLASS_NAME, null);
+      if (captureClass != null) {
+        requestor.processClassPrepare(process, captureClass);
+      }
+    }
+    catch (Exception e) {
+      LOG.warn("Error setting agent debug mode", e);
+    }
   }
 
   private static class ProcessStackFrameItem extends StackFrameItem {

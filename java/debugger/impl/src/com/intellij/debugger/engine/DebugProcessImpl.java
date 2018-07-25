@@ -1304,7 +1304,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public ReferenceType findClass(EvaluationContext evaluationContext, String className,
+  public ReferenceType findClass(@Nullable EvaluationContext evaluationContext, String className,
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -1315,10 +1315,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           break;
         }
       }
-      final EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
-      if (result == null && evalContext.isAutoLoadClasses()) {
+      if (result == null && evaluationContext != null) {
+        EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
+        if (evalContext.isAutoLoadClasses()) {
           return loadClass(evalContext, className, classLoader);
         }
+      }
       return result;
     }
     catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {

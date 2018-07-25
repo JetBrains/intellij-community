@@ -18,7 +18,6 @@ import java.util.jar.JarFile;
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
-  private static boolean DEBUG = false;
 
   private static final Map<String, List<InstrumentPoint>> myCapturePoints = new HashMap<String, List<InstrumentPoint>>();
   private static final Map<String, List<InstrumentPoint>> myInsertPoints = new HashMap<String, List<InstrumentPoint>>();
@@ -48,7 +47,7 @@ public class CaptureAgent {
 
       setupJboss();
 
-      if (DEBUG) {
+      if (CaptureStorage.DEBUG) {
         System.out.println("Capture agent: ready");
       }
     }
@@ -118,11 +117,6 @@ public class CaptureAgent {
       return;
     }
 
-    DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
-    if (DEBUG) {
-      CaptureStorage.setDebug(true);
-    }
-
     if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
       CaptureStorage.setEnabled(false);
     }
@@ -160,7 +154,7 @@ public class CaptureAgent {
             reader.accept(new CaptureInstrumentor(Opcodes.API_VERSION, writer, capturePoints, insertPoints), 0);
             byte[] bytes = writer.toByteArray();
 
-            if (DEBUG) {
+            if (CaptureStorage.DEBUG) {
               try {
                 FileOutputStream stream = new FileOutputStream("instrumented_" + className.replaceAll("/", "_") + ".class");
                 try {
@@ -225,7 +219,7 @@ public class CaptureAgent {
         for (final InstrumentPoint capturePoint : myCapturePoints) {
           if (capturePoint.matchesMethod(name, desc)) {
             final String methodDisplayName = getMethodDisplayName(capturePoint.myClassName, name, desc);
-            if (DEBUG) {
+            if (CaptureStorage.DEBUG) {
               System.out.println("Capture agent: instrumented capture point at " + methodDisplayName);
             }
             // for constructors and "this" key - move capture to after the super constructor call
@@ -260,7 +254,7 @@ public class CaptureAgent {
         for (InstrumentPoint insertPoint : myInsertPoints) {
           if (insertPoint.matchesMethod(name, desc)) {
             String methodDisplayName = getMethodDisplayName(insertPoint.myClassName, name, desc);
-            if (DEBUG) {
+            if (CaptureStorage.DEBUG) {
               System.out.println("Capture agent: instrumented insert point at " + methodDisplayName);
             }
             generateWrapper(access, name, desc, signature, exceptions, insertPoint, methodDisplayName);
@@ -381,7 +375,7 @@ public class CaptureAgent {
   // to be run from the debugger
   @SuppressWarnings("unused")
   public static void addCapturePoints(String capturePoints) throws UnmodifiableClassException, IOException {
-    if (DEBUG) {
+    if (CaptureStorage.DEBUG) {
       System.out.println("Capture agent: adding points " + capturePoints);
     }
 
@@ -405,7 +399,7 @@ public class CaptureAgent {
     }
 
     if (!classes.isEmpty()) {
-      if (DEBUG) {
+      if (CaptureStorage.DEBUG) {
         System.out.println("Capture agent: retransforming " + classes);
       }
 

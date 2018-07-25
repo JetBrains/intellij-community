@@ -38,7 +38,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -550,12 +549,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static String generateAgentSettings() {
-    Properties properties = new Properties();
-    if (Registry.is("debugger.capture.points.agent.debug")) {
-      properties.setProperty("debug", "true");
-    }
-    //noinspection UseOfPropertiesAsHashtable
-    properties.putAll(CaptureSettingsProvider.getPointsProperties());
+    Properties properties = CaptureSettingsProvider.getPointsProperties();
     if (!properties.isEmpty()) {
       try {
         File file = FileUtil.createTempFile("capture", ".props");
