@@ -21,6 +21,9 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.impl.FileIndexBase;
+import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -57,7 +60,7 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   @NotNull
-  private static Set<Module> buildDependents(Module module) {
+  private static Set<Module> buildDependents(@NotNull Module module) {
     Set<Module> result = new THashSet<>();
     result.add(module);
 
@@ -86,7 +89,8 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     final MultiMap<Module, Module> exportingUsages = MultiMap.create();
   }
 
-  private static ModuleIndex getModuleIndex(final Project project) {
+  @NotNull
+  private static ModuleIndex getModuleIndex(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       ModuleIndex index = new ModuleIndex();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -110,6 +114,14 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   boolean contains(@NotNull VirtualFile file, boolean myOnlyTests) {
+    if (myProjectFileIndex instanceof FileIndexBase) {
+      // optimization: fewer calls to getInfoForFileOrDirectory()
+      DirectoryInfo info = ((FileIndexBase)myProjectFileIndex).getInfoForFileOrDirectory(file);
+      Module moduleOfFile = info.getModule();
+      if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
+      if (myOnlyTests && !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) return false;
+      return ProjectFileIndexImpl.isFileInContent(file, info);
+    }
     Module moduleOfFile = myProjectFileIndex.getModuleForFile(file);
     if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
     if (myOnlyTests && !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) return false;
