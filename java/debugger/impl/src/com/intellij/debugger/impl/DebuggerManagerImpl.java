@@ -7,7 +7,6 @@ import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -506,7 +505,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   private static final String AGENT_FILE_NAME = "debugger-agent.jar";
 
   private static void addDebuggerAgent(JavaParameters parameters) {
-    if (StackCapturingLineBreakpoint.isAgentEnabled()) {
+    if (AsyncStacksUtils.isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
       if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_FILE_NAME))) {
@@ -555,14 +554,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     if (Registry.is("debugger.capture.points.agent.debug")) {
       properties.setProperty("debug", "true");
     }
-    int idx = 0;
-    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getPoints()) {
-      properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
-                             point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myKey.asString());
-    }
+    //noinspection UseOfPropertiesAsHashtable
+    properties.putAll(CaptureSettingsProvider.getPointsProperties());
     if (!properties.isEmpty()) {
       try {
         File file = FileUtil.createTempFile("capture", ".props");

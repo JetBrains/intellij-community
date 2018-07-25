@@ -1317,8 +1317,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       final EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
       if (result == null && evalContext.isAutoLoadClasses()) {
-        return loadClass(evalContext, className, classLoader);
-      }
+          return loadClass(evalContext, className, classLoader);
+        }
       return result;
     }
     catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {

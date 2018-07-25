@@ -20,7 +20,7 @@ public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
   private static boolean DEBUG = false;
 
-  private static Map<String, List<InstrumentPoint>> myCapturePoints = new HashMap<String, List<InstrumentPoint>>();
+  private static final Map<String, List<InstrumentPoint>> myCapturePoints = new HashMap<String, List<InstrumentPoint>>();
   private static final Map<String, List<InstrumentPoint>> myInsertPoints = new HashMap<String, List<InstrumentPoint>>();
 
   public static void premain(String args, Instrumentation instrumentation) {
@@ -30,7 +30,7 @@ public class CaptureAgent {
 
       readSettings(args);
 
-      instrumentation.addTransformer(new CaptureTransformer());
+      instrumentation.addTransformer(new CaptureTransformer(), true);
 
       // Trying to reinstrument java.lang.Thread
       // fails with dcevm, does not work with other vms :(
@@ -127,15 +127,8 @@ public class CaptureAgent {
       CaptureStorage.setEnabled(false);
     }
 
-    Enumeration<?> propNames = properties.propertyNames();
-    while (propNames.hasMoreElements()) {
-      String propName = (String)propNames.nextElement();
-      if (propName.startsWith("capture")) {
-        addPoint(true, properties.getProperty(propName));
-      }
-      else if (propName.startsWith("insert")) {
-        addPoint(false, properties.getProperty(propName));
-      }
+    for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+      addPoint((String)entry.getKey(), (String)entry.getValue());
     }
 
     // delete settings file only if it was read correctly
@@ -387,49 +380,70 @@ public class CaptureAgent {
 
   // to be run from the debugger
   @SuppressWarnings("unused")
-  public static void setCapturePoints(Object[][] capturePoints) throws UnmodifiableClassException {
-    Set<String> classNames = new HashSet<String>(myCapturePoints.keySet());
-
-    Map<String, List<InstrumentPoint>> points = new HashMap<String, List<InstrumentPoint>>();
-    for (Object[] capturePoint : capturePoints) {
-      String className = (String)capturePoint[0];
-      classNames.add(className);
-      List<InstrumentPoint> currentPoints = points.get(className);
-      if (currentPoints == null) {
-        currentPoints = new ArrayList<InstrumentPoint>();
-        points.put(className, currentPoints);
-      }
-      //currentPoints.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
+  public static void addCapturePoints(String capturePoints) throws UnmodifiableClassException, IOException {
+    if (DEBUG) {
+      System.out.println("Capture agent: adding points " + capturePoints);
     }
-    myCapturePoints = points;
 
-    List<Class> classes = new ArrayList<Class>(capturePoints.length);
-    for (String name : classNames) {
-      try {
-        classes.add(Class.forName(name));
-      }
-      catch (ClassNotFoundException e) {
-        e.printStackTrace();
+    Properties properties = new Properties();
+    properties.load(new StringReader(capturePoints));
+
+    Set<String> classNames = new HashSet<String>();
+
+    for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+      InstrumentPoint point = addPoint((String)entry.getKey(), (String)entry.getValue());
+      if (point != null) {
+        classNames.add(point.myClassName.replaceAll("/", "\\."));
       }
     }
-    //noinspection SSBasedInspection
-    ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
+
+    List<Class> classes = new ArrayList<Class>(classNames.size());
+    for (Class aClass : ourInstrumentation.getAllLoadedClasses()) {
+      if (classNames.contains(aClass.getName())) {
+        classes.add(aClass);
+      }
+    }
+
+    if (!classes.isEmpty()) {
+      if (DEBUG) {
+        System.out.println("Capture agent: retransforming " + classes);
+      }
+
+      //noinspection SSBasedInspection
+      ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
+    }
   }
 
-  private static void addPoint(boolean capture, String line) {
+  private static InstrumentPoint addPoint(String propertyKey, String propertyValue) {
+    if (propertyKey.startsWith("capture")) {
+      return addPoint(true, propertyValue);
+    }
+    else if (propertyKey.startsWith("insert")) {
+      return addPoint(false, propertyValue);
+    }
+    return null;
+  }
+
+  private static InstrumentPoint addPoint(boolean capture, String line) {
     String[] split = line.split(" ");
     KeyProvider keyProvider = createKeyProvider(Arrays.copyOfRange(split, 3, split.length));
-    addCapturePoint(capture, split[0], split[1], split[2], keyProvider);
+    return addCapturePoint(capture, split[0], split[1], split[2], keyProvider);
   }
 
-  private static void addCapturePoint(boolean capture, String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+  private static InstrumentPoint addCapturePoint(boolean capture,
+                                                 String className,
+                                                 String methodName,
+                                                 String methodDesc,
+                                                 KeyProvider keyProvider) {
     Map<String, List<InstrumentPoint>> map = capture ? myCapturePoints : myInsertPoints;
     List<InstrumentPoint> points = map.get(className);
     if (points == null) {
       points = new ArrayList<InstrumentPoint>(1);
       map.put(className, points);
     }
-    points.add(new InstrumentPoint(className, methodName, methodDesc, keyProvider));
+    InstrumentPoint point = new InstrumentPoint(className, methodName, methodDesc, keyProvider);
+    points.add(point);
+    return point;
   }
 
   private static final KeyProvider FIRST_PARAM = param(0);
