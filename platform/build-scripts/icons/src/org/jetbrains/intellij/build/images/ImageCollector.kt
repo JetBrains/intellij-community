@@ -28,7 +28,8 @@ import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
 internal class ImagePaths(val id: String,
-                          val sourceRoot: JpsModuleSourceRoot) {
+                          val sourceRoot: JpsModuleSourceRoot,
+                          val phantom: Boolean) {
   private var flags: ImageFlags = ImageFlags()
   private var images: MutableList<File> = ArrayList()
 
@@ -64,15 +65,21 @@ data class DeprecationData(val comment: String?, val replacement: String?, val r
 
 
 internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = true, val ignoreSkipTag: Boolean = false) {
-  private val result = HashMap <String, ImagePaths>()
+  private val icons = HashMap<String, ImagePaths>()
+  private val phantomIcons = HashMap<String, ImagePaths>()
 
   private val usedIconsRobots: MutableSet<File> = HashSet()
 
-  fun collect(module: JpsModule): List<ImagePaths> {
+  fun collect(module: JpsModule, includePhantom: Boolean = false): List<ImagePaths> {
     module.sourceRoots.forEach {
       processRoot(it)
     }
-    return result.values.toList()
+
+    val result = ArrayList(icons.values.toList())
+    if (includePhantom) {
+      result += phantomIcons.values.toList()
+    }
+    return result
   }
 
   fun printUsedIconRobots() {
@@ -94,7 +101,8 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
     val robotData = rootRobotData.fork(iconsRoot, root)
 
-    processDirectory(iconsRoot, sourceRoot, robotData, emptyList<String>())
+    processDirectory(iconsRoot, sourceRoot, robotData, emptyList())
+    processPhantomIcons(iconsRoot, sourceRoot, robotData, emptyList())
   }
 
   private fun processDirectory(dir: File, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
@@ -105,6 +113,10 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
         val childRobotData = robotData.fork(file, root)
         val childPrefix = prefix + file.name
         processDirectory(file, sourceRoot, childRobotData, childPrefix)
+
+        if (childRobotData != robotData) {
+          processPhantomIcons(file, sourceRoot, childRobotData, childPrefix)
+        }
       }
       else if (isImage(file, iconsOnly)) {
         processImageFile(file, sourceRoot, robotData, prefix)
@@ -118,8 +130,27 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     val flags = robotData.getImageFlags(file)
     if (flags.skipped) return
 
-    val iconPaths = result.computeIfAbsent(id, { ImagePaths(id, sourceRoot) })
+    val iconPaths = icons.computeIfAbsent(id, { ImagePaths(id, sourceRoot, false) })
     iconPaths.addImage(file, flags)
+  }
+
+  private fun processPhantomIcons(root: File, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
+    for (icon in robotData.getOwnDeprecatedIcons()) {
+      val iconFile = File(root, icon.first)
+      val id = ImageType.getBasicName(icon.first, prefix)
+
+      if (icons.containsKey(id)) continue
+
+      val paths = ImagePaths(id, sourceRoot, true)
+      paths.addImage(iconFile, icon.second)
+
+      if (phantomIcons.containsKey(id)) {
+        val otherPaths = phantomIcons[id]!!
+        throw Exception("Duplicated phantom icon found: $id\n${root.path}/${ROBOTS_FILE_NAME}")
+      }
+
+      phantomIcons.put(id, paths)
+    }
   }
 
   private fun upToProjectHome(dir: File): IconRobotsData {
@@ -160,6 +191,8 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     private val used: MutableList<Matcher> = ArrayList()
     private val deprecated: MutableList<Pair<Matcher, DeprecationData>> = ArrayList()
 
+    private val ownDeprecatedIcons: MutableList<Pair<String, DeprecationData>> = ArrayList()
+
     fun getImageFlags(file: File): ImageFlags {
       val isSkipped = !ignoreSkipTag && matches(file, skip)
       val isUsed = matches(file, used)
@@ -169,6 +202,10 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       val parentFlags = parent?.getImageFlags(file) ?: ImageFlags()
 
       return mergeImageFlags(ourFlags, parentFlags, file.path)
+    }
+
+    fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> {
+      return ownDeprecatedIcons.map { Pair(it.first, ImageFlags(false, false, it.second)) }
     }
 
     fun isSkipped(file: File): Boolean = getImageFlags(file).skipped
@@ -193,6 +230,10 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
               val deprecatedData = DeprecationData(comment, replacement, replacementContextClazz)
               answer.deprecated += Pair(compilePattern(dir, root, pattern), deprecatedData)
+
+              if (!pattern.contains('*') && !pattern.startsWith('/')) {
+                answer.ownDeprecatedIcons.add(Pair(pattern, deprecatedData))
+              }
             }),
             Pair("name:", { value -> }), // ignore directive for IconsClassGenerator
             Pair("#", { value -> }) // comment
