@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
@@ -23,6 +11,9 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -93,8 +84,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
               return PsiClass.EMPTY_ARRAY;
             }
           });
-          if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) &&
-              (file == null || file.getNameWithoutExtension().equals(classes[0].getName()))) {
+          if (classes.length == 1 && isClassForTreeNode(file, classes[0])) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1));
           } else {
             result.add(new PsiClassOwnerTreeNode(classOwner, settings1));
@@ -105,6 +95,20 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       result.add(child);
     }
     return result;
+  }
+
+  private static boolean isClassForTreeNode(VirtualFile file, PsiClass psiClass) {
+    if (psiClass == null || psiClass instanceof SyntheticElement) return false;
+    if (file == null || file.getNameWithoutExtension().equals(psiClass.getName())) return true;
+    Project project = psiClass.getProject();
+    for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors(file)) {
+      if (fileEditor instanceof TextEditor) {
+        TextEditor textEditor = (TextEditor)fileEditor;
+        Template template = TemplateManager.getInstance(project).getActiveTemplate(textEditor.getEditor());
+        if (template != null) return true; // only if refactoring is in progress
+      }
+    }
+    return false;
   }
 
   private boolean fileInRoots(VirtualFile file) {

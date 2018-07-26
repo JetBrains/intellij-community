@@ -104,7 +104,7 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
 
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    myComponent.getChildComponent().setText(myItem.path);
+    myComponent.getChildComponent().setText(myItem.getPath());
     return myWrapper;
   }
 

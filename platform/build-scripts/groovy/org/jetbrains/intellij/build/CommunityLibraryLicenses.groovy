@@ -31,6 +31,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android Profiler", libraryName: "studio-profiler-grpc-1.0-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Shared", libraryName: "com.android.tools.analytics-library:shared:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Tracker", libraryName: "com.android.tools.analytics-library:tracker:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Analytics Protos", libraryName: "analytics-protos", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Baksmali", libraryName: "baksmali", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Archive Patcher", libraryName: "archive-patcher", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Aia Manifest Proto", libraryName: "aia-manifest-proto-1.0-jarjar.jar", license: "Apache 2.0", url: "http://source.android.com/"),
@@ -43,9 +44,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android Ddm Library", libraryName: "com.android.tools.ddms:ddmlib:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Common Library", libraryName: "com.android.tools:common:26.1.2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
-    /* Android Studio: removed by Change Id404de7c / commit 1228409
     new LibraryLicense(name: "Android Sherpa library", libraryName: "sherpa-solver", license: "Apache 2.0", url: "http://source.android.com/"),
-    */
     new LibraryLicense(name: "Android Jimfs library", libraryName: "jimfs", license: "Apache 2.0", url: "https://github.com/google/jimfs"),
     new LibraryLicense(name: "Android libwebp library", libraryName: "libwebp.jar", license: "Apache 2.0", url: "https://github.com/webmproject/libwebp"),
     new LibraryLicense(name: "Ant", version: "1.9", license: "Apache 2.0", url: "http://ant.apache.org/",
@@ -192,7 +191,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.9", license: "LGPL 2",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.10", license: "LGPL 2",
                        url: "https://github.com/JetBrains/jediterm", licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/COPYING"),
     new LibraryLicense(name: "JEuclid", libraryName: "jeuclid-core-3.1.9.jar", version: "3.1.9", license: "Apache 2.0",
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
@@ -250,10 +249,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0",
                        url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    /* Android Studio: removed by Change Iccdcc705 / commit 9e6f986
     new LibraryLicense(name: "Lombok AST", libraryName: "lombok-ast", version: "0.2.1", license: "MIT", url: "http://projectlombok.org/",
                        licenseUrl: "http://opensource.org/licenses/mit-license.php"),
-    */
     new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.3", license: "Apache 2.0", url: "https://github.com/lz4/lz4-java",
                        licenseUrl: "https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "markdown4j", libraryName: "markdown4j", version: "2.2", license: "New BSD",
@@ -445,6 +442,10 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/JetBrains/java-annotations"),
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
+
+    new LibraryLicense(name: "delight-nashorn-sandbox", libraryName: "delight-nashorn-sandbox", version: "0.1.15", license: "Apache 2.0",
+                          url: "https://github.com/javadelight/delight-nashorn-sandbox", licenseUrl: "https://github.com/javadelight/delight-nashorn-sandbox/blob/master/LICENSE.TXT"),
+
 
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),

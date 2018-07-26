@@ -1,0 +1,11 @@
+<option>CALL_PARAMETERS_WRAP=WRAP_ALWAYS</option>
+<option>ALIGN_MULTILINE_PARAMETERS_IN_CALLS=true</option>
+foooooooooooooo(a,b,c)
+foooooooooooooo a,b,c
+-----
+foooooooooooooo(a,
+                b,
+                c)
+foooooooooooooo a,
+                b,
+                c

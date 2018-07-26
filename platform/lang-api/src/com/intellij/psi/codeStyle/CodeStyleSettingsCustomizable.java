@@ -128,8 +128,6 @@ public interface CodeStyleSettingsCustomizable {
     RIGHT_MARGIN,
     WRAP_ON_TYPING,
     KEEP_CONTROL_STATEMENT_IN_ONE_LINE,
-    LINE_COMMENT_AT_FIRST_COLUMN,
-    BLOCK_COMMENT_AT_FIRST_COLUMN,
     KEEP_LINE_BREAKS,
     KEEP_FIRST_COLUMN_COMMENT,
     CALL_PARAMETERS_WRAP,
@@ -219,7 +217,9 @@ public interface CodeStyleSettingsCustomizable {
   }
   
   enum CommenterOption {
-    LINE_COMMENT_ADD_SPACE
+    LINE_COMMENT_ADD_SPACE,
+    LINE_COMMENT_AT_FIRST_COLUMN,
+    BLOCK_COMMENT_AT_FIRST_COLUMN
   }
   
 

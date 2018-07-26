@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -178,7 +177,7 @@ public class GithubCreatePullRequestWorker {
       for (String remoteUrl : gitRemote.getUrls()) {
         if (server.matches(remoteUrl)) {
           String remoteName = gitRemote.getName();
-          if ("github" == remoteName || "origin" == remoteName) {
+          if ("github".equals(remoteName) || "origin".equals(remoteName)) {
             return Pair.create(gitRemote, remoteUrl);
           }
           if (githubRemote == null) {

@@ -414,7 +414,11 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
     yyendstate(DIVISION_EXPECTED);
     return storeToken(T_DIV_ASSIGN);
   }
-  "/"/[^/*] {
+  "//" | "/*" {
+    yypushback(2);
+    yyendstate(DIVISION_EXPECTED);
+  }
+  "/" {
     yyendstate(DIVISION_EXPECTED);
     return storeToken(T_DIV);
   }

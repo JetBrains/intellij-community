@@ -82,8 +82,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showStandardOptions("RIGHT_MARGIN",
                                    "WRAP_ON_TYPING",
                                    "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",
-                                   "LINE_COMMENT_AT_FIRST_COLUMN",
-                                   "BLOCK_COMMENT_AT_FIRST_COLUMN",
                                    "KEEP_LINE_BREAKS",
                                    "KEEP_FIRST_COLUMN_COMMENT",
                                    "CALL_PARAMETERS_WRAP",
@@ -188,7 +186,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
-      consumer.showStandardOptions("LINE_COMMENT_ADD_SPACE");
+      consumer.showAllStandardOptions();
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",

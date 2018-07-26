@@ -619,7 +619,9 @@ abstract class FunctionHelper {
     String getStatementText() {
       PsiElement[] children = myBody.getChildren();
       // Keep everything except braces
-      return StreamEx.of(children, 1, children.length - 1).map(PsiElement::getText).joining().trim();
+      return StreamEx.of(children, 1, children.length - 1)
+                     .dropWhile(e -> e instanceof PsiWhiteSpace)
+                     .map(PsiElement::getText).joining();
     }
 
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {

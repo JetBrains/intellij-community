@@ -28,7 +28,6 @@ class StatisticSenderImpl(
 
     override fun sendStatsData(url: String) {
         assertNotEDT()
-        filePathProvider.cleanupOldFiles()
         val filesToSend = filePathProvider.getDataFiles()
         filesToSend.forEach {
             if (it.length() > 0) {

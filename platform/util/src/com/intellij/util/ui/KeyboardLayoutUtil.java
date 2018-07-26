@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -34,16 +20,20 @@ public class KeyboardLayoutUtil {
 
   @Nullable
   public static Character getAsciiForChar(char a) {
-    char lc = Character.toLowerCase(a);
-    Character c = ourLLtoASCII.get(lc);
-    if (c == null && (ourLLtoASCII.isEmpty() || SystemInfo.isLinux)) {
+    Character c = ourLLtoASCII.get(a);
+    if (c != null) return c;
+
+    if (ourLLtoASCII.isEmpty() || SystemInfo.isLinux) {
       // Linux note:
       // KeyEvent provides 'rawCode' (a physical |row|column| coordinate) instead of 'keyCode'.
       // ASCII rawCodes can be collected to map chars via their rawCode in future.
       // That would also allow map latin chars to latin chars when a layout switches latin keys.
+      char lc = Character.toLowerCase(a);
       c = HardCoded.LL.get(lc);
+      if (c == null) return null;
+      return lc == a ? c : Character.toUpperCase(c);
     }
-    return c == null ? null : lc == a ? c : Character.toUpperCase(c);
+    return null;
   }
 
   public static void storeAsciiForChar(@NotNull KeyEvent e) {
@@ -58,7 +48,12 @@ public class KeyboardLayoutUtil {
     if (aChar == KeyEvent.CHAR_UNDEFINED) return;
     if ('a' <= aChar && aChar <= 'z' || 'A' <= aChar && aChar <= 'Z') return;
     if (ourLLtoASCII.containsKey(aChar)) return;
-    ourLLtoASCII.put(aChar, (char)((int)'a' + (code - KeyEvent.VK_A)));
+
+    char converted = (char)((int)'a' + (code - KeyEvent.VK_A));
+    if (Character.isUpperCase(aChar)) {
+      converted = Character.toUpperCase(converted);
+    }
+    ourLLtoASCII.put(aChar, converted);
   }
 
 

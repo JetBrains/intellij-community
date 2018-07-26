@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -36,14 +37,14 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public boolean isName(PsiElement element) {
+  public ThreeState isName(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof JsonObject) {
-      return true;
+      return ThreeState.YES;
     } else if (parent instanceof JsonProperty) {
-      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), element, false);
+      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), element, false) ? ThreeState.YES : ThreeState.NO;
     }
-    return false;
+    return ThreeState.NO;
   }
 
   @Override
@@ -138,8 +139,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
+  public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
+    final JsonObject object = PsiTreeUtil.getParentOfType(originalPosition, JsonObject.class);
     if (object != null) {
       return object.getPropertyList().stream()
         .filter(p -> !isNameQuoted() || p.getNameElement() instanceof JsonStringLiteral)

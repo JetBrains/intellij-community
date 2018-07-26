@@ -78,7 +78,7 @@ open class UniqueFilesProvider(private val baseFileName: String,
     override fun getStatsDataDirectory(): File {
         val dir = File(rootDirectoryPath, logsDirectoryName)
         if (!dir.exists()) {
-            dir.mkdir()
+            dir.mkdirs()
         }
         return dir
     }

@@ -45,7 +45,7 @@ public abstract class PyPackageManager {
 
   public abstract void install(@NotNull String requirementString) throws ExecutionException;
 
-  public abstract void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException;
+  public abstract void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException;
 
   public abstract void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException;
 

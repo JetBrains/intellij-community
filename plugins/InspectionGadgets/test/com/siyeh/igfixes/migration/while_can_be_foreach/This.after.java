@@ -6,7 +6,7 @@ import java.util.List;
 class This implements Iterable {
 
   void m() {
-      for (Object o: this) {
+      for (Object o : this) {
           System.out.println(o);
       }
   }

@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,14 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS =
     ContainerUtil.set(Mutability.UNMODIFIABLE_ANNOTATION, Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private final Project myProject;
+
+  // Could be added via external annotations, but there are many signatures to handle
+  // and we have troubles supporting external annotations for JDK 9+
+  private static final CallMatcher IMMUTABLE_FACTORY = CallMatcher.anyOf(
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of", "copyOf"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of", "copyOf"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of", "ofEntries", "copyOf", "entry")
+  );
 
   public InferredAnnotationsManagerImpl(Project project) {
     myProject = project;
@@ -113,6 +122,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof PsiMethod && IMMUTABLE_FACTORY.methodMatches((PsiMethod)owner)) {
+      return Mutability.UNMODIFIABLE.asAnnotation(myProject);
+    }
     if (!(owner instanceof PsiMethodImpl)) return null;
     PsiMethodImpl method = (PsiMethodImpl)owner;
     PsiModifierList modifiers = method.getModifierList();
@@ -134,15 +146,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredNullabilityAnnotation(PsiMethodImpl method) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    if (findAnnotation(method, manager.getNotNulls(), true) != null || findAnnotation(method, manager.getNullables(), true) != null) {
+    if (hasExplicitNullability(method)) {
       return null;
     }
-
-    if (manager.findNullityDefaultInHierarchy(method) != null) {
-      return null;
-    }
-
     Nullability nullability = JavaSourceInference.inferNullability(method);
     if (nullability == Nullability.NOT_NULL) {
       return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
@@ -153,10 +159,16 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  private boolean hasExplicitNullability(PsiModifierListOwner owner) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    return findAnnotation(owner, manager.getNotNulls(), true) != null ||
+           findAnnotation(owner, manager.getNullables(), true) != null ||
+           manager.findNullityDefaultInHierarchy(owner) != null;
+  }
+
   @Nullable
   private PsiAnnotation getInferredNullabilityAnnotation(PsiParameter parameter) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    if (findAnnotation(parameter, manager.getNotNulls(), true) != null || findAnnotation(parameter, manager.getNullables(), true) != null) {
+    if (hasExplicitNullability(parameter)) {
       return null;
     }
     PsiElement parent = parameter.getParent();

@@ -2,11 +2,8 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Factory;
@@ -246,7 +243,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   private boolean isSchemaByProvider(@NotNull VirtualFile file) {
     JsonSchemaFileProvider provider = myState.getProvider(file);
-    if (provider == null) return false;
+    if (provider == null) {
+      for (JsonSchemaFileProvider stateProvider: myState.getProviders()) {
+        if (isSchemaProvider(stateProvider) && stateProvider.isAvailable(file))
+          return true;
+      }
+      return false;
+    }
+    return isSchemaProvider(provider);
+  }
+
+  private static boolean isSchemaProvider(JsonSchemaFileProvider provider) {
     VirtualFile schemaFile = provider.getSchemaFile();
     if (schemaFile == null) return false;
     String url = schemaFile.getUrl();
@@ -281,9 +288,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   private static boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
-    final FileType type = file.getFileType();
-    final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
-    return (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) && provider.isAvailable(file);
+    return provider.isAvailable(file);
   }
 
   @Nullable

@@ -80,7 +80,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     JPanel grid = new JPanel(new GridBagLayout());
     GridBag bag = new GridBag()
       .anchor(GridBagConstraints.CENTER)
-      .fillCellHorizontally();
+      //weight is required for correct working scrollpane inside gridbaglayout
+      .weightx(1.0)
+      .weighty(1.0)
+      .fillCell();
 
     pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
     grid.add(pane, bag);
@@ -129,7 +132,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     scrollPane.setBackground(hintHint.getTextBackground());
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
-
     scrollPane.setViewportBorder(null);
 
     if (hintHint.isRequestFocus()) {
@@ -172,7 +174,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       public void actionPerformed(final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
         hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
-        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut");
+        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut", this.getClass());
         reloader.reload(!expanded);
       }
     });
@@ -200,7 +202,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return;
           }
 
-          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink");
+          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink", this.getClass());
 
           reloader.reload(!expanded);
         }

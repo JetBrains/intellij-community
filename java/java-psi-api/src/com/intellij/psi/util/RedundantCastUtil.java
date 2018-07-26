@@ -46,6 +46,8 @@ public class RedundantCastUtil {
 
   public static boolean isCastRedundant (PsiTypeCastExpression typeCast) {
     PsiElement parent = typeCast.getParent();
+    PsiExpression operand = typeCast.getOperand();
+    if (operand != null && operand.getType() != null && operand.getType().equals(typeCast.getType())) return true;
     while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
     if (parent instanceof PsiExpressionList) parent = parent.getParent();
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();

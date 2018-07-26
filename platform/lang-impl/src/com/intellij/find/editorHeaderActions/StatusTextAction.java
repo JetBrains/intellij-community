@@ -31,7 +31,7 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
   public void update(AnActionEvent e) {
     SearchSession search = e.getData(SearchSession.KEY);
     String statusText = search == null ? "" : search.getComponent().getStatusText();
-    JLabel label = (JLabel)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    JLabel label = (JLabel)e.getPresentation().getClientProperty(COMPONENT_KEY);
     if (label != null) {
       label.setText(statusText);
       label.setVisible(StringUtil.isNotEmpty(statusText));

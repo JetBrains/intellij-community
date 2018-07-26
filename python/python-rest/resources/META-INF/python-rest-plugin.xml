@@ -26,4 +26,8 @@
     </action>
 
   </actions>
+
+  <extensions defaultExtensionNs="restructured.text">
+    <html.preview.provider implementation="com.jetbrains.rest.RestPythonPreviewProvider" />
+  </extensions>
 </idea-plugin>

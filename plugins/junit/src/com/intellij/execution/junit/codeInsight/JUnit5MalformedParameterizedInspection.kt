@@ -87,6 +87,12 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                   noMultiArgsProvider = false
                 }
               }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES -> {
+                if (source == null) {
+                  val attributes = it.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+                  noMultiArgsProvider = (attributes as? PsiArrayInitializerMemberValue)?.initializers?.isEmpty() ?: false
+                }
+              }
             }
           }
 
@@ -323,7 +329,7 @@ class ChangeAnnotationFix(testAnnotation: PsiAnnotation, val targetAnnotation: S
   override fun getFamilyName(): String = "Replace annotation"
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-    val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + targetAnnotation, startElement)
+    val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$targetAnnotation", startElement)
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(annotation))
   }
 

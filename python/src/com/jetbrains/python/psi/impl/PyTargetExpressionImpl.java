@@ -6,7 +6,10 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -35,6 +38,7 @@ import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -527,24 +531,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
       if (qName != null && qName.getComponentCount() != 0) {
         final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
-        if (owner instanceof PyTypedElement) {
-          List<? extends RatedResolveResult> resolved =
-            Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, owner));
-
-          for (String component : qName.getComponents()) {
-            resolved = PyUtil.filterTopPriorityResults(
-              StreamEx
-                .of(resolved)
-                .map(ResolveResult::getElement)
-                .select(PyTypedElement.class)
-                .map(context::getType)
-                .nonNull()
-                .flatCollection(qualifier -> qualifier.resolveMember(component, null, AccessDirection.READ, resolveContext))
-                .toList()
-            );
-          }
-
-          return ContainerUtil.mapNotNull(resolved, ResolveResult::getElement);
+        if (owner != null) {
+          return PyResolveUtil.resolveQualifiedNameInScope(qName, owner, context);
         }
       }
 

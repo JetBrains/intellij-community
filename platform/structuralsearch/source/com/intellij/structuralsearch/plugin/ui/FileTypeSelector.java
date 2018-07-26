@@ -129,6 +129,9 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
     @Override
     public void customize(JList list, FileTypeInfo info, int index, boolean selected, boolean hasFocus) {
+      if (info == null) {
+        return;
+      }
       if (info.isNested() && index >= 0) {
         setIcon(WIDE_EMPTY_ICON);
         setText(info.getText());

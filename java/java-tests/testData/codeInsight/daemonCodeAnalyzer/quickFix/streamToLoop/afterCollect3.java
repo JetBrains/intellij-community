@@ -7,7 +7,7 @@ import java.util.Objects;
 public class Main {
   private static void test(List<String> list) {
       StringBuilder sb = new StringBuilder();
-      for (String str: list) {
+      for (String str : list) {
           if (str != null) {
               sb.append(str);
           }

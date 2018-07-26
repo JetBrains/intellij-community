@@ -63,7 +63,6 @@ public class DuplicatesFinder {
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
     myPatternAsList = Arrays.asList(myPattern);
-    myParameters = parameters;
     myOutputParameters = outputParameters;
     myMatchType = matchType;
     myEffectivelyLocal = effectivelyLocal != null ? effectivelyLocal : Collections.emptySet();
@@ -90,11 +89,13 @@ public class DuplicatesFinder {
       myMultipleExitPoints = exitPoints.size() > 1;
 
       if (myMultipleExitPoints) {
-        myParameters.removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
+        parameters = parameters.copy();
+        parameters.removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
       }
     }
     catch (AnalysisCanceledException ignored) {
     }
+    myParameters = parameters;
   }
 
   public DuplicatesFinder(@NotNull PsiElement[] pattern,

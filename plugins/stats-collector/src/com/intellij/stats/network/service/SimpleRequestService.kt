@@ -21,8 +21,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.HttpRequests
 import org.apache.commons.codec.binary.Base64OutputStream
-import org.apache.http.client.fluent.Request
-import org.apache.http.util.EntityUtils
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -78,12 +76,12 @@ class SimpleRequestService: RequestService() {
 
     override fun get(url: String): ResponseData? {
         return try {
-            var data: ResponseData? = null
-            Request.Get(url).execute().handleResponse {
-                val text = EntityUtils.toString(it.entity)
-                data = ResponseData(it.statusLine.statusCode, text)
+            val requestBuilder = HttpRequests.request(url)
+            return requestBuilder.connect { request ->
+                val responseCode = request.getResponseCode()
+                val responseText = request.readString()
+                ResponseData(responseCode, responseText)
             }
-            data
         } catch (e: IOException) {
             LOG.debug(e)
             null
@@ -92,10 +90,21 @@ class SimpleRequestService: RequestService() {
 
     private fun URLConnection.asResponseData(): ResponseData? {
         if (this is HttpURLConnection) {
-            return ResponseData(this.responseCode, this.responseMessage)
+            return ResponseData(this.responseCode, StringUtil.notNullize(this.responseMessage, ""))
         }
 
+        LOG.error("Could not get code and message from http response")
         return null
+    }
+
+    private fun HttpRequests.Request.getResponseCode(): Int {
+        val connection = this.connection
+        if (connection is HttpURLConnection) {
+            return connection.responseCode
+        }
+
+        LOG.error("Could not get code from http response")
+        return -1
     }
 }
 

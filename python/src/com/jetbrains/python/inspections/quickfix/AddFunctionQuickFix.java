@@ -123,7 +123,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       // else: no arglist, use empty args
 
       WriteAction.run(() -> {
-        PyFunction function = builder.buildFunction(project, LanguageLevel.forElement(file));
+        PyFunction function = builder.buildFunction();
 
         // add to the bottom
         function = (PyFunction) file.add(function);

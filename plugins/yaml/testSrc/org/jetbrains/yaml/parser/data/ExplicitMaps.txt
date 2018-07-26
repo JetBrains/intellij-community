@@ -37,9 +37,9 @@ YAML file
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('two')
-  PsiWhiteSpace(' ')
-  PsiComment(comment)('# block value')
-  PsiElement(Eol)('\n')
+          PsiWhiteSpace(' ')
+          PsiComment(comment)('# block value')
+      PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
@@ -105,7 +105,7 @@ YAML file
       PsiElement(,)(',')
       PsiElement(Eol)('\n')
       PsiElement(})('}')
-  PsiElement(Eol)('\n')
+    PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
@@ -147,7 +147,7 @@ YAML file
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('white↓')
-  PsiElement(Eol)('\n')
+      PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')

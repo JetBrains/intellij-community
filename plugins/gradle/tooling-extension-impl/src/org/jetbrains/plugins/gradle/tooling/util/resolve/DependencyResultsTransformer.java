@@ -378,7 +378,7 @@ public class DependencyResultsTransformer {
     dependency.setSelectionReason(selectionReason);
     dependency.setProjectPath(componentSelector.getProjectPath());
     dependency.setConfigurationName(it.getName());
-    Set<File> artifactsFiles = it.getAllArtifacts().getFiles().getFiles();
+    Set<File> artifactsFiles = new LinkedHashSet<File>(it.getAllArtifacts().getFiles().getFiles());
     dependency.setProjectDependencyArtifacts(artifactsFiles);
     setProjectDependencyArtifactsSources(dependency, artifactsFiles, mySourceSetFinder);
 

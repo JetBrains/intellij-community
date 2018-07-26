@@ -11,6 +11,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import java.awt.*;
@@ -91,12 +92,18 @@ public class UITheme {
     if ("null".equals(value)) {
       return null;
     }
+    if ("true".equals(value)) return Boolean.TRUE;
+    if ("false".equals(value)) return Boolean.FALSE;
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
-    } else if (key.endsWith("border")) {
+    } else if (key.endsWith("Border") || key.endsWith("border")) {
       try {
-        return Class.forName(value).newInstance();
+        if (StringUtil.split(value, ",").size() == 4) {
+          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+        } else {
+          return Class.forName(value).newInstance();
+        }
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -109,7 +116,6 @@ public class UITheme {
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
-      final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
       if (color != null) {
         return  new ColorUIResource(color);
@@ -117,8 +123,6 @@ public class UITheme {
         return invVal;
       } else if (icon != null) {
         return new IconUIResource(icon);
-      } else if (boolVal != null) {
-        return boolVal;
       }
     }
     return value;

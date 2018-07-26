@@ -244,7 +244,13 @@ public class FileEditorFixture extends EditorFixture {
 
   @NotNull
   public EditorFixture waitUntilErrorAnalysisFinishes() {
-    FileFixture file = getCurrentFileFixture();
+    FileFixture file = execute(new GuiQuery<FileFixture>() {
+      @Override
+      protected FileFixture executeInEDT() {
+        return getCurrentFileFixture();
+      }
+    });
+    assert file != null;
     file.waitUntilErrorAnalysisFinishes();
     return this;
   }

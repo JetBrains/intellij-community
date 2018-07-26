@@ -8,7 +8,7 @@ matrix:
     - python: "3.6"
       env: TEST_CMD="./tests/mypy_selftest.py"
     - python: "3.5"
-      env: TEST_CMD="./tests/mypy_test.py --no-implicit-optional"
+      env: TEST_CMD="./tests/mypy_test.py"
     - python: "3.4"
       env: TEST_CMD="./tests/check_consistent.py"
     - python: "2.7"

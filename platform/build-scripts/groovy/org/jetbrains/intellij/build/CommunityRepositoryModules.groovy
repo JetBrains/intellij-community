@@ -234,25 +234,14 @@ class CommunityRepositoryModules {
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
 */
-    },
-    plugin("intellij.statsCollector") {
-      withModule("intellij.statsCollector.features", "features.jar")
-      withModule("intellij.statsCollector.logEvents")
-      withResource("features/resources", "lib")
     }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
+    // the following is copied from https://android.googlesource.com/platform/tools/idea/+/studio-master-dev/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
     plugin("intellij.android.plugin") {
       directoryName = "android"
       mainJarName = "android.jar"
-      withModule("intellij.android.common", "android-common.jar", false)
-      withModule("intellij.android.rt", "android-rt.jar", false)
-
-      withModule("android-annotations", "androidAnnotations.jar")  // Android Studio
-      withModule("common")  // Android Studio
-
-      /* Android Studio: exclude
       withModule("intellij.android.common", "android-common.jar", null)
       withModule("intellij.android.buildCommon", "build-common.jar", null)
       withModule("intellij.android.rt", "android-rt.jar", null)
@@ -277,41 +266,22 @@ class CommunityRepositoryModules {
       withModule("intellij.android.apkanalyzer", "android.jar")
       withModule("intellij.android.project-system", "android.jar")
       withModule("intellij.android.project-system-gradle", "android.jar")
-      */
       withModule("intellij.android.adt.ui", "adt-ui.jar")
-      /* Android Studio: exclude
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
-      */
-      withModule("android.sdktools.repository")
-      withModule("intellij.android.sherpaUi", "constraint-layout.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-      withModule("android.sdktools.manifest-merger")  /* Android Studio:
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
-      */
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
-      /* Android Studio: exclude
       withModule("android.sdktools.binary-resources", "sdk-tools.jar")
       withModule("android.sdktools.analyzer", "sdk-tools.jar")
-      */
-      withModule("android.sdktools.ddmlib", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
-      /* Android Studio: exclude
       withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
-      */
-      withModule("android.sdktools.lint-api", "sdk-tools.jar")
-      withModule("android.sdktools.lint-checks", "sdk-tools.jar")
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
-      withModule("rpclib", "sdk-tools.jar")  // Android Studio
-      withModule("android.sdktools.builder-model", "sdk-tools.jar")
-      withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
-      withModule("instant-run-common", "sdk-tools.jar")  // Android Studio
-      withModule("instant-run-client", "sdk-tools.jar")  // Android Studio
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
       withModule("android.sdktools.java-lib-model", "sdk-tools.jar")
       withModule("android.sdktools.java-lib-model-builder", "sdk-tools.jar")
@@ -319,29 +289,29 @@ class CommunityRepositoryModules {
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
-      withProjectLibrary("freemarker") //todo[nik] move to module libraries
+      withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
+      withProjectLibrary("jgraphx") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
-      withResource("lib/asm-5.0.3.jar", "lib")  // Android Studio
-      withResource("lib/asm-analysis-5.0.3.jar", "lib")  // Android Studio
-      withResource("lib/asm-tree-5.0.3.jar", "lib")  // Android Studio
-      withResource("lib/commons-io-2.4.jar", "lib")  // Android Studio
-      withResource("lib/commons-compress-1.8.1.jar", "lib")  // Android Studio
-      withResource("lib/javawriter-2.2.1.jar", "lib")  // Android Studio
+      withResourceFromModule("intellij.android","lib/antlr4-runtime-4.5.3.jar", "lib")
+      withResourceFromModule("intellij.android","lib/asm-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android","lib/asm-analysis-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android","lib/asm-tree-5.0.3.jar", "lib")
+      withResourceFromModule("intellij.android","lib/commons-io-2.4.jar", "lib")
+      withResourceFromModule("intellij.android","lib/commons-compress-1.8.1.jar", "lib")
+      withResourceFromModule("intellij.android","lib/javawriter-2.2.1.jar", "lib")
+      withResourceFromModule("intellij.android","lib/juniversalchardet-1.0.3.jar", "lib")
 
-      withResource("lib/androidWidgets", "lib/androidWidgets")  // Android Studio
-      withResource("device-art-resources", "lib/device-art-resources")  // Android Studio
-      /* Android Studio: exclude
+      withResourceFromModule("intellij.android","lib/androidWidgets", "lib/androidWidgets")
+      withResourceFromModule("intellij.android.artwork","resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
-      */
-      withResourceArchive("annotations", "lib/androidAnnotations.jar") // Android Studio
+      withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 
-      /* Android Studio: exclude
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       withProjectLibrary("archive-patcher")
       withProjectLibrary("com.android.tools.analytics-library:shared:26.1.2")
@@ -352,7 +322,6 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.ddms:ddmlib:26.1.2")
       withProjectLibrary("com.android.tools.build:manifest-merger:26.1.2")
       withProjectLibrary("analytics-protos")
-      */
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)

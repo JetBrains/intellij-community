@@ -232,9 +232,9 @@ final class PaintersHelper implements Painter.Listener {
                     (FileUtil.isAbsolutePlatformIndependent(filePath)
                      ? new File(filePath)
                      : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
+          ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             final Image m = ImageLoader.loadFromUrl(url);
-            ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
             ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newAnchor), modalityState);
           });
         }

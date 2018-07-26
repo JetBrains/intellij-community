@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    return new YAMLIndentOptionsEditor();
+    return new YAMLIndentOptionsEditor(this);
   }
 
   @NotNull
@@ -85,6 +86,10 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   private static class YAMLIndentOptionsEditor extends SmartIndentOptionsEditor {
     private JCheckBox myIndentSequence;
+
+    public YAMLIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
+      super(provider);
+    }
 
     @Override
     protected void addComponents() {

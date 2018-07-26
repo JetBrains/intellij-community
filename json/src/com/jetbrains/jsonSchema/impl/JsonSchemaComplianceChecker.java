@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -64,7 +65,6 @@ public class JsonSchemaComplianceChecker {
       rootToCheck = findTopLevelElement(myWalker, element);
     } else {
       rootToCheck = firstProp.getParentObject();
-      if (rootToCheck == null) rootToCheck = firstProp.getParentArray();
       if (rootToCheck == null || !myWalker.isTopJsonElement(rootToCheck.getDelegate().getParent())) {
         return;
       }
@@ -81,7 +81,7 @@ public class JsonSchemaComplianceChecker {
         if (checkIfAlreadyProcessed(entry.getKey())) continue;
         String value = entry.getValue().getMessage();
         if (myMessagePrefix != null) value = myMessagePrefix + value;
-        LocalQuickFix fix = entry.getValue().createFix();
+        LocalQuickFix fix = entry.getKey().getContainingFile() instanceof JsonFile ? entry.getValue().createFix() : null;
         if (fix == null) {
           myHolder.registerProblem(entry.getKey(), value);
         }

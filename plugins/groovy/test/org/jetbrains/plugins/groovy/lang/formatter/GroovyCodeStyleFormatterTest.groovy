@@ -96,6 +96,22 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   void testMethod_call_par2() throws Throwable { doTest() }
 
+  void testArgumentsDontWrapAlign() { doTest() }
+
+  void testArgumentsWrapAlways() { doTest() }
+
+  void testArgumentsWrapAlwaysNl() { doTest() }
+
+  void testArgumentsWrapAlwaysAlign() { doTest() }
+
+  void testParametersDontWrapAlign() { doTest() }
+
+  void testParametersWrapAlways() { doTest() }
+
+  void testParametersWrapAlwaysDontAlign() { doTest() }
+
+  void testParametersWrapAlwaysNl() { doTest() }
+
   void testMethod_decl1() throws Throwable { doTest() }
 
   void testMethod_decl2() throws Throwable { doTest() }
@@ -109,6 +125,16 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   void testTry1() throws Throwable { doTest() }
 
   void testTry2() throws Throwable { doTest() }
+
+  void testTryResourcesSpaces() { doTest() }
+
+  void testTryResourcesDontWrap() { doTest() }
+
+  void testTryResourcesWrapAlways() { doTest() }
+
+  void testTryResourcesWrapAlwaysDontAlign() { doTest() }
+
+  void testTryResourcesWrapAlwaysNl() { doTest() }
 
   void testWhile1() throws Throwable { doTest() }
 

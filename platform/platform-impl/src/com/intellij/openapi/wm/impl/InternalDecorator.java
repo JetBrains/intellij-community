@@ -466,7 +466,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       if (myInfo == null) return;
 
       if (myAdditionalGearActions != null) {
-        addSorted(this, myAdditionalGearActions);
+        if (myAdditionalGearActions.isPopup() && !StringUtil.isEmpty(myAdditionalGearActions.getTemplatePresentation().getText())) {
+          add(myAdditionalGearActions);
+        } else {
+          addSorted(this, myAdditionalGearActions);
+        }
         addSeparator();
       }
       addAction(myToggleToolbarGroup).setAsSecondary(true);

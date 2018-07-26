@@ -26,6 +26,11 @@ fun ProjectStructureDialogScenarios.openProjectStructureAndCheck(actions: GuiTes
     val projectStructureTitle = ProjectStructureDialogModel.Constants.projectStructureTitle
     logTestStep("Check structure of the project")
     ideFrame {
+      projectView {
+        this.activate()
+        click()
+        shortcut(Key.HOME)
+      }
       val numberOfAttempts = 5
       var isCorrectDialogOpen = false
       for (currentAttempt in 0..numberOfAttempts) {

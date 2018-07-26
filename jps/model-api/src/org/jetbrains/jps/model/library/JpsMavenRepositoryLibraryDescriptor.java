@@ -51,6 +51,11 @@ public class JpsMavenRepositoryLibraryDescriptor {
     this(mavenId, true, Collections.emptyList());
   }
 
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             boolean includeTransitiveDependencies) {
+    this(groupId, artifactId, version, includeTransitiveDependencies, Collections.emptyList());
+  }
+
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId,
                                              boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     myMavenId = mavenId;

@@ -26,13 +26,19 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public final class DescriptorUtil {
   private DescriptorUtil() {
@@ -41,7 +47,6 @@ public final class DescriptorUtil {
   public interface Patcher {
     void patchPluginXml(XmlFile pluginXml, PsiClass klass) throws IncorrectOperationException;
   }
-
 
   public static void processComponents(XmlTag root, ComponentType.Processor processor) {
     final ComponentType[] types = ComponentType.values();
@@ -86,6 +91,21 @@ public final class DescriptorUtil {
     }
 
     return ideaPlugin.getRootElement().getPluginId();
+  }
+
+  public static List<String> getPluginAndOptionalDependenciesIds(Module module) {
+    XmlFile xml = PluginModuleType.getPluginXml(module);
+    if (xml == null) return Collections.emptyList();
+    DomFileElement<IdeaPlugin> plugin = getIdeaPlugin(xml);
+    if (plugin == null) return Collections.emptyList();
+    List<String> result = new ArrayList<>();
+    ContainerUtil.addIfNotNull(result, plugin.getRootElement().getPluginId());
+    for (Dependency dependency : plugin.getRootElement().getDependencies()) {
+      if (Boolean.TRUE.equals(dependency.getOptional().getValue())) {
+        ContainerUtil.addIfNotNull(result, dependency.getRawText());
+      }
+    }
+    return result;
   }
 
   public static boolean isPluginXml(@Nullable PsiFile file) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
@@ -169,11 +170,11 @@ fun <S, C : Component> ComponentFixture<S, C>.checkbox(labelText: String, timeou
  * @timeout in seconds to find ActionLink component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-  fun <S, C : Component> ComponentFixture<S, C>.actionLink(name: String, timeout: Long = defaultTimeout): ActionLinkFixture =
-    if (target() is Container) {
-      ActionLinkFixture.findActionLinkByName(name, robot(), target() as Container, timeout.toFestTimeout())
-    }
-    else throw unableToFindComponent("""ActionLink by name "$name"""")
+fun <S, C : Component> ComponentFixture<S, C>.actionLink(name: String, timeout: Long = defaultTimeout): ActionLinkFixture =
+  if (target() is Container) {
+    ActionLinkFixture.findActionLinkByName(name, robot(), target() as Container, timeout.toFestTimeout())
+  }
+  else throw unableToFindComponent("""ActionLink by name "$name"""")
 
 /**
  * Finds a ActionButton component in hierarchy of context component by action name and returns ActionButtonFixture.
@@ -391,14 +392,20 @@ private fun <S, C : Component> ComponentFixture<S, C>.unableToFindComponent(comp
 
 /**
  * Find an AsyncProcessIcon component in a current context (gets by receiver) and returns a fixture for it.
+ * Indexing processIcon is excluded from this search
  *
  * @timeout timeout in seconds to find AsyncProcessIcon
  */
 fun <S, C : Component> ComponentFixture<S, C>.asyncProcessIcon(timeout: Long = defaultTimeout): AsyncProcessIconFixture {
+  val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
   val asyncProcessIcon = GuiTestUtil.waitUntilFound(
     robot(),
     target() as Container,
-    GuiTestUtilKt.typeMatcher(AsyncProcessIcon::class.java) { it.isShowing && it.isVisible },
+    GuiTestUtilKt.typeMatcher(AsyncProcessIcon::class.java) {
+      it.isShowing &&
+      it.isVisible &&
+      it.toolTipText != indexingProcessIconTooltipText
+    },
     timeout.toFestTimeout())
   return AsyncProcessIconFixture(robot(), asyncProcessIcon)
 }
@@ -410,12 +417,13 @@ fun <ComponentType : Component> waitUntilFound(container: Container?,
                                                componentClass: Class<ComponentType>,
                                                timeout: Long,
                                                matcher: (ComponentType) -> Boolean): ComponentType {
-  return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
+  return GuiTestUtil.waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) },
+                                    timeout.toFestTimeout())
 }
 
 fun <ComponentType : Component> waitUntilFoundList(container: Container?,
-                                               componentClass: Class<ComponentType>,
-                                               timeout: Long,
-                                               matcher: (ComponentType) -> Boolean): List<ComponentType> {
+                                                   componentClass: Class<ComponentType>,
+                                                   timeout: Long,
+                                                   matcher: (ComponentType) -> Boolean): List<ComponentType> {
   return GuiTestUtil.waitUntilFoundList(container, timeout.toFestTimeout(), GuiTestUtilKt.typeMatcher(componentClass) { matcher(it) })
 }

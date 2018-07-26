@@ -2,6 +2,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,7 +18,7 @@ import java.util.List;
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends CachingScalableJBIcon<RowIcon> {
+public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconProvider {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -154,6 +156,15 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
     }
     myWidth = width;
     myHeight = height;
+  }
+
+  @Override
+  public Icon getDarkIcon(boolean isDark) {
+    RowIcon newIcon = copy();
+    for (int i=0; i<newIcon.myIcons.length; i++) {
+      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+    }
+    return newIcon;
   }
 
   @Override

@@ -1,5 +1,5 @@
 - -
-      a:
+      a   :
       -   -  d
           - e
       - pp
@@ -11,7 +11,7 @@
                world
               ups
       'key : sd': ttt
-      pp: >
+      pp : >
             Hello
             world
       ahahah: ppp

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.ASTNode;
@@ -24,8 +25,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -355,8 +354,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
 
     public CommonCodeStyleSettings.IndentOptions getIndentOptions() {
       if (myIndentOptions == null) {
-        CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-        myIndentOptions = codeStyleSettings.getIndentOptions(file.getFileType());
+        myIndentOptions = CodeStyle.getIndentOptions(file);
       }
       
       return myIndentOptions;

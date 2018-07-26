@@ -87,6 +87,23 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
   protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
   }
 
+  /**
+   * Fired before loading.
+   */
+  protected void beforeLoading() {}
+
+
+  /**
+   * Fired when settings just loaded.
+   *
+   * <p>
+   *   When the common version (the {@link CodeStyleSettings#myVersion} is not changed, this method is called just after loading.
+   *   When the common version is changed, this method called after {@link CustomCodeStyleSettings#importLegacySettings}.
+   * </p>
+   */
+  protected void afterLoaded() {}
+
+
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof CustomCodeStyleSettings)) return false;

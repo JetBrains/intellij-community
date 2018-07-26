@@ -31,12 +31,30 @@ function load_interactive_configs {
   fi
 }
 
+function override_jb_variables {
+  for VARIABLE in $(env)
+  do
+    NAME=${VARIABLE%%=*}
+    if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
+    then
+      NEW_NAME=${NAME:20}
+      if [ -n "$NEW_NAME" ]
+      then
+        VALUE=${VARIABLE#*=}
+        export "$NEW_NAME"="$VALUE"
+      fi
+    fi
+  done
+}
+
 if [ -n $LOGIN_SHELL ]; then
   load_login_configs
   unset LOGIN_SHELL
 fi
 
 load_interactive_configs
+
+override_jb_variables
 
 # mappings for Ctrl-left-arrow and Ctrl-right-arrow for word moving
 bind '"\e\e[C":forward-word'

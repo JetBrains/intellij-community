@@ -1,6 +1,6 @@
 class Braces {
   void m() {
-    final boolean <caret>isEqualsVoorSyncResync = this instanceof A ? isEqual2() : isEqual();//keep me
+    final var <caret>isEqualsVoorSyncResync = this instanceof A ? isEqual2() : isEqual();//keep me
   }
 
   private boolean isEqual() {

@@ -100,6 +100,7 @@ public class GroovyPsiCreator {
     if (elem == WHILE_STATEMENT) return new GrWhileStatementImpl(node);
     if (elem == DO_WHILE_STATEMENT) return new GrDoWhileStatementImpl(node);
     if (elem == TRY_STATEMENT) return new GrTryCatchStatementImpl(node);
+    if (elem == TRY_RESOURCE_LIST) return new GrTryResourceListImpl(node);
     if (elem == CATCH_CLAUSE) return new GrCatchClauseImpl(node);
     if (elem == FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
     if (elem == SYNCHRONIZED_STATEMENT) return new GrSynchronizedStatementImpl(node);

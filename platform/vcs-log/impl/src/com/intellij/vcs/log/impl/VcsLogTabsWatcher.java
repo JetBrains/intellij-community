@@ -14,6 +14,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import one.util.streamex.StreamEx;
@@ -36,6 +37,7 @@ public class VcsLogTabsWatcher implements Disposable {
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
   @Nullable private ToolWindow myToolWindow;
   private boolean myIsVisible;
+  @Nullable private MessageBusConnection myConnection;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher) {
     myRefresher = refresher;
@@ -43,9 +45,10 @@ public class VcsLogTabsWatcher implements Disposable {
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
     ApplicationManager.getApplication().invokeLater(() -> {
-      project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
+      myConnection = project.getMessageBus().connect();
+      myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
       installContentListener();
-    });
+    }, project.getDisposed());
   }
 
   @Nullable
@@ -74,7 +77,10 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private void removeListeners() {
-    myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
+    if (myConnection != null) {
+      myConnection.disconnect();
+      myConnection = null;
+    }
 
     if (myToolWindow != null) {
       myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);

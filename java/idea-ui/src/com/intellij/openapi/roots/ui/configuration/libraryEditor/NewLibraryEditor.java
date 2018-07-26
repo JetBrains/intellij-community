@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -215,13 +216,13 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   public void applyTo(@NotNull LibraryEx.ModifiableModelEx model) {
     model.setProperties(myProperties);
-    exportRoots(model::getUrls, model::isValid, model::removeRoot, model::addRoot, model::addJarDirectory);
+    exportRoots(model::getUrls, model::isValid, model::removeRoot, model::addRoot, model::addJarDirectory, model::addExcludedRoot);
   }
 
 
   public void applyTo(@NotNull LibraryEditorBase editor) {
     editor.setProperties(myProperties);
-    exportRoots(editor::getUrls, editor::isValid, editor::removeRoot, editor::addRoot, editor::addJarDirectory);
+    exportRoots(editor::getUrls, editor::isValid, editor::removeRoot, editor::addRoot, editor::addJarDirectory, editor::addExcludedRoot);
   }
 
   private void exportRoots(
@@ -229,7 +230,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
     final BiFunction<String, OrderRootType, Boolean> isValid,
     final BiConsumer<String, OrderRootType> removeRoot,
     final BiConsumer<String, OrderRootType> addRoot,
-    final TriConsumer<String, Boolean, OrderRootType> addJarDir) {
+    final TriConsumer<String, Boolean, OrderRootType> addJarDir,
+    final Consumer<String> addExcludedRoot) {
 
     // first, clean the target container optionally preserving invalid paths
     for (OrderRootType type : OrderRootType.getAllTypes()) {
@@ -259,6 +261,9 @@ public class NewLibraryEditor extends LibraryEditorBase {
       for (String url : entry.getValue()) {
         addJarDir.accept(url, true, type);
       }
+    }
+    for (LightFilePointer root: myExcludedRoots) {
+      addExcludedRoot.accept(root.getUrl());
     }
   }
 

@@ -77,7 +77,10 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
 
         if (context instanceof PsiDeclarationStatement || context instanceof PsiResourceVariable) {
           if (info.isRead() && REPORT_REDUNDANT_INITIALIZER) {
-            reportInitializerProblem(psiVariable, holder, isOnTheFly);
+            PsiTypeElement typeElement = psiVariable.getTypeElement();
+            if (typeElement == null || !typeElement.isInferredType()) {
+              reportInitializerProblem(psiVariable, holder, isOnTheFly);
+            }
           }
         }
         else if (context instanceof PsiAssignmentExpression) {

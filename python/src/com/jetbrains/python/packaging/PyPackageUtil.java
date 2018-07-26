@@ -37,13 +37,14 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
@@ -125,13 +126,13 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  private static PyListLiteralExpression findSetupPyInstallRequires(@Nullable PyCallExpression setupCall) {
+  private static PsiElement findSetupPyInstallRequires(@Nullable PyCallExpression setupCall) {
     if (setupCall == null) return null;
 
     return StreamEx
       .of(REQUIRES, INSTALL_REQUIRES)
       .map(setupCall::getKeywordArgument)
-      .map(requires -> resolveValue(requires, PyListLiteralExpression.class))
+      .map(PyPackageUtil::resolveValue)
       .findFirst(Objects::nonNull)
       .orElse(null);
   }
@@ -153,7 +154,7 @@ public class PyPackageUtil {
     if (setupCall == null) return null;
 
     final PyDictLiteralExpression extrasRequire =
-      resolveValue(setupCall.getKeywordArgument("extras_require"), PyDictLiteralExpression.class);
+      PyUtil.as(resolveValue(setupCall.getKeywordArgument("extras_require")), PyDictLiteralExpression.class);
     if (extrasRequire == null) return null;
 
     final Map<String, List<PyRequirement>> result = new HashMap<>();
@@ -171,21 +172,11 @@ public class PyPackageUtil {
   @Nullable
   private static Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra, @Nullable PyExpression requires) {
     if (extra instanceof PyStringLiteralExpression) {
-      final String requiresValue;
-
-      if (requires instanceof PyStringLiteralExpression) {
-        requiresValue = ((PyStringLiteralExpression)requires).getStringValue();
-      }
-      else if (requires instanceof PyListLiteralExpression) {
-        final List<String> requiresListValue = PyUtil.strListValue(requires);
-        requiresValue = requiresListValue != null ? StringUtil.join(requiresListValue, "\n") : null;
-      }
-      else {
-        requiresValue = null;
-      }
+      final List<String> requiresValue = resolveRequiresValue(requires);
 
       if (requiresValue != null) {
-        return Pair.createNonNull(((PyStringLiteralExpression)extra).getStringValue(), PyRequirementParser.fromText(requiresValue));
+        return Pair.createNonNull(((PyStringLiteralExpression)extra).getStringValue(),
+                                  PyRequirementParser.fromText(StringUtil.join(requiresValue, "\n")));
       }
     }
 
@@ -199,11 +190,7 @@ public class PyPackageUtil {
       StreamEx
         .of(argumentNames)
         .map(setupCall::getKeywordArgument)
-        .map(requires -> resolveValue(requires, PyListLiteralExpression.class))
-        .nonNull()
-        .flatMap(requires -> Stream.of(requires.getElements()))
-        .select(PyStringLiteralExpression.class)
-        .map(StringLiteralExpression::getStringValue)
+        .flatCollection(PyPackageUtil::resolveRequiresValue)
         .joining("\n")
     );
   }
@@ -225,20 +212,46 @@ public class PyPackageUtil {
     return requirementsFromRequires;
   }
 
+  /**
+   * @param expression expression to resolve
+   * @return {@code expression} if it is not a reference or element that is found by following assignments chain.
+   * <i>Note: if result is {@code com.jetbrains.python.psi.PyExpression} then paretheses around will be flattened.</i>
+   */
   @Nullable
-  private static <T extends PyExpression> T resolveValue(@Nullable PyExpression expression, @NotNull Class<T> cls) {
-    if (cls.isInstance(expression)) {
-      return cls.cast(expression);
-    }
-    if (expression instanceof PyReferenceExpression) {
-      final TypeEvalContext context = TypeEvalContext.deepCodeInsight(expression.getProject());
+  private static PsiElement resolveValue(@Nullable PyExpression expression) {
+    final PsiElement elementToAnalyze = PyPsiUtils.flattenParens(expression);
+
+    if (elementToAnalyze instanceof PyReferenceExpression) {
+      final TypeEvalContext context = TypeEvalContext.deepCodeInsight(elementToAnalyze.getProject());
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final QualifiedResolveResult result = ((PyReferenceExpression)expression).followAssignmentsChain(resolveContext);
-      final PsiElement element = result.getElement();
-      if (cls.isInstance(element)) {
-        return cls.cast(element);
-      }
+
+      return StreamEx
+        .of(((PyReferenceExpression)elementToAnalyze).multiFollowAssignmentsChain(resolveContext))
+        .map(ResolveResult::getElement)
+        .findFirst(Objects::nonNull)
+        .map(e -> e instanceof PyExpression ? PyPsiUtils.flattenParens((PyExpression)e) : e)
+        .orElse(null);
     }
+
+    return elementToAnalyze;
+  }
+
+  @Nullable
+  private static List<String> resolveRequiresValue(@Nullable PyExpression expression) {
+    final PsiElement elementToAnalyze = resolveValue(expression);
+
+    if (elementToAnalyze instanceof PyStringLiteralExpression) {
+      return Collections.singletonList(((PyStringLiteralExpression)elementToAnalyze).getStringValue());
+    }
+    else if (elementToAnalyze instanceof PyListLiteralExpression || elementToAnalyze instanceof PyTupleExpression) {
+      return StreamEx
+        .of(((PySequenceExpression)elementToAnalyze).getElements())
+        .map(PyPackageUtil::resolveValue)
+        .select(PyStringLiteralExpression.class)
+        .map(PyStringLiteralExpression::getStringValue)
+        .toList();
+    }
+
     return null;
   }
 
@@ -263,7 +276,7 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static PyCallExpression findSetupCall(@NotNull PyFile file) {
+  private static PyCallExpression findSetupCall(@NotNull PyFile file) {
     final Ref<PyCallExpression> result = new Ref<>(null);
     file.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
@@ -421,25 +434,18 @@ public class PyPackageUtil {
     }
 
     final PyFile setupPy = findSetupPy(module);
-    if (setupPy == null) {
-      return;
-    }
+    if (setupPy == null) return;
 
     final PyCallExpression setupCall = findSetupCall(setupPy);
-    final PyListLiteralExpression installRequires = findSetupPyInstallRequires(setupCall);
-    final PyElementGenerator generator = PyElementGenerator.getInstance(module.getProject());
+    if (setupCall == null) return;
 
-    if (installRequires != null && installRequires.isWritable()) {
-      final String text = String.format("'%s'", requirementName);
-      final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
-      installRequires.add(generated);
-
-      return;
+    final PsiElement installRequires = findSetupPyInstallRequires(setupCall);
+    if (installRequires != null) {
+      addRequirementToInstallRequires(installRequires, requirementName, languageLevel);
     }
-
-    if (setupCall != null) {
+    else {
       final PyArgumentList argumentList = setupCall.getArgumentList();
-      final PyKeywordArgument requiresArg = generateRequiresKwarg(setupPy, requirementName, languageLevel, generator);
+      final PyKeywordArgument requiresArg = generateRequiresKwarg(setupPy, requirementName, languageLevel);
 
       if (argumentList != null && requiresArg != null) {
         argumentList.addArgument(requiresArg);
@@ -447,14 +453,47 @@ public class PyPackageUtil {
     }
   }
 
+  private static void addRequirementToInstallRequires(@NotNull PsiElement installRequires,
+                                                      @NotNull String requirementName,
+                                                      @NotNull LanguageLevel languageLevel) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(installRequires.getProject());
+    final PyExpression newRequirement = generator.createExpressionFromText(languageLevel, "'" + requirementName + "'");
+
+    if (installRequires instanceof PyListLiteralExpression) {
+      installRequires.add(newRequirement);
+    }
+    else if (installRequires instanceof PyTupleExpression) {
+      final String newInstallRequiresText = StreamEx
+        .of(((PyTupleExpression)installRequires).getElements())
+        .append(newRequirement)
+        .map(PyExpression::getText)
+        .joining(",", "(", ")");
+
+      final PyExpression expression = generator.createExpressionFromText(languageLevel, newInstallRequiresText);
+
+      Optional
+        .ofNullable(PyUtil.as(expression, PyParenthesizedExpression.class))
+        .map(PyParenthesizedExpression::getContainedExpression)
+        .map(e -> PyUtil.as(e, PyTupleExpression.class))
+        .ifPresent(e -> installRequires.replace(e));
+    }
+    else if (installRequires instanceof PyStringLiteralExpression) {
+      final PyListLiteralExpression newInstallRequires = generator.createListLiteral();
+
+      newInstallRequires.add(installRequires);
+      newInstallRequires.add(newRequirement);
+
+      installRequires.replace(newInstallRequires);
+    }
+  }
+
   @Nullable
   private static PyKeywordArgument generateRequiresKwarg(@NotNull PyFile setupPy,
                                                          @NotNull String requirementName,
-                                                         @NotNull LanguageLevel languageLevel,
-                                                         @NotNull PyElementGenerator generator) {
+                                                         @NotNull LanguageLevel languageLevel) {
     final String keyword = SetupTaskIntrospector.usesSetuptools(setupPy) ? INSTALL_REQUIRES : REQUIRES;
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
-    final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
+    final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
 
     if (generated instanceof PyCallExpression) {
       final PyCallExpression callExpression = (PyCallExpression)generated;

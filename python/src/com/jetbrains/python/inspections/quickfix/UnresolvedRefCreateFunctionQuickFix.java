@@ -97,7 +97,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
       functionBuilder.parameter("args");
     }
 
-    PyFunction function = functionBuilder.buildFunction(project, LanguageLevel.getDefault());
+    PyFunction function = functionBuilder.buildFunction();
 
     final InjectedLanguageManager instance = InjectedLanguageManager.getInstance(project);
     final PsiLanguageInjectionHost host = instance.getInjectionHost(callExpr);

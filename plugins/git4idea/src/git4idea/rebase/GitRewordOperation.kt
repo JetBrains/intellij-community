@@ -153,9 +153,13 @@ class GitRewordOperation(private val repository: GitRepository,
       LOG.error("Couldn't find commits after reword in range $newCommitsRange")
       return null
     }
-    val newCommit = newCommits.last()
-    if (!StringUtil.equalsIgnoreWhitespaces(newCommit.fullMessage, newMessage)) {
-      LOG.error("Couldn't find the reworded commit. Expected message: \n[$newMessage]\nActual message: \n[${newCommit.fullMessage}]")
+    val newCommit = newCommits.find {
+      commit.author == it.author &&
+      commit.authorTime == it.authorTime &&
+      StringUtil.equalsIgnoreWhitespaces(it.fullMessage, newMessage)
+    }
+    if (newCommit == null) {
+      LOG.error("Couldn't find the reworded commit in range $newCommitsRange")
       return null
     }
     return newCommit.id

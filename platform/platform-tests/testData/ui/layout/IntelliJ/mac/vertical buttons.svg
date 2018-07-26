@@ -20,56 +20,56 @@
         <path d="M0 0 L480 0 L480 320 L0 320 L0 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="1">
-        <path d="M0 0 L0 27 L116 27 L116 0 Z"/>
+        <path d="M0 0 L0 27 L115 27 L115 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="2">
-        <path d="M0 0 L0 284 L359 284 L359 0 Z"/>
+        <path d="M0 0 L0 285 L360 285 L360 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="3">
-        <path d="M0 0 L0 16 L176 16 L176 0 Z"/>
+        <path d="M0 0 L0 15 L175 15 L175 0 Z"/>
       </clipPath>
     </defs>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(236,236,236)">
+    <g fill="rgb(236,236,236)" font-family="sans-serif" stroke="rgb(236,236,236)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(364,85)" stroke="rgb(236,236,236)">
-      <rect x="0" width="119" height="27" y="0" clip-path="url(#1)" stroke="none"/>
+    <g fill="rgb(236,236,236)" font-weight="bold" font-family="sans-serif" transform="translate(365,84)" stroke="rgb(236,236,236)">
+      <rect x="0" width="118" height="27" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(364,85)" stroke="white">
-      <rect x="3" y="3" clip-path="url(#1)" width="113" rx="3" ry="3" height="21" stroke="none"/>
-      <path fill="url(#linearGradient0)" d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L113 24 C114.6569 24 116 22.6569 116 21 L116 6 C116 4.3431 114.6569 3 113 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L112.5 23 C113.8807 23 115 21.8807 115 20.5 L115 6.5 C115 5.1193 113.8807 4 112.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" clip-path="url(#1)" fill-rule="evenodd" stroke="none"/>
-      <text fill="rgb(29,29,29)" x="32" xml:space="preserve" y="18" clip-path="url(#1)" stroke="none">Merge ...</text>
+    <g fill="white" text-rendering="optimizeLegibility" font-weight="bold" font-family="sans-serif" transform="translate(365,84)" stroke="white">
+      <rect x="3" y="3" clip-path="url(#1)" width="112" rx="3" ry="3" height="21" stroke="none"/>
+      <path fill="url(#linearGradient0)" d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L112 24 C113.6569 24 115 22.6569 115 21 L115 6 C115 4.3431 113.6569 3 112 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L111.5 23 C112.8807 23 114 21.8807 114 20.5 L114 6.5 C114 5.1193 112.8807 4 111.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" clip-path="url(#1)" fill-rule="evenodd" stroke="none"/>
+      <text fill="rgb(29,29,29)" x="34" xml:space="preserve" y="18" clip-path="url(#1)" stroke="none">Merge ...</text>
     </g>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(364,54)" stroke="rgb(236,236,236)">
-      <rect x="0" width="119" height="27" y="0" clip-path="url(#1)" stroke="none"/>
+    <g fill="rgb(236,236,236)" font-weight="bold" font-family="sans-serif" transform="translate(365,53)" stroke="rgb(236,236,236)">
+      <rect x="0" width="118" height="27" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(364,54)" stroke="white">
-      <rect x="3" y="3" clip-path="url(#1)" width="113" rx="3" ry="3" height="21" stroke="none"/>
-      <path fill="url(#linearGradient1)" d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L113 24 C114.6569 24 116 22.6569 116 21 L116 6 C116 4.3431 114.6569 3 113 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L112.5 23 C113.8807 23 115 21.8807 115 20.5 L115 6.5 C115 5.1193 113.8807 4 112.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" clip-path="url(#1)" fill-rule="evenodd" stroke="none"/>
+    <g fill="white" text-rendering="optimizeLegibility" font-weight="bold" font-family="sans-serif" transform="translate(365,53)" stroke="white">
+      <rect x="3" y="3" clip-path="url(#1)" width="112" rx="3" ry="3" height="21" stroke="none"/>
+      <path fill="url(#linearGradient1)" d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L112 24 C113.6569 24 115 22.6569 115 21 L115 6 C115 4.3431 113.6569 3 112 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L111.5 23 C112.8807 23 114 21.8807 114 20.5 L114 6.5 C114 5.1193 112.8807 4 111.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" clip-path="url(#1)" fill-rule="evenodd" stroke="none"/>
       <text fill="rgb(29,29,29)" x="17" xml:space="preserve" y="18" clip-path="url(#1)" stroke="none">Accept Theirs</text>
     </g>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(364,23)" stroke="rgb(236,236,236)">
-      <rect x="0" width="119" height="27" y="0" clip-path="url(#1)" stroke="none"/>
+    <g fill="rgb(236,236,236)" font-weight="bold" font-family="sans-serif" transform="translate(365,22)" stroke="rgb(236,236,236)">
+      <rect x="0" width="118" height="27" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(364,23)" stroke="white">
-      <rect x="3" y="3" clip-path="url(#1)" width="113" rx="3" ry="3" height="21" stroke="none"/>
-      <path fill="url(#linearGradient2)" d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L113 24 C114.6569 24 116 22.6569 116 21 L116 6 C116 4.3431 114.6569 3 113 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L112.5 23 C113.8807 23 115 21.8807 115 20.5 L115 6.5 C115 5.1193 113.8807 4 112.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" clip-path="url(#1)" fill-rule="evenodd" stroke="none"/>
-      <text fill="rgb(29,29,29)" x="17" xml:space="preserve" y="18" clip-path="url(#1)" stroke="none">Accept Yours</text>
+    <g fill="white" text-rendering="optimizeLegibility" font-weight="bold" font-family="sans-serif" transform="translate(365,22)" stroke="white">
+      <rect x="3" y="3" clip-path="url(#1)" width="112" rx="3" ry="3" height="21" stroke="none"/>
+      <path fill="url(#linearGradient2)" d="M3 6 L3 21 C3 22.6569 4.3431 24 6 24 L112 24 C113.6569 24 115 22.6569 115 21 L115 6 C115 4.3431 113.6569 3 112 3 L6 3 C4.3431 3 3 4.3431 3 6 ZM4 6.5 L4 20.5 C4 21.8807 5.1193 23 6.5 23 L111.5 23 C112.8807 23 114 21.8807 114 20.5 L114 6.5 C114 5.1193 112.8807 4 111.5 4 L6.5 4 C5.1193 4 4 5.1193 4 6.5 Z" clip-path="url(#1)" fill-rule="evenodd" stroke="none"/>
+      <text fill="rgb(29,29,29)" x="19" xml:space="preserve" y="18" clip-path="url(#1)" stroke="none">Accept Yours</text>
     </g>
-    <g fill="white" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,26)" stroke="white">
-      <rect x="0" width="359" height="284" y="0" clip-path="url(#2)" stroke="none"/>
+    <g fill="white" font-family="sans-serif" transform="translate(0,25)" stroke="white">
+      <rect x="0" width="360" height="285" y="0" clip-path="url(#2)" stroke="none"/>
     </g>
-    <g fill="silver" font-size="13px" font-family="'.SF NS Text'" transform="translate(0,26)" stroke="silver">
-      <rect x="0" width="1" height="284" y="0" clip-path="url(#2)" stroke="none"/>
-      <rect x="0" width="359" height="1" y="0" clip-path="url(#2)" stroke="none"/>
-      <rect x="358" width="1" height="284" y="0" clip-path="url(#2)" stroke="none"/>
-      <rect x="0" width="359" height="1" y="283" clip-path="url(#2)" stroke="none"/>
+    <g fill="silver" font-family="sans-serif" transform="translate(0,25)" stroke="silver">
+      <rect x="0" width="1" height="285" y="0" clip-path="url(#2)" stroke="none"/>
+      <rect x="0" width="360" height="1" y="0" clip-path="url(#2)" stroke="none"/>
+      <rect x="359" width="1" height="285" y="0" clip-path="url(#2)" stroke="none"/>
+      <rect x="0" width="360" height="1" y="284" clip-path="url(#2)" stroke="none"/>
     </g>
-    <g font-family="'.SF NS Text'" font-size="13px">
-      <text x="0" xml:space="preserve" y="13" clip-path="url(#3)" stroke="none">Merging branch </text>
-      <text x="101" xml:space="preserve" y="13" clip-path="url(#3)" font-weight="bold" stroke="none">foo</text>
-      <text x="122" xml:space="preserve" y="13" clip-path="url(#3)" stroke="none"> into </text>
-      <text x="154" xml:space="preserve" y="13" clip-path="url(#3)" font-weight="bold" stroke="none">bar</text>
+    <g font-family="sans-serif" font-weight="bold">
+      <text x="0" xml:space="preserve" y="12" clip-path="url(#3)" stroke="none">Merging branch </text>
+      <text x="101" xml:space="preserve" y="12" clip-path="url(#3)" stroke="none">foo</text>
+      <text x="122" xml:space="preserve" y="12" clip-path="url(#3)" stroke="none"> into </text>
+      <text x="155" xml:space="preserve" y="12" clip-path="url(#3)" stroke="none">bar</text>
     </g>
   </g>
 </svg>

@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 12 12">
-  <defs>
-    <polygon id="db_pending_method_breakpoint-a" points="1.757 1.757 10.243 1.757 10.243 10.243 1.757 10.243"/>
-  </defs>
-  <g fill="none" fill-rule="evenodd">
-    <use fill="#E5A0A0" transform="rotate(45 6 6)" xlink:href="#db_pending_method_breakpoint-a"/>
-  </g>
-</svg>

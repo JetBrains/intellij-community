@@ -25,8 +25,6 @@ import com.intellij.remote.ext.CredentialsCase;
 public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   extends SdkAdditionalData, RemoteSdkCredentialsProducer<T>, RemoteSdkProperties {
 
-  default void completeInitialization() throws RemoteSdkException {}
-
   @Deprecated
   boolean isInitialized();
   @Deprecated

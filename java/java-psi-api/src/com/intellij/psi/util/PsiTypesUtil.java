@@ -259,7 +259,8 @@ public class PsiTypesUtil {
     }
     else if (parent instanceof PsiAssignmentExpression) {
       if (PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
-        return ((PsiAssignmentExpression)parent).getLExpression().getType();
+        PsiType type = ((PsiAssignmentExpression)parent).getLExpression().getType();
+        return !PsiType.NULL.equals(type) ? type : null;
       }
     }
     else if (parent instanceof PsiReturnStatement) {

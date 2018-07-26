@@ -126,7 +126,7 @@ class Iterable(Protocol[_T_co]):
 class Iterator(Iterable[_T_co], Protocol[_T_co]):
     @abstractmethod
     def __next__(self) -> _T_co: ...
-    def __iter__(self) -> 'Iterator[_T_co]': ...
+    def __iter__(self) -> Iterator[_T_co]: ...
 
 class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     @abstractmethod
@@ -143,12 +143,16 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     def close(self) -> None: ...
 
     @abstractmethod
-    def __iter__(self) -> 'Generator[_T_co, _T_contra, _V_co]': ...
+    def __iter__(self) -> Generator[_T_co, _T_contra, _V_co]: ...
 
-    gi_code = ...  # type: CodeType
-    gi_frame = ...  # type: FrameType
-    gi_running = ...  # type: bool
-    gi_yieldfrom = ...  # type: Optional[Generator]
+    @property
+    def gi_code(self) -> CodeType: ...
+    @property
+    def gi_frame(self) -> FrameType: ...
+    @property
+    def gi_running(self) -> bool: ...
+    @property
+    def gi_yieldfrom(self) -> Optional[Generator]: ...
 
 # TODO: Several types should only be defined if sys.python_version >= (3, 5):
 # Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection.
@@ -173,21 +177,21 @@ class Coroutine(Awaitable[_V_co], Generic[_T_co, _T_contra, _V_co]):
 
 # NOTE: This type does not exist in typing.py or PEP 484.
 # The parameters corrrespond to Generator, but the 4th is the original type.
-class AwaitableGenerator(Generator[_T_co, _T_contra, _V_co], Awaitable[_V_co],
-                         Generic[_T_co, _T_contra, _V_co, _S]):
+class AwaitableGenerator(Awaitable[_V_co], Generator[_T_co, _T_contra, _V_co],
+                         Generic[_T_co, _T_contra, _V_co, _S], metaclass=ABCMeta):
     pass
 
 @runtime
 class AsyncIterable(Protocol[_T_co]):
     @abstractmethod
-    def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
+    def __aiter__(self) -> AsyncIterator[_T_co]: ...
 
 @runtime
 class AsyncIterator(AsyncIterable[_T_co],
                     Protocol[_T_co]):
     @abstractmethod
     def __anext__(self) -> Awaitable[_T_co]: ...
-    def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
+    def __aiter__(self) -> AsyncIterator[_T_co]: ...
 
 if sys.version_info >= (3, 6):
     class AsyncGenerator(AsyncIterator[_T_co], Generic[_T_co, _T_contra]):
@@ -205,12 +209,16 @@ if sys.version_info >= (3, 6):
         def aclose(self) -> Awaitable[_T_co]: ...
 
         @abstractmethod
-        def __aiter__(self) -> 'AsyncGenerator[_T_co, _T_contra]': ...
+        def __aiter__(self) -> AsyncGenerator[_T_co, _T_contra]: ...
 
-        ag_await = ...  # type: Any
-        ag_code = ...  # type: CodeType
-        ag_frame = ...  # type: FrameType
-        ag_running = ...  # type: bool
+        @property
+        def ag_await(self) -> Any: ...
+        @property
+        def ag_code(self) -> CodeType: ...
+        @property
+        def ag_frame(self) -> FrameType: ...
+        @property
+        def ag_running(self) -> bool: ...
 
 @runtime
 class Container(Protocol[_T_co]):
@@ -423,7 +431,7 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     @abstractmethod
     def __iter__(self) -> Iterator[AnyStr]: ...
     @abstractmethod
-    def __enter__(self) -> 'IO[AnyStr]': ...
+    def __enter__(self) -> IO[AnyStr]: ...
     @abstractmethod
     def __exit__(self, t: Optional[Type[BaseException]], value: Optional[BaseException],
                  traceback: Optional[TracebackType]) -> bool: ...
@@ -457,7 +465,7 @@ class TextIO(IO[str]):
     @abstractmethod
     def __enter__(self) -> TextIO: ...
 
-class ByteString(Sequence[int]): ...
+class ByteString(Sequence[int], metaclass=ABCMeta): ...
 
 class Match(Generic[AnyStr]):
     pos = 0

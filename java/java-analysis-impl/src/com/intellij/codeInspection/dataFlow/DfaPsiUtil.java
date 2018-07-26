@@ -115,7 +115,7 @@ public class DfaPsiUtil {
   @NotNull
   private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(owner);
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
     if (info == null ||
         ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
       return Nullability.UNKNOWN;

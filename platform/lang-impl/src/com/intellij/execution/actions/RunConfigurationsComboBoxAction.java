@@ -41,6 +41,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon CHECKED_SELECTED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
+  private ComboBoxButton myButton;
+
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
@@ -50,14 +52,15 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
     try {
       if (project == null || project.isDisposed() || !project.isOpen()) {
-        updatePresentation(null, null, null, presentation);
+        updatePresentation(null, null, null, presentation, e.getPlace());
         presentation.setEnabled(false);
       }
       else {
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            RunManager.getInstance(project).getSelectedConfiguration(),
                            project,
-                           presentation);
+                           presentation,
+                           e.getPlace());
         presentation.setEnabled(true);
       }
     }
@@ -69,7 +72,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   private static void updatePresentation(@Nullable ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings settings,
                                          @Nullable Project project,
-                                         @NotNull Presentation presentation) {
+                                         @NotNull Presentation presentation,
+                                         String actionPlace) {
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
       String name = Executor.shortenNameIfNeed(settings.getName());
@@ -87,7 +91,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
       presentation.setText("Add Configuration...");
       presentation.setDescription(ActionsBundle.actionDescription(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
-      presentation.setIcon(null);
+      if (ActionPlaces.TOUCHBAR_GENERAL.equals(actionPlace))
+        presentation.setIcon(AllIcons.General.Add);
+      else
+        presentation.setIcon(null);
     }
   }
 
@@ -111,13 +118,25 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
+  public void actionPerformed(AnActionEvent e) {
+    if (ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace())) {
+      final Presentation presentation = e.getPresentation();
+      if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
+        performWhenButton(myButton, ActionPlaces.TOUCHBAR_GENERAL);
+        return;
+      }
+    }
+    super.actionPerformed(e);
+  }
+
+  @Override
   protected boolean shouldShowDisabledActions() {
     return true;
   }
 
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
-    ComboBoxButton button = new ComboBoxButton(presentation) {
+    myButton = new ComboBoxButton(presentation) {
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
@@ -128,11 +147,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       @Override
       protected void fireActionPerformed(ActionEvent event) {
         if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
-          ActionManager manager = ActionManager.getInstance();
-          manager.tryToExecute(manager.getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS),
-                               new MouseEvent(this, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 0,
-                                              false, 0),
-                               this, ActionPlaces.UNKNOWN, true);
+          performWhenButton(this, ActionPlaces.UNKNOWN);
           return;
         }
 
@@ -149,8 +164,16 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                     JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
 
     panel.setBorder(border);
-    panel.add(button);
+    panel.add(myButton);
     return panel;
+  }
+
+  private void performWhenButton(@NotNull Component src, String place) {
+    ActionManager manager = ActionManager.getInstance();
+    manager.tryToExecute(manager.getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS),
+      new MouseEvent(src, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 0,false, 0),
+      src, place, true
+    );
   }
 
 
@@ -273,7 +296,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject),
                          RunManager.getInstance(myProject).getSelectedConfiguration(),
                          myProject,
-                         e.getPresentation());
+                         e.getPresentation(),
+                         e.getPlace());
     }
 
     @Override
@@ -307,7 +331,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public void actionPerformed(final AnActionEvent e) {
       RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
-      updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation());
+      updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation(), e.getPlace());
     }
 
     @Override

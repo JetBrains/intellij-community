@@ -5,6 +5,7 @@ import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import org.jetbrains.annotations.CalledInBackground;
@@ -53,23 +54,28 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
     return new RepositoryListLoader() {
       @Override
       public boolean isEnabled() {
-        return myAuthenticationManager.hasAccounts();
+        for (GithubAccount account: myAuthenticationManager.getAccounts()) {
+          if (myAuthenticationManager.hasTokenForAccount(account)) return true;
+        }
+        return false;
       }
 
       @Override
       public boolean enable() {
         if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return false;
-        return myAuthenticationManager.ensureHasAccounts(project);
+        return myAuthenticationManager.ensureHasAccountsWithTokens(project);
       }
 
       @NotNull
       @Override
-      public List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
-        try {
-          List<String> urls = new ArrayList<>();
-          for (GithubAccount account : myAuthenticationManager.getAccounts()) {
+      public Pair<List<String>, List<RepositoryListLoadingException>> getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
+        List<String> urls = new ArrayList<>();
+        List<RepositoryListLoadingException> exceptions = new ArrayList<>();
+
+        for (GithubAccount account: myAuthenticationManager.getAccounts()) {
+          try {
             urls.addAll(
-              myApiTaskExecutor.execute(progressIndicator, account, connection -> GithubApiUtil.getAvailableRepos(connection))
+              myApiTaskExecutor.execute(progressIndicator, account, connection -> GithubApiUtil.getAvailableRepos(connection), true)
                                .stream()
                                .sorted(Comparator.comparing(GithubRepo::getUserName).thenComparing(GithubRepo::getName))
                                .map(repo -> myGitHelper.getRemoteUrl(account.getServer(),
@@ -78,11 +84,11 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
                                .collect(Collectors.toList())
             );
           }
-          return urls;
+          catch (Exception e) {
+            exceptions.add(new RepositoryListLoadingException("Cannot load repositories from Github", e));
+          }
         }
-        catch (Exception e) {
-          throw new RepositoryListLoadingException("Error connecting to Github", e);
-        }
+        return Pair.create(urls, exceptions);
       }
     };
   }

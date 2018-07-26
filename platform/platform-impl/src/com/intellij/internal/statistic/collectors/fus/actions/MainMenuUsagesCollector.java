@@ -18,10 +18,7 @@ public final class MainMenuUsagesCollector extends ApplicationUsagesCollector im
   public Set<UsageDescriptor> getUsages() {
     MainMenuCollector.State state = MainMenuCollector.getInstance().getState();
     assert state != null;
-    return ContainerUtil.map2Set(state.myValues.entrySet(), e -> {
-      String key = e.getKey().replaceAll(" -> ", "-");
-      return new UsageDescriptor(ensureProperKey(key), e.getValue());
-    });
+    return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
   }
 
   @NotNull

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -400,6 +401,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
     visitStatement(tryCatchStatement);
+  }
+
+  public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
+    visitElement(resourceList);
   }
 
   public void visitBlockStatement(@NotNull GrBlockStatement blockStatement) {

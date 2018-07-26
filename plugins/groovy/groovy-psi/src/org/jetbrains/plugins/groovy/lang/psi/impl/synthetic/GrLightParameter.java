@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -35,6 +36,23 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
     myModifierList = new GrLightModifierList(this);
     myTypeGroovy = type;
     myTypeElement = type == null ? null : new GrLightTypeElement(type, scope.getManager());
+  }
+
+  public GrLightParameter(@NotNull GrParameter parameter) {
+    super(
+      parameter.getManager(),
+      ((GrVariable)parameter).getName(),
+      getTypeNotNull(parameter.getType(), parameter),
+      GroovyLanguage.INSTANCE
+    );
+    myScope = parameter;
+
+    myTypeGroovy = parameter.getTypeGroovy();
+    myTypeElement = myTypeGroovy == null ? null : new GrLightTypeElement(myTypeGroovy, parameter.getManager());
+    myOptional = parameter.isOptional();
+    GrLightModifierList modifierList = new GrLightModifierList(this);
+    modifierList.copyModifiers(parameter);
+    myModifierList = modifierList;
   }
 
   public void setModifierList(GrModifierList modifierList) {

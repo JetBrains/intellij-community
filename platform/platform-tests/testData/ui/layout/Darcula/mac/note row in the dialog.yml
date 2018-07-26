@@ -54,15 +54,15 @@ componentConstrains:
         preferred: *id007
     wrap: true
 cellBounds:
-- [0, 0, 480, 62]
-- [0, 72, 100, 24]
-- [106, 72, 374, 24]
-- [106, 106, 374, 13]
-- [0, 129, 480, 52]
+- [0, 0, 480, 60]
+- [0, 70, 98, 24]
+- [104, 70, 376, 24]
+- [104, 104, 376, 13]
+- [0, 127, 480, 52]
 componentBounds:
   Profiler requires access to the kernel-level API. Enter the sudo password to allow this.: [
-    0, 10, 287, 32]
-  'Sudo password:': [0, 76, 100, 16]
-  'JPasswordField #2': [103, 69, 256, 30]
-  !!binary "G1JlbWVtYmVy": [103, 104, 91, 18]
-  'SimpleColoredComponent #4': [0, 141, 316, 20]
+    0, 10, 292, 30]
+  'Sudo password:': [0, 74, 98, 15]
+  'JPasswordField #2': [101, 67, 256, 30]
+  !!binary "G1JlbWVtYmVy": [101, 102, 93, 18]
+  'SimpleColoredComponent #4': [0, 139, 300, 20]

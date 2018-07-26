@@ -63,6 +63,14 @@ public class IndexingStamp {
 
   private IndexingStamp() {}
 
+  public static void initPersistentIndexStamp(DataInput in) throws IOException {
+    IndexVersion.advanceIndexStamp(DataInputOutputUtil.readTIME(in));
+  }
+
+  public static void savePersistentIndexStamp(DataOutput out) throws IOException {
+    DataInputOutputUtil.writeTIME(out, IndexVersion.ourLastStamp);
+  }
+
   static class IndexVersion {
     private static volatile long ourLastStamp; // ensure any file index stamp increases
     final long myModificationCount;
@@ -73,12 +81,16 @@ public class IndexingStamp {
 
     private IndexVersion(long modificationCount) {
       myModificationCount = modificationCount;
+      advanceIndexStamp(modificationCount);
+    }
+
+    private static void advanceIndexStamp(long modificationCount) {
       ourLastStamp = Math.max(modificationCount, ourLastStamp);
     }
 
     public IndexVersion(DataInput in) throws IOException {
       myModificationCount = DataInputOutputUtil.readTIME(in);
-      ourLastStamp = Math.max(ourLastStamp, myModificationCount);
+      advanceIndexStamp(myModificationCount);
     }
 
     public void write(DataOutput os) throws IOException {

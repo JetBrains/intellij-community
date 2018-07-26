@@ -39,9 +39,9 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         String explanation = getObviouslyNonNullExplanation(nullArg);
         if (explanation == null) return;
         if(nullCheckParameter.myNull) {
-          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.useless.null.check.always.fail.message", explanation));
+          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.always.fail.message", explanation));
         } else {
-          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.useless.null.check.message", explanation),
+          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.redundant.null.check.message", explanation),
                                  new RemoveNullCheckFix());
         }
       }
@@ -110,7 +110,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.useless.null.check.fix.family.name");
+      return InspectionsBundle.message("inspection.redundant.null.check.fix.family.name");
     }
 
     @Override

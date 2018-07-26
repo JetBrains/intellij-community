@@ -215,7 +215,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     @NotNull
     @Override
     public TextRange getRangeInElement() {
-      return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());
+      return getNameIdentifierGroovy().getTextRange().shiftLeft(getNode().getStartOffset());
     }
 
     @Override

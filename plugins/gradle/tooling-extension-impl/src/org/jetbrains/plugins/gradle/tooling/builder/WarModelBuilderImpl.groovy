@@ -90,7 +90,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
               }
             }
           })
-          warModel.classpath = warTask.classpath.files
+          warModel.classpath = new LinkedHashSet<>(warTask.classpath.files)
         }
         catch (Exception ignore) {
           ErrorMessageBuilder builderError = getErrorMessageBuilder(project, ignore)

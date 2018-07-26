@@ -1,11 +1,11 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -87,11 +86,12 @@ public class AddImportHelper {
    * Creates and return comparator for import statements that compares them according to the rules specified in the code style settings.
    * It's intended to be used for imports that have the same import priority in order to sort them within the corresponding group.
    *
+   * @param settingsAnchor file to use as an anchor to detect settings of Optimize Imports
    * @see ImportPriority
    */
   @NotNull
-  public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull Project project) {
-    final PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class);
+  public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
+    final PyCodeStyleSettings settings = CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class);
     if (settings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST) {
       return IMPORT_TYPE_COMPARATOR.thenComparing(IMPORT_NAMES_COMPARATOR);
     }
@@ -253,7 +253,7 @@ public class AddImportHelper {
     if (newImport == null) {
       return false;
     }
-    return getSameGroupImportsComparator(existingImport.getProject()).compare(newImport, existingImport) < 0;
+    return getSameGroupImportsComparator(existingImport.getContainingFile()).compare(newImport, existingImport) < 0;
   }
 
   @NotNull

@@ -145,6 +145,12 @@ public interface ProjectViewSettings extends ViewSettings {
     }
 
     @Override
+    public boolean isCompactDirectories() {
+      ProjectView view = getProjectView();
+      return view != null && view.isCompactDirectories(getPaneID(view));
+    }
+
+    @Override
     public boolean isShowLibraryContents() {
       ProjectView view = getProjectView();
       return view != null && view.isShowLibraryContents(getPaneID(view));

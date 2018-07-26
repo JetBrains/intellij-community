@@ -129,11 +129,10 @@ public class ScopeUtil {
     if (containingClass != null && isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
       return nextOwner;
     }
-    // Function return annotations are resolved outside of the function
+    // Function return annotations and type comments are resolved outside of the function
     if (firstOwner instanceof PyFunction) {
       final PyFunction function = (PyFunction)firstOwner;
-      final PyAnnotation annotation = function.getAnnotation();
-      if (isAncestor(annotation, element, false)) {
+      if (isAncestor(function.getAnnotation(), element, false) || isAncestor(function.getTypeComment(), element, false)) {
         return nextOwner;
       }
     }

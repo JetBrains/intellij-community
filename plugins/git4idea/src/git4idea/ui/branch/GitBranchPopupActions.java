@@ -52,7 +52,7 @@ import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.GitStatisticsCollectorKt.reportUsage;
+import static git4idea.GitUsagesTriggerCollector.reportUsage;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
@@ -172,11 +172,11 @@ class GitBranchPopupActions {
       if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         if (options.shouldCheckout()) {
-          reportUsage("git.branch.create.new");
+          reportUsage(myProject, "git.branch.create.new");
           brancher.checkoutNewBranch(options.getName(), myRepositories);
         }
         else {
-          reportUsage("git.branch.create.new.nocheckout");
+          reportUsage(myProject, "git.branch.create.new.nocheckout");
           brancher.createBranch(options.getName(), StreamEx.of(myRepositories).toMap(position -> HEAD));
         }
       }
@@ -206,7 +206,7 @@ class GitBranchPopupActions {
         String reference = dialog.getReference();
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(reference, true, myRepositories, null);
-        reportUsage("git.branch.checkout.revision");
+        reportUsage(myProject, "git.branch.checkout.revision");
       }
     }
 
@@ -324,7 +324,7 @@ class GitBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(myBranchName, false, myRepositories, null);
-        reportUsage("git.branch.checkout.local");
+        reportUsage(myProject, "git.branch.checkout.local");
       }
     }
 
@@ -349,7 +349,7 @@ class GitBranchPopupActions {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
         }
-        reportUsage("git.checkout.as.new.branch");
+        reportUsage(myProject, "git.checkout.as.new.branch");
       }
     }
 
@@ -373,7 +373,7 @@ class GitBranchPopupActions {
         if (newName != null) {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.renameBranch(myCurrentBranchName, newName, myRepositories);
-          reportUsage("git.branch.rename");
+          reportUsage(myProject, "git.branch.rename");
         }
       }
 
@@ -402,7 +402,7 @@ class GitBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteBranch(myBranchName, myRepositories);
-        reportUsage("git.branch.delete.local");
+        reportUsage(myProject, "git.branch.delete.local");
       }
     }
   }
@@ -488,7 +488,7 @@ class GitBranchPopupActions {
         if (name != null) {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
-          reportUsage("git.branch.checkout.remote");
+          reportUsage(myProject, "git.branch.checkout.remote");
         }
       }
 
@@ -516,7 +516,7 @@ class GitBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteRemoteBranch(myBranchName, myRepositories);
-        reportUsage("git.branch.delete.remote");
+        reportUsage(myProject, "git.branch.delete.remote");
       }
     }
   }
@@ -541,7 +541,7 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
-      reportUsage("git.branch.compare");
+      reportUsage(myProject, "git.branch.compare");
     }
   }
 
@@ -566,7 +566,7 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
-      reportUsage("git.branch.merge");
+      reportUsage(myProject, "git.branch.merge");
     }
 
     private GitBrancher.DeleteOnMergeOption deleteOnMerge() {
@@ -594,7 +594,7 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebase(myRepositories, myBranchName);
-      reportUsage("git.branch.rebase");
+      reportUsage(myProject, "git.branch.rebase");
     }
 
     @Override
@@ -631,7 +631,7 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebaseOnCurrent(myRepositories, myBranchName);
-      reportUsage("git.branch.checkout.with.rebase");
+      reportUsage(myProject, "git.branch.checkout.with.rebase");
     }
   }
 
@@ -675,7 +675,7 @@ class GitBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteTag(myTagName, myRepositories);
-        reportUsage("git.tag.delete.local");
+        reportUsage(myProject, "git.tag.delete.local");
       }
     }
   }

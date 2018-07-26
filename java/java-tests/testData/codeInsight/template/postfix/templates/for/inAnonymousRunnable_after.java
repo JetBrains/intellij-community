@@ -3,7 +3,7 @@ class Example {
         new Runnable() {
             @Override
             public void run() {
-                for (T t: foo) {
+                for (T t : foo) {
 
                 }
             }

@@ -18,7 +18,13 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
     private val LOG = Logger.getInstance(LogEventRecordRequest::class.java)
 
     fun create(file: File, filter: LogEventFilter): LogEventRecordRequest? {
-      return create(file, ApplicationInfo.getInstance().build.productCode, PermanentInstallationID.get(), RECORD_SIZE, filter)
+      try {
+        return create(file, ApplicationInfo.getInstance().build.productCode, PermanentInstallationID.get(), RECORD_SIZE, filter)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed reading event log file", e)
+        return null
+      }
     }
 
     fun create(file: File, product: String, user: String, maxRecordSize: Int, filter: LogEventFilter): LogEventRecordRequest? {
@@ -55,7 +61,7 @@ class LogEventRecordRequest(val product : String, val user: String, val records:
       var line = firstLine
       while (line != null && recordSize + estimator.estimate(line) < maxRecordSize) {
         val event = LogEventSerializer.fromString(line)
-        if (filter.accepts(event.group.id)) {
+        if (event != null && filter.accepts(event.group.id)) {
           recordSize += estimator.estimate(line)
           events.add(event)
         }

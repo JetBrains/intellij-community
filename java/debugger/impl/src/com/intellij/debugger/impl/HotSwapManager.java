@@ -196,6 +196,6 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     reloadClassesProgress.setTitle(DebuggerBundle.message("progress.hotswap.reloading"));
     reloadClassesCommand.run();
-    ActionsCollector.getInstance().record("Reload Classes");
+    ActionsCollector.getInstance().record("Reload Classes", HotSwapManager.class);
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +31,7 @@ public class ScopeChooserUtils {
    * with the following limitations:
    * <ul>
    * <li>module-specific scope is not handled: if <code>scopeName</code> is "Module 'foo'" then {@link ProjectFilesScope} is returned</li>
-   * <li>each returned scope is intersected with the project content</li>
+   * <li>each returned scope is intersected with the project content (the only exception is 'Scratches and Consoles' scope)</li>
    * <li>if no known scope with the provided name found then empty scope is returned</li>
    * </ul>
    */
@@ -51,22 +52,25 @@ public class ScopeChooserUtils {
       return intersectWithContentScope(project, scope);
     }
 
-    for (SearchScope scope : PredefinedSearchScopeProvider.getInstance()
-                                                          .getPredefinedScopes(project, null, false, false, false, false, true)) {
+    for (SearchScope scope: PredefinedSearchScopeProvider.getInstance()
+                                                         .getPredefinedScopes(project, null, false, false, false, false, true)) {
       if (scope instanceof GlobalSearchScope && scope.getDisplayName().equals(scopeName)) {
+        if (scope instanceof ScratchesSearchScope) {
+          return (ScratchesSearchScope)scope;
+        }
         return intersectWithContentScope(project, (GlobalSearchScope)scope);
       }
     }
 
-    for (NamedScope scope : ChangeListsScopesProvider.getInstance(project).getFilteredScopes()) {
+    for (NamedScope scope: ChangeListsScopesProvider.getInstance(project).getFilteredScopes()) {
       if (scope.getName().equals(scopeName)) {
         return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
       }
     }
 
-    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+    for (NamedScopesHolder holder: NamedScopesHolder.getAllNamedScopeHolders(project)) {
       final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
-      for (NamedScope scope : scopes) {
+      for (NamedScope scope: scopes) {
         if (scope.getName().equals(scopeName)) {
           return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
         }

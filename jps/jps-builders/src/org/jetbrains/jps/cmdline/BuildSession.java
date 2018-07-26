@@ -16,6 +16,8 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -121,6 +123,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   @Override
   public void run() {
+    final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     Throwable error = null;
     final Ref<Boolean> hasErrors = new Ref<>(false);
     final Ref<Boolean> doneSomething = new Ref<>(false);
@@ -198,6 +201,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     finally {
       finishBuild(error, hasErrors.get(), doneSomething.get());
+      Disposer.dispose(memWatcher);
     }
   }
 

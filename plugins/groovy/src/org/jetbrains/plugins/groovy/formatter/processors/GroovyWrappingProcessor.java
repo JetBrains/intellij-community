@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Wrap;
@@ -31,6 +17,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRY_RESOURCE_LIST;
 
 /**
  * @author Max Medvedev
@@ -105,7 +93,7 @@ public class GroovyWrappingProcessor {
       }
     }
 
-    if (myParentType == GroovyElementTypes.ARGUMENTS) {
+    if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == TRY_RESOURCE_LIST) {
       if (childType == GroovyTokenTypes.mLPAREN || childType == GroovyTokenTypes.mRPAREN) {
         return createNoneWrap();
       }
@@ -120,7 +108,7 @@ public class GroovyWrappingProcessor {
         return getCommonWrap();
       }
       else {
-        return createNormalWrap();
+        return null;
       }
     }
 
@@ -196,15 +184,18 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.PARAMETERS_LIST) {
       myUsedDefaultWrap = true;
-      return Wrap.createWrap(mySettings.METHOD_PARAMETERS_WRAP, true);
+      return Wrap.createWrap(mySettings.METHOD_PARAMETERS_WRAP, false);
     }
-
 
     if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == GroovyElementTypes.COMMAND_ARGUMENTS) {
-      myUsedDefaultWrap = myParentType == GroovyElementTypes.ARGUMENTS;
-      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, myUsedDefaultWrap);
+      myUsedDefaultWrap = true;
+      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, false);
     }
 
+    if (myParentType == TRY_RESOURCE_LIST) {
+      myUsedDefaultWrap = true;
+      return Wrap.createWrap(mySettings.RESOURCE_LIST_WRAP, false);
+    }
 
     if (myParentType == GroovyElementTypes.FOR_TRADITIONAL_CLAUSE || myParentType == GroovyElementTypes.FOR_IN_CLAUSE) {
       myUsedDefaultWrap = true;

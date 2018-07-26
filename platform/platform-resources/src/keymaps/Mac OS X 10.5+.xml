@@ -470,6 +470,10 @@
     <keyboard-shortcut first-keystroke="meta E"/>
   </action>
 
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
+  </action>
+
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="meta UP"/>
     <keyboard-shortcut first-keystroke="alt HOME"/>
@@ -619,5 +623,9 @@
 
   <action id="GotoPrevElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="ctrl alt UP"/>
+  </action>
+
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="alt shift F5"/>
   </action>
 </keymap>

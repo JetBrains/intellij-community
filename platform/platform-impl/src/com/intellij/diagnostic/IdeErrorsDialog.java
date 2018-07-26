@@ -57,8 +57,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.zip.CRC32;
@@ -72,8 +70,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public static final DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
 
   private static final String STACKTRACE_ATTACHMENT = "stacktrace.txt";
-  private static final String INDUCED_STACKTRACES_ATTACHMENT = "induced.txt";
-  private static final DateFormat TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
   private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
   private static List<Developer> ourDevelopersList = Collections.emptyList();
@@ -392,30 +388,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     List<AbstractMessage> rawMessages = myMessagePool.getFatalErrors(true, true);
     Map<Long, MessageCluster> clusters = new LinkedHashMap<>();
     for (AbstractMessage raw : rawMessages) {
-      AbstractMessage message = raw instanceof GroupedLogMessage ? pack((GroupedLogMessage)raw) : raw;
+      AbstractMessage message = raw instanceof GroupedLogMessage ? ((GroupedLogMessage)raw).getProxyMessage() : raw;
       CRC32 digest = new CRC32();
       digest.update(ExceptionUtil.getThrowableText(message.getThrowable()).getBytes(StandardCharsets.UTF_8));
       clusters.computeIfAbsent(digest.getValue(), k -> new MessageCluster(message)).messages.add(message);
     }
     myMessageClusters.clear();
     myMessageClusters.addAll(clusters.values());
-  }
-
-  private static AbstractMessage pack(GroupedLogMessage message) {
-    AbstractMessage mainCause = message.getMessages().get(0);
-
-    List<Attachment> attachments = new ArrayList<>(mainCause.getAllAttachments());
-    StringBuilder stacktraces = new StringBuilder("Following exceptions happened soon after this one, most probably they are induced.");
-    for (AbstractMessage each : message.getMessages()) {
-      if (each != mainCause) {
-        stacktraces.append("\n\n\n").append(TIMESTAMP_FORMAT.format(each.getDate())).append('\n');
-        if (!StringUtil.isEmptyOrSpaces(each.getMessage())) stacktraces.append(each.getMessage()).append('\n');
-        stacktraces.append(each.getThrowableText());
-      }
-    }
-    attachments.add(new Attachment(INDUCED_STACKTRACES_ATTACHMENT, stacktraces.toString()));
-
-    return new RepackedLogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments, message);
   }
 
   private void updateControls() {
@@ -538,7 +517,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myAttachmentsList.clear();
     myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
     for (Attachment attachment : message.getAllAttachments()) {
-      myAttachmentsList.addItem(attachment.getName(), myInternalMode || attachment.isIncluded());
+      myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
     }
     myAttachmentsList.setSelectedIndex(0);
     myAttachmentsList.setEditable(canReport);
@@ -847,21 +826,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       else {
         return pair("*** exception class was changed or removed", detailsText);
       }
-    }
-  }
-
-  private static class RepackedLogMessage extends LogMessage {
-    private final GroupedLogMessage myOriginal;
-
-    private RepackedLogMessage(Throwable throwable, String message, List<Attachment> attachments, GroupedLogMessage original) {
-      super(throwable, message, attachments);
-      myOriginal = original;
-    }
-
-    @Override
-    public void setRead(boolean isRead) {
-      super.setRead(isRead);
-      myOriginal.setRead(isRead);
     }
   }
 

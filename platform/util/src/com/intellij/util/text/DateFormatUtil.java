@@ -386,7 +386,7 @@ public class DateFormatUtil {
     Foundation.invoke(dateFormatter, Foundation.createSelector("setDateStyle:"), dateStyle);
     String format = Foundation.toStringViaUTF8(Foundation.invoke(dateFormatter, Foundation.createSelector("dateFormat")));
     assert format != null;
-    return new SimpleDateFormat(format.trim());
+    return formatFromString(format);
   }
 
   private static boolean getUnixFormats(DateFormat[] formats) {
@@ -445,10 +445,10 @@ public class DateFormatUtil {
     assert rv > 1 : kernel32.GetLastError();
     String mediumTime = fixWindowsFormat(new String(data.getCharArray(0, rv - 1)));
 
-    formats[0] = new SimpleDateFormat(shortDate);
-    formats[1] = new SimpleDateFormat(shortTime);
-    formats[2] = new SimpleDateFormat(mediumTime);
-    formats[3] = new SimpleDateFormat(shortDate + " " + shortTime);
+    formats[0] = formatFromString(shortDate);
+    formats[1] = formatFromString(shortTime);
+    formats[2] = formatFromString(mediumTime);
+    formats[3] = formatFromString(shortDate + " " + shortTime);
 
     return true;
   }
@@ -457,6 +457,15 @@ public class DateFormatUtil {
     format = format.replaceAll("g+", "G");
     format = StringUtil.replace(format, "tt", "a");
     return format;
+  }
+
+  private static DateFormat formatFromString(String format) {
+    try {
+      return new SimpleDateFormat(format.trim());
+    }
+    catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("unrecognized format string '" + format + "'");
+    }
   }
   //</editor-fold>
 }

@@ -10,11 +10,8 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
-      Typecast expression
+      Parenthesized expression
         PsiElement(()('(')
-        Type element
-          Reference element
-            PsiElement(identifier)('Foo')
+        Reference expression
+          PsiElement(identifier)('Foo')
         PsiElement())(')')
-        PsiErrorElement:<expression> or '=' expected
-          <empty list>

@@ -583,4 +583,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       }
     );
   }
+
+  // EA-121262
+  public void testIncompleteFromImport() {
+    assertUnresolved();
+  }
 }

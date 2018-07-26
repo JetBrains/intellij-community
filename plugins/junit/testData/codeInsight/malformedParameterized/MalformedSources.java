@@ -85,3 +85,13 @@ class CustomArgProviderTest {
   @CustomSource
   void jsonSourceTest(String param) { }
 }
+
+class ArgSources {
+  @ParameterizedTest
+  @org.junit.jupiter.params.provider.ArgumentsSources({@org.junit.jupiter.params.provider.ArgumentsSource})
+  void args(String param) { }
+
+  <warning descr="No sources are provided, the suite would be empty">@ParameterizedTest</warning>
+  @org.junit.jupiter.params.provider.ArgumentsSources({})
+  void emptyArgs(String param) { }
+}

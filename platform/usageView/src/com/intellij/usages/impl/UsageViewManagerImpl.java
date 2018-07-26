@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -256,18 +257,22 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
-    PsiElement element = null;
-    VirtualFile file = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() :
-                       usage instanceof PsiElementUsage
-                       ? PsiUtilCore.getVirtualFile(element = ((PsiElementUsage)usage).getElement())
-                       : null;
-    if (file != null) {
-      return isFileInScope(file, searchScope);
-    }
-    return element != null &&
-           (searchScope instanceof EverythingGlobalScope ||
-            searchScope instanceof ProjectScopeImpl ||
-            searchScope instanceof ProjectAndLibrariesScope);
+    Boolean isInScope = ReadAction.compute(() -> {
+      PsiElement element = null;
+      VirtualFile file = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() :
+                         usage instanceof PsiElementUsage
+                         ? PsiUtilCore.getVirtualFile(element = ((PsiElementUsage)usage).getElement())
+                         : null;
+      if (file != null) {
+        return isFileInScope(file, searchScope);
+      }
+      return element != null &&
+             (searchScope instanceof EverythingGlobalScope ||
+              searchScope instanceof ProjectScopeImpl ||
+              searchScope instanceof ProjectAndLibrariesScope);
+    });
+
+    return isInScope == Boolean.TRUE;
   }
 
   private static boolean isFileInScope(@NotNull VirtualFile file, @NotNull SearchScope searchScope) {

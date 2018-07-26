@@ -19,11 +19,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -46,20 +49,19 @@ public class ConstantConditionalExpressionInspection
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final PsiConditionalExpression expression =
-      (PsiConditionalExpression)infos[0];
-    return InspectionGadgetsBundle.message(
-      "constant.conditional.expression.problem.descriptor",
-      calculateReplacementExpression(expression, new CommentTracker()));
+    final PsiConditionalExpression expression = (PsiConditionalExpression)infos[0];
+    return InspectionGadgetsBundle.message("constant.conditional.expression.problem.descriptor",
+      calculateReplacementExpression(expression).getText());
   }
 
-  static String calculateReplacementExpression(PsiConditionalExpression exp, CommentTracker commentTracker) {
+  @NotNull
+  static PsiExpression calculateReplacementExpression(@NotNull PsiConditionalExpression exp) {
     final PsiExpression thenExpression = exp.getThenExpression();
     final PsiExpression elseExpression = exp.getElseExpression();
     final PsiExpression condition = exp.getCondition();
     assert thenExpression != null;
     assert elseExpression != null;
-    return BoolUtils.isTrue(condition) ? commentTracker.text(thenExpression) : commentTracker.text(elseExpression);
+    return BoolUtils.isTrue(condition) ? thenExpression : elseExpression;
   }
 
   @Override
@@ -79,9 +81,23 @@ public class ConstantConditionalExpressionInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
-      CommentTracker commentTracker = new CommentTracker();
-      final String newExpression = calculateReplacementExpression(expression, commentTracker);
-      PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
+      CommentTracker ct = new CommentTracker();
+      final PsiExpression replacement = calculateReplacementExpression(expression);
+      PsiType type = replacement.getType();
+      PsiType expressionType = expression.getType();
+      if (type != null &&
+          expressionType != null &&
+          !type.equals(expressionType) &&
+          PsiTypesUtil.isDenotableType(expressionType, expression)) {
+        PsiTypeCastExpression castExpression = (PsiTypeCastExpression)ct
+          .replaceAndRestoreComments(expression, "(" + expressionType.getCanonicalText() + ")" + ct.text(replacement));
+        if (RedundantCastUtil.isCastRedundant(castExpression)) {
+          RedundantCastUtil.removeCast(castExpression);
+        }
+      }
+      else {
+        ct.replaceAndRestoreComments(expression, replacement);
+      }
     }
   }
 

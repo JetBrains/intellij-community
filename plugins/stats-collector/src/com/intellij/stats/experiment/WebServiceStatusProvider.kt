@@ -17,10 +17,11 @@
 package com.intellij.stats.experiment
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.assertNotEDT
+import com.intellij.stats.network.service.RequestService
 
 
 class WebServiceStatusProvider(
@@ -64,7 +65,7 @@ class WebServiceStatusProvider(
         assertNotEDT()
         val response = requestSender.get(STATUS_URL)
         if (response != null && response.isOK()) {
-            val map = GSON.fromJson(response.text, LinkedTreeMap::class.java)
+            val map = parseServerResponse(response.text)
             
             val salt = map["salt"]?.toString()
             val experimentVersion = map["experimentVersion"]?.toString()
@@ -79,6 +80,15 @@ class WebServiceStatusProvider(
             
             serverStatus = map["status"]?.toString() ?: ""
             dataServerUrl = map["urlForZipBase64Content"]?.toString() ?: ""
+        }
+    }
+
+    private fun parseServerResponse(responseText: String): LinkedTreeMap<*, *> {
+        try {
+            return GSON.fromJson(responseText, LinkedTreeMap::class.java)
+        }
+        catch (e: JsonSyntaxException) {
+            throw JsonSyntaxException("Expected valid JSON object, but received: $responseText", e)
         }
     }
 

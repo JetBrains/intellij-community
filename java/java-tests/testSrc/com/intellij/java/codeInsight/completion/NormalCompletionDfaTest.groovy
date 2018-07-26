@@ -60,6 +60,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testNarrowingReturnTypeInVoidContext() { doTest() }
   void testNoUnnecessaryCastDfa() { doTest() }
   void testNoUnnecessaryCastRawDfa() { doTest() }
+  void testInconsistentHierarchyDfa() { doTest() }
   void testNoUnnecessaryCastDeepHierarchy() { doTest() }
   void testInstanceOfAfterFunction() { doTest() }
   void testInstanceOfDisjunction() { doTest() }

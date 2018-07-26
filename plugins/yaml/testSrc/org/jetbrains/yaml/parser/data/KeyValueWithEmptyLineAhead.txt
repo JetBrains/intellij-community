@@ -88,8 +88,8 @@ YAML file
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('test/main.app')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('  ')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('libraries')

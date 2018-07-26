@@ -774,6 +774,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (!isModeConsistent(isCustomMessage)) return;
     myFinishedTestCount++;
     updateProgressOnTestDone();
+    updateStatusLabel(false);
   }
 
   private void updateOnTestIgnored() {

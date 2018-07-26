@@ -46,25 +46,25 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
                if (calleeExpression instanceof PyReferenceExpression) {
                  final PsiElement callee = ((PyReferenceExpression)calleeExpression).getReference().resolve();
                  if (callee instanceof PsiClass) {
-                   addSettersAndListeners(result, (PsiClass)callee);
+                   addSettersAndListeners(result, (PsiClass)callee, parameters.getOriginalFile());
                  }
                  else if (callee instanceof PsiMethod && ((PsiMethod) callee).isConstructor()) {
                    final PsiClass containingClass = ((PsiMethod)callee).getContainingClass();
                    assert containingClass != null;
-                   addSettersAndListeners(result, containingClass);
+                   addSettersAndListeners(result, containingClass, parameters.getOriginalFile());
                  }
                }
              }
            });
   }
 
-  private static void addSettersAndListeners(CompletionResultSet result, PsiClass containingClass) {
+  private static void addSettersAndListeners(CompletionResultSet result, PsiClass containingClass, PsiFile origin) {
     // see PyJavaType.init() in Jython source code for matching logic
     for (PsiMethod method : containingClass.getAllMethods()) {
       final Project project = containingClass.getProject();
       if (PropertyUtilBase.isSimplePropertySetter(method)) {
         final String propName = PropertyUtilBase.getPropertyName(method);
-        result.addElement(PyUtil.createNamedParameterLookup(propName, project));
+        result.addElement(PyUtil.createNamedParameterLookup(propName, origin));
       }
       else if (method.getName().startsWith("add") && method.getName().endsWith("Listener") && PsiType.VOID.equals(method.getReturnType())) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -73,9 +73,9 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
           if (type instanceof PsiClassType) {
             final PsiClass parameterClass = ((PsiClassType)type).resolve();
             if (parameterClass != null) {
-              result.addElement(PyUtil.createNamedParameterLookup(StringUtil.decapitalize(parameterClass.getName()), project));
+              result.addElement(PyUtil.createNamedParameterLookup(StringUtil.decapitalize(parameterClass.getName()), origin));
               for (PsiMethod parameterMethod : parameterClass.getMethods()) {
-                result.addElement(PyUtil.createNamedParameterLookup(parameterMethod.getName(), project));
+                result.addElement(PyUtil.createNamedParameterLookup(parameterMethod.getName(), origin));
               }
             }
           }

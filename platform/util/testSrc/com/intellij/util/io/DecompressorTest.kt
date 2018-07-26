@@ -13,6 +13,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 import java.util.zip.ZipEntry
+import java.util.zip.ZipException
 import java.util.zip.ZipOutputStream
 
 class DecompressorTest {
@@ -60,6 +61,14 @@ class DecompressorTest {
     val dir = tempDir.newFolder("unpacked")
     Decompressor.Tar(tar).extract(dir)
     assertThat(File(dir, "root.txt")).exists()
+  }
+
+  @Test(expected = ZipException::class)
+  fun failsOnCorruptedZip() {
+    val zip = tempDir.newFile("test.zip")
+    zip.writeText("whatever")
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Zip(zip).extract(dir)
   }
 
   private fun writeEntry(zip: ZipOutputStream, name: String) {

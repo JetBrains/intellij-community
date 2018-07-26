@@ -91,7 +91,7 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @Override
   @SuppressWarnings("SpellCheckingInspection")
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     if (right.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN ||
         left.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
       return SpaceRequirements.MUST_NOT;

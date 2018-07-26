@@ -212,7 +212,8 @@ object PyTestsLocator : SMTestLocator {
                            path: String,
                            metainfo: String?,
                            project: Project,
-                           scope: GlobalSearchScope): List<Location<out PsiElement>> = getLocationInternal(protocol, path, project, metainfo, scope)
+                           scope: GlobalSearchScope): List<Location<out PsiElement>> = getLocationInternal(protocol, path, project,
+                                                                                                           metainfo, scope)
 
   override fun getLocation(protocol: String, path: String, project: Project, scope: GlobalSearchScope): List<Location<out PsiElement>> {
     return getLocationInternal(protocol, path, project, null, scope)
@@ -705,7 +706,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     configuration.isUseModuleSdk = true
     if (location is PyTargetBasedPsiLocation) {
       location.target.copyTo(configuration.target)
-      location.metainfo?.let { configuration.setMetaInfo(it)}
+      location.metainfo?.let { configuration.setMetaInfo(it) }
     }
     else {
       val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
@@ -786,7 +787,9 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
 
   override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration,
                                           context: ConfigurationContext?): Boolean {
-
+    if (context != null && PyTestConfigurationSelector.EP.extensions.find { it.isFromContext(configuration, context) } != null) {
+      return true
+    }
     val location = context?.location
     if (location is PyTargetBasedPsiLocation) {
       // With derived classes several configurations for same element may exist
@@ -794,6 +797,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     }
 
     val psiElement = context?.psiLocation ?: return false
+
     val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
                                                                           psiElement) ?: return false
 

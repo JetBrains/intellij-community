@@ -178,5 +178,6 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   }
 
   @Override
-  public void setRestoreFocusSilentely() {}
+  public void setRestoreFocusSilently() {
+  }
 }

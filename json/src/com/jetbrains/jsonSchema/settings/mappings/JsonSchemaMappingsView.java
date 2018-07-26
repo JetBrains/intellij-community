@@ -46,9 +46,11 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
@@ -169,7 +171,10 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
-    return myTableView.getListTableModel().getItems();
+    return Collections.unmodifiableList(
+      myTableView.getListTableModel().getItems().stream()
+                 .filter(i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path))
+                 .collect(Collectors.toList()));
   }
 
   public void setItems(String schemaFilePath,

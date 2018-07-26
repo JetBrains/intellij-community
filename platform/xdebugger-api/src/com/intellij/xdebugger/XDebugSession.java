@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
@@ -98,13 +84,26 @@ public interface XDebugSession extends AbstractDebuggerSession {
   }
 
   /**
-   * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint
+   * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint.
+   * Usually in your breakpoint handler you need {@link #setBreakpointVerified(XLineBreakpoint)} or {@link #setBreakpointInvalid(XLineBreakpoint, String)} instead.
    *
    * @param breakpoint   breakpoint
    * @param icon         icon ({@code null} if default icon should be used). You can use icons from {@link com.intellij.icons.AllIcons.Debugger}
    * @param errorMessage an error message if breakpoint isn't successfully registered
+   * @see #setBreakpointVerified(XLineBreakpoint)~
+   * @see #setBreakpointInvalid(XLineBreakpoint, String)
    */
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
+
+  /**
+   * Marks the provide breakpoint as verified in the current session
+   */
+  void setBreakpointVerified(@NotNull XLineBreakpoint<?> breakpoint);
+
+  /**
+   * Marks the provide breakpoint as invalid in the current session
+   */
+  void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage);
 
   /**
    * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getCondition()}) evaluates to {@code true}.

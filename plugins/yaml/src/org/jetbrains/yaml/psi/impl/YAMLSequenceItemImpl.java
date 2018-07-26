@@ -1,6 +1,7 @@
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,5 +49,14 @@ public class YAMLSequenceItemImpl extends YAMLPsiElementImpl implements YAMLSequ
     else {
       super.accept(visitor);
     }
+  }
+
+  @Override
+  public int getItemIndex() {
+    PsiElement parent = getParent();
+    if (parent instanceof YAMLSequence) {
+      return ((YAMLSequence)parent).getItems().indexOf(this);
+    }
+    return 0;
   }
 }

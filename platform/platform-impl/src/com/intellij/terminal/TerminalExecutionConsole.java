@@ -33,10 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
-import com.jediterm.terminal.HyperlinkStyle;
-import com.jediterm.terminal.TerminalKeyEncoder;
-import com.jediterm.terminal.TerminalStarter;
-import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.*;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
@@ -69,6 +66,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final AtomicBoolean myAttachedToProcess = new AtomicBoolean(false);
   private final Collection<ChangeListener> myChangeListeners = new CopyOnWriteArraySet<>();
   private volatile boolean myLastCR = false;
+  private final PendingTasksRunner myOnResizedRunner;
 
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
 
@@ -78,6 +76,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     myProject = project;
+    myOnResizedRunner = new PendingTasksRunner(2000, project);
     final JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase() {
       @Override
       public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
@@ -106,6 +105,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
                 }
               }
             });
+          }
+
+          @Override
+          public Dimension requestResize(Dimension newSize, RequestOrigin origin, int cursorY, JediTerminal.ResizeHandler resizeHandler) {
+            Dimension dimension = super.requestResize(newSize, origin, cursorY, resizeHandler);
+            myOnResizedRunner.setReady();
+            return dimension;
           }
 
           @Override
@@ -258,21 +264,23 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (attachToProcessOutput) {
-          try {
-            ConsoleViewContentType contentType = null;
-            if (outputType != ProcessOutputTypes.STDOUT) {
-              contentType = ConsoleViewContentType.getConsoleViewType(outputType);
-            }
+          myOnResizedRunner.execute(() -> {
+            try {
+              ConsoleViewContentType contentType = null;
+              if (outputType != ProcessOutputTypes.STDOUT) {
+                contentType = ConsoleViewContentType.getConsoleViewType(outputType);
+              }
 
-            String text = event.getText();
-            if (outputType == ProcessOutputTypes.SYSTEM) {
-              text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
+              String text = event.getText();
+              if (outputType == ProcessOutputTypes.SYSTEM) {
+                text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
+              }
+              printText(text, contentType);
             }
-            printText(text, contentType);
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+          });
         }
       }
 

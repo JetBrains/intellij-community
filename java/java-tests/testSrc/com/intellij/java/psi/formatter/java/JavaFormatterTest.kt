@@ -1497,14 +1497,14 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
 
     doTextTest("class Foo {\n" +
                "    void foo() {\n" +
-               "         for (Object i: collection)\n" +
+               "         for (Object i : collection)\n" +
                "        {\n" +
                "            return false;\n" +
                "        }" +
                "    }\n" +
                "}", "class Foo {\n" +
                     "    void foo() {\n" +
-                    "        for (Object i: collection) {\n" +
+                    "        for (Object i : collection) {\n" +
                     "            return false;\n" +
                     "        }\n" +
                     "    }\n" +
@@ -1685,7 +1685,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                "\n" +
                "    //comment in declaration\n" +
                "    public static void main(String[] args) {\n" +
-               "        for (String arg: args) {\n" +
+               "        for (String arg : args) {\n" +
                "            \n" +
                "            // a first system out\n" +
                "            System.out.println(\"\");\n" +
@@ -1697,7 +1697,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                "}", "public class ReformatProblem {\n" +
                     "    //comment in declaration\n" +
                     "    public static void main(String[] args) {\n" +
-                    "        for (String arg: args) {\n" +
+                    "        for (String arg : args) {\n" +
                     "\n" +
                     "            // a first system out\n" +
                     "            System.out.println(\"\");\n" +
@@ -1716,7 +1716,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                "\n" +
                "    //comment in declaration\n" +
                "    public static void main(String[] args) {\n" +
-               "        for (String arg: args) {\n" +
+               "        for (String arg : args) {\n" +
                "            \n" +
                "            // a first system out\n" +
                "            System.out.println(\"\");\n" +
@@ -1729,7 +1729,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
                     "\n" +
                     "    //comment in declaration\n" +
                     "    public static void main(String[] args) {\n" +
-                    "        for (String arg: args) {\n" +
+                    "        for (String arg : args) {\n" +
                     "            // a first system out\n" +
                     "            System.out.println(\"\");\n" +
                     "            // another system out\n" +
@@ -2428,13 +2428,13 @@ enum Foo {
     AbstractJavaFormatterTest.getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     doTextTest("class Foo{\n" +
                "    void foo() {\n" +
-               "        for (Object o: localizations) {\n" +
+               "        for (Object o : localizations) {\n" +
                "            //do something \n" +
                "        }\n" +
                "    }\n" +
                "}", "class Foo {\n" +
                     "    void foo() {\n" +
-                    "        for (Object o: localizations)\n" +
+                    "        for (Object o : localizations)\n" +
                     "        {\n" +
                     "            //do something \n" +
                     "        }\n" +
@@ -2709,8 +2709,8 @@ enum Foo {
                  "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var: vars) foo();\n" + "    }\n" + "}",
-                 "class Foo {\n" + "    void foo() {\n" + "        for (int var: vars)\n" + "            foo();\n" + "    }\n" + "}")
+      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
+                 "class Foo {\n" + "    void foo() {\n" + "        for (int var : vars)\n" + "            foo();\n" + "    }\n" + "}")
 
 
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}", "class Foo {\n" +
@@ -2735,8 +2735,8 @@ enum Foo {
                  "class Foo {\n" + "    void foo() {\n" + "        for (int i = 0; i < 10; i++) foo();\n" + "    }\n" + "}")
 
 
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var: vars) foo();\n" + "    }\n" + "}",
-                 "class Foo {\n" + "    void foo() {\n" + "        for (int var: vars) foo();\n" + "    }\n" + "}")
+      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
+                 "class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}")
 
 
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        do foo(); while (true);\n" + "    }\n" + "}",
@@ -2769,8 +2769,8 @@ enum Foo {
                  "}")
 
       AbstractJavaFormatterTest.getSettings().RIGHT_MARGIN = 32
-      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var: vars) foo();\n" + "    }\n" + "}",
-                 "class Foo {\n" + "    void foo() {\n" + "        for (int var: vars)\n" + "            foo();\n" + "    }\n" + "}")
+      doTextTest("class Foo {\n" + "    void foo() {\n" + "        for (int var : vars) foo();\n" + "    }\n" + "}",
+                 "class Foo {\n" + "    void foo() {\n" + "        for (int var : vars)\n" + "            foo();\n" + "    }\n" + "}")
 
 
       AbstractJavaFormatterTest.getSettings().RIGHT_MARGIN = 12
@@ -3425,12 +3425,12 @@ enum Foo {
 
   fun testFormatCStyleCommentWithAsterisks() {
     doMethodTest(
-      "        for (Object o: new Object[]{}) {\n" +
+      "        for (Object o : new Object[]{}) {\n" +
       "/*\n" +
       "        *\n" +
       " \t\t\t\t\t            */\n" +
       "        }\n",
-      "for (Object o: new Object[]{}) {\n" +
+      "for (Object o : new Object[]{}) {\n" +
       "    /*\n" +
       "     *\n" +
       "     */\n" +
@@ -3527,7 +3527,7 @@ class Test {
         );
         // IDEA-98552
         for (
-                String s: list
+                String s : list
         ) {
             System.out.println(s);
         }

@@ -16,6 +16,7 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -35,10 +36,22 @@ public interface DnDSource extends DnDDropActionHandler {
    *
    * @param action drag-n-drop action
    * @param dragOrigin origin drag point
+   * @param bean a bean to create an image for
    * @return Pair of image and cursor offset at the image
    */
   @Nullable
-  Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin);
+  default Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
+    return createDraggedImage(action, dragOrigin);
+  }
+
+  /**
+   * @deprecated override {@link DnDSource#createDraggedImage(DnDAction, Point, DnDDragStartBean)} instead
+   */
+  @Deprecated
+  @Nullable
+  default Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+    return null;
+  }
 
   void dragDropEnd();
 }

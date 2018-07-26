@@ -7,46 +7,47 @@ import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class FeatureEventLogSerializationTest {
 
   @Test
   fun testEventWithoutData() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type"), false)
+    testEventSerialization(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type"), false)
   }
 
   @Test
   fun testEventWithData() {
-    val event = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type")
+    val event = newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type")
     event.event.addData("count", 23)
     testEventSerialization(event, false, "count")
   }
 
   @Test
   fun testEventRecorderWithSpaces() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder id", "1", "test-event-type"), false)
+    testEventSerialization(newLogEvent("session-id", "999.9999", "-1", "recorder id", "1", "test-event-type"), false)
   }
 
   @Test
   fun testEventActionWithTab() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\ttype"), false)
+    testEventSerialization(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\ttype"), false)
   }
 
   @Test
   fun testEventActionWithQuotes() {
-    testEventSerialization(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\"type"), false)
+    testEventSerialization(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event\"type"), false)
   }
 
   @Test
   fun testEventActionWithTagInDataKey() {
-    val event = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event-type")
+    val event = newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event-type")
     event.event.addData("my key", "value")
     testEventSerialization(event, false, "my_key")
   }
 
   @Test
   fun testEventActionWithTagInDataValue() {
-    val event = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event-type")
+    val event = newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "event-type")
     event.event.addData("key", "my value")
     testEventSerialization(event, false, "key")
   }
@@ -54,8 +55,8 @@ class FeatureEventLogSerializationTest {
   @Test
   fun testEventRequestWithSingleRecord() {
     val events = ArrayList<LogEvent>()
-    events.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first-type"))
-    events.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "second-type"))
+    events.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first-type"))
+    events.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "second-type"))
 
     val json = JsonParser().parse(LogEventSerializer.toString(requestByEvents(events))).asJsonObject
     assertLogEventContentIsValid(json, false)
@@ -64,11 +65,11 @@ class FeatureEventLogSerializationTest {
   @Test
   fun testEventRequestWithMultipleRecords() {
     val first = ArrayList<LogEvent>()
-    first.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first-type"))
-    first.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "second-type"))
+    first.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first-type"))
+    first.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "second-type"))
     val second = ArrayList<LogEvent>()
-    second.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "third-type"))
-    second.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "forth-type"))
+    second.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "third-type"))
+    second.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "forth-type"))
     val records = ArrayList<LogEventRecord>()
     records.add(LogEventRecord(first))
     records.add(LogEventRecord(second))
@@ -79,12 +80,12 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testEventWithBuildNumber() {
-    testEventSerialization(LogEvent("session-id", "182.2567.1", "-1", "recorder-id", "1", "test-event-type"), false)
+    testEventSerialization(newLogEvent("session-id", "182.2567.1", "-1", "recorder-id", "1", "test-event-type"), false)
   }
 
   @Test
   fun testStateEvent() {
-    testEventSerialization(LogEvent("session-id", "182.2567.1", "-1", "config-recorder", "1", "my-config", true), true)
+    testEventSerialization(newLogEvent("session-id", "182.2567.1", "-1", "config-recorder", "1", "my-config", true), true)
   }
 
   @Test
@@ -95,7 +96,7 @@ class FeatureEventLogSerializationTest {
   @Test
   fun testDeserializationSingleEvent() {
     val events = ArrayList<LogEvent>()
-    events.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type"))
+    events.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "test-event-type"))
 
     testDeserialization(events)
   }
@@ -103,9 +104,9 @@ class FeatureEventLogSerializationTest {
   @Test
   fun testDeserializationSingleBatch() {
     val events = ArrayList<LogEvent>()
-    events.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
-    events.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
-    events.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
+    events.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
+    events.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
+    events.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
 
     testDeserialization(events)
   }
@@ -114,12 +115,12 @@ class FeatureEventLogSerializationTest {
   fun testDeserializationTwoCompleteBatches() {
     val firstBatch = ArrayList<LogEvent>()
     val secondBatch = ArrayList<LogEvent>()
-    firstBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
-    firstBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
-    firstBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
-    secondBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "fourth"))
-    secondBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "fifth"))
-    secondBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "sixth"))
+    firstBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
+    firstBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
+    firstBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
+    secondBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "fourth"))
+    secondBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "fifth"))
+    secondBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "sixth"))
 
     testDeserialization(firstBatch, secondBatch)
   }
@@ -128,10 +129,10 @@ class FeatureEventLogSerializationTest {
   fun testDeserializationIncompleteBatch() {
     val firstBatch = ArrayList<LogEvent>()
     val secondBatch = ArrayList<LogEvent>()
-    firstBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
-    firstBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
-    firstBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
-    secondBatch.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "fourth"))
+    firstBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
+    firstBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
+    firstBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
+    secondBatch.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "fourth"))
 
     testDeserialization(firstBatch, secondBatch)
   }
@@ -139,18 +140,18 @@ class FeatureEventLogSerializationTest {
   @Test
   fun testEmptyWhitelist() {
     val all = ArrayList<LogEvent>()
-    all.add(LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
-    all.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
-    all.add(LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
+    all.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first"))
+    all.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second"))
+    all.add(newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third"))
 
     testWhitelist(HashSet(), all, ArrayList())
   }
 
   @Test
   fun testWhitelist() {
-    val first = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
-    val second = LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
-    val third = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "third")
+    val first = newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
+    val second = newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
+    val third = newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "third")
 
     val all = ArrayList<LogEvent>()
     all.add(first)
@@ -167,9 +168,9 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testWhitelistWithMultiGroups() {
-    val first = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
-    val second = LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
-    val third = LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third")
+    val first = newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
+    val second = newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
+    val third = newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third")
 
     val all = ArrayList<LogEvent>()
     all.add(first)
@@ -187,9 +188,9 @@ class FeatureEventLogSerializationTest {
 
   @Test
   fun testWhitelistAll() {
-    val first = LogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
-    val second = LogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
-    val third = LogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third")
+    val first = newLogEvent("session-id", "999.9999", "-1", "recorder-id", "1", "first")
+    val second = newLogEvent("session-id", "999.9999", "-1", "recorder-id-1", "1", "second")
+    val third = newLogEvent("session-id", "999.9999", "-1", "recorder-id-2", "1", "third")
 
     val all = ArrayList<LogEvent>()
     all.add(first)
@@ -205,6 +206,73 @@ class FeatureEventLogSerializationTest {
     whitelist.add("recorder-id-1")
     whitelist.add("recorder-id-2")
     testWhitelist(whitelist, all, filtered)
+  }
+
+  @Test
+  fun testInvalidEventWithoutSession() {
+    val json =
+      "{\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322," +
+        "\"group\":{\"id\":\"lifecycle\",\"version\":\"2\"}," +
+        "\"event\":{\"count\":1,\"data\":{},\"id\":\"ideaapp.started\"}" +
+      "}"
+    val deserialized = LogEventSerializer.fromString(json)
+    assertNull(deserialized)
+  }
+
+  @Test
+  fun testInvalidEventWithTimeAsString() {
+    val json =
+      "{\"session\":12345,\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":\"current-time\"," +
+        "\"group\":{\"id\":\"lifecycle\",\"version\":\"2\"}," +
+        "\"event\":{\"count\":1,\"data\":{},\"id\":\"ideaapp.started\"}" +
+      "}"
+    val deserialized = LogEventSerializer.fromString(json)
+    assertNull(deserialized)
+  }
+
+  @Test
+  fun testInvalidEventWithoutGroup() {
+    val json =
+      "{\"session\":12345,\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322," +
+        "\"event\":{\"count\":1,\"data\":{},\"id\":\"ideaapp.started\"}" +
+      "}"
+    val deserialized = LogEventSerializer.fromString(json)
+    assertNull(deserialized)
+  }
+
+  @Test
+  fun testInvalidEventWithoutEvent() {
+    val json =
+      "{\"session\":12345,\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322," +
+        "\"group\":{\"id\":\"lifecycle\",\"version\":\"2\"}" +
+      "}"
+    val deserialized = LogEventSerializer.fromString(json)
+    assertNull(deserialized)
+  }
+
+  @Test
+  fun testEventInOldFormat() {
+    val json =
+      "{\"session\":\"e4d6236d62f8\",\"bucket\":\"-1\",\"time\":1528885576020," +
+        "\"recorder\":{\"id\":\"action-stats\",\"version\":\"2\"}," +
+        "\"action\":{\"data\":{},\"id\":\"Run\"}" +
+      "}"
+    val deserialized = LogEventSerializer.fromString(json)
+    assertNull(deserialized)
+  }
+
+  @Test
+  fun testInvalidJsonEvent() {
+    val json = "\"session\":12345,\"build\":\"183.0\",\"bucket\":\"-1\",\"time\":1529428045322}"
+    val deserialized = LogEventSerializer.fromString(json)
+    assertNull(deserialized)
+  }
+
+  @Test
+  fun testInvalidEvent() {
+    val json = "{\"a\":12345,\"b\":\"183.0\",\"d\":\"-1\"}"
+    val deserialized = LogEventSerializer.fromString(json)
+    assertNull(deserialized)
   }
 
   private fun testWhitelist(whitelist: Set<String>, all: List<LogEvent>, filtered: List<LogEvent>) {

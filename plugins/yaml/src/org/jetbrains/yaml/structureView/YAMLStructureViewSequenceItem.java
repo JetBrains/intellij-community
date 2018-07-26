@@ -2,7 +2,6 @@
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.lang.ASTNode;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +18,7 @@ import static org.jetbrains.yaml.structureView.YAMLStructureViewFactory.ALIAS_IC
 
 class YAMLStructureViewSequenceItem extends DuplicatedPsiTreeElementBase<YAMLSequenceItem> {
   YAMLStructureViewSequenceItem(@NotNull YAMLSequenceItem item, String path) {
-    super(item, path + '-' + getItemNumber(item));
+    super(item, path + '-' + item.getItemIndex());
   }
 
   @NotNull
@@ -65,13 +64,5 @@ class YAMLStructureViewSequenceItem extends DuplicatedPsiTreeElementBase<YAMLSeq
   @Nullable
   private YAMLValue getItemValue() {
     return getElement().getValue();
-  }
-
-  private static int getItemNumber(@NotNull YAMLSequenceItem item) {
-    int num = 0;
-    for (ASTNode node = item.getNode().getTreePrev(); node != null; node = node.getTreePrev()) {
-      num++;
-    }
-    return num;
   }
 }

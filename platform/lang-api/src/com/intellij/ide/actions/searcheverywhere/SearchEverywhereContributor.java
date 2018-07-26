@@ -31,6 +31,10 @@ public interface SearchEverywhereContributor<F> {
 
   boolean showInFindResults();
 
+  default boolean isShownInSeparateTab() {
+    return false;
+  }
+
   ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
                                          ProgressIndicator progressIndicator, int elementsLimit);
 

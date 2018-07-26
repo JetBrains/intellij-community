@@ -82,30 +82,18 @@ public class YAMLFormattingTest extends LightPlatformCodeInsightFixtureTestCase 
     doPartialReformatTest(10, 11);
   }
 
-  // TODO: fix ticket RUBY-21789
-  @Bombed(year = 2018, month = Calendar.JULY, day = 10, user = "alexey.merkulov",
-    description = "Ticket RUBY-21789")
   public void testComments_default() {
     doWholeFileTest();
   }
 
-  // TODO: fix ticket RUBY-21789
-  @Bombed(year = 2018, month = Calendar.JULY, day = 10, user = "alexey.merkulov",
-    description = "Ticket RUBY-21789")
   public void testComments_indentSequenceValue() {
+    doWholeFileTest(() -> getCustomSettings().INDENT_SEQUENCE_VALUE = true);
+  }
+
+  public void testRegression21787() {
     doWholeFileTest();
   }
 
-  // TODO: fix ticket RUBY-21787
-  @Bombed(year = 2018, month = Calendar.JULY, day = 10, user = "alexey.merkulov",
-    description = "Ticket RUBY-21787")
-  public void testParsingBug1() {
-    doWholeFileTest();
-  }
-
-  // TODO: fix ticket RUBY-21788
-  @Bombed(year = 2018, month = Calendar.JULY, day = 10, user = "alexey.merkulov",
-    description = "Ticket RUBY-21788")
   public void testParsingBug2() {
     doWholeFileTest();
   }

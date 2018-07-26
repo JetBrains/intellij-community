@@ -43,14 +43,14 @@ componentConstrains:
     spanX: 2097051
     wrap: true
 cellBounds:
-- [0, 0, 480, 16]
-- [0, 26, 359, 284]
-- [367, 26, 113, 284]
-- [367, 26, 113, 284]
-- [367, 26, 113, 284]
+- [0, 0, 480, 15]
+- [0, 25, 360, 285]
+- [368, 25, 112, 285]
+- [368, 25, 112, 285]
+- [368, 25, 112, 285]
 componentBounds:
-  Merging branch foo into bar: [0, 0, 176, 16]
-  'JBScrollPane #1': [0, 26, 359, 284]
-  Accept Yours: [364, 23, 119, 30]
-  Accept Theirs: [364, 57, 119, 30]
-  Merge ...: [364, 91, 119, 30]
+  Merging branch foo into bar: [0, 0, 175, 15]
+  'JBScrollPane #1': [0, 25, 360, 285]
+  Accept Yours: [365, 22, 118, 30]
+  Accept Theirs: [365, 56, 118, 30]
+  Merge ...: [365, 90, 118, 30]

@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
@@ -39,6 +40,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGDocument;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,23 +58,49 @@ import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 public class SVGLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.SVGLoader");
 
-  private final TranscoderInput input;
-  private final Size size;
-  private BufferedImage img;
+  public static final NotNullValue<Double> MAX_SIZE = new NotNullValue<Double>() {
+    @NotNull
+    @Override
+    public Double initialize() {
+      double maxSize = Integer.MAX_VALUE;
+      if (!GraphicsEnvironment.isHeadless()) {
+        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        Rectangle bounds = device.getDefaultConfiguration().getBounds();
+        AffineTransform tx = device.getDefaultConfiguration().getDefaultTransform();
+        maxSize = (int)Math.max(bounds.width * tx.getScaleX(), bounds.height * tx.getScaleY());
+      }
+      return maxSize;
+    }
+  };
+
+  private final TranscoderInput myInput;
+  private final Size mySize;
+  private BufferedImage myImage;
 
   private static class Size {
-    final float width;
-    final float height;
+    final double width;
+    final double height;
 
     static final int FALLBACK_SIZE = 16;
 
-    Size(float width, float height) {
+    Size(double width, double height) {
       this.width = width;
       this.height = height;
     }
 
     Size scale(double scale) {
-      return new Size((float)(width * scale), (float)(height * scale));
+      return new Size(width * scale, height * scale);
+    }
+
+    Size scaleToMaxSize() {
+      double w = width;
+      double h = height;
+      if (w > MAX_SIZE.get() || h > MAX_SIZE.get()) {
+        double k = w >= h ? w / MAX_SIZE.get() : h / MAX_SIZE.get();
+        w /= k;
+        h /= k;
+      }
+      return new Size(w, h);
     }
 
     @NotNull
@@ -136,7 +164,7 @@ public class SVGLoader {
 
     @Override
     public void writeImage(BufferedImage img, TranscoderOutput output) {
-      SVGLoader.this.img = img;
+      SVGLoader.this.myImage = img;
     }
 
     @Override
@@ -176,7 +204,12 @@ public class SVGLoader {
 
   public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
     SVGLoader loader = new SVGLoader(url, stream, scale);
-    return Couple.of((int)loader.size.width, (int)loader.size.height);
+    return Couple.of((int)loader.mySize.width, (int)loader.mySize.height);
+  }
+
+  public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
+    SVGLoader loader = new SVGLoader(url, stream, ctx.getScale(PIX_SCALE));
+    return Math.min(MAX_SIZE.get() / loader.mySize.width, MAX_SIZE.get() / loader.mySize.height);
   }
 
   private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
@@ -196,16 +229,17 @@ public class SVGLoader {
     if (document == null) {
       throw new IOException("document not created");
     }
-    input = new TranscoderInput(document);
-    size = Size.parse(document).scale(scale);
+    myInput = new TranscoderInput(document);
+    mySize = Size.parse(document).scale(scale);
   }
 
   private BufferedImage createImage() throws TranscoderException {
+    Size size = mySize.scaleToMaxSize();
     MyTranscoder r = new MyTranscoder();
     r.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(size.width));
     r.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(size.height));
-    r.transcode(input, null);
-    return img;
+    r.transcode(myInput, null);
+    return myImage;
   }
 
   @NotNull

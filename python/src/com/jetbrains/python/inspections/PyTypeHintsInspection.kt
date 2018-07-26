@@ -2,22 +2,30 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyGenericType
+import com.jetbrains.python.psi.types.PyInstantiableType
 import com.jetbrains.python.psi.types.PyTypeChecker
 
 class PyTypeHintsInspection : PyInspection() {
@@ -45,11 +53,9 @@ class PyTypeHintsInspection : PyInspection() {
           checkTypeVarRedefinition(target)
         }
 
-        if (genericQName in calleeQName) {
-          checkGenericInstantiation(node)
-        }
-
         checkInstanceAndClassChecks(node)
+
+        checkParenthesesOnGenerics(node)
       }
     }
 
@@ -65,17 +71,54 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    override fun visitPySubscriptionExpression(node: PySubscriptionExpression?) {
+    override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
       super.visitPySubscriptionExpression(node)
 
-      if (node != null) {
-        val callee = node.operand as? PyReferenceExpression
-        val calleeQName = callee?.let { PyResolveUtil.resolveImportedElementQNameLocally(it) } ?: emptyList()
+      checkParameters(node)
+    }
 
-        if (genericQName in calleeQName) {
-          checkGenericParameters(node.indexExpression)
+    override fun visitPyReferenceExpression(node: PyReferenceExpression) {
+      super.visitPyReferenceExpression(node)
+
+      if (node.referencedName == PyNames.CANONICAL_SELF && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
+        val typeName = myTypeEvalContext.getType(node)?.name
+        if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
+          registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null, ReplaceWithTypeNameQuickFix(typeName))
         }
       }
+    }
+
+    override fun visitPyFile(node: PyFile?) {
+      super.visitPyFile(node)
+
+      if (node is PyDocstringFile && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
+        node.children.singleOrNull().also { if (it is PyExpressionStatement) checkTupleMatching(it.expression) }
+      }
+    }
+
+    override fun visitPyElement(node: PyElement?) {
+      super.visitPyElement(node)
+
+      if (node is PyTypeCommentOwner && node is PyAnnotationOwner && node.typeCommentAnnotation != null) {
+        val message = "Type(s) specified both in type comment and annotation"
+
+        if (node is PyFunction) {
+          if (node.annotationValue != null || node.parameterList.parameters.any { it is PyNamedParameter && it.annotationValue != null }) {
+            registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+            registerProblem(node.nameIdentifier, message, RemoveFunctionAnnotations())
+          }
+        }
+        else if (node.annotationValue != null) {
+          registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+          registerProblem(node.annotation, message, RemoveElementQuickFix("Remove annotation"))
+        }
+      }
+    }
+
+    override fun visitPyFunction(node: PyFunction) {
+      super.visitPyFunction(node)
+
+      checkTypeCommentAndParameters(node)
     }
 
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
@@ -126,8 +169,13 @@ class PyTypeHintsInspection : PyInspection() {
               if (argument !is PyStringLiteralExpression) {
                 registerProblem(argument, "'TypeVar()' expects a string literal as first argument")
               }
-              else if (target != null && argument.stringValue != target.name) {
-                registerProblem(argument, "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned")
+              else {
+                val targetName = target?.name
+                if (targetName != null && targetName != argument.stringValue) {
+                  registerProblem(argument,
+                                  "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned",
+                                  ReplaceWithTargetNameQuickFix(targetName))
+                }
               }
             "covariant" -> covariant = PyEvaluator.evaluateAsBoolean(argument, false)
             "contravariant" -> contravariant = PyEvaluator.evaluateAsBoolean(argument, false)
@@ -158,12 +206,6 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
       }
-    }
-
-    private fun checkGenericInstantiation(call: PyCallExpression) {
-      registerProblem(call,
-                      "Type 'Generic' cannot be instantiated; it can be used only as a base class",
-                      ProblemHighlightType.GENERIC_ERROR)
     }
 
     private fun checkInstanceAndClassChecks(call: PyCallExpression) {
@@ -249,7 +291,9 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.PROTOCOL_EXT -> {
                   registerProblem(base,
                                   "Parameterized generics cannot be used with instance and class checks",
-                                  ProblemHighlightType.GENERIC_ERROR)
+                                  ProblemHighlightType.GENERIC_ERROR,
+                                  null,
+                                  if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
                   return@forEach
                 }
               }
@@ -261,10 +305,34 @@ class PyTypeHintsInspection : PyInspection() {
               if (type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)) {
                 registerProblem(base,
                                 "Parameterized generics cannot be used with instance and class checks",
-                                ProblemHighlightType.GENERIC_ERROR)
+                                ProblemHighlightType.GENERIC_ERROR,
+                                null,
+                                if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
               }
             }
           }
+      }
+    }
+
+    private fun checkParenthesesOnGenerics(call: PyCallExpression) {
+      val callee = call.callee
+      if (callee is PyReferenceExpression) {
+        if (PyResolveUtil.resolveImportedElementQNameLocally(callee).any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.toString()) }) {
+          registerProblem(call,
+                          "Generics should be specified through square brackets",
+                          ProblemHighlightType.GENERIC_ERROR,
+                          null,
+                          ReplaceWithSubscriptionQuickFix())
+        }
+        else if (PyTypingTypeProvider.isInAnnotationOrTypeComment(call)) {
+          multiFollowAssignmentsChain(callee)
+            .asSequence()
+            .map { if (it is PyFunction) it.containingClass else it }
+            .any { it is PyWithAncestors && PyTypingTypeProvider.isGeneric(it, myTypeEvalContext) }
+            .also {
+              if (it) registerProblem(call, "Generics should be specified through square brackets", ReplaceWithSubscriptionQuickFix())
+            }
+        }
       }
     }
 
@@ -362,7 +430,34 @@ class PyTypeHintsInspection : PyInspection() {
       return Pair(if (seenGeneric) genericTypeVars else null, nonGenericTypeVars)
     }
 
-    private fun checkGenericParameters(index: PyExpression?) {
+    private fun checkParameters(node: PySubscriptionExpression) {
+      val operand = node.operand as? PyReferenceExpression ?: return
+      val index = node.indexExpression ?: return
+
+      val callableQName = QualifiedName.fromDottedString(PyTypingTypeProvider.CALLABLE)
+      val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
+
+      var typingOnly = true
+      var callableExists = false
+
+      qNames.forEach {
+        when (it) {
+          genericQName -> checkGenericParameters(index)
+          callableQName -> {
+            callableExists = true
+            checkCallableParameters(index)
+          }
+        }
+
+        typingOnly = typingOnly && it.firstComponent == PyTypingTypeProvider.TYPING
+      }
+
+      if (qNames.isNotEmpty() && typingOnly) {
+        checkTypingMemberParameters(index, callableExists)
+      }
+    }
+
+    private fun checkGenericParameters(index: PyExpression) {
       val parameters = (index as? PyTupleExpression)?.elements ?: arrayOf(index)
       val typeVars = mutableSetOf<PsiElement>()
 
@@ -387,6 +482,115 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
+    private fun checkCallableParameters(index: PyExpression) {
+      val message = "'Callable' must be used as 'Callable[[arg, ...], result]'"
+
+      if (index !is PyTupleExpression) {
+        registerProblem(index, message, ProblemHighlightType.GENERIC_ERROR)
+        return
+      }
+
+      val parameters = index.elements
+      if (parameters.size > 2) {
+        val possiblyLastParameter = parameters[parameters.size - 2]
+
+        registerProblem(index,
+                        message,
+                        ProblemHighlightType.GENERIC_ERROR,
+                        null,
+                        TextRange.create(0, possiblyLastParameter.startOffsetInParent + possiblyLastParameter.textLength),
+                        SurroundElementsWithSquareBracketsQuickFix())
+      }
+      else if (parameters.size < 2) {
+        registerProblem(index, message, ProblemHighlightType.GENERIC_ERROR)
+      }
+      else {
+        val first = parameters.first()
+
+        if (first !is PyListLiteralExpression && !(first is PyNoneLiteralExpression && first.isEllipsis)) {
+          registerProblem(first,
+                          message,
+                          ProblemHighlightType.GENERIC_ERROR,
+                          null,
+                          if (first is PyParenthesizedExpression) ReplaceWithListQuickFix() else SurroundElementWithSquareBracketsQuickFix())
+        }
+      }
+    }
+
+    private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {
+      val parameters = if (index is PyTupleExpression) index.elements else arrayOf(index)
+
+      parameters
+        .asSequence()
+        .drop(if (isCallable) 1 else 0)
+        .forEach {
+          if (it is PyListLiteralExpression) {
+            registerProblem(it,
+                            "Parameters to generic types must be types",
+                            ProblemHighlightType.GENERIC_ERROR,
+                            null,
+                            RemoveSquareBracketsQuickFix())
+          }
+          else if (it is PyReferenceExpression && multiFollowAssignmentsChain(it).any { it is PyListLiteralExpression }) {
+            registerProblem(it, "Parameters to generic types must be types", ProblemHighlightType.GENERIC_ERROR)
+          }
+        }
+    }
+
+    private fun checkTupleMatching(expression: PyExpression) {
+      if (expression !is PyTupleExpression) return
+
+      val assignment = PyPsiUtils.getRealContext(expression).parent as? PyAssignmentStatement ?: return
+      val lhs = assignment.leftHandSideExpression ?: return
+
+      if (PyTypingTypeProvider.mapTargetsToAnnotations(lhs, expression).isEmpty() &&
+          (expression.elements.isNotEmpty() || assignment.rawTargets.isNotEmpty())) {
+        registerProblem(expression, "Type comment cannot be matched with unpacked variables")
+      }
+    }
+
+    private fun checkTypeCommentAndParameters(node: PyFunction) {
+      val functionTypeAnnotation = PyTypingTypeProvider.getFunctionTypeAnnotation(node) ?: return
+
+      val parameterTypes = functionTypeAnnotation.parameterTypeList.parameterTypes
+      if (parameterTypes.singleOrNull().let { it is PyNoneLiteralExpression && it.isEllipsis }) return
+
+      val actualParametersSize = node.parameterList.parameters.size
+      val commentParametersSize = parameterTypes.size
+
+      val cls = node.containingClass
+      val modifier = node.modifier
+
+      val hasSelf = cls != null && modifier != PyFunction.Modifier.STATICMETHOD
+
+      if (commentParametersSize < actualParametersSize - if (hasSelf) 1 else 0) {
+        registerProblem(node.typeComment, "Type signature has too few arguments")
+      }
+      else if (commentParametersSize > actualParametersSize) {
+        registerProblem(node.typeComment, "Type signature has too many arguments")
+      }
+      else if (hasSelf && actualParametersSize == commentParametersSize) {
+        val actualSelfType =
+          (myTypeEvalContext.getType(cls!!) as? PyInstantiableType<*>)
+            ?.let { if (modifier == PyFunction.Modifier.CLASSMETHOD) it.toClass() else it.toInstance() }
+          ?: return
+
+        val commentSelfType =
+          parameterTypes.firstOrNull()
+            ?.let { PyTypingTypeProvider.getType(it, myTypeEvalContext) }
+            ?.get()
+          ?: return
+
+        if (!PyTypeChecker.match(commentSelfType, actualSelfType, myTypeEvalContext)) {
+          val actualSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(actualSelfType, myTypeEvalContext)
+          val commentSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(commentSelfType, myTypeEvalContext)
+
+          registerProblem(node.typeComment,
+                          "The type of self '$commentSelfTypeDescription' is not a supertype of its class '$actualSelfTypeDescription'")
+        }
+      }
+    }
+
     private fun followNotTypingOpaque(target: PyTargetExpression): Boolean {
       return !PyTypingTypeProvider.OPAQUE_NAMES.contains(target.qualifiedName)
     }
@@ -399,6 +603,164 @@ class PyTypeHintsInspection : PyInspection() {
                                             follow: (PyTargetExpression) -> Boolean = this::followNotTypingOpaque): List<PsiElement> {
       val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
       return referenceExpression.multiFollowAssignmentsChain(resolveContext, follow).mapNotNull { it.element }
+    }
+  }
+
+  companion object {
+    private class ReplaceWithTypeNameQuickFix(private val typeName: String) : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with type name"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyReferenceExpression ?: return
+        element.reference.handleElementRename(typeName)
+      }
+    }
+
+    private class RemoveElementQuickFix(private val description: String) : LocalQuickFix {
+
+      override fun getFamilyName() = description
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) = descriptor.psiElement.delete()
+    }
+
+    private class RemoveFunctionAnnotations : LocalQuickFix {
+
+      override fun getFamilyName() = "Remove function annotations"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val function = (descriptor.psiElement.parent as? PyFunction) ?: return
+
+        function.annotation?.delete()
+
+        function.parameterList.parameters
+          .asSequence()
+          .filterIsInstance<PyNamedParameter>()
+          .mapNotNull { it.annotation }
+          .forEach { it.delete() }
+      }
+    }
+
+    private class ReplaceWithTargetNameQuickFix(private val targetName: String) : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with target name"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val old = descriptor.psiElement as? PyStringLiteralExpression ?: return
+        val new = PyElementGenerator.getInstance(project).createStringLiteral(old, targetName) ?: return
+
+        old.replace(new)
+      }
+    }
+
+    private class RemoveGenericParametersQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Remove generic parameter(s)"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val old = descriptor.psiElement as? PySubscriptionExpression ?: return
+
+        old.replace(old.operand)
+      }
+    }
+
+    private class ReplaceWithSubscriptionQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyCallExpression ?: return
+
+        val callee = element.callee?.text ?: return
+        val argumentList = element.argumentList ?: return
+        val index = argumentList.text.let { it.substring(1, it.length - 1) }
+
+        val language = element.containingFile.language
+        val text = if (language == PyFunctionTypeAnnotationDialect.INSTANCE) "() -> $callee[$index]" else "$callee[$index]"
+
+        PsiFileFactory
+          .getInstance(project)
+          // it's important to create file with same language as element's file to have correct behaviour in injections
+          .createFileFromText(language, text)
+          ?.let { it.firstChild.lastChild as? PySubscriptionExpression }
+          ?.let { element.replace(it) }
+      }
+    }
+
+    private class SurroundElementsWithSquareBracketsQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Surround with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyTupleExpression ?: return
+        val list = PyElementGenerator.getInstance(project).createListLiteral()
+
+        val originalElements = element.elements
+        originalElements.dropLast(1).forEach { list.add(it) }
+        originalElements.dropLast(2).forEach { it.delete() }
+
+        element.elements.first().replace(list)
+      }
+    }
+
+    private class SurroundElementWithSquareBracketsQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Surround with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement
+        val list = PyElementGenerator.getInstance(project).createListLiteral()
+
+        list.add(element)
+
+        element.replace(list)
+      }
+    }
+
+    private class ReplaceWithListQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Replace with square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement
+
+        val expression = (element as? PyParenthesizedExpression)?.containedExpression ?: return
+        val elements = expression.let { if (it is PyTupleExpression) it.elements else arrayOf(it) }
+
+        val list = PyElementGenerator.getInstance(project).createListLiteral()
+        elements.forEach { list.add(it) }
+        element.replace(list)
+      }
+    }
+
+    private class RemoveSquareBracketsQuickFix : LocalQuickFix {
+
+      override fun getFamilyName() = "Remove square brackets"
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? PyListLiteralExpression ?: return
+
+        val subscription = PsiTreeUtil.getParentOfType(element, PySubscriptionExpression::class.java, true, ScopeOwner::class.java)
+        val index = subscription?.indexExpression ?: return
+
+        val newIndexElements = if (index is PyTupleExpression) {
+          index.elements.flatMap { if (it == element) element.elements.asList() else listOf(it) }
+        }
+        else {
+          element.elements.asList()
+        }
+
+        if (newIndexElements.size == 1) {
+          index.replace(newIndexElements.first())
+        }
+        else {
+          val newIndexText = newIndexElements.joinToString(prefix = "(", postfix = ")") { it.text }
+
+          val expression = PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(element), newIndexText)
+          val newIndex = (expression as? PyParenthesizedExpression)?.containedExpression as? PyTupleExpression ?: return
+
+          index.replace(newIndex)
+        }
+      }
     }
   }
 }

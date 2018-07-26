@@ -111,27 +111,14 @@ public abstract class AbstractFieldPanel extends JPanel {
 
     if (myBrowseButtonActionListener != null) {
       if (Experiments.isFeatureEnabled("inline.browse.button") && myComponent instanceof ExtendableTextComponent) {
-        ExtendableTextComponent.Extension action = new ExtendableTextComponent.Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            return hovered ? AllIcons.General.OpenDiskHover : AllIcons.General.OpenDisk;
-          }
-
-          @Override
-          public String getTooltip() {
-            return UIBundle.message("component.with.browse.button.browse.button.tooltip.text");
-          }
-
-          @Override
-          public Runnable getActionOnClick() {
-            return () -> myBrowseButtonActionListener.actionPerformed(new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action"));
-          }
-        };
-        ((ExtendableTextComponent)myComponent).addExtension(action);
+        ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
+          AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
+          UIBundle.message("component.with.browse.button.browse.button.tooltip.text"),
+          this::notifyActionListener));
         new DumbAwareAction() {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            action.getActionOnClick().run();
+            notifyActionListener();
           }
         }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
 
@@ -162,6 +149,11 @@ public abstract class AbstractFieldPanel extends JPanel {
       myButtons.add(showViewerButton);
       this.add(showViewerButton, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     }
+  }
+
+  private void notifyActionListener() {
+    ActionEvent event = new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action");
+    if (myBrowseButtonActionListener != null) myBrowseButtonActionListener.actionPerformed(event);
   }
 
   public void setBrowseButtonActionListener(ActionListener browseButtonActionListener) {

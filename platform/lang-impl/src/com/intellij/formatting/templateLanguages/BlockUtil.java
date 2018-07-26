@@ -15,8 +15,9 @@
  */
 package com.intellij.formatting.templateLanguages;
 
-import com.intellij.formatting.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ class BlockUtil {
   public static Pair<List<DataLanguageBlockWrapper>, List<DataLanguageBlockWrapper>> splitBlocksByRightBound(@NotNull Block parent, @NotNull TextRange bounds) {
     final List<Block> subBlocks = parent.getSubBlocks();
     if (subBlocks.size() == 0) return Pair
-      .create(Collections.<DataLanguageBlockWrapper>emptyList(), Collections.<DataLanguageBlockWrapper>emptyList());
+      .create(Collections.emptyList(), Collections.emptyList());
     final ArrayList<DataLanguageBlockWrapper> before = new ArrayList<>(subBlocks.size() / 2);
     final ArrayList<DataLanguageBlockWrapper> after = new ArrayList<>(subBlocks.size() / 2);
     splitByRightBoundAndCollectBlocks(subBlocks, before, after, bounds);
@@ -212,17 +213,6 @@ class BlockUtil {
       }
     }
     return children;
-  }
-
-  static void printBlocks(@Nullable TextRange textRange, @NotNull List<Block> list) {
-    StringBuilder sb = new StringBuilder(String.valueOf(textRange)).append(": ");
-    for (Block block : list) {
-      ASTNode node = block instanceof ASTBlock ? ((ASTBlock)block).getNode() : null;
-      TextRange r = block.getTextRange();
-      sb.append(" [").append(node != null ? node.getElementType() : null)//.append(" ").append(((BlockWithParent)block).getParent() != null)
-          .append(r).append(block.getIndent()).append(block.getAlignment()).append("] ");
-    }
-    System.out.println(sb);
   }
 
   static List<Block> setParent(List<Block> children, BlockWithParent parent) {

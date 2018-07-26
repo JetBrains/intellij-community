@@ -227,7 +227,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testParamOfFunctionInModuleWithIllegalName() {
-    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/illegal name.py");
+    doMultiFileCheckByHTML("illegal name.py");
+  }
+
+  public void doMultiFileCheckByHTML(@NotNull String activeFilePath) {
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/" + activeFilePath);
     final PsiElement originalElement = marks.get("<the_ref>");
     final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
     final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
@@ -545,6 +549,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
     final PyFile init = as(PsiManager.getInstance(myFixture.getProject()).findFile(file), PyFile.class);
     checkByHTML(myProvider.generateDoc(init, init));
+  }
+
+  // PY-30432
+  public void testNoExternalDocumentationSection() {
+    doMultiFileCheckByHTML("numpy.py");
   }
 
   @Override

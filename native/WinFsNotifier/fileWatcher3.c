@@ -38,6 +38,9 @@ static UINT32 _calls_ = 0, _max_events_ = 0;
 
 // -- Utilities ---------------------------------------------------
 
+typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr)(HANDLE, LPCWSTR, DWORD, DWORD);
+static GetFinalPathNameByHandlePtr __GetFinalPathNameByHandle = NULL;
+
 typedef struct {
     char *text;
     size_t size;
@@ -79,21 +82,38 @@ static bool IsDriveWatchable(const char *rootPath) {
 
 static bool IsPathWatchable(const char *pathToWatch) {
     bool watchable = true;
-
     int pathLen = MultiByteToWideChar(CP_UTF8, 0, pathToWatch, -1, NULL, 0);
-    wchar_t *path = (wchar_t *)calloc((size_t)pathLen, sizeof(wchar_t));
+    wchar_t *path = (wchar_t *)calloc((size_t)pathLen + 1, sizeof(wchar_t));
     MultiByteToWideChar(CP_UTF8, 0, pathToWatch, -1, path, pathLen);
+    wchar_t buffer[1024];
+    const int bufferSize = 1024;
 
-    while (wcschr(path, L'\\') != NULL) {
+    wchar_t *pSlash;
+    while ((pSlash = wcsrchr(path, L'\\')) != NULL) {
         DWORD attributes = GetFileAttributesW(path);
         if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-            watchable = false;
-            break;
+            if (__GetFinalPathNameByHandle != NULL) {
+                HANDLE h = CreateFileW(path, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                if (h != NULL) {
+                    DWORD result = __GetFinalPathNameByHandle(h, buffer, bufferSize, 0);
+                    CloseHandle(h);
+                    if (result > 0 && result < bufferSize && wcsncmp(buffer, L"\\\\?\\UNC\\", 8) == 0) {
+                        watchable = false;
+                        break;
+                    }
+                }
+            }
+
+            path[pathLen] = L'\\';
+            path[pathLen + 1] = L'\0';
+            if (GetVolumeNameForVolumeMountPointW(path, buffer, bufferSize) != 0) {
+                watchable = false;
+                break;
+            }
         }
-        wchar_t *pSlash = wcsrchr(path, L'\\');
-        if (pSlash != NULL) {
-            *pSlash = L'\0';
-        }
+
+        *pSlash = L'\0';
+        pathLen = (int)(pSlash - path);
     }
 
     free(path);
@@ -112,8 +132,19 @@ static void PrintUnwatchableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
 static void PrintUnwatchablePaths(PrintBuffer *buffer, UINT32 unwatchable) {
     for (WatchRoot *root = firstWatchRoot; root; root = root->next) {
         const char *path = root->path;
-        int drive = path[0] - 'A';
-        if ((unwatchable & (1 << drive)) == 0 && !IsPathWatchable(path)) {
+        boolean watchable = true;
+
+        int driveLetter = toupper(*path);
+        if (driveLetter < 'A' || driveLetter > 'Z') {
+            watchable = false;
+        } else {
+            int drive = driveLetter - 'A';
+            if ((unwatchable & (1 << drive)) == 0 && !IsPathWatchable(path)) {
+                watchable = false;
+            }
+        }
+
+        if (!watchable) {
             AppendString(buffer, path);
             AppendString(buffer, "\n");
         }
@@ -336,6 +367,7 @@ static void FreeWatchRootsList() {
 
 int main(int argc, char *argv[]) {
     SetErrorMode(SEM_FAILCRITICALERRORS);
+    __GetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
     InitializeCriticalSection(&csOutput);
 
     for (int i = 0; i < ROOT_COUNT; i++) {
@@ -361,15 +393,18 @@ int main(int argc, char *argv[]) {
                     failed = true;
                     break;
                 }
+                if (strlen(buffer) == 0) {
+                    continue;
+                }
                 if (buffer[0] == '#') {
                     break;
                 }
 
                 char *root = buffer;
                 if (*root == '|') root++;
+                AddWatchRoot(root);
                 int driveLetter = toupper(*root);
                 if (driveLetter >= 'A' && driveLetter <= 'Z') {
-                    AddWatchRoot(root);
                     watchDrive[driveLetter - 'A'].bUsed = true;
                 }
             }

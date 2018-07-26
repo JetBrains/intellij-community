@@ -8,7 +8,7 @@ public class Main {
 
     static {
         List<String> list = new ArrayList<>();
-        for (String s: Arrays.asList("foo", "bar", "baz")) {
+        for (String s : Arrays.asList("foo", "bar", "baz")) {
             String toUpperCase = s.toUpperCase();
             list.add(toUpperCase);
         }
@@ -19,7 +19,7 @@ public class Main {
 
     {
         StringJoiner joiner = new StringJoiner(",");
-        for (String s: STR) {
+        for (String s : STR) {
             if (!s.isEmpty()) {
                 joiner.add(s);
             }
@@ -35,7 +35,7 @@ public class Main {
 
     {
         long result = 0L;
-        for (Integer i: Arrays.asList(1, 2, 3, 4)) {
+        for (Integer i : Arrays.asList(1, 2, 3, 4)) {
             if (i % 2 == 0) {
                 result++;
             }
@@ -52,7 +52,7 @@ public class Main {
 
     {
         long result = 0L;
-        for (Integer i: Arrays.asList(1, 2, 3, 4)) {
+        for (Integer i : Arrays.asList(1, 2, 3, 4)) {
             if (i % 2 == 0) {
                 result++;
             }

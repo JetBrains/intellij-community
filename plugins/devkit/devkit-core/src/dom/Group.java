@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * plugin.dtd:group interface.
  */
-@Presentation(icon = "AllIcons.Actions.GroupByPackage")
+@Presentation(icon = "AllIcons.Actions.GroupByPackage", typeName = "Group")
 @Stubbed
 public interface Group extends Actions, ActionOrGroup {
 

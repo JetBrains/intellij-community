@@ -283,6 +283,20 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testTry_catch$try7() throws Throwable { doTest() }
 
+  void testTry_catch$tryResources() { doTest() }
+
+  void testTry_catch$tryResourcesEmpty() { doTest() }
+
+  void testTry_catch$tryResourcesNoRparen() { doTest() }
+
+  void testTry_catch$tryResourcesNoRparenAfterResource() { doTest() }
+
+  void testTry_catch$tryResourcesNLAfterResource() { doTest() }
+
+  void testTry_catch$tryResourcesSeparators() { doTest() }
+
+  void testTry_catch$tryResourcesTyped() { doTest() }
+
   void testTuples$doubleParens() throws Throwable { doTest() }
 
   void testTuples$methCallNotTuple() throws Throwable { doTest() }

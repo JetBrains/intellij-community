@@ -53,7 +53,7 @@ public class YAMLSyntaxHighlighter extends SyntaxHighlighterBase implements YAML
     ATTRIBUTES.put(DOCUMENT_MARKER, YAMLHighlighter.SIGN);
     ATTRIBUTES.put(SEQUENCE_MARKER, YAMLHighlighter.SIGN);
     ATTRIBUTES.put(ANCHOR, YAMLHighlighter.ANCHOR);
-    ATTRIBUTES.put(ALIAS, YAMLHighlighter.ALIAS);
+    ATTRIBUTES.put(ALIAS, YAMLHighlighter.ANCHOR);
   }
 
 

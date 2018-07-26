@@ -510,7 +510,7 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private static String getTestMethodLocation(String methodName, String className) {
-    return "locationHint=\'java:test://" + escapeName(className + "/" + getShortName(methodName)) + "\'";
+    return "locationHint=\'java:test://" + escapeName(className + "/" + getShortName(methodName, true)) + "\'";
   }
 
   private static boolean isParameter(Description description) {
@@ -525,6 +525,10 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private static String getShortName(String fqName) {
+    return getShortName(fqName, false);
+  }
+
+  private static String getShortName(String fqName, boolean splitBySlash) {
     if (fqName == null) return null;
     final int idx = fqName.indexOf("[");
     if (idx == 0) {
@@ -532,7 +536,7 @@ public class JUnit4TestListener extends RunListener {
       return fqName;
     }
     String fqNameWithoutParams = idx > 0 && fqName.endsWith("]") ? fqName.substring(0, idx) : fqName;
-    int classEnd = fqNameWithoutParams.indexOf('/');
+    int classEnd = splitBySlash ? fqNameWithoutParams.indexOf('/') : -1;
     if (classEnd >= 0) {
       return fqName.substring(classEnd + 1);
     }

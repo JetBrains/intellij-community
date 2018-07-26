@@ -18,6 +18,10 @@ public class JsonValidationError {
     return myIssueData;
   }
 
+  public JsonErrorPriority getPriority() {
+    return myPriority;
+  }
+
   public enum FixableIssueKind {
     MissingProperty,
     ProhibitedProperty,
@@ -92,11 +96,14 @@ public class JsonValidationError {
   private final String myMessage;
   private final FixableIssueKind myFixableIssueKind;
   private final IssueData myIssueData;
+  private final JsonErrorPriority myPriority;
 
-  public JsonValidationError(String message, FixableIssueKind fixableIssueKind, IssueData issueData) {
+  public JsonValidationError(String message, FixableIssueKind fixableIssueKind, IssueData issueData,
+                             JsonErrorPriority priority) {
     myMessage = message;
     myFixableIssueKind = fixableIssueKind;
     myIssueData = issueData;
+    myPriority = priority;
   }
 
   public String getMessage() {

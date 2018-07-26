@@ -38,6 +38,11 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("\n");
   }
 
+  public void testRegressionRuby21808() {
+    doTest("\n");
+  }
+
+  @SuppressWarnings("SameParameterValue")
   private void doTest(String insert) {
     String testName = getTestName(true);
     myFixture.configureByFile(testName + ".yml");

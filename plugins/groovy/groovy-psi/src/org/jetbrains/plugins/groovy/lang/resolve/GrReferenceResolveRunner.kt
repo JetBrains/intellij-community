@@ -38,7 +38,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     else {
       val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
       if (place.dotTokenType === GroovyTokenTypes.mSPREAD_DOT) {
-        return qualifier.type.processSpread(processor, state, place)
+        return qualifier.type.processSpread(processor, state, place, place.parent !is GrMethodCall)
       }
       else {
         if (ResolveUtil.isClassReference(place)) return false
@@ -80,7 +80,7 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     else {
       if (!qualifierType.processReceiverType(processor, state, place)) return false
       if (place.parent !is GrMethodCall && isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        return qualifierType.processSpread(processor, state, place)
+        return qualifierType.processSpread(processor, state, place, true)
       }
     }
     return true

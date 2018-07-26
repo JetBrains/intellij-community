@@ -18,6 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -50,8 +51,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String replacementString = calculateReplacementExpression(
-      (PsiMethodCallExpression)infos[0]);
+    final String replacementString = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
     return InspectionGadgetsBundle.message(
       "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
       replacementString);
@@ -59,38 +59,24 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
 
   @Nullable
   @NonNls
-  static String calculateReplacementExpression(
-    PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
-    if (!(qualifier instanceof PsiNewExpression)) {
-      return null;
-    }
-    final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
-    final PsiExpressionList argumentList = newExpression.getArgumentList();
-    if (argumentList == null) {
-      return null;
-    }
-    final PsiExpression[] expressions = argumentList.getExpressions();
-    if (expressions.length < 1) {
-      return null;
-    }
-    final PsiType type = newExpression.getType();
-    if (type == null) {
-      return null;
-    }
-    final PsiExpression argument = expressions[0];
-    final String argumentText = argument.getText();
+  static String calculateReplacementExpression(@NotNull PsiMethodCallExpression expression, @NotNull CommentTracker commentTracker) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final PsiNewExpression qualifier = ObjectUtils.tryCast(methodExpression.getQualifierExpression(), PsiNewExpression.class);
+    if (qualifier == null) return null;
+    final PsiExpressionList argumentList = qualifier.getArgumentList();
+    if (argumentList == null) return null;
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    if (arguments.length != 1) return null;
+    final PsiType type = qualifier.getType();
+    if (type == null) return null;
+    final String argumentText = commentTracker.text(arguments[0]);
     final String qualifierType = type.getPresentableText();
     return qualifierType + ".toString(" + argumentText + ')';
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    final String replacement = calculateReplacementExpression(
-      (PsiMethodCallExpression)infos[0]);
+    final String replacement = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
     final String name = InspectionGadgetsBundle.message(
       "unnecessary.temporary.on.conversion.from.string.fix.name",
       replacement);
@@ -122,12 +108,9 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
-      PsiExpression[] args = expression.getArgumentList().getExpressions();
-      if (args.length == 0) return;
-      final String newExpression = calculateReplacementExpression(expression);
-      if (newExpression == null) return;
       CommentTracker commentTracker = new CommentTracker();
-      commentTracker.markUnchanged(args[0]);
+      final String newExpression = calculateReplacementExpression(expression, commentTracker);
+      if (newExpression == null) return;
       PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }

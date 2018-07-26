@@ -52,14 +52,14 @@ class Thread:
     daemon = ...  # type: bool
     if sys.version_info >= (3,):
         def __init__(self, group: None = ...,
-                     target: Optional[Callable[..., None]] = ...,
+                     target: Optional[Callable[..., Any]] = ...,
                      name: Optional[str] = ...,
                      args: Iterable = ...,
                      kwargs: Mapping[str, Any] = ...,
                      *, daemon: Optional[bool] = ...) -> None: ...
     else:
         def __init__(self, group: None = ...,
-                     target: Optional[Callable[..., None]] = ...,
+                     target: Optional[Callable[..., Any]] = ...,
                      name: Optional[str] = ...,
                      args: Iterable = ...,
                      kwargs: Mapping[str, Any] = ...) -> None: ...

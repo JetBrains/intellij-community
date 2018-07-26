@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 public class Main {
   public static Map<Integer, List<String>> testSimple(List<String> strings) {
       Map<Integer, List<String>> map = new HashMap<>();
-      for (String str: strings) {
+      for (String str : strings) {
           map.computeIfAbsent(str.length(), k -> new ArrayList<>()).add(str);
       }
       return map;
@@ -15,7 +15,7 @@ public class Main {
 
   public static Map<Integer, List<String>> testVarConflict(List<String> strings, int k) {
       Map<Integer, List<String>> map = new HashMap<>();
-      for (String string: strings) {
+      for (String string : strings) {
           map.computeIfAbsent(string.length(), key -> new ArrayList<>()).add(string);
       }
       return map;
@@ -23,7 +23,7 @@ public class Main {
 
   static void testCounting(List<String> list) {
       Map<Integer, Long> map = new HashMap<>();
-      for (String s: list) {
+      for (String s : list) {
           map.merge(s.length(), 1L, Long::sum);
       }
       System.out.println(map);
@@ -31,7 +31,7 @@ public class Main {
 
   private static TreeMap<Integer, LinkedHashSet<String>> testCustomMap(List<String> strings) {
       TreeMap<Integer, LinkedHashSet<String>> map = new TreeMap<>(Comparator.reverseOrder());
-      for (String string: strings) {
+      for (String string : strings) {
           map.computeIfAbsent(string.length(), k -> new LinkedHashSet<>()).add(string);
       }
       return map;
@@ -39,7 +39,7 @@ public class Main {
 
   static void testSummingDouble(List<String> list) {
       Map<Integer, Double> map4 = new HashMap<>();
-      for (String s: list) {
+      for (String s : list) {
           map4.merge(s.length(), (double) s.length(), Double::sum);
       }
       System.out.println(map4);
@@ -47,7 +47,7 @@ public class Main {
 
   static void testMappingSummingInt(List<String> list) {
       Map<Integer, Integer> map3 = new HashMap<>();
-      for (String s: list) {
+      for (String s : list) {
           String trim = s.trim();
           map3.merge(s.length(), trim.length(), Integer::sum);
       }
@@ -56,7 +56,7 @@ public class Main {
 
   public static void testGroupingGroupingToSet(List<String> strings) {
       Map<Integer, Map<Character, Set<String>>> map = new HashMap<>();
-      for (String s: strings) {
+      for (String s : strings) {
           map.computeIfAbsent(s.length(), key -> new HashMap<>()).computeIfAbsent(s.charAt(0), k -> new HashSet<>()).add(s);
       }
       System.out.println(map);
@@ -64,7 +64,7 @@ public class Main {
 
   private static TreeMap<Integer, List<Integer>> testMappingToList(List<String> strings) {
       TreeMap<Integer, List<Integer>> map = new TreeMap<>(Comparator.reverseOrder());
-      for (String string: strings) {
+      for (String string : strings) {
           Integer len = string.length();
           Integer integer = len * 2;
           map.computeIfAbsent(string.length(), k -> new ArrayList<>()).add(integer);
@@ -74,7 +74,7 @@ public class Main {
 
   public static void testSummarizingDouble(List<String> strings) {
       Map<Integer, DoubleSummaryStatistics> map = new HashMap<>();
-      for (String string: strings) {
+      for (String string : strings) {
           if (string != null) {
               map.computeIfAbsent(string.length(), k -> new DoubleSummaryStatistics()).accept(string.length());
           }
@@ -84,7 +84,7 @@ public class Main {
 
   public static void testToMap(List<String> strings) {
       Map<Integer, Map<Character, String>> map = new HashMap<>();
-      for (String s: strings) {
+      for (String s : strings) {
           if (map.computeIfAbsent(s.length(), k -> new HashMap<>()).put(s.charAt(0), s) != null) {
               throw new IllegalStateException("Duplicate key");
           }
@@ -94,7 +94,7 @@ public class Main {
 
   public static void testToSet(List<String> strings) {
       Map<Integer, Set<String>> map = new HashMap<>();
-      for (String string: strings) {
+      for (String string : strings) {
           if (string != null) {
               map.computeIfAbsent(string.length(), k -> new HashSet<>()).add(string);
           }

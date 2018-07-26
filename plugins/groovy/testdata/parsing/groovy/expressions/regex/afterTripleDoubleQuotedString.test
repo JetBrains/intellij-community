@@ -1,0 +1,14 @@
+"""a""" /b/
+-----
+Groovy script
+  Multiplicative expression
+    Multiplicative expression
+      Literal
+        PsiElement(Gstring)('"""a"""')
+      PsiWhiteSpace(' ')
+      PsiElement(/)('/')
+      Reference expression
+        PsiElement(identifier)('b')
+    PsiElement(/)('/')
+    PsiErrorElement:<expression> expected
+      <empty list>

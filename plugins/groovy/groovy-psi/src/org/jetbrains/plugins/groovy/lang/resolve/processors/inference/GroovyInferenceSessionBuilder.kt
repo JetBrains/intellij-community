@@ -75,7 +75,7 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
     } else {
       val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, skipClosureBlock)
       val methodCall = ref.parent as? GrMethodCall ?: return session
-      session.addConstraint(ReferenceExpressionConstraint(getMostTopLevelCall(methodCall).invokedExpression as GrReferenceExpression, left))
+      session.addConstraint(ExpressionConstraint(getMostTopLevelCall(methodCall), left))
       return session
     }
   }

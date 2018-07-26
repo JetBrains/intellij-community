@@ -102,10 +102,10 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
         "INDENT_CASE_FROM_SWITCH",
 
-        //"RESOURCE_LIST_WRAP",
-        //"ALIGN_MULTILINE_RESOURCES",
-        //"RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
-        //"RESOURCE_LIST_RPAREN_ON_NEXT_LINE",
+        "RESOURCE_LIST_WRAP",
+        "ALIGN_MULTILINE_RESOURCES",
+        "RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
+        "RESOURCE_LIST_RPAREN_ON_NEXT_LINE",
 
         "CATCH_ON_NEW_LINE",
         "FINALLY_ON_NEW_LINE",
@@ -174,7 +174,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_WITHIN_IF_PARENTHESES",
                                    "SPACE_WITHIN_WHILE_PARENTHESES",
                                    "SPACE_WITHIN_FOR_PARENTHESES",
-//                                   "SPACE_WITHIN_TRY_PARENTHESES",
+                                   "SPACE_WITHIN_TRY_PARENTHESES",
                                    "SPACE_WITHIN_CATCH_PARENTHESES",
                                    "SPACE_WITHIN_SWITCH_PARENTHESES",
                                    "SPACE_WITHIN_SYNCHRONIZED_PARENTHESES",
@@ -188,7 +188,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_BEFORE_IF_PARENTHESES",
                                    "SPACE_BEFORE_WHILE_PARENTHESES",
                                    "SPACE_BEFORE_FOR_PARENTHESES",
-//                                   "SPACE_BEFORE_TRY_PARENTHESES",
+                                   "SPACE_BEFORE_TRY_PARENTHESES",
                                    "SPACE_BEFORE_CATCH_PARENTHESES",
                                    "SPACE_BEFORE_SWITCH_PARENTHESES",
                                    "SPACE_BEFORE_SYNCHRONIZED_PARENTHESES",

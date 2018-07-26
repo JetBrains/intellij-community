@@ -1342,6 +1342,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-29577
+  public void testRangeTypeByModifications() {
+    doTest("List[int]",
+           "expr = range(10)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.append('a')");
+
+    doTest("List[Union[int, Any]]",
+           "expr = range(10)\n" +
+           "expr.append(var)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr[0] = 'a'\n");
+
+    doTest("List[Union[int, str, None]]",
+           "expr = range(10)\n" +
+           "expr.extend(['a', None])");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.index('a')");
+  }
+
   // PY-1182
   public void testDictTypeByModifications() {
     doTest("Dict[str, Union[int, str]]",
@@ -3242,6 +3268,14 @@ public class PyTypeTest extends PyTestCase {
     doMultiFileTest("T",
                     "from a import T\n" +
                     "expr = T");
+  }
+
+  // PY-29748
+  public void testAfterIdentityComparison() {
+    doTest("int",
+           "a = 1\n" +
+           "if a is a:\n" +
+           "   expr = a");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
