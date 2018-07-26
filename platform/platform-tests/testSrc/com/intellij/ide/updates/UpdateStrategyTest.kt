@@ -5,6 +5,7 @@ import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.util.loadElement
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -213,6 +214,45 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (eap + eap15 + beta + beta15 + release + release15)).updatedChannel?.id)
     assertEquals("IDEA15_Release", check("IU-163.1", ChannelStatus.RELEASE, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
     assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+  }
+
+  @Test fun `building linear patch chain`() {
+    val result = check("IU-182.3569.1", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="182.3684.40" version="2018.2 RC2">
+          <patch from="182.3684.2" size="from 1 to 8"/>
+        </build>
+        <build number="182.3684.2" version="2018.2 RC">
+          <patch from="182.3569.1" size="2"/>
+        </build>
+      </channel>""")
+    assertBuild("182.3684.40", result.newBuild)
+    assertThat(result.patch).isNull()
+    assertThat(result.patchChain?.chain).isEqualTo(listOf("182.3569.1", "182.3684.2", "182.3684.40").map(BuildNumber::fromString))
+    assertThat(result.patchChain?.size).isEqualTo(10)
+  }
+
+  @Test fun `building patch chain across channels`() {
+    val result = check("IU-182.3684.40", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="182.3684.40" version="2018.2 RC2">
+          <patch from="182.3684.2"/>
+        </build>
+      </channel>
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="182.3684.41" version="2018.2">
+          <patch from="182.3684.40"/>
+        </build>
+      </channel>
+      <channel id="IDEA_Stable_EAP" status="eap" licensing="release">
+        <build number="182.3911.2" version="2018.2.1 EAP">
+          <patch from="182.3684.41"/>
+        </build>
+      </channel>""")
+    assertBuild("182.3911.2", result.newBuild)
+    assertThat(result.patch).isNull()
+    assertThat(result.patchChain?.chain).isEqualTo(listOf("182.3684.40", "182.3684.41", "182.3911.2").map(BuildNumber::fromString))
+    assertThat(result.patchChain?.size).isEqualTo(-1)
   }
 
   private fun check(currentBuild: String,

@@ -45,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -58,6 +59,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final PatchInfo myPatch;
+  private final ChainInfo myChain;
   private final boolean myWriteProtected;
   private final Pair<String, Color> myLicenseInfo;
   private final File myTestPatch;
@@ -65,6 +67,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
                    @Nullable PatchInfo patch,
+                   @Nullable ChainInfo chain,
                    boolean enableLink,
                    boolean forceHttps,
                    @Nullable Collection<PluginDownloader> updatedPlugins,
@@ -75,6 +78,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
     myPatch = patch;
+    myChain = chain;
     myWriteProtected = myPatch != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
@@ -87,7 +91,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
 
     FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown");
-    if (myPatch == null) {
+    if (myPatch == null && myChain == null) {
       FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.no.patch");
     }
     else if (!ApplicationManager.getApplication().isRestartCapable()) {
@@ -102,6 +106,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myUpdatedPlugins = null;
     myNewBuild = newBuild;
     myPatch = patch;
+    myChain = null;
     myWriteProtected = false;
     myLicenseInfo = null;
     myTestPatch = patchFile;
@@ -148,7 +153,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   protected Action[] createActions() {
     List<Action> actions = ContainerUtil.newArrayList();
 
-    if (myPatch != null) {
+    if (myPatch != null || myChain != null || myTestPatch != null) {
       boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
       actions.add(new AbstractAction(IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button")) {
         {
@@ -165,7 +170,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     List<ButtonInfo> buttons = myNewBuild.getButtons();
     for (ButtonInfo info : buttons) {
-      if (!info.isDownload() || myPatch == null) {
+      if (!info.isDownload() || myPatch == null && myChain == null) {
         actions.add(new ButtonAction(info));
       }
     }
@@ -200,9 +205,17 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          File file = myTestPatch != null ? myTestPatch : UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
-          indicator.setText(IdeBundle.message("update.preparing.patch.progress"));
-          command = UpdateInstaller.preparePatchCommand(file);
+          if (myPatch != null) {
+            File file = UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
+            command = UpdateInstaller.preparePatchCommand(file, indicator);
+          }
+          else if (myChain != null) {
+            List<File> files = UpdateInstaller.downloadPatchChain(myChain.getChain(), myForceHttps, indicator);
+            command = UpdateInstaller.preparePatchCommand(files, indicator);
+          }
+          else {
+            command = UpdateInstaller.preparePatchCommand(myTestPatch, indicator);
+          }
         }
         catch (ProcessCanceledException e) { throw e; }
         catch (Exception e) {
@@ -224,8 +237,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
         }
 
-        Application app = ApplicationManager.getApplication();
-        if (app.isRestartCapable()) {
+        if (ApplicationManager.getApplication().isRestartCapable()) {
           if (indicator.isShowing()) {
             restartLaterAndRunCommand(command);
           }
@@ -249,7 +261,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private static void restartLaterAndRunCommand(String[] command) {
     FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.update.started");
-    PropertiesComponent.getInstance().setValue(UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
+    PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     application.invokeLater(() -> application.exit(true, true, true, command));
   }
@@ -333,6 +345,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
       if (myPatch != null && !StringUtil.isEmptyOrSpaces(myPatch.getSize())) {
         myPatchInfo.setText(myPatch.getSize() + " MB");
+      }
+      else if (myChain != null && myChain.getSize() > 0) {
+        myPatchInfo.setText(myChain.getSize() + " MB");
       }
       else {
         myPatchLabel.setVisible(false);

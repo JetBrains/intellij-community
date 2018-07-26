@@ -391,8 +391,9 @@ object UpdateChecker {
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
         val patch = checkForUpdateResult.patch
+        val chain = checkForUpdateResult.patchChain
         val forceHttps = updateSettings.canUseSecureConnection()
-        UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, patch, chain, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }

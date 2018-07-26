@@ -31,7 +31,8 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     val newBuild = result?.first
     val updatedChannel = result?.second
     val patch = newBuild?.patch(currentBuild)
-    return CheckForUpdateResult(newBuild, updatedChannel, patch)
+    val chain = if (newBuild != null && patch == null) product.patchChain(currentBuild, newBuild.number) else null
+    return CheckForUpdateResult(newBuild, updatedChannel, patch, chain)
   }
 
   private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>) =

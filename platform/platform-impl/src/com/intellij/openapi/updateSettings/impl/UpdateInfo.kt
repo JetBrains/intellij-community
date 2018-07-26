@@ -6,6 +6,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.BuildRange
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.graph.InboundSemiGraph
+import com.intellij.util.graph.impl.ShortestPathFinder
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.text.ParseException
@@ -17,15 +20,54 @@ class UpdatesInfo(node: Element) {
   operator fun get(code: String): Product? = products.find { code in it.codes }
 }
 
-class Product internal constructor (node: Element) {
+class Product internal constructor(node: Element) {
   val name: String = node.getMandatoryAttributeValue("name")
   val codes: Set<String> = node.getChildren("code").map { it.value.trim() }.toSet()
   val channels: List<UpdateChannel> = node.getChildren("channel").map(::UpdateChannel)
 
+  fun patchChain(from: BuildNumber, to: BuildNumber): ChainInfo? {
+    val upgrades = MultiMap<BuildNumber, BuildNumber>()
+    val sizes = mutableMapOf<Pair<BuildNumber, BuildNumber>, Int>()
+
+    channels.forEach { channel ->
+      channel.builds.forEach { build ->
+        val toBuild = build.number.withoutProductCode()
+        build.patches.forEach { patch ->
+          if (patch.isAvailable) {
+            val fromBuild = patch.fromBuild.withoutProductCode()
+            upgrades.putValue(toBuild, fromBuild)
+            if (patch.size != null) {
+              val maxSize = Regex("\\d+").findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().max()
+              if (maxSize != null) sizes += (fromBuild to toBuild) to maxSize
+            }
+          }
+        }
+      }
+    }
+
+    val graph = object : InboundSemiGraph<BuildNumber> {
+      override fun getNodes() = upgrades.keySet() + upgrades.values()
+      override fun getIn(n: BuildNumber) = upgrades[n].iterator()
+    }
+    val path = ShortestPathFinder(graph).findPath(from.withoutProductCode(), to.withoutProductCode())
+    if (path == null || path.size <= 2) return null
+
+    var total = 0
+    for (i in 1 until path.size) {
+      val size = sizes[path[i - 1] to path[i]]
+      if (size == null) {
+        total = -1
+        break
+      }
+      total += size
+    }
+    return ChainInfo(path, total)
+  }
+
   override fun toString(): String = codes.firstOrNull() ?: "-"
 }
 
-class UpdateChannel internal constructor (node: Element) {
+class UpdateChannel internal constructor(node: Element) {
   companion object {
     const val LICENSING_EAP: String = "eap"
     const val LICENSING_RELEASE: String = "release"
@@ -40,7 +82,7 @@ class UpdateChannel internal constructor (node: Element) {
   override fun toString(): String = id
 }
 
-class BuildInfo internal constructor (node: Element) {
+class BuildInfo internal constructor(node: Element) {
   val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"))
   val apiVersion: BuildNumber = BuildNumber.fromStringWithProductCode(node.getAttributeValue("apiVersion"), number.productCode) ?: number
   val version: String = node.getAttributeValue("version") ?: ""
@@ -77,7 +119,7 @@ class BuildInfo internal constructor (node: Element) {
   override fun toString(): String = "${number}/${version}"
 }
 
-class ButtonInfo internal constructor (node: Element) {
+class ButtonInfo internal constructor(node: Element) {
   val name: String = node.getMandatoryAttributeValue("name")
   val url: String = node.getMandatoryAttributeValue("url")
   val isDownload: Boolean = node.getAttributeValue("download") != null  // a button marked with this attribute is hidden when a patch is available
@@ -85,14 +127,17 @@ class ButtonInfo internal constructor (node: Element) {
   override fun toString(): String = name
 }
 
-class PatchInfo internal constructor (node: Element) {
+class PatchInfo internal constructor(node: Element) {
+  companion object {
+    val OS_SUFFIX = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
+  }
+
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))
   val size: String? = node.getAttributeValue("size")
-  val isAvailable: Boolean = node.getAttributeValue("exclusions")?.splitToSequence(",")?.none { it.trim() == osSuffix } ?: true
-
-  val osSuffix: String
-    get() = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
+  val isAvailable: Boolean = node.getAttributeValue("exclusions")?.splitToSequence(",")?.none { it.trim() == OS_SUFFIX } ?: true
 }
+
+class ChainInfo internal constructor(val chain: List<BuildNumber>, val size: Int)
 
 private fun Element.getMandatoryAttributeValue(attribute: String) =
   getAttributeValue(attribute) ?: throw JDOMException("${name}@${attribute} missing")
