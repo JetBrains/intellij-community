@@ -195,7 +195,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     CommonCodeStyleSettings.copyPublicFields(from, this);
     CommonCodeStyleSettings.copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
     mySoftMargins.setValues(from.getDefaultSoftMargins());
-    myExcludedFiles.setDescriptors(from.getExcludedFiles().getDescriptors());
     copyCustomSettingsFrom(from);
   }
 
@@ -1390,7 +1389,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     if (!(obj instanceof CodeStyleSettings)) return false;
     if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
     if (!mySoftMargins.equals(((CodeStyleSettings)obj).mySoftMargins)) return false;
-    if (!myExcludedFiles.equals(((CodeStyleSettings)obj).getExcludedFiles())) return false;
     if (!OTHER_INDENT_OPTIONS.equals(((CodeStyleSettings)obj).OTHER_INDENT_OPTIONS)) return false;
     if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
     for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
