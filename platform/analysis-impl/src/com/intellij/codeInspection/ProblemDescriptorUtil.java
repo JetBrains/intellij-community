@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -170,7 +171,6 @@ public class ProblemDescriptorUtil {
     }
     throw new RuntimeException("Cannot map " + highlightType);
   }
-
   @NotNull
   public static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<Annotation> annotations, @NotNull final PsiFile file) {
     if (annotations.isEmpty()) {
@@ -199,11 +199,12 @@ public class ProblemDescriptorUtil {
       }
 
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
+      ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(annotation.getSeverity());
       ProblemDescriptor descriptor = new ProblemDescriptorBase(startElement,
                                                                endElement,
                                                                annotation.getMessage(),
                                                                quickFixes,
-                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                               highlightType,
                                                                annotation.isAfterEndOfLine(),
                                                                null,
                                                                true,
