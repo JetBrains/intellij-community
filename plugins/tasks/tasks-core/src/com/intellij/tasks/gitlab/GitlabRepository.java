@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -327,7 +328,9 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
    */
   @Override
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
-    final Pattern issueURLPattern = Pattern.compile("https://.*?/(.*?/.*?)/.*"); // Captures project namespace from URL
+    ensureApiVersionDiscovered();
+
+    final Pattern issueURLPattern = Pattern.compile("https?://.*/([^/]*/[^/]*)/issues/\\d+"); // Captures project namespace from URL
     final String issueURL = task.getIssueUrl();
     if (issueURL == null) {
       throw new IllegalArgumentException("A GitLab-bound LocalTask should not have a null issue url.");
@@ -340,37 +343,33 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     final String projectNamespace = issueURLMatcher.group(1);
 
     // Use URL-encoded project namespace since we can't find the project id from a LocalTask
-    final URIBuilder timeUpdateBuilder =
+    final URI timeUpdateURI =
       new URIBuilder(getRestApiUrl("projects", projectNamespace, "issues", task.getNumber(), "add_spent_time"))
-        .addParameter("duration", timeSpent);
+        .addParameter("duration", timeSpent)
+        .build();
 
-    LOG.debug("Sending POST request to " + timeUpdateBuilder.build());
+    LOG.debug("Sending POST request to " + timeUpdateURI);
 
-    final HttpPost timeUpdateRequest = new HttpPost(timeUpdateBuilder.build());
+    final HttpPost timeUpdateRequest = new HttpPost(timeUpdateURI);
     final HttpResponse timeUpdateResponse = getHttpClient().execute(timeUpdateRequest);
     if (timeUpdateResponse.getStatusLine().getStatusCode() != 201) {
       LOG.error("Failed adding time spent to GitLab. Received error code: " + timeUpdateResponse.getStatusLine().getStatusCode());
       throw new RuntimeException("Could not add time to the remote task.");
     }
-    else {
-      LOG.debug("Added time spent to GitLab.");
-    }
 
     // Not sure if we do want to add a comment to the issue when we add time spent,
     // since GitLab doesn't mark it as attributed to the time spent. But the functionality
     // is here, even if it is later removed.
-    if (comment.length() > 0) { // Ignore adding comment if the user doesn't have one to add
-      final URIBuilder addCommentBuilder = new URIBuilder(getRestApiUrl("projects", task.getProject(), "issues", task.getNumber(), "notes"))
-        .addParameter("body", comment);
+    if (!StringUtil.isEmptyOrSpaces(comment)) { // Ignore adding comment if the user doesn't have one to add
+      final URI addCommentURI = new URIBuilder(getRestApiUrl("projects", projectNamespace, "issues", task.getNumber(), "notes"))
+        .addParameter("body", comment)
+        .build();
 
-      final HttpPost addCommentRequest = new HttpPost(addCommentBuilder.build());
+      final HttpPost addCommentRequest = new HttpPost(addCommentURI);
       final HttpResponse addCommentResponse = getHttpClient().execute(addCommentRequest);
-      if (addCommentResponse.getStatusLine().getStatusCode() != 200) {
+      if (addCommentResponse.getStatusLine().getStatusCode() != 201) {
         LOG.error("Failed adding a comment to GitLab. Received error code: " + addCommentResponse.getStatusLine().getStatusCode());
         throw new RuntimeException("Could not add a comment to the remote task.");
-      }
-      else {
-        LOG.debug("Added comment to GitLab.");
       }
     }
   }
