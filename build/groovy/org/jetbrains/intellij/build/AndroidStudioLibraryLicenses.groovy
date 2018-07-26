@@ -28,19 +28,11 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Android Studio Analytics Protos", libraryName: "studio-analytics-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
-    new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.4", license: "Apache 2.0",
-                       url: "http://commons.apache.org/io/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api-1.0", license: "Apache 2.0"),
-    new LibraryLicense(name: "Baksmali", libraryName: "baksmali", version: "2.2.1", url: "https://github.com/JesusFreke/smali",
-                       additionalLibraryNames: ["baksmali-2.2.1.jar"], license: "New BSD License",
-                       licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     // for bouncycastle module library in android.sdktools.sdk-common
     new LibraryLicense(name: "bouncycastle", version: "1.56", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CDT", libraryName: "org.eclipse.cdt", license: "Eclipse Public License 1.0"),
-    new LibraryLicense(name: "Dexlib 2", libraryName: "dexlib2", version: "2.2.1", url: "https://github.com/JesusFreke/smali",
-                       additionalLibraryNames: ["dexlib2-2.2.1.jar", "util-2.2.1.jar"],
-                       license: "New BSD License", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     // for eclipse-layout-kernel module library in intellij.android.designer
     new LibraryLicense(name: "Eclipse Layout Kernel", libraryName: "eclipse-layout-kernel", license: "Eclipse Public License 1.0"),
     // for LSP4J module libraries in intellij.c
@@ -100,10 +92,6 @@ class AndroidStudioLibraryLicenses {
                        url: "https://github.com/square/javapoet"),
     new LibraryLicense(name: "Java Servlet API", libraryName: "javax.servlet-api-3.0.1.jar", license: "CDDL + GPLv2 w/ Classpath Exception",
                        licenseUrl: "https://glassfish.java.net/nonav/public/CDDL+GPL.html"),
-    new LibraryLicense(name: "JGit Core", version: "3.3.0.201403021825-r",
-                       libraryName: "org.eclipse.jgit-3.3.0.201403021825-r.jar", url: "https://eclipse.org/jgit/",
-                       license: "Eclipse Distribution License 1.0",
-                       licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php"),
     // for juniversalchardet module library in db-compiler
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet", version: "1.0.3",
                        url: "https://code.google.com/archive/p/juniversalchardet",
@@ -114,8 +102,6 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "PEPK", libraryName: "pepk", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "samplesindex-v1-1.0-SNAPSHOT.jar", libraryName: "samplesindex-v1-1.0-SNAPSHOT.jar",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "Android Studio Profiler gRPC", libraryName: "studio-profiler-grpc-1.0-jarjar",
-                       license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "swt.jar", libraryName: "swt.jar",
                        license: "Eclipse Public License 1.0", licenseUrl: "http://www.eclipse.org/legal/epl-v10.html"),
     new LibraryLicense(name: "uiautomatorviewer.jar", libraryName: "uiautomatorviewer.jar", license: "Apache 2.0"),
@@ -128,7 +114,6 @@ class AndroidStudioLibraryLicenses {
                        additionalLibraryNames: ["explainer.jar", "generator.jar", "shared.jar"],
                        license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    jetbrainsLibrary("uast")
     ] as List<LibraryLicense>) + (("true" == System.getProperty("bundle.ui.tests") ? [
     new LibraryLicense(name: "truth", libraryName: "truth", version: "0.28", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "easymock-tools", libraryName: "easymock-tools", version: "3.1", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
