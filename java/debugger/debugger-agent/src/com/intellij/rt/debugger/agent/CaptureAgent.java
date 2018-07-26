@@ -19,8 +19,7 @@ import java.util.jar.JarFile;
 public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
 
-  private static final Map<String, List<InstrumentPoint>> myCapturePoints = new HashMap<String, List<InstrumentPoint>>();
-  private static final Map<String, List<InstrumentPoint>> myInsertPoints = new HashMap<String, List<InstrumentPoint>>();
+  private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
 
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
@@ -132,10 +131,6 @@ public class CaptureAgent {
     }
   }
 
-  private static <T> List<T> getNotNull(List<T> list) {
-    return list != null ? list : Collections.<T>emptyList();
-  }
-
   private static class CaptureTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader,
@@ -144,14 +139,13 @@ public class CaptureAgent {
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
       if (className != null) {
-        List<InstrumentPoint> capturePoints = getNotNull(myCapturePoints.get(className));
-        List<InstrumentPoint> insertPoints = getNotNull(myInsertPoints.get(className));
-        if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
+        List<InstrumentPoint> classPoints = myInstrumentPoints.get(className);
+        if (classPoints != null) {
           try {
             ClassReader reader = new ClassReader(classfileBuffer);
             ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
 
-            reader.accept(new CaptureInstrumentor(Opcodes.API_VERSION, writer, capturePoints, insertPoints), 0);
+            reader.accept(new CaptureInstrumentor(Opcodes.API_VERSION, writer, classPoints), 0);
             byte[] bytes = writer.toByteArray();
 
             if (CaptureStorage.DEBUG) {
@@ -182,15 +176,13 @@ public class CaptureAgent {
   }
 
   private static class CaptureInstrumentor extends ClassVisitor {
-    private final List<InstrumentPoint> myCapturePoints;
-    private final List<InstrumentPoint> myInsertPoints;
+    private final List<InstrumentPoint> myInstrumentPoints;
     private final Map<String, String> myFields = new HashMap<String, String>();
     private String mySuperName;
 
-    public CaptureInstrumentor(int api, ClassVisitor cv, List<InstrumentPoint> capturePoints, List<InstrumentPoint> insertPoints) {
+    public CaptureInstrumentor(int api, ClassVisitor cv, List<InstrumentPoint> instrumentPoints) {
       super(api, cv);
-      this.myCapturePoints = capturePoints;
-      this.myInsertPoints = insertPoints;
+      this.myInstrumentPoints = instrumentPoints;
     }
 
     private static String getNewName(String name) {
@@ -216,49 +208,48 @@ public class CaptureAgent {
     @Override
     public MethodVisitor visitMethod(final int access, String name, final String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_BRIDGE) == 0) {
-        for (final InstrumentPoint capturePoint : myCapturePoints) {
-          if (capturePoint.matchesMethod(name, desc)) {
-            final String methodDisplayName = getMethodDisplayName(capturePoint.myClassName, name, desc);
+        for (final InstrumentPoint point : myInstrumentPoints) {
+          if (point.matchesMethod(name, desc)) {
+            final String methodDisplayName = getMethodDisplayName(point.myClassName, name, desc);
             if (CaptureStorage.DEBUG) {
-              System.out.println("Capture agent: instrumented capture point at " + methodDisplayName);
+              System.out.println(
+                "Capture agent: instrumented " + (point.myCapture ? "capture" : "insert") + " point at " + methodDisplayName);
             }
-            // for constructors and "this" key - move capture to after the super constructor call
-            if ("<init>".equals(name) && capturePoint.myKeyProvider == THIS_KEY_PROVIDER) {
-              return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
-                boolean captured = false;
+            if (point.myCapture) { // capture
+              // for constructors and "this" key - move capture to after the super constructor call
+              if (CONSTRUCTOR.equals(name) && point.myKeyProvider == THIS_KEY_PROVIDER) {
+                return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+                  boolean captured = false;
 
-                @Override
-                public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                  super.visitMethodInsn(opcode, owner, name, desc, itf);
-                  if (opcode == Opcodes.INVOKESPECIAL && !captured && owner.equals(mySuperName) && name.equals("<init>")) { // super constructor
-                    capture(mv, capturePoint.myKeyProvider, (access & Opcodes.ACC_STATIC) != 0,
-                            Type.getMethodType(desc).getArgumentTypes(), methodDisplayName);
-                    captured = true;
+                  @Override
+                  public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                    super.visitMethodInsn(opcode, owner, name, desc, itf);
+                    if (opcode == Opcodes.INVOKESPECIAL &&
+                        !captured &&
+                        owner.equals(mySuperName) &&
+                        name.equals(CONSTRUCTOR)) { // super constructor
+                      capture(mv, point.myKeyProvider, (access & Opcodes.ACC_STATIC) != 0,
+                              Type.getMethodType(desc).getArgumentTypes(), methodDisplayName);
+                      captured = true;
+                    }
                   }
-                }
-              };
+                };
+              }
+              else {
+                return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+                  @Override
+                  public void visitCode() {
+                    capture(mv, point.myKeyProvider, (access & Opcodes.ACC_STATIC) != 0, Type.getMethodType(desc).getArgumentTypes(),
+                            methodDisplayName);
+                    super.visitCode();
+                  }
+                };
+              }
             }
-            else {
-              return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
-                @Override
-                public void visitCode() {
-                  capture(mv, capturePoint.myKeyProvider, (access & Opcodes.ACC_STATIC) != 0, Type.getMethodType(desc).getArgumentTypes(),
-                          methodDisplayName);
-                  super.visitCode();
-                }
-              };
+            else { // insert
+              generateWrapper(access, name, desc, signature, exceptions, point, methodDisplayName);
+              return super.visitMethod(access, getNewName(name), desc, signature, exceptions);
             }
-          }
-        }
-
-        for (InstrumentPoint insertPoint : myInsertPoints) {
-          if (insertPoint.matchesMethod(name, desc)) {
-            String methodDisplayName = getMethodDisplayName(insertPoint.myClassName, name, desc);
-            if (CaptureStorage.DEBUG) {
-              System.out.println("Capture agent: instrumented insert point at " + methodDisplayName);
-            }
-            generateWrapper(access, name, desc, signature, exceptions, insertPoint, methodDisplayName);
-            return super.visitMethod(access, getNewName(name), desc, signature, exceptions);
           }
         }
       }
@@ -352,12 +343,14 @@ public class CaptureAgent {
   private static class InstrumentPoint {
     final static String ANY_DESC = "*";
 
+    final boolean myCapture;
     final String myClassName;
     final String myMethodName;
     final String myMethodDesc;
     final KeyProvider myKeyProvider;
 
-    public InstrumentPoint(String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+    public InstrumentPoint(boolean capture, String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+      myCapture = capture;
       myClassName = className;
       myMethodName = methodName;
       myMethodDesc = methodDesc;
@@ -429,13 +422,12 @@ public class CaptureAgent {
                                                  String methodName,
                                                  String methodDesc,
                                                  KeyProvider keyProvider) {
-    Map<String, List<InstrumentPoint>> map = capture ? myCapturePoints : myInsertPoints;
-    List<InstrumentPoint> points = map.get(className);
+    List<InstrumentPoint> points = myInstrumentPoints.get(className);
     if (points == null) {
       points = new ArrayList<InstrumentPoint>(1);
-      map.put(className, points);
+      myInstrumentPoints.put(className, points);
     }
-    InstrumentPoint point = new InstrumentPoint(className, methodName, methodDesc, keyProvider);
+    InstrumentPoint point = new InstrumentPoint(capture, className, methodName, methodDesc, keyProvider);
     points.add(point);
     return point;
   }
@@ -548,28 +540,30 @@ public class CaptureAgent {
     return new ParamKeyProvider(idx);
   }
 
+  public static final String CONSTRUCTOR = "<init>";
+
   // predefined points
   static {
-    addCapture("java/awt/event/InvocationEvent", "<init>", THIS_KEY_PROVIDER);
+    addCapture("java/awt/event/InvocationEvent", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/awt/event/InvocationEvent", "dispatch", THIS_KEY_PROVIDER);
 
     addCapture("java/lang/Thread", "start", THIS_KEY_PROVIDER);
     addInsert("java/lang/Thread", "run", THIS_KEY_PROVIDER);
 
-    addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY_PROVIDER);
+    addCapture("java/util/concurrent/FutureTask", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/FutureTask", "runAndReset", THIS_KEY_PROVIDER);
 
-    addCapture("java/util/concurrent/CompletableFuture$AsyncSupply", "<init>", THIS_KEY_PROVIDER);
+    addCapture("java/util/concurrent/CompletableFuture$AsyncSupply", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/CompletableFuture$AsyncSupply", "run", THIS_KEY_PROVIDER);
 
-    addCapture("java/util/concurrent/CompletableFuture$AsyncRun", "<init>", THIS_KEY_PROVIDER);
+    addCapture("java/util/concurrent/CompletableFuture$AsyncRun", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/CompletableFuture$AsyncRun", "run", THIS_KEY_PROVIDER);
 
-    addCapture("java/util/concurrent/CompletableFuture$UniAccept", "<init>", THIS_KEY_PROVIDER);
+    addCapture("java/util/concurrent/CompletableFuture$UniAccept", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/CompletableFuture$UniAccept", "tryFire", THIS_KEY_PROVIDER);
 
-    addCapture("java/util/concurrent/CompletableFuture$UniRun", "<init>", THIS_KEY_PROVIDER);
+    addCapture("java/util/concurrent/CompletableFuture$UniRun", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/CompletableFuture$UniRun", "tryFire", THIS_KEY_PROVIDER);
 
     // netty
@@ -577,10 +571,10 @@ public class CaptureAgent {
     addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", FIRST_PARAM);
 
     // scala
-    addCapture("scala/concurrent/impl/Future$PromiseCompletingRunnable", "<init>", THIS_KEY_PROVIDER);
+    addCapture("scala/concurrent/impl/Future$PromiseCompletingRunnable", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("scala/concurrent/impl/Future$PromiseCompletingRunnable", "run", THIS_KEY_PROVIDER);
 
-    addCapture("scala/concurrent/impl/CallbackRunnable", "<init>", THIS_KEY_PROVIDER);
+    addCapture("scala/concurrent/impl/CallbackRunnable", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY_PROVIDER);
 
     // akka-scala
