@@ -53,8 +53,12 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
     return selectItem(index, 30)
   }
 
+  /**
+   * Returns list of rendered values
+   * Nulls are not allowed - a rendered value cannot be a null
+   * */
   fun listItems(): List<String> {
-    return (0 until target().itemCount).map { target().getItemAt(it) }.filterNotNull().map { it.toString() }
+    return (0 until target().itemCount).map { driver().value(target(), it).toString() }
   }
 
   private fun doSelectItem(selectItemFunction: () -> Unit): Boolean {
