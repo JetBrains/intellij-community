@@ -95,14 +95,18 @@ class AndroidStudioLibraryLicenses {
                        license: "BSD 2-Clause", licenseUrl: "https://opensource.org/licenses/BSD-2-Clause"),
     new LibraryLicense(name: "Jackson", version: "1.9.11", libraryName: "jackson-core-asl-1.9.11.jar", url: "http://jackson.codehaus.org",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    // for javapoet module library in db-compiler
+    new LibraryLicense(name: "Java Poet", libraryName: "javapoet", version: "1.8.0", license: "Apache 2.0",
+                       url: "https://github.com/square/javapoet"),
     new LibraryLicense(name: "Java Servlet API", libraryName: "javax.servlet-api-3.0.1.jar", license: "CDDL + GPLv2 w/ Classpath Exception",
                        licenseUrl: "https://glassfish.java.net/nonav/public/CDDL+GPL.html"),
     new LibraryLicense(name: "JGit Core", version: "3.3.0.201403021825-r",
                        libraryName: "org.eclipse.jgit-3.3.0.201403021825-r.jar", url: "https://eclipse.org/jgit/",
                        license: "Eclipse Distribution License 1.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php"),
+    // for juniversalchardet module library in db-compiler
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet", version: "1.0.3",
-                       url: "http://juniversalchardet.googlecode.com/",
+                       url: "https://code.google.com/archive/p/juniversalchardet",
                        license: "MPL 1.1",  licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
     // for nosyncbuilder-jarjar module library in intellij.android.core
     new LibraryLicense(name: "nosyncbuilder-jarjar", license: "Apache 2.0", url: "http://source.android.com/"),

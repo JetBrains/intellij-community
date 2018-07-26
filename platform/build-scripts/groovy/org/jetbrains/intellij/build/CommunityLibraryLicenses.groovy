@@ -446,13 +446,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
 
-    // Android Studio: added by Change I43400d97 / commit 27761cb
-    new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",
-                       url: "https://code.google.com/archive/p/juniversalchardet"),
-    // Android Studio: added by Change Ib7a30b9c / commit 91531e9
-    new LibraryLicense(name: "Java Poet", libraryName: "javapoet", version: "1.8.0", license: "Apache 2.0",
-                       url: "https://github.com/square/javapoet"),
-
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("CoverageReport"),
