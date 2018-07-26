@@ -19,7 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.add.DialogFlowAction.OK
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
 import java.awt.Component
@@ -32,7 +32,7 @@ import javax.swing.JPanel
  * @author vlan
  */
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
-  override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
+  override val actions: Map<DialogFlowAction, Boolean>
     get() = mapOf(OK.enabled())
 
   override val component: Component

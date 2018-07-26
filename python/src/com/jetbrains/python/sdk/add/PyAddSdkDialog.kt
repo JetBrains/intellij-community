@@ -35,8 +35,8 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.DialogFlowAction.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.create
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
 import com.jetbrains.python.sdk.detectVirtualEnvs
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import icons.PythonIcons

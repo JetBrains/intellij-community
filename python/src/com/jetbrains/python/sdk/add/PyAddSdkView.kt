@@ -31,7 +31,7 @@ interface PyAddSdkView {
    * [PyAddSdkStateListener.onActionsStateChanged] is called after changes in
    * [actions].
    */
-  val actions: Map<PyAddSdkDialogFlowAction, Boolean>
+  val actions: Map<DialogFlowAction, Boolean>
 
   /**
    * The [component] *might* return the new [Component] after [next] or
