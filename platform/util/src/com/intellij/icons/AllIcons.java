@@ -546,6 +546,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Db_temporary_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
+    public static final Icon Db_variable = IconLoader.getIcon("/debugger/db_variable.svg"); // 16x16
     public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_verified_breakpoint.svg"); // 12x12
     public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.svg"); // 12x12
     public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.svg"); // 12x12
@@ -557,6 +558,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Db_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_watch = IconLoader.getIcon("/debugger/db_watch.svg"); // 16x16
     public static final Icon Disable_value_calculation = IconLoader.getIcon("/debugger/disable_value_calculation.png"); // 16x16
     public static final Icon EvaluateExpression = IconLoader.getIcon("/debugger/evaluateExpression.svg"); // 16x16
     public static final Icon Explosion = IconLoader.getIcon("/debugger/explosion.png"); // 256x256
@@ -715,6 +717,7 @@ public class AllIcons {
   }
 
   public static class General {
+    public static final Icon ActiveFilter = IconLoader.getIcon("/general/activeFilter.svg"); // 16x16
     public static final Icon ActualZoom = IconLoader.getIcon("/general/actualZoom.svg"); // 16x16
     public static final Icon Add = IconLoader.getIcon("/general/add.svg"); // 16x16
     public static final Icon AddFavoritesList = IconLoader.getIcon("/general/addFavoritesList.svg"); // 16x16
@@ -1593,6 +1596,7 @@ public class AllIcons {
       @SuppressWarnings("unused")
       @Deprecated
       public static final Icon Step_9 = IconLoader.getIcon("/process/big/step_2.svg"); // 32x32
+      public static final Icon Step_mask = IconLoader.getIcon("/process/big/step_mask.svg"); // 32x32
       public static final Icon Step_passive = IconLoader.getIcon("/process/big/step_passive.svg"); // 32x32
 
     }
@@ -1736,6 +1740,8 @@ public class AllIcons {
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.svg"); // 16x16
     public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); // 16x16
     public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png"); // 16x16
+    public static final Icon ShowIgnored = IconLoader.getIcon("/runConfigurations/showIgnored.svg"); // 16x16
+    public static final Icon ShowPassed = IconLoader.getIcon("/runConfigurations/showPassed.svg"); // 16x16
     public static final Icon SortbyDuration = IconLoader.getIcon("/runConfigurations/sortbyDuration.svg"); // 16x16
     public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png"); // 16x16
     public static final Icon TestCustom = IconLoader.getIcon("/runConfigurations/testCustom.png"); // 16x16
@@ -1767,6 +1773,9 @@ public class AllIcons {
     public static final Icon TestTerminated = IconLoader.getIcon("/runConfigurations/testTerminated.png"); // 16x16
     public static final Icon TestUnknown = IconLoader.getIcon("/runConfigurations/testUnknown.png"); // 16x16
     public static final Icon Tomcat = IconLoader.getIcon("/runConfigurations/tomcat.png"); // 16x16
+    public static final Icon ToolbarError = IconLoader.getIcon("/runConfigurations/toolbarError.svg"); // 16x16
+    public static final Icon ToolbarFailed = IconLoader.getIcon("/runConfigurations/toolbarFailed.svg"); // 16x16
+    public static final Icon ToolbarPassed = IconLoader.getIcon("/runConfigurations/toolbarPassed.svg"); // 16x16
     public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.png"); // 16x16
     public static final Icon TrackTests = IconLoader.getIcon("/runConfigurations/trackTests.png"); // 16x16
 
