@@ -23,6 +23,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
+import com.intellij.openapi.application.DeleteOldDirectoriesHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -216,6 +217,7 @@ public class StartupUtil {
         appStarter.beforeImportConfigs();
         Path newConfigDir = Paths.get(PathManager.getConfigPath());
         runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log));
+        runInEdtAndWait(log, DeleteOldDirectoriesHelper::run);  // Android Studio: upstream?
         appStarter.importFinished(newConfigDir);
       }
 
