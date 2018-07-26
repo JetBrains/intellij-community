@@ -79,7 +79,7 @@ import static com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHom
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
-import static com.intellij.ui.tree.project.ProjectFileListener.findArea;
+import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 import static java.util.Collections.emptyList;
 
 public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> implements InvokerSupplier {
@@ -587,8 +587,8 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       });
       if (provider == null) return children;
       children.addAll(provider.modify(parent, files.stream()
-                                                   .map(file -> new PsiFileNode(getProject(), file, getSettings()))
-                                                   .collect(Collectors.toList()), getSettings()));
+        .map(file -> new PsiFileNode(getProject(), file, getSettings()))
+        .collect(Collectors.toList()), getSettings()));
       return children;
     }
 
@@ -1017,7 +1017,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     @Nullable
     RootNode getFirstRoot() {
       if (!roots.isEmpty()) return roots.get(0);
-      for (Group group: groups.values()) {
+      for (Group group : groups.values()) {
         RootNode root = group.getFirstRoot();
         if (root != null) return root;
       }
@@ -1031,7 +1031,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       ModuleRootManager manager = getModuleRootManager(getModule(node.getVirtualFile(), node.getProject()));
       if (manager == null) return null;
       // ensure that a content root is not a source root or test root
-      for (VirtualFile file: manager.getSourceRoots()) {
+      for (VirtualFile file : manager.getSourceRoots()) {
         if (!isAncestor(node.getVirtualFile(), file, true)) return null;
       }
       return node;
@@ -1050,7 +1050,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       char separator = manager != null && manager.hasModuleGroups() ? VFS_SEPARATOR_CHAR : '.';
       boolean compactDirectories = parent.getSettings().isCompactDirectories();
       List<AbstractTreeNode> children = new SmartList<>();
-      for (Group group: groups.values()) {
+      for (Group group : groups.values()) {
         Object id = group.id;
         Group single = !compactDirectories ? null : group.getSingleGroup();
         if (single != null) {

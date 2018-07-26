@@ -33,7 +33,6 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 /**
  * @author spleaner
@@ -44,11 +43,15 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
   public FocusDebuggerAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> actionPerformed(null));
+      ApplicationManager.getApplication().invokeLater(() -> perform());
     }
   }
 
   public void actionPerformed(final AnActionEvent e) {
+    perform();
+  }
+
+  private void perform() {
     if (myFocusDrawer == null) {
       myFocusDrawer = new FocusDrawer();
       myFocusDrawer.start();

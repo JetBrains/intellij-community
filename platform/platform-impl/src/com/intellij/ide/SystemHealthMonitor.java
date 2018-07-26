@@ -85,7 +85,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();
-            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
+            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(e);
           }
         };
 

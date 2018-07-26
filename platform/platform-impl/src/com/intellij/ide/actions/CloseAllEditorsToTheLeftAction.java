@@ -2,6 +2,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
@@ -9,6 +11,8 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import javax.swing.*;
 
 public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
 
@@ -33,6 +37,19 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
 
   protected boolean isOKToClose(VirtualFile contextFile, VirtualFile candidateFile, VirtualFile cursorFile) {
     return Comparing.equal(cursorFile, candidateFile);//candidate is located before the clicked one
+  }
+
+  @Override
+  public void update(AnActionEvent event) {
+    super.update(event);
+    int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
+    if (tabPlacement == SwingConstants.LEFT || tabPlacement == SwingConstants.RIGHT) {
+      event.getPresentation().setText(IdeBundle.message(getAlternativeTextKey()));
+    }
+  }
+
+  protected String getAlternativeTextKey() {
+    return "action.close.all.editors.above";
   }
 
   @Override

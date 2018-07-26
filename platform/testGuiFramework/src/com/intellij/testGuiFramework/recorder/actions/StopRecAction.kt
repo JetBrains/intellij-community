@@ -27,7 +27,7 @@ import com.intellij.testGuiFramework.recorder.ui.Notifier
  */
 class StopRecAction : AnAction(null, "Stop Recording, Compiling, Running and Clear Buffer", AllIcons.Actions.Suspend) {
 
-  override fun actionPerformed(p0: AnActionEvent?) {
+  override fun actionPerformed(p0: AnActionEvent) {
     GlobalActionRecorder.deactivate()
     GuiRecorderManager.cancelCurrentTask()
     Notifier.updateStatus("Stopped")

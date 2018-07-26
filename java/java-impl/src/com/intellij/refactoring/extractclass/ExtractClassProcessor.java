@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -91,7 +90,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiClass> innerClasses,
                                String newPackageName,
                                String newClassName) {
-    this(sourceClass, fields, methods, innerClasses, newPackageName, null, newClassName, null, false, Collections.emptyList());
+    this(sourceClass, fields, methods, innerClasses, newPackageName, null, newClassName, null, false, Collections.emptyList(), false);
   }
 
   public ExtractClassProcessor(PsiClass sourceClass,
@@ -102,10 +101,13 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                MoveDestination moveDestination,
                                String newClassName,
                                String newVisibility,
-                               boolean generateAccessors, List<MemberInfo> enumConstants) {
+                               boolean generateAccessors, 
+                               List<MemberInfo> enumConstants,
+                               boolean extractInnerClass) {
     super(sourceClass.getProject());
     this.sourceClass = sourceClass;
     this.newPackageName = packageName;
+    this.extractInnerClass = extractInnerClass;
     myMoveDestination = moveDestination;
     myNewVisibility = newVisibility;
     myGenerateAccessors = generateAccessors;
@@ -145,10 +147,6 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return myClass;
   }
 
-  public void setExtractInnerClass(boolean extractInnerClass) {
-    this.extractInnerClass = extractInnerClass;
-  }
-
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -157,7 +155,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
       conflicts.putValue(sourceClass, "Extracted class won't be accessible in " + RefactoringUIUtil.getDescription(sourceClass, true));
     }
-    ApplicationManager.getApplication().runWriteAction(() -> myClass.delete());
+    WriteCommandAction.writeCommandAction(myProject).run(() -> myClass.delete());
     final Project project = sourceClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass existingClass =

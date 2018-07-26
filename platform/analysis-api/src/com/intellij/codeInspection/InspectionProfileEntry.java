@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
+import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
@@ -40,6 +41,7 @@ import java.util.*;
  * @author anna
  * @since 28-Nov-2005
  */
+@Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
 

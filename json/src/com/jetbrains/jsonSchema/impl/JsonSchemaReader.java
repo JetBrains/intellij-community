@@ -270,9 +270,9 @@ public class JsonSchemaReader {
         final JsonSchemaType type = parseType(StringUtil.unquoteString(element.getText()));
         if (type != null) object.setType(type);
       } else if (element instanceof JsonArray) {
-        final List<JsonSchemaType> typeList = ((JsonArray)element).getValueList().stream()
+        final Set<JsonSchemaType> typeList = ((JsonArray)element).getValueList().stream()
           .filter(notEmptyString()).map(el -> parseType(StringUtil.unquoteString(el.getText())))
-          .filter(el -> el != null).collect(Collectors.toList());
+          .filter(el -> el != null).collect(Collectors.toSet());
         if (!typeList.isEmpty()) object.setTypeVariants(typeList);
       }
     };

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
+import java.io.Writer
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -25,10 +26,23 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
   }
 
   override fun createSaveSession(states: StateMap) = object : FileBasedStorage.FileSaveSession(states, this) {
-    override fun saveLocally(element: Element?) {
-      super.saveLocally(element?.let {
-        Element("application")
-          .addContent(Element("component").setAttribute("name", "ProjectManager").addContent(it))
+    override fun saveLocally(dataWriter: DataWriter?) {
+      super.saveLocally(when (dataWriter) {
+        null -> null
+        else -> object : StringDataWriter() {
+          override fun hasData(filter: DataWriterFilter) = dataWriter.hasData(filter)
+
+          override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+            val lineSeparatorWithIndent = "$lineSeparator    "
+            writer.append("<application>").append(lineSeparator)
+            writer.append("""  <component name="ProjectManager">""")
+            writer.append(lineSeparatorWithIndent)
+            (dataWriter as StringDataWriter).write(writer, lineSeparatorWithIndent, filter)
+            writer.append(lineSeparator)
+            writer.append("  </component>").append(lineSeparator)
+            writer.append("</application>")
+          }
+        }
       })
     }
   }

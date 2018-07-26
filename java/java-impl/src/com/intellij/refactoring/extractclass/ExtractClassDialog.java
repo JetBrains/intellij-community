@@ -37,7 +37,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.components.JBLabelDecorator;
-import java.util.HashMap;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -152,8 +151,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
                                                                         false),
                                                                       newClassName, myVisibilityPanel.getVisibility(),
                                                                       isGenerateAccessors(),
-                                                                      isExtractAsEnum() ? enumConstants : Collections.emptyList());
-    processor.setExtractInnerClass(createInner.isSelected());
+                                                                      isExtractAsEnum() ? enumConstants : Collections.emptyList(),
+                                                                      createInner.isSelected());
     if (processor.getCreatedClass() == null) {
       Messages.showErrorDialog(myVisibilityPanel, "Unable to create class with the given name");
       classNameField.requestFocusInWindow();

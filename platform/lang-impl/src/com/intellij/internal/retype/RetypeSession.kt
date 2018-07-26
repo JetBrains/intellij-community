@@ -2,6 +2,7 @@
 package com.intellij.internal.retype
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
@@ -47,6 +48,7 @@ class RetypeSession(
   private var completedChars = 0
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private val oldAddUnambiguous = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+  private val oldOptimize = CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly
   var startNextCallback: (() -> Unit)? = null
   private val disposeLock = Any()
 
@@ -72,6 +74,7 @@ class RetypeSession(
       SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false
     }
+    CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = false
     queueNext()
   }
 
@@ -87,6 +90,8 @@ class RetypeSession(
       SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = oldSelectAutopopup
       ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldAddUnambiguous
     }
+    CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly = oldOptimize
+
     currentLatencyRecordKey?.details = "typed $typedChars chars, completed $completedChars chars"
     currentLatencyRecordKey = null
     if (startNext) {
@@ -175,7 +180,12 @@ class RetypeSession(
     if (this is LiveTemplateLookupElement) {
       return false
     }
-    val lookupString = LookupElementPresentation.renderElement(this).itemText ?: return false
+    val lookupString = try {
+      LookupElementPresentation.renderElement(this).itemText ?: return false
+    }
+    catch (e: Exception) {
+      return false
+    }
     val textAtLookup = originalText.substring(lookupStartOffset)
     if (textAtLookup.take(lookupString.length) != lookupString) {
       return false

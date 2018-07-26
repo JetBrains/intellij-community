@@ -377,7 +377,6 @@ public class LightToolWindow extends JPanel {
     GearAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setIcon(AllIcons.General.Gear);
-      presentation.setHoveredIcon(AllIcons.General.GearHover);
     }
 
     @Override

@@ -47,18 +47,18 @@ private fun getSaxBuilder(): SAXBuilder {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun Parent.write(file: Path, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
-  write(file.outputStream(), lineSeparator, filter)
+fun Parent.write(file: Path, lineSeparator: String = "\n") {
+  write(file.outputStream(), lineSeparator)
 }
 
 @JvmOverloads
-fun Parent.write(output: OutputStream, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
+fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
   output.bufferedWriter().use { writer ->
     if (this is Document) {
       JDOMUtil.writeDocument(this, writer, lineSeparator)
     }
     else {
-      JDOMUtil.writeElement(this as Element, writer, JDOMUtil.createOutputter(lineSeparator, filter))
+      JDOMUtil.writeElement(this as Element, writer, lineSeparator)
     }
   }
 }
@@ -122,9 +122,9 @@ fun Element.addOptionTag(name: String, value: String) {
   addContent(element)
 }
 
-fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
+fun Parent.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.write(this, out, lineSeparator)
+  JDOMUtil.write(this, out, lineSeparator.separatorString)
   return out
 }
 

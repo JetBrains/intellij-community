@@ -114,7 +114,7 @@ public class DarculaTest {
       @Override
       public void eventDispatched(AWTEvent event) {
         if (event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_F1) {
-          new ShowUIDefaultsAction().actionPerformed(null);
+          new ShowUIDefaultsAction().perform(null);
         }
       }
     }, AWTEvent.KEY_EVENT_MASK);

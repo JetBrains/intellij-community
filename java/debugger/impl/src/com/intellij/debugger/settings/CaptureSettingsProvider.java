@@ -8,10 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author egor
@@ -22,11 +23,20 @@ public class CaptureSettingsProvider {
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
   private static final String ANY = "*";
 
-  public static List<AgentPoint> getPoints() {
+  @NotNull
+  public static Properties getPointsProperties() {
+    Properties res = new Properties();
     if (Registry.is("debugger.capture.points.agent.annotations")) {
-      return getAnnotationPoints();
+      int idx = 0;
+      for (CaptureSettingsProvider.AgentPoint point : getAnnotationPoints()) {
+        res.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
+                        point.myClassName + AgentPoint.SEPARATOR +
+                        point.myMethodName + AgentPoint.SEPARATOR +
+                        point.myMethodDesc + AgentPoint.SEPARATOR +
+                        point.myKey.asString());
+      }
     }
-    return Collections.emptyList();
+    return res;
   }
 
   private static List<AgentPoint> getAnnotationPoints() {
@@ -76,13 +86,13 @@ public class CaptureSettingsProvider {
     });
   }
 
-  public static abstract class AgentPoint {
+  private static abstract class AgentPoint {
     public final String myClassName;
     public final String myMethodName;
     public final String myMethodDesc;
     public final KeyProvider myKey;
 
-    public static final String SEPARATOR = " ";
+    private static final String SEPARATOR = " ";
 
     public AgentPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       assert !className.contains(".") : "Classname should not contain . here";
@@ -100,7 +110,7 @@ public class CaptureSettingsProvider {
     }
   }
 
-  public static class AgentCapturePoint extends AgentPoint {
+  private static class AgentCapturePoint extends AgentPoint {
     public AgentCapturePoint(String className, String methodName, String methodDesc, KeyProvider key) {
       super(className, methodName, methodDesc, key);
     }
@@ -111,7 +121,7 @@ public class CaptureSettingsProvider {
     }
   }
 
-  public static class AgentInsertPoint extends AgentPoint {
+  private static class AgentInsertPoint extends AgentPoint {
     public AgentInsertPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       super(className, methodName, methodDesc, key);
     }
@@ -122,7 +132,7 @@ public class CaptureSettingsProvider {
     }
   }
 
-  public interface KeyProvider {
+  private interface KeyProvider {
     String asString();
   }
  

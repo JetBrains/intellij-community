@@ -31,10 +31,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Represents a test result tree node.
@@ -257,35 +254,39 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-    if (myLocationUrl == null || myLocator == null) {
+    String locationUrl = getLocationUrl();
+    if (locationUrl == null || myLocator == null) {
       return null;
     }
     if (myLocationMapCachedValue == null) {
       myLocationMapCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
         Map<GlobalSearchScope, Ref<Location>> value = ContainerUtil.newConcurrentMap(1);
+        // In some implementations calling `SMTestLocator.getLocation` might update the `ModificationTracker` from
+        // `SMTestLocator.getLocationCacheModificationTracker` call.
+        // Thus, calculate the first result in advance to cache with the updated modification tracker.
+        value.put(searchScope, Ref.create(computeLocation(project, searchScope, locationUrl)));
         return CachedValueProvider.Result.create(value, myLocator.getLocationCacheModificationTracker(project));
       }, false);
     }
     Map<GlobalSearchScope, Ref<Location>> value = myLocationMapCachedValue.getValue();
     // Ref<Location> allows to cache null locations
-    Ref<Location> ref = value.computeIfAbsent(searchScope, scope -> Ref.create(getLocation(project, searchScope, myLocationUrl)));
+    Ref<Location> ref = value.computeIfAbsent(searchScope, scope -> Ref.create(computeLocation(project, searchScope, locationUrl)));
     return ref.get();
   }
 
-  protected Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, String locationUrl) {
-    if (locationUrl != null && myLocator != null) {
-      String protocolId = VirtualFileManager.extractProtocol(locationUrl);
-      if (protocolId != null) {
-        String path = VirtualFileManager.extractPath(locationUrl);
-        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
-          return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
-            List<Location> locations = myLocator.getLocation(protocolId, path, myMetainfo, project, searchScope);
-            return !locations.isEmpty() ? locations.get(0) : null;
-          });
-        }
+  @Nullable
+  private Location computeLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String locationUrl) {
+    SMTestLocator locator = Objects.requireNonNull(myLocator);
+    String protocolId = VirtualFileManager.extractProtocol(locationUrl);
+    if (protocolId != null) {
+      String path = VirtualFileManager.extractPath(locationUrl);
+      if (!DumbService.isDumb(project) || DumbService.isDumbAware(locator)) {
+        return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+          List<Location> locations = locator.getLocation(protocolId, path, myMetainfo, project, searchScope);
+          return ContainerUtil.getFirstItem(locations);
+        });
       }
     }
-
     return null;
   }
 
@@ -942,10 +943,12 @@ public class SMTestProxy extends AbstractTestProxy {
 
     public void setRootLocationUrl(String locationUrl) {
       myRootLocationUrl = locationUrl;
+      ((SMTestProxy)this).myLocationMapCachedValue = null;
     }
 
+    @Nullable
     @Override
-    public String getRootLocation() {
+    public String getLocationUrl() {
       return myRootLocationUrl;
     }
 
@@ -956,13 +959,6 @@ public class SMTestProxy extends AbstractTestProxy {
     @Override
     public void setHandler(ProcessHandler handler) {
       myHandler = handler;
-    }
-
-    @Nullable
-    @Override
-    public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-      return myRootLocationUrl != null ? super.getLocation(project, searchScope, myRootLocationUrl)
-                                       : super.getLocation(project, searchScope);
     }
 
     @Override

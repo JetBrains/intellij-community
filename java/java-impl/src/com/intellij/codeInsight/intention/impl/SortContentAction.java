@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -120,11 +121,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   private static class EnumConstantSortingStrategy implements SortingStrategy {
     private static PsiType extractType(@NotNull PsiElement element) {
-      PsiReferenceExpression expression = tryCast(element, PsiReferenceExpression.class);
-      if (expression == null) return null;
-      PsiEnumConstant enumConstant = tryCast(expression.resolve(), PsiEnumConstant.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
+      PsiReferenceExpression referenceExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
+      if (referenceExpression == null) return null;
+      PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
       if (enumConstant == null) return null;
-      return expression.getType();
+      return referenceExpression.getType();
     }
 
     @Override
@@ -135,7 +137,10 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @NotNull
     @Override
     public Comparator<PsiElement> getComparator() {
-      return Comparator.comparing(el -> ((PsiReferenceExpression)el).getReferenceName());
+      return Comparator.comparing(el -> {
+        PsiExpression expr = (PsiExpression)el;
+        return ((PsiReferenceExpression)Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(expr))).getReferenceName();
+      });
     }
 
     @Override

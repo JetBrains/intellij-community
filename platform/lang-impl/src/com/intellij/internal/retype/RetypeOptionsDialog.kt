@@ -2,6 +2,7 @@
 package com.intellij.internal.retype
 
 import com.intellij.ide.util.propComponentProperty
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBIntSpinner
@@ -14,7 +15,7 @@ import javax.swing.JTextField
 /**
  * @author yole
  */
-class RetypeOptionsDialog(project: Project, private val haveCurrentFile: Boolean) : DialogWrapper(project) {
+class RetypeOptionsDialog(project: Project, private val editor: Editor?) : DialogWrapper(project) {
   var retypeDelay: Int by propComponentProperty(project, 400)
     private set
   var threadDumpDelay: Int by propComponentProperty(project, 100)
@@ -26,7 +27,7 @@ class RetypeOptionsDialog(project: Project, private val haveCurrentFile: Boolean
 
   private val typeDelaySpinner = JBIntSpinner(retypeDelay,0, 5000, 50)
   private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay,50, 5000, 50)
-  private val retypeCurrentFile = JRadioButton("Retype current file")
+  private val retypeCurrentFile = JRadioButton(if (editor?.selectionModel?.hasSelection() == true) "Retype selected text" else "Retype current file")
   private val retypeRandomFiles = JRadioButton("Retype")
   private val fileCountSpinner = JBIntSpinner(fileCount, 1, 5000)
   private val extensionTextField = JTextField(retypeExtension,5)
@@ -37,8 +38,8 @@ class RetypeOptionsDialog(project: Project, private val haveCurrentFile: Boolean
   }
 
   override fun createCenterPanel(): JComponent {
-    retypeCurrentFile.isEnabled = haveCurrentFile
-    if (haveCurrentFile) {
+    retypeCurrentFile.isEnabled = editor != null
+    if (editor != null) {
       retypeCurrentFile.isSelected = true
     }
     else {

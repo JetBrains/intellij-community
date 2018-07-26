@@ -75,7 +75,7 @@ internal class GithubAccountsPanel(private val project: Project,
                   .setAddAction { addAccount() }
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton("Set default",
                                                                                 AllIcons.Actions.Checked) {
-                    override fun actionPerformed(e: AnActionEvent?) {
+                    override fun actionPerformed(e: AnActionEvent) {
                       if (accountList.selectedValue.projectDefault) return
                       for (accountData in accountListModel.items) {
                         if (accountData == accountList.selectedValue) {

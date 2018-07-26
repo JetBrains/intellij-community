@@ -1266,7 +1266,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (AnAction action : myMinimizedViewActions.getChildren(null)) {
       Content content = ((RestoreViewAction)action).getContent();
       if (key.equals(content.getUserData(ViewImpl.ID))) {
-        action.actionPerformed(null);
+        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
         return;
       }
     }

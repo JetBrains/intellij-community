@@ -540,7 +540,7 @@ class JsonSchemaAnnotatorChecker {
       if (type != null) {
         list.add(type);
       } else {
-        final List<JsonSchemaType> variants = schema.getTypeVariants();
+        final Set<JsonSchemaType> variants = schema.getTypeVariants();
         if (variants != null) {
           list.addAll(variants);
         }
@@ -575,7 +575,7 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     if (schema.getTypeVariants() != null) {
-      List<JsonSchemaType> matchTypes = schema.getTypeVariants();
+      Set<JsonSchemaType> matchTypes = schema.getTypeVariants();
       if (matchTypes.contains(input)) {
         return input;
       }
@@ -583,7 +583,7 @@ class JsonSchemaAnnotatorChecker {
         return input;
       }
       //nothing matches, lets return one of the list so that other heuristics does not match
-      return matchTypes.get(0);
+      return matchTypes.iterator().next();
     }
     if (!schema.getProperties().isEmpty() && JsonSchemaType._object.equals(input)) return JsonSchemaType._object;
     return null;

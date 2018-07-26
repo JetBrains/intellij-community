@@ -177,7 +177,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
     settings.readExternal(root);
     List<FileSetDescriptor> descriptors = settings.getExcludedFiles().getDescriptors();
     assertSize(2, descriptors);
-    assertEquals("*.java", descriptors.get(0).getSpec());
-    assertEquals("/lib/**/*.min.js", descriptors.get(1).getSpec());
+    assertEquals("*.java", descriptors.get(0).getPattern());
+    assertEquals("/lib/**/*.min.js", descriptors.get(1).getPattern());
   }
 }

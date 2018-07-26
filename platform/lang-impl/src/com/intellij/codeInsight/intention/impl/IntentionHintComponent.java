@@ -391,7 +391,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
   private void showPopup(boolean mouseClick) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myPopup == null || myPopup.isDisposed()) return;
+    if (myPopup == null || myPopup.isDisposed() || myPopupShown) return;
 
     if (mouseClick && myPanel.isShowing()) {
       final RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);

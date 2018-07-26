@@ -353,9 +353,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       EventSet events = suspendContext.getEventSet();
       if (!ContainerUtil.isEmpty(events)) {
         List<Pair<Breakpoint, Event>> eventDescriptors = ContainerUtil.newSmartList();
-        RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
         for (Event event : events) {
-          Requestor requestor = requestManager.findRequestor(event.request());
+          Requestor requestor = RequestManagerImpl.findRequestor(event.request());
           if (requestor instanceof Breakpoint) {
             eventDescriptors.add(Pair.create((Breakpoint)requestor, event));
           }

@@ -25,20 +25,19 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.Function;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAware {
   public ComputeVirtualFileNameStatAction() {
     super("Compute VF Name Statistics");
   }
 
-  public static void main(String[] args) {
-    new ComputeVirtualFileNameStatAction().actionPerformed(null);
-  }
   @Override
   public void actionPerformed(AnActionEvent e) {
     long start = System.currentTimeMillis();
