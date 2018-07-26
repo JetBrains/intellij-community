@@ -180,7 +180,12 @@ class RetypeSession(
     if (this is LiveTemplateLookupElement) {
       return false
     }
-    val lookupString = LookupElementPresentation.renderElement(this).itemText ?: return false
+    val lookupString = try {
+      LookupElementPresentation.renderElement(this).itemText ?: return false
+    }
+    catch (e: Exception) {
+      return false
+    }
     val textAtLookup = originalText.substring(lookupStartOffset)
     if (textAtLookup.take(lookupString.length) != lookupString) {
       return false
