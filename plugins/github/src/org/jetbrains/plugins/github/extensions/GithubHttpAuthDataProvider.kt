@@ -25,8 +25,9 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
       try {
         val token = authenticationManager.getTokenForAccount(account) ?: return null
-        val username = requestExecutorFactory.create(token)
-          .execute(DumbProgressIndicator(), accountInformationProvider.getInformationRequest(account)).login
+        val username = accountInformationProvider.getInformation(requestExecutorFactory.create(token),
+                                                                 DumbProgressIndicator(),
+                                                                 account).login
         GithubAccountAuthData(account, username, token)
       }
       catch (e: IOException) {
@@ -56,8 +57,9 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     if (login != null) {
       potentialAccounts = potentialAccounts.filter {
         try {
-          requestExecutorManager.getExecutor(it)
-            .execute(DumbProgressIndicator(), accountInformationProvider.getInformationRequest(it)).login == login
+          accountInformationProvider.getInformation(requestExecutorManager.getExecutor(it),
+                                                    DumbProgressIndicator(),
+                                                    it).login == login
         }
         catch (e: IOException) {
           LOG.info("Cannot load username for $it", e)

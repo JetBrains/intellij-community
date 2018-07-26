@@ -202,7 +202,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           }
 
           indicator.text = "Retrieving username..."
-          val username = requestExecutor.execute(indicator, accountInformationProvider.getInformationRequest(account)).login
+          val username = accountInformationProvider.getInformation(requestExecutor, indicator, account).login
           val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
 
           //git remote add origin git@github.com:login/name.git

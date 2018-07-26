@@ -221,9 +221,9 @@ internal class GithubAccountsPanel(private val project: Project,
 
       override fun run(indicator: ProgressIndicator) {
         val executor = executorFactory.create(token)
-        val details = executor.execute(indicator, accountInformationProvider.getInformationRequest(account))
+        val details = accountInformationProvider.getInformation(executor, indicator, account)
         val image = details.avatarUrl?.let {
-          executor.execute(indicator, accountInformationProvider.getAvatarRequest(account, it))
+          accountInformationProvider.getAvatar(executor, indicator, account, it)
         }
         data = details to image
       }

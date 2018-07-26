@@ -35,7 +35,7 @@ class MyService(private val executorManager: GithubApiRequestExecutorManager,
 
       override fun run(indicator: ProgressIndicator) {
         //if you need cached information
-        username = executor.execute(indicator, accountInformationProvider.getInformationRequest(account)).login
+        username = accountInformationProvider.getInformation(executor, indicator, account).login
         //if you need up-to-date information
         username = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server)).login
       }

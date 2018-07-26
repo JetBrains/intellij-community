@@ -3,14 +3,19 @@ package org.jetbrains.plugins.github.authentication.accounts
 
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.plugins.github.api.GithubApiRequest
+import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubApiResponse
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import java.awt.Image
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+/**
+ * Loads the account information or provides it from cache
+ * TODO: more abstraction
+ */
 class GithubAccountInformationProvider {
 
   private val informationCache = CacheBuilder.newBuilder()
@@ -34,23 +39,15 @@ class GithubAccountInformationProvider {
       })
   }
 
-  @CalledInAny
-  fun getInformationRequest(account: GithubAccount): GithubApiRequest<GithubUserDetailed> {
-    val delegate = GithubApiRequests.CurrentUser.get(account.server)
-    return object : GithubApiRequest.Get<GithubUserDetailed>(delegate.url, delegate.acceptMimeType) {
-      override fun extractResult(response: GithubApiResponse): GithubUserDetailed {
-        return informationCache.getOrPut(account) { delegate.extractResult(response) }
-      }
-    }.apply { delegate.operationName?.let(::withOperationName) }
+  @CalledInBackground
+  @Throws(IOException::class)
+  fun getInformation(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, account: GithubAccount): GithubUserDetailed {
+    return informationCache.getOrPut(account) { executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server)) }
   }
 
-  @CalledInAny
-  fun getAvatarRequest(account: GithubAccount, url: String): GithubApiRequest<Image> {
-    val delegate = GithubApiRequests.CurrentUser.getAvatar(url)
-    return object : GithubApiRequest.Get<Image>(url, delegate.acceptMimeType) {
-      override fun extractResult(response: GithubApiResponse): Image {
-        return avatarCache.getOrPut(account) { delegate.extractResult(response) }
-      }
-    }.apply { delegate.operationName?.let(::withOperationName) }
+  @CalledInBackground
+  @Throws(IOException::class)
+  fun getAvatar(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, account: GithubAccount, url: String): Image {
+    return avatarCache.getOrPut(account) { executor.execute(indicator, GithubApiRequests.CurrentUser.getAvatar(url)) }
   }
 }
