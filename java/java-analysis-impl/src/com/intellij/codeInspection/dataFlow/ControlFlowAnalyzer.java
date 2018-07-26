@@ -1383,7 +1383,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (parent instanceof PsiBinaryExpression && RelationType.fromElementType(((PsiBinaryExpression)parent).getOperationTokenType()) != null) {
         return true;
       }
-      if (parent instanceof PsiLoopStatement) return false;
+      if (parent instanceof PsiLoopStatement &&
+          !(parent instanceof PsiForStatement &&
+            PsiTreeUtil.isAncestor(((PsiForStatement)parent).getInitialization(), expression, false))) {
+        return false;
+      }
       parent = parent.getParent();
     }
     return true;
