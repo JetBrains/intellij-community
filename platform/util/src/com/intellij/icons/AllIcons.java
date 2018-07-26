@@ -1565,19 +1565,35 @@ public class AllIcons {
   public static class Process {
 
     public static class Big {
-      public static final Icon Step_1 = IconLoader.getIcon("/process/big/step_1.png"); // 32x32
-      public static final Icon Step_10 = IconLoader.getIcon("/process/big/step_10.png"); // 32x32
-      public static final Icon Step_11 = IconLoader.getIcon("/process/big/step_11.png"); // 32x32
-      public static final Icon Step_12 = IconLoader.getIcon("/process/big/step_12.png"); // 32x32
-      public static final Icon Step_2 = IconLoader.getIcon("/process/big/step_2.png"); // 32x32
-      public static final Icon Step_3 = IconLoader.getIcon("/process/big/step_3.png"); // 32x32
-      public static final Icon Step_4 = IconLoader.getIcon("/process/big/step_4.png"); // 32x32
-      public static final Icon Step_5 = IconLoader.getIcon("/process/big/step_5.png"); // 32x32
-      public static final Icon Step_6 = IconLoader.getIcon("/process/big/step_6.png"); // 32x32
-      public static final Icon Step_7 = IconLoader.getIcon("/process/big/step_7.png"); // 32x32
-      public static final Icon Step_8 = IconLoader.getIcon("/process/big/step_8.png"); // 32x32
-      public static final Icon Step_9 = IconLoader.getIcon("/process/big/step_9.png"); // 32x32
-      public static final Icon Step_passive = IconLoader.getIcon("/process/big/step_passive.png"); // 32x32
+      public static final Icon Step_1 = IconLoader.getIcon("/process/big/step_1.svg"); // 32x32
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Step_10 = IconLoader.getIcon("/process/big/step_4.svg"); // 32x32
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Step_11 = IconLoader.getIcon("/process/big/step_6.svg"); // 32x32
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Step_12 = IconLoader.getIcon("/process/big/step_8.svg"); // 32x32
+      public static final Icon Step_2 = IconLoader.getIcon("/process/big/step_2.svg"); // 32x32
+      public static final Icon Step_3 = IconLoader.getIcon("/process/big/step_3.svg"); // 32x32
+      public static final Icon Step_4 = IconLoader.getIcon("/process/big/step_4.svg"); // 32x32
+      public static final Icon Step_5 = IconLoader.getIcon("/process/big/step_5.svg"); // 32x32
+      public static final Icon Step_6 = IconLoader.getIcon("/process/big/step_6.svg"); // 32x32
+      public static final Icon Step_7 = IconLoader.getIcon("/process/big/step_7.svg"); // 32x32
+      public static final Icon Step_8 = IconLoader.getIcon("/process/big/step_8.svg"); // 32x32
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Step_9 = IconLoader.getIcon("/process/big/step_2.svg"); // 32x32
+      public static final Icon Step_passive = IconLoader.getIcon("/process/big/step_passive.svg"); // 32x32
 
     }
     public static final Icon DisabledDebug = IconLoader.getIcon("/process/disabledDebug.png"); // 13x13
@@ -1630,20 +1646,36 @@ public class AllIcons {
       public static final Icon YellowStr = IconLoader.getIcon("/process/state/YellowStr.png"); // 16x16
 
     }
-    public static final Icon Step_1 = IconLoader.getIcon("/process/step_1.png"); // 16x16
-    public static final Icon Step_10 = IconLoader.getIcon("/process/step_10.png"); // 16x16
-    public static final Icon Step_11 = IconLoader.getIcon("/process/step_11.png"); // 16x16
-    public static final Icon Step_12 = IconLoader.getIcon("/process/step_12.png"); // 16x16
-    public static final Icon Step_2 = IconLoader.getIcon("/process/step_2.png"); // 16x16
-    public static final Icon Step_3 = IconLoader.getIcon("/process/step_3.png"); // 16x16
-    public static final Icon Step_4 = IconLoader.getIcon("/process/step_4.png"); // 16x16
-    public static final Icon Step_5 = IconLoader.getIcon("/process/step_5.png"); // 16x16
-    public static final Icon Step_6 = IconLoader.getIcon("/process/step_6.png"); // 16x16
-    public static final Icon Step_7 = IconLoader.getIcon("/process/step_7.png"); // 16x16
-    public static final Icon Step_8 = IconLoader.getIcon("/process/step_8.png"); // 16x16
-    public static final Icon Step_9 = IconLoader.getIcon("/process/step_9.png"); // 16x16
-    public static final Icon Step_mask = IconLoader.getIcon("/process/step_mask.png"); // 16x16
-    public static final Icon Step_passive = IconLoader.getIcon("/process/step_passive.png"); // 16x16
+    public static final Icon Step_1 = IconLoader.getIcon("/process/step_1.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Step_10 = IconLoader.getIcon("/process/step_4.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Step_11 = IconLoader.getIcon("/process/step_6.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Step_12 = IconLoader.getIcon("/process/step_8.svg"); // 16x16
+    public static final Icon Step_2 = IconLoader.getIcon("/process/step_2.svg"); // 16x16
+    public static final Icon Step_3 = IconLoader.getIcon("/process/step_3.svg"); // 16x16
+    public static final Icon Step_4 = IconLoader.getIcon("/process/step_4.svg"); // 16x16
+    public static final Icon Step_5 = IconLoader.getIcon("/process/step_5.svg"); // 16x16
+    public static final Icon Step_6 = IconLoader.getIcon("/process/step_6.svg"); // 16x16
+    public static final Icon Step_7 = IconLoader.getIcon("/process/step_7.svg"); // 16x16
+    public static final Icon Step_8 = IconLoader.getIcon("/process/step_8.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Step_9 = IconLoader.getIcon("/process/step_2.svg"); // 16x16
+    public static final Icon Step_mask = IconLoader.getIcon("/process/step_mask.svg"); // 16x16
+    public static final Icon Step_passive = IconLoader.getIcon("/process/step_passive.svg"); // 16x16
     public static final Icon Stop = IconLoader.getIcon("/process/stop.png"); // 14x14
     public static final Icon StopHovered = IconLoader.getIcon("/process/stopHovered.png"); // 14x14
     public static final Icon StopSmall = IconLoader.getIcon("/process/stopSmall.png"); // 12x12

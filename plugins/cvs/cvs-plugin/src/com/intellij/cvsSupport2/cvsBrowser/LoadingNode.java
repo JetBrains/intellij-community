@@ -43,11 +43,7 @@ class LoadingNode extends DefaultMutableTreeNode {
     AllIcons.Process.Step_5,
     AllIcons.Process.Step_6,
     AllIcons.Process.Step_7,
-    AllIcons.Process.Step_8,
-    AllIcons.Process.Step_9,
-    AllIcons.Process.Step_10,
-    AllIcons.Process.Step_11,
-    AllIcons.Process.Step_12
+    AllIcons.Process.Step_8
   };
   private volatile boolean stopped = false;
   private Runnable myPeriodRequest;
@@ -67,7 +63,7 @@ class LoadingNode extends DefaultMutableTreeNode {
 
   private void updatePeriod() {
     myPeriod++;
-    myPeriod %= 12;
+    myPeriod %= myIcons.length;
     if (stopped) {
       return;
     }

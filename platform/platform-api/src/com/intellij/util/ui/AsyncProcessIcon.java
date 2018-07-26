@@ -17,8 +17,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,11 +24,19 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AsyncProcessIcon extends AnimatedIcon {
-  public static final int COUNT = 12;
-  public static final int CYCLE_LENGTH = 800;
+  public static final int COUNT = 8;
+  public static final int CYCLE_LENGTH = 1040;
 
-  private static final Icon[] SMALL_ICONS = findIcons("/process/step_", "/process/step_mask.png");
-  private boolean myUseMask;
+  private static final Icon[] SMALL_ICONS = {
+    AllIcons.Process.Step_1,
+    AllIcons.Process.Step_2,
+    AllIcons.Process.Step_3,
+    AllIcons.Process.Step_4,
+    AllIcons.Process.Step_5,
+    AllIcons.Process.Step_6,
+    AllIcons.Process.Step_7,
+    AllIcons.Process.Step_8
+  };
 
   public AsyncProcessIcon(@NonNls String name) {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
@@ -38,38 +44,16 @@ public class AsyncProcessIcon extends AnimatedIcon {
 
   public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name, icons, passive, CYCLE_LENGTH);
-    setUseMask(false);
   }
 
+  @Deprecated
   public AsyncProcessIcon setUseMask(boolean useMask) {
-    myUseMask = useMask;
     return this;
   }
 
   @Override
   protected void paintIcon(Graphics g, Icon icon, int x, int y) {
-    if (icon instanceof ProcessIcon) {
-      ((ProcessIcon)icon).setLayerEnabled(0, myUseMask);
-    }
     super.paintIcon(g, icon, x, y);
-
-    if (icon instanceof ProcessIcon) {
-      ((ProcessIcon)icon).setLayerEnabled(0, false);
-    }
-  }
-
-  private static Icon[] findIcons(String prefix, String maskIconPath) {
-    Icon maskIcon = maskIconPath != null ? IconLoader.getIcon(maskIconPath) : null;
-    Icon[] icons = new Icon[COUNT];
-    for (int i = 0; i <= COUNT - 1; i++) {
-      Icon eachIcon = IconLoader.getIcon(prefix + (i + 1) + ".png");
-      if (maskIcon != null) {
-        icons[i] = new ProcessIcon(maskIcon, eachIcon);
-      } else {
-        icons[i] = eachIcon;
-      }
-    }
-    return icons;
   }
 
   public void updateLocation(final JComponent container) {
@@ -89,12 +73,6 @@ public class AsyncProcessIcon extends AnimatedIcon {
     return new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
   }
 
-  private static class ProcessIcon extends LayeredIcon {
-    private ProcessIcon(Icon mask, Icon stepIcon) {
-      super(mask, stepIcon);
-    }
-  }
-
   public static class Big extends AsyncProcessIcon {
     private static final Icon[] BIG_ICONS = {
       AllIcons.Process.Big.Step_1,
@@ -104,11 +82,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
       AllIcons.Process.Big.Step_5,
       AllIcons.Process.Big.Step_6,
       AllIcons.Process.Big.Step_7,
-      AllIcons.Process.Big.Step_8,
-      AllIcons.Process.Big.Step_9,
-      AllIcons.Process.Big.Step_10,
-      AllIcons.Process.Big.Step_11,
-      AllIcons.Process.Big.Step_12
+      AllIcons.Process.Big.Step_8
     };
 
     public Big(@NonNls final String name) {

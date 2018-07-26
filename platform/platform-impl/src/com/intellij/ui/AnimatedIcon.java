@@ -1,15 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 import javax.swing.Timer;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author Sergey.Malenkov
@@ -24,76 +26,82 @@ public class AnimatedIcon implements Icon {
 
   public static final class Default extends AnimatedIcon {
     public Default() {
-      super(100,
-            AllIcons.Process.Step_1,
-            AllIcons.Process.Step_2,
-            AllIcons.Process.Step_3,
-            AllIcons.Process.Step_4,
-            AllIcons.Process.Step_5,
-            AllIcons.Process.Step_6,
-            AllIcons.Process.Step_7,
-            AllIcons.Process.Step_8,
-            AllIcons.Process.Step_9,
-            AllIcons.Process.Step_10,
-            AllIcons.Process.Step_11,
-            AllIcons.Process.Step_12);
+      super(DELAY, ICONS.toArray(new Icon[0]));
     }
+
+    public static final int DELAY = 130;
+    public static final List<Icon> ICONS = asList(
+      AllIcons.Process.Step_1,
+      AllIcons.Process.Step_2,
+      AllIcons.Process.Step_3,
+      AllIcons.Process.Step_4,
+      AllIcons.Process.Step_5,
+      AllIcons.Process.Step_6,
+      AllIcons.Process.Step_7,
+      AllIcons.Process.Step_8);
   }
 
   public static final class Big extends AnimatedIcon {
     public Big() {
-      super(100,
-            AllIcons.Process.Big.Step_1,
-            AllIcons.Process.Big.Step_2,
-            AllIcons.Process.Big.Step_3,
-            AllIcons.Process.Big.Step_4,
-            AllIcons.Process.Big.Step_5,
-            AllIcons.Process.Big.Step_6,
-            AllIcons.Process.Big.Step_7,
-            AllIcons.Process.Big.Step_8,
-            AllIcons.Process.Big.Step_9,
-            AllIcons.Process.Big.Step_10,
-            AllIcons.Process.Big.Step_11,
-            AllIcons.Process.Big.Step_12);
+      super(DELAY, ICONS.toArray(new Icon[0]));
     }
+
+    public static final int DELAY = 130;
+    public static final List<Icon> ICONS = asList(
+      AllIcons.Process.Big.Step_1,
+      AllIcons.Process.Big.Step_2,
+      AllIcons.Process.Big.Step_3,
+      AllIcons.Process.Big.Step_4,
+      AllIcons.Process.Big.Step_5,
+      AllIcons.Process.Big.Step_6,
+      AllIcons.Process.Big.Step_7,
+      AllIcons.Process.Big.Step_8);
   }
 
+  @Deprecated
   public static final class Grey extends AnimatedIcon {
     public Grey() {
-      super(150,
-            AllIcons.Process.State.GreyProgr_1,
-            AllIcons.Process.State.GreyProgr_2,
-            AllIcons.Process.State.GreyProgr_3,
-            AllIcons.Process.State.GreyProgr_4,
-            AllIcons.Process.State.GreyProgr_5,
-            AllIcons.Process.State.GreyProgr_6,
-            AllIcons.Process.State.GreyProgr_7,
-            AllIcons.Process.State.GreyProgr_8);
+      super(DELAY, ICONS.toArray(new Icon[0]));
     }
+
+    public static final int DELAY = 130;
+    public static final List<Icon> ICONS = asList(
+      AllIcons.Process.State.GreyProgr_1,
+      AllIcons.Process.State.GreyProgr_2,
+      AllIcons.Process.State.GreyProgr_3,
+      AllIcons.Process.State.GreyProgr_4,
+      AllIcons.Process.State.GreyProgr_5,
+      AllIcons.Process.State.GreyProgr_6,
+      AllIcons.Process.State.GreyProgr_7,
+      AllIcons.Process.State.GreyProgr_8);
   }
 
+  @ApiStatus.Experimental
   public static final class FS extends AnimatedIcon {
     public FS() {
-      super(50,
-            AllIcons.Process.FS.Step_1,
-            AllIcons.Process.FS.Step_2,
-            AllIcons.Process.FS.Step_3,
-            AllIcons.Process.FS.Step_4,
-            AllIcons.Process.FS.Step_5,
-            AllIcons.Process.FS.Step_6,
-            AllIcons.Process.FS.Step_7,
-            AllIcons.Process.FS.Step_8,
-            AllIcons.Process.FS.Step_9,
-            AllIcons.Process.FS.Step_10,
-            AllIcons.Process.FS.Step_11,
-            AllIcons.Process.FS.Step_12,
-            AllIcons.Process.FS.Step_13,
-            AllIcons.Process.FS.Step_14,
-            AllIcons.Process.FS.Step_15,
-            AllIcons.Process.FS.Step_16,
-            AllIcons.Process.FS.Step_17,
-            AllIcons.Process.FS.Step_18);
+      super(DELAY, ICONS.toArray(new Icon[0]));
     }
+
+    public static final int DELAY = 50;
+    public static final List<Icon> ICONS = asList(
+      AllIcons.Process.FS.Step_1,
+      AllIcons.Process.FS.Step_2,
+      AllIcons.Process.FS.Step_3,
+      AllIcons.Process.FS.Step_4,
+      AllIcons.Process.FS.Step_5,
+      AllIcons.Process.FS.Step_6,
+      AllIcons.Process.FS.Step_7,
+      AllIcons.Process.FS.Step_8,
+      AllIcons.Process.FS.Step_9,
+      AllIcons.Process.FS.Step_10,
+      AllIcons.Process.FS.Step_11,
+      AllIcons.Process.FS.Step_12,
+      AllIcons.Process.FS.Step_13,
+      AllIcons.Process.FS.Step_14,
+      AllIcons.Process.FS.Step_15,
+      AllIcons.Process.FS.Step_16,
+      AllIcons.Process.FS.Step_17,
+      AllIcons.Process.FS.Step_18);
   }
 
 

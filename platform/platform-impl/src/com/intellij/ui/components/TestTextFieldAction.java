@@ -105,7 +105,7 @@ public class TestTextFieldAction extends DumbAwareAction {
             }
           },
           new ExtendableTextComponent.Extension() {
-            private final Icon icon = new AnimatedIcon.Grey();
+            private final Icon icon = new AnimatedIcon.FS();
 
             @Override
             public Icon getIcon(boolean hovered) {
