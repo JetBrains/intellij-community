@@ -994,8 +994,8 @@ java_library(
 java_library(
     name = "jediterm-pty",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jediterm-pty-2.9"],
-    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.9"],
+    exports = ["//tools/idea/lib:jediterm-pty-2.10"],
+    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.10"],
 )
 
 # managed by go/iml_to_build
@@ -1326,4 +1326,12 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.22.0-GA:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.22.0-GA:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "delight-nashorn-sandbox",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.15:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.15:jar"],
 )

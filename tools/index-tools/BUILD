@@ -31,6 +31,5 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module]",
-        "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
     ],
 )

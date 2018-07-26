@@ -98,8 +98,8 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "jediterm-pty-2.9",
-    jars = ["jediterm-pty-2.9.jar"],
+    name = "jediterm-pty-2.10",
+    jars = ["jediterm-pty-2.10.jar"],
     visibility = ["//visibility:public"],
 )
 

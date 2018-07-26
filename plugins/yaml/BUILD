@@ -12,8 +12,9 @@ iml_module(
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/images:intellij.platform.images",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
@@ -24,7 +25,6 @@ iml_module(
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/xml/relaxng:intellij.relaxng",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
@@ -37,5 +37,8 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/xml/openapi:intellij.xml[module]",
+        "//tools/idea/json:intellij.json[module]",
+        "//tools/idea/json/tests:intellij.json.tests[module, test]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
     ],
 )

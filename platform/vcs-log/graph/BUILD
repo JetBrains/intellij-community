@@ -24,7 +24,11 @@ iml_module(
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/platform/vcs-log/graph-api:intellij.platform.vcs.log.graph"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/idea/platform/util:intellij.platform.util",
+        "//tools/idea/platform/vcs-log/graph-api:intellij.platform.vcs.log.graph",
+    ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util:intellij.platform.util[module]",
