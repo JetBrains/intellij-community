@@ -24,19 +24,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class AsyncProcessIcon extends AnimatedIcon {
-  public static final int COUNT = 8;
-  public static final int CYCLE_LENGTH = 1040;
+  private static final Icon[] SMALL_ICONS = com.intellij.ui.AnimatedIcon.Default.ICONS.toArray(new Icon[0]);
 
-  private static final Icon[] SMALL_ICONS = {
-    AllIcons.Process.Step_1,
-    AllIcons.Process.Step_2,
-    AllIcons.Process.Step_3,
-    AllIcons.Process.Step_4,
-    AllIcons.Process.Step_5,
-    AllIcons.Process.Step_6,
-    AllIcons.Process.Step_7,
-    AllIcons.Process.Step_8
-  };
+  public static final int COUNT = SMALL_ICONS.length;
+  public static final int CYCLE_LENGTH = com.intellij.ui.AnimatedIcon.Default.DELAY * SMALL_ICONS.length;
 
   public AsyncProcessIcon(@NonNls String name) {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
@@ -74,16 +65,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
   }
 
   public static class Big extends AsyncProcessIcon {
-    private static final Icon[] BIG_ICONS = {
-      AllIcons.Process.Big.Step_1,
-      AllIcons.Process.Big.Step_2,
-      AllIcons.Process.Big.Step_3,
-      AllIcons.Process.Big.Step_4,
-      AllIcons.Process.Big.Step_5,
-      AllIcons.Process.Big.Step_6,
-      AllIcons.Process.Big.Step_7,
-      AllIcons.Process.Big.Step_8
-    };
+    private static final Icon[] BIG_ICONS = com.intellij.ui.AnimatedIcon.Default.ICONS.toArray(new Icon[0]);
 
     public Big(@NonNls final String name) {
       super(name, BIG_ICONS, AllIcons.Process.Big.Step_passive);

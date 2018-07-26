@@ -17,7 +17,7 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.CommonBundle;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
-import com.intellij.icons.AllIcons;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -35,16 +35,7 @@ class LoadingNode extends DefaultMutableTreeNode {
   private final String myText = CommonBundle.getLoadingTreeNodeText();
   private int myPeriod = 0;
 
-  private final Icon[] myIcons = new Icon[] {
-    AllIcons.Process.Step_1,
-    AllIcons.Process.Step_2,
-    AllIcons.Process.Step_3,
-    AllIcons.Process.Step_4,
-    AllIcons.Process.Step_5,
-    AllIcons.Process.Step_6,
-    AllIcons.Process.Step_7,
-    AllIcons.Process.Step_8
-  };
+  private final Icon[] myIcons = AnimatedIcon.Default.ICONS.toArray(new Icon[0]);
   private volatile boolean stopped = false;
   private Runnable myPeriodRequest;
   private final DefaultTreeModel myModel;

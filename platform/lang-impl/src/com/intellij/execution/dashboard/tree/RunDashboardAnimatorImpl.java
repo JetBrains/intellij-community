@@ -17,13 +17,12 @@ package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.RunDashboardAnimator;
 import com.intellij.execution.dashboard.RunDashboardNode;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,11 +35,9 @@ import java.util.Set;
  * @author Konstantin Aleev
  */
 public class RunDashboardAnimatorImpl implements RunDashboardAnimator, Runnable, Disposable {
-  private static final int FRAMES_COUNT = AsyncProcessIcon.COUNT;
-  private static final int MOVIE_TIME = AsyncProcessIcon.CYCLE_LENGTH;
-  private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;
-
-  public static final Icon[] FRAMES = new Icon[FRAMES_COUNT];
+  public static final Icon[] FRAMES = AnimatedIcon.Default.ICONS.toArray(new Icon[0]);
+  private static final int FRAME_TIME = AnimatedIcon.Default.DELAY;
+  private static final int MOVIE_TIME = FRAME_TIME * FRAMES.length;
 
   private long myLastInvocationTime = -1;
 
@@ -51,17 +48,6 @@ public class RunDashboardAnimatorImpl implements RunDashboardAnimator, Runnable,
   public RunDashboardAnimatorImpl(AbstractTreeBuilder builder) {
     Disposer.register(builder, this);
     init(builder);
-  }
-
-  static {
-    FRAMES[0] = AllIcons.Process.Step_1;
-    FRAMES[1] = AllIcons.Process.Step_2;
-    FRAMES[2] = AllIcons.Process.Step_3;
-    FRAMES[3] = AllIcons.Process.Step_4;
-    FRAMES[4] = AllIcons.Process.Step_5;
-    FRAMES[5] = AllIcons.Process.Step_6;
-    FRAMES[6] = AllIcons.Process.Step_7;
-    FRAMES[7] = AllIcons.Process.Step_8;
   }
 
   public static int getCurrentFrameIndex() {
