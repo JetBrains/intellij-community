@@ -146,6 +146,10 @@ public class QuickEditHandler implements Disposable, DocumentListener {
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
+        if (event.getEditor().getDocument() == myOrigDocument) {
+          ApplicationManager.getApplication().invokeLater(() -> closeEditor(), myProject.getDisposed());
+          return;
+        }
         if (event.getEditor().getDocument() != myNewDocument) return;
         if (--useCount > 0) return;
         if (Boolean.TRUE.equals(myNewVirtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
