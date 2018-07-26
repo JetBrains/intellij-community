@@ -101,7 +101,9 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
                             "        project.dependencies.add('downloadSources', '" + artifactCoordinates + ":sources" + "')\n" +
                             "        project.tasks.create(name: '" + taskName + "', overwrite: true) {\n" +
                             "        doLast {\n" +
-                            "          project.configurations.downloadSources.resolve()\n" +
+                            "          if (!project.configurations.downloadSources.resolvedConfiguration.lenientConfiguration.getFiles().any()) {\n" +
+                            "            project.configurations.downloadSources.resolvedConfiguration.rethrowFailure()\n" +
+                            "          }\n" +
                             "        }\n" +
                             "      }\n" +
                             "    }\n" +
@@ -172,3 +174,4 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
     return result;
   }
 }
+
