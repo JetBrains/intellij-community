@@ -57,7 +57,7 @@ class AsyncProjectViewSupport {
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
       @Override
-      protected void update(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+      protected void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
         if (fromRoot) {
           updateAll(null);
         }
