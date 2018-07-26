@@ -43,6 +43,7 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
+/* Android Studio: b/67589184
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -50,6 +51,7 @@ import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
+Android Studio: b/67589184 */
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -313,7 +315,9 @@ public class TipUIUtil {
   }
 
   public static Browser createBrowser() {
+    /* Android Studio: b/67589184
     return Registry.is("ide.javafx.tips") ? new JFXBrowser() : new SwingBrowser();
+    */ return new SwingBrowser();
   }
 
   public interface Browser extends TextAccessor {
@@ -359,6 +363,7 @@ public class TipUIUtil {
     }
   }
 
+/* Android Studio: b/67589184
   private static class JFXBrowser extends JPanel implements Browser {
     private final JFXPanel myPanel;
     private WebView myWebView;
@@ -429,4 +434,5 @@ public class TipUIUtil {
       return myRecentText;
     }
   }
+Android Studio: b/67589184 */
 }
