@@ -71,7 +71,37 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
     }
   }
 
-  fun getSelectedVisibleValue() = getVisibleValueAtIndex(target().selectedIndex)
+  /**
+   * JComboBox.getSelectedIndex assumes that an item in the model cannot be null
+   *
+   *This function copies body of [JComboBox.getSelectedIndex] but with null allowed
+   *
+   */
+  val selectedIndex: Int
+    get() {
+      val noSelectedIndex = -1
+      val model = (target() as? JComboBox)?.model
+                  ?: throw IllegalStateException("ComboBoxFixture wraps not a JComboBox")
+      val selectedItem = model.selectedItem
+      return (0 until model.size)
+               .firstOrNull { model.getElementAt(it) == selectedItem }
+             ?: noSelectedIndex
+    }
 
-  fun getVisibleValueAtIndex(index: Int) = driver().value(target(), index)
+  /**
+   * 1. selectedItem should return visible value of value from Cell Renderer
+   * 2. to workaround problem with selected `null` value [selectedIndex] is used
+   * */
+  override fun selectedItem(): String? {
+    return getRenderedValueAtIndex(selectedIndex)
+  }
+
+  /**
+   * Returns rendered value got through Cell Renderer
+   * might differ from value got from the component itself
+   *
+   * @return rendered value at the specified index
+   * */
+  private fun getRenderedValueAtIndex(index: Int) =
+    driver().value(target(), index)
 }
