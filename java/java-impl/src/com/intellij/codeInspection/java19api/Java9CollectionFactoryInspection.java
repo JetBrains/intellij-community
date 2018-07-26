@@ -271,7 +271,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         PsiExpression[] args = argumentList.getExpressions();
         PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
         if (classReference != null && className.equals(classReference.getQualifiedName())) {
-          return fromCopyConstructor(newExpression, args, type);
+          return fromCopyConstructor(args, type);
         }
         PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         if (anonymousClass != null && args.length == 0) {
@@ -285,9 +285,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     }
 
     @Nullable
-    private static PrepopulatedCollectionModel fromCopyConstructor(PsiNewExpression newExpression,
-                                                                   PsiExpression[] args,
-                                                                   String type) {
+    private static PrepopulatedCollectionModel fromCopyConstructor(PsiExpression[] args, String type) {
       if (args.length == 1) {
         PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[0]);
         PsiMethodCallExpression call = tryCast(arg, PsiMethodCallExpression.class);
