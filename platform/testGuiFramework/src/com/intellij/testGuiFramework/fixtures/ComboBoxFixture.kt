@@ -27,7 +27,7 @@ import javax.swing.JComboBox
 class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(robot, comboBox) {
 
   fun expand(): ComboBoxFixture {
-    val arrowButton = target().components.filter { it is JButton }.firstOrNull() ?: throw ComponentLookupException(
+    val arrowButton = target().components.firstOrNull { it is JButton } ?: throw ComponentLookupException(
       "Unable to find bounded arrow button for a combobox")
     robot().click(arrowButton)
     return this
@@ -36,7 +36,7 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
   //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
   fun selectItem(itemName: String, timeoutInSeconds: Int = 30): ComboBoxFixture {
     waitUntil("item '$itemName' will be appeared in dropdown list", timeoutInSeconds) {
-      doSelectItem({ super.selectItem(itemName) })
+      doSelectItem { super.selectItem(itemName) }
     }
     return this
   }
@@ -44,7 +44,7 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
   //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
   fun selectItem(itemIndex: Int, timeoutInSeconds: Int = 30): ComboBoxFixture {
     waitUntil("item with index $itemIndex will be appeared in dropdown list", timeoutInSeconds) {
-      doSelectItem({ super.selectItem(itemIndex) })
+      doSelectItem { super.selectItem(itemIndex) }
     }
     return this
   }
