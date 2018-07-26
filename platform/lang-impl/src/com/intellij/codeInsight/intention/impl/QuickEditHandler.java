@@ -211,8 +211,13 @@ public class QuickEditHandler implements Disposable, DocumentListener {
             int end = o.getEndOffset();
             start += StringUtil.countChars(sequence, '\n', start, end, true);
             end -= StringUtil.countChars(sequence, '\n', end, start, true);
-            FoldRegion region = start <= end ? foldingModel.addFoldRegion(start, end, replacement) : null;
-            if (region != null) region.setExpanded(false);
+            if (start <= end) {
+              FoldRegion region = foldingModel.getFoldRegion(start, end);
+              if (region == null) {
+                region = foldingModel.addFoldRegion(start, end, replacement);
+              }
+              if (region != null) region.setExpanded(false);
+            }
           }
         });
       }
