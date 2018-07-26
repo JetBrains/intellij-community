@@ -84,25 +84,25 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
   private static Map<Module, Module> splitModulesIntoChunks(@NotNull Location<PsiMethod>[] testMethods, Module module) {
     Map<Module, Module> toRoot = new HashMap<>();
     if (module == null) {
-      List<Module> usedModules = Arrays.stream(testMethods).map(Location::getModule).collect(Collectors.toList());
+      Set<Module> usedModules = Arrays.stream(testMethods).map(Location::getModule).collect(Collectors.toSet());
       while (!usedModules.isEmpty()) {
-        Map<Module, List<Module>> allDeps = new HashMap<>();
+        Map<Module, Set<Module>> allDeps = new HashMap<>();
         for (Module usedModule : usedModules) {
           List<Module> rootModules = ModuleUtilCore.getAllDependentModules(usedModule);
           for (Module rootModule : rootModules) {
-            allDeps.computeIfAbsent(rootModule, __ -> new ArrayList<>()).add(usedModule);
+            allDeps.computeIfAbsent(rootModule, __ -> new LinkedHashSet<>()).add(usedModule);
           }
-          allDeps.computeIfAbsent(usedModule, __ -> new ArrayList<>()).add(usedModule);
+          allDeps.computeIfAbsent(usedModule, __ -> new LinkedHashSet<>()).add(usedModule);
         }
 
         
-        Optional<Map.Entry<Module, List<Module>>> maxDependency =
+        Optional<Map.Entry<Module, Set<Module>>> maxDependency =
           allDeps.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size()));
 
         if (maxDependency.isPresent()) {
-          Map.Entry<Module, List<Module>> entry = maxDependency.get();
+          Map.Entry<Module, Set<Module>> entry = maxDependency.get();
           Module rootModule = entry.getKey();
-          List<Module> srcModules = entry.getValue();
+          Set<Module> srcModules = entry.getValue();
           for (Module srcModule : srcModules) {
             toRoot.put(srcModule, rootModule);
           }
