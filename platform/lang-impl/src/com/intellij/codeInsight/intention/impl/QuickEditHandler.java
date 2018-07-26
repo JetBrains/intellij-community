@@ -32,6 +32,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -203,9 +205,9 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values
-      if (editor != null) {
+      if (editor instanceof EditorEx) {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
-        final FoldingModel foldingModel = editor.getFoldingModel();
+        final FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
         foldingModel.runBatchFoldingOperation(() -> {
           CharSequence sequence = myNewDocument.getImmutableCharSequence();
           for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
@@ -218,7 +220,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
             if (start <= end) {
               FoldRegion region = foldingModel.getFoldRegion(start, end);
               if (region == null) {
-                region = foldingModel.addFoldRegion(start, end, replacement);
+                region = foldingModel.createFoldRegion(start, end, replacement, null, true);
               }
               if (region != null) region.setExpanded(false);
             }
