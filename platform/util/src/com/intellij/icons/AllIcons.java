@@ -56,8 +56,8 @@ public class AllIcons {
     public static final Icon Clean = IconLoader.getIcon("/actions/clean.png"); // 16x16
     public static final Icon CleanLight = IconLoader.getIcon("/actions/cleanLight.png"); // 16x16
     public static final Icon Clear = IconLoader.getIcon("/actions/clear.png"); // 16x16
-    public static final Icon Close = IconLoader.getIcon("/actions/close.png"); // 16x16
-    public static final Icon CloseHovered = IconLoader.getIcon("/actions/closeHovered.png"); // 16x16
+    public static final Icon Close = IconLoader.getIcon("/actions/close.svg"); // 16x16
+    public static final Icon CloseHovered = IconLoader.getIcon("/actions/closeHovered.svg"); // 16x16
     public static final Icon CloseNew = IconLoader.getIcon("/actions/closeNew.png"); // 16x16
     public static final Icon CloseNewHovered = IconLoader.getIcon("/actions/closeNewHovered.png"); // 16x16
     public static final Icon Collapseall = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
