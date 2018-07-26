@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -47,6 +48,7 @@ import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,12 +117,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                                                authManager.getDefaultAccount(project),
                                                                getFileName(editor, files),
                                                                settings.isPrivateGist(),
-                                                               settings.isOpenInBrowserGist());
+                                                               settings.isOpenInBrowserGist(),
+                                                               settings.isCopyURLGist());
     if (!dialog.showAndGet()) {
       return;
     }
     settings.setPrivateGist(dialog.isSecret());
     settings.setOpenInBrowserGist(dialog.isOpenInBrowser());
+    settings.setCopyURLGist(dialog.isCopyURL());
 
     GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(dialog.getAccount(), project);
     if (requestExecutor == null) return;
@@ -142,6 +146,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
       public void onSuccess() {
         if (url.isNull()) {
           return;
+        }
+        if (dialog.isCopyURL()) {
+          StringSelection stringSelection = new StringSelection(url.get());
+          CopyPasteManager.getInstance().setContents(stringSelection);
         }
         if (dialog.isOpenInBrowser()) {
           BrowserUtil.browse(url.get());
