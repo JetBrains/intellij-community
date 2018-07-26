@@ -202,7 +202,7 @@ public class StartupUtil {
         appStarter.beforeImportConfigs();
         Path newConfigDir = Paths.get(PathManager.getConfigPath());
         runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log), initUiTask);
-        runInEdtAndWait(log, DeleteOldDirectoriesHelper::run);  // Android Studio: upstream?
+        runInEdtAndWait(log, DeleteOldDirectoriesHelper::run, initUiTask);  // Android Studio: upstream?
         appStarter.importFinished(newConfigDir);
       }
 
