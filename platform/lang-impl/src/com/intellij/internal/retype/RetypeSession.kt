@@ -11,7 +11,6 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
-import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.performance.LatencyDistributionRecordKey
 import com.intellij.internal.performance.TypingLatencyReportDialog
 import com.intellij.internal.performance.currentLatencyRecordKey
@@ -129,8 +128,6 @@ class RetypeSession(
       }
       editor.caretModel.moveToOffset(pos)
     }
-
-    IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
     if (TemplateManager.getInstance(project).getActiveTemplate(editor) != null) {
       TemplateManager.getInstance(project).finishTemplate(editor)
