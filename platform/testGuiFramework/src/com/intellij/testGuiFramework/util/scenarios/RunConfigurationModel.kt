@@ -77,7 +77,13 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
           FieldKind.Choice -> TODO()
           FieldKind.List -> TODO()
           FieldKind.Tree -> TODO()
-          FieldKind.Combo -> combobox(title).selectItem(value)
+          FieldKind.Combo -> {
+            val combo = combobox(title)
+            val newValue = combo.listItems().firstOrNull {
+              predicate(it, value)
+            }
+            combo.selectItem(newValue)
+          }
           FieldKind.Custom -> TODO()
         }
       }
