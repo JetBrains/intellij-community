@@ -25,6 +25,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.util.Axis;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,14 +46,14 @@ class DragHelper extends MouseDragHelper {
   private TabInfo myDragOutSource;
   private Reference<TabLabel> myPressedTabLabel;
 
-  public DragHelper(JBTabsImpl tabs) {
+  DragHelper(JBTabsImpl tabs) {
     super(tabs, tabs);
     myTabs = tabs;
   }
 
 
   @Override
-  protected boolean isDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint) {
+  protected boolean isDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint) {
     if (myDragSource == null || !myDragSource.canBeDraggedOut()) return false;
 
     TabLabel label = myTabs.myInfo2Label.get(myDragSource);
@@ -65,7 +66,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processDragOut(MouseEvent event, Point dragToScreenPoint, Point startScreenPoint, boolean justStarted) {
+  protected void processDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint, boolean justStarted) {
     TabInfo.DragOutDelegate delegate = myDragOutSource.getDragOutDelegate();
     if (justStarted) {
       delegate.dragOutStarted(event, myDragOutSource);
@@ -76,7 +77,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processDragOutFinish(MouseEvent event) {
+  protected void processDragOutFinish(@NotNull MouseEvent event) {
     super.processDragOutFinish(event);
 
     myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
@@ -95,7 +96,8 @@ class DragHelper extends MouseDragHelper {
     myPressedTabLabel = label == null ? null : new WeakReference<>(label);
   }
 
-  protected void processDrag(MouseEvent event, Point targetScreenPoint, Point startPointScreen) {
+  @Override
+  protected void processDrag(@NotNull MouseEvent event, @NotNull Point targetScreenPoint, @NotNull Point startPointScreen) {
     if (!myTabs.isTabDraggingEnabled() || !isDragSource(event) || !MouseDragHelper.checkModifiers(event)) return;
 
     SwingUtilities.convertPointFromScreen(startPointScreen, myTabs);
@@ -236,7 +238,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processDragFinish(MouseEvent event, boolean willDragOutStart) {
+  protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
     super.processDragFinish(event, willDragOutStart);
 
     endDrag(willDragOutStart);

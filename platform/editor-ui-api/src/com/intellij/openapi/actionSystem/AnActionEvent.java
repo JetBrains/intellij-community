@@ -139,18 +139,21 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   @NonNls
-  public static String injectedId(String dataId) {
+  @NotNull
+  public static String injectedId(@NotNull String dataId) {
     synchronized(ourInjectedIds) {
       return ourInjectedIds.computeIfAbsent(dataId, i -> ourInjectedPrefix + i);
     }
   }
 
   @NonNls
+  @NotNull
   public static String uninjectedId(@NotNull String dataId) {
     return StringUtil.trimStart(dataId, ourInjectedPrefix);
   }
 
-  public static DataContext getInjectedDataContext(final DataContext context) {
+  @NotNull
+  public static DataContext getInjectedDataContext(@NotNull DataContext context) {
     return new DataContextWrapper(context) {
       @Nullable
       @Override

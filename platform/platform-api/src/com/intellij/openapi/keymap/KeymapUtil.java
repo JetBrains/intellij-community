@@ -231,6 +231,13 @@ public class KeymapUtil {
     return shortcut == null? "" : getShortcutText(shortcut);
   }
 
+  public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull String actionId) {
+    for (KeyboardShortcut shortcut : ContainerUtil.findAll(getActiveKeymapShortcuts(actionId).getShortcuts(), KeyboardShortcut.class)) {
+      if (AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == shortcut.getFirstKeyStroke()) return true;
+    }
+    return false;
+  }
+
   @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
     return getFirstKeyboardShortcutText(action.getShortcutSet());

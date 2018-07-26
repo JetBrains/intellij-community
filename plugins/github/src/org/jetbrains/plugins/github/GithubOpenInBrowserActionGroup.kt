@@ -34,9 +34,7 @@ import org.jetbrains.plugins.github.util.GithubUtil
 open class GithubOpenInBrowserActionGroup
   : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github) {
 
-  override fun update(e: AnActionEvent?) {
-    if (e == null) return
-
+  override fun update(e: AnActionEvent) {
     val repositories = getData(e.dataContext)?.first
     e.presentation.isEnabledAndVisible = repositories != null && repositories.isNotEmpty()
   }
@@ -53,9 +51,7 @@ open class GithubOpenInBrowserActionGroup
 
   override fun isPopup(): Boolean = true
 
-  override fun actionPerformed(e: AnActionEvent?) {
-    if (e == null) return
-
+  override fun actionPerformed(e: AnActionEvent) {
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
   }
 

@@ -31,9 +31,9 @@ envs {
     shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
   }
 
-  python "python27", "2.7.13"
-  python "python36", "3.6.2"
-  python "python35", "3.5.0"
+  python "python27", "2.7.15"
+  python "python36", "3.6.6"
+  python "python35", "3.5.4"
 
 //  conda "Anaconda3", "Anaconda3-5.0.0", "64", []
 }

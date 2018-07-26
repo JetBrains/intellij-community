@@ -360,16 +360,19 @@ public class GitUnstashDialog extends DialogWrapper {
       myStashInfo = stashInfo;
     }
 
+    @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "<html>Conflicts during unstashing <code>" + myStashInfo.getStash() + "\"" + myStashInfo.getMessage() + "\"</code></html>";
     }
 
+    @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return "Local changes";
     }
 
+    @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return "Changes from stash";

@@ -865,4 +865,30 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                        "  }\n" +
                        "] ");
   }
+
+  public void testComplexOneOfSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complexOneOfSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": \"tab\"\n" +
+                       "  }");
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": <warning>\"ttab\"</warning>\n" +
+                       "  }");
+  }
+
+  public void testEnumCasing() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"type\": \"object\",\n" +
+                                      "\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"name\": { \"type\": \"string\", \"enum\": [\"aa\", \"bb\"] }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\n" +
+                   "  \"name\": \"aa\"\n" +
+                   "}");
+    doTest(schema, "{\n" +
+                   "  \"name\": <warning>\"aA\"</warning>\n" +
+                   "}");
+  }
 }

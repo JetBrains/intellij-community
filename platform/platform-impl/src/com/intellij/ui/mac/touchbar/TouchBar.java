@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +52,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
       myItemListener = null;
 
     myItems = new ItemsContainer(touchbarName, myItemListener);
-    if (replaceEsc)
-      myCustomEsc = new TBItemButton(touchbarName + "_custom_esc_button", myItemListener).setIcon(AllIcons.Actions.Cancel).setThreadSafeAction(()-> {
+    if (replaceEsc) {
+      final Icon ic = IconLoader.getIcon("/mac/touchbar/popoverClose_dark.svg");
+      myCustomEsc = new TBItemButton(touchbarName + "_custom_esc_button", myItemListener).setIcon(ic).setWidth(64).setTransparentBg(true).setThreadSafeAction(()-> {
         _closeSelf();
         if (emulateESC) {
           try {
@@ -69,7 +70,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
           }
         }
       });
-    else
+    } else
       myCustomEsc = null;
 
     myNativePeer = NST.createTouchBar(touchbarName, this, myCustomEsc != null ? myCustomEsc.myUid : null);

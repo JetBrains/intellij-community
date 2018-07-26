@@ -45,7 +45,7 @@ public class TasksCoreIcons {
   @SuppressWarnings("unused")
   @Deprecated
   public static final Icon Github = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
-  public static final Icon Gitlab = load("/icons/gitlab.png"); // 16x16
+  public static final Icon Gitlab = load("/icons/gitlab.svg"); // 16x16
   public static final Icon Jira = load("/icons/jira.png"); // 16x16
   public static final Icon Lighthouse = load("/icons/lighthouse.png"); // 16x16
   public static final Icon Mantis = load("/icons/mantis.png"); // 16x16

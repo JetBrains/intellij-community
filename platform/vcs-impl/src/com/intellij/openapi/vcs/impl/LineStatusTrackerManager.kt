@@ -1025,6 +1025,10 @@ class LineStatusTrackerManager(
 
   @TestOnly
   fun waitUntilBaseContentsLoaded() {
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      UIUtil.dispatchAllInvocationEvents()
+    }
+
     val semaphore = Semaphore()
     semaphore.down()
 

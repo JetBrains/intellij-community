@@ -93,6 +93,11 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
   }
 
   @Override
+  public boolean isValid() {
+    return myConstructor.isValid() && myType.isValid();
+  }
+
+  @Override
   public void renderElement(LookupElementPresentation presentation) {
     super.renderElement(presentation);
 

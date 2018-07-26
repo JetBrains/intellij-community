@@ -792,10 +792,28 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         return StringUtil.first(name, 60, true); //fallback to previous behaviour
       }
       int freeSpace = calcFreeSpace(list, panel, nameComponent, shortcutText);
-      return doCutName(name, nameComponent.getFontMetrics(nameComponent.getFont()), freeSpace);
+
+      if (freeSpace <= 0) {
+        return name;
+      }
+
+      FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont());
+      int strWidth = fm.stringWidth(name);
+      if (strWidth <= freeSpace) {
+        return name;
+      }
+
+      int cutSymbolIndex  = (int)((((double) freeSpace - fm.stringWidth("...")) / strWidth) * name.length());
+      cutSymbolIndex = Integer.max(1, cutSymbolIndex);
+      name = name.substring(0, cutSymbolIndex);
+      while (fm.stringWidth(name + "...") > freeSpace && name.length() > 1) {
+        name = name.substring(0, name.length() - 1);
+      }
+
+      return name.trim() + "...";
     }
 
-    private static int calcFreeSpace(JList list, JPanel panel, JComponent nameComponent, String shortcutText) {
+    private static int calcFreeSpace(JList list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
       BorderLayout layout = (BorderLayout)panel.getLayout();
       Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
       Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);
@@ -804,7 +822,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         - (panel.getInsets().right + panel.getInsets().left)
         - (eastComponent == null ? 0 : eastComponent.getPreferredSize().width)
         - (westComponent == null ? 0 : westComponent.getPreferredSize().width)
-        - (nameComponent.getInsets().right + nameComponent.getInsets().left);
+        - (nameComponent.getInsets().right + nameComponent.getInsets().left)
+        - (nameComponent.getIpad().right + nameComponent.getIpad().left)
+        - nameComponent.getIconTextGap();
 
       if (StringUtil.isNotEmpty(shortcutText)) {
         FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont().deriveFont(Font.BOLD));
@@ -812,26 +832,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       }
 
       return freeSpace;
-    }
-
-    private static String doCutName(String str, FontMetrics fm, int freeSpace) {
-      if (freeSpace <= 0) {
-        return str;
-      }
-
-      int strWidth = fm.stringWidth(str);
-      if (strWidth <= freeSpace) {
-        return str;
-      }
-
-      int cutSymbolIndex  = (int)((((double) freeSpace - fm.stringWidth("...")) / strWidth) * str.length());
-      cutSymbolIndex = Integer.max(1, cutSymbolIndex);
-      str = str.substring(0, cutSymbolIndex);
-      while (fm.stringWidth(str + "...") > freeSpace && str.length() > 1) {
-        str = str.substring(0, str.length() - 1);
-      }
-
-      return str.trim() + "...";
     }
 
     private static void addOnOffButton(@NotNull JPanel panel, boolean selected) {

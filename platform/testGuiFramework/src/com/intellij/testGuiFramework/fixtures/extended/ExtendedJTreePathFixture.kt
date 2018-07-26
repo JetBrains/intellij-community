@@ -1,6 +1,7 @@
   // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures.extended
 
+import com.intellij.openapi.externalSystem.service.execution.NotSupportedException
 import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.driver.FinderPredicate
@@ -11,7 +12,6 @@ import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JTreeFixture
-import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -30,7 +30,7 @@ open class ExtendedJTreePathFixture(
     robot: Robot = GuiRobotHolder.robot,
     driver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
   ) :
-    this(tree, path.path.map { it.toString() }.toList(), predicate, robot, driver)
+    this(tree, path.getPathStrings(), predicate, robot, driver)
 
   init {
     replaceDriverWith(myDriver)
@@ -62,15 +62,11 @@ open class ExtendedJTreePathFixture(
    * It's supposed the new path in the same tree
    * @param node one node value somewhere whithin the same tree
    * @throws LocationUnavailableException if node not found
-   * TODO complete
    * */
   fun pathToNode(node: String): ExtendedJTreePathFixture{
     val newPath = myDriver.findPathToNode(tree, node, predicate)
     return ExtendedJTreePathFixture(tree, newPath, predicate, robot(), myDriver)
   }
-
-  fun hasPath(vararg pathStrings: String): Boolean =
-    ExtendedJTreePathFixture(tree, pathStrings.toList(), predicate, robot(), myDriver).hasPath()
 
   fun hasPath(): Boolean {
     return try {
@@ -82,14 +78,14 @@ open class ExtendedJTreePathFixture(
     }
   }
 
-  fun clickPath(mouseClickInfo: MouseClickInfo): Unit = myDriver.clickPath(tree, path, mouseClickInfo)
+  fun clickPath(mouseClickInfo: MouseClickInfo): Unit =
+    myDriver.clickPath(tree, path, mouseClickInfo.button(), mouseClickInfo.times())
 
-  fun clickPath(button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1): Unit =
-    myDriver.clickPath(tree, path, button, times)
+  fun clickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.LEFT_BUTTON, 1)
 
-  fun doubleClickPath(): Unit = myDriver.doubleClickPath(tree, path)
+  fun doubleClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.LEFT_BUTTON, 2)
 
-  fun rightClickPath(): Unit = myDriver.rightClickPath(tree, path)
+  fun rightClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.RIGHT_BUTTON, 1)
 
   fun expandPath() {
     myDriver.expandPath(tree, path)
@@ -100,7 +96,7 @@ open class ExtendedJTreePathFixture(
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtilKt.waitUntil(condition = "wait to find a correct path to click", timeoutInSeconds = 2) {
+        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeoutInSeconds = 2) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
               .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
@@ -119,14 +115,62 @@ open class ExtendedJTreePathFixture(
 
   fun collapsePath(): Unit = myDriver.collapsePath(tree, path)
 
-  fun selectPath(): Unit = myDriver.selectPath(tree, path)
+  ////////////////////////////////////////////////////////////////
+  // Overridden functions
+  override fun clickPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.clickPath()
+    return tree
+  }
 
-  //  fun scrollToPath(): Point = myDriver.scrollToPath(tree, path)
-  fun openPopupMenu(): JPopupMenu = myDriver.showPopupMenu(tree, path)
+  override fun clickPath(path: String, mouseClickInfo: MouseClickInfo): JTreeFixture {
+    val tree = this.path(path)
+    tree.clickPath(mouseClickInfo)
+    return tree
+  }
 
-  fun drag(): Unit = myDriver.drag(tree, path)
+  override fun clickPath(path: String, button: MouseButton): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    when(button){
+      MouseButton.LEFT_BUTTON -> tree.clickPath()
+      MouseButton.MIDDLE_BUTTON -> throw NotSupportedException("Middle mouse click not supported")
+      MouseButton.RIGHT_BUTTON -> tree.rightClickPath()
+    }
+    return tree
+  }
 
-  fun drop(): Unit = myDriver.drop(tree, path)
+  override fun doubleClickPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.doubleClickPath()
+    return tree
+  }
 
-  fun getPathStrings(): List<String> = path.path.map { it.toString() }
+  override fun rightClickPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.rightClickPath()
+    return tree
+  }
+
+  override fun expandPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.expandPath()
+    return tree
+  }
+
+  override fun collapsePath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.collapsePath()
+    return tree
+  }
+
 }
+
+  /**
+   * Returns list of visible strings not including the first invisible item
+   *
+   * Note: code `this.path.joinToString()` always includes the first invisible item
+   * */
+  fun TreePath.getPathStrings(): List<String> {
+    val pathStrings = this.path.map { it.toString() }
+    return if (pathStrings.first().isEmpty()) pathStrings.drop(1) else pathStrings
+  }

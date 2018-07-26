@@ -32,6 +32,7 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
     tree.scrollToPath(path)
     tree.makeVisible(path)
     robot.click(tree, checkBoxCenterPoint)
+    robot.waitForIdle()
   }
 
 

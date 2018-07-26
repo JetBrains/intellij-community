@@ -48,7 +48,10 @@ public class ConvertSetLiteralQuickFix implements LocalQuickFix {
         stringBuilder.append(expressions[i].getText());
       }
       PyStatement newElement = elementGenerator.createFromText(LanguageLevel.getDefault(), PyExpressionStatement.class, "set([" + stringBuilder.toString() + "])");
-      setLiteral.replace(newElement);
+      final PsiElement parent = setLiteral.getParent();
+      if (parent instanceof PyExpressionStatement) {
+        parent.replace(newElement);
+      }
     }
   }
 }

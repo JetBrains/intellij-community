@@ -31,6 +31,7 @@ public class KeySetIterationMayUseEntrySetFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() { doTest(); }
   public void testParentheses() { doTest(); }
+  public void testParenthesesAroundGetKey() { doTest(); }
   public void testCastNeeded1() { doTest(); }
   public void testCastNeeded2() { doTest(); }
   public void testReference() { doTest(); }

@@ -54,7 +54,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -224,7 +223,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       @Override
       public void run(AnActionButton button) {
         if (popupItems.isEmpty()) {
-          new AttachFilesAction(myDescriptor.getAttachFilesActionName()).actionPerformed(null);
+          new AttachFilesAction(myDescriptor.getAttachFilesActionName()).perform();
           return;
         }
 
@@ -417,6 +416,10 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
     @Override
     public void actionPerformed(@Nullable AnActionEvent e) {
+      perform();
+    }
+
+    void perform() {
       VirtualFile toSelect = getFileToSelect();
       List<OrderRoot> roots = selectRoots(toSelect);
       if (roots.isEmpty()) return;

@@ -205,9 +205,22 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
             descriptor.setSelectContentWhenAdded(false);
 
             // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
-            ProcessHandler processHandler = descriptor.getProcessHandler();
-            if (processHandler != null) {
+            ProcessHandler forkedProcessHandler = descriptor.getProcessHandler();
+            if (forkedProcessHandler != null) {
               processHandler.addProcessListener(new ProcessAdapter() {
+                @Override
+                public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+                  processHandler.removeProcessListener(this);
+                  if (willBeDestroyed) {
+                    forkedProcessHandler.destroyProcess();
+                  }
+                  else {
+                    forkedProcessHandler.detachProcess();
+                  }
+                }
+              });
+
+              forkedProcessHandler.addProcessListener(new ProcessAdapter() {
                 @Override
                 public void processTerminated(@NotNull ProcessEvent event) {
                   final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);

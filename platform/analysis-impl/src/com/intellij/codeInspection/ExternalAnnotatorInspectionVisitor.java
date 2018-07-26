@@ -16,9 +16,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -26,10 +29,13 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.IdentityHashMap;
+import java.util.List;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotatorInspectionVisitor.class);
@@ -69,12 +75,80 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       return ReadAction.compute(() -> {
         AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), true);
         annotator.apply(file, annotationResult, annotationHolder);
-        return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
+        return convertToProblemDescriptors(annotationHolder, file);
       });
     }
     return ProblemDescriptor.EMPTY_ARRAY;
   }
 
+  @NotNull
+  private static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<Annotation> annotations, @NotNull final PsiFile file) {
+    if (annotations.isEmpty()) {
+      return ProblemDescriptor.EMPTY_ARRAY;
+    }
+
+    List<ProblemDescriptor> problems = ContainerUtil.newArrayListWithCapacity(annotations.size());
+    IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = ContainerUtil.newIdentityHashMap();
+    for (Annotation annotation : annotations) {
+      if (annotation.getSeverity() == HighlightSeverity.INFORMATION ||
+          annotation.getStartOffset() == annotation.getEndOffset() && !annotation.isAfterEndOfLine()) {
+        continue;
+      }
+
+      final PsiElement startElement;
+      final PsiElement endElement;
+      if (annotation.getStartOffset() == annotation.getEndOffset() && annotation.isAfterEndOfLine()) {
+        startElement = endElement = file.findElementAt(annotation.getEndOffset() - 1);
+      } else {
+        startElement = file.findElementAt(annotation.getStartOffset());
+        endElement = file.findElementAt(annotation.getEndOffset() - 1);
+      }
+      if (startElement == null || endElement == null) {
+        continue;
+      }
+
+      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
+      ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(annotation.getSeverity());
+      ProblemDescriptor descriptor = new ProblemDescriptorBase(startElement,
+                                                                     endElement,
+                                                                     annotation.getMessage(),
+                                                                     quickFixes,
+                                                                     highlightType,
+                                                                     annotation.isAfterEndOfLine(),
+                                                                     null,
+                                                                     true,
+                                                                     false);
+      problems.add(descriptor);
+    }
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos,
+                                                   @NotNull IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+    if (fixInfos == null || fixInfos.isEmpty()) {
+      return LocalQuickFix.EMPTY_ARRAY;
+    }
+    LocalQuickFix[] result = new LocalQuickFix[fixInfos.size()];
+    int i = 0;
+    for (Annotation.QuickFixInfo fixInfo : fixInfos) {
+      IntentionAction intentionAction = fixInfo.quickFix;
+      final LocalQuickFix fix;
+      if (intentionAction instanceof LocalQuickFix) {
+        fix = (LocalQuickFix) intentionAction;
+      }
+      else {
+        LocalQuickFix lqf = quickFixMappingCache.get(intentionAction);
+        if (lqf == null) {
+          lqf = new LocalQuickFixBackedByIntentionAction(intentionAction);
+          quickFixMappingCache.put(intentionAction, lqf);
+        }
+        fix = lqf;
+      }
+      result[i++] = fix;
+    }
+    return result;
+  }
 
   private void addDescriptors(@NotNull ProblemDescriptor[] descriptors) {
     for (ProblemDescriptor descriptor : descriptors) {

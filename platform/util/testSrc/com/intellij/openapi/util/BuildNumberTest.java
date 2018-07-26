@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.google.common.primitives.Ints;
@@ -46,13 +32,13 @@ public class BuildNumberTest {
     assertParsed(BuildNumber.fromString("IU-145.1.*"), 145, 1, "IU-145.1.SNAPSHOT");
     assertParsed(BuildNumber.fromString("IU-145.1.SNAPSHOT"), 145, 1, "IU-145.1.SNAPSHOT");
 
-    assertParsed(BuildNumber.fromString("IU-145.1.2.3.4"), 145, 1, "IU-145.1.2.3.4");
-    assertParsed(BuildNumber.fromString("IU-145.1000.2000.3000.4000"), 145, 1000, "IU-145.1000.2000.3000.4000");
+    assertParsed(BuildNumber.fromString("IU-146.1.2.3.4"), 146, 1, "IU-146.1.2.3.4");
+    assertParsed(BuildNumber.fromString("IU-147.1000.2000.3000.4000"), 147, 1000, "IU-147.1000.2000.3000.4000");
   }
 
   private static void assertParsed(BuildNumber n, int expectedBaseline, int expectedBuildNumber, String asString) {
     assertEquals(expectedBaseline, n.getBaselineVersion());
-    assertEquals(expectedBuildNumber, n.getBuildNumber());
+    assertEquals(expectedBuildNumber, n.getComponents()[1]);
     assertEquals(asString, n.asString());
   }
 
@@ -67,7 +53,6 @@ public class BuildNumberTest {
     assertTrue(BuildNumber.fromString("145.1.1.2").compareTo(BuildNumber.fromString("145.1.1.1.1")) > 0);
     assertTrue(BuildNumber.fromString("145.2.2.2.2").compareTo(BuildNumber.fromString("145.2.*")) < 0);
     assertTrue(BuildNumber.fromString("145.2.*").compareTo(BuildNumber.fromString("145.2.2.2.2")) > 0);
-
   }
 
   @Test
@@ -77,7 +62,7 @@ public class BuildNumberTest {
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").isSnapshot());
     assertTrue(BuildNumber.fromString("IU-145.1.2.3.4.SNAPSHOT").isSnapshot());
     assertFalse(BuildNumber.fromString("IU-145.1.2.3.4").isSnapshot());
-    
+
     assertTrue(BuildNumber.fromString("IC-90.*").isSnapshot());
     assertFalse(BuildNumber.fromString("90.9999999").isSnapshot());
   }
@@ -87,21 +72,22 @@ public class BuildNumberTest {
     BuildNumber b = BuildNumber.fromString("__BUILD_NUMBER__");
     assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
     assertTrue(b.isSnapshot());
-    
+
     assertEquals(BuildNumber.fromString("__BUILD_NUMBER__"), BuildNumber.fromString("SNAPSHOT"));
   }
 
   @Test
+  @SuppressWarnings("SimplifiableJUnitAssertion")
   public void snapshotDomination() {
     assertTrue(BuildNumber.fromString("90.SNAPSHOT").compareTo(BuildNumber.fromString("90.12345")) > 0);
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-90.12345")) > 0);
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-100.12345")) < 0);
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-100.SNAPSHOT")) < 0);
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-90.SNAPSHOT")) == 0);
-    
+
     assertTrue(BuildNumber.fromString("145.SNAPSHOT").compareTo(BuildNumber.fromString("145.1")) > 0);
     assertTrue(BuildNumber.fromString("145.1").compareTo(BuildNumber.fromString("145.SNAPSHOT")) < 0);
-    
+
     assertTrue(BuildNumber.fromString("145.SNAPSHOT").compareTo(BuildNumber.fromString("145.*")) == 0);
     assertTrue(BuildNumber.fromString("145.*").compareTo(BuildNumber.fromString("145.SNAPSHOT")) == 0);
 
@@ -109,24 +95,24 @@ public class BuildNumberTest {
     assertTrue(BuildNumber.fromString("145.1.*").compareTo(BuildNumber.fromString("145.SNAPSHOT")) < 0);
 
     assertTrue(BuildNumber.fromString("145.SNAPSHOT").compareTo(BuildNumber.fromString("145.SNAPSHOT")) == 0);
-    
+
     assertTrue(BuildNumber.fromString("145.1.SNAPSHOT").compareTo(BuildNumber.fromString("145.1.*")) == 0);
     assertTrue(BuildNumber.fromString("145.1.*").compareTo(BuildNumber.fromString("145.1.SNAPSHOT")) == 0);
-    
+
     assertTrue(BuildNumber.fromString("145.1.SNAPSHOT").compareTo(BuildNumber.fromString("145.*")) < 0);
     assertTrue(BuildNumber.fromString("145.*").compareTo(BuildNumber.fromString("145.1.SNAPSHOT")) > 0);
 
     assertTrue(BuildNumber.fromString("145.1.SNAPSHOT").compareTo(BuildNumber.fromString("145.1.1")) > 0);
     assertTrue(BuildNumber.fromString("145.1.1").compareTo(BuildNumber.fromString("145.1.SNAPSHOT")) < 0);
-    
+
     assertTrue(BuildNumber.fromString("145.1.SNAPSHOT").compareTo(BuildNumber.fromString("145.1.SNAPSHOT")) == 0);
-    
+
     assertTrue(BuildNumber.fromString("145.SNAPSHOT.1").compareTo(BuildNumber.fromString("145.1.1")) > 0);
     assertTrue(BuildNumber.fromString("145.1.1").compareTo(BuildNumber.fromString("145.SNAPSHOT.1")) < 0);
-    
+
     assertTrue(BuildNumber.fromString("145.SNAPSHOT.1").compareTo(BuildNumber.fromString("145.1.SNAPSHOT")) > 0);
     assertTrue(BuildNumber.fromString("145.1.SNAPSHOT").compareTo(BuildNumber.fromString("145.SNAPSHOT.1")) < 0);
-    
+
     assertTrue(BuildNumber.fromString("145.SNAPSHOT.1").compareTo(BuildNumber.fromString("145.SNAPSHOT.SNAPSHOT")) == 0);
     assertTrue(BuildNumber.fromString("145.SNAPSHOT.SNAPSHOT").compareTo(BuildNumber.fromString("145.SNAPSHOT.1")) == 0);
   }

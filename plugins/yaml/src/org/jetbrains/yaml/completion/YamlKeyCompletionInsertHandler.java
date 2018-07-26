@@ -59,6 +59,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     final YAMLKeyValue keyValue = PsiTreeUtil.getParentOfType(elementAtCaret, YAMLKeyValue.class);
     assert keyValue != null;
+    assert keyValue.getParentMapping() != null;
 
     context.commitDocument();
     if (keyValue.getValue() != null) {

@@ -390,7 +390,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
-    UIUtil.decorateFrame(rootPane);
+    UIUtil.decorateWindowHeader(rootPane);
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 

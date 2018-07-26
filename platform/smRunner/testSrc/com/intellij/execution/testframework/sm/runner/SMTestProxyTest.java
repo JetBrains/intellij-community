@@ -15,13 +15,24 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.easymock.EasyMock;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 
@@ -644,12 +655,41 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   public void testLocation() {
-    assertNull(mySuite.getLocation(getProject(), GlobalSearchScope.allScope(getProject())));
+    Project project = getProject();
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+    assertNull(mySuite.getLocation(project, allScope));
 
     mySuite.addChild(mySimpleTest);
 
-    assertNull(mySuite.getLocation(getProject(), GlobalSearchScope.allScope(getProject())));
-    assertNull(mySimpleTest.getLocation(getProject(), GlobalSearchScope.allScope(getProject())));
+    assertNull(mySuite.getLocation(project, allScope));
+    assertNull(mySimpleTest.getLocation(project, allScope));
+    PsiFile testFile = createFile("test.txt", MockTestLocator.TEST_LOCATION_TEXT);
+    Location<PsiFile> testFileLocation = PsiLocation.fromPsiElement(testFile);
+    MockTestLocator locator = new MockTestLocator(testFileLocation);
+    mySimpleTest.setLocator(locator);
+    assertEquals(testFileLocation, mySimpleTest.getLocation(project, allScope));
+    assertEquals(ContainerUtil.newArrayList(allScope), locator.myCalledSearchScopes);
+
+    assertEquals(testFileLocation, mySimpleTest.getLocation(project, allScope));
+    assertEquals(ContainerUtil.newArrayList(allScope), locator.myCalledSearchScopes);
+
+    GlobalSearchScope notAllScope = GlobalSearchScope.notScope(allScope);
+    assertEquals(testFileLocation, mySimpleTest.getLocation(project, notAllScope));
+    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope), locator.myCalledSearchScopes);
+
+    WriteAction.run(() -> {
+      PsiDocumentManager.getInstance(project).getDocument(testFile).setText("");
+      PsiDocumentManager.getInstance(project).commitAllDocuments(); // to rebuild PSI and invalidate cache
+    });
+
+    assertNull(null, mySimpleTest.getLocation(project, allScope));
+    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
+
+    assertNull(null, mySimpleTest.getLocation(project, allScope));
+    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
+
+    assertNull(null, mySimpleTest.getLocation(project, allScope));
+    assertEquals(ContainerUtil.newArrayList(allScope, notAllScope, allScope), locator.myCalledSearchScopes);
   }
 
   public void testNavigatable() {
@@ -1039,5 +1079,30 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
   protected static void assertWeightsOrder(final Magnitude previous, final Magnitude next) {
     assertTrue(previous.getSortWeight() < next.getSortWeight());
+  }
+
+  private static class MockTestLocator implements SMTestLocator {
+
+    public static final String TEST_LOCATION_TEXT = "<test location>";
+
+    private final Location myLocation;
+    private final List<GlobalSearchScope> myCalledSearchScopes = ContainerUtil.newArrayList();
+
+    public MockTestLocator(@NotNull Location location) {
+      myLocation = location;
+    }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String protocol,
+                                      @NotNull String path,
+                                      @NotNull Project project,
+                                      @NotNull GlobalSearchScope scope) {
+      myCalledSearchScopes.add(scope);
+      if (myLocation.getPsiElement().getText().contains(TEST_LOCATION_TEXT)) {
+        return Collections.singletonList(myLocation);
+      }
+      return Collections.emptyList();
+    }
   }
 }

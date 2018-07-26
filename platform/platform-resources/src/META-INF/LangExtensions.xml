@@ -526,6 +526,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameCompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SubstringBeforeMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.RegExMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$LineCommentStart"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$BlockCommentStart"/>
@@ -613,8 +614,7 @@
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.template.impl.LiveTemplateCharFilter" order="first" id="liveTemplate"/>
-    <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last" id="completion"/>
-    <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier" order="last"/>
+    <lookup.charFilter implementation="com.intellij.codeInsight.completion.DefaultCharFilter" order="last" id="default"/>
     <lookup.charFilter implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCharFilter" id="fileRef"
                        order="before completion"/>
 
@@ -1050,6 +1050,7 @@
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <statusBarWidgetProvider implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetProvider" />
+    <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
     <projectService serviceImplementation="com.intellij.execution.TestStateStorage"/>

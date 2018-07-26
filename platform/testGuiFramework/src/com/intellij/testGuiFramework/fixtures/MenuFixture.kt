@@ -18,10 +18,14 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.GuiTestUtil.toMs
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import org.fest.assertions.Assertions.assertThat
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
+import org.fest.swing.driver.JComponentDriver
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
@@ -80,6 +84,7 @@ class MenuFixture internal constructor(private val myRobot: Robot, private val m
       }
       if (i < segmentCount - 1) {
         val showingPopupMenus = findShowingPopupMenus(getCountOfShowing(previouslyFoundPopups) + 1)
+        waitUntil("menu item $menuItem will be showing on screen") { menuItem.isShowing }
         myRobot.click(menuItem)
         showingPopupMenus.removeAll(previouslyFoundPopups)
         assertThat(showingPopupMenus).hasSize(1)
@@ -93,10 +98,10 @@ class MenuFixture internal constructor(private val myRobot: Robot, private val m
 
   private fun menuItemMatcher(pathIsRegex: Boolean,
                               segment: String): GenericTypeMatcher<JMenuItem> {
-    return typeMatcher(JMenuItem::class.java, {
+    return typeMatcher(JMenuItem::class.java) {
       if (pathIsRegex) it.text.matches(segment.toRegex())
       else segment == it.text
-    })
+    }
   }
 
   private fun getMenuItem(root: Container, pathIsRegex: Boolean, segment: String): JMenuItem {
@@ -104,7 +109,8 @@ class MenuFixture internal constructor(private val myRobot: Robot, private val m
   }
 
   private fun getMenuItem(root: Container, pathIsRegex: Boolean, segment: String, timeoutInSeconds: Long): JMenuItem {
-    return GuiTestUtil.waitUntilFound(myRobot, root, menuItemMatcher(pathIsRegex, segment), Timeout.timeout(timeoutInSeconds, TimeUnit.SECONDS))
+    return GuiTestUtil.waitUntilFound(myRobot, root, menuItemMatcher(pathIsRegex, segment),
+                                      Timeout.timeout(timeoutInSeconds, TimeUnit.SECONDS))
   }
 
   private fun getCountOfShowing(previouslyFoundPopups: List<JPopupMenu>): Int {
@@ -128,5 +134,18 @@ class MenuFixture internal constructor(private val myRobot: Robot, private val m
   }
 
   class MenuItemFixture(selfType: Class<MenuItemFixture>, robot: Robot, target: JMenuItem) : JComponentFixture<MenuItemFixture, JMenuItem>(
-    selfType, robot, target)
+    selfType, robot, target) {
+
+    init {
+      replaceDriverWith(MenuItemFixtureDriver(robot))
+    }
+
+    //wait for component showing on screen, as a workaround for IDEA-195830
+    class MenuItemFixtureDriver(robot: Robot) : JComponentDriver<JMenuItem>(robot) {
+      override fun click(jMenuItem: JMenuItem) {
+        waitForShowing(jMenuItem, defaultTimeout.toMs())
+        robot.click(jMenuItem)
+      }
+    }
+  }
 }

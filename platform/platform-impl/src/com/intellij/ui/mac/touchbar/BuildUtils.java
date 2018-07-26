@@ -48,13 +48,14 @@ class BuildUtils {
   private static final String ourLargeSeparatorText = "type.large";
   private static final String ourFlexibleSeparatorText = "type.flexible";
 
-  private static final int ourRunConfigurationPopoverWidth = 143;
   private static final int BUTTON_MIN_WIDTH_DLG = 107;
   private static final int BUTTON_BORDER = 16;
   private static final int BUTTON_IMAGE_MARGIN = 2;
 
   static void addActionGroupButtons(@NotNull TouchBar out, @NotNull ActionGroup actionGroup, @Nullable String filterGroupPrefix, @Nullable Customizer customizer) {
     _traverse(actionGroup, new GroupVisitor(out, filterGroupPrefix, customizer));
+    if (customizer != null)
+      customizer.finish();
   }
 
   static ActionGroup getCustomizedGroup(@NotNull String barId) {
@@ -401,6 +402,9 @@ class BuildUtils {
     private final int myShowMode;
     private final @Nullable ModalityState myModality;
 
+    private TBItemAnActionButton myRunConfigurationButton;
+    private List<TBItemAnActionButton> myRunnerButtons;
+
     Customizer(int showMode, @Nullable ModalityState modality) {
       myShowMode = showMode;
       myModality = modality;
@@ -430,14 +434,22 @@ class BuildUtils {
         butt.setHiddenWhenDisabled(true);
 
       if (isRunConfigPopover) {
-        butt.setWidth(ourRunConfigurationPopoverWidth);
+        myRunConfigurationButton = butt;
+      } else if (butt.getAnAction() instanceof WelcomePopupAction) {
         butt.setHasArrowIcon(true);
-      } else if (butt.getAnAction() instanceof WelcomePopupAction)
-        butt.setHasArrowIcon(true);
+      } else if ("RunnerActionsTouchbar".equals(ni.getParentGroupID()) || "Stop".equals(actId)) {
+        if (myRunnerButtons == null) myRunnerButtons = new ArrayList<>();
+        myRunnerButtons.add(butt);
+      }
 
       final TouchbarDataKeys.ActionDesc actionDesc = butt.getAnAction().getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
       if (actionDesc != null && actionDesc.getContextComponent() != null)
         butt.setComponent(actionDesc.getContextComponent());
+    }
+
+    void finish() {
+      if (myRunConfigurationButton != null && myRunnerButtons != null && !myRunnerButtons.isEmpty())
+        myRunConfigurationButton.setLinkedButtons(myRunnerButtons);
     }
   }
 

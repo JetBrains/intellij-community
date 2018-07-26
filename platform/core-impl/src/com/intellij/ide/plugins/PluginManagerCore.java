@@ -597,11 +597,13 @@ public class PluginManagerCore {
     // needed to make sure that extensions are always in the same order
     ids.sort((o1, o2) -> o2.getIdString().compareTo(o1.getIdString()));
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<PluginId>() {
+      @NotNull
       @Override
       public Collection<PluginId> getNodes() {
         return ids;
       }
 
+      @NotNull
       @Override
       public Iterator<PluginId> getIn(PluginId pluginId) {
         IdeaPluginDescriptor descriptor = idToDescriptorMap.get(pluginId);

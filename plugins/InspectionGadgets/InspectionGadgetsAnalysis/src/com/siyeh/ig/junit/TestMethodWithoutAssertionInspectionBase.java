@@ -28,6 +28,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       .add(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
       .add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert.*|fail.*")
       .add("org.assertj.core.api.Assertions", "assertThat")
+      .add("org.assertj.core.api.WithAssertions", "assertThat")
       .add("com.google.common.truth.Truth", "assert.*")
       .add("com.google.common.truth.Truth8", "assert.*")
       .add("org.mockito.Mockito", "verify.*")

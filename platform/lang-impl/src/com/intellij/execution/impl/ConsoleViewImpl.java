@@ -895,6 +895,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_PASTE, new PasteHandler());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler());
       registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_DELETE, new DeleteHandler());
+      registerActionHandler(myEditor, IdeActions.ACTION_EDITOR_TAB, new TabHandler());
 
       registerActionHandler(myEditor, EOFAction.ACTION_ID);
     }
@@ -1306,6 +1307,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     private static EditorActionHandler getDefaultActionHandler() {
       return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+    }
+  }
+
+  private static class TabHandler extends ConsoleAction {
+    @Override
+    protected void execute(@NotNull ConsoleViewImpl console, @NotNull DataContext context) {
+      console.type(console.myEditor, "\t");
     }
   }
 

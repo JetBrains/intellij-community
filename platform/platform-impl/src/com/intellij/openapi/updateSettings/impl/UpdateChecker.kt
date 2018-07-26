@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger
 import com.intellij.notification.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -389,7 +390,7 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+        val patch = checkForUpdateResult.patch
         val forceHttps = updateSettings.canUseSecureConnection()
         UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
@@ -400,8 +401,12 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
+        FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector::class.java, "notification.shown")
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
-        showNotification(project, message, runnable, NotificationUniqueType.PLATFORM)
+        showNotification(project, message, {
+          FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector::class.java, "notification.clicked")
+          runnable()
+        }, NotificationUniqueType.PLATFORM)
       }
       return
     }
@@ -556,7 +561,7 @@ object UpdateChecker {
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild
-      patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+      patch = checkForUpdateResult.patch
     }
 
     if (channel != null && newBuild != null) {

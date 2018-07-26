@@ -459,7 +459,8 @@ public class GuessManagerImpl extends GuessManager {
 
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
+      PsiExpression operand = expression.getOperand();
+      if (operand != null && ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
         myNeedDfa = true;
       }
       super.visitTypeCastExpression(expression);

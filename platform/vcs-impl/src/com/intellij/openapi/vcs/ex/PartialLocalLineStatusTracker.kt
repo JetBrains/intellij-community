@@ -537,7 +537,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
       val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
       object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent?) {
+        override fun actionPerformed(e: AnActionEvent) {
           link.linkLabel.doClick()
         }
       }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)

@@ -166,6 +166,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         }
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH, true);
+        editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
       }
 
@@ -180,6 +181,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   void initiateValidation() {
+    if (myAlarm.isDisposed()) return;
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
       try {

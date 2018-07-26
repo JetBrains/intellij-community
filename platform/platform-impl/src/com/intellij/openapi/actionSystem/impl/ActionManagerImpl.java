@@ -626,6 +626,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
+    boolean customClass = false;
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
       if ("true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))) {
@@ -655,6 +656,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
             return null;
           }
         }
+        customClass = true;
         group = (ActionGroup)obj;
       }
       // read ID and register loaded group
@@ -694,6 +696,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
+      if (id != null && customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+        myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+      }
+
       // process all group's children. There are other groups, actions, references and links
       for (Element child : element.getChildren()) {
         String name = child.getName();

@@ -959,7 +959,7 @@ public class GeneratedParserUtilBase {
       int count = 0;
       loop: for (Variant variant : list) {
         if (position == variant.position) {
-          String text = variant.object.toString();
+          String text = String.valueOf(variant.object);
           long hash = StringHash.calc(text);
           for (int i=0; i<count; i++) {
             if (hashes[i] == hash) continue loop;
@@ -1083,26 +1083,6 @@ public class GeneratedParserUtilBase {
     @Override
     public String toString() {
       return "<" + position + ", " + object + ">";
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Variant variant = (Variant)o;
-
-      if (position != variant.position) return false;
-      if (!this.object.equals(variant.object)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = position;
-      result = 31 * result + object.hashCode();
-      return result;
     }
   }
 

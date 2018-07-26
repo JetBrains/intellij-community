@@ -695,7 +695,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   // E.g. "change(a/b/c/x.txt)" and "delete(a/b/c)" are conflicting because "a/b/c/x.txt" is under the "a/b/c" directory from the other event.
   //
   // returns index after the last grouped event.
-  private static int groupByPath(@NotNull List<VFileEvent> inEvents, int startIndex, @NotNull Set<String> files, @NotNull Set<String> middleDirs) {
+  private static int groupByPath(@NotNull List<? extends VFileEvent> inEvents,
+                                 int startIndex,
+                                 @NotNull Set<? super String> files,
+                                 @NotNull Set<? super String> middleDirs) {
     // store all paths from all events (including all parents)
     // check the each new event's path against this set and if it's there, this event is conflicting
 
@@ -730,7 +733,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return i;
   }
 
-  private static boolean checkIfConflictingEvent(@NotNull String path, @NotNull Set<String> files, @NotNull Set<String> middleDirs) {
+  private static boolean checkIfConflictingEvent(@NotNull String path, @NotNull Set<? super String> files, @NotNull Set<? super String> middleDirs) {
     if (!files.add(path) || middleDirs.contains(path)) {
       // conflicting event found for (non-strict) descendant, stop
       return true;
@@ -755,12 +758,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   // "outApplyEvents" will contain handlers for applying the grouped events
   // "outValidatedEvents" will contain events for which VFileEvent.isValid() is true
   // return index after the last processed event
-  private int groupAndValidate(@NotNull List<VFileEvent> events,
+  private int groupAndValidate(@NotNull List<? extends VFileEvent> events,
                                int startIndex,
-                               @NotNull List<Runnable> outApplyEvents,
-                               @NotNull List<VFileEvent> outValidatedEvents,
-                               @NotNull Set<String> files,
-                               @NotNull Set<String> middleDirs) {
+                               @NotNull List<? super Runnable> outApplyEvents,
+                               @NotNull List<? super VFileEvent> outValidatedEvents,
+                               @NotNull Set<? super String> files,
+                               @NotNull Set<? super String> middleDirs) {
     int endIndex = groupByPath(events, startIndex, files, middleDirs);
     // since all events in the group are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
@@ -772,11 +775,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   // find all VFileCreateEvent events in [start..end)
   // group them by parent directory, validate in bulk for each directory, and return "applyCreations()" runnable
-  private void groupCreations(@NotNull List<VFileEvent> events,
+  private void groupCreations(@NotNull List<? extends VFileEvent> events,
                               int start,
                               int end,
-                              @NotNull List<VFileEvent> outValidated,
-                              @NotNull List<Runnable> outApplyEvents) {
+                              @NotNull List<? super VFileEvent> outValidated,
+                              @NotNull List<? super Runnable> outApplyEvents) {
     MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = new MultiMap<VirtualDirectoryImpl, VFileCreateEvent>(){
       @NotNull
       @Override
@@ -805,7 +808,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     if (hasValidEvents) {
-      outApplyEvents.add(()->{
+      outApplyEvents.add((Runnable)()->{
         applyCreations(grouped);
         incStructuralModificationCount();
       });
@@ -814,11 +817,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   // find all VFileDeleteEvent events in [start..end)
   // group them by parent directory (can be null), filter out files which parent dir is to be deleted too, and return "applyDeletions()" runnable
-  private void groupDeletions(@NotNull List<VFileEvent> events,
+  private void groupDeletions(@NotNull List<? extends VFileEvent> events,
                               int start,
                               int end,
-                              @NotNull List<VFileEvent> outValidated,
-                              @NotNull List<Runnable> outApplyEvents) {
+                              @NotNull List<? super VFileEvent> outValidated,
+                              @NotNull List<? super Runnable> outApplyEvents) {
     MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = new MultiMap<VirtualDirectoryImpl, VFileDeleteEvent>(){
       @NotNull
       @Override
@@ -838,7 +841,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     if (hasValidEvents) {
-      outApplyEvents.add(() -> {
+      outApplyEvents.add((Runnable)() -> {
         clearIdCache();
         applyDeletions(grouped);
         incStructuralModificationCount();
@@ -848,16 +851,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   // find events other than VFileCreateEvent or VFileDeleteEvent in [start..end)
   // validate and return "applyEvent()" runnable for each event because it's assumed there won't be too many of them
-  private void groupOthers(@NotNull List<VFileEvent> events,
+  private void groupOthers(@NotNull List<? extends VFileEvent> events,
                            int start,
                            int end,
-                           @NotNull List<VFileEvent> outValidated,
-                           @NotNull List<Runnable> outApplyEvents) {
+                           @NotNull List<? super VFileEvent> outValidated,
+                           @NotNull List<? super Runnable> outApplyEvents) {
     for (int i = start; i < end; i++) {
       VFileEvent event = events.get(i);
       if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || !event.isValid()) continue;
       outValidated.add(event);
-      outApplyEvents.add(() -> applyEvent(event));
+      outApplyEvents.add((Runnable)() -> applyEvent(event));
     }
   }
 
@@ -1148,6 +1151,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
+  @Override
   @NotNull
   @NonNls
   public String toString() {

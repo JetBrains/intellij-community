@@ -168,8 +168,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     }
     else {
       AbstractTestProxy selectedTest = getSelectedTest();
-      fqn = selectedTest instanceof TestProxyRoot ? ((TestProxyRoot)selectedTest).getRootLocation() 
-                                                  : selectedTest != null ? selectedTest.getLocationUrl() : null;
+      fqn = selectedTest != null ? selectedTest.getLocationUrl() : null;
     }
     CopyPasteManager.getInstance().setContents(new StringSelection(fqn));
   }
@@ -177,9 +176,6 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     AbstractTestProxy test = getSelectedTest();
-    if (test instanceof TestProxyRoot) {
-      return ((TestProxyRoot)test).getRootLocation() != null;
-    }
     return test != null && test.getLocationUrl() != null;
   }
 

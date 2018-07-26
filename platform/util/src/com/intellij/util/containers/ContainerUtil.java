@@ -622,7 +622,7 @@ public class ContainerUtil extends ContainerUtilRt {
                                                    @NotNull List<T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
-                                                   @NotNull Consumer<T> processor) {
+                                                   @NotNull Consumer<? super T> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {

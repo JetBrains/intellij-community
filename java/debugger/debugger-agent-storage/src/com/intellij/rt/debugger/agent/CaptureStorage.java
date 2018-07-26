@@ -24,7 +24,8 @@ public class CaptureStorage {
     }
   };
 
-  private static boolean DEBUG = false;
+  @SuppressWarnings("StaticNonFinalField")
+  public static boolean DEBUG; // set from debugger
   private static boolean ENABLED = true;
 
   //// METHODS CALLED FROM THE USER PROCESS
@@ -268,10 +269,6 @@ public class CaptureStorage {
       }
     }
     return res;
-  }
-
-  public static void setDebug(boolean debug) {
-    DEBUG = debug;
   }
 
   public static void setEnabled(boolean enabled) {

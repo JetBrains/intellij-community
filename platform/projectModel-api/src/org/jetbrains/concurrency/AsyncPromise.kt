@@ -46,7 +46,9 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
   override fun getState(): State = if (!f.isDone) State.PENDING else if (f.isCompletedExceptionally) State.REJECTED else State.SUCCEEDED
 
   override fun onSuccess(handler: Consumer<in T>): Promise<T> {
-    val whenComplete = f.whenComplete { value, exception -> if (exception == null) handler.accept(value) }
+    val whenComplete = f.whenComplete { value, exception ->
+      if (exception == null && !InternalPromiseUtil.isHandlerObsolete(handler)) handler.accept(value)
+    }
     return AsyncPromise(whenComplete)
   }
 
@@ -54,14 +56,16 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
     val whenComplete = f.whenComplete { _, exception ->
       if (exception != null) {
         val toReport = if (exception is CompletionException && exception.cause != null) exception.cause!! else exception
-        rejected.accept(toReport)
+        if (!InternalPromiseUtil.isHandlerObsolete(rejected)) {
+          rejected.accept(toReport)
+        }
       }
     }
     return AsyncPromise(whenComplete)
   }
 
   override fun onProcessed(processed: Consumer<in T>): Promise<T> {
-    val whenComplete = f.whenComplete { value, _ -> processed.accept(value) }
+    val whenComplete = f.whenComplete { value, _ -> if (!InternalPromiseUtil.isHandlerObsolete(processed)) processed.accept(value) }
     return AsyncPromise(whenComplete)
   }
 

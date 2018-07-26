@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -15,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
@@ -163,14 +161,40 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Override
   public boolean isReferenceTo(PsiElement element) {
-    final PsiManager manager = getManager();
-    if (element instanceof PsiNamedElement && getParent() instanceof GrImportStatement) {
-      final GroovyResolveResult[] results = multiResolve(false);
-      for (GroovyResolveResult result : results) {
-        if (manager.areElementsEquivalent(result.getElement(), element)) return true;
-      }
+    switch (getKind()) {
+      case PACKAGE_REFERENCE:
+        return referencesPackage(element);
+      case REFERENCE:
+        return referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
+      case IMPORT_REFERENCE:
+        return element instanceof PsiMember &&
+               element instanceof PsiNamedElement &&
+               checkName((PsiNamedElement)element) &&
+               multiResolvesTo(element);
+      default:
+        throw new IllegalStateException();
     }
-    return manager.areElementsEquivalent(element, resolve());
+  }
+
+  private boolean referencesPackage(@NotNull PsiElement element) {
+    return element instanceof PsiPackage && checkName((PsiNamedElement)element) && resolvesTo(element);
+  }
+
+  private boolean checkName(@NotNull PsiNamedElement namedElement) {
+    final String name = namedElement.getName();
+    final String referenceName = getReferenceName();
+    return referenceName != null && referenceName.equals(name);
+  }
+
+  private boolean resolvesTo(@NotNull PsiElement element) {
+    return getManager().areElementsEquivalent(element, resolve());
+  }
+
+  private boolean multiResolvesTo(@NotNull PsiElement element) {
+    final PsiManager manager = getManager();
+    return resolve(false).stream()
+      .map(it -> it.getElement())
+      .anyMatch(it -> manager.areElementsEquivalent(it, element));
   }
 
   @Override

@@ -41,11 +41,6 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     return true;
   }
@@ -70,6 +65,7 @@ public class EverythingGlobalScope extends GlobalSearchScope {
     return true;
   }
 
+  @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Project project = getProject();

@@ -436,6 +436,8 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryProjectUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
     <statistic.eventLog.fusEventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLoggerProvider"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
 
@@ -562,7 +564,7 @@
     <experimentalFeature id="inline.browse.button" percentOfUsers="100">
       <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
     </experimentalFeature>
-    <experimentalFeature id="new.search.everywhere" percentOfUsers="0">
+    <experimentalFeature id="new.search.everywhere" internalFeature="true" percentOfUsers="100">
       <description>Shows new consolidated popup for all GoTo and Search Everywhere actions</description>
     </experimentalFeature>
   </extensions>

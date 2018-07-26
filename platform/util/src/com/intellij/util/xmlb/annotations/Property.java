@@ -40,4 +40,6 @@ public @interface Property {
    * Applicable only on class level.
    */
   Style style() default Style.OPTION_TAG;
+
+  boolean assertIfNoBindings() default true;
 }

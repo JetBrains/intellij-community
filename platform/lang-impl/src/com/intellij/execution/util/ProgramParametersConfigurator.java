@@ -5,10 +5,8 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.ide.macro.EditorMacro;
-import com.intellij.ide.macro.Macro;
-import com.intellij.ide.macro.MacroManager;
-import com.intellij.ide.macro.PromptingMacro;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.macro.*;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -20,6 +18,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,14 @@ public class ProgramParametersConfigurator {
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
-  private static String expandMacros(@Nullable String path) {
+  public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
+    if (Registry.is("allow.macros.for.run.configurations")) {
+      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Insert Macros", ()
+        -> MacrosDialog.show(expandableTextField, macro -> !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro))));
+    }
+  }
+
+  public static String expandMacros(@Nullable String path) {
     if (path != null && Registry.is("allow.macros.for.run.configurations")) {
         Collection<Macro> macros = MacroManager.getInstance().getMacros();
         for (Macro macro: macros) {

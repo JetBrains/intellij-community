@@ -302,11 +302,11 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     override val isUseVfsForWrite: Boolean
       get() = storageManager.isUseVfsForWrite
 
-    override fun beforeElementSaved(element: Element) {
+    override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
       if (rootElementName != null) {
-        storageManager.beforeElementSaved(element)
+        storageManager.beforeElementSaved(elements, rootAttributes)
       }
-      super.beforeElementSaved(element)
+      super.beforeElementSaved(elements, rootAttributes)
     }
 
     override fun beforeElementLoaded(element: Element) {
@@ -314,9 +314,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       super.beforeElementLoaded(element)
     }
 
-    override fun providerDataStateChanged(element: Element?, type: DataStateChanged) {
-      storageManager.providerDataStateChanged(this, element, type)
-      super.providerDataStateChanged(element, type)
+    override fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) {
+      storageManager.providerDataStateChanged(this, writer, type)
+      super.providerDataStateChanged(writer, type)
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
@@ -330,10 +330,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   open val isExternalSystemStorageEnabled: Boolean
     get() = false
 
-  protected open fun beforeElementSaved(element: Element) {
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
   }
 
-  protected open fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
+  protected open fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
   }
 
   protected open fun beforeElementLoaded(element: Element) {

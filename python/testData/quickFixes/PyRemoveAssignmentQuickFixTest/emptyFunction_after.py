@@ -1,4 +1,5 @@
 def foo():
     pass
 
+
 foo()

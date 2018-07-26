@@ -1369,6 +1369,38 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
+  public void testCaretMovementOverVirtualComma() {
+    enableVirtualComma();
+
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret><Hint text=\",def:\"/>) } }");
+
+    right();
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
+  }
+
+  public void testHintsAreNotShownInImproperContext() {
+    configureJava("class C { void m() { int a = Math.ma<caret>5; } }");
+    complete("max(int a, int b)");
+    checkResultWithInlays("class C { void m() { int a = Math.max(<caret>)5; } }");
+  }
+
+  public void testConstructorInvocationInsideMethodInvocation() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
+    type("new Strin");
+    complete("String(byte[] bytes, String charsetName)");
+    checkResultWithInlays("class C { void m() { System.getProperty(new String(<HINT text=\"bytes:\"/><caret><Hint text=\",charsetName:\"/>)) } }");
+    type("null");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.getProperty(new String(<Hint text=\"bytes:\"/>null, <HINT text=\"charsetName:\"/><caret>)) } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }

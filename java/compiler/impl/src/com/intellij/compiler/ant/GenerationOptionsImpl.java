@@ -34,6 +34,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -230,10 +231,13 @@ public class GenerationOptionsImpl extends GenerationOptions {
     }
 
     final Graph<ModuleChunk> moduleChunkGraph = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleChunk>() {
+      @NotNull
       public Collection<ModuleChunk> getNodes() {
         return map.values();
       }
 
+      @NotNull
+      @Override
       public Iterator<ModuleChunk> getIn(ModuleChunk n) {
         final Chunk<Module> chunk = reverseMap.get(n);
         final Iterator<Chunk<Module>> in = chunkGraph.getIn(chunk);

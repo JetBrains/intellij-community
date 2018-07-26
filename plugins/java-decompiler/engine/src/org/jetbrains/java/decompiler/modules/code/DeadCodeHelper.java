@@ -216,14 +216,14 @@ public class DeadCodeHelper {
 
       for (int i = 0; i < node.getPreds().size(); i++) {
         BasicBlock pred = node.getPreds().get(i);
-        if (!marked.contains(pred) && pred != dom) {
+        if (pred != dom && !marked.contains(pred)) {
           lstNodes.add(pred);
         }
       }
 
       for (int i = 0; i < node.getPredExceptions().size(); i++) {
         BasicBlock pred = node.getPredExceptions().get(i);
-        if (!marked.contains(pred) && pred != dom) {
+        if (pred != dom && !marked.contains(pred)) {
           lstNodes.add(pred);
         }
       }

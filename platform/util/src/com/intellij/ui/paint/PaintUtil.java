@@ -149,6 +149,8 @@ public class PaintUtil {
   public static double alignToInt(double usrValue, @NotNull ScaleContext ctx, @Nullable RoundingMode rm, @Nullable ParityMode pm) {
     if (rm == null) rm = ROUND;
     double scale = getScale(ctx);
+    if (scale == 0) return 0;
+
     int devValue = devValue(usrValue, scale, pm != null && rm == ROUND ? FLOOR : rm);
     if (pm != null && ParityMode.of(devValue) != pm) {
       devValue += (rm == FLOOR) ? -1 : 1;
@@ -198,7 +200,11 @@ public class PaintUtil {
 
   private static double getScale(ScaleContext ctx) {
     // exclude the user scale, unless it's zero
-    return ctx.getScale(USR_SCALE) == 0 ? 0 : ctx.getScale(PIX_SCALE) / ctx.getScale(USR_SCALE);
+    double scale = ctx.getScale(USR_SCALE) == 0 ? 0 : ctx.getScale(PIX_SCALE) / ctx.getScale(USR_SCALE);
+    if (scale <= 0) {
+      //Logger.getInstance(PaintUtil.class).warn("bad scale in the context: " + ctx.toString(), new Throwable());
+    }
+    return scale;
   }
 
   /**

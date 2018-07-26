@@ -55,7 +55,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
         if (newValue != null && dataGetter != null) {
           String oldValue = (String)evt.getOldValue();
           Collection<VcsUser> usersToExamine = myUserRegistry.getUsers();
-          if (oldValue != null && newValue.contains(oldValue) && myMatchedUsers != null) {
+          if (oldValue != null && myMatchedUsers != null && newValue.contains(oldValue)) {
             if (myMatchedUsers.isEmpty()) return;
             usersToExamine = myMatchedUsers;
           }

@@ -26,7 +26,12 @@ import org.jetbrains.annotations.NotNull;
 public enum ShortenCommandLine {
   NONE("none", "java [options] classname [args]"),
   MANIFEST("JAR manifest", "java -cp classpath.jar classname [args]"),
-  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]"),
+  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]"){
+    @Override
+    public boolean isApplicable(String jreRoot) {
+      return jreRoot == null || !JdkUtil.isModularRuntime(jreRoot);
+    }
+  },
   ARGS_FILE("@argFiles (java 9+)", "java @argFile [args]") {
     @Override
     public boolean isApplicable(String jreRoot) {

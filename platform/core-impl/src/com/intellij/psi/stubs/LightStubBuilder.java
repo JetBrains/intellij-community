@@ -111,7 +111,7 @@ public class LightStubBuilder implements StubBuilder {
           immediateParentStubbed = hasStub;
           element = (children = kids).get(childNumber = 0);
           parentStub = stub;
-          if (!skipNode(tree, parent, element)) continue nextElement;
+          if (!skipNode(tree, parent, element)) continue;
         }
       }
 
@@ -137,7 +137,7 @@ public class LightStubBuilder implements StubBuilder {
   }
 
   @NotNull
-  private static StubElement createStub(final LighterAST tree, final LighterASTNode element, final StubElement parentStub) {
+  private static StubElement createStub(@NotNull LighterAST tree, @NotNull LighterASTNode element, @NotNull StubElement parentStub) {
     final IElementType elementType = element.getTokenType();
     if (elementType instanceof IStubElementType) {
       if (elementType instanceof ILightStubElementType) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -29,6 +29,9 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   private PathMacrosImpl myPathMacros;
+
+  private ReplacePathToMacroMap myReplacePathToMacroMap;
+  private long myPathMacrosModificationCount;
 
   public BasePathMacroManager(@Nullable PathMacros pathMacros) {
     myPathMacros = (PathMacrosImpl)pathMacros;
@@ -80,12 +83,22 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @NotNull
-  protected ReplacePathToMacroMap getReplacePathMap() {
+  protected synchronized ReplacePathToMacroMap getReplacePathMap() {
+    PathMacrosImpl pathMacros = getPathMacros();
+
+    long pathMacrosModificationCount = pathMacros.getModificationCount();
+    if (myReplacePathToMacroMap != null && pathMacrosModificationCount == myPathMacrosModificationCount) {
+      return myReplacePathToMacroMap;
+    }
+
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-    getPathMacros().addMacroReplacements(result);
+    pathMacros.addMacroReplacements(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroReplacement(entry.getValue(), entry.getKey());
     }
+
+    myReplacePathToMacroMap = result;
+    myPathMacrosModificationCount = pathMacrosModificationCount;
     return result;
   }
 

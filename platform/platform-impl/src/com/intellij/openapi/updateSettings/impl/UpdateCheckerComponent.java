@@ -3,12 +3,15 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,11 +22,13 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 
 import static com.intellij.openapi.application.PathManager.isSnap;
@@ -36,6 +41,8 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
+  static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";//must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
@@ -118,7 +125,24 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
 
   @Override
   public void initComponent() {
+    checkIfPreviousUpdateFailed();
     PluginsAdvertiser.ensureDeleted();
+  }
+
+  private static void checkIfPreviousUpdateFailed() {
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY))) {
+      File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
+      try {
+        if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
+          FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "update.failed");
+          LOG.info("Previous update of the IDE failed");
+        }
+      }
+      catch (IOException ignored) {
+      }
+    }
+    properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
   }
 
   @Override

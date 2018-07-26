@@ -13,10 +13,8 @@ import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.actions.migrate.MigrateDiffTool;
 import com.intellij.util.config.*;
@@ -26,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
 
 @State(
   name = "DiffManager",
@@ -93,59 +90,17 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
 
   @Override
   public DiffTool getIdeaDiffTool() {
-    return INTERNAL_DIFF;
+    return MigrateDiffTool.INSTANCE;
   }
 
   @Override
   public DiffTool getDiffTool() {
-    DiffTool[] standardTools;
-    // there is inner check in multiple tool for external viewers as well
-    if (!ENABLE_FILES.value(myProperties) || !ENABLE_FOLDERS.value(myProperties) || !ENABLE_MERGE.value(myProperties)) {
-      DiffTool[] embeddableTools = {
-        INTERNAL_DIFF,
-        MergeTool.INSTANCE,
-        BinaryDiffTool.INSTANCE
-      };
-      standardTools = new DiffTool[]{
-        MigrateDiffTool.INSTANCE,
-        ExtCompareFolders.INSTANCE,
-        ExtCompareFiles.INSTANCE,
-        ExtMergeFiles.INSTANCE,
-        new MultiLevelDiffTool(Arrays.asList(embeddableTools)),
-        INTERNAL_DIFF,
-        MergeTool.INSTANCE,
-        BinaryDiffTool.INSTANCE
-      };
-    }
-    else {
-      standardTools = new DiffTool[]{
-        MigrateDiffTool.INSTANCE,
-        ExtCompareFolders.INSTANCE,
-        ExtCompareFiles.INSTANCE,
-        ExtMergeFiles.INSTANCE,
-        INTERNAL_DIFF,
-        MergeTool.INSTANCE,
-        BinaryDiffTool.INSTANCE
-      };
-    }
-    return new CompositeDiffTool(standardTools);
+    return MigrateDiffTool.INSTANCE;
   }
 
   @Override
   public MarkupEditorFilter getDiffEditorFilter() {
     return DIFF_EDITOR_FILTER;
-  }
-
-  @Override
-  public DiffPanel createDiffPanel(Window window, @NotNull Project project, DiffTool parentTool) {
-    return new DiffPanelImpl(window, project, true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET, parentTool);
-  }
-
-  @Override
-  public DiffPanel createDiffPanel(Window window, @NotNull Project project, @NotNull Disposable parentDisposable, DiffTool parentTool) {
-    DiffPanel diffPanel = createDiffPanel(window, project, parentTool);
-    Disposer.register(parentDisposable, diffPanel);
-    return diffPanel;
   }
 
   public static DiffManagerImpl getInstanceEx() {
@@ -194,10 +149,11 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
     return myProperties;
   }
 
-  static DiffPanel createDiffPanel(DiffRequest data, Window window, @NotNull Disposable parentDisposable, FrameDiffTool tool) {
+  static DiffPanel createDiffPanel(DiffRequest data, Window window, @NotNull Disposable parentDisposable, DiffTool tool) {
     DiffPanel diffPanel = null;
     try {
-      diffPanel = DiffManager.getInstance().createDiffPanel(window, data.getProject(), parentDisposable, tool);
+      diffPanel = new DiffPanelImpl(window, data.getProject(), true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET, tool);
+      Disposer.register(parentDisposable, diffPanel);
       int contentCount = data.getContents().length;
       LOG.assertTrue(contentCount == 2, String.valueOf(contentCount));
       LOG.assertTrue(data.getContentTitles().length == contentCount);

@@ -64,7 +64,6 @@ public class SvnRootAboveTest extends SvnTestCase {
 
     myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
     myProjectLevelVcsManager.setDirectoryMapping(myLocalWcRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
-    myProjectLevelVcsManager.updateActiveVcss();
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
@@ -108,7 +107,6 @@ public class SvnRootAboveTest extends SvnTestCase {
       }
       newMappings.add(new VcsDirectoryMapping(myMappingTarget.getPath(), SvnVcs.VCS_NAME));
       myProjectLevelVcsManager.setDirectoryMappings(newMappings);
-      myProjectLevelVcsManager.updateActiveVcss();
       sleep100();
     }
 

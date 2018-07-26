@@ -192,7 +192,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     try {
       map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
-        protected boolean wantNonnegativeIntegralValues() {
+        protected boolean wantNonNegativeIntegralValues() {
           return true;
         }
       };
@@ -215,7 +215,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       started = System.currentTimeMillis();
       map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
-        protected boolean wantNonnegativeIntegralValues() {
+        protected boolean wantNonNegativeIntegralValues() {
           return true;
         }
       };

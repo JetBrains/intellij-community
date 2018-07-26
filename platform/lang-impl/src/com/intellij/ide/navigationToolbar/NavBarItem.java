@@ -94,6 +94,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     return myAttributes;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }

@@ -314,6 +314,22 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  fun testUpgradeableModuleOnClasspath() {
+    highlight("test.java", """
+        import java.xml.bind.*;
+        import java.xml.bind.C;
+        """.trimIndent())
+  }
+
+  fun testUpgradeableModuleOnModulePath() {
+    myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
+    highlight("""
+        module M {
+          requires <error descr="'java.xml.bind' is deprecated and marked for removal">java.xml.bind</error>;
+          requires java.xml.ws;
+        }""".trimIndent())
+  }
+
   fun testLinearModuleGraphBug() {
     addFile("module-info.java", "module M6 { requires M7; }", M6)
     addFile("module-info.java", "module M7 { }", M7)

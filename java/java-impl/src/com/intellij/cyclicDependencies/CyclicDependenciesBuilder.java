@@ -27,6 +27,7 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.graph.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -236,10 +237,14 @@ public class CyclicDependenciesBuilder{
 
   private Graph<PsiPackage> buildGraph() {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<PsiPackage>() {
+      @Override
+      @NotNull
       public Collection<PsiPackage> getNodes() {
         return getAllScopePackages().values();
       }
 
+      @NotNull
+      @Override
       public Iterator<PsiPackage> getIn(PsiPackage psiPack) {
         final Set<PsiPackage> psiPackages = myPackageDependencies.get(psiPack);
         if (psiPackages == null) {     //for packs without java classes

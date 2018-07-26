@@ -69,7 +69,7 @@ public class ExpressionParser {
     if (left == null) return null;
 
     final IElementType tokenType = getGtTokenType(builder);
-    if (ASSIGNMENT_OPS.contains(tokenType) && tokenType != null) {
+    if (tokenType != null && ASSIGNMENT_OPS.contains(tokenType)) {
       final PsiBuilder.Marker assignment = left.precede();
       advanceGtToken(builder, tokenType);
 

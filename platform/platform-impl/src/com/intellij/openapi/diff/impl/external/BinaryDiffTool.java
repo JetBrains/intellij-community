@@ -133,9 +133,7 @@ public class BinaryDiffTool implements DiffTool {
     public DiffPanel create(final Window window, final Disposable disposable, final BinaryDiffTool tool) {
       if (! myCanCreatePanel) return null;
 
-      final Project project = myData.getProject();
-      final DiffPanel panel = DiffManager.getInstance().createDiffPanel(window, project, disposable, tool);
-      panel.setDiffRequest(myData);
+      final DiffPanel panel = DiffManagerImpl.createDiffPanel(myData, window, disposable, tool);
       panel.removeStatusBar();
       return panel;
     }

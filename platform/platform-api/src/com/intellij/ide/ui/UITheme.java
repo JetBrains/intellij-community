@@ -31,11 +31,13 @@ public class UITheme {
   private boolean dark;
   private String author;
   private String id;
+  private String editorScheme;
   private Map<String, Object> ui;
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
-  private Class providerClass;
+  private ClassLoader providerClassLoader = getClass().getClassLoader();
+  private String editorSchemeName;
 
   private UITheme() {
   }
@@ -52,10 +54,10 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull Class provider) throws IOException {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull ClassLoader provider) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
-    theme.providerClass = provider;
+    theme.providerClassLoader = provider;
     if (!theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
@@ -73,6 +75,15 @@ public class UITheme {
     return id;
   }
 
+  @Nullable
+  public String getEditorScheme() {
+    return editorScheme;
+  }
+
+  public Map<String, Object> getBackground() {
+    return background;
+  }
+
   public void applyProperties(UIDefaults defaults) {
     if (ui == null) return;
 
@@ -85,8 +96,9 @@ public class UITheme {
     return patcher;
   }
 
-  public Class getProviderClass() {
-    return providerClass;
+  @NotNull
+  public ClassLoader getProviderClassLoader() {
+    return providerClassLoader;
   }
 
   private static void apply(String key, Object value, UIDefaults defaults) {
@@ -194,6 +206,14 @@ public class UITheme {
     return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
   }
 
+  public String getEditorSchemeName() {
+    return editorSchemeName;
+  }
+
+  public void setEditorSchemeName(String editorSchemeName) {
+    this.editorSchemeName = editorSchemeName;
+  }
+
   //
   //json deserialization methods
   //
@@ -223,8 +243,9 @@ public class UITheme {
     this.icons = icons;
   }
 
-  public Map<String, Object> getBackground() {
-    return background;
+  @SuppressWarnings("unused")
+  public void setEditorScheme(String editorScheme) {
+    this.editorScheme = editorScheme;
   }
 
   public void setBackground(Map<String, Object> background) {

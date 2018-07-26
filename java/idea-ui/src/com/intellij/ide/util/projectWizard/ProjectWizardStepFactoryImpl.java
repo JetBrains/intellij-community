@@ -48,7 +48,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
                                                final Computable<Boolean> isVisible,
                                                final Icon icon,
                                                @NonNls final String helpId) {
-    return new ProjectJdkForModuleStep(context, type){
+    return new ProjectJdkForModuleStep(context, type, helpId) {
       public void updateDataModel() {
         super.updateDataModel();
         builder.setModuleJdk(getJdk());
@@ -65,10 +65,6 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
       @Override
       public String getName() {
         return "Specify JDK";
-      }
-
-      public String getHelpId() {
-        return helpId;
       }
     };
   }
