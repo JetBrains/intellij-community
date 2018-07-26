@@ -32,6 +32,8 @@ import java.lang.ref.Reference;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 /**
  * This panel contains all tool stripes and JLayeredPanle at the center area. All tool windows are
  * located inside this layered pane.
@@ -875,32 +877,26 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage = myLayeredPane.getTopImage();
-          final Graphics topGraphics = topImage.getGraphics();
 
-          Rectangle bounds;
+          Rectangle bounds =  myComponent.getBounds();
 
-          try {
+          useSafely(topImage.getGraphics(), topGraphics -> {
             myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
             myLayeredPane.moveToFront(myComponent);
             myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-            bounds = myComponent.getBounds();
             myComponent.paint(topGraphics);
             myLayeredPane.remove(myComponent);
-          }
-          finally {
-            topGraphics.dispose();
-          }
+          });
+
           // Prepare bottom image.
           final Image bottomImage = myLayeredPane.getBottomImage();
-          final Graphics bottomGraphics = bottomImage.getGraphics();
-          try {
+
+          useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             bottomGraphics.setClip(0, 0, bounds.width, bounds.height);
             bottomGraphics.translate(-bounds.x, -bounds.y);
             myLayeredPane.paint(bottomGraphics);
-          }
-          finally {
-            bottomGraphics.dispose();
-          }
+          });
+
           // Start animation.
           final Surface surface = new Surface(topImage, bottomImage, 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
@@ -1094,26 +1090,21 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
           final Image topImage = myLayeredPane.getTopImage();
-          final Graphics topGraphics = topImage.getGraphics();
-          try {
+          useSafely(topImage.getGraphics(), topGraphics -> {
             myComponent.paint(topGraphics);
-          }
-          finally {
-            topGraphics.dispose();
-          }
+          });
+
           // Prepare bottom image. This image contains picture of component that is located
           // under the component to is being removed.
           final Image bottomImage = myLayeredPane.getBottomImage();
-          final Graphics bottomGraphics = bottomImage.getGraphics();
-          try {
+
+          useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             myLayeredPane.remove(myComponent);
             bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
             bottomGraphics.translate(-bounds.x, -bounds.y);
             myLayeredPane.paint(bottomGraphics);
-          }
-          finally {
-            bottomGraphics.dispose();
-          }
+          });
+
           // Remove component from the layered pane and start animation.
           final Surface surface = new Surface(topImage, bottomImage, -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
