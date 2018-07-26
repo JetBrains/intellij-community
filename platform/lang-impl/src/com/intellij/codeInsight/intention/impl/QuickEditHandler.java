@@ -90,7 +90,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private EditorWindow mySplittedWindow;
   private boolean myCommittingToOriginal;
 
-  private final PsiFile myInjectedFile;
+  private PsiFile myInjectedFile;
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = ContainerUtil.newLinkedList();
 
   @Nullable
@@ -161,15 +161,13 @@ public class QuickEditHandler implements Disposable, DocumentListener {
         lastShred.getHostRangeMarker().getEndOffset());
       myAltFullRange.setGreedyToLeft(true);
       myAltFullRange.setGreedyToRight(true);
-
       initGuardedBlocks(shreds);
-      myInjectedFile = null;
     }
     else {
       initMarkers(shreds);
       myAltFullRange = null;
-      myInjectedFile = injectedFile;
     }
+    myInjectedFile = injectedFile;
   }
 
   public boolean isValid() {
@@ -457,7 +455,23 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     return myNewFile;
   }
 
-  public boolean changesRange(TextRange range) {
+  public boolean tryReuse(@NotNull PsiFile injectedFile, TextRange hostRange) {
+
+    if (myInjectedFile == injectedFile) return changesRange(hostRange);
+
+    if ((myInjectedFile == null || !myInjectedFile.isValid()) && myAltFullRange != null) {
+      DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
+      if (documentWindow != null && documentWindow.getDelegate() == myAltFullRange.getDocument() && changesRange(hostRange)) {
+        myInjectedFile = injectedFile;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+
+  private boolean changesRange(TextRange range) {
     if (myAltFullRange != null) {
        return range.intersects(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
     }
