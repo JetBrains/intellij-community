@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.keymap.KeymapUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -24,6 +25,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
   private final KeyStroke myStroke;
   private final KeyboardGestureAction.ModifierType myType;
 
+  @NotNull
   public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
     switch (type) {
       case dblClick:
@@ -54,7 +56,7 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
   }
 
   @Override
-  public boolean startsWith(final Shortcut sc) {
+  public boolean startsWith(@NotNull final Shortcut sc) {
     if (!(sc instanceof KeyboardModifierGestureShortcut)) return false;
 
     final KeyboardModifierGestureShortcut other = (KeyboardModifierGestureShortcut)sc;
