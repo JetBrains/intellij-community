@@ -1,34 +1,38 @@
 <html>
 <body>
 Reports any variables which may be declared with a weaker type. For instance,
-a variable may be of type <b>ArrayList</b>, and only the method
-<b>isEmpty()</b> is called on it. In this case the type
-<b>List</b> would do just as well.
+a variable may be of type <tt>ArrayList</tt>, and only the method
+<tt>isEmpty()</tt> is called on it. In this case the type
+<tt>List</tt> would do just as well.
 <!-- tooltip end -->
 <p>
-Enable the first checkbox below to prevent weakening the left side of assignments when the right side is not
+Enable the <b>Use righthand type</b> checkbox below
+to prevent weakening the left side of assignments when the right side is not
 a type cast or new expression. When storing the result of a method call in a variable, it is
 useful to retain the type of the method call result instead of unnecessarily weakening it.
 <p>
-Enable the second checkbox below to use the parameterized type of the collection as weakest type when
+Enable the <b>Use parameterized type</b> checkbox below
+to use the parameterized type of the collection as weakest type when
 the object evaluated is used as an argument to a collection method with a parameter type of
-<b>java.lang.Object</b>. Use this option to prevent weakening to
-<b>Object</b> when passing an object to the collection methods
-<b>get()</b>, <b>remove()</b>,
-<b>contains()</b>, <b>indexOf()</b>,
-<b>lastIndexOf()</b>, <b>containsKey()</b>
-and <b>containsValue()</b>.
+<tt>java.lang.Object</tt>.
+Use this option to prevent weakening to <tt>Object</tt> when passing an object to the collection methods
+<tt>get()</tt>, <tt>remove()</tt>,
+<tt>contains()</tt>, <tt>indexOf()</tt>,
+<tt>lastIndexOf()</tt>, <tt>containsKey()</tt> and <tt>containsValue()</tt>.
 <p>
-Use the third checkbox below to specify if this inspection should warn when a type can be
-weakened to <b>java.lang.Object</b>. Weakening to
-<b>java.lang.Object</b> is often not very useful.
+Enable the <b>Do not weaken to Object</b> checkbox below
+to specify whether a type should be weakened to <tt>java.lang.Object</tt>.
+Weakening to <tt>java.lang.Object</tt> is often not very useful.
 <p>
-Use the fourth checkbox below to only report when the type can be weakened to an interface type.
+Enable the <b>Only weaken to an interface</b> checkbox below
+to only report when the type can be weakened to an interface type.
 <p>
-Use the fifth checkbox below to prevent reporting when return type may be weakened. So, only variables will be analysed.
+Enable the <b>Do not weaken return type</b> ceckbox below
+to prevent reporting when return type may be weakened.
+So, only variables will be analysed.
 <p>
-Stop classes are intended to prevent weakening to classes, lower than stop classes, even if it is possible.
-In some cases it may improve readability.
-
+<b>Stop classes</b> are intended to prevent weakening to classes
+lower than stop classes, even if it would be possible.
+In some cases this may improve readability.
 </body>
 </html>
