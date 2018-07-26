@@ -391,7 +391,7 @@ public class RefactoringUtil {
     PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiType.NULL.equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
-      if (infos.length == 1) {
+      if (infos.length > 0) {
         type = infos[0].getType();
         if (type instanceof PsiPrimitiveType) {
           type = ((PsiPrimitiveType)type).getBoxedType(expr);
