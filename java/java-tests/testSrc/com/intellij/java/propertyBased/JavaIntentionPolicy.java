@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -166,6 +167,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       while (shouldParenthesizeParent(expression)) {
         expression = (PsiExpression)expression.getParent();
       }
+      if (ErrorUtil.containsDeepError(expression)) break;
       PsiElement parent = expression.getParent();
       if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
