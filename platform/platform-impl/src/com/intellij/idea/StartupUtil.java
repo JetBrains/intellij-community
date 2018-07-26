@@ -13,6 +13,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
+import com.intellij.openapi.application.DeleteOldDirectoriesHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -148,6 +149,7 @@ public class StartupUtil {
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
       ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+      DeleteOldDirectoriesHelper.run();
     }
     else {
       installPluginUpdates();
