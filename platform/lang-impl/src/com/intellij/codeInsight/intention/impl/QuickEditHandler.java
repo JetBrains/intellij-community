@@ -269,7 +269,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       }
     }
     else if (e.getDocument() == myOrigDocument) {
-      if (myCommittingToOriginal || myAltFullRange != null && myAltFullRange.isValid()) return;
+      if (myCommittingToOriginal) return;
       ApplicationManager.getApplication().invokeLater(() -> closeEditor(), myProject.getDisposed());
     }
   }
