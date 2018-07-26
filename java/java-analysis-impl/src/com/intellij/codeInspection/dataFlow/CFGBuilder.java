@@ -726,6 +726,7 @@ public class CFGBuilder {
       push(factory.getConstFactory().getSentinel());
       for (PsiExpression expression : expressions) {
         pushExpression(expression);
+        boxUnbox(expression, targetVariable.getVariableType());
       }
       // Revert order
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));
