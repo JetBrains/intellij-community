@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -178,20 +177,14 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
 
-    Collection<PsiJavaModule> named = JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope);
-    if (!named.isEmpty()) {
-      return upgradeModules(sortModules(named, scope), moduleName, scope);
-    }
+    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
 
     Collection<VirtualFile> jars = JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope);
     if (!jars.isEmpty()) {
-      List<PsiJavaModule> automatic = jars.stream().map(f -> LightJavaModule.getModule(myManager, f)).collect(Collectors.toList());
-      if (!automatic.isEmpty()) {
-        return sortModules(automatic, scope);
-      }
+      jars.stream().map(f -> LightJavaModule.getModule(myManager, f)).forEach(results::add);
     }
 
-    return Collections.emptyList();
+    return upgradeModules(sortModules(results, scope), moduleName, scope);
   }
 
   private static class LibSrcExcludingScope extends DelegatingGlobalSearchScope {
@@ -229,7 +222,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
         ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
         for (ListIterator<PsiJavaModule> i = list.listIterator(); i.hasNext(); ) {
           PsiJavaModule candidate = i.next();
-          if (index.getOrderEntryForFile(candidate.getContainingFile().getVirtualFile()) instanceof JdkOrderEntry) {
+          if (index.getOrderEntryForFile(PsiImplUtil.getModuleVirtualFile(candidate)) instanceof JdkOrderEntry) {
             if (i.previousIndex() > 0) {
               i.remove();  // not at the top -> is upgraded
             }
