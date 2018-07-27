@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.SmartHashSet
-import com.intellij.util.containers.isNullOrEmpty
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.BasePathMacroManager")
 
@@ -29,11 +28,9 @@ internal class TrackingPathMacroSubstitutorImpl(private val macroManager: BasePa
   override fun invalidateUnknownMacros(macros: Set<String>) {
     synchronized(lock) {
       for (macro in macros) {
-        val componentNames = macroToComponentNames.remove(macro)
-        if (componentNames.isNullOrEmpty()) {
-          for (component in componentNames!!) {
-            componentNameToMacros.remove(component)
-          }
+        val componentNames = macroToComponentNames.remove(macro) ?: continue
+        for (component in componentNames) {
+          componentNameToMacros.remove(component)
         }
       }
     }
