@@ -120,13 +120,6 @@ public abstract class BaseUpdateAction extends PatchAction {
     }
   }
 
-  protected void writeDiff(File olderFile, File newerFile, OutputStream patchOutput) throws IOException {
-    try (BufferedInputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile, myPatch.isNormalized()));
-         BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile))) {
-      writeDiff(olderFileIn, newerFileIn, patchOutput);
-    }
-  }
-
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
     Runner.logger().info("writing diff");
     ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();

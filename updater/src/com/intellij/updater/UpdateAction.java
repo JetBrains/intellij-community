@@ -27,7 +27,10 @@ public class UpdateAction extends BaseUpdateAction {
       FileType type = getFileType(newerFile);
       if (type == FileType.SYMLINK) throw new IOException("Unexpected symlink: " + newerFile);
       writeFileType(patchOutput, type);
-      writeDiff(olderFile, newerFile, patchOutput);
+      try (BufferedInputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile, myPatch.isNormalized()));
+           BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile))) {
+        writeDiff(olderFileIn, newerFileIn, patchOutput);
+      }
 
       patchOutput.closeEntry();
     }
