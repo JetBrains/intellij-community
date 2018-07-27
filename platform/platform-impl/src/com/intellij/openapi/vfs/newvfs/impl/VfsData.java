@@ -186,7 +186,7 @@ public class VfsData {
   }
 
   static CharSequence getNameByFileId(int id) {
-    return FileNameCache.getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
+    return FSRecords.INSTANCE.getFileNameCache().getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
   }
 
   static boolean isFileValid(int id) {

@@ -192,7 +192,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       if (attributes != null) {
         int childId = createAndFillRecord(fs, child, id, attributes);
         childrenIds.add(childId);
-        nameIds.add(new FSRecords.NameId(childId, FileNameCache.storeName(newName), newName));
+        nameIds.add(new FSRecords.NameId(childId, myFSRecords.getFileNameCache().storeName(newName), newName));
       }
     }
 

@@ -122,6 +122,7 @@ public class FSRecords {
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
 
   private final DbConnection myDbConnection = new DbConnection(this);
+  private final FileNameCache myFileNameCache = new FileNameCache(this);
 
   public static final FSRecords INSTANCE = new FSRecords();
 
@@ -939,11 +940,16 @@ public class FSRecords {
           int id = DataInputOutputUtil.readINT(input) + prevId;
           prevId = id;
           int nameId = doGetNameId(id);
-          result[i] = new NameId(id, nameId, FileNameCache.getVFileName(nameId, this::doGetNameByNameId));
+          result[i] = new NameId(id, nameId, myFileNameCache.getVFileName(nameId, this::doGetNameByNameId));
         }
         return result;
       }
     });
+  }
+
+  @NotNull
+  public FileNameCache getFileNameCache() {
+    return myFileNameCache;
   }
 
   boolean wereChildrenAccessed(int id) {
@@ -1150,7 +1156,7 @@ public class FSRecords {
   @NotNull
   private CharSequence doGetNameSequence(int id) throws IOException {
     final int nameId = getRecordInt(id, NAME_OFFSET);
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, this::doGetNameByNameId);
+    return nameId == 0 ? "" : myFileNameCache.getVFileName(nameId, this::doGetNameByNameId);
   }
 
   public String getNameByNameId(int nameId) {

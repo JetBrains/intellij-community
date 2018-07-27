@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
@@ -93,7 +94,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @NotNull
   @Override
   public CharSequence getNameSequence() {
-    return FileNameCache.getVFileName(getNameId());
+    return FSRecords.INSTANCE.getFileNameCache().getVFileName(getNameId());
   }
 
   public final int getNameId() {
@@ -164,7 +165,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
-    CharSequence name = FileNameCache.getVFileName(mySegment.getNameId(myId));
+    CharSequence name = FSRecords.INSTANCE.getFileNameCache().getVFileName(mySegment.getNameId(myId));
 
     char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
     int i = positionRef[0];
@@ -319,7 +320,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
-    mySegment.setNameId(myId, FileNameCache.storeName(newName));
+    mySegment.setNameId(myId, FSRecords.INSTANCE.getFileNameCache().storeName(newName));
     parent.addChild(this);
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }

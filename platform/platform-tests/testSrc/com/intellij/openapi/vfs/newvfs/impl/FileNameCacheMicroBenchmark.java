@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -36,18 +37,22 @@ import java.util.concurrent.Future;
  * @author peter
  */
 public class FileNameCacheMicroBenchmark {
+  private static final FSRecords ourFSRecords = FSRecords.INSTANCE;
+
   public static void main(String[] args) throws Exception {
     //noinspection SSBasedInspection
     SwingUtilities.invokeAndWait(() -> {
       try {
-        IdeaTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR).getFixture();
+        IdeaTestFixture fixture =
+          IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+                                .getFixture();
         fixture.setUp();
         long start = System.currentTimeMillis();
         runTest(200, "All names in cache");
         runTest(50000, "Cache almost overflows");
         runTest(120000, "Cache certain overflow");
         long elapsed = System.currentTimeMillis() - start;
-        System.out.println("Total elapsed: " + elapsed/1000.0 +"s");
+        System.out.println("Total elapsed: " + elapsed / 1000.0 + "s");
 
         fixture.tearDown();
       }
@@ -65,9 +70,9 @@ public class FileNameCacheMicroBenchmark {
       final int blackHole = threadRandom.nextInt();
 
       for (int j = 0; j < queryCount; j++) {
-        final CharSequence name = FileNameCache.getVFileName(ids[threadRandom.nextInt(ids.length)]);
+        final CharSequence name = ourFSRecords.getFileNameCache().getVFileName(ids[threadRandom.nextInt(ids.length)]);
 
-        if (blackHole == name.hashCode() && blackHole+1 == name.hashCode()) {
+        if (blackHole == name.hashCode() && blackHole + 1 == name.hashCode()) {
           failure();
         }
       }
@@ -106,7 +111,7 @@ public class FileNameCacheMicroBenchmark {
         final int blackHole = threadRandom.nextInt();
         int currentId = 0;
 
-        for(int j = 0; j < queryCount; ++j) {
+        for (int j = 0; j < queryCount; ++j) {
           final int hash = getPath(currentId++, ids);
           if (currentId == ids.length) currentId = 0;
           if (blackHole == hash) {
@@ -127,7 +132,7 @@ public class FileNameCacheMicroBenchmark {
   };
 
   private static void runTest(int nameCount, String name) throws InterruptedException, ExecutionException {
-    System.out.println("----- " + name + " ------ name count: "+nameCount);
+    System.out.println("----- " + name + " ------ name count: " + nameCount);
 
     TIntObjectHashMap<CharSequence> map = generateNames(nameCount);
     final int[] ids = map.keys();
@@ -145,6 +150,7 @@ public class FileNameCacheMicroBenchmark {
   }
 
   private static boolean warmedUp;
+
   private static void warmUp(int[] ids) throws InterruptedException, ExecutionException {
     if (warmedUp) return;
     System.out.println("Warming up");
@@ -161,14 +167,15 @@ public class FileNameCacheMicroBenchmark {
     int result = 0;
 
     while (id > 0) {
-      result += FileNameCache.getVFileName(ids[id]).hashCode();
+      result += ourFSRecords.getFileNameCache().getVFileName(ids[id]).hashCode();
       id /= 10;
     }
     return result;
   }
 
-  private static void measureAverageTime(int[] ids, int threadCount, TestIteration iteration) throws InterruptedException, ExecutionException {
-    System.out.println("Running "+threadCount+" threads, using "+iteration);
+  private static void measureAverageTime(int[] ids, int threadCount, TestIteration iteration)
+    throws InterruptedException, ExecutionException {
+    System.out.println("Running " + threadCount + " threads, using " + iteration);
     TLongArrayList times = new TLongArrayList();
     for (int i = 0; i < 10; i++) {
       long time = runThreads(ids, threadCount, 2000000/*0*/, iteration);
@@ -178,19 +185,21 @@ public class FileNameCacheMicroBenchmark {
 
     times.sort();
     long median = times.get(times.size() / 2);
-    System.out.println("Median for " + threadCount + " threads: " + median+"ms");
+    System.out.println("Median for " + threadCount + " threads: " + median + "ms");
     System.out.println();
   }
 
   private abstract static class TestIteration {
     abstract void doTest(int threadNumber, int[] ids, Random threadRandom, int queryCount);
+
     static void failure() {
       System.err.println("Failure");
       assert false;
     }
   }
 
-  private static long runThreads(final int[] ids, int threadCount, final int queryCount, final TestIteration testIteration) throws InterruptedException, ExecutionException {
+  private static long runThreads(final int[] ids, int threadCount, final int queryCount, final TestIteration testIteration)
+    throws InterruptedException, ExecutionException {
     long start = System.currentTimeMillis();
     List<Future<?>> futures = ContainerUtil.newArrayList();
     Random seedRandom = new Random();
@@ -208,7 +217,7 @@ public class FileNameCacheMicroBenchmark {
 
   private static void checkNames(TIntObjectHashMap<CharSequence> map, int[] ids) {
     for (int id : ids) {
-      Assert.assertEquals(map.get(id), FileNameCache.getVFileName(id).toString());
+      Assert.assertEquals(map.get(id), ourFSRecords.getFileNameCache().getVFileName(id).toString());
     }
   }
 
@@ -218,7 +227,7 @@ public class FileNameCacheMicroBenchmark {
     TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<>();
     for (int i = 0; i < nameCount; i++) {
       String name = "some_name_" + random.nextInt() + StringUtil.repeat("a", random.nextInt(10));
-      int id = FileNameCache.storeName(name);
+      int id = ourFSRecords.getFileNameCache().storeName(name);
       map.put(id, name);
     }
     return map;

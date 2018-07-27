@@ -176,7 +176,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         myData.addAdoptedName(name, caseSensitive);
         return null;
       }
-      child = createChild(FileNameCache.storeName(name), id, delegate);
+      child = createChild(FSRecords.INSTANCE.getFileNameCache().storeName(name), id, delegate);
 
       insertChildAt(child, index);
       ((PersistentFSImpl)ourPersistence).incStructuralModificationCount();
@@ -232,7 +232,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @NotNull
   public VirtualFileSystemEntry createChild(@NotNull String name, int id, @NotNull NewVirtualFileSystem delegate) {
     synchronized (myData) {
-      return createChild(FileNameCache.storeName(name), id, delegate);
+      return createChild(FSRecords.INSTANCE.getFileNameCache().storeName(name), id, delegate);
     }
   }
 
