@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,11 +93,20 @@ public class JsonSchemaInfo {
       }
     }
 
+    while (index2 >= 0 && isVeryDumbName(possibleName)) {
+      int prev = index2;
+      index2 = myUrl.lastIndexOf('/', prev - 1);
+      if (index2 != -1) {
+        possibleName = sanitizeName(myUrl.substring(index2 + 1, prev));
+      }
+    }
+
     return possibleName;
   }
 
   public static boolean isVeryDumbName(String possibleName) {
-    return "schema".equals(possibleName) || "config".equals(possibleName);
+    if (StringUtil.isEmptyOrSpaces(possibleName) || "schema".equals(possibleName) || "config".equals(possibleName)) return true;
+    return StringUtil.split(possibleName, ".").stream().allMatch(s -> JsonSchemaType.isInteger(s));
   }
 
   @NotNull
