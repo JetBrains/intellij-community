@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +38,15 @@ import java.util.List;
  */
 @State(name = "TemplateDataLanguageMappings", storages = @Storage("templateLanguages.xml"))
 public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Language> {
+  private final FilePropertyPusher<Language> myPropertyPusher;
+
+  public TemplateDataLanguageMappings(final Project project, final FSRecords fsRecords) {
+    super(project);
+    myPropertyPusher = new TemplateDataLanguagePusher(fsRecords);
+  }
 
   public static TemplateDataLanguageMappings getInstance(final Project project) {
     return ServiceManager.getService(project, TemplateDataLanguageMappings.class);
-  }
-
-  public TemplateDataLanguageMappings(final Project project) {
-    super(project);
   }
 
   @Override
@@ -70,7 +73,7 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
 
   @Nullable
   public static Language getDefaultMappingForFile(@Nullable VirtualFile file) {
-    return file == null? null : TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
+    return file == null ? null : TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
   }
 
   public static List<Language> getTemplateableLanguages() {
@@ -78,14 +81,14 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
       @Override
       public boolean value(final Language language) {
         if (language == Language.ANY) return false;
-        if (language instanceof TemplateLanguage || language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
+        if (language instanceof TemplateLanguage || language instanceof DependentLanguage || language instanceof InjectableLanguage) {
+          return false;
+        }
         if (language.getBaseLanguage() != null) return value(language.getBaseLanguage());
         return true;
       }
     });
   }
-
-  private final FilePropertyPusher<Language> myPropertyPusher = new TemplateDataLanguagePusher();
 
   @NotNull
   @Override

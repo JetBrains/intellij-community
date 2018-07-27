@@ -130,8 +130,8 @@ public class VfsData {
     }
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
-      FSRecords.INSTANCE.invalidateCaches();
-      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.INSTANCE.getParent(id));
+      FSRecords.getInstance().invalidateCaches();
+      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getInstance().getParent(id));
     }
 
     return o instanceof DirectoryData ? persistentFS.getOrCacheDir(id, segment, (DirectoryData)o, parent)
@@ -173,12 +173,13 @@ public class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      FSRecords.INSTANCE.invalidateCaches();
-      int parent = FSRecords.INSTANCE.getParent(id);
+      final FSRecords fsRecords = FSRecords.getInstance();
+      fsRecords.invalidateCaches();
+      int parent = fsRecords.getParent(id);
       String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
       if (parent > 0) {
-        msg += "; parent.name=" + FSRecords.INSTANCE.getName(parent);
-        msg += "; parent.children=" + Arrays.toString(FSRecords.INSTANCE.listAll(id));
+        msg += "; parent.name=" + fsRecords.getName(parent);
+        msg += "; parent.children=" + Arrays.toString(fsRecords.listAll(id));
       }
       throw new FileAlreadyCreatedException(msg);
     }
@@ -186,7 +187,7 @@ public class VfsData {
   }
 
   static CharSequence getNameByFileId(int id) {
-    return FSRecords.INSTANCE.getFileNameCache().getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
+    return FSRecords.getInstance().getFileNameCache().getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
   }
 
   static boolean isFileValid(int id) {

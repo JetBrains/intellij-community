@@ -36,6 +36,8 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 public class PersistentFsTest extends PlatformTestCase {
+  private static final FSRecords ourFSRecords = FSRecords.getInstance();
+
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
 
@@ -201,8 +203,8 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
 
-    FSRecords.INSTANCE.force();
-    assertFalse(FSRecords.INSTANCE.isDirty());
+    ourFSRecords.force();
+    assertFalse(ourFSRecords.isDirty());
     ++globalModCount;
 
     int finalGlobalModCount = globalModCount;
@@ -239,8 +241,8 @@ public class PersistentFsTest extends PlatformTestCase {
     final int parentModCount = managingFS.getModificationCount(vFile.getParent());
     int inSessionModCount = managingFS.getModificationCount();
 
-    FSRecords.INSTANCE.force();
-    assertFalse(FSRecords.INSTANCE.isDirty());
+    ourFSRecords.force();
+    assertFalse(ourFSRecords.isDirty());
 
     FileAttribute attribute = new FileAttribute("test.attribute", 1, true);
     WriteAction.run(() -> {
@@ -254,20 +256,20 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
 
-    assertTrue(FSRecords.INSTANCE.isDirty());
-    FSRecords.INSTANCE.force();
-    assertFalse(FSRecords.INSTANCE.isDirty());
+    assertTrue(ourFSRecords.isDirty());
+    ourFSRecords.force();
+    assertFalse(ourFSRecords.isDirty());
 
     //
     int fileId = ((VirtualFileWithId)vFile).getId();
-    FSRecords.INSTANCE.setTimestamp(fileId, FSRecords.INSTANCE.getTimestamp(fileId));
-    FSRecords.INSTANCE.setLength(fileId, FSRecords.INSTANCE.getLength(fileId));
+    ourFSRecords.setTimestamp(fileId, ourFSRecords.getTimestamp(fileId));
+    ourFSRecords.setLength(fileId, ourFSRecords.getLength(fileId));
 
     assertEquals(globalModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
-    assertFalse(FSRecords.INSTANCE.isDirty());
+    assertFalse(ourFSRecords.isDirty());
   }
 
   public void testProcessEventsMustIgnoreDeleteDuplicates() {

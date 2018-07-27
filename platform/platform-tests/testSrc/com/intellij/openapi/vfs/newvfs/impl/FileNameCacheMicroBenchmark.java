@@ -37,7 +37,7 @@ import java.util.concurrent.Future;
  * @author peter
  */
 public class FileNameCacheMicroBenchmark {
-  private static final FSRecords ourFSRecords = FSRecords.INSTANCE;
+  private static final FSRecords ourFSRecords = FSRecords.getInstance();
 
   public static void main(String[] args) throws Exception {
     //noinspection SSBasedInspection

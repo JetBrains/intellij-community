@@ -124,8 +124,6 @@ public class FSRecords {
   private final DbConnection myDbConnection = new DbConnection(this);
   private final FileNameCache myFileNameCache = new FileNameCache(this);
 
-  public static final FSRecords INSTANCE = new FSRecords();
-
   private FSRecords() {
     //noinspection ConstantConditions
     assert HEADER_SIZE <= RECORD_SIZE;
@@ -133,6 +131,10 @@ public class FSRecords {
     lock = new ReentrantReadWriteLock();
     r = lock.readLock();
     w = lock.writeLock();
+  }
+
+  public static FSRecords getInstance() {
+    return ApplicationManager.getApplication().getComponent(FSRecords.class);
   }
 
   void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {

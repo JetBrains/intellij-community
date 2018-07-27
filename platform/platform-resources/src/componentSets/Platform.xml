@@ -26,6 +26,14 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.FSRecords</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.vfs.newvfs.impl.FileLoadingTracker</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.openapi.vfs.LocalFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl</implementation-class>
     </component>

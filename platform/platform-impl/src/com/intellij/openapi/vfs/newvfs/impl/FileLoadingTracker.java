@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,12 +32,24 @@ import java.util.Set;
 /**
  * @author peter
  */
-class FileLoadingTracker {
+public class FileLoadingTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.FileLoadingTracker");
+
   private static final Set<String> ourPaths = new THashSet<>(getPathsToTrack(), FilePathHashingStrategy.create());
-  private static final TIntHashSet ourLeafNameIds = new TIntHashSet(ourPaths.stream().mapToInt(
-    path -> FSRecords.INSTANCE.getFileNameCache().storeName(StringUtil.getShortName(path, '/'))
-  ).toArray());
+
+  private final FSRecords myFSRecords;
+  private final TIntHashSet myLeafNameIds;
+
+  public static FileLoadingTracker getInstance() {
+    return ApplicationManager.getApplication().getComponent(FileLoadingTracker.class);
+  }
+
+  public FileLoadingTracker(final FSRecords fsRecords) {
+    myFSRecords = fsRecords;
+    myLeafNameIds = new TIntHashSet(ourPaths.stream().mapToInt(
+      path -> myFSRecords.getFileNameCache().storeName(StringUtil.getShortName(path, '/'))
+    ).toArray());
+  }
 
   private static List<String> getPathsToTrack() {
     try {
@@ -47,9 +60,9 @@ class FileLoadingTracker {
     }
   }
 
-  static void fileLoaded(VirtualDirectoryImpl parent, int nameId) {
-    if (ourLeafNameIds.contains(nameId)) {
-      String path = parent.getPath() + "/" + FSRecords.INSTANCE.getFileNameCache().getVFileName(nameId).toString();
+  void fileLoaded(VirtualDirectoryImpl parent, int nameId) {
+    if (myLeafNameIds.contains(nameId)) {
+      String path = parent.getPath() + "/" + myFSRecords.getFileNameCache().getVFileName(nameId).toString();
       if (ourPaths.contains(path)) {
         LOG.info("Loading " + path, new Throwable());
       }

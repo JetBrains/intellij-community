@@ -82,6 +82,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private final Deque<VirtualFile> filesToResolve = new ArrayDeque<>(); // guarded by filesToResolve
   private final ConcurrentBitSet fileIsInQueue = new ConcurrentBitSet();
   private final ConcurrentBitSet fileIsResolved;
+  private final FSRecords myFSRecords;
   private final ApplicationEx myApplication;
   private volatile boolean myDisposed;
   private volatile boolean upToDate;
@@ -93,11 +94,13 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   public RefResolveServiceImpl(final Project project,
                                final MessageBus messageBus,
                                final PsiManager psiManager,
+                               final FSRecords fsRecords,
                                StartupManager startupManager,
                                ApplicationEx application,
                                ProjectFileIndex projectFileIndex) throws IOException {
     super(project);
     ((FutureTask)resolveProcess).run();
+    myFSRecords = fsRecords;
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
     if (ENABLED) {
@@ -107,7 +110,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       fileIsResolved = ConcurrentBitSet.readFrom(new File(getStorageDirectory(), "bitSet"));
       log("Read resolved file bitset: " + fileIsResolved);
 
-      int maxId = FSRecords.INSTANCE.getMaxId();
+      int maxId = myFSRecords.getMaxId();
       PersistentIntList list = new PersistentIntList(dataFile, dataFile.exists() ? 0 : maxId);
       if (list.getSize() == maxId) {
         storage = list;
@@ -362,7 +365,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   private void queueUnresolvedFilesSinceLastRestart() {
     PersistentFS fs = PersistentFS.getInstance();
-    int maxId = FSRecords.INSTANCE.getMaxId();
+    int maxId = myFSRecords.getMaxId();
     TIntArrayList list = new TIntArrayList();
     for (int id= fileIsResolved.nextClearBit(1); id >= 0 && id < maxId; id = fileIsResolved.nextClearBit(id + 1)) {
       int nextSetBit = fileIsResolved.nextSetBit(id);

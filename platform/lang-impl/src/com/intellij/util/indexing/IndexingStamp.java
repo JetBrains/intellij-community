@@ -128,7 +128,7 @@ public class IndexingStamp {
     try {
       DataInputOutputUtil.writeINT(os, version);
       DataInputOutputUtil.writeINT(os, VERSION);
-      DataInputOutputUtil.writeTIME(os, FSRecords.INSTANCE.getCreationTimestamp());
+      DataInputOutputUtil.writeTIME(os, FSRecords.getInstance().getCreationTimestamp());
       newIndexVersion.write(os);
       ourIndexIdToCreationStamp.put(indexId, newIndexVersion);
     }
@@ -170,7 +170,7 @@ public class IndexingStamp {
 
           if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
               DataInputOutputUtil.readINT(in) == VERSION &&
-              DataInputOutputUtil.readTIME(in) == FSRecords.INSTANCE.getCreationTimestamp()) {
+              DataInputOutputUtil.readTIME(in) == FSRecords.getInstance().getCreationTimestamp()) {
             version = new IndexVersion(in);
             ourIndexIdToCreationStamp.put(indexName, version);
             return version;
@@ -361,7 +361,7 @@ public class IndexingStamp {
     }
     Timestamps timestamps = myTimestampsCache.get(id);
     if (timestamps == null) {
-      final DataInputStream stream = FSRecords.INSTANCE.readAttributeWithLock(id, Timestamps.PERSISTENCE);
+      final DataInputStream stream = FSRecords.getInstance().readAttributeWithLock(id, Timestamps.PERSISTENCE);
       try {
         timestamps = new Timestamps(stream);
       }
@@ -430,7 +430,7 @@ public class IndexingStamp {
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              try (DataOutputStream sink = FSRecords.INSTANCE.writeAttribute(file, Timestamps.PERSISTENCE)) {
+              try (DataOutputStream sink = FSRecords.getInstance().writeAttribute(file, Timestamps.PERSISTENCE)) {
                 timestamp.writeToStream(sink);
               }
             }

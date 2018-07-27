@@ -136,7 +136,7 @@ public class BuildManager implements Disposable {
 
   private final List<String> myFallbackJdkParams = new SmartList<>();
   private final ProjectManager myProjectManager;
-  private final FSRecords myFSRecords = FSRecords.INSTANCE;
+  private final FSRecords myFSRecords;
 
   private final Map<TaskFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
@@ -230,10 +230,11 @@ public class BuildManager implements Disposable {
   private final Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
   private volatile boolean myBuildProcessDebuggingEnabled;
 
-  public BuildManager(final ProjectManager projectManager) {
+  public BuildManager(final ProjectManager projectManager, final FSRecords fsRecords) {
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
     myProjectManager = projectManager;
+    myFSRecords = fsRecords;
 
     final String fallbackSdkHome = getFallbackSdkHome();
     if (fallbackSdkHome != null) {

@@ -280,7 +280,7 @@ public class JarHandler extends ZipHandler {
         catch (IOException ignore) { }
       }
 
-      if (currentVfsVersion != FSRecords.INSTANCE.getCreationTimestamp()) {
+      if (currentVfsVersion != FSRecords.getInstance().getCreationTimestamp()) {
         FileUtil.deleteWithRenaming(jarsDir);
         FileUtil.createDirectory(jarsDir);
         saveVersion(versionFile);
@@ -416,7 +416,7 @@ public class JarHandler extends ZipHandler {
     private static void saveVersion(File versionFile) {
       try (DataOutputStream versionOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(versionFile)))) {
         DataInputOutputUtil.writeINT(versionOutputStream, VERSION);
-        DataInputOutputUtil.writeTIME(versionOutputStream, FSRecords.INSTANCE.getCreationTimestamp());
+        DataInputOutputUtil.writeTIME(versionOutputStream, FSRecords.getInstance().getCreationTimestamp());
       }
       catch (IOException ignore) { }
     }

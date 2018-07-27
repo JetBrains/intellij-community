@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OnAirPersistentFS extends PersistentFSImpl {
-  public OnAirPersistentFS(@NotNull MessageBus bus) {
-    super(bus);
+  public OnAirPersistentFS(@NotNull MessageBus bus, @NotNull FSRecords fsRecords) {
+    super(bus, fsRecords);
   }
 
   public static void download(String revision) {
@@ -39,7 +39,7 @@ public class OnAirPersistentFS extends PersistentFSImpl {
       for (String file : files) {
         String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/vfs/" + file;
         ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
-        File basePath = FSRecords.INSTANCE.basePath();
+        File basePath = FSRecords.getInstance().basePath(); // TODO: myFSRecords
         basePath.mkdirs();
         try (FileOutputStream fos = new FileOutputStream(new File(basePath, file))) {
           FileChannel dest = fos.getChannel();

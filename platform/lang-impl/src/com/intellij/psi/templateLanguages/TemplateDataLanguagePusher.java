@@ -43,12 +43,16 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
 
   public static final Key<Language> KEY = Key.create("TEMPLATE_DATA_LANGUAGE");
 
-  private static final VfsDependentEnum<String> ourLanguagesEnumerator = new VfsDependentEnum<>(
-    "languages",
-    EnumeratorStringDescriptor.INSTANCE,
-    1,
-    FSRecords.INSTANCE.basePath()
-  );
+  private final VfsDependentEnum<String> myLanguagesEnumerator;
+
+  public TemplateDataLanguagePusher(final FSRecords fsRecords) {
+    this.myLanguagesEnumerator = new VfsDependentEnum<>(
+      "languages",
+      EnumeratorStringDescriptor.INSTANCE,
+      1,
+      fsRecords.basePath()
+    );
+  }
 
   @Override
   public void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
@@ -102,7 +106,7 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
     if (iStream != null) {
       try {
         final int oldLanguage = DataInputOutputUtil.readINT(iStream);
-        String oldLanguageId = ourLanguagesEnumerator.getById(oldLanguage);
+        String oldLanguageId = myLanguagesEnumerator.getById(oldLanguage);
         if (value.getID().equals(oldLanguageId)) return;
       }
       finally {
@@ -113,7 +117,7 @@ public class TemplateDataLanguagePusher implements FilePropertyPusher<Language> 
 
     if (value != Language.ANY || iStream != null) {
       try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
-        DataInputOutputUtil.writeINT(oStream, ourLanguagesEnumerator.getId(value.getID()));
+        DataInputOutputUtil.writeINT(oStream, myLanguagesEnumerator.getId(value.getID()));
       }
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, Conditions.alwaysTrue());
     }

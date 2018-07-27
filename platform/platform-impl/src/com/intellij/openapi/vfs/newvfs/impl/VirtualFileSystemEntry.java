@@ -94,7 +94,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @NotNull
   @Override
   public CharSequence getNameSequence() {
-    return FSRecords.INSTANCE.getFileNameCache().getVFileName(getNameId());
+    return FSRecords.getInstance().getFileNameCache().getVFileName(getNameId());
   }
 
   public final int getNameId() {
@@ -165,7 +165,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
-    CharSequence name = FSRecords.INSTANCE.getFileNameCache().getVFileName(mySegment.getNameId(myId));
+    CharSequence name = FSRecords.getInstance().getFileNameCache().getVFileName(mySegment.getNameId(myId));
 
     char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
     int i = positionRef[0];
@@ -320,7 +320,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
-    mySegment.setNameId(myId, FSRecords.INSTANCE.getFileNameCache().storeName(newName));
+    mySegment.setNameId(myId, FSRecords.getInstance().getFileNameCache().storeName(newName));
     parent.addChild(this);
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }

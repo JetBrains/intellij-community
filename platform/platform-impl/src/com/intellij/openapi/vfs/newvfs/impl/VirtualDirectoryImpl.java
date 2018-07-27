@@ -176,7 +176,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         myData.addAdoptedName(name, caseSensitive);
         return null;
       }
-      child = createChild(FSRecords.INSTANCE.getFileNameCache().storeName(name), id, delegate);
+      child = createChild(FSRecords.getInstance().getFileNameCache().storeName(name), id, delegate);
 
       insertChildAt(child, index);
       ((PersistentFSImpl)ourPersistence).incStructuralModificationCount();
@@ -232,13 +232,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @NotNull
   public VirtualFileSystemEntry createChild(@NotNull String name, int id, @NotNull NewVirtualFileSystem delegate) {
     synchronized (myData) {
-      return createChild(FSRecords.INSTANCE.getFileNameCache().storeName(name), id, delegate);
+      return createChild(FSRecords.getInstance().getFileNameCache().storeName(name), id, delegate);
     }
   }
 
   @NotNull
   private VirtualFileSystemEntry createChild(int nameId, int id, @NotNull NewVirtualFileSystem delegate) {
-    FileLoadingTracker.fileLoaded(this, nameId);
+    FileLoadingTracker.getInstance().fileLoaded(this, nameId);
 
     final int attributes = ourPersistence.getFileAttributes(id);
     VfsData.Segment segment = VfsData.getSegment(id, true);
@@ -247,7 +247,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                        PersistentFS.isDirectory(attributes) ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     }
     catch (VfsData.FileAlreadyCreatedException e) {
-      throw new RuntimeException("dir=" + myId + "; dir.children=" + Arrays.toString(FSRecords.INSTANCE.listAll(myId)), e);
+      throw new RuntimeException("dir=" + myId + "; dir.children=" + Arrays.toString(FSRecords.getInstance().listAll(myId)), e);
     }
     LOG.assertTrue(!(getFileSystem() instanceof Win32LocalFileSystem));
 
@@ -576,7 +576,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       int id = getId();
       if (id >= 0) {
-        FSRecords.NameId[] persistentIds = FSRecords.INSTANCE.listAll(id);
+        FSRecords.NameId[] persistentIds = FSRecords.getInstance().listAll(id);
         for (FSRecords.NameId nameId : persistentIds) {
           existingNames.add(nameId.name);
         }

@@ -33,7 +33,7 @@ public class FileNameCache {
 
   private final FSRecords myFSRecords;
 
-  public FileNameCache(FSRecords records) {
+  public FileNameCache(final FSRecords records) {
     myFSRecords = records;
     final int protectedSize = 40000 / ourNameCache.length;
     final int probationalSize = 20000 / ourNameCache.length;
@@ -130,7 +130,7 @@ public class FileNameCache {
   @NotNull
   public CharSequence getVFileName(int nameId) {
     try {
-      return getVFileName(nameId, FSRecords.INSTANCE::getNameByNameId);
+      return getVFileName(nameId, FSRecords.getInstance()::getNameByNameId);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // actually will be caught in getNameByNameId
