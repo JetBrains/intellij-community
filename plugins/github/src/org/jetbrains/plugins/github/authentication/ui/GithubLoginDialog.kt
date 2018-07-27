@@ -268,7 +268,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
                                    "Authentication Code",
                                    "Github Two-Factor Authentication",
                                    null)
-        } ?: throw GithubAuthenticationException("Can't get two factor authentication code")
+        }
       })
     }
 

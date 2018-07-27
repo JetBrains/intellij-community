@@ -50,24 +50,29 @@ sealed class GithubApiRequestExecutor {
   class WithBasicAuth internal constructor(githubSettings: GithubSettings,
                                            private val login: String,
                                            private val password: CharArray,
-                                           private val twoFactorCodeSupplier: Supplier<String>) : Base(githubSettings) {
+                                           private val twoFactorCodeSupplier: Supplier<String?>) : Base(githubSettings) {
+    private var twoFactorCode: String? = null
+
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
       indicator.checkCanceled()
       val basicHeaderValue = HttpSecurityUtil.createBasicAuthHeaderValue(login, password)
+      return executeWithBasicHeader(indicator, request, basicHeaderValue)
+    }
+
+    private fun <T> executeWithBasicHeader(indicator: ProgressIndicator, request: GithubApiRequest<T>, header: String): T {
+      indicator.checkCanceled()
       return try {
         createRequestBuilder(request)
-          .tuner { connection -> connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $basicHeaderValue") }
+          .tuner { connection ->
+            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $header")
+            twoFactorCode?.let { connection.addRequestProperty(OTP_HEADER_NAME, it) }
+          }
           .execute(request, indicator)
       }
       catch (e: GithubTwoFactorAuthenticationException) {
-        val code = twoFactorCodeSupplier.get()
-        createRequestBuilder(request)
-          .tuner { connection ->
-            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $basicHeaderValue")
-            connection.addRequestProperty(OTP_HEADER_NAME, code)
-          }
-          .execute(request, indicator)
+        twoFactorCode = twoFactorCodeSupplier.get() ?: throw e
+        executeWithBasicHeader(indicator, request, header)
       }
     }
   }
@@ -139,12 +144,10 @@ sealed class GithubApiRequestExecutor {
           if (otpHeader != null && otpHeader.contains("required", true)) {
             GithubTwoFactorAuthenticationException(jsonError?.message ?: errorText)
           }
-
-          if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
+          else if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
             GithubRateLimitExceededException(jsonError.message)
           }
-
-          GithubAuthenticationException("Request response: " + (jsonError?.message ?: errorText))
+          else GithubAuthenticationException("Request response: " + (jsonError?.message ?: errorText))
         }
         else -> {
           if (jsonError != null) {
@@ -199,7 +202,7 @@ sealed class GithubApiRequestExecutor {
     }
 
     @CalledInAny
-    internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String>): WithBasicAuth {
+    internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String?>): WithBasicAuth {
       return GithubApiRequestExecutor.WithBasicAuth(githubSettings, login, password, twoFactorCodeSupplier)
     }
 
