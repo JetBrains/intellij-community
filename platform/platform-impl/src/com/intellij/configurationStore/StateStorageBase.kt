@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
-import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.messages.MessageBus
 import org.jdom.Element
@@ -54,17 +54,17 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected abstract fun loadData(): T
 
   fun disableSaving() {
-    LOG.debug { "Disabled saving for ${toString()}" }
+    LOG.debugOrInfoIfTestMode { "Disabled saving for ${toString()}" }
     isSavingDisabled = true
   }
 
   fun enableSaving() {
-    LOG.debug { "Enabled saving ${toString()}" }
+    LOG.debugOrInfoIfTestMode { "Enabled saving ${toString()}" }
     isSavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
-    LOG.debug { "Saving disabled for ${toString()}" }
+    LOG.debugOrInfoIfTestMode { "Saving disabled for ${toString()}" }
     return isSavingDisabled
   }
 }
