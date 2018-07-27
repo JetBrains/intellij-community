@@ -37,7 +37,6 @@ import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.chain
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
-import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
 import java.awt.Cursor
 import java.net.UnknownHostException
@@ -71,7 +70,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
   private lateinit var login: String
   private lateinit var token: String
 
-  var tokenNote: String = GithubUtil.DEFAULT_TOKEN_NOTE
+  var clientName: String = GithubTokenCreator.DEFAULT_CLIENT_NAME
   private var tokenAcquisitionError: ValidationInfo? = null
 
   init {
@@ -277,7 +276,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
                                       indicator: ProgressIndicator): Pair<String, String> {
       if (!isAccountUnique(loginTextField.text, server)) throw LoginNotUniqueException()
 
-      val token = GithubTokenCreator(server, executor, indicator).createMaster(tokenNote).token
+      val token = GithubTokenCreator(server, executor, indicator).createMaster(clientName).token
 
       return loginTextField.text to token
     }

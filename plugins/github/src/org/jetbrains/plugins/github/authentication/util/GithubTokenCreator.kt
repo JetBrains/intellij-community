@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.util
 
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthorization
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
@@ -15,12 +17,9 @@ import java.io.IOException
 class GithubTokenCreator(private val server: GithubServerPath,
                          private val executor: GithubApiRequestExecutor,
                          private val indicator: ProgressIndicator) {
-
-  private val MASTER_SCOPES = listOf("repo", "gist")
-
   @Throws(IOException::class)
-  fun createMaster(note: String): GithubAuthorization {
-    return safeCreate(MASTER_SCOPES, note)
+  fun createMaster(@Nls(capitalization = Nls.Capitalization.Title) noteSuffix: String): GithubAuthorization {
+    return safeCreate(MASTER_SCOPES, ApplicationNamesInfo.getInstance().fullProductName + " " + noteSuffix + " access token")
   }
 
   @Throws(IOException::class)
@@ -44,5 +43,10 @@ class GithubTokenCreator(private val server: GithubServerPath,
       }
       throw e
     }
+  }
+
+  companion object {
+    private val MASTER_SCOPES = listOf("repo", "gist")
+    const val DEFAULT_CLIENT_NAME = "Github Integration Plugin"
   }
 }
