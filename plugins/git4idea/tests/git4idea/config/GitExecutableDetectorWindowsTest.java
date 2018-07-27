@@ -11,15 +11,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 public class GitExecutableDetectorWindowsTest {
   @Before
   public void setUp() throws IOException, NoSuchFieldException, IllegalAccessException {
     Assume.assumeTrue(SystemInfo.isWindows);
     testRoot = FileUtil.createTempDirectory("", "");
-    setWindowsRoot(new File(testRoot, "C_"));
   }
 
   @Test
@@ -169,22 +166,19 @@ public class GitExecutableDetectorWindowsTest {
 
   private String detect() {
     return new GitExecutableDetector() {
+      private final File TEST_WIN_ROOT = new File(testRoot, "C_");
+
+      @NotNull
+      @Override
+      protected File getWinRoot() {
+        return TEST_WIN_ROOT;
+      }
+
       @Override
       protected String getPath() {
         return StringUtil.join(PATH.split(";"), s -> convertPath(s), ";");
       }
     }.detect();
-  }
-
-  public static void setWindowsRoot(File file) throws NoSuchFieldException, IllegalAccessException {
-    Field field = GitExecutableDetector.class.getDeclaredField("WIN_ROOT");
-    field.setAccessible(true);
-
-    Field modifiersField = Field.class.getDeclaredField("modifiers");
-    modifiersField.setAccessible(true);
-    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-    field.set(null, file);
   }
 
   private File testRoot;

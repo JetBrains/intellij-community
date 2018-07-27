@@ -15,6 +15,7 @@
  */
 package git4idea.config;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -70,7 +71,7 @@ public class GitExecutableDetector {
   }
 
   @NotNull
-  private static String detectForWindows() {
+  private String detectForWindows() {
     String exec = checkProgramFiles();
     if (exec != null) {
       return exec;
@@ -85,13 +86,13 @@ public class GitExecutableDetector {
   }
 
   @Nullable
-  private static String checkProgramFiles() {
+  private String checkProgramFiles() {
     final String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
 
     // collecting all potential msys distributives
     List<File> distrs = new ArrayList<>();
     for (String programFiles : PROGRAM_FILES) {
-      File pf = new File(WIN_ROOT, programFiles);
+      File pf = new File(getWinRoot(), programFiles);
       File[] children = pf.listFiles(pathname -> pathname.isDirectory() && pathname.getName().toLowerCase().startsWith("git"));
       if (!pf.exists() || children == null) {
         continue;
@@ -112,15 +113,21 @@ public class GitExecutableDetector {
   }
 
   @Nullable
-  private static String checkCygwin() {
+  private String checkCygwin() {
     final String[] OTHER_WINDOWS_PATHS = {FileUtil.toSystemDependentName("cygwin/bin/git.exe")};
     for (String otherPath : OTHER_WINDOWS_PATHS) {
-      File file = new File(WIN_ROOT, otherPath);
+      File file = new File(getWinRoot(), otherPath);
       if (file.exists()) {
         return file.getPath();
       }
     }
     return null;
+  }
+
+  @VisibleForTesting
+  @NotNull
+  protected File getWinRoot() {
+    return WIN_ROOT;
   }
 
   @Nullable
@@ -154,6 +161,7 @@ public class GitExecutableDetector {
     return null;
   }
 
+  @VisibleForTesting
   @Nullable
   protected String getPath() {
     return PathEnvironmentVariableUtil.getPathVariableValue();
