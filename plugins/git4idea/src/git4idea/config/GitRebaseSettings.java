@@ -17,7 +17,6 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
     public boolean INTERACTIVE = true;
     public boolean PRESERVE_MERGES = false;
     public boolean SHOW_TAGS = false;
-    public boolean SHOW_REMOTE_BRANCHES = false;
     public String ONTO = null;
   }
 

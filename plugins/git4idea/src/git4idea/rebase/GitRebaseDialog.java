@@ -43,6 +43,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -265,6 +266,7 @@ public class GitRebaseDialog extends DialogWrapper {
         updateOntoFrom();
       }
     };
+    myShowTagsCheckBox.addActionListener(showListener);
     rootListener.actionPerformed(null);
     myGitRootComboBox.addActionListener(rootListener);
     myBranchComboBox.addActionListener(new ActionListener() {
@@ -300,22 +302,20 @@ public class GitRebaseDialog extends DialogWrapper {
     String from = GitUIUtil.getTextField(myFromComboBox).getText();
     myFromComboBox.removeAllItems();
     myOntoComboBox.removeAllItems();
-    for (GitBranch b : myLocalBranches) {
-      myFromComboBox.addItem(b);
-      myOntoComboBox.addItem(b);
-    }
-      for (GitBranch b : myRemoteBranches) {
-        myFromComboBox.addItem(b);
-        myOntoComboBox.addItem(b);
-      }
+    addRefsToOntoAndFrom(myLocalBranches);
+    addRefsToOntoAndFrom(myRemoteBranches);
     if (myShowTagsCheckBox.isSelected()) {
-      for (GitTag t : myTags) {
-        myFromComboBox.addItem(t);
-        myOntoComboBox.addItem(t);
-      }
+      addRefsToOntoAndFrom(myTags);
     }
     GitUIUtil.getTextField(myOntoComboBox).setText(onto);
     GitUIUtil.getTextField(myFromComboBox).setText(from);
+  }
+
+  private void addRefsToOntoAndFrom(Collection<? extends GitReference> refs) {
+    for (GitReference ref: refs) {
+      myFromComboBox.addItem(ref);
+      myOntoComboBox.addItem(ref);
+    }
   }
 
   /**
@@ -355,7 +355,7 @@ public class GitRebaseDialog extends DialogWrapper {
         String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
         String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
         if (remote == null || mergeBranch == null) {
-          trackedBranch = new GitLocalBranch("master");;
+          trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
         }
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
