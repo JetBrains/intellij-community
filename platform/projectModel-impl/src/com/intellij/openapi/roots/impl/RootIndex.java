@@ -30,6 +30,7 @@ import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
@@ -268,13 +269,12 @@ public class RootIndex {
    * <p>Each edge carries with it the associated OrderEntry that caused the dependency.
    */
   private static class OrderEntryGraph {
-
     private static class Edge {
       Module myKey;
       ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
       boolean myRecursive; // Whether this edge should be descended into during graph walk
 
-      public Edge(Module key, ModuleOrderEntry orderEntry, boolean recursive) {
+      Edge(@NotNull Module key, @NotNull ModuleOrderEntry orderEntry, boolean recursive) {
         myKey = key;
         myOrderEntry = orderEntry;
         myRecursive = recursive;
@@ -311,7 +311,7 @@ public class RootIndex {
     private MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
     private MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
 
-    OrderEntryGraph(Project project, RootInfo rootInfo) {
+    OrderEntryGraph(@NotNull Project project, @NotNull RootInfo rootInfo) {
       myProject = project;
       myRootInfo = rootInfo;
       myAllRoots = myRootInfo.getAllRoots();
@@ -319,7 +319,7 @@ public class RootIndex {
       myCache = new SynchronizedSLRUCache<VirtualFile, List<OrderEntry>>(cacheSize, cacheSize) {
         @NotNull
         @Override
-        public List<OrderEntry> createValue(VirtualFile key) {
+        public List<OrderEntry> createValue(@NotNull VirtualFile key) {
           return collectOrderEntries(key);
         }
       };
@@ -328,7 +328,7 @@ public class RootIndex {
         new SynchronizedSLRUCache<Module, Set<String>>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
           @NotNull
           @Override
-          public Set<String> createValue(Module key) {
+          public Set<String> createValue(@NotNull Module key) {
             return collectDependentUnloadedModules(key);
           }
         };
@@ -418,6 +418,7 @@ public class RootIndex {
       myLibSourceRootEntries = libSourceRootEntries;
     }
 
+    @NotNull
     private List<OrderEntry> getOrderEntries(@NotNull VirtualFile file) {
       return myCache.get(file);
     }
@@ -425,6 +426,7 @@ public class RootIndex {
     /**
      * Traverses the graph from the given file, collecting all encountered order entries.
      */
+    @NotNull
     private List<OrderEntry> collectOrderEntries(@NotNull VirtualFile file) {
       List<VirtualFile> roots = getHierarchy(file, myAllRoots, myRootInfo);
       if (roots == null) {
@@ -474,6 +476,7 @@ public class RootIndex {
       return result;
     }
 
+    @NotNull
     Set<String> getDependentUnloadedModules(@NotNull Module module) {
       return myDependentUnloadedModulesCache.get(module);
     }
@@ -481,6 +484,7 @@ public class RootIndex {
     /**
      * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
      */
+    @NotNull
     private Set<String> collectDependentUnloadedModules(@NotNull Module module) {
       Node start = myGraph.myNodes.get(module);
       if (start == null) return Collections.emptySet();
@@ -838,7 +842,7 @@ public class RootIndex {
     VirtualFile libraryClassRoot = Pair.getFirst(libraryClassRootInfo);
 
     boolean inProject = moduleContentRoot != null ||
-                        ((libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromSdkRoots.contains(root));
+                        (libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromSdkRoots.contains(root);
 
     VirtualFile nearestContentRoot;
     if (inProject) {
@@ -914,7 +918,7 @@ public class RootIndex {
     }
 
     @NotNull
-    public abstract V createValue(K key);
+    public abstract V createValue(@NotNull K key);
 
     @Override
     @NotNull

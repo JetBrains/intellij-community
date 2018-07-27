@@ -1022,7 +1022,7 @@ public class FSRecords {
   }
 
   @Nullable
-  static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idCache) {
+  static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Throwable> {
       @Nullable private TIntArrayList path;
       private VirtualFileSystemEntry foundParent;
@@ -1033,21 +1033,22 @@ public class FSRecords {
         while (true) {
           int parentId = getRecordInt(currentId, PARENT_OFFSET);
           if (parentId == 0) {
-            return null;
+            break;
           }
           if (parentId == currentId || path != null && path.size() % 128 == 0 && path.contains(parentId)) {
             LOG.error("Cyclic parent child relations in the database. id = " + parentId);
-            return null;
+            break;
           }
-          foundParent = idCache.get(parentId);
+          foundParent = idToDirCache.get(parentId);
           if (foundParent != null) {
-            return null;
+            break;
           }
 
           currentId = parentId;
           if (path == null) path = new TIntArrayList();
           path.add(currentId);
         }
+        return null;
       }
 
       private VirtualFileSystemEntry findDescendantByIdPath() {
@@ -1067,7 +1068,7 @@ public class FSRecords {
         }
         VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).findChildById(childId);
         if (child instanceof VirtualDirectoryImpl) {
-          VirtualFileSystemEntry old = idCache.putIfAbsent(childId, child);
+          VirtualFileSystemEntry old = idToDirCache.putIfAbsent(childId, child);
           if (old != null) child = old;
         }
         return child;
