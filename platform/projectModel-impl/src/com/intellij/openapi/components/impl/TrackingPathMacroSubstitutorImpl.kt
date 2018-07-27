@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl
 
-import com.intellij.openapi.components.BasePathMacroManager
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.Logger
@@ -11,7 +11,7 @@ import com.intellij.util.containers.SmartHashSet
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.BasePathMacroManager")
 
-internal class TrackingPathMacroSubstitutorImpl(private val macroManager: BasePathMacroManager) : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
+internal class TrackingPathMacroSubstitutorImpl(private val macroManager: PathMacroManager) : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
   private val lock = Object()
 
   private val macroToComponentNames = MultiMap.createSet<String, String>()

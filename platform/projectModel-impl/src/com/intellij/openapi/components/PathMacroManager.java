@@ -20,7 +20,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.Map;
 
-public class BasePathMacroManager extends PathMacroManager {
+public class PathMacroManager implements PathMacroSubstitutor {
   @NotNull
   public static PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
     return (PathMacroManager)componentManager.getPicoContainer().getComponentInstance(PathMacroManager.class);
@@ -35,7 +35,7 @@ public class BasePathMacroManager extends PathMacroManager {
   private ReplacePathToMacroMap myReplacePathToMacroMap;
   private long myPathMacrosModificationCount;
 
-  public BasePathMacroManager(@Nullable PathMacros pathMacros) {
+  public PathMacroManager(@Nullable PathMacros pathMacros) {
     myPathMacros = (PathMacrosImpl)pathMacros;
   }
 
@@ -105,7 +105,6 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @NotNull
-  @Override
   public TrackingPathMacroSubstitutor createTrackingSubstitutor() {
     return new TrackingPathMacroSubstitutorImpl(this);
   }

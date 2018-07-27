@@ -2,7 +2,6 @@
 
 package org.jetbrains.idea.eclipse.conversion;
 
-import com.intellij.openapi.components.BasePathMacroManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.project.Project;
@@ -97,7 +96,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
       try {
         readClasspathEntry(model, unknownLibraries, unknownJdks, refsToModules, testPattern, o, idx++,
                            eclipseModuleManager,
-                           ((BasePathMacroManager)PathMacroManager.getInstance(model.getModule())).getExpandMacroMap(), libs);
+                           PathMacroManager.getInstance(model.getModule()).getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {
         ErrorLog.rethrow(ErrorLog.Level.Warning, null, EclipseXml.CLASSPATH_FILE, e);

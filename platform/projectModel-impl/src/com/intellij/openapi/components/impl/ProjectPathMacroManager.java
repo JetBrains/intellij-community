@@ -3,13 +3,13 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.BasePathMacroManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-public class ProjectPathMacroManager extends BasePathMacroManager {
+public class ProjectPathMacroManager extends PathMacroManager {
   private final Project myProject;
 
   public ProjectPathMacroManager(PathMacros pathMacros, Project project) {
