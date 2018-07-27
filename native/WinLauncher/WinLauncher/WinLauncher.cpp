@@ -729,6 +729,13 @@ void PrintUsage()
   MessageBoxA(NULL, buf.str().c_str(), title.c_str(), MB_OK);
 }
 
+bool isNumber(std::string line)
+{
+  char* p;
+  strtol(line.c_str(), &p, 10);
+  return *p == 0;
+}
+
 std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
 {
   int numArgs;
@@ -745,7 +752,31 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
       PrintUsage();
       std::exit(0);
     }
-    result.push_back(argv[i]);
+
+    std::wstring arg(argv[i]);
+    std::string command(arg.begin(), arg.end());
+    if (command.find_last_of(":") != std::string::npos)
+    {
+      std::string line = command.substr(command.find_last_of(":") + 1);
+      if (isNumber(line))
+      {
+        result.push_back(L"-l");
+        int numArgs;
+        LPWSTR* lineNumberArg = CommandLineToArgvW(std::wstring(line.begin(), line.end()).c_str(), &numArgs);
+        result.push_back(lineNumberArg[0]);
+        std::string fileName = command.substr(0, command.find_last_of(":"));
+        LPWSTR* fileNameArg = CommandLineToArgvW(std::wstring(fileName.begin(), fileName.end()).c_str(), &numArgs);
+        result.push_back(fileNameArg[0]);
+      }
+      else
+      {
+        result.push_back(argv[i]);
+      }
+    }
+    else
+    {
+      result.push_back(argv[i]);
+    }
   }
   return result;
 }
