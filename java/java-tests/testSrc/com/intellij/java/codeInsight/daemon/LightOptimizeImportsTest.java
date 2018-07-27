@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
+@SuppressWarnings("ALL")
 public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
   
   public void testSingleImportConflictingWith2Others() throws Exception {
@@ -49,5 +50,51 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
                           "            A2.class\n" +
                           "    };\n" +
                           "}\n");
+  }
+
+  public void testStaticImportsOrder() throws Exception {
+    
+    myFixture.addClass("package p; public class C1 {" +
+                       "    public static String Byte;\n" +
+                       "    public static String Field2;" +
+                       "}");
+    myFixture.addClass("package p; public class C2 { " +
+                       "    public static String Long;\n" +
+                       "    public static String Field4;" +
+                       "}");
+    
+    myFixture.configureByText(StdFileTypes.JAVA, "\n" +
+                                                 "import static p.C1.*;\n" +
+                                                 "import static p.C1.Byte;\n" +
+                                                 "import static p.C2.Long;\n" +
+                                                 "import static p.C2.*;\n" +
+                                                 "\n" +
+                                                 "public class Main {\n" +
+                                                 "    public static void main(String[] args) {\n" +
+                                                 "        System.out.println(Byte);\n" +
+                                                 "        System.out.println(Field2);\n" +
+                                                 "        System.out.println(Long);\n" +
+                                                 "        System.out.println(Field4);\n" +
+                                                 "    }\n" +
+                                                 "}");
+    
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+    myFixture.checkResult("import static p.C1.Byte;\n" +
+                          "import static p.C1.*;\n" +
+                          "import static p.C2.Long;\n" +
+                          "import static p.C2.*;\n" +
+                          "\n" +
+                          "public class Main {\n" +
+                          "    public static void main(String[] args) {\n" +
+                          "        System.out.println(Byte);\n" +
+                          "        System.out.println(Field2);\n" +
+                          "        System.out.println(Long);\n" +
+                          "        System.out.println(Field4);\n" +
+                          "    }\n" +
+                          "}");
   }
 }

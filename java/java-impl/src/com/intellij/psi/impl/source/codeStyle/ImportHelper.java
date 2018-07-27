@@ -381,10 +381,14 @@ public class ImportHelper{
       String packageOrClassName = getPackageOrClassName(name);
       final boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
+      final Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
       if (namesToUseSingle.remove(name)) {
+        if (useOnDemand && importedPackagesOrClasses.contains(current)) {
+          buffer.insert(buffer.lastIndexOf("import"), "import " + (isStatic ? "static " : "") + name + ";\n");
+          continue;
+        }
         useOnDemand = false;
       }
-      final Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
       if (useOnDemand && (importedPackagesOrClasses.contains(current) || implicitlyImported)) continue;
       buffer.append("import ");
       if (isStatic) buffer.append("static ");
