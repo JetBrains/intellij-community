@@ -60,6 +60,7 @@ class GitRewordOperation(private val repository: GitRepository,
     if (reworded) {
       headAfterReword = repository.currentRevision
       rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
+      notifySuccess()
     }
   }
 
@@ -98,7 +99,6 @@ class GitRewordOperation(private val repository: GitRepository,
     val result = Git.getInstance().runCommand(handler)
     repository.update()
     if (result.success()) {
-      notifySuccess()
       return true
     }
     else {
@@ -218,7 +218,6 @@ class GitRewordOperation(private val repository: GitRepository,
 
     override fun notifySuccess(successful: MutableMap<GitRepository, GitSuccessfulRebase>,
                                skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) {
-      notifySuccess()
       succeeded = true
     }
   }
