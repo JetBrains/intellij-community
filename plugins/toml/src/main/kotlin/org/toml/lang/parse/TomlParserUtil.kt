@@ -23,6 +23,7 @@ object TomlParserUtil : GeneratedParserUtilBase() {
         return false
     }
 
+    @Suppress("UNUSED_PARAMETER")
     @JvmStatic
     fun any(b: PsiBuilder, level: Int): Boolean = true
 
