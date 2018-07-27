@@ -251,7 +251,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
+  override val storageManager = ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), project)
 
   override fun setPath(path: String) {
     setPath(path, true)
@@ -266,7 +266,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     val nameFile = nameFile
     if (nameFile.exists()) {
       LOG.runAndLogException {
-        nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+        nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }?.let {
           lastSavedProjectName = it
           return it
         }

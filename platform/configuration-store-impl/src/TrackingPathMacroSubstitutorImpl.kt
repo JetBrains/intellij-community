@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.components.impl
+package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.SmartHashSet
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.BasePathMacroManager")
+internal fun PathMacroManager?.createTrackingSubstitutor(): TrackingPathMacroSubstitutorImpl? = if (this == null) null else TrackingPathMacroSubstitutorImpl(this)
 
 internal class TrackingPathMacroSubstitutorImpl(private val macroManager: PathMacroManager) : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
   private val lock = Object()

@@ -51,8 +51,6 @@ public interface PathMacroSubstitutor {
    */
   void collapsePaths(@NotNull Element element, boolean recursively);
 
-
-
   @Contract("null -> null; !null -> !null")
   default String collapsePathsRecursively(@Nullable String text) {
     return collapsePath(text, true);

@@ -27,7 +27,7 @@ public class ProjectPathMacroManager extends PathMacroManager {
 
   @NotNull
   @Override
-  public ReplacePathToMacroMap getReplacePathMap() {
+  public synchronized ReplacePathToMacroMap getReplacePathMap() {
     final ReplacePathToMacroMap result = super.getReplacePathMap();
     addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, myProject.getBasePath(), null);
     return result;

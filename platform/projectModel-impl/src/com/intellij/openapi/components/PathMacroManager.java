@@ -5,7 +5,6 @@ import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.impl.TrackingPathMacroSubstitutorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -102,11 +101,6 @@ public class PathMacroManager implements PathMacroSubstitutor {
     myReplacePathToMacroMap = result;
     myPathMacrosModificationCount = pathMacrosModificationCount;
     return result;
-  }
-
-  @NotNull
-  public TrackingPathMacroSubstitutor createTrackingSubstitutor() {
-    return new TrackingPathMacroSubstitutorImpl(this);
   }
 
   @Override
