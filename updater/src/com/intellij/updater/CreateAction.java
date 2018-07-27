@@ -117,10 +117,7 @@ public class CreateAction extends PatchAction {
     return new String(bytes, StandardCharsets.UTF_8);
   }
 
-  protected void doBackup(File toFile, File backupFile) {
-    // do nothing
-  }
-
+  @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
     Utils.delete(toFile);
   }

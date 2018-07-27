@@ -46,6 +46,11 @@ public class DeleteAction extends PatchAction {
   }
 
   @Override
+  protected void doBackup(File toFile, File backupFile) throws IOException {
+    Utils.copy(toFile, backupFile);
+  }
+
+  @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     Runner.logger().info("Delete action. File: " + toFile.getAbsolutePath());
     //NOTE: a folder can be deleted only in case if it does not contain any user's files/folders.
@@ -54,11 +59,6 @@ public class DeleteAction extends PatchAction {
       Runner.logger().info("Delete: " + toFile.getAbsolutePath());
       Utils.delete(toFile);
     }
-  }
-
-  @Override
-  protected void doBackup(File toFile, File backupFile) throws IOException {
-    Utils.copy(toFile, backupFile);
   }
 
   @Override

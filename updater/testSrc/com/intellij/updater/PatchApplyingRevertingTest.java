@@ -673,11 +673,5 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
       throw new IOException("dummy exception");
     }
-
-    @Override
-    protected void doBackup(File toFile, File backupFile) { }
-
-    @Override
-    protected void doRevert(File toFile, File backupFile) { }
   }
 }

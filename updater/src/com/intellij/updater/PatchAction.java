@@ -183,23 +183,21 @@ public abstract class PatchAction {
     return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile, myPatch.isNormalized());
   }
 
-  public void apply(ZipFile patchFile, File backupDir, File toDir) throws IOException {
-    doApply(patchFile, backupDir, getFile(toDir));
-  }
-
-  protected abstract void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException;
-
   public void backup(File toDir, File backupDir) throws IOException {
     doBackup(getFile(toDir), getFile(backupDir));
   }
 
-  protected abstract void doBackup(File toFile, File backupFile) throws IOException;
+  public void apply(ZipFile patchFile, File backupDir, File toDir) throws IOException {
+    doApply(patchFile, backupDir, getFile(toDir));
+  }
 
   public void revert(File toDir, File backupDir) throws IOException {
     doRevert(getFile(toDir), getFile(backupDir));
   }
 
-  protected abstract void doRevert(File toFile, File backupFile) throws IOException;
+  protected void doBackup(File toFile, File backupFile) throws IOException { }
+  protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException { }
+  protected void doRevert(File toFile, File backupFile) throws IOException { }
 
   @Override
   public String toString() {
