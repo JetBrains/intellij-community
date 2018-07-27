@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.vcs.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.vcs.impl.iml"],
+    javacopts = ["-Xep:FormatString:WARN"],  # TODO(b/111928489): remove after correcting code
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
