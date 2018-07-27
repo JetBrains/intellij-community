@@ -374,9 +374,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
         if (rememberedLogin == null) {
           return null;
         }
-        return getDataForUser(url, rememberedLogin);
+        return (myData = getDataForUser(url, rememberedLogin));
       }
-      return getDataForUser(url, login);
+      return (myData = getDataForUser(url, login));
     }
 
     @Override
