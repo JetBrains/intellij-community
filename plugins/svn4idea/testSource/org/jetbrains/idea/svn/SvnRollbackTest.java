@@ -558,10 +558,7 @@ public class SvnRollbackTest extends SvnTestCase {
   }
 
   private void assertRollback(List<Change> changes, final List<Change> allowedAfter) throws VcsException {
-    final List<VcsException> exceptions = new ArrayList<>();
-    vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-    //noinspection unchecked
-    throwIfNotEmpty((List)exceptions);
+    rollback(changes);
     refreshChanges();
 
     List<LocalChangeList> lists = changeListManager.getChangeLists();

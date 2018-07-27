@@ -13,10 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
@@ -47,8 +45,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     final Change change = changeListManager.getChange(tree.myS1File);
     assertNotNull(change);
-    final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(singletonList(change), "commit");
-    assertTrue(isEmpty(exceptions));
+    commit(singletonList(change), "commit");
 
     dirtyScopeManager.fileDirty(tree.myS1File);
     waitChangesAndAnnotations();

@@ -173,8 +173,7 @@ public class SvnProtocolsTest extends SvnTestCase {
     assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
-    final List<VcsException> commit = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    assertTrue(commit.isEmpty());
+    commit(Collections.singletonList(change), "commit");
     return file;
   }
 

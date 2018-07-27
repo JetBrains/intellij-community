@@ -6,12 +6,9 @@ import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.rollback.RollbackProgressListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
-import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.systemIndependentPath
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.nullValue
@@ -165,9 +162,7 @@ class SvnRenameTest : SvnTestCase() {
     val change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)
     assertNotNull(change)
 
-    val exceptions = ArrayList<VcsException>()
-    vcs.rollbackEnvironment!!.rollbackChanges(listOf(change!!), exceptions, RollbackProgressListener.EMPTY)
-    assertTrue(exceptions.isEmpty())
+    rollback(listOf(change))
     assertFalse(File(myWorkingCopyDir.path, "newchild").exists())
     assertTrue(File(myWorkingCopyDir.path, "child").exists())
   }
@@ -213,10 +208,7 @@ class SvnRenameTest : SvnTestCase() {
     changes.add(changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!.findChild("a.txt")!!)!!)
     changes.add(changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)!!)
 
-    val exceptions = ArrayList<VcsException>()
-    vcs.rollbackEnvironment!!.rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY)
-    TimeoutUtil.sleep(300)
-    assertTrue(exceptions.isEmpty())
+    rollback(changes)
     val fileA = File(childPath, "a.txt")
     assertTrue(fileA.absolutePath, fileA.exists())
     val fileU = File(childPath, "u.txt")
@@ -246,9 +238,7 @@ class SvnRenameTest : SvnTestCase() {
 
     refreshVfs()   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false)
-    val changes = ArrayList(changeListManager.defaultChangeList.changes)
-    val list = vcs.checkinEnvironment!!.commit(changes, "test")
-    assertEquals(0, list!!.size.toLong())
+    commit(changeListManager.defaultChangeList.changes.toList(), "test")
   }
 
   // IDEADEV-19364

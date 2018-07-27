@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ApplicationRule;
@@ -46,7 +47,9 @@ import org.junit.rules.ExternalResource;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext;
 import static com.intellij.openapi.application.PluginPathManager.getPluginHomePath;
@@ -55,8 +58,10 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
+import static com.intellij.util.FunctionUtil.nullConstant;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
@@ -174,6 +179,21 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   protected void waitChangesAndAnnotations() {
     changeListManager.ensureUpToDate(false);
     ((VcsAnnotationLocalChangesListenerImpl)vcsManager.getAnnotationLocalChangesListener()).calmDown();
+  }
+
+  @NotNull
+  protected Set<String> commit(@NotNull List<Change> changes, @NotNull String message) {
+    Set<String> feedback = new HashSet<>();
+    //noinspection unchecked
+    throwIfNotEmpty((List)vcs.getCheckinEnvironment().commit(changes, message, nullConstant(), feedback));
+    return feedback;
+  }
+
+  protected void rollback(@NotNull List<Change> changes) {
+    List<VcsException> exceptions = new ArrayList<>();
+    vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+    //noinspection unchecked
+    throwIfNotEmpty((List)exceptions);
   }
 
   @Override

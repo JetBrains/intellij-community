@@ -14,15 +14,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.util.ArrayUtil.toObjectArray;
-import static com.intellij.util.FunctionUtil.nullConstant;
 import static com.intellij.util.containers.ContainerUtil.map;
-import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static org.junit.Assert.*;
 
 public class SvnCommitTest extends SvnTestCase {
@@ -160,9 +157,7 @@ public class SvnCommitTest extends SvnTestCase {
       assertNotNull(change);
       changes.add(change);
     }
-    Set<String> feedback = new HashSet<>();
-    //noinspection unchecked
-    throwIfNotEmpty((List)vcs.getCheckinEnvironment().commit(changes, "test comment list", nullConstant(), feedback));
+    Set<String> feedback = commit(changes, "test comment list");
     refreshChanges();
 
     for (FilePath file : files) {
