@@ -174,6 +174,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   @Override
   public void saveSettings() {
     FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
+    myHelper.updateFindSettings();
     applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
     rememberResultsPreviewWasOpen();
   }
@@ -1269,6 +1270,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private static void setStringsToComboBox(@NotNull String[] strings, @NotNull ComboBox<? super String> combo, String selected) {
     if (combo.getItemCount() > 0){
       combo.removeAllItems();
+      combo.setSelectedItem(null);
     }
     if (selected != null && selected.indexOf('\n') < 0) {
       strings = ArrayUtil.remove(strings, selected);
