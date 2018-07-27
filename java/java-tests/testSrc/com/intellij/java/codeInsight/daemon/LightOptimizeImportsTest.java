@@ -97,4 +97,48 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
                           "    }\n" +
                           "}");
   }
+
+  public void testStaticImportOnMethodFromSuperClass() {
+    myFixture.addClass("package p; public class A {\n" +
+                       "  public static void m1() {}\n" +
+                       "  public static void m2() {}\n" +
+                       "}");
+    
+    myFixture.addClass("package p; public class B extends A {\n" +
+                       "  public static void m3() {}\n" +
+                       "  public static void m4() {}\n" +
+                       "}");
+    
+     myFixture.configureByText(StdFileTypes.JAVA, "\n" +
+                                                 "import static p.A.m1;\n" +
+                                                 "import static p.A.m2;\n" +
+                                                 "import static p.B.m3;\n" +
+                                                 "import static p.B.m4;\n" +
+                                                 "\n" +
+                                                 "public class Main {\n" +
+                                                 "    public static void main(String[] args) {\n" +
+                                                 "      m1();\n" +
+                                                 "      m2();\n" +
+                                                 "      m3();\n" +
+                                                 "      m4();\n" +
+                                                 "    }\n" +
+                                                 "}");
+    
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+    myFixture.checkResult("import static p.A.*;\n" +
+                          "import static p.B.*;\n" +
+                          "\n" +
+                          "public class Main {\n" +
+                          "    public static void main(String[] args) {\n" +
+                          "      m1();\n" +
+                          "      m2();\n" +
+                          "      m3();\n" +
+                          "      m4();\n" +
+                          "    }\n" +
+                          "}");
+  }
 }

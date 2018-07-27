@@ -276,7 +276,11 @@ public class ImportHelper{
               else {
                 PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
                 for (PsiMethod method : methods) {
-                  if (method.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(method, file, null)) {
+                  PsiClass containingClass = method.getContainingClass();
+                  if (containingClass == null) continue;
+                  if (method.hasModifierProperty(PsiModifier.STATIC) && 
+                      resolveHelper.isAccessible(method, file, null) &&
+                      !prefix.equals(containingClass.getQualifiedName())) {
                     namesToUseSingle.add(name);
                   }
                 }
