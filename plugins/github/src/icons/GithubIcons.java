@@ -38,5 +38,4 @@ public class GithubIcons {
   @SuppressWarnings("unused")
   @Deprecated
   public static final Icon Github_icon = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
-  public static final Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg"); // 13x13
 }

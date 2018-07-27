@@ -1,3 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <path fill="#7F8B91" fill-opacity=".5" fill-rule="evenodd" d="M7,5 L12,5 L12,7 L7,7 L7,12 L5,12 L5,7 L-2.27373675e-13,7 L-2.27373675e-13,5 L5,5 L5,0 L7,0 L7,5 Z" transform="rotate(45 4.586 9.414)"/>
+  <g fill="#6E6E6E" fill-rule="evenodd" transform="rotate(45 6.293 8.707)">
+    <rect width="2" height="14" x="6"/>
+    <rect width="2" height="14" x="6" transform="rotate(90 7 7)"/>
+  </g>
 </svg>
