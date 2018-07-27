@@ -3,6 +3,7 @@ package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.TestSourcesFilter;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +21,8 @@ public class ModuleWithDependentsAndLibrariesScope extends ModuleWithDependentsS
   boolean contains(@NotNull VirtualFile file, boolean myOnlyTests) {
     //TODO: does this work for library classes?
     if (myOnlyTests && !TestSourcesFilter.isTestSources(file, getProject())) return false;
-    if (myProjectFileIndex.isInLibraryClasses(file)) return true;
-    return super.contains(file, myOnlyTests);
+    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
+    if (info.isInProject(file) && info.hasLibraryClassRoot()) return true;
+    return super.contains(info, file, myOnlyTests);
   }
 }
