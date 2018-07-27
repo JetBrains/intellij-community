@@ -34,7 +34,7 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
       return
     }
 
-    if (getAccountsForRemotes(project, gitRepository).isEmpty()
+    if (service<GithubGitHelper>().getPossibleRepositories(gitRepository).isEmpty()
         && service<GithubAccountsMigrationHelper>().getOldServer()?.let { getRemote(it, gitRepository) } == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -52,8 +52,9 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
     if (gitRepository == null) return
     gitRepository.update()
 
+    val authenticationManager = service<GithubAuthenticationManager>()
     if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
-    val accounts = getAccountsForRemotes(project, gitRepository)
+    val accounts = getAccountsForRemotes(authenticationManager, project, gitRepository)
     // can happen if migration was cancelled
     if (accounts.isEmpty()) return
     val account = if (accounts.size == 1) accounts.first()
@@ -67,7 +68,7 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
       DialogManager.show(dialog)
       if (!dialog.isOK) return
       val account = dialog.account
-      if (dialog.setDefault) service<GithubAuthenticationManager>().setDefaultAccount(project, account)
+      if (dialog.setDefault) authenticationManager.setDefaultAccount(project, account)
 
       account
     }
@@ -77,8 +78,9 @@ abstract class LegacySingleAccountActionGroup(text: String?, description: String
 
   abstract fun actionPerformed(project: Project, file: VirtualFile?, gitRepository: GitRepository, account: GithubAccount)
 
-  private fun getAccountsForRemotes(project: Project, repository: GitRepository): List<GithubAccount> {
-    val authenticationManager = service<GithubAuthenticationManager>()
+  private fun getAccountsForRemotes(authenticationManager: GithubAuthenticationManager,
+                                    project: Project, repository: GitRepository): List<GithubAccount> {
+    if (!authenticationManager.ensureHasAccounts(project)) return emptyList()
     val defaultAccount = authenticationManager.getDefaultAccount(project)
     return if (defaultAccount != null && getRemote(defaultAccount.server, repository) != null)
       listOf(defaultAccount)
