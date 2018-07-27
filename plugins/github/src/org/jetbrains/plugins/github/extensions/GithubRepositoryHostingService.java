@@ -74,6 +74,7 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
       @Override
       public boolean enable() {
         if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return false;
+        if (!myAuthenticationManager.ensureHasAccounts(project)) return false;
         boolean atLeastOneHasToken = false;
         for (GithubAccount account : myAuthenticationManager.getAccounts()) {
           GithubApiRequestExecutor executor = myExecutorManager.getExecutor(account, project);
