@@ -107,7 +107,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     assert importList != null;
     final String qualifiedName  = qualifierClass.getQualifiedName();
     final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand() ||
+    if (refs.size() + 1 < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand() ||
         JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
       importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
     } else {

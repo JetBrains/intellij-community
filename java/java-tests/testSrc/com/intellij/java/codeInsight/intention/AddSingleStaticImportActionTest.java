@@ -61,6 +61,10 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     doTest("Add import for 'foo.Class1.Inner1'");
   }
 
+  public void testSingleStaticReferencesUntilCollapsedToDiamond() {
+    doTest("Add static import for 'java.lang.Math.max'");
+  }
+
  public void testDisabledInsideParameterizedReference() {
     myFixture.addClass("package foo; " +
                        "public class Class1 {" +
