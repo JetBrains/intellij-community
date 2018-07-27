@@ -149,7 +149,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
     myProject = myHelper.getProject();
 
     setTitle(myHelper.getTitle());
-    setOKButtonText(FindBundle.message("find.button"));
     init();
   }
 
@@ -1488,6 +1487,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
     myCbPreserveCase.setVisible(isReplaceState);
     setTitle(myHelper.getTitle());
+    setOKButtonText(FindBundle.message(myHelper.isReplaceState() ? "find.replace.command" : "find.button"));
     validateFindButton();
   }
 
