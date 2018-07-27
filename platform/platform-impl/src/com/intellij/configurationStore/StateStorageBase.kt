@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 private val LOG = logger<StateStorageBase<*>>()
 
 abstract class StateStorageBase<T : Any> : StateStorage {
-  private var mySavingDisabled = false
+  private var isSavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
@@ -55,17 +55,17 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
   fun disableSaving() {
     LOG.debug { "Disabled saving for ${toString()}" }
-    mySavingDisabled = true
+    isSavingDisabled = true
   }
 
   fun enableSaving() {
     LOG.debug { "Enabled saving ${toString()}" }
-    mySavingDisabled = false
+    isSavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
     LOG.debug { "Saving disabled for ${toString()}" }
-    return mySavingDisabled
+    return isSavingDisabled
   }
 }
 
