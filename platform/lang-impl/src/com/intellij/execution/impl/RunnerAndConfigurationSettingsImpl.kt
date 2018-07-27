@@ -11,9 +11,8 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.BasePathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException

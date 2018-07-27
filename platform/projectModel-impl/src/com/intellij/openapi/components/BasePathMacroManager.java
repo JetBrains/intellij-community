@@ -1,14 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.components.impl;
+package com.intellij.openapi.components;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.components.CompositePathMacroFilter;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.impl.TrackingPathMacroSubstitutorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +21,11 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.util.Map;
 
 public class BasePathMacroManager extends PathMacroManager {
+  @NotNull
+  public static PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
+    return (PathMacroManager)componentManager.getPicoContainer().getComponentInstance(PathMacroManager.class);
+  }
+
   private static class Holder {
     private static final CompositePathMacroFilter FILTER = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
   }
@@ -83,7 +85,7 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @NotNull
-  protected synchronized ReplacePathToMacroMap getReplacePathMap() {
+  public synchronized ReplacePathToMacroMap getReplacePathMap() {
     PathMacrosImpl pathMacros = getPathMacros();
 
     long pathMacrosModificationCount = pathMacros.getModificationCount();

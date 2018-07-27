@@ -1,4 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 /*
  * Copyright 2000-2016 JetBrains s.r.o.
  *
@@ -15,7 +17,7 @@
  * limitations under the License.
  */
 import com.intellij.application.options.PathMacrosImpl
-import com.intellij.openapi.components.impl.BasePathMacroManager
+import com.intellij.openapi.components.BasePathMacroManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
