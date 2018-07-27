@@ -35,7 +35,7 @@ public class ValidateAction extends PatchAction {
 
   @Override
   public ValidationResult validate(File toDir) throws IOException {
-    return doValidateNotChanged(getFile(toDir), ValidationResult.Kind.ERROR, ValidationResult.Action.VALIDATE);
+    return doValidateNotChanged(getFile(toDir), ValidationResult.Action.VALIDATE);
   }
 
   @Override
