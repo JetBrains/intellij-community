@@ -28,8 +28,8 @@ public class ModulePathMacroManager extends PathMacroManager {
 
   @NotNull
   @Override
-  public synchronized ReplacePathToMacroMap getReplacePathMap() {
-    final ReplacePathToMacroMap result = super.getReplacePathMap();
+  public ReplacePathToMacroMap computeReplacePathMap() {
+    final ReplacePathToMacroMap result = super.computeReplacePathMap();
     final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
     addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHomePath());
     return result;

@@ -10,7 +10,7 @@ import com.intellij.util.containers.SmartHashSet
 
 internal fun PathMacroManager?.createTrackingSubstitutor(): TrackingPathMacroSubstitutorImpl? = if (this == null) null else TrackingPathMacroSubstitutorImpl(this)
 
-internal class TrackingPathMacroSubstitutorImpl(private val macroManager: PathMacroManager) : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
+internal class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathMacroManager) : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
   private val lock = Object()
 
   private val macroToComponentNames = MultiMap.createSet<String, String>()

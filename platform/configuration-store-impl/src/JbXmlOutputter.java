@@ -54,7 +54,6 @@ package com.intellij.configurationStore;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.Stack;
 import org.jdom.*;
 import org.jdom.output.Format;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +99,7 @@ class JbXmlOutputter {
     List<Content> content = doc.getContent();
     for (Content obj : content) {
       if (obj instanceof Element) {
-        printElement(out, doc.getRootElement(), 0, new NamespaceStack());
+        printElement(out, doc.getRootElement(), 0);
       }
       else if (obj instanceof Comment) {
         printComment(out, (Comment)obj);
@@ -144,7 +143,7 @@ class JbXmlOutputter {
   }
 
   public void output(@NotNull Element element, @NotNull Writer out) throws IOException {
-    printElement(out, element, 0, new NamespaceStack());
+    printElement(out, element, 0);
   }
 
   /**
@@ -157,7 +156,7 @@ class JbXmlOutputter {
    * @param out  <code>Writer</code> to use.
    */
   public void output(List<Content> list, Writer out) throws IOException {
-    printContentRange(out, list, 0, list.size(), 0, new NamespaceStack());
+    printContentRange(out, list, 0, list.size(), 0);
     out.flush();
   }
 
@@ -332,9 +331,8 @@ class JbXmlOutputter {
    * @param element    <code>Element</code> to output.
    * @param out        <code>Writer</code> to use.
    * @param level      <code>int</code> level of indention.
-   * @param namespaces <code>List</code> stack of Namespaces in scope.
    */
-  protected void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
+  protected void printElement(Writer out, Element element, int level) throws IOException {
     if (elementFilter != null && !elementFilter.accept(element, level)) {
       return;
     }
@@ -344,17 +342,8 @@ class JbXmlOutputter {
     out.write('<');
     printQualifiedName(out, element);
 
-    // Mark our namespace starting point
-    int previouslyDeclaredNamespaces = namespaces.size();
-
-    // Print the element's namespace, if appropriate
-    printElementNamespace(out, element, namespaces);
-
-    // Print out additional namespace declarations
-    printAdditionalNamespaces(out, element, namespaces);
-
     if (element.hasAttributes()) {
-      printAttributes(out, element.getAttributes(), namespaces);
+      printAttributes(out, element.getAttributes());
     }
 
     // Depending on the settings (newlines, textNormalize, etc), we may
@@ -382,7 +371,7 @@ class JbXmlOutputter {
       if (nextNonText(content, start) < size) {
         // Case Mixed Content - normal indentation
         newline(out);
-        printContentRange(out, content, start, size, level + 1, namespaces);
+        printContentRange(out, content, start, size, level + 1);
         newline(out);
         indent(out, level);
       }
@@ -393,11 +382,6 @@ class JbXmlOutputter {
       out.write("</");
       printQualifiedName(out, element);
       out.write('>');
-    }
-
-    // remove declared namespaces from stack
-    while (namespaces.size() > previouslyDeclaredNamespaces) {
-      namespaces.pop();
     }
   }
 
@@ -412,9 +396,8 @@ class JbXmlOutputter {
    * @param end        index of last content node (exclusive).
    * @param out        <code>Writer</code> to use.
    * @param level      <code>int</code> level of indentation.
-   * @param namespaces <code>List</code> stack of Namespaces in scope.
    */
-  private void printContentRange(Writer out, List<Content> content, int start, int end, int level, NamespaceStack namespaces) throws IOException {
+  private void printContentRange(Writer out, List<Content> content, int start, int end, int level) throws IOException {
     boolean firstNode; // Flag for 1st node in content
     Object next;       // Node we're about to print
     int first, index;  // Indexes into the list of content
@@ -452,7 +435,7 @@ class JbXmlOutputter {
         printComment(out, (Comment)next);
       }
       else if (next instanceof Element) {
-        printElement(out, (Element)next, level, namespaces);
+        printElement(out, (Element)next, level);
       }
       else if (next instanceof ProcessingInstruction) {
         printProcessingInstruction(out, (ProcessingInstruction)next);
@@ -538,48 +521,13 @@ class JbXmlOutputter {
   }
 
   /**
-   * This will handle printing of any needed <code>{@link Namespace}</code>
-   * declarations.
-   *
-   * @param ns  <code>Namespace</code> to print definition of
-   * @param out <code>Writer</code> to use.
-   */
-  private static void printNamespace(Writer out, Namespace ns,
-                                     NamespaceStack namespaces)
-    throws IOException {
-    String prefix = ns.getPrefix();
-    String uri = ns.getURI();
-
-    // Already printed namespace decl?
-    if (uri.equals(namespaces.getURI(prefix))) {
-      return;
-    }
-
-    out.write(" xmlns");
-    if (!prefix.isEmpty()) {
-      out.write(':');
-      out.write(prefix);
-    }
-    out.write('=');
-    out.write('"');
-    out.write(escapeAttributeEntities(uri));
-    out.write('"');
-    namespaces.push(ns);
-  }
-
-  /**
    * This will handle printing of a <code>{@link Attribute}</code> list.
    *
    * @param attributes <code>List</code> of Attribute objects
    * @param out        <code>Writer</code> to use
    */
-  protected void printAttributes(Writer out, List<Attribute> attributes, NamespaceStack namespaces) throws IOException {
+  protected void printAttributes(Writer out, List<Attribute> attributes) throws IOException {
     for (Attribute attribute : attributes) {
-      Namespace ns = attribute.getNamespace();
-      if (ns != Namespace.NO_NAMESPACE && ns != Namespace.XML_NAMESPACE) {
-        printNamespace(out, ns, namespaces);
-      }
-
       out.write(' ');
       printQualifiedName(out, attribute);
       out.write('=');
@@ -588,31 +536,6 @@ class JbXmlOutputter {
       out.write('"');
     }
   }
-
-  private static void printElementNamespace(Writer out, Element element, NamespaceStack namespaces) throws IOException {
-    // Add namespace decl only if it's not the XML namespace and it's
-    // not the NO_NAMESPACE with the prefix "" not yet mapped
-    // (we do output xmlns="" if the "" prefix was already used and we
-    // need to reclaim it for the NO_NAMESPACE)
-    Namespace ns = element.getNamespace();
-    if (ns == Namespace.XML_NAMESPACE) {
-      return;
-    }
-    if (!(ns == Namespace.NO_NAMESPACE && namespaces.getURI("") == null)) {
-      printNamespace(out, ns, namespaces);
-    }
-  }
-
-  private static void printAdditionalNamespaces(Writer out, Element element, NamespaceStack namespaces) throws IOException {
-    List<Namespace> list = element.getAdditionalNamespaces();
-    if (list != null) {
-      for (Namespace additional : list) {
-        printNamespace(out, additional, namespaces);
-      }
-    }
-  }
-
-  // * * * * * * * * * * Support methods * * * * * * * * * *
 
   /**
    * This will print a newline only if indent is not null.
@@ -769,61 +692,5 @@ class JbXmlOutputter {
       out.write(':');
     }
     out.write(a.getName());
-  }
-
-  public static class NamespaceStack {
-    /**
-     * The prefixes available
-     */
-    private final Stack<String> prefixes = new Stack<>();
-
-    /**
-     * The URIs available
-     */
-    private final Stack<String> uris = new Stack<>();
-
-    /**
-     * This will add a new <code>{@link Namespace}</code>
-     * to those currently available.
-     *
-     * @param ns <code>Namespace</code> to add.
-     */
-    public void push(Namespace ns) {
-      prefixes.push(ns.getPrefix());
-      uris.push(ns.getURI());
-    }
-
-    /**
-     * This will remove the topmost (most recently added)
-     * <code>{@link Namespace}</code>, and return its prefix.
-     *
-     * @return <code>String</code> - the popped namespace prefix.
-     */
-    public String pop() {
-      String prefix = prefixes.pop();
-      uris.pop();
-      return prefix;
-    }
-
-    /**
-     * This returns the number of available namespaces.
-     *
-     * @return <code>int</code> - size of the namespace stack.
-     */
-    public int size() {
-      return prefixes.size();
-    }
-
-    /**
-     * Given a prefix, this will return the namespace URI most
-     * recently (topmost) associated with that prefix.
-     *
-     * @param prefix <code>String</code> namespace prefix.
-     * @return <code>String</code> - the namespace URI for that prefix.
-     */
-    public String getURI(String prefix) {
-      int index = prefixes.lastIndexOf(prefix);
-      return index == -1 ? null : uris.get(index);
-    }
   }
 }

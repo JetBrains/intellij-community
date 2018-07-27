@@ -4,6 +4,7 @@ package com.intellij.openapi.components;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,6 +37,11 @@ public class PathMacroManager implements PathMacroSubstitutor {
 
   public PathMacroManager(@Nullable PathMacros pathMacros) {
     myPathMacros = (PathMacrosImpl)pathMacros;
+  }
+
+  @NotNull
+  public PathMacroFilter getMacroFilter() {
+    return Holder.FILTER;
   }
 
   protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
@@ -84,22 +90,24 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   @NotNull
-  public synchronized ReplacePathToMacroMap getReplacePathMap() {
-    PathMacrosImpl pathMacros = getPathMacros();
-
-    long pathMacrosModificationCount = pathMacros.getModificationCount();
+  public final synchronized ReplacePathToMacroMap getReplacePathMap() {
+    long pathMacrosModificationCount = getPathMacros().getModificationCount();
     if (myReplacePathToMacroMap != null && pathMacrosModificationCount == myPathMacrosModificationCount) {
       return myReplacePathToMacroMap;
     }
 
+    myReplacePathToMacroMap = computeReplacePathMap();
+    myPathMacrosModificationCount = pathMacrosModificationCount;
+    return myReplacePathToMacroMap;
+  }
+
+  @NotNull
+  protected ReplacePathToMacroMap computeReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-    pathMacros.addMacroReplacements(result);
+    getPathMacros().addMacroReplacements(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroReplacement(entry.getValue(), entry.getKey());
     }
-
-    myReplacePathToMacroMap = result;
-    myPathMacrosModificationCount = pathMacrosModificationCount;
     return result;
   }
 
