@@ -285,6 +285,18 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @NotNull
   @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesScope() {
+    return myModuleScopeProvider.getModuleWithDependentsAndLibrariesScope();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesTestScope() {
+    return myModuleScopeProvider.getModuleWithDependentsAndLibrariesTestScope();
+  }
+
+  @NotNull
+  @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
   }

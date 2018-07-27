@@ -29,6 +29,7 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   private final Module myModule;
   private final IntObjectMap<GlobalSearchScope> myScopeCache = ContainerUtil.createConcurrentIntObjectMap();
   private ModuleWithDependentsTestScope myModuleTestsWithDependentsScope;
+  private ModuleWithDependentsAndLibrariesTestScope myModuleTestsWithDependentsAndLibrariesScope;
 
   public ModuleScopeProviderImpl(@NotNull Module module) {
     myModule = module;
@@ -100,6 +101,22 @@ public class ModuleScopeProviderImpl implements ModuleScopeProvider {
     ModuleWithDependentsTestScope scope = myModuleTestsWithDependentsScope;
     if (scope == null) {
       myModuleTestsWithDependentsScope = scope = new ModuleWithDependentsTestScope(myModule);
+    }
+    return scope;
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesScope() {
+    return getModuleWithDependentsAndLibrariesTestScope().getBaseScope();
+  }
+
+  @NotNull
+  @Override
+  public ModuleWithDependentsAndLibrariesTestScope getModuleWithDependentsAndLibrariesTestScope() {
+    ModuleWithDependentsAndLibrariesTestScope scope = myModuleTestsWithDependentsAndLibrariesScope;
+    if (scope == null) {
+      myModuleTestsWithDependentsAndLibrariesScope = scope = new ModuleWithDependentsAndLibrariesTestScope(myModule);
     }
     return scope;
   }

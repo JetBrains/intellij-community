@@ -43,7 +43,7 @@ import java.util.Set;
 class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Module myModule;
 
-  private final ProjectFileIndexImpl myProjectFileIndex;
+  protected final ProjectFileIndexImpl myProjectFileIndex;
   private final Set<Module> myModules;
 
   ModuleWithDependentsScope(@NotNull Module module) {

@@ -62,6 +62,10 @@ public interface ModuleScopeProvider {
   @NotNull
   GlobalSearchScope getModuleTestsWithDependentsScope();
   @NotNull
+  GlobalSearchScope getModuleWithDependentsAndLibrariesScope();
+  @NotNull
+  GlobalSearchScope getModuleWithDependentsAndLibrariesTestScope();
+  @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
   void clearCache();
