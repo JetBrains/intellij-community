@@ -189,10 +189,12 @@ class GitRewordOperation(private val repository: GitRepository,
 
     val connection = project.messageBus.connect()
     notification.whenExpired { connection.disconnect() }
-    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-      BackgroundTaskUtil.executeOnPooledThread(repository, Runnable {
-        if (checkUndoPossibility() !is UndoPossibility.Possible) notification.expire()
-      })
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { it: GitRepository ->
+      if (it == repository) {
+        BackgroundTaskUtil.executeOnPooledThread(repository, Runnable {
+          if (checkUndoPossibility() !is UndoPossibility.Possible) notification.expire()
+        })
+      }
     })
 
     notifier.notify(notification)
