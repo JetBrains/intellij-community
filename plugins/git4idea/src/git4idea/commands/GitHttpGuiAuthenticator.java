@@ -374,9 +374,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
         if (rememberedLogin == null) {
           return null;
         }
-        return (myData = getDataForUser(url, rememberedLogin));
+        return getDataForUser(url, rememberedLogin);
       }
-      return (myData = getDataForUser(url, login));
+      return getDataForUser(url, login);
     }
 
     @Override
@@ -385,7 +385,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       String key = makeKey(url, login);
       Credentials credentials = CredentialAttributesKt.getAndMigrateCredentials(oldCredentialAttributes(key), credentialAttributes(key));
       String password = StringUtil.nullize(credentials == null ? null : credentials.getPasswordAsString());
-      return new AuthData(login, password);
+      return (myData = new AuthData(login, password));
     }
 
     @Override
