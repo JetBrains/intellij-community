@@ -71,7 +71,7 @@ public class RelaxedDirectInheritorChecker {
     return locals + qNames.size() > 1;
   }
 
-  public boolean checkInheritance(@NotNull PsiClass inheritorCandidate, boolean checkDeep) {
+  public boolean checkInheritance(@NotNull PsiClass inheritorCandidate) {
     if (!inheritorCandidate.isValid() || !myBaseClass.isValid()) return false;
     if (myFileIndex.isInSourceContent(inheritorCandidate.getContainingFile().getVirtualFile())) {
       if (!myHasGlobalAmbiguities.getValue()) {
@@ -86,7 +86,7 @@ public class RelaxedDirectInheritorChecker {
       }
     }
 
-    return inheritorCandidate.isInheritor(myBaseClass, checkDeep);
+    return inheritorCandidate.isInheritor(myBaseClass, false);
   }
 
   private static boolean isAccessibleLight(@NotNull PsiClass inheritorCandidate, @NotNull PsiClass base) {
