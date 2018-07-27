@@ -52,7 +52,10 @@
  */
 package com.intellij.configurationStore;
 
+import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.*;
 import org.jdom.output.Format;
@@ -65,7 +68,7 @@ import java.io.Writer;
 import java.util.List;
 
 @SuppressWarnings("Duplicates")
-class JbXmlOutputter {
+final class JbXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 
   // For normal output
@@ -73,9 +76,19 @@ class JbXmlOutputter {
   @Nullable
   private final JDOMUtil.ElementOutputFilter elementFilter;
 
-  public JbXmlOutputter(@NotNull String lineSeparator, @Nullable JDOMUtil.ElementOutputFilter elementFilter) {
+  @Nullable
+  private final ReplacePathToMacroMap macroMap;
+  @Nullable
+  private final PathMacroFilter macroFilter;
+
+  public JbXmlOutputter(@NotNull String lineSeparator,
+                        @Nullable JDOMUtil.ElementOutputFilter elementFilter,
+                        @Nullable ReplacePathToMacroMap macroMap,
+                        @Nullable PathMacroFilter macroFilter) {
     this.format = DEFAULT_FORMAT.getLineSeparator().equals(lineSeparator) ? DEFAULT_FORMAT : JDOMUtil.createFormat(lineSeparator);
     this.elementFilter = elementFilter;
+    this.macroMap = macroMap;
+    this.macroFilter = macroFilter;
   }
 
   /**
@@ -169,7 +182,7 @@ class JbXmlOutputter {
    * @param out      <code>Writer</code> to use.
    * @param encoding The encoding to add to the declaration
    */
-  protected void printDeclaration(Writer out, String encoding) throws IOException {
+  private void printDeclaration(Writer out, String encoding) throws IOException {
     // Only print the declaration if it's not being omitted
     if (!format.getOmitDeclaration()) {
       // Assume 1.0 version
@@ -192,7 +205,7 @@ class JbXmlOutputter {
    * @param docType <code>Document</code> whose declaration to write.
    * @param out     <code>Writer</code> to use.
    */
-  protected void printDocType(Writer out, DocType docType) throws IOException {
+  private void printDocType(Writer out, DocType docType) throws IOException {
 
     String publicID = docType.getPublicID();
     String systemID = docType.getSystemID();
@@ -230,7 +243,7 @@ class JbXmlOutputter {
    * @param comment <code>Comment</code> to write.
    * @param out     <code>Writer</code> to use.
    */
-  protected void printComment(Writer out, Comment comment)
+  private static void printComment(Writer out, Comment comment)
     throws IOException {
     out.write("<!--");
     out.write(comment.getText());
@@ -243,7 +256,7 @@ class JbXmlOutputter {
    * @param pi  <code>ProcessingInstruction</code> to write.
    * @param out <code>Writer</code> to use.
    */
-  protected void printProcessingInstruction(Writer out, ProcessingInstruction pi) throws IOException {
+  private void printProcessingInstruction(Writer out, ProcessingInstruction pi) throws IOException {
     String target = pi.getTarget();
     boolean piProcessed = false;
 
@@ -283,7 +296,7 @@ class JbXmlOutputter {
    * @param entity <code>EntityRef</code> to output.
    * @param out    <code>Writer</code> to use.
    */
-  protected void printEntityRef(Writer out, EntityRef entity)
+  private static void printEntityRef(Writer out, EntityRef entity)
     throws IOException {
     out.write("&");
     out.write(entity.getName());
@@ -296,7 +309,7 @@ class JbXmlOutputter {
    * @param cdata <code>CDATA</code> to output.
    * @param out   <code>Writer</code> to use.
    */
-  protected void printCDATA(Writer out, CDATA cdata) throws IOException {
+  private void printCDATA(Writer out, CDATA cdata) throws IOException {
     String str;
     if (format.getTextMode() == Format.TextMode.NORMALIZE) {
       str = cdata.getTextNormalize();
@@ -320,6 +333,11 @@ class JbXmlOutputter {
     else if (format.getTextMode() == Format.TextMode.TRIM) {
       str = str.trim();
     }
+
+    if (macroMap != null) {
+      str = macroMap.substitute(str, SystemInfoRt.isFileSystemCaseSensitive);
+    }
+
     out.write(escapeElementEntities(str));
   }
 
@@ -328,11 +346,11 @@ class JbXmlOutputter {
    * its <code>{@link Attribute}</code>s, and all contained (child)
    * elements, etc.
    *
-   * @param element    <code>Element</code> to output.
-   * @param out        <code>Writer</code> to use.
-   * @param level      <code>int</code> level of indention.
+   * @param element <code>Element</code> to output.
+   * @param out     <code>Writer</code> to use.
+   * @param level   <code>int</code> level of indention.
    */
-  protected void printElement(Writer out, Element element, int level) throws IOException {
+  public void printElement(Writer out, Element element, int level) throws IOException {
     if (elementFilter != null && !elementFilter.accept(element, level)) {
       return;
     }
@@ -366,17 +384,16 @@ class JbXmlOutputter {
     else {
       out.write('>');
 
-      // For a special case where the content is only CDATA
-      // or Text we don't want to indent after the start or before the end tag.
+      // for a special case where the content is only CDATA or Text we don't want to indent after the start or before the end tag
       if (nextNonText(content, start) < size) {
-        // Case Mixed Content - normal indentation
+        // case Mixed Content - normal indentation
         newline(out);
         printContentRange(out, content, start, size, level + 1);
         newline(out);
         indent(out, level);
       }
       else {
-        // Case all CDATA or Text - no indentation
+        // case all CDATA or Text - no indentation
         printTextRange(out, content, start, size);
       }
       out.write("</");
@@ -391,11 +408,11 @@ class JbXmlOutputter {
    * starting index is inclusive, while the ending index is
    * exclusive.
    *
-   * @param content    <code>List</code> of content to output
-   * @param start      index of first content node (inclusive.
-   * @param end        index of last content node (exclusive).
-   * @param out        <code>Writer</code> to use.
-   * @param level      <code>int</code> level of indentation.
+   * @param content <code>List</code> of content to output
+   * @param start   index of first content node (inclusive.
+   * @param end     index of last content node (exclusive).
+   * @param out     <code>Writer</code> to use.
+   * @param level   <code>int</code> level of indentation.
    */
   private void printContentRange(Writer out, List<Content> content, int start, int end, int level) throws IOException {
     boolean firstNode; // Flag for 1st node in content
@@ -441,13 +458,11 @@ class JbXmlOutputter {
         printProcessingInstruction(out, (ProcessingInstruction)next);
       }
       else {
-        // XXX if we get here then we have a illegal content, for
-        //     now we'll just ignore it (probably should throw
-        //     a exception)
+        // XXX if we get here then we have a illegal content, for now we'll just ignore it (probably should throw a exception)
       }
 
       index++;
-    } /* while */
+    }
   }
 
   /**
@@ -467,18 +482,18 @@ class JbXmlOutputter {
 
     previous = null;
 
-    // Remove leading whitespace-only nodes
+    // remove leading whitespace-only nodes
     start = skipLeadingWhite(content, start);
 
     int size = content.size();
     if (start < size) {
-      // And remove trialing whitespace-only nodes
+      // and remove trialing whitespace-only nodes
       end = skipTrailingWhite(content, end);
 
       for (int i = start; i < end; i++) {
         node = content.get(i);
 
-        // Get the unmangled version of the text we are about to print
+        // get the unmangled version of the text we are about to print
         if (node instanceof Text) {
           next = ((Text)node).getText();
         }
@@ -489,13 +504,12 @@ class JbXmlOutputter {
           throw new IllegalStateException("Should see only CDATA, Text, or EntityRef");
         }
 
-        // This may save a little time
+        // this may save a little time
         if (next == null || next.isEmpty()) {
           continue;
         }
 
-        // Determine if we need to pad the output (padding is
-        // only need in trim or normalizing mode)
+        // determine if we need to pad the output (padding is only need in trim or normalizing mode)
         if (previous != null) { // Not 1st node
           if (format.getTextMode() == Format.TextMode.NORMALIZE || format.getTextMode() == Format.TextMode.TRIM) {
             if (endsWithWhite(previous) || startsWithWhite(next)) {
@@ -526,13 +540,22 @@ class JbXmlOutputter {
    * @param attributes <code>List</code> of Attribute objects
    * @param out        <code>Writer</code> to use
    */
-  protected void printAttributes(Writer out, List<Attribute> attributes) throws IOException {
+  private void printAttributes(Writer out, List<Attribute> attributes) throws IOException {
     for (Attribute attribute : attributes) {
       out.write(' ');
       printQualifiedName(out, attribute);
       out.write('=');
       out.write('"');
-      out.write(escapeAttributeEntities(attribute.getValue()));
+
+      String value;
+      if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
+        value = macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false);
+      }
+      else {
+        value = attribute.getValue();
+      }
+
+      out.write(escapeAttributeEntities(value));
       out.write('"');
     }
   }

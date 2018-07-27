@@ -9,7 +9,7 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.safeOutputStream
 import com.intellij.util.LineSeparator
@@ -230,7 +230,7 @@ private class XmlDataWriter(private val rootElementName: String?,
         writer.append(entry.key)
         writer.append('=')
         writer.append('"')
-        writer.append(replacePathMap?.substitute(JDOMUtil.escapeText(entry.value, false, true), SystemInfo.isFileSystemCaseSensitive))
+        writer.append(replacePathMap?.substitute(JDOMUtil.escapeText(entry.value, false, true), SystemInfoRt.isFileSystemCaseSensitive))
         writer.append('"')
       }
 
@@ -243,13 +243,12 @@ private class XmlDataWriter(private val rootElementName: String?,
       writer.append('>')
     }
 
-    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter())
+    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter(), replacePathMap, macroFilter)
     for (element in elements) {
       if (hasRootElement) {
         writer.append(lineSeparatorWithIndent)
       }
 
-      replacePathMap?.substitute(element, SystemInfo.isFileSystemCaseSensitive, false, macroFilter)
       xmlOutputter.printElement(writer, element, 0)
     }
 
@@ -414,7 +413,7 @@ internal fun createDataWriterForElement(element: Element): DataWriter {
     override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
 
     override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
-      output.bufferedWriter().use { JbXmlOutputter(lineSeparator, filter?.toElementFilter()).output(element, it) }
+      output.bufferedWriter().use { JbXmlOutputter(lineSeparator, filter?.toElementFilter(), null, null).output(element, it) }
     }
   }
 }
