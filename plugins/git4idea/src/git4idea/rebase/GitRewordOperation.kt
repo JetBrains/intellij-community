@@ -128,11 +128,11 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun injectRewordAction(list: List<GitRebaseEntry>): List<GitRebaseEntry> {
-    return list.map({ entry ->
+    return list.map { entry ->
       if (entry.action == PICK && commit.id.asString().startsWith(entry.commit))
         GitRebaseEntry(REWORD, entry.commit, entry.subject)
       else entry
-    })
+    }
   }
 
   private fun supplyNewMessage(editorText: String): String {
@@ -192,7 +192,7 @@ class GitRewordOperation(private val repository: GitRepository,
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { it: GitRepository ->
       if (it == repository) {
         BackgroundTaskUtil.executeOnPooledThread(repository, Runnable {
-          if (checkUndoPossibility() !is UndoPossibility.Possible) notification.expire()
+          if (checkUndoPossibility() !== UndoPossibility.Possible) notification.expire()
         })
       }
     })
