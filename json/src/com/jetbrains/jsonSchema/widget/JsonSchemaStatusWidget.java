@@ -126,23 +126,10 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (info.getState()) {
         case DOWNLOADING_NOT_STARTED:
+          addDownloadingUpdateListener(info);
+          return getNoSchemaState();
         case DOWNLOADING_IN_PROGRESS:
-          info.addDownloadingListener(new FileDownloadingAdapter() {
-            @Override
-            public void fileDownloaded(VirtualFile localFile) {
-              update();
-            }
-
-            @Override
-            public void errorOccurred(@NotNull String errorMessage) {
-              update();
-            }
-
-            @Override
-            public void downloadingCancelled() {
-              update();
-            }
-          });
+          addDownloadingUpdateListener(info);
           return new MyWidgetState("Download is scheduled or in progress", "Downloading JSON schema", false);
         case ERROR_OCCURRED:
           return getDownloadErrorState(info.getErrorMessage());
@@ -169,6 +156,25 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
     return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
                              true);
+  }
+
+  private void addDownloadingUpdateListener(@NotNull RemoteFileInfo info) {
+    info.addDownloadingListener(new FileDownloadingAdapter() {
+      @Override
+      public void fileDownloaded(VirtualFile localFile) {
+        update();
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        update();
+      }
+
+      @Override
+      public void downloadingCancelled() {
+        update();
+      }
+    });
   }
 
   private boolean isValidSchemaFile(VirtualFile schemaFile) {
