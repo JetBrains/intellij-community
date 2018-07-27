@@ -167,7 +167,6 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       while (shouldParenthesizeParent(expression)) {
         expression = (PsiExpression)expression.getParent();
       }
-      if (ErrorUtil.containsDeepError(expression)) break;
       PsiElement parent = expression.getParent();
       if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
@@ -176,6 +175,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
         break;
       }
       if (parent instanceof PsiVariable && expression instanceof PsiArrayInitializerExpression) break;
+      if (ErrorUtil.containsDeepError(parent)) break;
       result.add(expression);
       element = expression.getParent();
     }
