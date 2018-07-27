@@ -13,8 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class GitExecutableDetectorWindowsTest {
   @Before
@@ -30,14 +28,15 @@ public class GitExecutableDetectorWindowsTest {
     assertExecutable("C:/Program Files/Git/bin/git.exe");
   }
 
-  @Test public void Prefer_default_Git_without_version_to_versioned_ones() {
+  @Test
+  public void Prefer_default_Git_without_version_to_versioned_ones() {
     fs("C:/Program Files/Git/bin/git.exe", "C:/Program Files/Git 1.8/bin/git.exe", "C:/Program Files/Git_1.7.1/bin/git.exe");
     assertExecutable("C:/Program Files/Git/bin/git.exe");
   }
 
   @Test
   public void Prefer_the_latest_version() {
-    fs("C:/Program Files (x86)/Git 1.8/cmd/git.exe", "C:/Program Files/Git_1.7.1/bin/git.exe", "C:/Program Files/Git_1.7.5/cmd/git.cmd",
+    fs("C:/Program Files (x86)/Git 1.8/cmd/git.exe", "C:/Program Files/Git_1.7.1/bin/git.exe", "C:/Program Files/Git_1.7.5/cmd/git.exe",
        "C:/Program Files (x86)/Git_1.7.0.2/bin/git.exe");
     assertExecutable("C:/Program Files (x86)/Git 1.8/cmd/git.exe");
   }
@@ -49,22 +48,9 @@ public class GitExecutableDetectorWindowsTest {
   }
 
   @Test
-  public void Prefer_git_cmd_over_git_exe() {
-    fs("C:/Program Files (x86)/Git 1.7.4/bin/git.exe", "C:/Program Files/Git 1.7.4/cmd/git.cmd");
-    assertExecutable("C:/Program Files/Git 1.7.4/cmd/git.cmd");
-  }
-
-  @Test
   public void Prefer_cmd_over_bin_in_newer_versions_of_Git() {
     fs("C:/Program Files (x86)/Git 1.8/bin/git.exe", "C:/Program Files/Git 1.8/cmd/git.exe");
     assertExecutable("C:/Program Files/Git 1.8/cmd/git.exe");
-  }
-
-  @Test
-  public void _1_8_0_Prefer_cmd_git_cmd_over_cmd_git_exe_and_bin_git_exe() {
-    fs("C:/Program Files (x86)/Git_1.8/bin/git.exe", "C:/Program Files (x86)/Git_1.8/cmd/git.cmd",
-       "C:/Program Files (x86)/Git_1.8/cmd/git.exe");
-    assertExecutable("C:/Program Files (x86)/Git_1.8/cmd/git.cmd");
   }
 
   @Test
@@ -81,31 +67,19 @@ public class GitExecutableDetectorWindowsTest {
 
   @Test
   public void Many_different_versions_real_case() {
-    fs("C:/Program Files (x86)/Git_1.7.0.2/bin/git.exe", "C:/Program Files (x86)/Git_1.7.0.2/cmd/git.cmd",
-       "C:/Program Files (x86)/Git_1.7.8/bin/git.exe", "C:/Program Files (x86)/Git_1.7.8/cmd/git.cmd",
-       "C:/Program Files (x86)/Git_1.8/bin/git.exe", "C:/Program Files (x86)/Git_1.8/cmd/git.cmd",
+    fs("C:/Program Files (x86)/Git_1.7.0.2/bin/git.exe", "C:/Program Files (x86)/Git_1.7.0.2/cmd/git.exe",
+       "C:/Program Files (x86)/Git_1.7.8/bin/git.exe", "C:/Program Files (x86)/Git_1.7.8/cmd/git.exe",
+       "C:/Program Files (x86)/Git_1.8/bin/git.exe", "C:/Program Files (x86)/Git_1.8/cmd/git.exe",
        "C:/Program Files (x86)/Git_1.8/cmd/git.exe", "C:/Program Files (x86)/Git_1.8.0.2/cmd/git.exe",
        "C:/Program Files (x86)/Git_1.8.0.2/bin/git.exe", "C:/cygwin/bin/git.exe");
     assertExecutable("C:/Program Files (x86)/Git_1.8.0.2/cmd/git.exe");
   }
 
   @Test
-  public void Program_not_found_try_git_exe() {
-    CAN_RUN = new ArrayList<>(Arrays.asList("git.exe"));
-    assertExecutable("git.exe");
-  }
-
-  @Test
-  public void For_both_git_exe_and_git_cmd_prefer_git_cmd() {
-    CAN_RUN = new ArrayList<>(Arrays.asList("git.exe", "git.cmd"));
-    assertExecutable("git.cmd");
-  }
-
-  @Test
   public void Find_Git_in_PATH() {
     PATH = "D:/Program Files (x86)/Git_distr/cmd";
-    fs("D:/Program Files (x86)/Git_distr/cmd/git.cmd");
-    assertExecutable("D:/Program Files (x86)/Git_distr/cmd/git.cmd");
+    fs("D:/Program Files (x86)/Git_distr/cmd/git.exe");
+    assertExecutable("D:/Program Files (x86)/Git_distr/cmd/git.exe");
   }
 
   @Test
@@ -133,8 +107,8 @@ public class GitExecutableDetectorWindowsTest {
   @Test
   public void Prefer_the_first_entry_from_the_PATH() {
     PATH = "C:/Ruby193/bin;D:/Git/cmd;C:/Users/John.Doe/Documents/Git_1.8.0.2/bin;";
-    fs("D:/Git/cmd/git.cmd", "C:/Users/John.Doe/Documents/Git_1.8.0.2/bin/git.exe");
-    assertExecutable("D:/Git/cmd/git.cmd");
+    fs("D:/Git/cmd/git.exe", "C:/Users/John.Doe/Documents/Git_1.8.0.2/bin/git.exe");
+    assertExecutable("D:/Git/cmd/git.exe");
   }
 
   @Test
@@ -196,11 +170,6 @@ public class GitExecutableDetectorWindowsTest {
   private String detect() {
     return new GitExecutableDetector() {
       @Override
-      protected boolean runs(@NotNull String exec) {
-        return CAN_RUN.contains(exec);
-      }
-
-      @Override
       protected String getPath() {
         return StringUtil.join(PATH.split(";"), s -> convertPath(s), ";");
       }
@@ -219,6 +188,5 @@ public class GitExecutableDetectorWindowsTest {
   }
 
   private File testRoot;
-  private ArrayList CAN_RUN = new ArrayList();
   private String PATH = "%SystemRoot%/system32;%SystemRoot%;%SystemRoot%/System32/Wbem;%SYSTEMROOT%/System32/WindowsPowerShell/v1.0/;";
 }
