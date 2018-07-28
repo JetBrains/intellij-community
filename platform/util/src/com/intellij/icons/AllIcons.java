@@ -1156,19 +1156,15 @@ public class AllIcons {
 
     public static class Notification {
       public static final Icon Close = IconLoader.getIcon("/ide/notification/close.svg"); // 16x16
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.Notification.Close */
-      @SuppressWarnings("unused")
-      @Deprecated
-      public static final Icon CloseHover = IconLoader.getIcon("/ide/notification/close.svg"); // 16x16
-      public static final Icon Collapse = IconLoader.getIcon("/ide/notification/collapse.png"); // 16x16
-      public static final Icon CollapseHover = IconLoader.getIcon("/ide/notification/collapseHover.png"); // 16x16
-      public static final Icon DropTriangle = IconLoader.getIcon("/ide/notification/dropTriangle.png"); // 11x8
+      public static final Icon CloseHover = IconLoader.getIcon("/ide/notification/closeHover.svg"); // 16x16
+      public static final Icon Collapse = IconLoader.getIcon("/ide/notification/collapse.svg"); // 16x16
+      public static final Icon CollapseHover = IconLoader.getIcon("/ide/notification/collapseHover.svg"); // 16x16
+      public static final Icon DropTriangle = IconLoader.getIcon("/ide/notification/dropTriangle.svg"); // 16x16
       public static final Icon ErrorEvents = IconLoader.getIcon("/ide/notification/errorEvents.svg"); // 13x13
-      public static final Icon Expand = IconLoader.getIcon("/ide/notification/expand.png"); // 16x16
-      public static final Icon ExpandHover = IconLoader.getIcon("/ide/notification/expandHover.png"); // 16x16
-      public static final Icon Gear = IconLoader.getIcon("/ide/notification/gear.png"); // 16x16
-      public static final Icon GearHover = IconLoader.getIcon("/ide/notification/gearHover.png"); // 16x16
+      public static final Icon Expand = IconLoader.getIcon("/ide/notification/expand.svg"); // 16x16
+      public static final Icon ExpandHover = IconLoader.getIcon("/ide/notification/expandHover.svg"); // 16x16
+      public static final Icon Gear = IconLoader.getIcon("/ide/notification/gear.svg"); // 16x16
+      public static final Icon GearHover = IconLoader.getIcon("/ide/notification/gearHover.svg"); // 16x16
       public static final Icon InfoEvents = IconLoader.getIcon("/ide/notification/infoEvents.svg"); // 13x13
       public static final Icon NoEvents = IconLoader.getIcon("/ide/notification/noEvents.svg"); // 13x13
 
