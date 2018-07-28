@@ -1491,11 +1491,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
               long currentTime = System.nanoTime();
               Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
               if (startTime != null) {
+/* Android Studio: b/111942793
                 long time = (currentTime - startTime.longValue()) / 1000000;
                 FUSProjectUsageTrigger.getInstance(myProject).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.open.time."+(time/1000));
                 FeatureUsageLogger.INSTANCE.log("lifecycle", "project.opening.finished", Collections.singletonMap("time.ms", time));
 
                 LOG.info("Project opening took " + time + " ms");
+Android Studio: b/111942793 */
                 PluginManagerCore.dumpPluginClassStatistics();
               }
             }, myProject.getDisposed());
