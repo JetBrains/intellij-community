@@ -641,13 +641,13 @@ public class AllIcons {
   }
 
   public static class Diff {
-    public static final Icon ApplyNotConflicts = IconLoader.getIcon("/diff/applyNotConflicts.png"); // 16x16
-    public static final Icon ApplyNotConflictsLeft = IconLoader.getIcon("/diff/applyNotConflictsLeft.png"); // 16x16
-    public static final Icon ApplyNotConflictsRight = IconLoader.getIcon("/diff/applyNotConflictsRight.png"); // 16x16
-    public static final Icon Arrow = IconLoader.getIcon("/diff/arrow.png"); // 11x11
-    public static final Icon ArrowLeftDown = IconLoader.getIcon("/diff/arrowLeftDown.png"); // 11x11
-    public static final Icon ArrowRight = IconLoader.getIcon("/diff/arrowRight.png"); // 11x11
-    public static final Icon ArrowRightDown = IconLoader.getIcon("/diff/arrowRightDown.png"); // 11x11
+    public static final Icon ApplyNotConflicts = IconLoader.getIcon("/diff/applyNotConflicts.svg"); // 16x16
+    public static final Icon ApplyNotConflictsLeft = IconLoader.getIcon("/diff/applyNotConflictsLeft.svg"); // 16x16
+    public static final Icon ApplyNotConflictsRight = IconLoader.getIcon("/diff/applyNotConflictsRight.svg"); // 16x16
+    public static final Icon Arrow = IconLoader.getIcon("/diff/arrow.svg"); // 12x12
+    public static final Icon ArrowLeftDown = IconLoader.getIcon("/diff/arrowLeftDown.svg"); // 12x12
+    public static final Icon ArrowRight = IconLoader.getIcon("/diff/arrowRight.svg"); // 12x12
+    public static final Icon ArrowRightDown = IconLoader.getIcon("/diff/arrowRightDown.svg"); // 12x12
     public static final Icon Compare3LeftMiddle = IconLoader.getIcon("/diff/compare3LeftMiddle.png"); // 16x16
     public static final Icon Compare3LeftRight = IconLoader.getIcon("/diff/compare3LeftRight.png"); // 16x16
     public static final Icon Compare3MiddleRight = IconLoader.getIcon("/diff/compare3MiddleRight.png"); // 16x16
@@ -662,11 +662,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16
-    public static final Icon GutterCheckBox = IconLoader.getIcon("/diff/gutterCheckBox.png"); // 11x11
-    public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.png"); // 11x11
-    public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.png"); // 12x12
-    public static final Icon MagicResolveToolbar = IconLoader.getIcon("/diff/magicResolveToolbar.png"); // 16x16
-    public static final Icon Remove = IconLoader.getIcon("/diff/remove.png"); // 11x11
+    public static final Icon GutterCheckBox = IconLoader.getIcon("/diff/gutterCheckBox.svg"); // 12x12
+    public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.svg"); // 12x12
+    public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.svg"); // 12x12
+    public static final Icon MagicResolveToolbar = IconLoader.getIcon("/diff/magicResolveToolbar.svg"); // 16x16
+    public static final Icon Remove = IconLoader.getIcon("/diff/remove.svg"); // 12x12
 
   }
 
@@ -1967,7 +1967,7 @@ public class AllIcons {
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16
     public static final Icon History = IconLoader.getIcon("/vcs/history.svg"); // 16x16
     public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
-    public static final Icon Merge = IconLoader.getIcon("/vcs/merge.png"); // 12x12
+    public static final Icon Merge = IconLoader.getIcon("/vcs/merge.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree */
     @SuppressWarnings("unused")
