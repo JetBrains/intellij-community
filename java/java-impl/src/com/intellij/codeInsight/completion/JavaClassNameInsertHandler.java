@@ -126,6 +126,22 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     if (fillTypeArgs && context.getCompletionChar() != '(') {
       JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
     }
+    else if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
+             psiClass.getTypeParameters().length == 1 &&
+             PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+      wrapFollowingTypeInGenerics(context, context.getOffset(refEnd));
+    }
+  }
+
+  private static void wrapFollowingTypeInGenerics(InsertionContext context, int refEnd) {
+    PsiTypeElement typeElem = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), refEnd, PsiTypeElement.class, false);
+    if (typeElem != null) {
+      int typeEnd = typeElem.getTextRange().getEndOffset();
+      context.getDocument().insertString(typeEnd, ">");
+      context.getEditor().getCaretModel().moveToOffset(typeEnd + 1);
+      context.getDocument().insertString(refEnd, "<");
+      context.setAddCompletionChar(false);
+    }
   }
 
   @Nullable static PsiJavaCodeReferenceElement findJavaReference(@NotNull PsiFile file, int offset) {
