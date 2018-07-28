@@ -8,6 +8,8 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase.assertDoesntExist
+import com.intellij.testFramework.UsefulTestCase.assertExists
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.io.systemIndependentPath
 import org.hamcrest.CoreMatchers.allOf
@@ -163,8 +165,8 @@ class SvnRenameTest : SvnTestCase() {
     assertNotNull(change)
 
     rollback(listOf(change))
-    assertFalse(File(myWorkingCopyDir.path, "newchild").exists())
-    assertTrue(File(myWorkingCopyDir.path, "child").exists())
+    assertDoesntExist(File(myWorkingCopyDir.path, "newchild"))
+    assertExists(File(myWorkingCopyDir.path, "child"))
   }
 
   // todo undo; undo after commit
@@ -198,9 +200,9 @@ class SvnRenameTest : SvnTestCase() {
     renameFileInCommand(child, "newchild")
     val childPath = File(myWorkingCopyDir.path, "child")
     val newChildPath = File(myWorkingCopyDir.path, "newchild")
-    assertTrue(File(newChildPath, "a.txt").exists())
-    assertTrue(File(newChildPath, "u.txt").exists())
-    assertFalse(File(childPath, "u.txt").exists())
+    assertExists(File(newChildPath, "a.txt"))
+    assertExists(File(newChildPath, "u.txt"))
+    assertDoesntExist(File(childPath, "u.txt"))
 
     refreshVfs()
     changeListManager.ensureUpToDate(false)
@@ -209,13 +211,10 @@ class SvnRenameTest : SvnTestCase() {
     changes.add(changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)!!)
 
     rollback(changes)
-    val fileA = File(childPath, "a.txt")
-    assertTrue(fileA.absolutePath, fileA.exists())
-    val fileU = File(childPath, "u.txt")
-    assertTrue(fileU.absolutePath, fileU.exists())
-    val unversionedDirFile = File(childPath, "uc")
-    assertTrue(unversionedDirFile.exists())
-    assertTrue(File(unversionedDirFile, "c.txt").exists())
+    assertExists(File(childPath, "a.txt"))
+    assertExists(File(childPath, "u.txt"))
+    assertExists(File(childPath, "uc"))
+    assertExists(File(childPath, "uc/c.txt"))
   }
 
   // IDEA-13824
@@ -253,8 +252,8 @@ class SvnRenameTest : SvnTestCase() {
     moveFileInCommand(child, parent2)
     undo()
     val childPath = File(parent1.path, "child")
-    assertTrue(childPath.exists())
-    assertTrue(File(childPath, "a.txt").exists())
+    assertExists(childPath)
+    assertExists(File(childPath, "a.txt"))
   }
 
   // IDEADEV-19552
@@ -265,8 +264,8 @@ class SvnRenameTest : SvnTestCase() {
 
     renameFileInCommand(file, "b.txt")
     undo()
-    assertTrue(File(myWorkingCopyDir.path, "a.txt").exists())
-    assertFalse(File(myWorkingCopyDir.path, "b.txt").exists())
+    assertExists(File(myWorkingCopyDir.path, "a.txt"))
+    assertDoesntExist(File(myWorkingCopyDir.path, "b.txt"))
   }
 
   @Test

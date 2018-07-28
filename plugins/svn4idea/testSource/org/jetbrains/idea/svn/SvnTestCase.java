@@ -57,14 +57,16 @@ import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
+import static com.intellij.testFramework.UsefulTestCase.*;
 import static com.intellij.util.FunctionUtil.nullConstant;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
@@ -272,7 +274,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       final File rootFile = virtualToIoFile(subTree.myRootDir);
       delete(rootFile);
       delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-      assertTrue(!rootFile.exists());
+      assertDoesntExist(rootFile);
       refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl);
@@ -369,7 +371,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       final File rootFile = virtualToIoFile(subTree.myRootDir);
       delete(rootFile);
       delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-      assertTrue(!rootFile.exists());
+      assertDoesntExist(rootFile);
       refreshVfs();
 
       final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
@@ -385,7 +387,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
       if (updateExternal) {
         refreshVfs();
-        assertTrue(new File(sourceDir, "external").exists());
+        assertExists(new File(sourceDir, "external"));
       }
     });
   }

@@ -14,8 +14,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author yole
@@ -62,6 +62,6 @@ public class SvnDeleteTest extends SvnTestCase {
     final File wasFile = virtualToIoFile(dir);
     deleteFileInCommand(dir);
     runAndVerifyStatusSorted("! child", "! child/a.txt");
-    assertTrue(!wasFile.exists());
+    assertDoesntExist(wasFile);
   }
 }

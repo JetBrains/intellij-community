@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.junit.Assert.*;
 
 /**
@@ -127,7 +128,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     for (TreeConflictData.FileData leftFile : leftFiles) {
       if (! leftFile.myIsDir && ! StringUtil.isEmpty(leftFile.myContents)) {
         final File ioFile = new File(myWorkingCopyDir.getPath(), leftFile.myRelativePath);
-        assertTrue(ioFile.exists());
+        assertExists(ioFile);
         final String text = FileUtil.loadFile(ioFile);
         assertEquals(leftFile.myContents, text);
       }

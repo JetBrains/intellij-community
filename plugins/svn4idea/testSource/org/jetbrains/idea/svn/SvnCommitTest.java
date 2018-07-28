@@ -5,14 +5,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -121,12 +119,8 @@ public class SvnCommitTest extends SvnTestCase {
 
     workingCopyBuilder.run();
 
-    final File file1 = new File(myWorkingCopyDir.getPath(), path1);
-    final File fileInner = new File(myWorkingCopyDir.getPath(), path2);
-    assertTrue(file1.exists());
-    assertTrue(fileInner.exists());
-    final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-    final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
+    final VirtualFile vf1 = myWorkingCopyDir.findFileByRelativePath(path1);
+    final VirtualFile vf2 = myWorkingCopyDir.findFileByRelativePath(path2);
     assertNotNull(vf1);
     assertNotNull(vf2);
 

@@ -29,6 +29,8 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
@@ -95,11 +97,11 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change s2Change = assertMove(tree.myS2File);
     assertTrue(unv.isValid());
     assertTrue(!filesEqual(virtualToIoFile(unv), wasUnversioned));
-    assertTrue(!wasUnversioned.exists());
+    assertDoesntExist(wasUnversioned);
 
     assertRollback(asList(change, s2Change), emptyList());
 
-    assertTrue(wasUnversioned.exists());
+    assertExists(wasUnversioned);
   }
 
   //IDEA-39943
@@ -130,11 +132,11 @@ public class SvnRollbackTest extends SvnTestCase {
     assertMove(innerFile);
 
     assertTrue(!filesEqual(virtualToIoFile(deepUnverioned), was));
-    assertTrue(!was.exists());
+    assertDoesntExist(was);
 
     assertRollback(singletonList(change), emptyList());
 
-    assertTrue(was.exists());
+    assertExists(was);
   }
 
   @Test
@@ -196,8 +198,8 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasLowestDirAfter = virtualToIoFile(inner3);
 
     renameFileInCommand(tree.mySourceDir, "newNameSource");
-    assertTrue(!wasU.exists());
-    assertTrue(!wasU2.exists());
+    assertDoesntExist(wasU);
+    assertDoesntExist(wasU2);
     refreshChanges();
 
     final Change change = assertRename(tree.mySourceDir);
@@ -220,7 +222,7 @@ public class SvnRollbackTest extends SvnTestCase {
                         new SimpleContentRevision("1", getFilePath(inner2After, true), WORKING.toString())), fantomDelete1, fantomDelete2)
     );
 
-    assertTrue(wasU2.exists());
+    assertExists(wasU2);
   }
 
   @Test
@@ -329,15 +331,15 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change dirChange = assertRename(tree.mySourceDir);
     final Change s1Change = assertMove(tree.myS1File);
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unverionedDir));
-    assertTrue(!wasUnvDir.exists());
+    assertDoesntExist(wasUnvDir);
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unvFile));
-    assertTrue(!wasUnvFile.exists());
+    assertDoesntExist(wasUnvFile);
 
     assertRollback(singletonList(dirChange),
                    singletonList(new Change(s1Change.getBeforeRevision(), s1Change.getBeforeRevision(), FileStatus.MODIFIED)));
 
-    assertTrue(wasUnvDir.exists());
-    assertTrue(wasUnvFile.exists());
+    assertExists(wasUnvDir);
+    assertExists(wasUnvFile);
   }
 
   @Test
@@ -362,7 +364,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change dirChange = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
     assertMove(tree.myS2File);
-    assertTrue(!wasIgnored.exists());
+    assertDoesntExist(wasIgnored);
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
 
     assertRollback(singletonList(dirChange), emptyList());
@@ -370,7 +372,7 @@ public class SvnRollbackTest extends SvnTestCase {
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was not committed
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(ignored));
-    assertTrue(wasIgnored.exists());
+    assertExists(wasIgnored);
   }
 
   @Test
@@ -397,7 +399,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change dirChange = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
     assertMove(tree.myS2File);
-    assertTrue(!wasIgnored.exists());
+    assertDoesntExist(wasIgnored);
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
 
     assertRollback(singletonList(dirChange), emptyList());
@@ -405,7 +407,7 @@ public class SvnRollbackTest extends SvnTestCase {
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was committed
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
-    assertTrue(wasIgnored.exists());
+    assertExists(wasIgnored);
   }
 
   @Test
@@ -530,9 +532,9 @@ public class SvnRollbackTest extends SvnTestCase {
     checkin();
 
     final File wasInitially = virtualToIoFile(tree.mySourceDir);
-    assertTrue(wasInitially.exists());
+    assertExists(wasInitially);
     moveFileInCommand(tree.mySourceDir, tree.myTargetDir);
-    assertTrue(!wasInitially.exists());
+    assertDoesntExist(wasInitially);
     refreshChanges();
 
     assertMove(tree.mySourceDir);

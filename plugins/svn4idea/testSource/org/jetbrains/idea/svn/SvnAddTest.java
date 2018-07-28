@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 /**
  * @author yole
@@ -63,6 +63,6 @@ public class SvnAddTest extends SvnTestCase {
     checkin();
     undo();
     runAndVerifyStatusSorted("D a.txt");
-    assertFalse(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
+    assertDoesntExist(new File(myWorkingCopyDir.getPath(), "a.txt"));
   }
 }
