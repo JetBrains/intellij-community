@@ -36,7 +36,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.CoreProgressManager");
 
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
-  final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
+  private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));

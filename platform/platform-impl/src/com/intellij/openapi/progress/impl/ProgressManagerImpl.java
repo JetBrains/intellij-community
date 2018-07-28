@@ -31,6 +31,7 @@ import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
+  private final Set<ProgressWindow> myUnsafeProgresses = ContainerUtil.newConcurrentSet();
 
   public ProgressManagerImpl() {
     HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
@@ -59,8 +60,20 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
+  public boolean hasUnsafeProgressIndicator() {
+    return super.hasUnsafeProgressIndicator() || !myUnsafeProgresses.isEmpty();
+  }
+
+  /**
+   * The passes progress won't count in {@link #hasUnsafeProgressIndicator()} and won't stop from application exiting.
+   */
+  public void markProgressSafe(@NotNull ProgressWindow progress) {
+    myUnsafeProgresses.remove(progress);
+  }
+
+  @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
+    if (progress instanceof ProgressWindow) myUnsafeProgresses.add((ProgressWindow)progress);
 
     CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread() 
                              ? p -> { ((PingProgress)progress).interact(); return true; } 
@@ -71,7 +84,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       super.executeProcessUnderProgress(process, progress);
     }
     finally {
-      if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
+      if (progress instanceof ProgressWindow) myUnsafeProgresses.remove((ProgressWindow)progress);
       if (hook != null) removeCheckCanceledHook(hook);
     }
   }

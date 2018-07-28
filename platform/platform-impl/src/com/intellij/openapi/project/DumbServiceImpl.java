@@ -13,9 +13,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -482,6 +484,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
+    ((ProgressManagerImpl)ProgressManager.getInstance()).markProgressSafe((ProgressWindow)visibleIndicator);
+
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
     ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
@@ -493,9 +497,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     try {
       shutdownTracker.registerStopperThread(self);
 
-      if (visibleIndicator instanceof ProgressIndicatorEx) {
-        ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
-      }
+      ((ProgressIndicatorEx)visibleIndicator).addStateDelegate(new AppIconProgress());
 
       DumbModeTask task = null;
       while (true) {
@@ -504,15 +506,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         task = pair.first;
         ProgressIndicatorEx taskIndicator = pair.second;
-        if (visibleIndicator instanceof ProgressIndicatorEx) {
-          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-            @Override
-            protected void delegateProgressChange(@NotNull IndicatorAction action) {
-              super.delegateProgressChange(action);
-              action.execute((ProgressIndicatorEx)visibleIndicator);
-            }
-          });
-        }
+        taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
+          @Override
+          protected void delegateProgressChange(@NotNull IndicatorAction action) {
+            super.delegateProgressChange(action);
+            action.execute((ProgressIndicatorEx)visibleIndicator);
+          }
+        });
         try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks")) {
           runSingleTask(task, taskIndicator);
         }
