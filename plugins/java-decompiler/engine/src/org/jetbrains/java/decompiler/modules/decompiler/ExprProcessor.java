@@ -773,7 +773,7 @@ public class ExprProcessor implements CodeConstants {
     }
 
     if (buf.length() == 0 && semicolon) {
-      buf.appendIndent(indent).append(";").appendLineSeparator();
+      buf.appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 

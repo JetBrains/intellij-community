@@ -10,7 +10,7 @@ public class TestMissingConstructorCallBad {
       try {
          new TestMissingConstructorCallBad();
       } catch (Throwable var2) {// 37
-         ;
+
       }
 
    }// 39

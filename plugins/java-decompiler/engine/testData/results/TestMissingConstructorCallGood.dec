@@ -13,7 +13,7 @@ public class TestMissingConstructorCallGood {
       try {
          new TestMissingConstructorCallGood();
       } catch (Throwable var2) {// 45
-         ;
+
       }
 
    }// 47
