@@ -68,6 +68,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -276,7 +277,13 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal) return;
-      ApplicationManager.getApplication().invokeLater(() -> closeEditor(), myProject.getDisposed());
+      if (!changesRange(TextRange.from(e.getOffset(), e.getNewLength()))) return;
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Component owner = FocusManager.getCurrentManager().getFocusOwner();
+        closeEditor();
+        owner.requestFocus();
+      }, myProject.getDisposed());
     }
   }
 
