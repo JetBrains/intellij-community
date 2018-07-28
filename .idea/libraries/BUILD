@@ -1330,8 +1330,16 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "delight-nashorn-sandbox",
+    name = "delight-rhino-sandbox",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.15:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.15:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-rhino-sandbox/0.0.6:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-rhino-sandbox/0.0.6:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "rhino",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/mozilla/rhino/1.7.10:jar"],
 )
