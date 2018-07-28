@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static org.junit.Assert.*;
 
@@ -92,8 +93,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), vcs.getName())));
       createSubTree(data);
       myTheirs.refresh(false, true);
-      final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
-      creator.create();
+      runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner).create());
       sleep(200);
 
       changeListManager.forceGoInTestMode();
@@ -212,8 +212,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
 
       createSubTree(data);
-      final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
-      creator.create();
+      runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner).create());
 
       refreshChanges();
       refreshChanges();
