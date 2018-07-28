@@ -31,7 +31,6 @@ import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
@@ -325,10 +324,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
         myTargetFiles.add(findChild(myTargetDir, "t" + (i + 10) + ".txt", ourS1Contents, create));
       }
     }
-  }
-
-  protected static void sleep(final int millis) {
-    TimeoutUtil.sleep(millis);
   }
 
   public String prepareBranchesStructure() throws Exception {

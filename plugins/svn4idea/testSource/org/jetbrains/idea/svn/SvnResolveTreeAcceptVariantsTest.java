@@ -88,13 +88,11 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       myTheirs = createDirInCommand(myTheirs.getParent(), "theirs" + cnt);
       mySvnClientRunner.checkout(myRepoUrl, myTheirs);
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
-      sleep(200);
 
       vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), vcs.getName())));
       createSubTree(data);
       myTheirs.refresh(false, true);
       runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner).create());
-      sleep(200);
 
       changeListManager.forceGoInTestMode();
       refreshChanges();
@@ -305,13 +303,10 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
 
     clearWc(false);
     mySvnClientRunner.checkin(myWorkingCopyDir);
-    sleep(30);
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     mySvnClientRunner.checkin(myWorkingCopyDir);
-    sleep(30);
     mySvnClientRunner.update(myTheirs);
     mySvnClientRunner.update(myWorkingCopyDir);
-    sleep(30);
 
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
