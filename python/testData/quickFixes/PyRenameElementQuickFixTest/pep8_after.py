@@ -1,2 +1,2 @@
 def foo():
-    a = "test"
+    abc = "test"

@@ -578,4 +578,96 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testAssigningToDictEntry() {
     doTest();
   }
+
+  // PY-27231
+  public void testStructuralAndNone() {
+    doTestByText("def func11(value):\n" +
+                 "    if value is not None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func12(value):\n" +
+                 "    if None is not value and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func21(value):\n" +
+                 "    if value is None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func22(value):\n" +
+                 "    if None is value and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "func11(None)\n" +
+                 "func12(None)\n" +
+                 "func21(None)\n" +
+                 "func22(None)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func31(value):\n" +
+                 "    if value and None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func32(value):\n" +
+                 "    if value is value and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func33(value):\n" +
+                 "    if None is None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func34(value):\n" +
+                 "    a = 2\n" +
+                 "    if a is a and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "func31(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)\n" +
+                 "func32(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)\n" +
+                 "func33(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)\n" +
+                 "func34(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)");
+  }
+
+  // PY-29704
+  public void testPassingAbstractMethodResult() {
+    doTestByText("import abc\n" +
+                 "\n" +
+                 "class Foo:\n" +
+                 "    __metaclass__ = abc.ABCMeta\n" +
+                 "\n" +
+                 "    @abc.abstractmethod\n" +
+                 "    def get_int(self):\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def foo(self, i):\n" +
+                 "        # type: (int) -> None\n" +
+                 "        print(i)\n" +
+                 "\n" +
+                 "    def bar(self):\n" +
+                 "        self.foo(self.get_int())");
+  }
+
+  // PY-30629
+  public void testIteratingOverAbstractMethodResult() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from abc import ABCMeta, abstractmethod\n" +
+                         "\n" +
+                         "class A(metaclass=ABCMeta):\n" +
+                         "\n" +
+                         "    @abstractmethod\n" +
+                         "    def foo(self):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def something(derived: A):\n" +
+                         "    for _, _ in derived.foo():\n" +
+                         "        pass\n")
+    );
+  }
 }

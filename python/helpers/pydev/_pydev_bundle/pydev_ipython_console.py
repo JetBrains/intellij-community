@@ -47,9 +47,6 @@ class InterpreterInterface(BaseInterpreterInterface):
     def get_namespace(self):
         return self.interpreter.get_namespace()
 
-    def getCompletions(self, text, act_tok):
-        return self.interpreter.getCompletions(text, act_tok)
-
     def close(self):
         sys.exit(0)
 

@@ -17,10 +17,10 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -32,7 +32,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,13 +131,13 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   }
   
   private JComponent createToolbar() {
-    DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new ShowSchemesActionsListAction(myActions.getActions()));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setBorder(JBUI.Borders.empty(3));
-    toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     return toolbarComponent;
   }
 
@@ -278,45 +277,39 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends DumbAwareAction {
+  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup {
 
-    private final ActionGroup myActionGroup;
-    private final Component myParentComponent;
-
-    ShowSchemesActionsListAction(Collection<AnAction> actions, Component component) {
-      super("Show Scheme Actions", "Show Scheme Actions", AllIcons.General.Gear);
-      myParentComponent = component;
-      myActionGroup = new DefaultActionGroup(actions.toArray(AnAction.EMPTY_ARRAY));
+    ShowSchemesActionsListAction(Collection<AnAction> actions) {
+      setPopup(true);
+      getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
+      getTemplatePresentation().setText("Show Scheme Actions");
+      getTemplatePresentation().setDescription("Show Scheme Actions");
+      addAll(actions);
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      p.setEnabledAndVisible(isEnabledAndVisible(e));
+    public boolean isDumbAware() {
+      return true;
     }
 
-    private boolean isEnabledAndVisible(AnActionEvent e) {
-      // copy existing event because an action update changes its presentation
-      e = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, e.getDataContext());
-      for (AnAction action : myActionGroup.getChildren(e)) {
-        action.update(e); // ensure that at least action is enabled and visible
-        if (e.getPresentation().isEnabledAndVisible()) return true;
-      }
-      return false;
+    @Override
+    public boolean canBePerformed(DataContext context) {
+      return true;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      ListPopup actionGroupPopup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, myActionGroup, e.getDataContext(), true, null, Integer.MAX_VALUE);
+      ListPopup popup = JBPopupFactory.getInstance().
+        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
-      HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), actionGroupPopup);
-      actionGroupPopup.show(new RelativePoint(myParentComponent, getPopupPoint()));
-    }
-
-    private Point getPopupPoint() {
-      int dH = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(1) : 0;
-      return new Point(JBUI.scale(2), myParentComponent.getHeight() - dH);
+      HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
+      Component component = e.getInputEvent().getComponent();
+      if (component instanceof ActionButtonComponent) {
+        popup.showUnderneathOf(component);
+      }
+      else {
+        popup.showInCenterOf(component);
+      }
     }
   }
 

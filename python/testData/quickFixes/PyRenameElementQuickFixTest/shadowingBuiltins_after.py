@@ -1,2 +1,2 @@
 def foo():
-    a = 10
+    A_NEW_NAME = 10

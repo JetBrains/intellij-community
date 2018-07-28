@@ -20,17 +20,18 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.io.ZipUtil
 
 class EduUtils {
-  static void copyEduToolsPlugin(String dependenciesPath, BuildContext buildContext, String targetDirectory) {
+  static void copyPlugin(String pluginName, String dependenciesPath, BuildContext buildContext, String targetDirectory) {
     def dependenciesProjectDir = new File(dependenciesPath)
-    new GradleRunner(dependenciesProjectDir, buildContext.messages, SystemProperties.getJavaHome()).run("Downloading EduTools plugin...", "setupEduPlugin")
+    new GradleRunner(dependenciesProjectDir, buildContext.messages, SystemProperties.getJavaHome()).run(
+      "Downloading $pluginName plugin...", "setup${pluginName}Plugin")
     Properties properties = new Properties()
     new File(dependenciesProjectDir, "gradle.properties").withInputStream {
       properties.load(it)
     }
 
-    def pluginZip = new File("${dependenciesProjectDir.absolutePath}/build/edu/EduTools-${properties.getProperty("eduPluginVersion")}.zip")
+    def pluginZip = new File("${dependenciesProjectDir.absolutePath}/build/$pluginName/$pluginName-${properties.getProperty("${pluginName}PluginVersion")}.zip")
     if (!pluginZip.exists()) {
-      throw new IllegalStateException("EduTools bundled plugin is not found. Plugin path:${pluginZip.canonicalPath}")
+      throw new IllegalStateException("$pluginName bundled plugin is not found. Plugin path:${pluginZip.canonicalPath}")
     }
     ZipUtil.extract(pluginZip, new File("$targetDirectory/plugins/"), new FilenameFilter() {
       @Override

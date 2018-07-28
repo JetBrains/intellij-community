@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,6 +131,8 @@ class TBItemAnActionButton extends TBItemButton {
     if (myAnAction instanceof Toggleable) {
       final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
       isSelected = selectedProp != null && selectedProp == Boolean.TRUE;
+      if (myNativePeer != ID.NIL && myActionId != null && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }
     if ("RunConfiguration".equals(myActionId)) {
       if (presentation.getIcon() != AllIcons.General.Add) {

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -234,7 +235,7 @@ public class FStringParser {
 
     private ParseResult(@NotNull List<Integer> singleRightBraces, @NotNull List<Fragment> fragments) {
       mySingleRightBraces = singleRightBraces;
-      myFragments = ContainerUtil.sorted(fragments, (f1, f2) -> f1.getLeftBraceOffset() - f2.getLeftBraceOffset());
+      myFragments = ContainerUtil.sorted(fragments, Comparator.comparingInt(Fragment::getLeftBraceOffset));
     }
 
     @NotNull

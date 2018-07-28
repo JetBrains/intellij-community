@@ -60,12 +60,21 @@ public class PyEvaluator {
    */
   private boolean myEnableResolve = true;
 
+  /**
+   * Store expressions as values if they can't be evaludated
+   */
+  private boolean myAllowExpressionsAsValues = false;
+
   public void setNamespace(@Nullable Map<String, Object> namespace) {
     myNamespace = namespace;
   }
 
   public void setEvaluateCollectionItems(boolean evaluateCollectionItems) {
     myEvaluateCollectionItems = evaluateCollectionItems;
+  }
+
+  public void setAllowExpressionsAsValues(final boolean allowExpressionsAsValues) {
+    myAllowExpressionsAsValues = allowExpressionsAsValues;
   }
 
   public void setEvaluateKeys(boolean evaluateKeys) {
@@ -304,13 +313,34 @@ public class PyEvaluator {
         }
         return result;
       }
-    }
 
+      final PyExpression[] arguments = expression.getArguments();
+      //dict(foo="spam")
+      if (arguments.length > 0) {
+        final Map<Object, Object> result = new HashMap<>();
+        for (final PyExpression argument : arguments) {
+          if (!(argument instanceof PyKeywordArgument)) {
+            continue;
+          }
+          final PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
+          final String keyword = keywordArgument.getKeyword();
+          if (keyword == null) {
+            continue;
+          }
+          addRecordFromDict(result, keyword, keywordArgument.getValueExpression());
+        }
+        return result;
+      }
+    }
     return null;
   }
 
   private void addRecordFromDict(@NotNull Map<Object, Object> result, @NotNull PyExpression key, @Nullable PyExpression value) {
-    result.put(myEvaluateKeys ? evaluate(key) : key, myEvaluateCollectionItems ? evaluate(value) : value);
+    result.put(myEvaluateKeys ? evaluate(key) : key, myEvaluateCollectionItems ? evaluateOrGet(value) : value);
+  }
+
+  private void addRecordFromDict(@NotNull Map<Object, Object> result, @NotNull String key, @Nullable PyExpression value) {
+    result.put(key, myEvaluateCollectionItems ? evaluateOrGet(value) : value);
   }
 
   @NotNull
@@ -429,5 +459,14 @@ public class PyEvaluator {
     }
 
     return null;
+  }
+
+  @Nullable
+  private Object evaluateOrGet(@Nullable final PyExpression expression) {
+    final Object result = evaluate(expression);
+    if (result !=null) {
+      return result;
+    }
+    return myAllowExpressionsAsValues ? expression : null;
   }
 }

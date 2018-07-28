@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -60,7 +61,15 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
     else if (element instanceof PyArgumentList) {
       LOG.assertTrue(element.getParent() instanceof PyClass, "Parent type: " + element.getParent().getClass());
       LOG.assertTrue(((PyArgumentList)element).getArguments().length == 0, "Argument list: " + element.getText());
-      element.delete();
+      final ASTNode nameNode = PyElementGenerator.getInstance(project).createFromText(
+        LanguageLevel.forElement(element), PyClass.class, "class A: pass").getNameNode();
+      if (nameNode != null) {
+        final PsiElement emptyArgList = nameNode.getPsi().getNextSibling();
+        element.replace(emptyArgList);
+      }
+      else {
+        element.delete();
+      }
     }
   }
 

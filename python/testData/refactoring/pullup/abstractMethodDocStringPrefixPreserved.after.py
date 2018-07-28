@@ -1,5 +1,5 @@
 # coding=utf-8
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 
 
 class A:

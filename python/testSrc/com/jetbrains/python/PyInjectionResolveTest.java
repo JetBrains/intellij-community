@@ -123,4 +123,9 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   public void testFStringInsideAssertStatement() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyParameter.class, "name"));
   }
+
+  // PY-21493
+  public void testRegexpAndFStringCombined() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyTargetExpression.class, "foo"));
+  }
 }

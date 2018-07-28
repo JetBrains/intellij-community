@@ -303,11 +303,14 @@ public class EditorFragmentComponent extends JPanel {
     JComponent editorComponent = editor.getComponent();
     Container editorComponentParent = editorComponent.getParent();
     if (editorComponentParent != null) {
-      Container contentPane = editorComponent.getRootPane().getContentPane();
-      if (contentPane != null) {
-        int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
-        int visualLines = y / editor.getLineHeight();
-        availableVisualLines = Math.max(availableVisualLines, visualLines);
+      JRootPane rootPane = editorComponent.getRootPane();
+      if (rootPane != null) {
+        Container contentPane = rootPane.getContentPane();
+        if (contentPane != null) {
+          int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
+          int visualLines = y / editor.getLineHeight();
+          availableVisualLines = Math.max(availableVisualLines, visualLines);
+        }
       }
     }
     return availableVisualLines;

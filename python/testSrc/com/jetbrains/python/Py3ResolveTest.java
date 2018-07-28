@@ -22,6 +22,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -591,5 +592,11 @@ public class Py3ResolveTest extends PyResolveTestCase {
           );
       }
     );
+  }
+
+  // PY-30512
+  public void testDunderBuiltins() {
+    final PsiElement element = doResolve();
+    assertEquals(PyBuiltinCache.getInstance(myFixture.getFile()).getBuiltinsFile(), element);
   }
 }

@@ -54,13 +54,15 @@ public final class PyDebugValueExecutionService {
 
   public synchronized void cancelSubmittedTasks(@NotNull PyFrameAccessor frameAccessor) {
     int i = myFrameAccessors.indexOf(frameAccessor);
-    List<Future> submittedTasks = mySubmittedTasks.get(i);
-    for (Future task : submittedTasks) {
-      if (!task.isDone()) {
-        task.cancel(true);
+    if (i != -1) {
+      List<Future> submittedTasks = mySubmittedTasks.get(i);
+      for (Future task : submittedTasks) {
+        if (!task.isDone()) {
+          task.cancel(true);
+        }
       }
+      submittedTasks.clear();
     }
-    submittedTasks.clear();
   }
 
   public synchronized void sessionStopped(@NotNull PyFrameAccessor frameAccessor) {

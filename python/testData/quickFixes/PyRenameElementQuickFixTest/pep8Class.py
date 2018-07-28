@@ -1,2 +1,2 @@
-class a_<caret>b:
+class <caret>lowercase:
     pass

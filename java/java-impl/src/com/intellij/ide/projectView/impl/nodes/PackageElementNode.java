@@ -185,6 +185,14 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       final PsiDirectory directory = (PsiDirectory)element;
       return Arrays.asList(value.getPackage().getDirectories()).contains(directory);
     }
+    if (element instanceof VirtualFile) {
+      VirtualFile file = (VirtualFile)element;
+      if (file.isDirectory()) {
+        for (PsiDirectory directory : value.getPackage().getDirectories()) {
+          if (file.equals(directory.getVirtualFile())) return true;
+        }
+      }
+    }
     return false;
   }
 

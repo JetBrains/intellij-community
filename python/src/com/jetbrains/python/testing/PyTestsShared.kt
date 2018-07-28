@@ -126,7 +126,7 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
  * We just save its name and provide it again to rerun
- * @param metainfo additional info provided by test runner, in case of py.test it is test name that could be used as "-k" argument
+ * @param metainfo additional info provided by test runner, in case of pytest it is test name that could be used as "-k" argument
  */
 private class PyTargetBasedPsiLocation(val target: ConfigurationTarget,
                                        element: PsiElement,

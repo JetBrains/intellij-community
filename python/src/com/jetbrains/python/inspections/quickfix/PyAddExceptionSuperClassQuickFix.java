@@ -53,7 +53,8 @@ public class PyAddExceptionSuperClassQuickFix implements LocalQuickFix {
             assert expressionList != null;
             final ASTNode nameNode = ((PyClass)psiElement).getNameNode();
             assert nameNode != null;
-            psiElement.addAfter(expressionList, nameNode.getPsi());
+            final PsiElement oldArgList = nameNode.getPsi().getNextSibling();
+            oldArgList.replace(expressionList);
           }
         }
       }
