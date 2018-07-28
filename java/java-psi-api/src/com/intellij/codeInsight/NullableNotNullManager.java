@@ -112,9 +112,11 @@ public abstract class NullableNotNullManager {
 
   @Nullable
   public PsiAnnotation copyNullableOrNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
-    NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
-    if (info == null) return null;
-    return copyAnnotation(info.getAnnotation(), generated);
+    NullabilityAnnotationInfo src = findOwnNullabilityInfo(original);
+    if (src == null) return null;
+    NullabilityAnnotationInfo effective = findEffectiveNullabilityInfo(generated);
+    if (effective != null && effective.getNullability() == src.getNullability()) return null;
+    return copyAnnotation(src.getAnnotation(), generated);
   }
 
   @Nullable
