@@ -98,6 +98,61 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     checkFileContents();
   }
 
+  @Test
+  public void testTheirsFull() throws Exception {
+    mySvnClientRunner.checkout(myRepoUrl, myTheirs);
+
+    createSubTree();
+    runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, conflictData, mySvnClientRunner).create());
+
+    refreshChanges();
+    refreshChanges();
+
+    final String conflictFile = conflictData.getConflictFile();
+    final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
+    final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
+    final Change change = changeListManager.getChange(filePath);
+    assertNotNull(change);
+    assertTrue(change instanceof ConflictedSvnChange);
+    FilePath beforePath = null;
+    if (change.isMoved() || change.isRenamed()) {
+      beforePath = change.getBeforeRevision().getFile();
+    }
+
+    new SvnTreeConflictResolver(vcs, filePath, beforePath).resolveSelectTheirsFull();
+
+    myTheirs.refresh(false, true);
+    refreshVfs();
+    VfsUtil.processFileRecursivelyWithoutIgnored(myTheirs, file -> {
+      final String relative = getRelativePath(file, myTheirs, File.separatorChar);
+      File workingFile = new File(myWorkingCopyDir.getPath(), relative);
+      boolean exists = workingFile.exists();
+      if (!exists) {
+        String[] excluded = conflictData.getExcludeFromToTheirsCheck();
+        if (excluded != null && asList(excluded).contains(relative)) {
+          return true;
+        }
+        assertTrue(createTestFailedComment(relative), exists);
+      }
+      final File theirsFile = virtualToIoFile(file);
+      Info theirsInfo = vcs.getInfo(theirsFile);
+      Info thisInfo = vcs.getInfo(workingFile);
+      if (theirsInfo != null) {
+        assertEquals(createTestFailedComment(relative) + ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: "
+                     + thisInfo.getRevision().getNumber(), theirsInfo.getRevision().getNumber(), thisInfo.getRevision().getNumber());
+        if (!theirsFile.isDirectory()) {
+          try {
+            assertEquals(FileUtil.loadFile(theirsFile), FileUtil.loadFile(workingFile));
+          }
+          catch (IOException e) {
+            fail(e.getMessage());
+          }
+        }
+      }
+      return true;
+    });
+  }
+
   private void checkFileContents() throws IOException {
     for (TreeConflictData.FileData leftFile : conflictData.getLeftFiles()) {
       if (!leftFile.myIsDir && !StringUtil.isEmpty(leftFile.myContents)) {
@@ -162,61 +217,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
 
   private String createTestFailedComment(final String path) {
     return "File: " + path + " in: " + myWorkingCopyDir.getPath();
-  }
-
-  @Test
-  public void testTheirsFull() throws Exception {
-    mySvnClientRunner.checkout(myRepoUrl, myTheirs);
-
-    createSubTree();
-    runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, conflictData, mySvnClientRunner).create());
-
-    refreshChanges();
-    refreshChanges();
-
-    final String conflictFile = conflictData.getConflictFile();
-    final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
-    final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
-    final Change change = changeListManager.getChange(filePath);
-    assertNotNull(change);
-    assertTrue(change instanceof ConflictedSvnChange);
-    FilePath beforePath = null;
-    if (change.isMoved() || change.isRenamed()) {
-      beforePath = change.getBeforeRevision().getFile();
-    }
-
-    new SvnTreeConflictResolver(vcs, filePath, beforePath).resolveSelectTheirsFull();
-
-    myTheirs.refresh(false, true);
-    refreshVfs();
-    VfsUtil.processFileRecursivelyWithoutIgnored(myTheirs, file -> {
-      final String relative = getRelativePath(file, myTheirs, File.separatorChar);
-      File workingFile = new File(myWorkingCopyDir.getPath(), relative);
-      boolean exists = workingFile.exists();
-      if (!exists) {
-        String[] excluded = conflictData.getExcludeFromToTheirsCheck();
-        if (excluded != null && asList(excluded).contains(relative)) {
-          return true;
-        }
-        assertTrue(createTestFailedComment(relative), exists);
-      }
-      final File theirsFile = virtualToIoFile(file);
-      Info theirsInfo = vcs.getInfo(theirsFile);
-      Info thisInfo = vcs.getInfo(workingFile);
-      if (theirsInfo != null) {
-        assertEquals(createTestFailedComment(relative) + ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: "
-                     + thisInfo.getRevision().getNumber(), theirsInfo.getRevision().getNumber(), thisInfo.getRevision().getNumber());
-        if (!theirsFile.isDirectory()) {
-          try {
-            assertEquals(FileUtil.loadFile(theirsFile), FileUtil.loadFile(workingFile));
-          }
-          catch (IOException e) {
-            fail(e.getMessage());
-          }
-        }
-      }
-      return true;
-    });
   }
 
   private static Object getStaticFieldValue(Field field) {
