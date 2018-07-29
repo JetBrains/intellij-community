@@ -1,15 +1,20 @@
 package com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access;
-import java.util.Map;
+import com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access.Foo.Bar;
+import com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access.TestOuter.TestInner;
+import com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access.UnnecessarilyQualifiedInnerClassAccess.X;
 
-@Y(UnnecessarilyQualifiedInnerClassAccess.X.class)
+import java.util.Map;
+import java.util.Map.Entry;
+
+@Y(X.class)
 public class UnnecessarilyQualifiedInnerClassAccess<T> {
 
     public UnnecessarilyQualifiedInnerClassAccess(int i) {
-        Map<caret>.Entry entry;
+        Entry entry;
     }
 
     public UnnecessarilyQualifiedInnerClassAccess() {
-        final String test =  UnnecessarilyQualifiedInnerClassAccess .Inner.TEST;
+        final String test =  Inner.TEST;
     }
     public static class Inner {
         public static final String TEST = "test";
@@ -17,7 +22,7 @@ public class UnnecessarilyQualifiedInnerClassAccess<T> {
 
     void foo() {
         UnnecessarilyQualifiedInnerClassAccess<String>.X x; // no warning here, because generic parameter is needed
-         UnnecessarilyQualifiedInnerClassAccess .Y<String> y;
+         Y<String> y;
     }
 
     class X {
@@ -32,7 +37,7 @@ public class UnnecessarilyQualifiedInnerClassAccess<T> {
     Class value();
 }
 
-class Foo extends PresenterWidget<Foo.Bar> { // warning because Bar can be imported
+class Foo extends PresenterWidget<Bar> { // warning because Bar can be imported
     interface Bar extends View { }
 }
 
@@ -61,7 +66,7 @@ class MultipleInheritance {
     }
   }
 }
-@TestAnnotation(TestOuter.TestInner.TEST_FIELD)
+@TestAnnotation(TestInner.TEST_FIELD)
 class TestOuter {
   public interface TestInner {
     String TEST_FIELD = "TEST";

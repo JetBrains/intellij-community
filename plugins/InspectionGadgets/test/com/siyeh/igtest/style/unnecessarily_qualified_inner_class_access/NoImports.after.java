@@ -3,7 +3,7 @@ import java.util.Map;
 
 abstract class NoImports implements List<NoImports.A> {
   Map.Entry entry;
-  <caret>NoImports.A a;
+  A a;
 
   class A {}
 }
