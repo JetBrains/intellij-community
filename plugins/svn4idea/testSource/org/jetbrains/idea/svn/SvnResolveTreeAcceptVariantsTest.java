@@ -36,7 +36,6 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static java.util.Arrays.asList;
-import static org.jetbrains.idea.svn.SvnUtil.isAdminDirectory;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
@@ -69,12 +68,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     myTheirs = myTempDirFixture.findOrCreateDir("theirs");
     mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     myTraceClient = true;
-  }
-
-  private void clearWc(final boolean withSvn) throws Exception {
-    refreshVfs();
-    clearDirInCommand(myWorkingCopyDir, file -> withSvn || !isAdminDirectory(file));
-    refreshVfs();
   }
 
   @Test
@@ -239,7 +232,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
-    clearWc(false);
     mySvnClientRunner.checkin(myWorkingCopyDir);
     new SubTree(myWorkingCopyDir);
     mySvnClientRunner.checkin(myWorkingCopyDir);
