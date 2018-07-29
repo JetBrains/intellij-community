@@ -73,8 +73,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   @Test
   public void testMineFull() throws Exception {
     int cnt = 0;
-    myWorkingCopyDir = createDirInCommand(myWorkingCopyDir, "test--");
-    myTheirs = createDirInCommand(myTheirs, "theirs--");
     // todo debug
     //final TreeConflictData.Data data = TreeConflictData.DirToDir.MINE_UNV_THEIRS_MOVE;
     //final TreeConflictData.Data data = TreeConflictData.FileToFile.MINE_EDIT_THEIRS_MOVE;
@@ -84,8 +82,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       }
 
       changeListManager.stopEveryThingIfInTestMode();
-      myWorkingCopyDir = createDirInCommand(myWorkingCopyDir.getParent(), "test" + cnt);
-      myTheirs = createDirInCommand(myTheirs.getParent(), "theirs" + cnt);
+      myWorkingCopyDir = createDirInCommand(myWorkingCopyDir, "test" + cnt);
+      myTheirs = createDirInCommand(myTheirs, "theirs" + cnt);
       mySvnClientRunner.checkout(myRepoUrl, myTheirs);
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
 
@@ -195,8 +193,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   @Test
   public void testTheirsFull() throws Exception {
     int cnt = 0;
-    myWorkingCopyDir = createDirInCommand(myWorkingCopyDir, "test--");
-    myTheirs = createDirInCommand(myTheirs, "theirs--");
     // todo debug
     //final TreeConflictData.Data data = TreeConflictData.FileToFile.MINE_MOVE_THEIRS_ADD;
     for (final TreeConflictData.Data data : TreeConflictData.ourAll) {
@@ -204,8 +200,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
         System.out.println("========= TEST " + getTestName(data) + " =========");
       }
 
-      myWorkingCopyDir = createDirInCommand(myWorkingCopyDir.getParent(), "test" + cnt);
-      myTheirs = createDirInCommand(myTheirs.getParent(), "theirs" + cnt);
+      myWorkingCopyDir = createDirInCommand(myWorkingCopyDir, "test" + cnt);
+      myTheirs = createDirInCommand(myTheirs, "theirs" + cnt);
       mySvnClientRunner.checkout(myRepoUrl, myTheirs);
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
 
