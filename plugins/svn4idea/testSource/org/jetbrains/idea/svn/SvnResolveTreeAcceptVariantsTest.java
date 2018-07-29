@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.idea.svn.TreeConflictData.DirToDir;
 import org.jetbrains.idea.svn.TreeConflictData.DirToFile;
@@ -35,6 +34,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
@@ -47,6 +47,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   public TreeConflictData.Data conflictData;
   @Parameterized.Parameter(1)
   public String conflictName;
+  private FilePath conflictFile;
+  private Change conflictChange;
 
   @Parameterized.Parameters(name = "{1}")
   public static Collection<Object[]> data() {
@@ -65,64 +67,45 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     super.setUp();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
-    myTheirs = myTempDirFixture.findOrCreateDir("theirs");
     mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     myTraceClient = true;
+
+    setUpConflict();
+  }
+
+  private void setUpConflict() throws Exception {
+    myTheirs = myTempDirFixture.findOrCreateDir("theirs");
+    mySvnClientRunner.checkout(myRepoUrl, myTheirs);
+    myTheirs.refresh(false, true);
+
+    createSubTree();
+    runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, conflictData, mySvnClientRunner).create());
+    refreshChanges();
+
+    conflictFile = getFilePath(new File(myWorkingCopyDir.getPath(), conflictData.getConflictFile()));
+    conflictChange = changeListManager.getChange(conflictFile);
+    assertNotNull(conflictChange);
+    assertTrue(conflictChange instanceof ConflictedSvnChange);
   }
 
   @Test
   public void testMineFull() throws Exception {
-    changeListManager.stopEveryThingIfInTestMode();
-    mySvnClientRunner.checkout(myRepoUrl, myTheirs);
-
-    createSubTree();
-    myTheirs.refresh(false, true);
-    runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, conflictData, mySvnClientRunner).create());
-
-    changeListManager.forceGoInTestMode();
-    refreshChanges();
-    refreshChanges();
-
-    final String conflictFile = conflictData.getConflictFile();
-    final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
-    final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
-    final Change change = changeListManager.getChange(filePath);
-    assertNotNull(change);
-    assertTrue(change instanceof ConflictedSvnChange);
-
-    new SvnTreeConflictResolver(vcs, filePath, null).resolveSelectMineFull();
-
+    new SvnTreeConflictResolver(vcs, conflictFile, null).resolveSelectMineFull();
     myTheirs.refresh(false, true);
     refreshVfs();
-    checkStatusesAfterMineFullResolve(conflictIoFile);
+
+    checkStatusesAfterMineFullResolve();
     checkFileContents();
   }
 
   @Test
   public void testTheirsFull() throws Exception {
-    mySvnClientRunner.checkout(myRepoUrl, myTheirs);
+    FilePath beforePath = conflictChange.isMoved() || conflictChange.isRenamed() ? conflictChange.getBeforeRevision().getFile() : null;
 
-    createSubTree();
-    runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, conflictData, mySvnClientRunner).create());
-
-    refreshChanges();
-    refreshChanges();
-
-    final String conflictFile = conflictData.getConflictFile();
-    final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
-    final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
-    final Change change = changeListManager.getChange(filePath);
-    assertNotNull(change);
-    assertTrue(change instanceof ConflictedSvnChange);
-    FilePath beforePath = null;
-    if (change.isMoved() || change.isRenamed()) {
-      beforePath = change.getBeforeRevision().getFile();
-    }
-
-    new SvnTreeConflictResolver(vcs, filePath, beforePath).resolveSelectTheirsFull();
-
+    new SvnTreeConflictResolver(vcs, conflictFile, beforePath).resolveSelectTheirsFull();
     myTheirs.refresh(false, true);
     refreshVfs();
+
     VfsUtil.processFileRecursivelyWithoutIgnored(myTheirs, file -> {
       final String relative = getRelativePath(file, myTheirs, File.separatorChar);
       File workingFile = new File(myWorkingCopyDir.getPath(), relative);
@@ -163,9 +146,9 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     }
   }
 
-  private void checkStatusesAfterMineFullResolve(File conflictIoFile) {
-    assertNull(createTestFailedComment(conflictIoFile.getPath()) + " tree conflict resolved",
-               SvnUtil.getStatus(vcs, conflictIoFile).getTreeConflict());
+  private void checkStatusesAfterMineFullResolve() {
+    assertNull(createTestFailedComment(conflictFile.getPath()) + " tree conflict resolved",
+               SvnUtil.getStatus(vcs, conflictFile.getIOFile()).getTreeConflict());
     for (TreeConflictData.FileData file : conflictData.getLeftFiles()) {
       File exFile = new File(myWorkingCopyDir.getPath(), file.myRelativePath);
       final Status status = SvnUtil.getStatus(vcs, exFile);
