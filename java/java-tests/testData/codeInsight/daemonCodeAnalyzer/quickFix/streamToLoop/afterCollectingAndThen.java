@@ -48,4 +48,12 @@ public class Main {
             return result;
         }));
   }
+
+  void sample4(List<String> people) {
+      Map<Integer, List<String>> result = new HashMap<>();
+      for (String person : people) {
+          result.computeIfAbsent(person.length(), k -> new ArrayList<>()).add(person);
+      }
+      Map<Integer, List<String>> map = Collections.unmodifiableMap(result);
+  }
 }

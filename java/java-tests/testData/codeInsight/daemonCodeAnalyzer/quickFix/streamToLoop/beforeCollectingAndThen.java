@@ -30,4 +30,10 @@ public class Main {
       Collectors.collectingAndThen(Collectors.<String, List<String>>toCollection(LinkedList::new),
         list -> Stream.concat(list.stream(), list.stream()).collect(Collectors.toList())));
   }
+
+  void sample4(List<String> people) {
+    Map<Integer, List<String>> map = people.stream().collect(
+      Collectors.collectingAndThen(Collectors.groupingBy(String::length),
+                                   m -> Collections.unmodifiableMap(m)));
+  }
 }
