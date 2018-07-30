@@ -6,7 +6,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
@@ -44,8 +43,7 @@ public class WinProcessManager {
   }
 
   public static int getCurrentProcessId() {
-    Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
-    return kernel32.GetCurrentProcessId();
+    return Kernel32.INSTANCE.GetCurrentProcessId();
   }
 
   public static boolean kill(Process process, boolean tree) {
