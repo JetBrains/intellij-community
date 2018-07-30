@@ -247,7 +247,7 @@ public class VcsRootProblemNotifier {
     else if (invalidRoots.isEmpty()) {
       String vcs = getVcsName(unregisteredRoots);
       String repository = pluralize("Repository", unregisteredRoots.size());
-      title = String.format(rootsAlreadyAdded ? "%s Integration Enabled" : "%s %s Found", vcs, repository);
+      title = rootsAlreadyAdded ? String.format("%s Integration Enabled", vcs) : String.format("%s %s Found", vcs, repository);
     }
     else {
       title = "VCS root configuration problems";
