@@ -217,7 +217,7 @@ public class IfStatement extends Statement {
         }
 
         if (ifedge.labeled) {
-          buf.appendIndent(indent + 1).append(" label").append(ifedge.closure.id.toString());
+          buf.append(" label").append(ifedge.closure.id.toString());
         }
       }
       if(semicolon) {
