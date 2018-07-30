@@ -196,7 +196,9 @@ object GuiTestUtilKt {
    *
    * @throws WaitTimedOutError with the text: "Timed out waiting for $timeoutInSeconds second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will", timeoutInSeconds: Int = 30, functionProbeToNull: () -> ReturnType?): ReturnType {
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+                                     timeoutInSeconds: Int = 30,
+                                     functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
     waitUntil("$conditionText will be not null", timeoutInSeconds) {
       result = functionProbeToNull()
@@ -217,7 +219,8 @@ object GuiTestUtilKt {
         override fun test() = conditionalFunction()
       }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
     }
-    catch (ignore: WaitTimedOutError) { }
+    catch (ignore: WaitTimedOutError) {
+    }
   }
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
@@ -302,6 +305,13 @@ object GuiTestUtilKt {
     if (result?.second != null) throw result.second!!
     return result?.first
   }
+
+  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+    action()
+  }
+  catch (ignore: ComponentLookupException) {
+  }
+
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
     try {

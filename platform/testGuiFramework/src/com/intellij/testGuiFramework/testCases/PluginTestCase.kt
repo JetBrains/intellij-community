@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.testCases
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.ignoreComponentLookupException
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
@@ -60,7 +61,7 @@ open class PluginTestCase : GuiTestCase() {
       popupClick("Plugins")
       dialog("Plugins") {
         button("Install JetBrains plugin...").click()
-        dialog("Browse JetBrains Plugins ") browsePlugins@ {
+        dialog("Browse JetBrains Plugins ") browsePlugins@{
           pluginNames.forEach { this@browsePlugins.installPlugin(it) }
           button("Close").click()
         }
@@ -77,26 +78,26 @@ open class PluginTestCase : GuiTestCase() {
     welcomeFrame {
       actionLink("Configure").click()
       popupClick("Plugins")
-      dialog("Plugins") {
-        //Check if plugin has already been installed
-        try {
-          table(pluginName, timeout = 1L).cell(pluginName).click()
-          button("OK").click()
-          ensureButtonOkHasPressed(this@PluginTestCase)
+      pluginDialog {
+        showInstalledPlugins()
+        showInstallPluginFromDiskDialog()
+        installPluginFromDiskDialog {
+          setPath(pluginPath)
+          clickOk()
+          ignoreComponentLookupException {
+            dialog(title = "Warning", timeout = 5) {
+              message("Warning") {
+                button("OK").click()
+              }
+            }
+          }
         }
-        catch (e: Exception) {
-          button("Install plugin from disk...").click()
-          chooseFileInFileChooser(pluginPath)
-          button("OK").click()
-          ensureButtonOkHasPressed(this@PluginTestCase)
+        button("OK").click()
+        ignoreComponentLookupException {
+          dialog(title = "IDE and Plugin Updates", timeout = 5) {
+            button("Postpone").click()
+          }
         }
-      }
-      try {
-        message("IDE and Plugin Updates", timeout = 5L) {
-          button("Postpone").click()
-        }
-      }
-      catch (e: Exception) {
       }
     }
   }
