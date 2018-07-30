@@ -6,12 +6,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.EventListenerList;
@@ -40,12 +40,26 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   public ComboBoxTableRenderer(final T[] values) {
     myValues = values;
     setFont(UIUtil.getButtonFont());
-    setBorder(new EmptyBorder(0, 5, 0, 5));
+    setBorder(JBUI.Borders.empty(0, 5));
   }
 
   @Override
   public Dimension getPreferredSize() {
-    return addIconSize(super.getPreferredSize());
+    Dimension size = addIconSize(super.getPreferredSize());
+
+    if (myValues != null) {
+      for(T v : myValues) {
+        setText(getTextFor(v));
+        setIcon(getIconFor(v));
+
+        Dimension vSize = addIconSize(super.getPreferredSize());
+
+        size.width = Math.max(size.width, vSize.width);
+        size.height = Math.max(size.height, vSize.height);
+      }
+    }
+
+    return size;
   }
 
   @Override
@@ -54,8 +68,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   private static Dimension addIconSize(final Dimension d) {
-    return new Dimension(d.width + AllIcons.General.ArrowDown.getIconWidth() + 2, Math.max(d.height, AllIcons.General.ArrowDown
-      .getIconHeight()));
+    return new Dimension(d.width + AllIcons.General.ArrowDown.getIconWidth() + JBUI.scale(2),
+                         Math.max(d.height, AllIcons.General.ArrowDown.getIconHeight()));
   }
 
   protected String getTextFor(@NotNull T value) {

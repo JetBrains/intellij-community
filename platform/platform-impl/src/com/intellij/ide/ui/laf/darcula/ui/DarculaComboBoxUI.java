@@ -197,11 +197,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   @Override
-  protected Insets getInsets() {
-    return getDefaultComboBoxInsets().asUIResource();
-  }
-
-  @Override
   public void paint(Graphics g, JComponent c) {
     Container parent = c.getParent();
     if (parent != null) {
@@ -331,33 +326,44 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     if (!(c instanceof JComponent)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
+    float bw = BW.getFloat();
+    Rectangle r = new Rectangle(x, y, width, height);
+
     try {
-      checkFocus();
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      Rectangle r = new Rectangle(x, y, width, height);
-      JBInsets.removeFrom(r, JBUI.insets(1));
+      if (!isTableCellEditor((JComponent)c)) {
+        checkFocus();
 
-      g2.translate(r.x, r.y);
+        JBInsets.removeFrom(r, JBUI.insets(1));
 
-      float lw = LW.getFloat();
-      float bw = BW.getFloat();
-      float arc = COMPONENT_ARC.getFloat();
+        g2.translate(r.x, r.y);
 
-      Object op = comboBox.getClientProperty("JComponent.outline");
-      if (op != null) {
-        paintOutlineBorder(g2, r.width, r.height, arc, true, hasFocus, Outline.valueOf(op.toString()));
-      } else {
-        if (hasFocus) {
-          paintOutlineBorder(g2, r.width, r.height, arc, true, true, Outline.focus);
+        float lw = LW.getFloat();
+        float arc = COMPONENT_ARC.getFloat();
+
+        Object op = comboBox.getClientProperty("JComponent.outline");
+        if (op != null) {
+          paintOutlineBorder(g2, r.width, r.height, arc, true, hasFocus, Outline.valueOf(op.toString()));
+        } else {
+          if (hasFocus) {
+            paintOutlineBorder(g2, r.width, r.height, arc, true, true, Outline.focus);
+          }
+
+          Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+          border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
+          border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw), false);
+
+          g2.setColor(getOutlineColor(c.isEnabled(), hasFocus));
+          g2.fill(border);
         }
-
+      } else {
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
-        border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw), false);
+        border.append(new Rectangle2D.Float(0, 0, r.width, r.height), false);
+        border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
 
-        g2.setColor(getOutlineColor(c.isEnabled(), hasFocus));
+        Outline.focus.setGraphicsColor(g2, true);
         g2.fill(border);
       }
     } finally {
@@ -388,7 +394,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return getInsets();
+    return isTableCellEditor((JComponent)c) ? JBUI.insets(2) : getDefaultComboBoxInsets();
   }
 
   @Override

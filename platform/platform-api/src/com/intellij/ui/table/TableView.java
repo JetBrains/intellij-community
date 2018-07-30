@@ -169,7 +169,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
                               viewWidth) - allColumnWidth) / varCount;
 
     for (int i = 0 ; i < visibleColumnCount; i++) {
-      TableColumn column = columnModel.getColumn(i);
+       TableColumn column = columnModel.getColumn(i);
       int width = widths[i];
       if (sizeMode[i] == 1) {
         column.setMaxWidth(width);

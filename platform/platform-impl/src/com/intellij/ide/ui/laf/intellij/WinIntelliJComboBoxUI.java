@@ -431,11 +431,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
-  protected Insets getInsets() {
-    return getBorderInsets(comboBox);
-  }
-
-  @Override
   public Insets getBorderInsets(Component c) {
     return JBUI.insets(1);
   }

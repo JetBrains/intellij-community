@@ -374,6 +374,10 @@ public class DarculaUIUtil {
     return c instanceof JComponent && ((JComponent)c).getClientProperty(COMPACT_PROPERTY) == Boolean.TRUE;
   }
 
+  public static boolean isTableCellEditor(Component c) {
+    return UIUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
+  }
+
   public static final JBValue MINIMUM_WIDTH = new JBValue.Float(64);
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
