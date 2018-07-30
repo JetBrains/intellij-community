@@ -90,10 +90,4 @@ sealed class StyleProperty(
     }
     setProperty(component, value)
   }
-
-  class BasicButton : JButton() {
-    init {
-      setUI(BasicButtonUI())
-    }
-  }
 }

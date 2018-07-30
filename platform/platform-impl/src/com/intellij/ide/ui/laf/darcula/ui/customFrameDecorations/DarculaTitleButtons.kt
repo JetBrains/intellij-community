@@ -13,6 +13,7 @@ import java.awt.Color
 import javax.accessibility.AccessibleContext
 import javax.security.auth.Destroyable
 import javax.swing.*
+import javax.swing.plaf.basic.BasicButtonUI
 
 open class DarculaTitleButtons constructor(myCloseAction: Action,
                                            private val myHelpAction: HelpAction) : Destroyable {
@@ -121,7 +122,7 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
   }
 
   protected fun createButton(accessibleName: String, action: Action): JButton {
-    val button = StyleProperty.BasicButton()
+    val button = JButton().apply { ui = BasicButtonUI() }
     button.action = action
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
     button.text = null
