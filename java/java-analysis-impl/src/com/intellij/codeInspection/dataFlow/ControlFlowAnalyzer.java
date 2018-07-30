@@ -485,7 +485,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private DfaValue getIteratedElement(PsiExpression iteratedValue) {
+  private DfaValue getIteratedElement(PsiType type, PsiExpression iteratedValue) {
     PsiExpression[] expressions = null;
     if (iteratedValue instanceof PsiNewExpression) {
       PsiArrayInitializerExpression initializer = ((PsiNewExpression)iteratedValue).getArrayInitializer();
@@ -502,7 +502,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (iteratedValue instanceof PsiMethodCallExpression && LIST_INITIALIZER.test((PsiMethodCallExpression)iteratedValue)) {
       expressions = ((PsiMethodCallExpression)iteratedValue).getArgumentList().getExpressions();
     }
-    return expressions == null ? DfaUnknownValue.getInstance() : getFactory().createCommonValue(expressions);
+    return expressions == null ? DfaUnknownValue.getInstance() : getFactory().createCommonValue(expressions, type);
   }
 
   @Override public void visitForeachStatement(PsiForeachStatement statement) {
@@ -539,7 +539,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     ControlFlowOffset offset = myCurrentFlow.getNextOffset();
     DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(parameter);
-    new CFGBuilder(this).assignAndPop(dfaVariable, getIteratedElement(iteratedValue));
+    new CFGBuilder(this).assignAndPop(dfaVariable, getIteratedElement(parameter.getType(), iteratedValue));
 
     if (!hasSizeCheck) {
       pushUnknown();
