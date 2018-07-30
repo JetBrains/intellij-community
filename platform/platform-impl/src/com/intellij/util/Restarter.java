@@ -256,7 +256,6 @@ public class Restarter {
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
   private interface Kernel32 extends StdCallLibrary {
-    int GetCurrentProcessId();
     WString GetCommandLineW();
     Pointer LocalFree(Pointer pointer);
     WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);
