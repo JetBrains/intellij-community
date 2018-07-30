@@ -137,31 +137,27 @@ public class VcsPushDialog extends DialogWrapper {
 
   @CalledInAwt
   public void push(boolean forcePush) {
+    PrePushHandler.Result result = runPrePushHandlersInModalTask();
+    if (result == PrePushHandler.Result.OK) {
+      myController.push(forcePush);
+      close(OK_EXIT_CODE);
+    }
+    else if (result == PrePushHandler.Result.ABORT_AND_CLOSE) {
+      doCancelAction();
+    }
+    else if (result == PrePushHandler.Result.ABORT) {
+      // cancel push and leave the push dialog open
+    }
+  }
+
+  @CalledInAwt
+  public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
     new Task.Modal(myController.getProject(), "Checking Commits...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         result.set(myController.executeHandlers(indicator));
-      }
-
-      @Override
-      public void onSuccess() {
-        super.onSuccess();
-        if (result.get() == PrePushHandler.Result.OK) {
-          doPush();
-        }
-        else if (result.get() == PrePushHandler.Result.ABORT_AND_CLOSE) {
-          doCancelAction();
-        }
-        else if (result.get() == PrePushHandler.Result.ABORT) {
-          // cancel push and leave the push dialog open
-        }
-      }
-
-      private void doPush() {
-        myController.push(forcePush);
-        close(OK_EXIT_CODE);
       }
 
       @Override
@@ -208,10 +204,14 @@ public class VcsPushDialog extends DialogWrapper {
                                         "&Push Anyway",
                                         "&Cancel",
                                         UIUtil.getWarningIcon()) == Messages.OK) {
-          doPush();
+          result.set(PrePushHandler.Result.OK);
+        }
+        else {
+          result.set(PrePushHandler.Result.ABORT);
         }
       }
     }.queue();
+    return result.get();
   }
 
   public void updateOkActions() {
