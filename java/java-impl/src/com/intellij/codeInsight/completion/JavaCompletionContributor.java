@@ -796,15 +796,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";";
     }
 
-    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiJavaCodeReferenceElement.class, false);
-    if (ref != null && !(ref instanceof PsiReferenceExpression)) {
-      return null;
+    PsiElement leaf = file.findElementAt(offset);
+    if (leaf instanceof PsiIdentifier || leaf instanceof PsiKeyword) {
+      return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
     }
 
-    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiAnnotation.class, false) != null) {
-      return null;
-    }
-    return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+    return null;
   }
 
   public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {
