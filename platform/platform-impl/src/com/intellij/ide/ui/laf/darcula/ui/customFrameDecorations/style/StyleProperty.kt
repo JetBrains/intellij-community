@@ -35,32 +35,32 @@ sealed class StyleProperty(
   )
 
   object BACKGROUND : StyleProperty(
-    { component, background -> component.background = if (background == null) null else background as Color },
+    { component, background -> component.background = background as Color? },
     { component -> component.background },
     Color::class.java
   )
 
   object FOREGROUND : StyleProperty(
-    { component, foreground -> component.foreground = if (foreground == null) null else foreground as Color },
+    { component, foreground -> component.foreground = foreground as Color? },
     { component -> component.foreground },
     Color::class.java
   )
 
   object BORDER : StyleProperty(
-    { component, border -> component.border = if (border == null) null else border as Border },
+    { component, border -> component.border = border as Border? },
     { component -> component.border },
     Border::class.java
   )
 
   object ICON : StyleProperty(
-    { component, icon -> (component as AbstractButton).icon = if (icon == null) null else icon as Icon },
+    { component, icon -> (component as AbstractButton).icon = icon as Icon? },
     { component -> (component as AbstractButton).icon },
     Icon::class.java,
     AbstractButton::class.java
   )
 
   object MARGIN : StyleProperty(
-    { component, margin -> (component as AbstractButton).margin = if (margin == null) null else margin as Insets },
+    { component, margin -> (component as AbstractButton).margin = margin as Insets? },
     { component -> (component as AbstractButton).margin },
     Insets::class.java,
     AbstractButton::class.java

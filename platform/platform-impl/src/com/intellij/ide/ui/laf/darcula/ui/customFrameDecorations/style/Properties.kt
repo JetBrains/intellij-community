@@ -36,16 +36,12 @@ class Properties {
 
   fun clone(): Properties {
     val new = Properties()
-    for ((k, v) in map) {
-      new.setValue(k, v)
-    }
+    new.map +=map
     return new
   }
 
   fun updateBy(source: Properties): Properties {
-    for ((k, v) in source.map) {
-      setValue(k, v)
-    }
+    map += source.map
     return this
   }
 

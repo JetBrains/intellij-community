@@ -10,7 +10,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-class ComponentStyle<T : JComponent>private constructor(private val default: Properties, private val styleMap: HashMap<ComponentStyleState, Properties>) {
+class ComponentStyle<T : JComponent>private constructor(private val default: Properties, private val styleMap: Map<ComponentStyleState, Properties>) {
   companion object {
     const val ENABLED_PROPERTY = "enabled"
   }
@@ -107,12 +107,7 @@ class ComponentStyle<T : JComponent>private constructor(private val default: Pro
     }
 
     fun build(): ComponentStyle<T> {
-      val stm = HashMap<ComponentStyleState, Properties>()
-      for ((k, v) in styleMap) {
-        stm[k] = v.clone()
-      }
-
-      return ComponentStyle<T>(default.clone(), stm)
+      return ComponentStyle<T>(default.clone(), styleMap.mapValues { it.value.clone()})
     }
   }
 
