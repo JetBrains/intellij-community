@@ -22,6 +22,7 @@ import java.awt.Container
 import java.awt.Window
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.swing.JCheckBox
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JRadioButton
@@ -127,7 +128,7 @@ object GuiTestUtilKt {
   }
 
   fun Component.isTextComponent(): Boolean {
-    val textComponentsTypes = arrayOf(JLabel::class.java, JRadioButton::class.java)
+    val textComponentsTypes = arrayOf(JLabel::class.java, JRadioButton::class.java, JCheckBox::class.java)
     return textComponentsTypes.any { it.isInstance(this) }
   }
 
@@ -135,6 +136,7 @@ object GuiTestUtilKt {
     when (this) {
       is JLabel -> return this.text
       is JRadioButton -> return this.text
+      is JCheckBox -> return this.text
       else -> return null
     }
   }
