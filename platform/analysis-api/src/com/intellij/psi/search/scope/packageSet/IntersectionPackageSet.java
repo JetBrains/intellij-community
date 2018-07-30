@@ -61,7 +61,7 @@ public class IntersectionPackageSet extends PackageSetBase {
   }
 
   @Override
-  public PackageSet map(Function<PackageSet, PackageSet> transformation) {
+  public PackageSet map(@NotNull Function<? super PackageSet, ? extends PackageSet> transformation) {
     PackageSet firstUpdated = transformation.apply(myFirstSet);
     PackageSet secondUpdated = transformation.apply(mySecondSet);
     if (firstUpdated != myFirstSet || secondUpdated != mySecondSet) {
@@ -72,7 +72,7 @@ public class IntersectionPackageSet extends PackageSetBase {
   }
 
   @Override
-  public boolean anyMatches(Predicate<PackageSet> predicate) {
+  public boolean anyMatches(@NotNull Predicate<? super PackageSet> predicate) {
     return predicate.test(myFirstSet) || predicate.test(mySecondSet);
   }
 

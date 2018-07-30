@@ -65,13 +65,13 @@ public class ComplementPackageSet extends PackageSetBase {
   }
 
   @Override
-  public PackageSet map(Function<PackageSet, PackageSet> transformation) {
+  public PackageSet map(@NotNull Function<? super PackageSet, ? extends PackageSet> transformation) {
     PackageSet updated = transformation.apply(myComplementarySet);
     return updated != myComplementarySet ? new ComplementPackageSet(updated) : this;
   }
 
   @Override
-  public boolean anyMatches(Predicate<PackageSet> predicate) {
+  public boolean anyMatches(@NotNull Predicate<? super PackageSet> predicate) {
     return predicate.test(myComplementarySet);
   }
 
