@@ -1721,6 +1721,10 @@ public class AllIcons {
     public static final Icon HideIgnored = IconLoader.getIcon("/runConfigurations/hideIgnored.png"); // 16x16
     public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.png"); // 16x16
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon IncludeNonStartedTests_Rerun = IconLoader.getIcon("/runConfigurations/includeNonStartedTests_Rerun.png"); // 16x16
     public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png"); // 16x16
     public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.png"); // 16x16
