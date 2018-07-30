@@ -10,12 +10,14 @@ import org.junit.runners.Suite
 
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
-@Suite.SuiteClasses(CompletionFocusTest::class,
-//                    TypeAheadTest::class,
-                    GoToClassFocusTest::class,
-                    GoToClassTwiceFocusTest::class,
-                    InlineVariableFocusTest::class,
-                    KeyMapSettingsTestFocusTest::class,
-                    SearchEverywhereFocusTest::class,
-                    ReplaceInPathFocusTest::class)
-class FocusIssuesSuite: GuiTestSuite()
+@Suite.SuiteClasses(
+  CompletionFocusTest::class,
+  //TypeAheadTest::class,
+  GoToClassFocusTest::class,
+  //GoToClassTwiceFocusTest::class,  todo: switched off until GUI-145 will be fixed
+  InlineVariableFocusTest::class,
+  KeyMapSettingsTestFocusTest::class
+  //SearchEverywhereFocusTest::class,  todo: switched off until GUI-145 will be fixed
+  //ReplaceInPathFocusTest::class  todo: switched off until GUI-145 will be fixed
+)
+class FocusIssuesSuite : GuiTestSuite()
