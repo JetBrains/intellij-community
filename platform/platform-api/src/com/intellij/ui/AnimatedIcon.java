@@ -24,7 +24,7 @@ public class AnimatedIcon implements Icon {
     int getDelay();
   }
 
-  public static final class Default extends AnimatedIcon {
+  public static class Default extends AnimatedIcon {
     public Default() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
@@ -41,7 +41,7 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Step_8);
   }
 
-  public static final class Big extends AnimatedIcon {
+  public static class Big extends AnimatedIcon {
     public Big() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
@@ -59,7 +59,7 @@ public class AnimatedIcon implements Icon {
   }
 
   @Deprecated
-  public static final class Grey extends AnimatedIcon {
+  public static class Grey extends AnimatedIcon {
     public Grey() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
@@ -77,7 +77,7 @@ public class AnimatedIcon implements Icon {
   }
 
   @ApiStatus.Experimental
-  public static final class FS extends AnimatedIcon {
+  public static class FS extends AnimatedIcon {
     public FS() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
@@ -109,7 +109,6 @@ public class AnimatedIcon implements Icon {
   private boolean requested;
   private long time;
   private int index;
-  private Frame frame;
 
   public AnimatedIcon(int delay, @NotNull Icon... icons) {
     this(getFrames(delay, icons));
@@ -119,7 +118,7 @@ public class AnimatedIcon implements Icon {
     this.frames = frames;
     assert frames.length > 0 : "empty array";
     for (Frame frame : frames) assert frame != null : "null animation frame";
-    updateFrameAt(System.currentTimeMillis());
+    time = System.currentTimeMillis();
   }
 
   private static Frame[] getFrames(int delay, @NotNull Icon... icons) {
@@ -146,21 +145,27 @@ public class AnimatedIcon implements Icon {
   }
 
   private void updateFrameAt(long current) {
-    if (frames.length <= index) index = 0;
-    frame = frames[index++];
+    int next = index + 1;
+    index = next < frames.length ? next : 0;
     time = current;
   }
 
+  @NotNull
   private Icon getUpdatedIcon() {
-    long current = System.currentTimeMillis();
-    if (frame.getDelay() <= (current - time)) updateFrameAt(current);
-    return frame.getIcon();
+    int index = getCurrentIndex();
+    return frames[index].getIcon();
   }
 
-  @Override
-  public final void paintIcon(Component c, Graphics g, int x, int y) {
-    Icon icon = getUpdatedIcon();
+  private int getCurrentIndex() {
+    long current = System.currentTimeMillis();
+    Frame frame = frames[index];
+    if (frame.getDelay() <= (current - time)) updateFrameAt(current);
+    return index;
+  }
+
+  private void requestRefresh(Component c) {
     if (!requested && canRefresh(c)) {
+      Frame frame = frames[index];
       int delay = frame.getDelay();
       if (delay > 0) {
         requested = true;
@@ -177,6 +182,12 @@ public class AnimatedIcon implements Icon {
         doRefresh(c);
       }
     }
+  }
+
+  @Override
+  public final void paintIcon(Component c, Graphics g, int x, int y) {
+    Icon icon = getUpdatedIcon();
+    requestRefresh(c);
     icon.paintIcon(c, g, x, y);
   }
 

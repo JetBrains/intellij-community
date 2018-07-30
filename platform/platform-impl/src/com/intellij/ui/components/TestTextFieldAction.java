@@ -109,7 +109,7 @@ public class TestTextFieldAction extends DumbAwareAction {
 
             @Override
             public Icon getIcon(boolean hovered) {
-              return icon;
+              return !hovered ? icon : AllIcons.Process.FS.Step_passive;
             }
 
             @Override
