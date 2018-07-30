@@ -1915,7 +1915,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'catch' '(' parse_catch_parameter ')' lazy_block
+  // 'catch' '(' parse_catch_parameter ')' (mb_nl lazy_block)
   public static boolean catch_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "catch_clause")) return false;
     if (!nextTokenIs(b, KW_CATCH)) return false;
@@ -1925,9 +1925,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = 1
     r = r && report_error_(b, parse_catch_parameter(b, l + 1));
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
-    r = p && lazy_block(b, l + 1) && r;
+    r = p && catch_clause_4(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // mb_nl lazy_block
+  private static boolean catch_clause_4(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "catch_clause_4")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && lazy_block(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
