@@ -10,7 +10,7 @@ import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
 
-class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
+class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<RunConfigurationModel>(
     { RunConfigurationModel(it) }
   )
@@ -25,20 +25,55 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     Text, Check, Choice, List, Tree, Combo, Custom
   }
 
+  data class CustomConfigurationField(
+    val actionIsPresent: (RunConfigurationModel, String) -> Boolean,
+    val actionGetValue: (RunConfigurationModel, String) -> String?,
+    val actionSetValue: (RunConfigurationModel, String, String) -> Unit) {
+    companion object {
+
+      val envVarsField = CustomConfigurationField(
+        actionIsPresent = { model: RunConfigurationModel, title: String ->
+          with(model.connectDialog()) {
+            model.guiTestCase.exists { textfield(title, timeout = 1) }
+          }
+        },
+        actionSetValue = { model, title: String, value: String ->
+          with(model.connectDialog()) {
+            val field = componentWithBrowseButton(title)
+            field.clickAnyExtensionButton()
+            if (value.isNotEmpty()) model.guiTestCase.envVarsModel.paste(value)
+            else {
+              model.guiTestCase.envVarsModel.removeAll(textfield(title).text() ?: "")
+            }
+          }
+        },
+        actionGetValue = { model, title: String ->
+          with(model.connectDialog()) {
+            textfield(title).text()
+          }
+        }
+      )
+    }
+
+  }
+
   data class ConfigurationField(
     val title: String,
     val kind: FieldKind,
-    val type: String? = null,
+    val custom: CustomConfigurationField? = null,
     val predicate: FinderPredicate = predicateEquality) {
+
+    init {
+      if (kind == FieldKind.Custom && custom == null)
+        throw  IllegalStateException("Handler for custom field '$title' must be set")
+    }
 
     companion object {
       val predicateEquality: FinderPredicate = { left: String, right: String -> left == right }
       val predicateStartsWith: FinderPredicate = { left: String, right: String -> left.startsWith(right) }
     }
 
-    override fun toString(): String {
-      return "$title : $kind${if (type != null) " ($type)" else ""}"
-    }
+    override fun toString() = "$title : $kind"
 
     fun RunConfigurationModel.isFieldPresent(): Boolean {
       with(connectDialog()) {
@@ -49,7 +84,9 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
           RunConfigurationModel.FieldKind.List -> TODO()
           RunConfigurationModel.FieldKind.Tree -> TODO()
           RunConfigurationModel.FieldKind.Combo -> guiTestCase.exists { combobox(title, timeout = 1) }
-          RunConfigurationModel.FieldKind.Custom -> TODO()
+          RunConfigurationModel.FieldKind.Custom -> custom?.actionIsPresent?.invoke(this@isFieldPresent, title)
+                                                    ?: throw IllegalStateException(
+                                                      "Handler for field '$title' not set")
         }
       }
     }
@@ -63,7 +100,8 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
           FieldKind.List -> TODO()
           FieldKind.Tree -> TODO()
           FieldKind.Combo -> combobox(title).selectedItem()
-          FieldKind.Custom -> TODO()
+          FieldKind.Custom -> custom?.actionGetValue?.invoke(this@getFieldValue, title) ?: throw IllegalStateException(
+            "Handler for field '$title' not set")
         }
         return actualValue ?: throw ComponentLookupException("Cannot find component with label `$title`")
       }
@@ -84,7 +122,8 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
             }
             combo.selectItem(newValue)
           }
-          FieldKind.Custom -> TODO()
+          FieldKind.Custom -> custom?.actionSetValue?.invoke(this@setFieldValue, title, value) ?: throw IllegalStateException(
+            "Handler for field '$title' not set")
         }
       }
     }
@@ -95,12 +134,11 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     VMOptions(ConfigurationField("VM options:", FieldKind.Text)),
     ProgramArgs(ConfigurationField("Program arguments:", FieldKind.Text)),
     WorkingDir(ConfigurationField("Working directory:", FieldKind.Text)),
-    EnvVars(ConfigurationField("Environment variables:", FieldKind.Text)),
+    EnvVars(ConfigurationField("Environment variables:", FieldKind.Custom, custom = CustomConfigurationField.envVarsField)),
     UseModule(ConfigurationField("Use classpath of module:", FieldKind.Combo)),
     ProvidedScope(ConfigurationField("Include dependencies with \"Provided\" scope", FieldKind.Check)),
     JRE(ConfigurationField("JRE:", FieldKind.Combo, predicate = ConfigurationField.predicateStartsWith)),
     ShortenCmdLine(ConfigurationField("Shorten command line:", FieldKind.Combo,
-                                      type = "com.intellij.execution.ui.ShortenCommandLineModeCombo",
                                       predicate = ConfigurationField.predicateStartsWith)),
     CapturingSnapshots(ConfigurationField("Enable capturing form snapshots", FieldKind.Check)),
     BeforeLaunch(ConfigurationField("Before launch:", FieldKind.List))
@@ -120,7 +158,7 @@ class RunConfigurationModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.runConfigModel by RunConfigurationModel
 
 fun RunConfigurationModel.connectDialog(): JDialogFixture =
-  testCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true, GuiTestUtil.defaultTimeout)
+  guiTestCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true, GuiTestUtil.defaultTimeout)
 
 fun RunConfigurationModel.checkConfigurationExistsAndSelect(vararg configuration: String) {
   with(connectDialog()) {
