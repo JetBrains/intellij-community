@@ -136,13 +136,6 @@ fun <S, C : Component> ComponentFixture<S, C>.spinner(boundedLabelText: String, 
  */
 fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String, timeout: Long = defaultTimeout): ComboBoxFixture =
   if (target() is Container) {
-    try {
-      waitUntilFound(target() as Container, Component::class.java,
-                     timeout) { it.isShowing && it.isTextComponent() && it.getComponentText() == labelText }
-    }
-    catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("Unable to find label for a combobox with text \"$labelText\" in $timeout seconds")
-    }
     val comboBox = GuiTestUtilKt.findBoundedComponentByText(robot(), target() as Container, labelText, JComboBox::class.java)
     val comboboxFixture = ComboBoxFixture(robot(), comboBox)
     comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
