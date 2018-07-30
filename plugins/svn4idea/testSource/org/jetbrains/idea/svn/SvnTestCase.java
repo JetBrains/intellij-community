@@ -320,7 +320,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
       myTargetDir = findChild(myRootDir, "target", null, create);
       myTargetFiles.clear();
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 3; i++) {
         myTargetFiles.add(findChild(myTargetDir, "t" + (i + 10) + ".txt", ourS1Contents, create));
       }
     }

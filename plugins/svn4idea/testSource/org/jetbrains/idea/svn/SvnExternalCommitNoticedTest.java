@@ -53,7 +53,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     renameFileInCommand(tree.myTargetDir, "aabbcc");
     refreshChanges();
-    assertChanges(11);
+    assertChanges(tree.myTargetFiles.size() + 1);
 
     checkin();
 
