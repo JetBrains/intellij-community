@@ -1714,12 +1714,20 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ConfigurationWarning = IconLoader.getIcon("/general/balloonError.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon HideIgnored = IconLoader.getIcon("/runConfigurations/hideIgnored.png"); // 16x16
     public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.png"); // 16x16
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.svg"); // 16x16
     public static final Icon IncludeNonStartedTests_Rerun = IconLoader.getIcon("/runConfigurations/includeNonStartedTests_Rerun.png"); // 16x16
     public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png"); // 16x16
     public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon LoadingTree = IconLoader.getIcon("/runConfigurations/loadingTree.png"); // 16x16
     public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png"); // 16x16
     public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.png"); // 16x16
@@ -1738,14 +1746,46 @@ public class AllIcons {
     public static final Icon TestError = IconLoader.getIcon("/runConfigurations/testError.svg"); // 16x16
     public static final Icon TestFailed = IconLoader.getIcon("/runConfigurations/testFailed.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/runConfigurations/testIgnored.svg"); // 16x16
-    public static final Icon TestInProgress1 = IconLoader.getIcon("/runConfigurations/testInProgress1.png"); // 16x16
-    public static final Icon TestInProgress2 = IconLoader.getIcon("/runConfigurations/testInProgress2.png"); // 16x16
-    public static final Icon TestInProgress3 = IconLoader.getIcon("/runConfigurations/testInProgress3.png"); // 16x16
-    public static final Icon TestInProgress4 = IconLoader.getIcon("/runConfigurations/testInProgress4.png"); // 16x16
-    public static final Icon TestInProgress5 = IconLoader.getIcon("/runConfigurations/testInProgress5.png"); // 16x16
-    public static final Icon TestInProgress6 = IconLoader.getIcon("/runConfigurations/testInProgress6.png"); // 16x16
-    public static final Icon TestInProgress7 = IconLoader.getIcon("/runConfigurations/testInProgress7.png"); // 16x16
-    public static final Icon TestInProgress8 = IconLoader.getIcon("/runConfigurations/testInProgress8.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress1 = IconLoader.getIcon("/process/step_1.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_2 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress2 = IconLoader.getIcon("/process/step_2.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_3 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress3 = IconLoader.getIcon("/process/step_3.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_4 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress4 = IconLoader.getIcon("/process/step_4.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_5 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress5 = IconLoader.getIcon("/process/step_5.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_6 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress6 = IconLoader.getIcon("/process/step_6.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_7 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress7 = IconLoader.getIcon("/process/step_7.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Process.Step_8 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TestInProgress8 = IconLoader.getIcon("/process/step_8.svg"); // 16x16
     public static final Icon TestMark = IconLoader.getIcon("/runConfigurations/testMark.png"); // 16x16
     public static final Icon TestNotRan = IconLoader.getIcon("/runConfigurations/testNotRan.svg"); // 16x16
     public static final Icon TestPassed = IconLoader.getIcon("/runConfigurations/testPassed.svg"); // 16x16
