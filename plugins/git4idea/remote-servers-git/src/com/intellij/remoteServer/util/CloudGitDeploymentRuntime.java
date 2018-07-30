@@ -311,7 +311,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected GitLineHandlerListener createGitLineHandlerListener() {
-    return new GitLineHandlerAdapter() {
+    return new GitLineHandlerListener() {
 
       @Override
       public void onLineAvailable(String line, Key outputType) {

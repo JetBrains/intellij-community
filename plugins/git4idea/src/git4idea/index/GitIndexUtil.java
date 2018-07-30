@@ -68,7 +68,7 @@ public class GitIndexUtil {
     h.endOptions();
     h.addRelativePaths(filePaths);
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
@@ -101,7 +101,7 @@ public class GitIndexUtil {
     h.endOptions();
     h.addRelativePaths(filePath);
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;

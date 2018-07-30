@@ -248,7 +248,7 @@ abstract class GitImplBase implements Git {
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
       GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
-      handler.addLineListener(new GitLineHandlerAdapter() {
+      handler.addLineListener(new GitLineHandlerListener() {
         @Override
         public void onLineAvailable(String line, Key outputType) {
           if (!handler.isSilent() && !StringUtil.isEmptyOrSpaces(line)) {
