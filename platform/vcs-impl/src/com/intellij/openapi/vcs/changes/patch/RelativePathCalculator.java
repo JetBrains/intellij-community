@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class RelativePathCalculator {
-  private final int ourNumOfAllowedStepsAbove = 1;
+  private static final int ourNumOfAllowedStepsAbove = 1;
   private static final int ourAllowedStepsDown = 2;
 
   private final String myShifted;
@@ -32,13 +32,13 @@ public class RelativePathCalculator {
   private String myResult;
   private boolean myRename;
 
-  public RelativePathCalculator(final String base, final String shifted) {
+  public RelativePathCalculator(@Nullable String base, @Nullable String shifted) {
     myShifted = shifted;
     myBase = base;
   }
 
   private static boolean stringEqual(@NotNull final String s1, @NotNull final String s2) {
-    if (! SystemInfo.isFileSystemCaseSensitive) {
+    if (!SystemInfo.isFileSystemCaseSensitive) {
       return s1.equalsIgnoreCase(s2);
     }
     return s1.equals(s2);
@@ -61,18 +61,18 @@ public class RelativePathCalculator {
 
     int cnt = 0;
     while (true) {
-      if ((baseParts.length <= cnt) || (shiftedParts.length <= cnt)) {
+      if (baseParts.length <= cnt || shiftedParts.length <= cnt) {
         // means that directory moved to a file or vise versa -> error
         return;
       }
-      if (! stringEqual(baseParts[cnt], shiftedParts[cnt])) {
+      if (!stringEqual(baseParts[cnt], shiftedParts[cnt])) {
         break;
       }
-      ++ cnt;
+      ++cnt;
     }
 
     final int stepsUp = baseParts.length - cnt - 1;
-    if ((! myRename) && (stepsUp > ourNumOfAllowedStepsAbove) && ((shiftedParts.length - cnt) <= ourAllowedStepsDown)) {
+    if (!myRename && stepsUp > ourNumOfAllowedStepsAbove && shiftedParts.length - cnt <= ourAllowedStepsDown) {
       myResult = myShifted;
       return;
     }
@@ -101,11 +101,11 @@ public class RelativePathCalculator {
     return myRename;
   }
 
-  private boolean checkRename(final String[] baseParts, final String[] shiftedParts) {
+  private static boolean checkRename(final String[] baseParts, final String[] shiftedParts) {
     if (baseParts.length == shiftedParts.length) {
       for (int i = 0; i < baseParts.length; i++) {
-        if (! stringEqual(baseParts[i], shiftedParts[i])) {
-          return i == (baseParts.length - 1);
+        if (!stringEqual(baseParts[i], shiftedParts[i])) {
+          return i == baseParts.length - 1;
         }
       }
     }
@@ -118,10 +118,10 @@ public class RelativePathCalculator {
 
   @Nullable
   public static String getMovedString(final String beforeName, final String afterName) {
-    if ((beforeName != null) && (afterName != null) && (! stringEqual(beforeName, afterName))) {
+    if (beforeName != null && afterName != null && !stringEqual(beforeName, afterName)) {
       final RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
       calculator.execute();
-      final String key = (calculator.isRename()) ? "change.file.renamed.to.text" : "change.file.moved.to.text";
+      final String key = calculator.isRename() ? "change.file.renamed.to.text" : "change.file.moved.to.text";
       return VcsBundle.message(key, calculator.getResult());
     }
     return null;
