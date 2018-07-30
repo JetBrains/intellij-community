@@ -112,6 +112,18 @@ public class MockModule extends MockComponentManager implements Module {
     throw new UnsupportedOperationException("Method getModuleWithLibrariesScope is not yet implemented in " + getClass().getName());
   }
 
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesScope() {
+    throw new UnsupportedOperationException("Method getModuleWithDependentsAndLibrariesScope is not yet implemented in " + getClass().getName());
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesTestScope() {
+    throw new UnsupportedOperationException("Method getModuleWithDependentsAndLibrariesTestScope is not yet implemented in " + getClass().getName());
+  }
+
   @Override
   @NotNull
   public String getName() {

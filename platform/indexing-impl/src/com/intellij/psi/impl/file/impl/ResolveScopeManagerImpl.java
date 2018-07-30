@@ -176,8 +176,8 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     }
     boolean isTest = TestSourcesFilter.isTestSources(vDirectory, myProject);
     GlobalSearchScope scope = isTest
-                              ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
-                              : GlobalSearchScope.moduleWithDependentsScope(module);
+                              ? GlobalSearchScope.moduleWithDependentsAndLibrariesTestScope(module)
+                              : GlobalSearchScope.moduleWithDependentsAndLibrariesScope(module);
     RefResolveService resolveService;
     if (virtualFile instanceof VirtualFileWithId && RefResolveService.ENABLED && (resolveService = RefResolveService.getInstance(myProject)).isUpToDate()) {
       return resolveService.restrictByBackwardIds(virtualFile, scope);

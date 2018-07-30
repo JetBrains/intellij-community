@@ -82,6 +82,18 @@ public class CoreModuleScopeProvider implements ModuleScopeProvider {
 
   @NotNull
   @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesScope() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesTestScope() {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     throw new UnsupportedOperationException();
   }

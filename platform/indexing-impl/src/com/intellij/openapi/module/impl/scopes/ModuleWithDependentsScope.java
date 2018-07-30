@@ -43,7 +43,7 @@ import java.util.Set;
 class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Module myModule;
 
-  private final ProjectFileIndexImpl myProjectFileIndex;
+  protected final ProjectFileIndexImpl myProjectFileIndex;
   private final Set<Module> myModules;
 
   ModuleWithDependentsScope(@NotNull Module module) {
@@ -111,7 +111,10 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
   boolean contains(@NotNull VirtualFile file, boolean myOnlyTests) {
     // optimization: fewer calls to getInfoForFileOrDirectory()
-    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
+    return contains(myProjectFileIndex.getInfoForFileOrDirectory(file), file, myOnlyTests);
+  }
+
+  boolean contains(@NotNull DirectoryInfo info, @NotNull VirtualFile file, boolean myOnlyTests) {
     Module moduleOfFile = info.getModule();
     if (moduleOfFile == null || !myModules.contains(moduleOfFile)) return false;
     if (myOnlyTests && !TestSourcesFilter.isTestSources(file, moduleOfFile.getProject())) return false;

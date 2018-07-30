@@ -18,6 +18,7 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 // Tests only (module plus dependencies) scope
@@ -25,7 +26,11 @@ import org.jetbrains.annotations.NotNull;
 class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope {
   ModuleWithDependentsTestScope(@NotNull Module module) {
     // the additional equality argument allows to distinguish ModuleWithDependentsTestScope from ModuleWithDependentsScope
-    super(new ModuleWithDependentsScope(module), true);
+    this(new ModuleWithDependentsScope(module));
+  }
+
+  ModuleWithDependentsTestScope(ModuleWithDependentsScope scope) {
+    super(scope, true);
   }
 
   @Override

@@ -188,10 +188,23 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     return myModuleScopeProvider.getModuleWithDependentsScope();
   }
 
+
   @NotNull
   @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
     return myModuleScopeProvider.getModuleTestsWithDependentsScope();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesScope() {
+    return myModuleScopeProvider.getModuleWithDependentsAndLibrariesScope();
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope getModuleWithDependentsAndLibrariesTestScope() {
+    return myModuleScopeProvider.getModuleWithDependentsAndLibrariesTestScope();
   }
 
   @NotNull
