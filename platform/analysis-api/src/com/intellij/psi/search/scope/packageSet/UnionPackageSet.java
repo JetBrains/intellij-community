@@ -16,39 +16,52 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.function.Predicate;
 
-public class UnionPackageSet extends PackageSetBase {
-  private final PackageSet myFirstSet;
-  private final PackageSet mySecondSet;
-
-  private String myText;
-
-  public UnionPackageSet(@NotNull PackageSet set1, @NotNull PackageSet set2) {
-    myFirstSet = set1;
-    mySecondSet = set2;
-  }
-
-  @Override
-  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
-  }
-
-  @Override
-  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-    return (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, project, holder) : myFirstSet.contains(getPsiFile(file, project), holder)) ||
-           (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, project, holder) : mySecondSet.contains(getPsiFile(file, project), holder));
-  }
-
-  @Override
+public class UnionPackageSet extends CompoundPackageSet {
   @NotNull
-  public PackageSet createCopy() {
-    return new UnionPackageSet(myFirstSet.createCopy(), mySecondSet.createCopy());
+  public static PackageSet create(@NotNull PackageSet... sets) {
+    if (sets.length == 0) throw new IllegalArgumentException("empty arguments");
+    return sets.length == 1 ? sets[0] : new UnionPackageSet(sets);
+  }
+
+  /**
+   * @deprecated use {@link #create(PackageSet...)} instead
+   */
+  @Deprecated
+  public UnionPackageSet(@NotNull PackageSet set1, @NotNull PackageSet set2) {
+    super(set1, set2);
+  }
+
+  private UnionPackageSet(@NotNull PackageSet... sets) {
+    super(sets);
+  }
+
+  @Override
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+    PsiFile psiFile = null;
+
+    for (PackageSet set : mySets) {
+      if (set instanceof PackageSetBase) {
+        if (((PackageSetBase)set).contains(file, project, holder)) {
+          return true;
+        }
+      }
+      else {
+        if (psiFile == null) {
+          psiFile = getPsiFile(file, project);
+        }
+        if (set.contains(psiFile, holder)) return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -58,34 +71,15 @@ public class UnionPackageSet extends PackageSetBase {
 
   @Override
   public PackageSet map(@NotNull Function<? super PackageSet, ? extends PackageSet> transformation) {
-    PackageSet firstUpdated = transformation.apply(myFirstSet);
-    PackageSet secondUpdated = transformation.apply(mySecondSet);
-    if (firstUpdated != myFirstSet || secondUpdated != mySecondSet) {
-      return new UnionPackageSet(firstUpdated != myFirstSet ? firstUpdated : myFirstSet.createCopy(),
-                                 secondUpdated != mySecondSet ? secondUpdated : mySecondSet.createCopy());
-    }
-    return this;
-  }
-
-  @Override
-  public boolean anyMatches(@NotNull Predicate<? super PackageSet> predicate) {
-    return predicate.test(myFirstSet) || predicate.test(mySecondSet);
+    return create(ContainerUtil.map(mySets, s -> transformation.apply(s), new PackageSet[mySets.length]));
   }
 
   @Override
   @NotNull
   public String getText() {
     if (myText == null) {
-      myText = myFirstSet.getText() + "||" + mySecondSet.getText();
+      myText = StringUtil.join(mySets, s->s.getText(), "||");
     }
     return myText;
-  }
-
-  public PackageSet getFirstSet() {
-    return myFirstSet;
-  }
-
-  public PackageSet getSecondSet() {
-    return mySecondSet;
   }
 }
