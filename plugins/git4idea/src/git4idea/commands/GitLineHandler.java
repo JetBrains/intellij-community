@@ -67,6 +67,34 @@ public class GitLineHandler extends GitTextHandler {
     super(project, directory, pathToExecutable, command, configParameters);
   }
 
+  {
+    addLineListener(new GitLineHandlerListener() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (shouldLogOutput(line, outputType)) {
+          LOG.info(line.trim());
+        }
+        else {
+          OUTPUT_LOG.debug(line.trim());
+        }
+      }
+
+      @Override
+      public boolean trimLineSeparator() {
+        return false;
+      }
+
+      private boolean shouldLogOutput(String line, Key outputType) {
+        if (line.endsWith("\r")) return false; // do not log git remote progress (progress lines are separated with CR by convention)
+        if (StringUtil.isEmptyOrSpaces(line)) return false;
+        if (mySilent) return false;
+        if (outputType == ProcessOutputTypes.STDOUT) return !isStdoutSuppressed();
+        if (outputType == ProcessOutputTypes.STDERR) return !isStderrSuppressed();
+        return false;
+      }
+    });
+  }
+
   public void setUrl(@NotNull String url) {
     setUrls(singletonList(url));
   }
@@ -112,23 +140,16 @@ public class GitLineHandler extends GitTextHandler {
    * @param outputType output type
    */
   private void notifyLine(@NotNull String line, @NotNull Key outputType) {
-    String lineWithoutSeparator = LineHandlerHelper.trimLineSeparator(line);
-    // do not log git remote progress (progress lines are separated with CR by convention)
-    if (!line.endsWith("\r")) logOutput(lineWithoutSeparator, outputType);
     if (outputType == ProcessOutputTypes.SYSTEM) return;
-    myLineListeners.getMulticaster().onLineAvailable(lineWithoutSeparator, outputType);
-  }
+    String lineWithoutSeparator = LineHandlerHelper.trimLineSeparator(line);
 
-  private void logOutput(@NotNull String line, @NotNull Key outputType) {
-    String trimmedLine = line.trim();
-    if (!StringUtil.isEmptyOrSpaces(trimmedLine) &&
-        !mySilent &&
-        ((outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) ||
-         outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed())) {
-      LOG.info(trimmedLine);
-    }
-    else {
-      OUTPUT_LOG.debug(trimmedLine);
+    for (GitLineHandlerListener listener : myLineListeners.getListeners()) {
+      if (listener.trimLineSeparator()) {
+        listener.onLineAvailable(lineWithoutSeparator, outputType);
+      }
+      else {
+        listener.onLineAvailable(line, outputType);
+      }
     }
   }
 

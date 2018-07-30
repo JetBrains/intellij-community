@@ -17,4 +17,8 @@ public interface GitLineHandlerListener extends LineProcessEventListener {
   @Override
   @SuppressWarnings({"UnusedParameters", "UnnecessaryFullyQualifiedName"})
   void onLineAvailable(String line, Key outputType);
+
+  default boolean trimLineSeparator() {
+    return true;
+  }
 }
