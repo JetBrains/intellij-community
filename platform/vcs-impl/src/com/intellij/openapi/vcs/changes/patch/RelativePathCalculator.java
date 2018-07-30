@@ -43,7 +43,7 @@ public class RelativePathCalculator {
     return s1.equals(s2);
   }
 
-  @Nullable
+  @NotNull
   public String execute() {
     if (stringEqual(myShifted, myBase)) {
       return ".";
@@ -56,8 +56,9 @@ public class RelativePathCalculator {
     int cnt = 0;
     while (true) {
       if (baseParts.length <= cnt || shiftedParts.length <= cnt) {
-        // means that directory moved to a file or vise versa -> error
-        return null;
+        // means that directory moved to a file or vise versa -> undo last match
+        cnt--;
+        break;
       }
       if (!stringEqual(baseParts[cnt], shiftedParts[cnt])) {
         break;
