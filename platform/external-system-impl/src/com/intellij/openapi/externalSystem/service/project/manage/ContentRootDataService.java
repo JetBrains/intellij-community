@@ -286,6 +286,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         if (LOG.isDebugEnabled()) {
           LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will add when dir is created");
         }
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info("Adding source folder listener to watch [" + root.getPath() + "] for creation in project [hashCode=" + module.getProject().hashCode() + "]" );
+        }
         final AddSourceFolderListener listener = new AddSourceFolderListener(root, module, sourceRootType);
         saveSourceFolderCreationListener(module, listener);
         VirtualFileManager.getInstance().addVirtualFileListener(listener, module);
