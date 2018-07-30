@@ -105,7 +105,7 @@
         <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
                 icon="AllIcons.General.Remove"/>
         <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
-                icon="AllIcons.Actions.Submit1"/>
+                icon="AllIcons.Actions.Selectall"/>
         <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"/>
       </group>
       <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
