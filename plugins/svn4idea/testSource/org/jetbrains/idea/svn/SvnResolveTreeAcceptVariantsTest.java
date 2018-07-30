@@ -83,7 +83,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, conflictData, mySvnClientRunner).create());
     refreshChanges();
 
-    conflictFile = getFilePath(new File(myWorkingCopyDir.getPath(), conflictData.getConflictFile()));
+    boolean isDirectory = conflictName.startsWith("DirTo");
+    conflictFile = getFilePath(new File(myWorkingCopyDir.getPath(), conflictData.getConflictFile()), isDirectory);
     conflictChange = changeListManager.getChange(conflictFile);
     assertNotNull(conflictChange);
     assertTrue(conflictChange instanceof ConflictedSvnChange);
