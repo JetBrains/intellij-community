@@ -27,8 +27,10 @@ public interface TreeConflictData {
                                             "@@ -1,1 +0,0 @@\n" +
                                             "-123\n" +
                                             "\\ No newline at end of file\n", "root/source/s1.txt",
+                                            // Status after resolve mine-full - added + copied from previous revision
                                             new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
-                                                         StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false));
+                                                         StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false,
+                                                         "root/source/s1.txt"));
     Data MINE_DELETE_THEIRS_EDIT = new Data("Index: root/source/s1.txt\n" +
                                             "===================================================================\n" +
                                             "--- root/source/s1.txt\t(revision 358)\n" +
@@ -46,9 +48,9 @@ public interface TreeConflictData {
                                           "--- root/source/s1.txt\t(revision 358)\n" +
                                           "+++ root/source/s1renamed.txt\t(revision )\n" +
                                           "@@ -1,0 +1,0 @@\n", "root/source/s1.txt",
+                                          // Status after resolve mine-full - added + copied from previous revision
                                           new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
-                                                       StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false));
-
+                                                       StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false, "root/source/s1.txt"));
     Data MINE_UNV_THEIRS_MOVE = new Data("Index: root/source/s1.txt\n" +
                                           "===================================================================\n" +
                                           "--- root/source/s1.txt\t(revision 358)\n" +

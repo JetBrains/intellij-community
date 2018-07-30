@@ -36,6 +36,7 @@ import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Arrays.asList;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
@@ -192,8 +193,14 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
                         StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())));
           }
         }
-        assertTrue(createTestFailedComment(exFile.getPath()) + " (modified text status)",
-                   status != null && file.myContentsStatus.equals(status.getContentsStatus()));
+        if (file.myCopyFrom != null) {
+          assertTrue(createTestFailedComment(exFile.getPath()) + " (copied status)",
+                     status != null && file.myCopyFrom.equals(getRelativeUrl(myRepositoryUrl, status.getCopyFromURL())));
+        }
+        else {
+          assertTrue(createTestFailedComment(exFile.getPath()) + " (modified text status)",
+                     status != null && file.myContentsStatus.equals(status.getContentsStatus()));
+        }
       }
     }
   }
