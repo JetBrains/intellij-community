@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
-import org.jetbrains.plugins.github.api.GithubApiUtil
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -18,7 +17,7 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 class GithubGitHelper(private val githubSettings: GithubSettings,
                       private val authenticationManager: GithubAuthenticationManager,
                       private val migrationHelper: GithubAccountsMigrationHelper) {
-  private val DEFAULT_SERVER = GithubServerPath(GithubApiUtil.DEFAULT_GITHUB_HOST)
+  private val DEFAULT_SERVER = GithubServerPath(GithubServerPath.DEFAULT_HOST)
 
   fun getRemoteUrl(server: GithubServerPath, repoPath: GithubFullPath): String {
     return getRemoteUrl(server, repoPath.user, repoPath.repository)

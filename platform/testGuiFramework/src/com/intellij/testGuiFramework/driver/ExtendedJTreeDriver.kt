@@ -9,7 +9,6 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
 import org.fest.swing.core.MouseButton
-import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
 import org.fest.swing.driver.JTreeDriver
@@ -24,7 +23,6 @@ import java.awt.Rectangle
 import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.plaf.basic.BasicTreeUI
-import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDriver(robot) {
@@ -227,29 +225,32 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     stringPath
       .list2tree()
       .forEach {
-        path = ExtendedJTreePathFinder(tree)
-          .findMatchingPathByPredicate(predicate = predicate, pathStrings = *it.toTypedArray())
+        path = ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(predicate, *it.toTypedArray())
         expandPath(tree, path)
       }
     return path
   }
 
-  fun findPathToNode(tree: JTree, node: String, predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): TreePath {
-    val result: MutableList<String> = mutableListOf()
-    var currentNode = tree.model.root as DefaultMutableTreeNode
-    val e = currentNode.preorderEnumeration()
-    while (e.hasMoreElements()) {
-      currentNode = e.nextElement() as DefaultMutableTreeNode
-      if (predicate(currentNode.toString(), node)) {
-        break
+  fun findPathToNode(tree: JTree, node: String, predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): TreePath{
+
+    fun JTree.iterateChildren(root: Any, node: String, rootPath: TreePath, predicate: FinderPredicate): TreePath?{
+      for(index in 0 until this.model.getChildCount(root)){
+        val child = this.model.getChild(root, index)
+        val childPath = TreePath(arrayOf(*rootPath.path, child))
+        if (predicate(child.toString(), node)){
+          return childPath
+        }
+        if(!this.model.isLeaf(child)) {
+          makeVisible(childPath, true)
+          val found = this.iterateChildren(child, node, childPath, predicate)
+          if(found != null) return found
+        }
       }
+      return null
     }
-    result.add(0, currentNode.toString())
-    while (currentNode.parent != null) {
-      currentNode = currentNode.parent as DefaultMutableTreeNode
-      result.add(0, currentNode.toString())
-    }
-    return findPath(tree, result, predicate)
+
+    return tree.iterateChildren(tree.model.root, node, TreePath(tree.model.root), predicate)
+           ?: throw LocationUnavailableException("Node `$node` not found")
   }
 
   fun exists(tree: JTree, pathStrings: List<String>, predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): Boolean {

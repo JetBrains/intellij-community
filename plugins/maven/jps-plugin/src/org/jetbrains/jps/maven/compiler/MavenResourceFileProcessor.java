@@ -31,6 +31,10 @@ import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsProject;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -77,7 +81,17 @@ public class MavenResourceFileProcessor {
       copyWithFiltering(file, targetFile);
     }
     else {
-      FileUtil.copyContent(file, targetFile);
+      final Path from = file.toPath();
+      final Path to = targetFile.toPath();
+      try {
+        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+      }
+      catch (NoSuchFileException e) {
+        final File parent = targetFile.getParentFile();
+        if (parent != null && parent.mkdirs()) {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat on successful target dir creation
+        }
+      }
     }
   }
 

@@ -19,6 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestCase {
@@ -59,6 +60,16 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
                        "  public static class Inner2<T> {}" +
                        "}");
     doTest("Add import for 'foo.Class1.Inner1'");
+  }
+
+  public void testPredefinedAlwaysUseOnDemandImport() {
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(true, "java.lang.Math", true));
+    doTest("Add static import for 'java.lang.Math.abs'");
+  }
+
+  public void testSingleStaticReferencesUntilCollapsedToDiamond() {
+    doTest("Add static import for 'java.lang.Math.max'");
   }
 
  public void testDisabledInsideParameterizedReference() {

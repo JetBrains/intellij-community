@@ -264,10 +264,10 @@ private annotation_value ::= annotation | annotation_array_value | expression
 {
   name = 'annotation attribute initializer'
 }
-annotation_array_value ::= '[' <<comma_list annotation_value>>? ']'
-{
-  pin = 1
-}
+annotation_array_value ::= '[' annotation_array_item* ']' { pin = 1 }
+private annotation_array_item ::= <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
+private annotation_array_item_end ::= ',' | &']' | end_of_file
+private annotation_array_item_start ::= '@' | expression_start
 // endregion
 
 
@@ -1222,9 +1222,6 @@ private qualified_name ::= <<qualifiedName code_reference>>
 
 // region Variables
 private var ::= IDENTIFIER mb_initializer
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
 private mb_initializer ::= ['=' mb_nl expression_or_application]
 {
   pin('.*') = 1

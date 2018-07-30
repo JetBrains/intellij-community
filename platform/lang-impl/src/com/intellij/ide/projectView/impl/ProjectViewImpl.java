@@ -2,7 +2,6 @@
 
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
@@ -22,6 +21,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -191,13 +191,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myFileEditorManager = fileEditorManager;
 
     myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        refresh();
-      }
-    });
-
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
 
     myDataProvider = new MyPanel();
@@ -966,7 +959,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
-        DeleteHandler.deletePsiElement(elements, myProject);
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> DeleteHandler.deletePsiElement(elements, myProject));
       }
       finally {
         a.finish();

@@ -150,7 +150,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     buttons.add(createKeymapHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 4, 0, 20))
 
     actions.add(object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent?) {
+      override fun actionPerformed(e: AnActionEvent) {
         runFixAction.run()
       }
 
@@ -160,7 +160,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     })
 
     actions.add(object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent?) {
+      override fun actionPerformed(e: AnActionEvent) {
         showAllFixes.run()
       }
 

@@ -29,6 +29,9 @@ public class MapReplaceableByEnumMapFixTest extends IGQuickFixesTestCase {
   public void testSimple() {
     doTest();
   }
+  public void testParentheses() {
+    doTest();
+  }
 
 
 }

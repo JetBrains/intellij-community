@@ -160,9 +160,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return null;
   }
 
-  private static void reformatDirectory(@NotNull Project project,
-                                        @NotNull PsiDirectory dir,
-                                        @NotNull DirectoryFormattingOptions options)
+  public static void reformatDirectory(@NotNull Project project,
+                                       @NotNull PsiDirectory dir,
+                                       @NotNull DirectoryFormattingOptions options)
   {
     AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(
       project, dir, options.isIncludeSubdirectories(), options.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT

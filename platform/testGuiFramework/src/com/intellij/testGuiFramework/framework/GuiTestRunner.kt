@@ -43,7 +43,6 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
   private val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestRunner")!!
   private val criticalError = Ref(false)
 
-
   fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
     if (!GuiTestStarter.isGuiTestThread())
       runOnServerSide(method, notifier)
@@ -97,7 +96,13 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
             Type.IGNORED -> {
               eachNotifier.fireTestIgnored(); testIsRunning = false
             }
-            Type.FAILURE -> eachNotifier.addFailure(message.content.obj as Throwable)
+            Type.FAILURE -> {
+              //reconstruct Throwable
+              val (className, messageFromException, stackTraceFromException) = message.content.obj as FailureException
+              val throwable = Throwable("thrown from $className: $messageFromException")
+              throwable.stackTrace = stackTraceFromException
+              eachNotifier.addFailure(throwable)
+            }
             Type.FINISHED -> {
               eachNotifier.fireTestFinished(); testIsRunning = false
             }

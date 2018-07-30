@@ -4,7 +4,10 @@ package git4idea.commands;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -67,16 +70,12 @@ public abstract class GitTextHandler extends GitHandler {
       if (myIsDestroyed) {
         return null;
       }
-      final ProcessHandler processHandler = createProcess(myCommandLine);
-      myHandler = (OSProcessHandler)processHandler;
+      myHandler = createProcess(myCommandLine);
       return myHandler.getProcess();
     }
   }
 
   protected void startHandlingStreams() {
-    if (myHandler == null) {
-      return;
-    }
     myHandler.addProcessListener(new ProcessListener() {
       @Override
       public void startNotified(@NotNull final ProcessEvent event) {
@@ -163,7 +162,7 @@ public abstract class GitTextHandler extends GitHandler {
     return myHandler.waitFor(TERMINATION_TIMEOUT_MS);
   }
 
-  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator"));
   }
 

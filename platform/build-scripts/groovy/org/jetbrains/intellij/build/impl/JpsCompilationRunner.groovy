@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NonNls
@@ -45,6 +46,8 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
+import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.impl.BuildTargetChunk
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.cmdline.JpsModelLoader
 import org.jetbrains.jps.incremental.MessageHandler
@@ -260,15 +263,36 @@ class JpsCompilationRunner {
         case BuildMessage.Kind.PROGRESS:
           if (msg instanceof ProgressMessage) {
             progress = ((ProgressMessage)msg).done
+            def currentTargets = getCurrentTargets(msg)
+            if (currentTargets != null) {
+              Collection<? extends BuildTarget<?>> buildTargets = currentTargets.targets as Collection
+              reportProgress(buildTargets, msg.messageText)
+            }
           }
           else if (msg instanceof BuildingTargetProgressMessage && ((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
             def targets = ((BuildingTargetProgressMessage)msg).targets
-            def targetsString = targets.collect { StringUtil.decapitalize(it.presentableName) }.join(", ")
-            String progressText = progress > 0 ? " (${(int)(100 * progress)}%)" : ""
-            context.messages.progress("Compiling$progressText: $targetsString")
+            reportProgress(targets, "")
           }
           break
       }
+    }
+
+    @CompileDynamic
+    private BuildTargetChunk getCurrentTargets(ProgressMessage msg) {
+      try {
+        msg.currentTargets
+      }
+      catch (MissingPropertyException ignored) {
+        //todo[nik] remove this after we update bootstrap JPS version
+        null
+      }
+    }
+
+    private void reportProgress(Collection<? extends BuildTarget<?>> targets, String targetSpecificMessage) {
+      def targetsString = targets.collect { StringUtil.decapitalize(it.presentableName) }.join(", ")
+      String progressText = progress > 0 ? " (${(int)(100 * progress)}%)" : ""
+      String targetSpecificText = !targetSpecificMessage.isEmpty() ? ", $targetSpecificMessage" : ""
+      context.messages.progress("Compiling$progressText: $targetsString$targetSpecificText")
     }
   }
 

@@ -436,9 +436,11 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryProjectUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
     <statistic.eventLog.fusEventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLoggerProvider"/>
-    <postStartupActivity implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
+    <statistic.eventLog.fusStateEventTracker implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
+    <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
 
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
 
@@ -562,9 +564,6 @@
     <!-- experiments -->
     <experimentalFeature id="inline.browse.button" percentOfUsers="100">
       <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
-    </experimentalFeature>
-    <experimentalFeature id="new.search.everywhere" percentOfUsers="0">
-      <description>Shows new consolidated popup for all GoTo and Search Everywhere actions</description>
     </experimentalFeature>
   </extensions>
 </idea-plugin>

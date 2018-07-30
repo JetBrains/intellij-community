@@ -75,6 +75,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
   private final SoftMargins mySoftMargins = new SoftMargins();
 
+  private final ExcludedFiles myExcludedFiles = new ExcludedFiles();
+
   private int myVersion = CURR_VERSION;
 
   public CodeStyleSettings() {
@@ -855,6 +857,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     }
 
     mySoftMargins.deserializeFrom(element);
+    myExcludedFiles.deserializeFrom(element);
 
     migrateLegacySettings();
     notifySettingsLoaded();
@@ -866,6 +869,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
     mySoftMargins.serializeInto(element);
+    myExcludedFiles.serializeInto(element);
 
     myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
       CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
@@ -1480,5 +1484,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   public void setDefaultSoftMargins(List<Integer> softMargins) {
     mySoftMargins.setValues(softMargins);
+  }
+
+  @NotNull
+  public ExcludedFiles getExcludedFiles() {
+    return myExcludedFiles;
   }
 }

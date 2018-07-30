@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
-import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.messages.MessageBus
 import org.jdom.Element
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 private val LOG = logger<StateStorageBase<*>>()
 
 abstract class StateStorageBase<T : Any> : StateStorage {
-  private var mySavingDisabled = false
+  private var isSavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
@@ -54,18 +54,18 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected abstract fun loadData(): T
 
   fun disableSaving() {
-    LOG.debug { "Disabled saving for ${toString()}" }
-    mySavingDisabled = true
+    LOG.debugOrInfoIfTestMode { "Disabled saving for ${toString()}" }
+    isSavingDisabled = true
   }
 
   fun enableSaving() {
-    LOG.debug { "Enabled saving ${toString()}" }
-    mySavingDisabled = false
+    LOG.debugOrInfoIfTestMode { "Enabled saving ${toString()}" }
+    isSavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
-    LOG.debug { "Saving disabled for ${toString()}" }
-    return mySavingDisabled
+    LOG.debugOrInfoIfTestMode { "Saving disabled for ${toString()}" }
+    return isSavingDisabled
   }
 }
 

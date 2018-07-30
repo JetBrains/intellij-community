@@ -136,7 +136,8 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     final PerformanceTrace trace;
     if (traceNodes.size() > 0) {
       trace = (PerformanceTrace)traceNodes.iterator().next().getData();
-    } else {
+    }
+    else {
       trace = new PerformanceTrace();
       grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
     }
@@ -283,10 +284,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     final List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
-      LOG.warn(String.format(
-        "Can't import data nodes '%s'. Reason: no service is registered for key %s. Available services for %s",
-        toImport, key, myServices.getValue().keySet()
-      ));
+      LOG.debug(String.format("No data service is registered for %s", key));
     }
     else {
       for (ProjectDataService<?, ?> service : services) {

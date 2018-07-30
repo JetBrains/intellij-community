@@ -357,7 +357,10 @@ public class ByLine {
   private static List<Line> convertMode(@NotNull List<Line> original, @NotNull ComparisonPolicy policy) {
     List<Line> result = new ArrayList<>(original.size());
     for (Line line : original) {
-      result.add(new Line(line.getContent(), policy));
+      Line newLine = line.myPolicy != policy
+                     ? new Line(line.getContent(), policy)
+                     : line;
+      result.add(newLine);
     }
     return result;
   }

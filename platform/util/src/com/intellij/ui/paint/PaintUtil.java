@@ -202,7 +202,7 @@ public class PaintUtil {
     // exclude the user scale, unless it's zero
     double scale = ctx.getScale(USR_SCALE) == 0 ? 0 : ctx.getScale(PIX_SCALE) / ctx.getScale(USR_SCALE);
     if (scale <= 0) {
-      Logger.getInstance(PaintUtil.class).warn("bad scale in the context: " + ctx.toString(), new Throwable());
+      //Logger.getInstance(PaintUtil.class).warn("bad scale in the context: " + ctx.toString(), new Throwable());
     }
     return scale;
   }

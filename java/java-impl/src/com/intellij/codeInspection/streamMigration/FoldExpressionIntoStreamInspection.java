@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -151,6 +152,10 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
                      .pairMap(EquivalenceChecker.getCanonicalPsiEquivalence()::expressionsAreEquivalent)
                      .allMatch(Boolean.TRUE::equals)) {
         delimiter = operands[1];
+        if (!InheritanceUtil.isInheritor(delimiter.getType(), "java.lang.CharSequence") &&
+            !(delimiter instanceof PsiLiteralExpression && PsiType.CHAR.equals(delimiter.getType()))) {
+          return null;
+        }
         if (operands.length % 2 == 0) {
           rest = ArrayUtil.getLastElement(operands);
         }
@@ -272,8 +277,20 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       String map = (lambda == null ? "" : mapToString(elementType, myOperandType, lambda)) + myMapToString;
       return map +
              ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS +
-             ".joining(" + (myDelimiter == null ? "" : ct.text(myDelimiter)) + "))" +
+             ".joining(" + getDelimiterText(ct) + "))" +
              (myRest == null ? "" : "+" + ct.text(myRest));
+    }
+
+    @NotNull
+    private String getDelimiterText(CommentTracker ct) {
+      if (myDelimiter == null) {
+        return "";
+      }
+      String text = ct.text(myDelimiter);
+      if (text.startsWith("'")) {
+        return PsiLiteralUtil.stringForCharLiteral(text);
+      }
+      return text;
     }
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
-import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
@@ -120,16 +119,19 @@ inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable
  * Merge results into one list.
  */
 @JvmOverloads
-fun <T> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = false): Promise<List<T>> {
+fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = false): Promise<List<T>> {
   if (isEmpty()) {
     return resolvedPromise(emptyList())
   }
-
-  val results: MutableList<T> = if (size == 1) SmartList<T>() else ArrayList(size)
-  for (promise in this) {
-    promise.onSuccess { results.add(it) }
+  val result = AsyncPromise<List<T>>()
+  val latch = AtomicInteger(size)
+  val results: MutableList<T?> = Collections.synchronizedList(ArrayList(Collections.nCopies(size, null as T?)))
+  fun arrive() = if (latch.decrementAndGet() == 0) result.setResult(results.mapNotNull { d -> d }) else Unit
+  for ((i, promise) in this.withIndex()) {
+    promise.onSuccess { results[i] = it; arrive() }
+    promise.onError { if (ignoreErrors) arrive() else result.setError(it) }
   }
-  return all(results, ignoreErrors)
+  return result
 }
 
 @JvmOverloads

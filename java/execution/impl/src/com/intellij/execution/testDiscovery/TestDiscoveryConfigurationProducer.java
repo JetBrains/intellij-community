@@ -11,6 +11,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -189,7 +190,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return position != null && position.equals(getPosition(configuration));
   }
 
-  private class MyRunProfile implements RunProfile, ConfigurationWithCommandLineShortener {
+  private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>, RunConfiguration, ConfigurationWithCommandLineShortener, RunProfileWithCompileBeforeLaunchOption {
     private final Location<PsiMethod>[] myTestMethods;
     private final Module myModule;
     private final JavaTestConfigurationBase myConfiguration;
@@ -230,9 +231,41 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       myConfiguration.setShortenCommandLine(mode);
     }
 
+    @Nullable
+    @Override
+    public ConfigurationFactory getFactory() {
+      return myConfiguration.getFactory();
+    }
+
+    @Override
+    public void setName(String name) {
+    }
+
+    @NotNull
+    @Override
+    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+      return myConfiguration.getConfigurationEditor();
+    }
+
     @Override
     public Project getProject() {
       return myConfiguration.getProject();
+    }
+
+    @Override
+    public RunConfiguration clone() {
+      return new MyRunProfile(myTestMethods, myModule, myConfiguration, myConfigurationName);
+    }
+
+    @Override
+    public RunConfiguration getPeer() {
+      return myConfiguration;
+    }
+
+    @NotNull
+    @Override
+    public Module[] getModules() {
+      return myConfiguration.getModules();
     }
   }
 }

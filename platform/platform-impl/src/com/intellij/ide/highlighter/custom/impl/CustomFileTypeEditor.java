@@ -22,17 +22,21 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * @author Yura Cangea, dsl
@@ -53,9 +57,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JTextField myHexPrefix = new JTextField(5);
 
   private final JTextField myNumPostfixes = new JTextField(5);
-  private final JBList[] myKeywordsLists = new JBList[]{new JBList(), new JBList(), new JBList(), new JBList()};
-  private final DefaultListModel[] myKeywordModels =
-    new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
+  private final JTextArea[] myKeywordsLists = {new JTextArea(), new JTextArea(), new JTextArea(), new JTextArea()};
 
   public CustomFileTypeEditor() {
     myLineComment.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -92,10 +94,10 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
       mySupportParens.setSelected(table.isHasParens());
       mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-      table.getKeywords1().stream().sorted().forEach(s -> myKeywordModels[0].addElement(s));
-      table.getKeywords2().stream().sorted().forEach(s -> myKeywordModels[1].addElement(s));
-      table.getKeywords3().stream().sorted().forEach(s -> myKeywordModels[2].addElement(s));
-      table.getKeywords4().stream().sorted().forEach(s -> myKeywordModels[3].addElement(s));
+      myKeywordsLists[0].setText(StreamEx.of(table.getKeywords1()).sorted().joining("\n"));
+      myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
+      myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
+      myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
     }
   }
 
@@ -116,14 +118,6 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   @Override
   @NotNull
   public JComponent createEditor() {
-    JComponent panel = createCenterPanel();
-    for (int i = 0; i < myKeywordsLists.length; i++) {
-      myKeywordsLists[i].setModel(myKeywordModels[i]);
-    }
-    return panel;
-  }
-
-  protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel fileTypePanel = new JPanel(new BorderLayout());
@@ -172,10 +166,9 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper(this);
     tabbedPaneWrapper.getComponent().setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords"),
                                                                                    false));
-    tabbedPaneWrapper.addTab(" 1 ", createKeywordsPanel(0));
-    tabbedPaneWrapper.addTab(" 2 ", createKeywordsPanel(1));
-    tabbedPaneWrapper.addTab(" 3 ", createKeywordsPanel(2));
-    tabbedPaneWrapper.addTab(" 4 ", createKeywordsPanel(3));
+    for (int i = 0; i < 4; i++) {
+      tabbedPaneWrapper.addTab(" " + (i + 1) + " ", myKeywordsLists[i]);
+    }
 
     highlighterPanel.add(tabbedPaneWrapper.getComponent(), BorderLayout.CENTER);
     highlighterPanel.add(myIgnoreCase, BorderLayout.SOUTH);
@@ -184,48 +177,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
     panel.add(fileTypePanel);
 
-    for (int i = 0; i < myKeywordsLists.length; i++) {
-      final int idx = i;
-      new DoubleClickListener() {
-        @Override
-        protected boolean onDoubleClick(MouseEvent e) {
-          edit(idx);
-          return true;
-        }
-      }.installOn(myKeywordsLists[i]);
-    }
-
-
     return panel;
-  }
-
-  private JPanel createKeywordsPanel(final int index) {
-    JPanel panel = ToolbarDecorator.createDecorator(myKeywordsLists[index])
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], "");
-          if (dialog.showAndGet()) {
-            String keywordName = dialog.getKeywordName();
-            if (!myKeywordModels[index].contains(keywordName)) myKeywordModels[index].addElement(keywordName);
-          }
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          ListUtil.removeSelectedItems(myKeywordsLists[index]);
-        }
-      }).disableUpDownActions().createPanel();
-    panel.setBorder(null);
-    return panel;
-  }
-
-  private void edit(int index) {
-    if (myKeywordsLists[index].getSelectedIndex() == -1) return;
-    ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], (String)myKeywordsLists[index].getSelectedValue());
-    if (dialog.showAndGet()) {
-      myKeywordModels[index].setElementAt(dialog.getKeywordName(), myKeywordsLists[index].getSelectedIndex());
-    }
   }
 
   public SyntaxTable getSyntaxTable() {
@@ -245,38 +197,15 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     syntaxTable.setHasParens(mySupportParens.isSelected());
     syntaxTable.setHasStringEscapes(mySupportEscapes.isSelected());
 
-    for (int i = 0; i < myKeywordModels[0].size(); i++) {
-      if (ignoreCase) {
-        syntaxTable.addKeyword1(((String)myKeywordModels[0].getElementAt(i)).toLowerCase());
-      }
-      else {
-        syntaxTable.addKeyword1((String)myKeywordModels[0].getElementAt(i));
-      }
-    }
-    for (int i = 0; i < myKeywordModels[1].size(); i++) {
-      if (ignoreCase) {
-        syntaxTable.addKeyword2(((String)myKeywordModels[1].getElementAt(i)).toLowerCase());
-      }
-      else {
-        syntaxTable.addKeyword2((String)myKeywordModels[1].getElementAt(i));
-      }
-    }
-    for (int i = 0; i < myKeywordModels[2].size(); i++) {
-      if (ignoreCase) {
-        syntaxTable.addKeyword3(((String)myKeywordModels[2].getElementAt(i)).toLowerCase());
-      }
-      else {
-        syntaxTable.addKeyword3((String)myKeywordModels[2].getElementAt(i));
-      }
-    }
-    for (int i = 0; i < myKeywordModels[3].size(); i++) {
-      if (ignoreCase) {
-        syntaxTable.addKeyword4(((String)myKeywordModels[3].getElementAt(i)).toLowerCase());
-      }
-      else {
-        syntaxTable.addKeyword4((String)myKeywordModels[3].getElementAt(i));
-      }
-    }
+    splitKeywordLines(ignoreCase, myKeywordsLists[0]).forEach(syntaxTable::addKeyword1);
+    splitKeywordLines(ignoreCase, myKeywordsLists[1]).forEach(syntaxTable::addKeyword2);
+    splitKeywordLines(ignoreCase, myKeywordsLists[2]).forEach(syntaxTable::addKeyword3);
+    splitKeywordLines(ignoreCase, myKeywordsLists[3]).forEach(syntaxTable::addKeyword4);
+
     return syntaxTable;
+  }
+
+  private static Stream<String> splitKeywordLines(boolean ignoreCase, JTextArea list) {
+    return Arrays.stream(StringUtil.splitByLines(list.getText())).map(s -> ignoreCase ? s.toLowerCase(Locale.getDefault()) : s);
   }
 }

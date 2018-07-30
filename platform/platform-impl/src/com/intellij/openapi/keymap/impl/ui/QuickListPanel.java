@@ -165,7 +165,7 @@ class QuickListPanel {
           }
         }
         if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)) {
-          icon = AllIcons.Actions.QuickList;
+          icon = null; // AllIcons.Actions.QuickList;
         }
         setIcon(ActionsTree.getEvenIcon(icon));
       }

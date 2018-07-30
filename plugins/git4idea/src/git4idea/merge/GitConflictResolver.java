@@ -17,14 +17,12 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +61,7 @@ public class GitConflictResolver {
 
     public Params() {
       myMergeDialogCustomizer = new MergeDialogCustomizer() {
+        @NotNull
         @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           return myMergeDescription;
         }
@@ -73,6 +72,7 @@ public class GitConflictResolver {
       GitMergeProvider provider = (GitMergeProvider)GitVcs.getInstance(project).getMergeProvider();
 
       myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(provider) {
+        @NotNull
         @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           if (!StringUtil.isEmpty(myMergeDescription)) {
             return myMergeDescription;
@@ -258,48 +258,13 @@ public class GitConflictResolver {
    * @see #getUnmergedFiles(java.util.Collection
    */
   private Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
-    return unmergedFiles(root);
-  }
-
-  /**
-   * Parse changes from lines
-   *
-   *
-   * @param root    the git root
-   * @return a set of unmerged files
-   * @throws com.intellij.openapi.vcs.VcsException if the input format does not matches expected format
-   */
-  private List<VirtualFile> unmergedFiles(final VirtualFile root) throws VcsException {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return Collections.emptyList();
     }
 
-    GitCommandResult result = myGit.getUnmergedFiles(repository);
-    if (!result.success()) {
-      throw new VcsException(result.getErrorOutputAsJoinedString());
-    }
-
-    String output = StringUtil.join(result.getOutput(), "\n");
-    HashSet<String> unmergedPaths = ContainerUtil.newHashSet();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
-      if (s.isEol()) {
-        s.nextLine();
-        continue;
-      }
-      s.boundedToken('\t');
-      String relative = s.line();
-      unmergedPaths.add(GitUtil.unescapePath(relative));
-    }
-
-    if (unmergedPaths.size() == 0) {
-      return Collections.emptyList();
-    }
-    else {
-      List<File> files = ContainerUtil.map(unmergedPaths, path -> new File(root.getPath(), path));
-      return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
-    }
+    List<File> files = GitChangeUtils.getUnmergedFiles(repository);
+    return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
   }
-
 }

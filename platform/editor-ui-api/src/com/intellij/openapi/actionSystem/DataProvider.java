@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see DataContext
  */
+@FunctionalInterface
 public interface DataProvider {
   /**
    * Returns the object corresponding to the specified data identifier. Some of the supported

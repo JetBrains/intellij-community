@@ -7,13 +7,14 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Comparator;
 
 /*package*/ abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
@@ -43,7 +44,7 @@ import java.util.Comparator;
     final Ref<Integer> first = new Ref<>();
     final Ref<Integer> next = new Ref<>();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
-      if (info.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || info.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE) {
+      if (HighlightInfoType.ELEMENT_UNDER_CARET_READ.equals(info.type) || HighlightInfoType.ELEMENT_UNDER_CARET_WRITE.equals(info.type)) {
         if (ordering.compare(info.startOffset, caretOffset) > 0 && ordering.compare(info.endOffset, caretOffset) > 0) {
           if (next.isNull() || ordering.compare(next.get(), info.startOffset) > 0) {
             next.set(info.startOffset);

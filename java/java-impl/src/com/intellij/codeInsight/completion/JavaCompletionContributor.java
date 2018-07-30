@@ -776,31 +776,35 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
 
-      if (context.getCompletionType() == CompletionType.BASIC) {
-        if (PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset() - 1, PsiReferenceParameterList.class, false) != null) {
-          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
-          return;
-        }
-
-        if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {
-          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
-          return;
-        }
-
-        PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
-        if (ref != null && !(ref instanceof PsiReferenceExpression)) {
-          return;
-        }
-
-        final PsiElement element = file.findElementAt(context.getStartOffset());
-
-        if (psiElement().inside(PsiAnnotation.class).accepts(element)) {
-          return;
-        }
-
-        context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
+      String dummyIdentifier = customizeDummyIdentifier(context, file);
+      if (dummyIdentifier != null) {
+        context.setDummyIdentifier(dummyIdentifier);
       }
     }
+  }
+
+  @Nullable
+  private static String customizeDummyIdentifier(@NotNull CompletionInitializationContext context, PsiFile file) {
+    if (context.getCompletionType() != CompletionType.BASIC) return null;
+
+    int offset = context.getStartOffset();
+    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiReferenceParameterList.class, false) != null) {
+      return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+    }
+
+    if (semicolonNeeded(context.getEditor(), file, offset)) {
+      return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";";
+    }
+
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiJavaCodeReferenceElement.class, false);
+    if (ref != null && !(ref instanceof PsiReferenceExpression)) {
+      return null;
+    }
+
+    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiAnnotation.class, false) != null) {
+      return null;
+    }
+    return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
   }
 
   public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {

@@ -185,7 +185,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
           UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
           String path = theme.getEditorScheme();
           if (path != null) {
-            mySchemeManager.loadBundledScheme(path, theme.getProviderClass());
+            mySchemeManager.loadBundledScheme(path, theme);
           }
         }
       }

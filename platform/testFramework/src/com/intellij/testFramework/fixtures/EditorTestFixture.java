@@ -274,7 +274,7 @@ public class EditorTestFixture {
       assertNotNull(lookup);
       lookup.finishLookup(completionChar);
     };
-    CommandProcessor.getInstance().executeCommand(myProject, command, null, null);
+    CommandProcessor.getInstance().executeCommand(myProject, command, null, null, myEditor.getDocument());
   }
 
   public PsiElement getElementAtCaret() {

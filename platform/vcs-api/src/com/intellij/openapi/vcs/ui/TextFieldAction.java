@@ -24,7 +24,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -49,14 +48,18 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           e.consume();
-          actionPerformed(null);
+          perform();
         }
       }
     });
   }
 
   @Override
-  public abstract void actionPerformed(@Nullable AnActionEvent e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    perform();
+  }
+
+  public void perform() {}
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
@@ -87,7 +90,7 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        actionPerformed(null);
+        perform();
         return true;
       }
     }.installOn(label);

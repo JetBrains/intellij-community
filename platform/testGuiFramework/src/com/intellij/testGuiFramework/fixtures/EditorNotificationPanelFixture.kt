@@ -53,7 +53,7 @@ class EditorNotificationPanelFixture(val robot: Robot,
 
   companion object {
     fun findEditorNotificationPanel(robot: Robot, timeoutInSeconds: Int = 30): EditorNotificationPanelFixture {
-      val panel = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds) { findEditorNotificationPanel(robot) }
+      val panel = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeoutInSeconds) { findEditorNotificationPanel(robot) }
       return EditorNotificationPanelFixture(robot, panel)
     }
 

@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -28,4 +29,8 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
   }
 
   return expression.type
+}
+
+fun getTopLevelTypeCached(expression: GrExpression): PsiType? {
+  return GroovyPsiManager.getInstance(expression.project).getTopLevelType(expression)
 }

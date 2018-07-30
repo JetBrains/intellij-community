@@ -37,7 +37,7 @@ import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
 import com.intellij.testGuiFramework.fixtures.*
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.fixtures.extended.getPathStrings
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
 import com.intellij.testGuiFramework.generators.Utils.convertSimpleTreeItemToPath
@@ -189,6 +189,7 @@ class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
   private fun JTree.getPath(cp: Point): TreePath = this.getClosestPathForLocation(cp.x, cp.y)
   private fun wasClickOnCheckBox(cmp: CheckboxTree, cp: Point): Boolean {
     val treePath = cmp.getPath(cp)
+    println("CheckboxTreeGenerator.wasClickOnCheckBox: treePath = ${treePath.path.joinToString()}")
     return withRobot {
       val checkboxComponent = CheckboxTreeDriver(it).getCheckboxComponent(cmp, treePath) ?: throw Exception(
         "Checkbox component from cell renderer is null")
@@ -760,18 +761,14 @@ object Utils {
   }
 
   fun getJTreePath(cmp: JTree, path: TreePath): String {
-    val pathArray = getJTreePathArray(cmp, path)
+    val pathArray = path.getPathStrings()
     return pathArray.joinToString(separator = ", ", transform = { str -> "\"$str\"" })
   }
 
   fun getJTreePathItemsString(cmp: JTree, path: TreePath): String {
-    return getJTreePathArray(cmp, path)
+    return path.getPathStrings()
       .map { StringUtil.wrapWithDoubleQuote(it) }
       .reduceRight { s, s1 -> "$s, $s1" }
-  }
-
-  private fun getJTreePathArray(tree: JTree, path: TreePath): List<String> = withRobot { robot ->
-    ExtendedJTreePathFixture(tree, path, robot = robot).getPathStrings()
   }
 
   fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {

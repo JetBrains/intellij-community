@@ -38,7 +38,6 @@ public class ModuleVcsDetector {
       if (myVcsManager.needAutodetectMappings()) {
         autoDetectVcsMappings(true);
       }
-      myVcsManager.updateActiveVcss();
     });
     startupManager.registerPostStartupActivity(() -> {
       MessageBusConnection connection = myProject.getMessageBus().connect();

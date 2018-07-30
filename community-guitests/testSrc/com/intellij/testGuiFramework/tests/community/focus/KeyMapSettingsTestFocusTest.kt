@@ -34,7 +34,7 @@ class KeyMapSettingsTestFocusTest : GuiTestCase() {
     val settingsTitle = if (SystemInfo.isMac()) "Preferences" else "Settings"
     dialog(settingsTitle){
       jTree("Keymap").clickPath("Keymap")
-      actionButton("Find Actions by Shortcut").click()
+      actionButton("Find Actions by Shortcut").waitEnabledAndShowing().click()
       val keyboardShortcutPanel = checkbox("Second stroke").target().parent
       val keyMapTextField = shortcutTextField(keyboardShortcutPanel)
       keyMapTextField.click()

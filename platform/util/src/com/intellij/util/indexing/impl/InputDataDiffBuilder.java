@@ -34,7 +34,7 @@ public abstract class InputDataDiffBuilder<Key, Value> {
    * @return false if there is no difference and true otherwise
    */
   public abstract boolean differentiate(@NotNull Map<Key, Value> newData,
-                                     @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
-                                     @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                                     @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException;
+                                        @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
+                                        @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
+                                        @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException;
 }

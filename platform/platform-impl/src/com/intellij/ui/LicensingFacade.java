@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public final class LicensingFacade {
   public String licensedTo;
@@ -14,6 +15,7 @@ public final class LicensingFacade {
   public boolean isEvaluation;
   public Date expirationDate;
   public Date perpetualFallbackDate;
+  public Map<String, String> confirmationStamps;
 
   public volatile static LicensingFacade INSTANCE;
 
@@ -47,5 +49,10 @@ public final class LicensingFacade {
   @Nullable
   public Date getLicenseExpirationDate() {
     return expirationDate;
+  }
+
+  @Nullable
+  public String getConfirmationStamp(String productCode) {
+    return confirmationStamps == null? null : confirmationStamps.get(productCode);
   }
 }

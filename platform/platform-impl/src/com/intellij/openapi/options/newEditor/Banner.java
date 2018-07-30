@@ -13,6 +13,7 @@ import com.intellij.ui.components.labels.SwingActionLink;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -38,9 +39,10 @@ final class Banner extends SimpleBanner {
   }
 
   void setText(Collection<String> names) {
+    Transferable transferable = CopySettingsPathAction.createTransferable(names);
     ArrayList<Crumb> crumbs = new ArrayList<>();
-    if (names != null && !names.isEmpty()) {
-      CopyAction action = new CopyAction(() -> CopyAction.createTransferable(names));
+    if (transferable != null) {
+      Action action = CopySettingsPathAction.createSwingAction(() -> transferable);
       for (String name : names) {
         crumbs.add(new Crumb.Impl(null, name, null, action));
       }

@@ -503,6 +503,8 @@
             <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
             <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
             <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
+            <action id="CloseAllToTheLeft" class="com.intellij.ide.actions.CloseAllEditorsToTheLeftAction"/>
+            <action id="CloseAllToTheRight" class="com.intellij.ide.actions.CloseAllEditorsToTheRightAction"/>
           </group>
           <separator/>
           <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction" />
@@ -896,5 +898,7 @@
     <action class="com.intellij.ide.actions.SelectInProjectViewAction" id="SelectInProjectView" text="Select in Project View" />
 
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
+
+    <action id="CopySettingsPath" class="com.intellij.openapi.options.newEditor.CopySettingsPathAction"/>
   </actions>
 </idea-plugin>

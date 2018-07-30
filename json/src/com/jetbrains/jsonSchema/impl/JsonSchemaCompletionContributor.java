@@ -72,10 +72,19 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   public static void doCompletion(@NotNull final CompletionParameters parameters,
                                   @NotNull final CompletionResultSet result,
                                   @NotNull final JsonSchemaObject rootSchema) {
+    doCompletion(parameters, result, rootSchema, true);
+  }
+
+  public static void doCompletion(@NotNull final CompletionParameters parameters,
+                                  @NotNull final CompletionResultSet result,
+                                  @NotNull final JsonSchemaObject rootSchema,
+                                  boolean stop) {
     final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
     new Worker(rootSchema, parameters.getPosition(), completionPosition, result).work();
-    result.stopHere();
+    if (stop) {
+      result.stopHere();
+    }
   }
 
   @TestOnly
@@ -308,6 +317,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
+      else {
+        String type = jsonSchemaObject.getTypeDescription(true);
+        if (type != null) {
+          builder = builder.withTypeText(type, true);
+        }
+      }
 
       builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));
 
@@ -329,9 +344,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (type == null) return AllIcons.Nodes.Property;
       switch (type) {
         case _object:
-          return AllIcons.Json.Property_braces;
+          return AllIcons.Json.Object;
         case _array:
-          return AllIcons.Json.Property_brackets;
+          return AllIcons.Json.Array;
         default:
           return AllIcons.Nodes.Property;
       }

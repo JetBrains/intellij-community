@@ -106,6 +106,15 @@ public abstract class FileIndentOptionsProvider {
     return sb.toString();
   }
 
+  /**
+   * Returns a text shown in a popup to drag user's attention to a UI element associated with the current indent options and related actions.
+   * The advertisement text may contain basic information about the source of the current indent options so that a user becomes aware of it.
+   * The popup is supposed to be shown just once per a case which requires explanation. Subsequent calls to the method may return {@code null}.
+   *
+   * @param psiFile       A PSI file to show the advertisement text for.
+   * @param indentOptions The current indent options for the file.
+   * @return The text to be shown or null for no popup.
+   */
   @Nullable
   public String getAdvertisementText(@NotNull PsiFile psiFile, @NotNull IndentOptions indentOptions) {
     return null;

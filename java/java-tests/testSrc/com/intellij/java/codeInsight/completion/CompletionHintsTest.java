@@ -1369,7 +1369,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testCaretMovementOverVirtualComma() throws Exception {
+  public void testCaretMovementOverVirtualComma() {
     enableVirtualComma();
 
     configureJava("class C { void m() { System.getPro<caret> } }");
@@ -1378,6 +1378,57 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
     right();
     checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
+  }
+
+  public void testHintsAreNotShownInImproperContext() {
+    configureJava("class C { void m() { int a = Math.ma<caret>5; } }");
+    complete("max(int a, int b)");
+    checkResultWithInlays("class C { void m() { int a = Math.max(<caret>)5; } }");
+  }
+
+  public void testConstructorInvocationInsideMethodInvocation() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
+    type("new Strin");
+    complete("String(byte[] bytes, String charsetName)");
+    checkResultWithInlays("class C { void m() { System.getProperty(new String(<HINT text=\"bytes:\"/><caret><Hint text=\",charsetName:\"/>)) } }");
+    type("null");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.getProperty(new String(<Hint text=\"bytes:\"/>null, <HINT text=\"charsetName:\"/><caret>)) } }");
+  }
+
+  public void testFieldAccessInsideMethodInvocation() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C {\n" +
+                  "  int x;\n" +
+                  "  void some(int a, int b) {}\n" +
+                  "  void other() { som<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/><caret><Hint text=\",b:\"/>); }\n" +
+                          "}");
+    type("this.");
+    complete("x");
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/>this.x<caret><Hint text=\",b:\"/>); }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<Hint text=\"a:\"/>this.x, <HINT text=\"b:\"/><caret>); }\n" +
+                          "}");
   }
 
   private void checkResultWithInlays(String text) {

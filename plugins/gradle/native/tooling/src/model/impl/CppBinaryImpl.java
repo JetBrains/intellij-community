@@ -27,7 +27,10 @@ public class CppBinaryImpl implements CppBinary {
                        TargetType targetType) {
     myBaseName = baseName;
     myVariantName = variantName;
-    mySources = new LinkedHashMap<File, CppFileSettings>(sources);
+    mySources = new LinkedHashMap<File, CppFileSettings>();
+    for (Map.Entry<File, CppFileSettings> fileSettingsEntry : sources.entrySet()) {
+      mySources.put(fileSettingsEntry.getKey(), new CppFileSettingsImpl(fileSettingsEntry.getValue()));
+    }
     myCompilerDetails = compilerDetails;
     myLinkerDetails = linkerDetails;
     myTargetType = targetType;

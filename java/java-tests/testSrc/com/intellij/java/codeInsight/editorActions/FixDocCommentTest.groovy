@@ -587,6 +587,23 @@ class Test {
     )
   }
 
+  void "test many newlines before interface"() {
+    doTest(
+      initial: '''\
+
+
+
+
+interface <caret>I {}''',
+      expected: '''\
+/**
+ * 
+ */
+interface I {}'''
+    )
+
+  }
+
   void testWithEmptyTagsRemovalOption() {
     codeStyleBean.with {
       javaDocKeepEmptyParameter = false

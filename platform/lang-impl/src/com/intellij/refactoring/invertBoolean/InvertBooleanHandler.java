@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class InvertBooleanHandler implements RefactoringActionHandler {
   public static final String INVERT_BOOLEAN_HELP_ID = "refactoring.invertBoolean";
-  static final String REFACTORING_NAME = RefactoringBundle.message("invert.boolean.title");
+  public static final String REFACTORING_NAME = RefactoringBundle.message("invert.boolean.title");
   private static final Logger LOG = Logger.getInstance(InvertBooleanHandler.class);
   
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {

@@ -34,9 +34,7 @@ import org.jetbrains.plugins.github.util.GithubUtil
 open class GithubOpenInBrowserActionGroup
   : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github) {
 
-  override fun update(e: AnActionEvent?) {
-    if (e == null) return
-
+  override fun update(e: AnActionEvent) {
     val repositories = getData(e.dataContext)?.first
     e.presentation.isEnabledAndVisible = repositories != null && repositories.isNotEmpty()
   }
@@ -53,9 +51,7 @@ open class GithubOpenInBrowserActionGroup
 
   override fun isPopup(): Boolean = true
 
-  override fun actionPerformed(e: AnActionEvent?) {
-    if (e == null) return
-
+  override fun actionPerformed(e: AnActionEvent) {
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
   }
 
@@ -147,7 +143,7 @@ open class GithubOpenInBrowserActionGroup
       }
 
       private fun openCommitInBrowser(path: GithubRepositoryPath, revisionHash: String) {
-        BrowserUtil.browse("https://$path/commit/$revisionHash")
+        BrowserUtil.browse("${path.toUrl()}/commit/$revisionHash")
       }
 
       private fun openFileInBrowser(project: Project,
@@ -190,13 +186,13 @@ open class GithubOpenInBrowserActionGroup
                                 relativePath: String,
                                 branch: String,
                                 path: GithubRepositoryPath): String? {
-        val builder = StringBuilder("https://")
+        val builder = StringBuilder()
 
         if (StringUtil.isEmptyOrSpaces(relativePath)) {
-          builder.append(path).append("/tree/").append(branch)
+          builder.append(path.toUrl()).append("/tree/").append(branch)
         }
         else {
-          builder.append(path).append("/blob/").append(branch).append('/').append(relativePath)
+          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(relativePath)
         }
 
         if (editor != null && editor.document.lineCount >= 1) {

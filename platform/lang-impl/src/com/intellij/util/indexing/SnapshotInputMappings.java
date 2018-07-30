@@ -81,11 +81,12 @@ class SnapshotInputMappings<Key, Value, Input> {
     private final Map<Key, Value> myData;
     private final int hashId;
 
-    private Snapshot(Map<Key, Value> data, int id) {
+    private Snapshot(@NotNull Map<Key, Value> data, int id) {
       myData = data;
       hashId = id;
     }
 
+    @NotNull
     Map<Key, Value> getData() {
       return myData;
     }

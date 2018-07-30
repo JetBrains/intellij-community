@@ -27,7 +27,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class JUnit5TestRunnerUtil {
@@ -61,12 +63,12 @@ public class JUnit5TestRunnerUtil {
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
           if (selectors.isEmpty()) {
             builder = builder.selectors(DiscoverySelectors.selectPackage(packageName));
-            if (filters != null && !filters.isEmpty()) {
-              builder = builder.filters(ClassNameFilter.includeClassNamePatterns(filters.split("\\|\\|")));
-            }
           }
           else {
             builder = builder.selectors(selectors);
+          }
+          if (filters != null && !filters.isEmpty()) {
+            builder = builder.filters(ClassNameFilter.includeClassNamePatterns(filters.split("\\|\\|")));
           }
           if (tags != null && !tags.isEmpty()) {
             builder = builder
@@ -121,6 +123,10 @@ public class JUnit5TestRunnerUtil {
     if (line.startsWith("\u001B")) {
       String uniqueId = line.substring("\u001B".length());
       return DiscoverySelectors.selectUniqueId(uniqueId);
+    }
+    else if (line.startsWith("\u002B")) {
+      String directory = line.substring("\u002B".length());
+      return DiscoverySelectors.selectClasspathRoots(Collections.singleton(Paths.get(directory))).iterator().next();
     }
     else if (line.contains(",")) {
       return DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));

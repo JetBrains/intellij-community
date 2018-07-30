@@ -26,13 +26,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,19 +48,15 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   private Generator<VirtualFile> javaFiles() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     List<VirtualFile> allFiles = new ArrayList<>(FilenameIndex.getAllFilesByExt(myProject, "java", projectScope));
+    if (allFiles.isEmpty()) {
+      throw new IllegalStateException("No java files in project???");
+    }
+    ContainerUtil.sort(allFiles, Comparator.comparing(VirtualFile::getPath));
     return Generator.sampledFrom(allFiles);
   }
 
   protected Generator<PsiJavaFile> psiJavaFiles() {
     return javaFiles().map(vf -> (PsiJavaFile)PsiManager.getInstance(myProject).findFile(vf));
-  }
-
-  @Override
-  protected boolean shouldRunTest() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return false;
-    }
-    return super.shouldRunTest();
   }
 
   protected abstract String getTestDataPath();

@@ -1282,12 +1282,19 @@ public class ExpressionUtils {
     return null;
   }
 
+  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
+                                                        PsiExpression replacement) {
+    return replacePolyadicWithParent(expressionToReplace, replacement, new CommentTracker());
+  }
+
   /**
    * Flattens second+ polyadic's operand replaced with another polyadic expression of the same type to the parent's operands.
    * 
    * Otherwise reparse would produce different expression.
    */
-  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace, PsiExpression replacement) {
+  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
+                                                        PsiExpression replacement, 
+                                                        CommentTracker tracker) {
     PsiElement parent = expressionToReplace.getParent();
     if (parent instanceof PsiPolyadicExpression && 
         replacement instanceof PsiPolyadicExpression &&
@@ -1295,10 +1302,16 @@ public class ExpressionUtils {
       int idx = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), expressionToReplace);
       if (idx >= 0) {
         PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
-        new CommentTracker().replaceAndRestoreComments(copyParentPolyadic.getOperands()[idx], replacement);
+        copyParentPolyadic.getOperands()[idx].replace(replacement);
         PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
                                                           .createExpressionFromText(copyParentPolyadic.getText(), parent);
-        return ((PsiPolyadicExpression)parent.replace(recreateCopyFromText)).getOperands()[idx];
+        PsiElement[] children = parent.getChildren();
+        for (PsiElement child : children) {
+          if (child != expressionToReplace) {
+            tracker.markUnchanged(child);
+          }
+        }
+        return ((PsiPolyadicExpression)tracker.replaceAndRestoreComments(parent, recreateCopyFromText)).getOperands()[idx];
       }
     }
     return null;

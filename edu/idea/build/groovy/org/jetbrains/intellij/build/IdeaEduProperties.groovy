@@ -32,7 +32,8 @@ class IdeaEduProperties extends IdeaCommunityProperties {
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     super.copyAdditionalFiles(buildContext, targetDirectory)
 
-    EduUtils.copyEduToolsPlugin(dependenciesPath, buildContext, targetDirectory)
+    EduUtils.copyPlugin("EduTools", dependenciesPath, buildContext, targetDirectory)
+    EduUtils.copyPlugin("Scala", dependenciesPath, buildContext, targetDirectory)
   }
 
   @Override

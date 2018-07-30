@@ -16,14 +16,14 @@ class MethodCandidate(val method: PsiMethod,
                       val context: GroovyPsiElement) {
 
   private val typeComputer: (Argument) -> PsiType? = { it ->
-    val type = if (it.expression != null) getTopLevelType(it.expression) else it.type
+    val type = if (it.expression != null) getTopLevelTypeCached(it.expression) else it.type
 
     type ?: TypesUtil.getJavaLangObject(context)
   }
 
   private val completionTypeComputer: (Argument) -> PsiType? = { it ->
     if (it.expression != null) {
-      var type = getTopLevelType(it.expression)
+      var type = getTopLevelTypeCached(it.expression)
       if (it.expression is GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
         type = null
       }

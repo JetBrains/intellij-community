@@ -135,6 +135,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return this;
   }
 
+  @Override
   public String toString() {
     return getDisplayName();
   }

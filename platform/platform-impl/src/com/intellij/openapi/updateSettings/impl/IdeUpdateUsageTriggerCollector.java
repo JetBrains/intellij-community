@@ -8,6 +8,6 @@ public class IdeUpdateUsageTriggerCollector extends ApplicationUsageTriggerColle
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.ide.autoupdate";
+    return "statistics.ide.self.update";
   }
 }

@@ -276,7 +276,11 @@ public class ImportHelper{
               else {
                 PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
                 for (PsiMethod method : methods) {
-                  if (method.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(method, file, null)) {
+                  PsiClass containingClass = method.getContainingClass();
+                  if (containingClass == null) continue;
+                  if (method.hasModifierProperty(PsiModifier.STATIC) && 
+                      resolveHelper.isAccessible(method, file, null) &&
+                      !prefix.equals(containingClass.getQualifiedName())) {
                     namesToUseSingle.add(name);
                   }
                 }
@@ -381,10 +385,14 @@ public class ImportHelper{
       String packageOrClassName = getPackageOrClassName(name);
       final boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
-      if (useOnDemand && namesToUseSingle.remove(name)) {
+      final Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
+      if (namesToUseSingle.remove(name)) {
+        if (useOnDemand && importedPackagesOrClasses.contains(current)) {
+          buffer.insert(buffer.lastIndexOf("import"), "import " + (isStatic ? "static " : "") + name + ";\n");
+          continue;
+        }
         useOnDemand = false;
       }
-      final Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
       if (useOnDemand && (importedPackagesOrClasses.contains(current) || implicitlyImported)) continue;
       buffer.append("import ");
       if (isStatic) buffer.append("static ");
@@ -478,7 +486,7 @@ public class ImportHelper{
 
     if (useOnDemand &&
         refClass.getContainingClass() != null &&
-        mySettings.INSERT_INNER_CLASS_IMPORTS &&
+        mySettings.isInsertInnerClassImportsFor(PsiNameHelper.getShortClassName(className)) &&
         containsInCurrentPackage(file, curRefClass)) {
       return false;
     }

@@ -712,8 +712,10 @@ public class StreamChainInliner implements CallInliner {
     }
     if (single) {
       // exactly single element
+      PsiExpression arg = sourceCall.getArgumentList().getExpressions()[0];
       builder
-        .pushExpression(sourceCall.getArgumentList().getExpressions()[0])
+        .pushExpression(arg)
+        .boxUnbox(arg, inType)
         .chain(firstStep::before)
         .chain(firstStep::iteration);
       return;

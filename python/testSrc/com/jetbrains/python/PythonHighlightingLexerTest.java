@@ -170,6 +170,13 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
              "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK", "Py:SPACE", "Py:RBRACE");
     }
 
+  // PY-29665
+  public void testRawBytesLiteral() {
+    doTest(LanguageLevel.PYTHON27, "expr = br'raw bytes'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
+    doTest(LanguageLevel.PYTHON34, "expr = rb'raw bytes'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
+    doTest(LanguageLevel.PYTHON34, "expr = br'raw bytes'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
+  }
+
   private static void doTest(LanguageLevel languageLevel, String text, String... expectedTokens) {
     PyLexerTestCase.doLexerTest(text, new PythonHighlightingLexer(languageLevel), expectedTokens);
   }

@@ -43,7 +43,7 @@ public class JsonSchemaReader {
   public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile key) throws Exception {
     if (!key.isValid()) throw new Exception(String.format("Can not load JSON Schema file '%s'", key.getName()));
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(key);
-    if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load PSI for JSON Schema file '%s'", key.getName()));
+    if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load code model for JSON Schema file '%s'", key.getName()));
     final JsonObject value = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
     if (value == null)
       throw new Exception(String.format("JSON Schema file '%s' must contain only one top-level object", key.getName()));
@@ -270,9 +270,9 @@ public class JsonSchemaReader {
         final JsonSchemaType type = parseType(StringUtil.unquoteString(element.getText()));
         if (type != null) object.setType(type);
       } else if (element instanceof JsonArray) {
-        final List<JsonSchemaType> typeList = ((JsonArray)element).getValueList().stream()
+        final Set<JsonSchemaType> typeList = ((JsonArray)element).getValueList().stream()
           .filter(notEmptyString()).map(el -> parseType(StringUtil.unquoteString(el.getText())))
-          .filter(el -> el != null).collect(Collectors.toList());
+          .filter(el -> el != null).collect(Collectors.toSet());
         if (!typeList.isEmpty()) object.setTypeVariants(typeList);
       }
     };

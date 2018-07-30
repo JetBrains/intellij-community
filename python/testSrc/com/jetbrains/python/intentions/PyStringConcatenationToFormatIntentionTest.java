@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.intentions;
 
-import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -53,7 +52,6 @@ public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestC
   }
 
   public void testUnicodeSecondString() { //PY-7463
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
   }
 

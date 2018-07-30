@@ -207,9 +207,9 @@ public class CompilerReferenceIndex<Input> {
   }
 
   class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
-    public CompilerMapReduceIndex(@NotNull final IndexExtension<Key, Value, Input> extension,
-                                  @NotNull final File indexDir,
-                                  boolean readOnly)
+    CompilerMapReduceIndex(@NotNull final IndexExtension<Key, Value, Input> extension,
+                           @NotNull final File indexDir,
+                           boolean readOnly)
       throws IOException {
       super(extension,
             createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
@@ -232,7 +232,7 @@ public class CompilerReferenceIndex<Input> {
     }
 
     @Override
-    protected void requestRebuild(Throwable e) {
+    protected void requestRebuild(@NotNull Throwable e) {
       setRebuildRequestCause(e);
     }
   }

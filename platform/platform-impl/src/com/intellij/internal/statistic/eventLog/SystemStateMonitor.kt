@@ -3,17 +3,15 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.lang.JavaVersion
 import java.util.concurrent.TimeUnit
 
-class SystemStateMonitor : StartupActivity {
+class SystemStateMonitor : FeatureUsageStateEventTracker {
   private val INITIAL_DELAY = 0
   private val PERIOD_DELAY = 24 * 60
 
-  override fun runActivity(project: Project) {
+  override fun initialize() {
     if (!FeatureUsageLogger.isEnabled()) {
       return
     }

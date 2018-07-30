@@ -570,7 +570,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         }
       }
     }
-    return false;
+
+    return PyReferenceCustomTargetChecker.Companion.isReferenceTo(this, element);
   }
 
   private boolean resolvesToSameLocal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner) {
