@@ -188,10 +188,10 @@ public class FSRecords {
     }
 
     private static void scanFreeRecords() {
-      final int filelength = (int)myRecords.length();
-      LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
+      final int fileLength = (int)myRecords.length();
+      LOG.assertTrue(fileLength % RECORD_SIZE == 0, "invalid file size: " + fileLength);
 
-      int count = filelength / RECORD_SIZE;
+      int count = fileLength / RECORD_SIZE;
       for (int n = 2; n < count; n++) {
         if (BitUtil.isSet(getFlags(n), FREE_RECORD_FLAG)) {
           myFreeRecords.add(n);
@@ -604,8 +604,8 @@ public class FSRecords {
   }
 
   private static void markAsDeletedRecursively(final int id) {
-    for (int subrecord : list(id)) {
-      markAsDeletedRecursively(subrecord);
+    for (int subRecord : list(id)) {
+      markAsDeletedRecursively(subRecord);
     }
 
     markAsDeleted(id);
@@ -619,8 +619,8 @@ public class FSRecords {
   }
 
   private static void doDeleteRecursively(final int id) {
-    for (int subrecord : list(id)) {
-      doDeleteRecursively(subrecord);
+    for (int subRecord : list(id)) {
+      doDeleteRecursively(subRecord);
     }
 
     deleteRecord(id);
