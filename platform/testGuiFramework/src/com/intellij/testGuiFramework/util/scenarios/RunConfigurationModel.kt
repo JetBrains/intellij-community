@@ -148,10 +148,18 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
     AppServer(ConfigurationField("Application server:", FieldKind.Combo)),
     URL(ConfigurationField("URL:", FieldKind.Text)),
     AfterLaunchCheck(ConfigurationField("After launch", FieldKind.Check)),
+    AfterLaunchCombo(ConfigurationField("After launch", FieldKind.Combo)),
+    WithJavaScriptDebugger(ConfigurationField("with JavaScript debugger", FieldKind.Check)),
+    VMOptions(ConfigurationField("VM options:", FieldKind.Text)),
     OnUpdateAction(ConfigurationField("On 'Update' action:", FieldKind.Combo)),
+    ShowDialog(ConfigurationField("Show dialog", FieldKind.Check)),
+    OnFrameDeactivation(ConfigurationField("On frame deactivation:", FieldKind.Combo)),
+    JRE(ConfigurationField("JRE:", FieldKind.Combo, predicate = ConfigurationField.predicateStartsWith)),
     ServerDomain(ConfigurationField("Server Domain:", FieldKind.Combo)),
     Username(ConfigurationField("Username:", FieldKind.Text)),
-    Password(ConfigurationField("Password:", FieldKind.Text))
+    Password(ConfigurationField("Password:", FieldKind.Text)),
+    PreserveSessions(ConfigurationField("Preserve Sessions Across Redeployment", FieldKind.Check)),
+    JavaEE5Compat(ConfigurationField("Java EE 5 compatibility", FieldKind.Check)),
   }
 }
 
