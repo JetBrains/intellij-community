@@ -154,6 +154,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     filerByPackageName(classList, file);
+
+    return removeDuplicates(classList);
+  }
+
+  private static List<PsiClass> removeDuplicates(List<PsiClass> classList) {
+    Set<String> uniqueNames = new HashSet<>();
+    classList.removeIf(aClass -> !uniqueNames.add(aClass.getQualifiedName()));
     return classList;
   }
 
