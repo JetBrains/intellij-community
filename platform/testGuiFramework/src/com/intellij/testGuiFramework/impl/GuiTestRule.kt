@@ -257,7 +257,7 @@ class GuiTestRule : TestRule {
       try {
         val executorService = AppExecutorUtil.getAppExecutorService()
         //wait 10 second for the termination of all
-        if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) executorService.shutdownNow()
+        if (!executorService.awaitTermination(2, TimeUnit.SECONDS)) executorService.shutdownNow()
         MessagePool.getInstance().clearErrors()
       }
       catch (e: Exception) {
