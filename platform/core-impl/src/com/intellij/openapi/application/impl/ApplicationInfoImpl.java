@@ -253,6 +253,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         return api.asString();
       }
     }
+    // Android Studio: Create API version from the first 3 values of build number
+    else if (PlatformUtils.isAndroidStudio()) {
+      assert build.getComponents().length >= 3;
+      BuildNumber apiBuildNumber = new BuildNumber("AI",
+                                                   build.getComponents()[0],
+                                                   build.getComponents()[1],
+                                                   build.getComponents()[2]);
+      return apiBuildNumber.asString();
+    }
     return build.asString();
   }
 
