@@ -27,6 +27,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -245,7 +246,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     mySettings.UI_SHOW_FILES = false;
     myLeftTreeExpansionMonitor.freeze();
     myLeftTree.setModel(TreeModelBuilder.createTreeModel(myProject, false, psiFiles, new Marker() {
-      public boolean isMarked(VirtualFile file) {
+      public boolean isMarked(@NotNull VirtualFile file) {
         return false;
       }
     }, mySettings));
@@ -280,7 +281,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
           final PackageDependenciesNode pack = (PackageDependenciesNode)TreeModelBuilder
             .createTreeModel(myProject, false, dependentFilesInPackage, new Marker() {
-              public boolean isMarked(VirtualFile file) {
+              public boolean isMarked(@NotNull VirtualFile file) {
                 return false;
               }
             }, mySettings).getRoot();

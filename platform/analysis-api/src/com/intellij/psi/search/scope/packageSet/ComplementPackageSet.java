@@ -26,17 +26,17 @@ import java.util.function.Predicate;
 public class ComplementPackageSet extends PackageSetBase {
   private final PackageSet myComplementarySet;
 
-  public ComplementPackageSet(PackageSet set) {
+  public ComplementPackageSet(@NotNull PackageSet set) {
     myComplementarySet = set;
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
     return contains(file, holder.getProject(), holder);
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     return myComplementarySet instanceof PackageSetBase ? !((PackageSetBase)myComplementarySet).contains(file, project, holder)
                                                         : myComplementarySet.contains(getPsiFile(file, project), holder);
   }
@@ -75,6 +75,7 @@ public class ComplementPackageSet extends PackageSetBase {
     return predicate.test(myComplementarySet);
   }
 
+  @NotNull
   public PackageSet getComplementarySet() {
     return myComplementarySet;
   }
