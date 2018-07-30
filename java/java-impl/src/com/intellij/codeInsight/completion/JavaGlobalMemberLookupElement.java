@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
@@ -85,7 +86,7 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
 
     (willBeImported() ? myImportInsertion : myQualifiedInsertion).handleInsert(context, this);

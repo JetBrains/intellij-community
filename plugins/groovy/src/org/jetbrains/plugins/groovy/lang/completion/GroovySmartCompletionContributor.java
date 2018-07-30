@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -149,7 +147,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
           final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
           item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
+            public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.casting");
 
               final Editor editor = context.getEditor();
@@ -266,7 +264,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         if (item.getObject() instanceof PsiClass) {
           item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
+            public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
           });

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -23,6 +9,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
@@ -39,7 +26,7 @@ class ArrayMemberAccess {
       final PsiExpression conversion = createExpression(getQualifierText(qualifier) + prefix + "[0]", element);
       result.consume(new ExpressionLookupItem(conversion, object.getIcon(Iconable.ICON_FLAG_VISIBILITY), prefix + "[...]", prefix) {
         @Override
-        public void handleInsert(InsertionContext context) {
+        public void handleInsert(@NotNull InsertionContext context) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ARRAY_MEMBER);
 
           final int tailOffset = context.getTailOffset();

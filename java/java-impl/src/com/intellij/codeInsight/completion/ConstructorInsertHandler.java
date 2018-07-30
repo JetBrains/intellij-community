@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -56,7 +57,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   }
 
   @Override
-  public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
     @SuppressWarnings({"unchecked"}) final LookupElement delegate = item.getDelegate();
 
     PsiClass psiClass = (PsiClass)item.getObject();
@@ -224,10 +225,10 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     return false;
   }
 
-  public static boolean insertParentheses(InsertionContext context,
-                                          LookupElement delegate,
-                                          final PsiClass psiClass,
-                                          final boolean forAnonymous) {
+  public static boolean insertParentheses(@NotNull InsertionContext context,
+                                          @NotNull LookupElement delegate,
+                                          @NotNull PsiClass psiClass,
+                                          boolean forAnonymous) {
     if (context.getCompletionChar() == '[') {
       return false;
     }

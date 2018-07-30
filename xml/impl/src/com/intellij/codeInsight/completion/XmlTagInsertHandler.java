@@ -55,7 +55,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   @Override
-  public void handleInsert(InsertionContext context, LookupElement item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Project project = context.getProject();
     Editor editor = context.getEditor();
     Document document = InjectedLanguageUtil.getTopLevelEditor(editor).getDocument();
