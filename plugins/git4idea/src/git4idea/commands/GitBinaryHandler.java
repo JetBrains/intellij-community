@@ -42,7 +42,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final Semaphore mySteamSemaphore = new Semaphore(0); // The semaphore that waits for stream processing
   @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
-  public GitBinaryHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
+  public GitBinaryHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
