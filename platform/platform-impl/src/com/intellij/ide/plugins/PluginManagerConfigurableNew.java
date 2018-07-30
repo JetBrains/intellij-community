@@ -1166,9 +1166,7 @@ public class PluginManagerConfigurableNew
           if (SwingUtilities.isLeftMouseButton(event)) {
             int tab = findTab(event);
             if (tab != -1 && tab != mySelectionTab) {
-              mySelectionTab = tab;
-              myListener.selectionChanged(tab);
-              repaint();
+              setSelectionWithEvents(tab);
             }
           }
         }
@@ -1192,6 +1190,35 @@ public class PluginManagerConfigurableNew
       };
       addMouseListener(mouseHandler);
       addMouseMotionListener(mouseHandler);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+
+      addTabSelectionAction(IdeActions.ACTION_NEXT_TAB,
+                            () -> setSelectionWithEvents(mySelectionTab == myTabs.size() - 1 ? 0 : mySelectionTab + 1));
+
+      addTabSelectionAction(IdeActions.ACTION_PREVIOUS_TAB,
+                            () -> setSelectionWithEvents(mySelectionTab == 0 ? myTabs.size() - 1 : mySelectionTab - 1));
+    }
+
+    private void addTabSelectionAction(@NotNull String actionId, @NotNull Runnable callback) {
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      if (action == null) {
+        return;
+      }
+
+      AnAction localAction = new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          if (isShowing() && !myTabs.isEmpty()) {
+            callback.run();
+          }
+        }
+      };
+      localAction.copyShortcutFrom(action);
+      localAction.registerCustomShortcutSet(getRootPane(), null);
     }
 
     public void addTab(@NotNull String title) {
@@ -1227,6 +1254,12 @@ public class PluginManagerConfigurableNew
       else {
         mySelectionTab = index;
       }
+      repaint();
+    }
+
+    private void setSelectionWithEvents(int index) {
+      mySelectionTab = index;
+      myListener.selectionChanged(index);
       repaint();
     }
 
