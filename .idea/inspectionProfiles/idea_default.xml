@@ -486,6 +486,7 @@
       <scope name="runtime.classes" level="ERROR" enabled="true" />
     </inspection_tool>
     <inspection_tool class="LambdaUnfriendlyMethodOverload" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LiftReturnOrAssignment" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="LocalVariableName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="[a-z][A-Za-z\d_]*" />
     </inspection_tool>
