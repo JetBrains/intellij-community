@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.github.extensions
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
@@ -17,8 +18,7 @@ import java.io.IOException
 class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthenticationManager,
                                  private val requestExecutorFactory: GithubApiRequestExecutor.Factory,
                                  private val requestExecutorManager: GithubApiRequestExecutorManager,
-                                 private val accountInformationProvider: GithubAccountInformationProvider,
-                                 private val authenticationFailureManager: GithubAccountGitAuthenticationFailureManager) : GitHttpAuthDataProvider {
+                                 private val accountInformationProvider: GithubAccountInformationProvider) : GitHttpAuthDataProvider {
   private val LOG = logger<GithubHttpAuthDataProvider>()
 
   override fun getAuthData(project: Project, url: String): GithubAccountAuthData? {
@@ -43,13 +43,14 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     }
   }
 
-  override fun forgetPassword(url: String, authData: AuthData) {
+  override fun forgetPassword(project: Project, url: String, authData: AuthData) {
     if (authData is GithubAccountAuthData) {
-      authenticationFailureManager.ignoreAccount(url, authData.account)
+      project.service<GithubAccountGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
     }
   }
 
   fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GithubAccount> {
+    val authenticationFailureManager = project.service<GithubAccountGitAuthenticationFailureManager>()
     var potentialAccounts = authenticationManager.getAccounts()
       .filter { it.server.matches(url) }
       .filter { !authenticationFailureManager.isAccountIgnored(url, it) }
