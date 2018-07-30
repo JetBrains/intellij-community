@@ -595,7 +595,7 @@ public final class IconLoader {
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
           numberOfPatchers = ourPatchers.size();
-          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, null);
+          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, myClassLoader);
           String path = myOriginalPath == null ? null : patchedPath.first;
           if (patchedPath.second != null) {
             myClassLoader = patchedPath.second;
