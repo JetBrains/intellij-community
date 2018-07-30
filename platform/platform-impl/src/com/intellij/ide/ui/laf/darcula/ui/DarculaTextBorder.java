@@ -81,28 +81,6 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     }
   }
 
-  private void paintCellEditorBorder(Graphics2D g2, Component c, Rectangle r) {
-    g2 = (Graphics2D)g2.create();
-    try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
-      float bw = bw();
-
-      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      border.append(new Rectangle2D.Float(0, 0, r.width, r.height), false);
-      border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
-
-      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-      Outline outline = op == null ? Outline.focus : Outline.valueOf(op.toString());
-      outline.setGraphicsColor(g2, true);
-      g2.fill(border);
-    } finally {
-      g2.dispose();
-    }
-  }
-
   protected void paintSearchArea(Graphics2D g, Rectangle r, JTextComponent c, boolean fillBackground) {
     paintDarculaSearchArea(g, r, c, fillBackground);
   }

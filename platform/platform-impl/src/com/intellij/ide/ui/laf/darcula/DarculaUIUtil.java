@@ -174,6 +174,28 @@ public class DarculaUIUtil {
     return -1;
   }
 
+  public static void paintCellEditorBorder(Graphics2D g2, Component c, Rectangle r) {
+    g2 = (Graphics2D)g2.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      float bw = CELL_EDITOR_BW.getFloat();
+
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+      border.append(new Rectangle2D.Float(0, 0, r.width, r.height), false);
+      border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
+
+      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      Outline outline = op == null ? Outline.focus : Outline.valueOf(op.toString());
+      outline.setGraphicsColor(g2, true);
+      g2.fill(border);
+    } finally {
+      g2.dispose();
+    }
+  }
+
   public static class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
     public MacEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
       super(editorTextField, editor);
@@ -375,7 +397,8 @@ public class DarculaUIUtil {
   }
 
   public static boolean isTableCellEditor(Component c) {
-    return UIUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
+    return Boolean.TRUE.equals(((JComponent)c).getClientProperty("JComboBox.isTableCellEditor")) ||
+           UIUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 
   public static final JBValue MINIMUM_WIDTH = new JBValue.Float(64);
@@ -384,6 +407,7 @@ public class DarculaUIUtil {
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
   public static final JBValue LW = new JBValue.Float(1);
   public static final JBValue BW = new JBValue.UIInteger("Border.width", 2);
+  public static final JBValue CELL_EDITOR_BW = new JBValue.UIInteger("CellEditor.border.width", 2);
   public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
 
