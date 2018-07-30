@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +35,9 @@ public interface PyUnresolvedReferenceSkipperExtPoint {
    * Checks if some unused import should be skipped
    *
    * @param importNameDefiner unused import
+   * @param typeEvalContext
    * @return true if should be skipped
    */
-  boolean unusedImportShouldBeSkipped(@NotNull PyImportedNameDefiner importNameDefiner);
+  boolean unusedImportShouldBeSkipped(@NotNull PyImportedNameDefiner importNameDefiner,
+                                      TypeEvalContext typeEvalContext);
 }
