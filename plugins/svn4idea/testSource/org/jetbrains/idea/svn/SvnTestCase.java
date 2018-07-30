@@ -207,13 +207,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     runInEdtAndWait(() -> {
       tearDownProject();
 
-      if (myWcRoot != null && myWcRoot.exists()) {
-        delete(myWcRoot);
-      }
-      if (myRepoRoot != null && myRepoRoot.exists()) {
-        delete(myRepoRoot);
-      }
-
       if (myTempDirFixture != null) {
         myTempDirFixture.tearDown();
         myTempDirFixture = null;
