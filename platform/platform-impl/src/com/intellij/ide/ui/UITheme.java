@@ -2,6 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,8 +64,25 @@ public class UITheme {
         @Nullable
         @Override
         public String patchPath(String path, ClassLoader classLoader) {
+          if (classLoader instanceof PluginClassLoader) {
+            String pluginId = ((PluginClassLoader)classLoader).getPluginId().getIdString();
+            Object icons = theme.icons.get(pluginId);
+            if (icons instanceof Map) {
+              Object pluginIconPath = ((Map)icons).get(path);
+              if (pluginIconPath instanceof String) {
+                return (String)pluginIconPath;
+              }
+            }
+          }
+
           Object value = theme.icons.get(path);
           return value instanceof String ? (String)value : null;
+        }
+
+        @Nullable
+        @Override
+        public ClassLoader getContextClassLoader(String path, ClassLoader originalClassLoader) {
+          return theme.providerClassLoader;
         }
       };
     }
