@@ -969,31 +969,32 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class RemoveToolStripeButtonCmd extends FinalizableCommand {
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
+    private final ToolWindowAnchor myAnchor;
 
     RemoveToolStripeButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info, @NotNull Runnable finishCallBack) {
       super(finishCallBack);
       myButton = button;
       myInfo = info;
+      myAnchor = myInfo.getAnchor();
     }
 
     @Override
     public final void run() {
       try {
-        final ToolWindowAnchor anchor = myInfo.getAnchor();
-        if (ToolWindowAnchor.TOP == anchor) {
+        if (ToolWindowAnchor.TOP == myAnchor) {
           myTopStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.LEFT == anchor) {
+        else if (ToolWindowAnchor.LEFT == myAnchor) {
           myLeftStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.BOTTOM == anchor) {
+        else if (ToolWindowAnchor.BOTTOM == myAnchor) {
           myBottomStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.RIGHT == anchor) {
+        else if (ToolWindowAnchor.RIGHT == myAnchor) {
           myRightStripe.removeButton(myButton);
         }
         else {
-          LOG.error("unknown anchor: " + anchor);
+          LOG.error("unknown anchor: " + myAnchor);
         }
         validate();
         repaint();
