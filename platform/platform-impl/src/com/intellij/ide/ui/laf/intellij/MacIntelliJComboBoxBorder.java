@@ -13,6 +13,8 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintCellEditorBorder;
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
@@ -25,37 +27,41 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      g2.translate(x, y);
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+      if (!isTableCellEditor(c)) {
+        g2.translate(x, y);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      Shape clip = g2.getClip();
-      Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
-      area.subtract(getButtonBounds(c));
-      area.intersect(new Area(clip));
-      g2.setClip(area);
+        Shape clip = g2.getClip();
+        Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
+        area.subtract(getButtonBounds(c));
+        area.intersect(new Area(clip));
+        g2.setClip(area);
 
-      float arc = isRound(c) ? ARC.getFloat() : 0;
-      float bw = BW.getFloat();
-      float lw = LW(g2);
+        float arc = isRound(c) ? ARC.getFloat() : 0;
+        float bw = BW.getFloat();
+        float lw = LW(g2);
 
-      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      border.append(new RoundRectangle2D.Double(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
-      border.append(new RoundRectangle2D.Double(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc - lw, arc - lw), false);
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(new RoundRectangle2D.Double(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
+        border.append(new RoundRectangle2D.Double(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc - lw, arc - lw), false);
 
-      g2.setColor(Gray.xBC);
-      g2.fill(border);
+        g2.setColor(Gray.xBC);
+        g2.fill(border);
 
-      g2.setClip(clip); // Reset clip
+        g2.setClip(clip); // Reset clip
 
-      clipForBorder(c, g2, width, height);
+        clipForBorder(c, g2, width, height);
 
-      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-      boolean focused = isFocused(c);
-      if (op != null) {
-        paintOutlineBorder(g2, width, height, arc, isSymmetric(), focused, DarculaUIUtil.Outline.valueOf(op.toString()));
-      } else if (focused) {
-        paintOutlineBorder(g2, width, height, arc, isSymmetric(), true, DarculaUIUtil.Outline.focus);
+        Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+        boolean focused = isFocused(c);
+        if (op != null) {
+          paintOutlineBorder(g2, width, height, arc, isSymmetric(), focused, DarculaUIUtil.Outline.valueOf(op.toString()));
+        } else if (focused) {
+          paintOutlineBorder(g2, width, height, arc, isSymmetric(), true, DarculaUIUtil.Outline.focus);
+        }
+      } else {
+        paintCellEditorBorder(g2, c, new Rectangle(x, y, width, height));
       }
     } finally {
       g2.dispose();
@@ -64,7 +70,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3).asUIResource();
+    return JBUI.insets(isTableCellEditor(c) ? 2 : 3).asUIResource();
   }
 
   @Override

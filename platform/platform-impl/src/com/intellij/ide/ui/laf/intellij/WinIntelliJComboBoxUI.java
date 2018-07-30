@@ -88,7 +88,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       if (c.isOpaque()) {
         Container parent = c.getParent();
         if (parent != null) {
-          g2.setColor(isTableCellEditor(c) && editor != null ? editor.getBackground() : parent.getBackground());
+          g2.setColor(DarculaUIUtil.isTableCellEditor(c) && editor != null ? editor.getBackground() : parent.getBackground());
           g2.fill(r);
         }
       }
@@ -150,7 +150,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     JBInsets.removeFrom(r, jc.getInsets());
 
     // paint selection in table-cell-editor mode correctly
-    boolean changeOpaque = isTableCellEditor(comboBox) && c.isOpaque();
+    boolean changeOpaque = DarculaUIUtil.isTableCellEditor(comboBox) && c.isOpaque();
     if (changeOpaque) {
       jc.setOpaque(false);
     } else if (c.isOpaque()) {
