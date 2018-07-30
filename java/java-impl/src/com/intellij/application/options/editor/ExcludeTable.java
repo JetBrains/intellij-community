@@ -18,9 +18,9 @@ package com.intellij.application.options.editor;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.execution.util.ListTableWithButtons;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -30,6 +30,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +117,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     @Nullable
     @Override
     public TableCellEditor getEditor(Item pair) {
-      return new DefaultCellEditor(new ComboBox(ExclusionScope.values()));
+      return new ComboBoxTableRenderer<>(ExclusionScope.values());
     }
 
     @Override
@@ -133,6 +134,11 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     @Override
     public String getMaxStringValue() {
       return "Project";
+    }
+
+    @Override
+    public int getAdditionalWidth() {
+      return JBUI.scale(12) + AllIcons.General.ArrowDown.getIconWidth();
     }
   };
   private final Project myProject;

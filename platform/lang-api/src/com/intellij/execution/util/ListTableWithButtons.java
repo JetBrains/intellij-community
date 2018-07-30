@@ -82,10 +82,9 @@ public abstract class ListTableWithButtons<T> extends Observable {
         }
       }
     };
-    myTableView.setRowHeight(new JTextField().getPreferredSize().height);
     myTableView.setIntercellSpacing(JBUI.emptySize());
     myTableView.setStriped(true);
-    
+
     myTableView.getTableViewModel().setSortable(false);
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
     myPanel = decorator
