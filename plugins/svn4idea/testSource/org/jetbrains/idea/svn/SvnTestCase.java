@@ -77,6 +77,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     }
   };
 
+  private static final String ORIGINAL_TEMP_DIRECTORY = getTempDirectory();
+
   protected TempDirTestFixture myTempDirFixture;
   protected Url myRepositoryUrl;
   protected String myRepoUrl;
@@ -121,6 +123,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     runInEdtAndWait(() -> {
       myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
       myTempDirFixture.setUp();
+      resetCanonicalTempPathCache(myTempDirFixture.getTempDirPath());
 
       myPluginRoot = new File(getPluginHome());
       myClientBinaryPath = getSvnClientDirectory();
@@ -211,6 +214,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
         myTempDirFixture.tearDown();
         myTempDirFixture = null;
       }
+      resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY);
     });
   }
 
