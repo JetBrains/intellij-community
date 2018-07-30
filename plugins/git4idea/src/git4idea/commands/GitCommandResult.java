@@ -16,6 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -90,7 +90,7 @@ public class GitCommandResult {
 
   @NotNull
   public List<String> getOutput() {
-    return Collections.unmodifiableList(myOutput);
+    return ContainerUtil.map(myOutput, line -> LineHandlerHelper.trimLineSeparator(line));
   }
 
   public int getExitCode() {
@@ -103,7 +103,7 @@ public class GitCommandResult {
 
   @NotNull
   public List<String> getErrorOutput() {
-    return Collections.unmodifiableList(myErrorOutput);
+    return ContainerUtil.map(myErrorOutput, line -> LineHandlerHelper.trimLineSeparator(line));
   }
 
   @Override
@@ -113,23 +113,29 @@ public class GitCommandResult {
 
   @NotNull
   public String getErrorOutputAsHtmlString() {
-    return StringUtil.join(cleanup(getErrorOrStdOutput()), "<br/>");
+    return collectErrorOutputAsString("<br/>");
   }
 
   @NotNull
   public String getErrorOutputAsJoinedString() {
-    return StringUtil.join(cleanup(getErrorOrStdOutput()), "\n");
+    return collectErrorOutputAsString("\n");
   }
 
-  // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
   @NotNull
-  private List<String> getErrorOrStdOutput() {
-    return myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
+  private String collectErrorOutputAsString(@NotNull String separator) {
+    // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
+    List<String> errorOutput = myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
+    return StringUtil.join(errorOutput, line -> GitUtil.cleanupErrorPrefixes(line), separator);
   }
 
   @NotNull
   public String getOutputAsJoinedString() {
-    return StringUtil.join(myOutput, "\n");
+    return StringUtil.join(myOutput, (line) -> LineHandlerHelper.trimLineSeparator(line), "\n");
+  }
+
+  @NotNull
+  public String getOutputAsRawString() {
+    return StringUtil.join(myOutput, "");
   }
 
   /**
@@ -177,11 +183,6 @@ public class GitCommandResult {
 
   public boolean cancelled() {
     return false; // will be implemented later
-  }
-
-  @NotNull
-  private static Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
-    return ContainerUtil.map(errorOutput, errorMessage -> GitUtil.cleanupErrorPrefixes(errorMessage));
   }
 
   protected boolean hasStartFailed() {

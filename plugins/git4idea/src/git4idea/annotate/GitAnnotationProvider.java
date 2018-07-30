@@ -37,6 +37,7 @@ import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
@@ -169,7 +170,9 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     }
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
+    GitCommandResult result = Git.getInstance().runCommand(h);
+    result.throwOnError();
+    String output = result.getOutputAsRawString();
 
     GitFileAnnotation fileAnnotation = parseAnnotations(revision, file, root, output);
 

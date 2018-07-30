@@ -196,6 +196,11 @@ abstract class GitImplBase implements Git {
     }
 
     @Override
+    public boolean trimLineSeparator() {
+      return false;
+    }
+
+    @Override
     public void processTerminated(int code) {
       myExitCode = code;
     }
