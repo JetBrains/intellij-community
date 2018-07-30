@@ -457,7 +457,48 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '[' <<comma_list annotation_value>>? ']'
+  // <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
+  static boolean annotation_array_item(PsiBuilder b, int l) {
+    return separated_item(b, l + 1, annotation_array_item_end_parser_, annotation_value_parser_, annotation_array_item_start_parser_);
+  }
+
+  /* ********************************************************** */
+  // ',' | &']' | end_of_file
+  static boolean annotation_array_item_end(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "annotation_array_item_end")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_COMMA);
+    if (!r) r = annotation_array_item_end_1(b, l + 1);
+    if (!r) r = eof(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &']'
+  private static boolean annotation_array_item_end_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "annotation_array_item_end_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = consumeToken(b, T_RBRACK);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '@' | expression_start
+  static boolean annotation_array_item_start(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "annotation_array_item_start")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_AT);
+    if (!r) r = expression_start(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '[' annotation_array_item* ']'
   public static boolean annotation_array_value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "annotation_array_value")) return false;
     if (!nextTokenIs(b, T_LBRACK)) return false;
@@ -471,10 +512,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // <<comma_list annotation_value>>?
+  // annotation_array_item*
   private static boolean annotation_array_value_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "annotation_array_value_1")) return false;
-    comma_list(b, l + 1, annotation_value_parser_);
+    while (true) {
+      int c = current_position_(b);
+      if (!annotation_array_item(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "annotation_array_value_1", c)) break;
+    }
     return true;
   }
 
@@ -8042,6 +8087,16 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   final static Parser T_RPAREN_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return consumeToken(b, T_RPAREN);
+    }
+  };
+  final static Parser annotation_array_item_end_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return annotation_array_item_end(b, l + 1);
+    }
+  };
+  final static Parser annotation_array_item_start_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return annotation_array_item_start(b, l + 1);
     }
   };
   final static Parser annotation_level_parser_ = new Parser() {
