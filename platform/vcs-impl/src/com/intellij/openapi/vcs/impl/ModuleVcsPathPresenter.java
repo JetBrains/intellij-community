@@ -94,8 +94,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     }
 
     final RelativePathCalculator calculator = new RelativePathCalculator(toPath.getPath(), fromPath.getPath());
-    calculator.execute();
-    final String result = calculator.getResult();
+    final String result = calculator.execute();
     return result != null ? result.replace("/", File.separator) : null;
   }
 

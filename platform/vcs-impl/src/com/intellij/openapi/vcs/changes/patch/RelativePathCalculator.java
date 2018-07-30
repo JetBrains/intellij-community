@@ -29,30 +29,24 @@ public class RelativePathCalculator {
   private final String myShifted;
   private final String myBase;
 
-  private String myResult;
   private boolean myRename;
 
-  public RelativePathCalculator(@Nullable String base, @Nullable String shifted) {
+  public RelativePathCalculator(@NotNull String base, @NotNull String shifted) {
     myShifted = shifted;
     myBase = base;
   }
 
-  private static boolean stringEqual(@NotNull final String s1, @NotNull final String s2) {
+  private static boolean stringEqual(@NotNull String s1, @NotNull String s2) {
     if (!SystemInfo.isFileSystemCaseSensitive) {
       return s1.equalsIgnoreCase(s2);
     }
     return s1.equals(s2);
   }
 
-  public void execute() {
-    if (myShifted == null || myBase == null) {
-      myResult = null;
-      return;
-    }
+  @Nullable
+  public String execute() {
     if (stringEqual(myShifted, myBase)) {
-      myResult = ".";
-      myRename = false;
-      return;
+      return ".";
     }
     final String[] baseParts = split(myBase);
     final String[] shiftedParts = split(myShifted);
@@ -63,7 +57,7 @@ public class RelativePathCalculator {
     while (true) {
       if (baseParts.length <= cnt || shiftedParts.length <= cnt) {
         // means that directory moved to a file or vise versa -> error
-        return;
+        return null;
       }
       if (!stringEqual(baseParts[cnt], shiftedParts[cnt])) {
         break;
@@ -73,8 +67,7 @@ public class RelativePathCalculator {
 
     final int stepsUp = baseParts.length - cnt - 1;
     if (!myRename && stepsUp > ourNumOfAllowedStepsAbove && shiftedParts.length - cnt <= ourAllowedStepsDown) {
-      myResult = myShifted;
-      return;
+      return myShifted;
     }
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < stepsUp; i++) {
@@ -94,10 +87,10 @@ public class RelativePathCalculator {
       sb.append(newName);
     }
 
-    myResult = sb.toString();
+    return sb.toString();
   }
 
-  public boolean isRename() {
+  private boolean isRename() {
     return myRename;
   }
 
@@ -112,17 +105,13 @@ public class RelativePathCalculator {
     return false;
   }
 
-  public String getResult() {
-    return myResult;
-  }
-
   @Nullable
   public static String getMovedString(final String beforeName, final String afterName) {
     if (beforeName != null && afterName != null && !stringEqual(beforeName, afterName)) {
       final RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
-      calculator.execute();
+      String result = calculator.execute();
       final String key = calculator.isRename() ? "change.file.renamed.to.text" : "change.file.moved.to.text";
-      return VcsBundle.message(key, calculator.getResult());
+      return VcsBundle.message(key, result);
     }
     return null;
   }

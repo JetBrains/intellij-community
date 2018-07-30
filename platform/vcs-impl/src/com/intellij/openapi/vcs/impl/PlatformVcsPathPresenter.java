@@ -33,8 +33,7 @@ public class PlatformVcsPathPresenter extends VcsPathPresenter {
   public String getPresentableRelativePath(final ContentRevision fromRevision, final ContentRevision toRevision) {
     RelativePathCalculator calculator = new RelativePathCalculator(toRevision.getFile().getPath(), fromRevision.getFile().getPath());
 
-    calculator.execute();
-    final String result = calculator.getResult();
+    final String result = calculator.execute();
     return (result == null) ? null : result.replace("/", File.separator);
   }
 }
