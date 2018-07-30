@@ -49,7 +49,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     markClassItemWrapped(getDelegate());
     super.handleInsert(context);
 

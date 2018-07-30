@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -596,7 +594,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
         LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
           @Override
-          public void handleInsert(InsertionContext context, LookupElement item) {
+          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
             context.setAddCompletionChar(false);
@@ -950,7 +948,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     @Override
-    public void handleInsert(InsertionContext context) {
+    public void handleInsert(@NotNull InsertionContext context) {
       super.handleInsert(context);
       Project project = context.getProject();
       Document document = context.getDocument();
