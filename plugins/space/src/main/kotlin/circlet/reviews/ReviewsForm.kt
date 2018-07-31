@@ -69,16 +69,14 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 }
 
 private fun <T> Lifetimed.updater(name: String, update: suspend (T) -> Unit): Channel<T> {
-    val channel = boundedChannel<T>(0, lifetime)
+    val channel = Channel<T>(0)
 
-    launch(ApplicationUiDispatch.contextWithExplicitLog, start = CoroutineStart.UNDISPATCHED) {
-        channel.consumeEach {
-            try {
-                update(it)
-            }
-            catch (t: Throwable) {
-                LOG.error(t) { "Updater '$name' error" } // TODO
-            }
+    channel.launchForEach(ApplicationUiDispatch.contextWithExplicitLog, CoroutineStart.UNDISPATCHED) {
+        try {
+            update(it)
+        }
+        catch (t: Throwable) {
+            LOG.error(t) { "Updater '$name' error" } // TODO
         }
     }
 
