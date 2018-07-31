@@ -71,7 +71,7 @@ public class QualifiedNameFinder {
 
   @Nullable
   private static QualifiedName shortestQName(@NotNull List<QualifiedName> qNames) {
-    return qNames.stream().min((o1, o2) -> o1.getComponentCount() - o2.getComponentCount()).orElse(null);
+    return qNames.stream().min(Comparator.comparingInt(QualifiedName::getComponentCount)).orElse(null);
   }
 
   @Nullable
@@ -198,37 +198,47 @@ public class QualifiedNameFinder {
    * Tries to find roots that contain given vfile.
    */
   private static class PathChoosingVisitor implements RootVisitor {
-    @Nullable private final VirtualFile myVFile;
+    @NotNull private final VirtualFile myVFile;
     @NotNull private final Set<QualifiedName> myResults = new LinkedHashSet<>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
-      if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
-        myVFile = file.getParent();
-      }
-      else {
-        myVFile = file;
-      }
+      myVFile = file;
     }
 
     @Override
     public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
-      if (myVFile != null) {
-        final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
-        if (!StringUtil.isEmpty(relativePath)) {
-          final List<String> result = StringUtil.split(relativePath, "/");
-          if (!result.isEmpty()) {
-            final int lastIndex = result.size() - 1;
-            result.set(lastIndex, FileUtil.getNameWithoutExtension(result.get(lastIndex)));
+      final List<String> result = pathToNameComponents(VfsUtilCore.getRelativePath(myVFile, root, '/'));
+      if (!result.isEmpty()) {
+        for (String component : result) {
+          if (!PyNames.isIdentifier(component)) {
+            return true;
           }
-          for (String component : result) {
-            if (!PyNames.isIdentifier(component)) {
-              return true;
-            }
-          }
-          myResults.add(QualifiedName.fromComponents(result));
         }
+        myResults.add(QualifiedName.fromComponents(result));
       }
       return true;
+    }
+
+    @NotNull
+    private List<String> pathToNameComponents(@Nullable String relativePath) {
+      if (StringUtil.isEmpty(relativePath)) return Collections.emptyList();
+
+      final List<String> result = new ArrayList<>(StringUtil.split(relativePath, "/"));
+      if (!result.isEmpty()) {
+        final int lastIndex = result.size() - 1;
+        final String nameWithoutExtension = FileUtil.getNameWithoutExtension(result.get(lastIndex));
+
+        if (myVFile.isDirectory() || !nameWithoutExtension.equals(PyNames.INIT)) {
+          result.set(lastIndex, nameWithoutExtension);
+        }
+        else {
+          result.remove(lastIndex);
+        }
+
+        return result;
+      }
+
+      return Collections.emptyList();
     }
 
     @NotNull

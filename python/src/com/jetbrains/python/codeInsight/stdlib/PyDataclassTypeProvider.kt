@@ -68,7 +68,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     if (resolvedCallee is PyCallable) {
       val instanceName = when (resolvedCallee.qualifiedName) {
         "dataclasses.replace" -> "obj"
-        "attr.__init__.assoc", "attr.__init__.evolve" -> "inst"
+        "attr.assoc", "attr.evolve" -> "inst"
         else -> return null
       }
 
