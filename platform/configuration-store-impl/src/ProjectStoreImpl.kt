@@ -157,7 +157,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
     }
 
-    storageManager.addMacro(StoragePathMacros.CACHE_FILE, project.getProjectCachePath("workspace").toString() + ".xml")
+    storageManager.addMacro(StoragePathMacros.CACHE_FILE, FileUtilRt.toSystemIndependentName(project.getProjectCachePath("workspace").toString()) + ".xml")
   }
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
