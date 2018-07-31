@@ -31,7 +31,7 @@ import javax.swing.JPanel
 /**
  * @author vlan
  */
-abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
+abstract class PyAddSdkPanel : JPanel(), AddSdkView {
   override val actions: Map<DialogFlowAction, Boolean>
     get() = mapOf(OK.enabled())
 
@@ -39,10 +39,10 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
     get() = this
 
   /**
-   * [component] is permanent. [PyAddSdkStateListener.onComponentChanged] won't
+   * [component] is permanent. [AddSdkStateListener.onComponentChanged] won't
    * be called anyway.
    */
-  override fun addStateListener(stateListener: PyAddSdkStateListener): Unit = Unit
+  override fun addStateListener(stateListener: AddSdkStateListener): Unit = Unit
 
   override fun previous(): Nothing = throw UnsupportedOperationException()
 

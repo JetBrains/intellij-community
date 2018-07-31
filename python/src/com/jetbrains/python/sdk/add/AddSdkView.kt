@@ -10,7 +10,7 @@ import javax.swing.Icon
  * Represents the view for adding new Python SDK. It is used in
  * [PyAddSdkDialog].
  */
-interface PyAddSdkView {
+interface AddSdkView {
   val panelName: String
 
   val icon: Icon
@@ -28,7 +28,7 @@ interface PyAddSdkView {
   fun onSelected()
 
   /**
-   * [PyAddSdkStateListener.onActionsStateChanged] is called after changes in
+   * [AddSdkStateListener.onActionsStateChanged] is called after changes in
    * [actions].
    */
   val actions: Map<DialogFlowAction, Boolean>
@@ -74,5 +74,5 @@ interface PyAddSdkView {
    */
   fun validateAll(): List<ValidationInfo>
 
-  fun addStateListener(stateListener: PyAddSdkStateListener)
+  fun addStateListener(stateListener: AddSdkStateListener)
 }

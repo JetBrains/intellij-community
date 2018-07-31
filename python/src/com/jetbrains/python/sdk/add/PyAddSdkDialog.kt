@@ -63,8 +63,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
    */
   private val mainPanel: JPanel = JPanel(JBCardLayout())
 
-  private var selectedPanel: PyAddSdkView? = null
-  private var panels: List<PyAddSdkView> = emptyList()
+  private var selectedPanel: AddSdkView? = null
+  private var panels: List<AddSdkView> = emptyList()
 
   init {
     title = "Add Python Interpreter"
@@ -74,9 +74,9 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val sdks = existingSdks
       .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
-    val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, module, sdks, newProjectPath),
-                                           createAnacondaPanel(project, module),
-                                           PyAddSystemWideInterpreterPanel(module, existingSdks))
+    val panels = arrayListOf<AddSdkView>(createVirtualEnvPanel(project, module, sdks, newProjectPath),
+                                         createAnacondaPanel(project, module),
+                                         PyAddSystemWideInterpreterPanel(module, existingSdks))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
       .mapNotNull {
         it.createView(project = project, module = module, newProjectPath = newProjectPath, existingSdks = existingSdks)
@@ -145,7 +145,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   fun getOrCreateSdk(): Sdk? = selectedPanel?.getOrCreateSdk()
 
-  private fun createCardSplitter(panels: List<PyAddSdkView>): Splitter {
+  private fun createCardSplitter(panels: List<AddSdkView>): Splitter {
     this.panels = panels
     return Splitter(false, 0.25f).apply {
       val cardLayout = CardLayout()
@@ -154,7 +154,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         for (panel in panels) {
           add(panel.component, panel.panelName)
 
-          panel.addStateListener(object : PyAddSdkStateListener {
+          panel.addStateListener(object : AddSdkStateListener {
             override fun onComponentChanged() {
               show(mainPanel, panel.component)
 
@@ -168,11 +168,11 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         }
       }
       val cardsList = JBList(panels).apply {
-        val descriptor = object : ListItemDescriptorAdapter<PyAddSdkView>() {
-          override fun getTextFor(value: PyAddSdkView) = StringUtil.toTitleCase(value.panelName)
-          override fun getIconFor(value: PyAddSdkView) = value.icon
+        val descriptor = object : ListItemDescriptorAdapter<AddSdkView>() {
+          override fun getTextFor(value: AddSdkView) = StringUtil.toTitleCase(value.panelName)
+          override fun getIconFor(value: AddSdkView) = value.icon
         }
-        cellRenderer = object : GroupedItemsListRenderer<PyAddSdkView>(descriptor) {
+        cellRenderer = object : GroupedItemsListRenderer<AddSdkView>(descriptor) {
           override fun createItemComponent() = super.createItemComponent().apply {
             border = JBUI.Borders.empty(4, 4, 4, 10)
           }
@@ -303,7 +303,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     doOKAction()
   }
 
-  private fun updateWizardActionButtons(it: PyAddSdkView) {
+  private fun updateWizardActionButtons(it: AddSdkView) {
     previousButton.value.isEnabled = false
 
     it.actions.forEach { (action, isEnabled) ->
