@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 @State(name = "VcsContentAnnotationSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class VcsContentAnnotationSettings implements PersistentStateComponent<VcsContentAnnotationSettings.State> {
-  static final int ourMaxDays = 31; // approx
+  public static final int ourMaxDays = 31; // approx
   static final long ourAbsoluteLimit = TimeUnit.DAYS.toMillis(ourMaxDays);
 
   private State myState = new State();
