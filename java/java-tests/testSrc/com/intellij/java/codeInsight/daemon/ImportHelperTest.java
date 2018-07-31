@@ -399,18 +399,22 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
     assertEmpty(errs);
 
-    type("int i = ");
+    type("/* ");
     UIUtil.dispatchAllInvocationEvents();
     errs = highlightErrors();
     assertNotEmpty(errs);
-    assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    PsiImportStatementBase imp = assertOneElement(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertEquals("java.util.ArrayList", imp.getImportReference().getQualifiedName());
+    UIUtil.dispatchAllInvocationEvents();
 
-    type("0;//");
+    type(" */ ");
     UIUtil.dispatchAllInvocationEvents();
     errs = highlightErrors();
     assertEmpty(errs);
+    UIUtil.dispatchAllInvocationEvents();
 
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    imp = assertOneElement(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertEquals("java.util.ArrayList", imp.getImportReference().getQualifiedName());
   }
 
   public void testAutoInsertImportForInnerClass() {
