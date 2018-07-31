@@ -1,6 +1,7 @@
 import foo.*;
 
 import java.util.Map;
+import java.util.HashMap;
 
 class MapUpdateInlining {
   void testKey(Map<String, String> map) {
@@ -59,4 +60,22 @@ class MapUpdateInlining {
       System.out.println("impossible");
     }
   }
+
+  // IDEA-196415
+  void testFlush() {
+    Map<String, String> aMap = new HashMap<>();
+    aMap.computeIfAbsent("a", key -> key);
+    if (aMap.isEmpty()) {
+      System.out.println("EMPTY");
+    } else {
+      System.out.println("NOT EMPTY");
+    }
+    int len = aMap.size();
+    doSmth();
+    if(<warning descr="Condition 'aMap.size() != len' is always 'false'">aMap.size() != len</warning>) {
+      System.out.println("Impossible: Map is not escaped yet");
+    }
+  }
+
+  native void doSmth();
 }
