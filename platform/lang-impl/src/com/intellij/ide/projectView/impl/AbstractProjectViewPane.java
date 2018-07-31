@@ -497,6 +497,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (!treeState.isEmpty()) {
         myReadTreeState.put(getSubId(), treeState);
       }
+      else {
+        myReadTreeState.remove(getSubId());
+      }
     }
   }
 
