@@ -37,7 +37,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
-  private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
   private static CheckCanceledHook ourCheckCanceledHook;
@@ -136,7 +135,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public boolean hasModalProgressIndicator() {
-    return myCurrentModalProgressCount.get() > 0;
+    synchronized (threadsUnderIndicator) {
+      return ContainerUtil.or(threadsUnderIndicator.keySet(), i -> i.isModal());
+    }
   }
 
   @Override
@@ -506,8 +507,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    boolean modal = progress != null && progress.isModal();
-    if (modal) myCurrentModalProgressCount.incrementAndGet();
     if (progress == null) myCurrentUnsafeProgressCount.incrementAndGet();
 
     try {
@@ -529,7 +528,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
     finally {
       if (progress == null) myCurrentUnsafeProgressCount.decrementAndGet();
-      if (modal) myCurrentModalProgressCount.decrementAndGet();
     }
   }
 
