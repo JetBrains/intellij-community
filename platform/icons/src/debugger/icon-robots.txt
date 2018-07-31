@@ -1,4 +1,8 @@
+deprecated: autoVariablesMode.png; to be removed in IDEA 2020
+deprecated: breakpointAlert.png; to be removed in IDEA 2020
 deprecated: class_filter.png -> /general/filter.svg; to be removed in IDEA 2020 - use AllIcons.General.Filter
+deprecated: commandLine.png -> /debugger/console.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Console
+deprecated: console_log.png -> /debugger/console.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Console
 deprecated: db_dep_exception_breakpoint.png -> /debugger/db_exception_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
 deprecated: db_field_warning_breakpoint.png; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
 deprecated: db_invalid_field_breakpoint.png -> /debugger/db_invalid_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint
@@ -21,6 +25,9 @@ deprecated: db_muted_temporary_breakpoint.png -> /debugger/db_muted_breakpoint.s
 deprecated: db_pending_breakpoint.png -> /debugger/db_set_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint
 deprecated: db_temporary_breakpoint.png -> /debugger/db_set_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint
 deprecated: db_verified_warning_breakpoint.png; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
+deprecated: disable_value_calculation.png; to be removed in IDEA 2020
+deprecated: explosion.png; to be removed in IDEA 2020
 deprecated: newWatch.png -> /general/add.svg; to be removed in IDEA 2020 - use AllIcons.General.Add
 deprecated: stackFrame.png -> /debugger/frame.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Frame
+deprecated: toolConsole.png -> /debugger/console.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Console
 deprecated: watches.png -> /debugger/watch.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Watch

@@ -401,7 +401,15 @@ public class AllIcons {
     }
     public static final Icon AddToWatch = IconLoader.getIcon("/debugger/addToWatch.svg"); // 16x16
     public static final Icon AttachToProcess = IconLoader.getIcon("/debugger/attachToProcess.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon AutoVariablesMode = IconLoader.getIcon("/debugger/autoVariablesMode.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon BreakpointAlert = IconLoader.getIcon("/debugger/breakpointAlert.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Filter */
@@ -409,9 +417,17 @@ public class AllIcons {
     @Deprecated
     public static final Icon Class_filter = IconLoader.getIcon("/general/filter.svg"); // 16x16
     public static final Icon ClassLevelWatch = IconLoader.getIcon("/debugger/classLevelWatch.svg"); // 16x16
-    public static final Icon CommandLine = IconLoader.getIcon("/debugger/commandLine.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CommandLine = IconLoader.getIcon("/debugger/console.svg"); // 16x16
     public static final Icon Console = IconLoader.getIcon("/debugger/console.svg"); // 16x16
-    public static final Icon Console_log = IconLoader.getIcon("/debugger/console_log.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Console_log = IconLoader.getIcon("/debugger/console.svg"); // 16x16
     public static final Icon Db_array = IconLoader.getIcon("/debugger/db_array.svg"); // 16x16
     public static final Icon Db_db_object = IconLoader.getIcon("/debugger/db_db_object.svg"); // 16x16
 
@@ -559,18 +575,38 @@ public class AllIcons {
     @Deprecated
     public static final Icon Db_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png"); // 16x16
     public static final Icon Db_watch = IconLoader.getIcon("/debugger/db_watch.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static final Icon Disable_value_calculation = IconLoader.getIcon("/debugger/disable_value_calculation.png"); // 16x16
     public static final Icon EvaluateExpression = IconLoader.getIcon("/debugger/evaluateExpression.svg"); // 16x16
-    public static final Icon Explosion = IconLoader.getIcon("/debugger/explosion.png"); // 256x256
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Explosion = IconLoader.getIcon("/debugger/explosion.png"); // 16x16
     public static final Icon Frame = IconLoader.getIcon("/debugger/frame.svg"); // 16x16
     public static final Icon KillProcess = IconLoader.getIcon("/debugger/killProcess.svg"); // 16x16
     public static final Icon LambdaBreakpoint = IconLoader.getIcon("/debugger/LambdaBreakpoint.svg"); // 12x12
 
     public static class MemoryView {
       public static final Icon Active = IconLoader.getIcon("/debugger/memoryView/active.svg"); // 16x16
-      public static final Icon ClassTracked = IconLoader.getIcon("/debugger/memoryView/classTracked.png"); // 16x16
-      public static final Icon ToolWindowDisabled = IconLoader.getIcon("/debugger/memoryView/toolWindowDisabled.png"); // 13x13
-      public static final Icon ToolWindowEnabled = IconLoader.getIcon("/debugger/memoryView/toolWindowEnabled.png"); // 13x13
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Watch */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon ClassTracked = IconLoader.getIcon("/debugger/watch.svg"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon ToolWindowDisabled = IconLoader.getIcon("/debugger/memoryView/toolWindowDisabled.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon ToolWindowEnabled = IconLoader.getIcon("/debugger/memoryView/toolWindowEnabled.png"); // 16x16
 
     }
     public static final Icon MultipleBreakpoints = IconLoader.getIcon("/debugger/MultipleBreakpoints.svg"); // 12x12
@@ -601,8 +637,16 @@ public class AllIcons {
 
     public static class ThreadStates {
       public static final Icon Daemon_sign = IconLoader.getIcon("/debugger/threadStates/daemon_sign.svg"); // 16x16
-      public static final Icon EdtBusy = IconLoader.getIcon("/debugger/threadStates/edtBusy.png"); // 16x16
-      public static final Icon Exception = IconLoader.getIcon("/debugger/threadStates/exception.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.ProfileCPU */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon EdtBusy = IconLoader.getIcon("/actions/profileCPU.svg"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Lightning */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Exception = IconLoader.getIcon("/actions/lightning.svg"); // 16x16
       public static final Icon Idle = IconLoader.getIcon("/debugger/threadStates/idle.svg"); // 16x16
 
       /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall */
@@ -625,11 +669,19 @@ public class AllIcons {
       @Deprecated
       public static final Icon Running = IconLoader.getIcon("/actions/resume.svg"); // 16x16
       public static final Icon Socket = IconLoader.getIcon("/debugger/threadStates/socket.svg"); // 16x16
-      public static final Icon Threaddump = IconLoader.getIcon("/debugger/threadStates/threaddump.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Dump */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Threaddump = IconLoader.getIcon("/actions/dump.svg"); // 16x16
 
     }
     public static final Icon ThreadSuspended = IconLoader.getIcon("/debugger/threadSuspended.svg"); // 16x16
-    public static final Icon ToolConsole = IconLoader.getIcon("/debugger/toolConsole.png"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon ToolConsole = IconLoader.getIcon("/debugger/console.svg"); // 16x16
     public static final Icon Value = IconLoader.getIcon("/debugger/value.svg"); // 16x16
     public static final Icon ViewBreakpoints = IconLoader.getIcon("/debugger/viewBreakpoints.svg"); // 16x16
     public static final Icon Watch = IconLoader.getIcon("/debugger/watch.svg"); // 16x16
