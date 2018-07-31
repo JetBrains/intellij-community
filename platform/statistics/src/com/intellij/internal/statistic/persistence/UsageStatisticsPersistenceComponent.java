@@ -146,7 +146,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     }
     return options.isEAP() ? isAllowedForEAP : options.isSendingUsageStatsAllowed();
     */
-    return AnalyticsSettings.getInstance(getAndroidLogger()).getOptedIn();
+    return AnalyticsSettings.getOptedIn();
   }
 
   public void setShowNotification(boolean showNotification) {
