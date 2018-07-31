@@ -14,7 +14,7 @@ class MethodCallConstraint(private val callRef: GrReferenceExpression, val candi
   }
 
   private fun processArguments(constraints: MutableList<ConstraintFormula>) {
-    val argInfos = candidate.mapArguments()
+    val argInfos = candidate.argumentMaping
 
     argInfos.forEach { argument, pair ->
       val leftType = pair.second ?: return@forEach
