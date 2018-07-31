@@ -58,7 +58,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
     private final Class<T> myAgentInterface;
 
     private final String myAllPluginsRoot;
-    private final boolean myRuntimeNotBuild;
+    private final boolean myRunningFromSources;
 
     public AgentBuilderImpl(@NotNull RemoteAgentProxyFactory agentProxyFactory,
                             @NotNull Class<T> agentInterface,
@@ -68,7 +68,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
       File plugin = new File(PathUtil.getJarPathForClass(pluginClass));
       myAllPluginsRoot = plugin.getParent();
-      myRuntimeNotBuild = plugin.isDirectory();
+      myRunningFromSources = plugin.isDirectory();
     }
 
     @Override
@@ -109,7 +109,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
     @Override
     public Builder<T> withModuleDependency(@NotNull String runtimeModuleName, @NotNull String buildPathToJar) {
-      if (myRuntimeNotBuild) {
+      if (myRunningFromSources) {
         File specificsModule = new File(myAllPluginsRoot, runtimeModuleName);
         myModuleDependencies.add(specificsModule);
       }
