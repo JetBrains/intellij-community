@@ -43,9 +43,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     super(new BorderLayout());
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"), 
-                                                                     AllIcons.RunConfigurations.TestPassed, 
+                                                                     AllIcons.RunConfigurations.ShowPassed, 
                                                                      properties, TestConsoleProperties.HIDE_PASSED_TESTS));
-    actionGroup.add(new DumbAwareToggleInvertedBooleanProperty("Show Ignored", "Show Ignored", AllIcons.RunConfigurations.TestIgnored, 
+    actionGroup.add(new DumbAwareToggleInvertedBooleanProperty("Show Ignored", "Show Ignored", AllIcons.RunConfigurations.ShowIgnored, 
                                                                properties, TestConsoleProperties.HIDE_IGNORED_TEST));
     actionGroup.addSeparator();
 

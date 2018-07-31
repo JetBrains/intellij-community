@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +62,31 @@ public class TestIconMapper implements PoolOfTestIcons {
         return ERROR_ICON;
       case PASSED_INDEX:
         return PASSED_ICON;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Icon getToolbarIcon(@NotNull TestStateInfo.Magnitude magnitude) {
+    switch (magnitude) {
+      case SKIPPED_INDEX:
+        return AllIcons.RunConfigurations.TestSkipped;
+      case COMPLETE_INDEX:
+        return AllIcons.RunConfigurations.ToolbarPassed;
+      case NOT_RUN_INDEX:
+        return AllIcons.RunConfigurations.TestNotRan;
+      case RUNNING_INDEX:
+        return null;
+      case TERMINATED_INDEX:
+        return AllIcons.RunConfigurations.TestTerminated;
+      case IGNORED_INDEX:
+        return AllIcons.RunConfigurations.TestIgnored;
+      case FAILED_INDEX:
+        return AllIcons.RunConfigurations.ToolbarFailed;
+      case ERROR_INDEX:
+        return AllIcons.RunConfigurations.ToolbarError;
+      case PASSED_INDEX:
+        return AllIcons.RunConfigurations.ToolbarPassed;
     }
     return null;
   }
