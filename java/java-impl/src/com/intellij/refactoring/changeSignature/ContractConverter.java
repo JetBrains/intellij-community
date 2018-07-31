@@ -2,13 +2,10 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiMethod;
 import one.util.streamex.IntStreamEx;
@@ -62,11 +59,7 @@ public final class ContractConverter {
       result.add(convertContract(contract, newToOldIndex, oldToNewIndex, oldParameterNames));
     }
     if (result.equals(contracts)) return annotation;
-    boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
-    String mutates = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES));
-    String resultValue = StreamEx.of(result).joining("; ");
-    Project project = method.getProject();
-    return InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, resultValue, mutates);
+    return JavaMethodContractUtil.updateContract(annotation, result);
   }
 
   @NotNull
