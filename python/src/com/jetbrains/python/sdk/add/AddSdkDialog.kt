@@ -12,9 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.packaging.PyExecutionException
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
 import javax.swing.Action
@@ -207,18 +205,24 @@ abstract class AddSdkDialog constructor(protected val project: Project?) : Dialo
       return
     }
     catch (e: Exception) {
-      val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
-      if (cause == null) {
+      if (!handleSdkCreationException(e)) {
         Messages.showErrorDialog(e.localizedMessage, "Error")
-      }
-      else {
-        showProcessExecutionErrorDialog(project, cause)
       }
       return
     }
 
     close(OK_EXIT_CODE)
   }
+
+  /**
+   * The method is executed with the exception that is caught on
+   * [AddSdkView.complete] method execution. This allows to handle specifically
+   * certain exceptions that occur during the SDK creation process.
+   *
+   * @return `true` if the exception is handled specifically within the method
+   *         and `false` otherwise
+   */
+  abstract fun handleSdkCreationException(e: Exception): Boolean
 
   private fun onFinish() {
     doOKAction()

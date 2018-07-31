@@ -20,7 +20,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
+import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.create
@@ -58,6 +60,15 @@ class PyAddSdkDialog private constructor(project: Project?,
       }
     panels.addAll(extendedPanels)
     return panels
+  }
+
+  override fun handleSdkCreationException(e: Exception): Boolean {
+    val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
+    if (cause != null) {
+      showProcessExecutionErrorDialog(project, cause)
+      return true
+    }
+    return false
   }
 
   private fun <T> T.registerIfDisposable(): T = apply { (this as? Disposable)?.let { Disposer.register(disposable, it) } }
