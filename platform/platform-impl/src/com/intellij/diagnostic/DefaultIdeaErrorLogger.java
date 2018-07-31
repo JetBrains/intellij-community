@@ -71,7 +71,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return;
 
     // Android Studio: track exception count
-    if (AnalyticsSettings.getInstance(new NullLogger()).getOptedIn()) {
+    if (AnalyticsSettings.getOptedIn()) {
       Throwable t = event.getThrowable();
       if (t != null) {
         if (isReportableCrash(t)) {

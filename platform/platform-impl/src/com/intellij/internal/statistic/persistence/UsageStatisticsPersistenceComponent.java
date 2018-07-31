@@ -190,7 +190,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     /* Android Studio: we use our own mechanism
     return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
     */
-    return AnalyticsSettings.getInstance(getAndroidLogger()).getOptedIn();
+    return AnalyticsSettings.getOptedIn();
   }
 
   public void setShowNotification(boolean showNotification) {
