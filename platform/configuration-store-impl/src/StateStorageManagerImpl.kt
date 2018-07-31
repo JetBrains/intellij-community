@@ -505,7 +505,7 @@ internal val Storage.path: String
 
 
 internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml" || collapsedPath == StoragePathMacros.CACHE_FILE)) {
     return RoamingType.DISABLED
   }
   else {
