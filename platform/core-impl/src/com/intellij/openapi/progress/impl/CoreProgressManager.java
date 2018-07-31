@@ -105,6 +105,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
+  List<ProgressIndicator> getCurrentIndicators() {
+    synchronized (threadsUnderIndicator) {
+      return new ArrayList<>(threadsUnderIndicator.keySet());
+    }
+  }
+
   public static boolean runCheckCanceledHooks(@Nullable ProgressIndicator indicator) {
     CheckCanceledHook hook = ourCheckCanceledHook;
     return hook != null && hook.runHook(indicator);

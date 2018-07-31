@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -30,8 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
+  private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
   private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
-  private final Set<ProgressWindow> myUnsafeProgresses = ContainerUtil.newConcurrentSet();
 
   public ProgressManagerImpl() {
     HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
@@ -61,21 +62,23 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
 
   @Override
   public boolean hasUnsafeProgressIndicator() {
-    return super.hasUnsafeProgressIndicator() || !myUnsafeProgresses.isEmpty();
+    return super.hasUnsafeProgressIndicator() || ContainerUtil.exists(getCurrentIndicators(), ProgressManagerImpl::isUnsafeIndicator);
+  }
+
+  private static boolean isUnsafeIndicator(ProgressIndicator indicator) {
+    return indicator instanceof ProgressWindow && ((ProgressWindow)indicator).getUserData(SAFE_PROGRESS_INDICATOR) == null;
   }
 
   /**
    * The passes progress won't count in {@link #hasUnsafeProgressIndicator()} and won't stop from application exiting.
    */
   public void markProgressSafe(@NotNull ProgressWindow progress) {
-    myUnsafeProgresses.remove(progress);
+    progress.putUserData(SAFE_PROGRESS_INDICATOR, true);
   }
 
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    if (progress instanceof ProgressWindow) myUnsafeProgresses.add((ProgressWindow)progress);
-
-    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread() 
+    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread()
                              ? p -> { ((PingProgress)progress).interact(); return true; } 
                              : null;
     if (hook != null) addCheckCanceledHook(hook);
@@ -84,7 +87,6 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       super.executeProcessUnderProgress(process, progress);
     }
     finally {
-      if (progress instanceof ProgressWindow) myUnsafeProgresses.remove((ProgressWindow)progress);
       if (hook != null) removeCheckCanceledHook(hook);
     }
   }
