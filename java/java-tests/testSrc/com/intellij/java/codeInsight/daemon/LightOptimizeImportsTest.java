@@ -5,6 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 @SuppressWarnings("ALL")
@@ -138,6 +139,47 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
                           "      m2();\n" +
                           "      m3();\n" +
                           "      m4();\n" +
+                          "    }\n" +
+                          "}");
+  }
+
+  public void testConflictingSingleImportUsedInReferenceQualifier() {
+    myFixture.addClass("package p.p1; public class C {}");
+    myFixture.addClass("package p.p1; public class D {}");
+    myFixture.addClass("package p.p2;\n" +
+                       "public class B{\n" +
+                       "    public enum C { None, Some, All }\n" +
+                       "    public static final int JUNK = 0;\n" +
+                       "}");
+    myFixture.configureByText(StdFileTypes.JAVA, "package p.p2;\n" +
+                                                 "import p.p1.*;\n" +
+                                                 "import static p.p2.B.*;\n" +
+                                                 "import static p.p2.B.C;\n" +
+                                                 "public class A {\n" +
+                                                 "    public static void main( String[] args )\n" +
+                                                 "    {\n" +
+                                                 "        new D();\n" +
+                                                 "        System.out.println( C.None );\n" +
+                                                 "        System.out.println( JUNK );\n" +
+                                                 "    }\n" +
+                                                 "}");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "p", true));
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+    myFixture.checkResult("package p.p2;\n" +
+                          "\n" +
+                          "import p.p1.*;\n" +
+                          "\n" +
+                          "import static p.p2.B.C;\n" +
+                          "import static p.p2.B.*;\n" +
+                          "public class A {\n" +
+                          "    public static void main( String[] args )\n" +
+                          "    {\n" +
+                          "        new D();\n" +
+                          "        System.out.println( C.None );\n" +
+                          "        System.out.println( JUNK );\n" +
                           "    }\n" +
                           "}");
   }
