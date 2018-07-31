@@ -3,35 +3,28 @@ package org.jetbrains.idea.svn
 
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase.assertDoesntExist
 import com.intellij.testFramework.UsefulTestCase.assertExists
-import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.io.systemIndependentPath
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.FeatureMatcher
 import org.hamcrest.Matcher
-import org.hamcrest.Matchers.containsInAnyOrder
-import org.hamcrest.Matchers.equalToIgnoringCase
+import org.hamcrest.Matchers.*
 import org.jetbrains.annotations.NonNls
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
-import java.util.*
 
 @NonNls
 private const val LOG_SEPARATOR_START = "-------------"
 
-/**
- * @author yole
- */
 class SvnRenameTest : SvnTestCase() {
   override fun setUp() {
     super.setUp()
@@ -112,13 +105,6 @@ class SvnRenameTest : SvnTestCase() {
       "child/grandChild" to "childnew/grandChild",
       "child/grandChild/b.txt" to "childnew/grandChild/b.txt"
     )
-    // there is no such directory any more
-    /*VirtualFile oldChild = myWorkingCopyDir.findChild("child");
-    if (oldChild == null) {
-      refreshVfs();
-      oldChild = myWorkingCopyDir.findChild("child");
-    }
-    Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));*/
   }
 
   private fun prepareDirectoriesForRename(): VirtualFile {
@@ -139,18 +125,9 @@ class SvnRenameTest : SvnTestCase() {
     checkin()
 
     val runResult = runSvn("log", "-q", "newchild/a.txt")
-    AbstractVcsTestCase.verify(runResult)
-    val lines = StringUtil.split(runResult.stdout, "\n")
-    val iterator = lines.iterator()
-    while (iterator.hasNext()) {
-      val next = iterator.next()
-      if (next.startsWith(LOG_SEPARATOR_START)) {
-        iterator.remove()
-      }
-    }
-    assertEquals(2, lines.size.toLong())
-    assertTrue(lines[0].startsWith("r2 |"))
-    assertTrue(lines[1].startsWith("r1 |"))
+    verify(runResult)
+    val lines = runResult.stdout.lines().filterNot { it.isEmpty() || it.startsWith(LOG_SEPARATOR_START) }
+    assertThat(lines, contains(startsWith("r2 |"), startsWith("r1 |")))
   }
 
   // todo - undo; undo after commit
@@ -206,9 +183,10 @@ class SvnRenameTest : SvnTestCase() {
 
     refreshVfs()
     changeListManager.ensureUpToDate(false)
-    val changes = ArrayList<Change>()
-    changes.add(changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!.findChild("a.txt")!!)!!)
-    changes.add(changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)!!)
+    val changes = mutableListOf(
+      changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!.findChild("a.txt")!!)!!,
+      changeListManager.getChange(myWorkingCopyDir.findChild("newchild")!!)!!
+    )
 
     rollback(changes)
     assertExists(File(childPath, "a.txt"))
@@ -414,13 +392,12 @@ class SvnRenameTest : SvnTestCase() {
     )
   }
 
-  private fun moveToNewPackage(file: VirtualFile, packageName: String): VirtualFile {
-    return writeCommandAction(myProject).compute<VirtualFile, IOException> {
+  private fun moveToNewPackage(file: VirtualFile, packageName: String) =
+    writeCommandAction(myProject).compute<VirtualFile, IOException> {
       val packageDirectory = myWorkingCopyDir.createChildDirectory(this, packageName)
       file.move(this, packageDirectory)
       packageDirectory
     }
-  }
 
   private fun assertChanges(vararg expected: Pair<String?, String?>) {
     val changes = changeListManager.defaultChangeList.changes.toMutableList()
