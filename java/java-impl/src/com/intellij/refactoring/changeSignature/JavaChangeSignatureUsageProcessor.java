@@ -1045,7 +1045,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       if (checkUnusedParameter) {
         checkParametersToDelete(myChangeInfo.getMethod(), toRemove, conflictDescriptions);
       }
-      checkContract(conflictDescriptions, myChangeInfo.getMethod());
+      checkContract(conflictDescriptions, myChangeInfo.getMethod(), false);
 
       for (UsageInfo usageInfo : usagesSet) {
         final PsiElement element = usageInfo.getElement();
@@ -1065,7 +1065,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             }
           }
 
-          checkContract(conflictDescriptions, method);
+          checkContract(conflictDescriptions, method, true);
         }
         else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
           conflictDescriptions.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
@@ -1104,9 +1104,14 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    private void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
+    private void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method, boolean override) {
       try {
         ContractConverter.convertContract(method, myChangeInfo);
+      }
+      catch (ContractConverter.ContractInheritedException e) {
+        if (!override) {
+          conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());
+        }
       }
       catch (ContractConverter.ContractConversionException e) {
         conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());
