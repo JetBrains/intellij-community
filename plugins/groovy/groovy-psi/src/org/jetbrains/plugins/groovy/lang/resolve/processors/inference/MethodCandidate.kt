@@ -20,7 +20,7 @@ class MethodCandidate(val method: PsiMethod,
                       val arguments: List<Argument>,
                       val context: GroovyPsiElement) {
 
-  val argumentMaping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy {
+  val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy {
     mapArguments(typeComputer)
   }
 
@@ -29,8 +29,8 @@ class MethodCandidate(val method: PsiMethod,
   }
 
   fun isApplicable(substitutor: PsiSubstitutor): Boolean {
-    if (substitutor.substitutionMap.isEmpty() && argumentMaping.size == method.parameters.size) { //fast pass
-      if (argumentMaping.size == arguments.size) return true
+    if (substitutor.substitutionMap.isEmpty() && argumentMapping.size == method.parameters.size) { //fast pass
+      if (argumentMapping.size == arguments.size) return true
       return checkProviders(erasedArguments, method, substitutor, context, true) == applicable
     }
 
