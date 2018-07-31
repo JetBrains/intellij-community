@@ -872,7 +872,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
         int infoStart = error.getActualStartOffset();
         int infoEnd = error.getActualEndOffset();
 
-        return importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
+        return !(importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF));
       });
 
     return hasErrorsExceptUnresolvedImports;

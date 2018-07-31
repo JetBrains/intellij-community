@@ -371,6 +371,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
     List<HighlightInfo> errs = highlightErrors();
 
+    //error in import list
     assertEquals(1, errs.size());
 
     assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
@@ -379,7 +380,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     doHighlighting();
     UIUtil.dispatchAllInvocationEvents();
 
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
   }
 
   public void testAutoInsertImportForInnerClass() {
