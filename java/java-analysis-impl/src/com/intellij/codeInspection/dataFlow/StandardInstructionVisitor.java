@@ -97,9 +97,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       if (var.getInherentNullability() == Nullability.NULLABLE && !memState.isNotNull(dfaSource) && instruction.isVariableInitializer()) {
         DfaMemoryStateImpl stateImpl = (DfaMemoryStateImpl)memState;
-        stateImpl.setVariableState(var, stateImpl.getVariableState(var).withFact(DfaFactType.CAN_BE_NULL, true));
+        stateImpl.setVariableState(var, stateImpl.getVariableState(var).withFact(DfaFactType.NULLABILITY, DfaNullability.NULLABLE));
       }
-    } else if (dfaDest instanceof DfaFactMapValue && Boolean.FALSE.equals(((DfaFactMapValue)dfaDest).get(DfaFactType.CAN_BE_NULL))) {
+    } else if (dfaDest instanceof DfaFactMapValue && DfaNullability.isNotNull(((DfaFactMapValue)dfaDest).getFacts())) {
       checkNotNullable(memState, dfaSource, kind.problem(rValue));
     }
 
@@ -497,14 +497,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                       @Nullable NullabilityProblemKind.NullabilityProblem<T> problem) {
     boolean ok = checkNotNullable(memState, value, problem);
     if (value instanceof DfaFactMapValue) {
-      return ((DfaFactMapValue)value).withFact(DfaFactType.CAN_BE_NULL, false);
+      return ((DfaFactMapValue)value).withFact(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     }
     if (ok) return value;
     if (memState.isNull(value) && NullabilityProblemKind.nullableFunctionReturn.isMyProblem(problem)) {
-      return value.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false);
+      return value.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     }
     if (value instanceof DfaVariableValue) {
-      memState.forceVariableFact((DfaVariableValue)value, DfaFactType.CAN_BE_NULL, false);
+      memState.forceVariableFact((DfaVariableValue)value, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     }
     return value;
   }
@@ -742,7 +742,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
         DfaFactMapValue left = (DfaFactMapValue)dfaLeft;
         DfaFactMapValue right = (DfaFactMapValue)dfaRight;
-        useful = !right.getFacts().with(DfaFactType.CAN_BE_NULL, null).isSuperStateOf(left.getFacts());
+        useful = !right.getFacts().with(DfaFactType.NULLABILITY, null).isSuperStateOf(left.getFacts());
       } else {
         useful = true;
       }

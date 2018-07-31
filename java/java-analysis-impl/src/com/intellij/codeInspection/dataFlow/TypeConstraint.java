@@ -31,7 +31,7 @@ import java.util.*;
  * Immutable class representing a number of non-primitive type constraints applied to some value.
  * There are two types of constrains: value is instance of some type and value is not an instance of some type.
  * Unlike usual Java semantics, the {@code null} value is considered to be instanceof any type (non-null instanceof can be expressed
- * via additional restriction {@link DfaFactType#CAN_BE_NULL} {@code = false}).
+ * via additional restriction {@link DfaFactType#NULLABILITY} {@code = NOT_NULL}).
  */
 public abstract class TypeConstraint {
 
