@@ -65,7 +65,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
   }
 
   public static class Big extends AsyncProcessIcon {
-    private static final Icon[] BIG_ICONS = com.intellij.ui.AnimatedIcon.Default.ICONS.toArray(new Icon[0]);
+    private static final Icon[] BIG_ICONS = com.intellij.ui.AnimatedIcon.Big.ICONS.toArray(new Icon[0]);
 
     public Big(@NonNls final String name) {
       super(name, BIG_ICONS, AllIcons.Process.Big.Step_passive);
