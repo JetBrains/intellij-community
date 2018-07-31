@@ -22,9 +22,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author yole
@@ -197,12 +195,11 @@ public class QualifiedNameFinder {
   }
 
   /**
-   * Tries to find roots that contain given vfile, and among them the root that contains at the smallest depth.
-   * For equal depth source root is in preference to library.
+   * Tries to find roots that contain given vfile.
    */
   private static class PathChoosingVisitor implements RootVisitor {
     @Nullable private final VirtualFile myVFile;
-    @NotNull private final List<QualifiedName> myResults = new ArrayList<>();
+    @NotNull private final Set<QualifiedName> myResults = new LinkedHashSet<>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
       if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
@@ -214,23 +211,21 @@ public class QualifiedNameFinder {
     }
 
     @Override
-    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
+    public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
       if (myVFile != null) {
         final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
-        if (relativePath != null && !relativePath.isEmpty()) {
-          List<String> result = StringUtil.split(relativePath, "/");
-          if (result.size() > 0) {
-            result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
+        if (!StringUtil.isEmpty(relativePath)) {
+          final List<String> result = StringUtil.split(relativePath, "/");
+          if (!result.isEmpty()) {
+            final int lastIndex = result.size() - 1;
+            result.set(lastIndex, FileUtil.getNameWithoutExtension(result.get(lastIndex)));
           }
           for (String component : result) {
             if (!PyNames.isIdentifier(component)) {
               return true;
             }
           }
-          final QualifiedName resQname = QualifiedName.fromComponents(result);
-          if (!myResults.contains(resQname)) {
-            myResults.add(resQname);
-          }
+          myResults.add(QualifiedName.fromComponents(result));
         }
       }
       return true;
@@ -238,7 +233,7 @@ public class QualifiedNameFinder {
 
     @NotNull
     public List<QualifiedName> getResults() {
-      return myResults;
+      return new ArrayList<>(myResults);
     }
   }
 }
