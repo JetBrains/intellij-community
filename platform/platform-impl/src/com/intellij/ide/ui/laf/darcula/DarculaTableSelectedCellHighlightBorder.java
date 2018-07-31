@@ -16,10 +16,8 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -28,24 +26,9 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaTableSelectedCellHighlightBorder extends CompoundBorder implements UIResource {
-  private static final int BW = 1;
-
   public DarculaTableSelectedCellHighlightBorder() {
-
-    outsideBorder = JBUI.Borders.customLine(getFocusColor(), BW);
-    insideBorder = UIManager.getBorder("Table.cellNoFocusBorder");
-    if (insideBorder != null) {
-      Insets noFocusInsets = insideBorder.getBorderInsets(null);
-      int scaledBW = JBUI.scale(BW);
-
-      noFocusInsets.top -= scaledBW;
-      noFocusInsets.bottom -= scaledBW;
-      noFocusInsets.left -= scaledBW;
-      noFocusInsets.right -= scaledBW;
-      insideBorder = new JBEmptyBorder(noFocusInsets);
-    } else {
-      insideBorder = JBUI.Borders.empty(3);
-    }
+    outsideBorder = JBUI.Borders.customLine(getFocusColor(), 1);
+    insideBorder = JBUI.Borders.empty(3);
   }
 
   protected Color getFocusColor() {
