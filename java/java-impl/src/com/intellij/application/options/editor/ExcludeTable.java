@@ -32,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +43,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -56,21 +56,19 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
       return pair.exclude;
     }
 
-    @Nullable
     @Override
     public TableCellEditor getEditor(Item pair) {
       final JTextField field = GuiUtils.createUndoableTextField();
       field.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
-          field.setForeground(
-            ourPackagePattern.matcher(field.getText()).matches() ? UIUtil.getTableForeground() : JBColor.RED);
+          field.putClientProperty("JComponent.outline",
+                                  ourPackagePattern.matcher(field.getText()).matches() ? null : "error");
         }
       });
       return new DefaultCellEditor(field);
     }
 
-    @Nullable
     @Override
     public TableCellRenderer getRenderer(Item pair) {
       return new DefaultTableCellRenderer() {
@@ -108,13 +106,11 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
       return pair.scope;
     }
 
-    @Nullable
     @Override
     public TableCellRenderer getRenderer(Item pair) {
       return new ComboBoxTableRenderer<>(ExclusionScope.values());
     }
 
-    @Nullable
     @Override
     public TableCellEditor getEditor(Item pair) {
       return new ComboBoxTableRenderer<>(ExclusionScope.values());
@@ -130,7 +126,6 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
       pair.scope = value;
     }
 
-    @Nullable
     @Override
     public String getMaxStringValue() {
       return "Project";
@@ -201,7 +196,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     for (String s : JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames) {
       rows.add(new Item(s, ExclusionScope.Project));
     }
-    Collections.sort(rows, (o1, o2) -> o1.exclude.compareTo(o2.exclude));
+    Collections.sort(rows, Comparator.comparing(o -> o.exclude));
 
     setValues(rows);
   }
