@@ -339,7 +339,7 @@ object UpdateChecker {
 
     val pluginVersion = downloader.pluginVersion
     val installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId))
-    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
+    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, downloader.descriptor) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
       val oldDownloader = ourUpdatedPlugins[pluginId]

@@ -125,7 +125,7 @@ public class PluginDownloader {
       //store old plugins file
       descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(descriptor != null);
-      if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
+      if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myDescriptor) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false;
       }
@@ -163,7 +163,7 @@ public class PluginDownloader {
       }
 
       myPluginVersion = actualDescriptor.getVersion();
-      if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
+      if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myDescriptor) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false; //was not updated
       }
@@ -181,8 +181,18 @@ public class PluginDownloader {
   }
 
   public static int compareVersionsSkipBrokenAndIncompatible(@NotNull IdeaPluginDescriptor existingPlugin, String newPluginVersion) {
-    int state = comparePluginVersions(newPluginVersion, existingPlugin.getVersion());
+    PluginNode mockNewPlugin = new PluginNode(existingPlugin.getPluginId());
+    mockNewPlugin.setSinceBuild(existingPlugin.getSinceBuild());
+    mockNewPlugin.setVersion(newPluginVersion);
+    return compareVersionsSkipBrokenAndIncompatible(existingPlugin, mockNewPlugin);
+  }
+
+  public static int compareVersionsSkipBrokenAndIncompatible(@NotNull IdeaPluginDescriptor existingPlugin,
+                                                             @NotNull IdeaPluginDescriptor newPlugin) {
+    int state = comparePluginVersions(newPlugin.getVersion(), existingPlugin.getVersion());
     if (state < 0 && (PluginManagerCore.isBrokenPlugin(existingPlugin) || PluginManagerCore.isIncompatible(existingPlugin))) {
+      state = 1;
+    } else if (state == 0 && isNewerPlatform(newPlugin.getSinceBuild(), existingPlugin.getSinceBuild())) {
       state = 1;
     }
     return state;
@@ -351,5 +361,9 @@ public class PluginDownloader {
     node.setDepends(downloader.myDepends, null);
     node.setDescription(downloader.myDescription);
     return node;
+  }
+
+  private static boolean isNewerPlatform(String newVersion, String oldVersion) {
+    return VersionComparatorUtil.compare(newVersion, oldVersion) > 0;
   }
 }
