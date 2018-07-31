@@ -119,6 +119,9 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     VirtualFile schemaFile = schemaFiles.iterator().next();
     schemaFile = ((JsonSchemaServiceImpl)myService).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
 
+    String tooltip = isJsonFile ? JSON_SCHEMA_TOOLTIP : JSON_SCHEMA_TOOLTIP_OTHER_FILES;
+    String bar = isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES;
+
     if (schemaFile instanceof HttpVirtualFile) {
       RemoteFileInfo info = ((HttpVirtualFile)schemaFile).getFileInfo();
       if (info == null) return getDownloadErrorState(null);
@@ -127,7 +130,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       switch (info.getState()) {
         case DOWNLOADING_NOT_STARTED:
           addDownloadingUpdateListener(info);
-          return getNoSchemaState();
+          return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
+                                   true);
         case DOWNLOADING_IN_PROGRESS:
           addDownloadingUpdateListener(info);
           return new MyWidgetState("Download is scheduled or in progress", "Downloading JSON schema", false);
@@ -141,9 +145,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       state.setWarning(true);
       return state;
     }
-
-    String tooltip = isJsonFile ? JSON_SCHEMA_TOOLTIP : JSON_SCHEMA_TOOLTIP_OTHER_FILES;
-    String bar = isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES;
 
     JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
     if (provider != null) {
