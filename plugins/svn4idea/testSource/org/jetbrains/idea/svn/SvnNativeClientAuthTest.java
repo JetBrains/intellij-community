@@ -22,6 +22,8 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +36,7 @@ import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class SvnNativeClientAuthTest extends SvnTestCase {
   private AcceptResult myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
   private boolean myCredentialsCorrect = true;
@@ -556,6 +559,4 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
       ++ myExpectedCert;
     }
   }
-
-  private static @interface Test {}
 }

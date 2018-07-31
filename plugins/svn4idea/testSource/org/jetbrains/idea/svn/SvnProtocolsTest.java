@@ -31,6 +31,8 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,7 @@ import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
 
+@Ignore
 public class SvnProtocolsTest extends SvnTestCase {
   // todo correct URL
   private final static String ourSSH_URL = "svn+ssh://unit-069:222/home/irina/svnrepo";
@@ -201,7 +204,4 @@ public class SvnProtocolsTest extends SvnTestCase {
     assertTrue(cnt[0] > 1);
     return root;
   }
-
-  // disable tests for now
-  private @interface Test{}
 }
