@@ -4,9 +4,8 @@ package com.intellij.testGuiFramework.framework
 import com.intellij.testGuiFramework.remote.IdeProcessControlManager
 import org.junit.AfterClass
 import org.junit.BeforeClass
-import org.junit.runner.RunWith
 
-@RunWith(GuiTestSuiteRunner::class)
+
 open class GuiTestSuite {
 
   companion object {
