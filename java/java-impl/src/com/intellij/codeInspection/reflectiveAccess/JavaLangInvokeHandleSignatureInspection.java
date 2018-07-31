@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
@@ -248,8 +249,8 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       return;
     }
     if (!isAbstractAllowed) {
-      final int notAbstract = ContainerUtil.indexOf(matchingMethods, method -> !method.hasModifierProperty(PsiModifier.ABSTRACT));
-      if (notAbstract < 0) {
+      final boolean allAbstract = matchingMethods.stream().allMatch(method -> method.hasModifierProperty(PsiModifier.ABSTRACT));
+      if (allAbstract) {
         final String className = ownerClass.getPsiClass().getQualifiedName();
         if (className != null) {
           holder.registerProblem(methodNameExpression,
@@ -267,7 +268,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     if (callerClass != null && callerClass.isExact()) {
       final PsiClass caller = callerClass.getPsiClass();
       final PsiClass owner = ownerClass.getPsiClass();
-      if (!caller.isInheritor(owner, true) && !owner.getManager().areElementsEquivalent(owner, caller)) {
+      if (!InheritanceUtil.isInheritorOrSelf(caller, owner, true)) {
         final String callerName = caller.getQualifiedName();
         final String ownerName = owner.getQualifiedName();
         if (callerName != null && ownerName != null) {

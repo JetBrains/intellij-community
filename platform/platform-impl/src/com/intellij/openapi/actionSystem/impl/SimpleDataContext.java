@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,14 +33,13 @@ public class SimpleDataContext implements DataContext {
     myParent = parent;
     myWithRules = withRules;
     if (withRules) {
-      myDataProvider = dataId -> myDataId2Data.get(dataId);
+      myDataProvider = dataId -> getDataFromSelfOrParent(dataId);
     }
   }
 
   @Override
   public Object getData(String dataId) {
-    Object result =  myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) : 
-           myParent == null ? null : myParent.getData(dataId);
+    Object result = getDataFromSelfOrParent(dataId);
     
     if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {
       result = IdeFocusManager.getGlobalInstance().getFocusOwner();
@@ -53,6 +53,12 @@ public class SimpleDataContext implements DataContext {
     }
 
     return result;
+  }
+
+  @Nullable
+  private Object getDataFromSelfOrParent(String dataId) {
+    return myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) :
+           myParent == null ? null : myParent.getData(dataId);
   }
 
   @NotNull

@@ -683,6 +683,7 @@ public class AllIcons {
     @Deprecated
     public static final Icon ToolConsole = IconLoader.getIcon("/debugger/console.svg"); // 16x16
     public static final Icon Value = IconLoader.getIcon("/debugger/value.svg"); // 16x16
+    public static final Icon VariablesTab = IconLoader.getIcon("/debugger/variablesTab.svg"); // 16x16
     public static final Icon ViewBreakpoints = IconLoader.getIcon("/debugger/viewBreakpoints.svg"); // 16x16
     public static final Icon Watch = IconLoader.getIcon("/debugger/watch.svg"); // 16x16
 
