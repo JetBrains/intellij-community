@@ -204,24 +204,26 @@ public class IfStatement extends Statement {
     tracer.incrementCurrentSourceLine();
 
     if (ifstat == null) {
-      buf.appendIndent(indent + 1);
-
+      boolean semicolon = false;
       if (ifedge.explicit) {
+        semicolon = true;
         if (ifedge.getType() == StatEdge.TYPE_BREAK) {
           // break
-          buf.append("break");
+          buf.appendIndent(indent + 1).append("break");
         }
         else {
           // continue
-          buf.append("continue");
+          buf.appendIndent(indent + 1).append("continue");
         }
 
         if (ifedge.labeled) {
           buf.append(" label").append(ifedge.closure.id.toString());
         }
       }
-      buf.append(";").appendLineSeparator();
-      tracer.incrementCurrentSourceLine();
+      if(semicolon) {
+        buf.append(";").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+      }
     }
     else {
       buf.append(ExprProcessor.jmpWrapper(ifstat, indent + 1, true, tracer));
