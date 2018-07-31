@@ -75,7 +75,7 @@ public class GitIndexUtil {
         ContainerUtil.addIfNotNull(result, parseListFilesStagedRecord(root, line));
       }
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
 
     return result;
   }
@@ -108,7 +108,7 @@ public class GitIndexUtil {
         ContainerUtil.addIfNotNull(result, parseListTreeRecord(root, line));
       }
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
 
     return result;
   }
@@ -205,7 +205,7 @@ public class GitIndexUtil {
       h.addParameters("--cacheinfo", mode, blobHash.asString(), path);
     }
     h.endOptions();
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
   }
 
   @NotNull

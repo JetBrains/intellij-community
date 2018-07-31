@@ -343,7 +343,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       handler.setSilent(false);
       handler.addParameters(subCommand, remoteName, application.getGitUrl());
       GitCommandResult result = myGit.runCommand(handler);
-      result.getOutputOrThrow();
+      result.throwOnError();
       getRepository().update();
       if (result.getExitCode() != 0) {
         throw new ServerRuntimeException(failMessage);
@@ -421,7 +421,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
         handler.setStdoutSuppressed(false);
         handler.addParameters("-m", message);
         handler.endOptions();
-        Git.getInstance().runCommand(handler).getOutputOrThrow();
+        Git.getInstance().runCommand(handler).throwOnError();
       }
     }
     catch (VcsException e) {

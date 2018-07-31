@@ -83,8 +83,8 @@ import java.awt.event.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
@@ -674,7 +674,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
@@ -707,7 +707,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change));
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MV);
       h.addParameters("-f", beforePath.getPath(), afterPath.getPath());
-      Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+      Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
       return true;
     }
     catch (VcsException e) {
@@ -850,7 +850,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--no-verify");
     }
     handler.endOptions();
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   /**
@@ -1003,7 +1003,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 

@@ -178,7 +178,7 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
       LOG.info("Adding GitHub parent as a remote host");
       indicator.setText("Adding GitHub parent as a remote host...");
       try {
-        myGit.addRemote(myRepository, "upstream", parentRepoUrl).getOutputOrThrow();
+        myGit.addRemote(myRepository, "upstream", parentRepoUrl).throwOnError();
       }
       catch (VcsException e) {
         GithubNotifications

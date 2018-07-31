@@ -97,7 +97,7 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
         handler.endOptions();
         handler.addParameters(paths);
         GitCommandResult result = Git.getInstance().runCommand(handler);
-        result.getOutputOrThrow();
+        result.throwOnError();
       }
 
       GitFileUtils.addPaths(myProject, root, rootPaths);

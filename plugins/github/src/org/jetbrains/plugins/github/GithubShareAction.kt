@@ -208,7 +208,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           //git remote add origin git@github.com:login/name.git
           LOG.info("Adding GitHub as a remote host")
           indicator.text = "Adding GitHub as a remote host..."
-          git.addRemote(repository, remoteName, remoteUrl).getOutputOrThrow()
+          git.addRemote(repository, remoteName, remoteUrl).throwOnError()
           repository.update()
 
           // create sample commit for binding project
@@ -293,7 +293,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             handler.setStdoutSuppressed(false)
             handler.addParameters("-m", dialog.commitMessage)
             handler.endOptions()
-            Git.getInstance().runCommand(handler).getOutputOrThrow()
+            Git.getInstance().runCommand(handler).throwOnError()
 
             VcsFileUtil.markFilesDirty(project, modified)
           }

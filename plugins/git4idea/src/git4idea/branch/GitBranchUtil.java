@@ -150,7 +150,7 @@ public class GitBranchUtil {
     });
 
     GitCommandResult result = Git.getInstance().runCommandWithoutCollectingOutput(h);
-    result.getOutputOrThrow();
+    result.throwOnError();
 
     return tags;
   }

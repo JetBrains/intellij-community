@@ -275,7 +275,7 @@ public class GitRebaser {
     GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.ADD);
     handler.setSilent(false);
     handler.addParameters("--update");
-    myGit.runCommand(handler).getOutputOrThrow();
+    myGit.runCommand(handler).throwOnError();
   }
 
   private GitConflictResolver.Params makeParamsForRebaseConflict() {
