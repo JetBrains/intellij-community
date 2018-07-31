@@ -7,8 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to disable expansion of path macros in the values of certain properties.
- *
- * @author yole
  */
 public abstract class PathMacroFilter {
   public boolean skipPathMacros(@NotNull Element element) {
@@ -19,7 +17,7 @@ public abstract class PathMacroFilter {
     return false;
   }
 
-  public boolean recursePathMacros(Attribute attribute) {
+  public boolean recursePathMacros(@NotNull Attribute attribute) {
     return false;
   }
 }

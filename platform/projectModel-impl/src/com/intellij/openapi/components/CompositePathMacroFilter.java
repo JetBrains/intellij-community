@@ -37,7 +37,7 @@ public class CompositePathMacroFilter extends PathMacroFilter {
   }
 
   @Override
-  public boolean recursePathMacros(Attribute attribute) {
+  public boolean recursePathMacros(@NotNull Attribute attribute) {
     for (PathMacroFilter filter : myFilters) {
       if (filter.recursePathMacros(attribute)) return true;
     }
