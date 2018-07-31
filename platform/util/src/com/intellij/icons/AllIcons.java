@@ -546,6 +546,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Db_temporary_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
+    public static final Icon Db_variable = IconLoader.getIcon("/debugger/db_variable.svg"); // 16x16
     public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_verified_breakpoint.svg"); // 12x12
     public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.svg"); // 12x12
     public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.svg"); // 12x12
@@ -557,6 +558,7 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Db_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_watch = IconLoader.getIcon("/debugger/db_watch.svg"); // 16x16
     public static final Icon Disable_value_calculation = IconLoader.getIcon("/debugger/disable_value_calculation.png"); // 16x16
     public static final Icon EvaluateExpression = IconLoader.getIcon("/debugger/evaluateExpression.svg"); // 16x16
     public static final Icon Explosion = IconLoader.getIcon("/debugger/explosion.png"); // 256x256
