@@ -7,8 +7,7 @@ import java.awt.Component
 import javax.swing.Icon
 
 /**
- * Represents the view for adding new Python SDK. It is used in
- * [PyAddSdkDialog].
+ * Represents the view for adding new SDK. It is used in [AddSdkDialog].
  */
 interface AddSdkView {
   val panelName: String
@@ -16,7 +15,7 @@ interface AddSdkView {
   val icon: Icon
 
   /**
-   * Returns the created sdk after closing [PyAddSdkDialog]. The method may
+   * Returns the created sdk after closing [AddSdkDialog]. The method may
    * return `null` if the dialog was closed or cancelled or if the creation
    * failed.
    *
@@ -52,7 +51,7 @@ interface AddSdkView {
   /**
    * Completes SDK creation.
    *
-   * The method is called by [PyAddSdkDialog] when *OK* or *Finish* button is
+   * The method is called by [AddSdkDialog] when *OK* or *Finish* button is
    * pressed.
    *
    * The method may attempt to create the SDK and throw an [Exception] if some
@@ -60,7 +59,7 @@ interface AddSdkView {
    * obtained by [getOrCreateSdk] method.
    *
    * If the method throws an [Exception] the error message is shown to the user
-   * and [PyAddSdkDialog] is not closed.
+   * and [AddSdkDialog] is not closed.
    *
    * @throws Exception if SDK creation failed for some reason
    */
