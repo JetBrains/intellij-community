@@ -261,7 +261,7 @@ public class IndexingStamp {
 
     // Indexed stamp compact format:
     // (DataInputOutputUtil.timeBase + numberOfOutdatedIndices outdated_index_id+)? (dominating_index_stamp) index_id*
-    // Note, that FSRecords.INSTANCE.REASONABLY_SMALL attribute storage allocation policy will give an attribute 32 bytes to each file
+    // Note, that FSRecords.getInstance().REASONABLY_SMALL attribute storage allocation policy will give an attribute 32 bytes to each file
     // Compact format allows 22 indexed states in this state
     private void writeToStream(final DataOutputStream stream) throws IOException {
       if (myIndexStamps != null && !myIndexStamps.isEmpty()) {

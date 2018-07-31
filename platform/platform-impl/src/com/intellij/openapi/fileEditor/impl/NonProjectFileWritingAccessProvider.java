@@ -121,7 +121,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     if (!(file.getFileSystem() instanceof LocalFileSystem)) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
     if (file.getFileSystem() instanceof TempFileSystem) return true;
 
-    IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
+    IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
 
     if (documentHistory.isRecentlyChanged(file)) return true;
 
