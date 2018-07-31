@@ -1867,6 +1867,7 @@ public class AllIcons {
     public static final Icon ToolbarError = IconLoader.getIcon("/runConfigurations/toolbarError.svg"); // 16x16
     public static final Icon ToolbarFailed = IconLoader.getIcon("/runConfigurations/toolbarFailed.svg"); // 16x16
     public static final Icon ToolbarPassed = IconLoader.getIcon("/runConfigurations/toolbarPassed.svg"); // 16x16
+    public static final Icon ToolbarTerminated = IconLoader.getIcon("/runConfigurations/toolbarTerminated.svg"); // 16x16
     public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.png"); // 16x16
     public static final Icon TrackTests = IconLoader.getIcon("/runConfigurations/trackTests.png"); // 16x16
 

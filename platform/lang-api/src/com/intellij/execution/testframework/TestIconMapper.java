@@ -70,24 +70,23 @@ public class TestIconMapper implements PoolOfTestIcons {
   public static Icon getToolbarIcon(@NotNull TestStateInfo.Magnitude magnitude) {
     switch (magnitude) {
       case SKIPPED_INDEX:
-        return AllIcons.RunConfigurations.TestSkipped;
+        return AllIcons.RunConfigurations.ShowIgnored;
       case COMPLETE_INDEX:
         return AllIcons.RunConfigurations.ToolbarPassed;
       case NOT_RUN_INDEX:
         return AllIcons.RunConfigurations.TestNotRan;
-      case RUNNING_INDEX:
-        return null;
       case TERMINATED_INDEX:
-        return AllIcons.RunConfigurations.TestTerminated;
+        return AllIcons.RunConfigurations.ToolbarTerminated;
       case IGNORED_INDEX:
-        return AllIcons.RunConfigurations.TestIgnored;
+        return AllIcons.RunConfigurations.ShowIgnored;
       case FAILED_INDEX:
         return AllIcons.RunConfigurations.ToolbarFailed;
       case ERROR_INDEX:
         return AllIcons.RunConfigurations.ToolbarError;
       case PASSED_INDEX:
         return AllIcons.RunConfigurations.ToolbarPassed;
+      default:
+        return null;
     }
-    return null;
   }
 }
