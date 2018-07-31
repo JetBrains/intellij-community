@@ -196,7 +196,7 @@ object GithubApiRequests {
 
 
       @JvmStatic
-      fun get(url: String) = Get.jsonSearchPage<GithubIssue>(url).withOperationName("search issues in repository")
+      fun get(url: String) = Get.jsonSearchPage<GithubSearchedIssue>(url).withOperationName("search issues in repository")
     }
   }
 
