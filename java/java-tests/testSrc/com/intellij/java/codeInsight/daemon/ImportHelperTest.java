@@ -42,6 +42,7 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -381,6 +382,35 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+  }
+
+  public void testAutoOptimizeDoesntSuddenlyRemoveImportsDuringTyping() {
+    @Language("JAVA")
+    @NonNls String text = "package x; " +
+                          "import java.util.ArrayList; " +
+                          "class S {{ <caret> ArrayList l;\n" +
+                          "}}";
+    configureByText(StdFileTypes.JAVA, text);
+
+    CodeInsightWorkspaceSettings.getInstance(myProject).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    List<HighlightInfo> errs = highlightErrors();
+
+    assertEmpty(errs);
+
+    type("int i = ");
+    UIUtil.dispatchAllInvocationEvents();
+    errs = highlightErrors();
+    assertNotEmpty(errs);
+    assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+
+    type("0;//");
+    UIUtil.dispatchAllInvocationEvents();
+    errs = highlightErrors();
+    assertEmpty(errs);
+
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
 
   public void testAutoInsertImportForInnerClass() {
