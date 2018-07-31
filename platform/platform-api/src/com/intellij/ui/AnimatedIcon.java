@@ -58,6 +58,19 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Big.Step_8);
   }
 
+  public static class Recording extends AnimatedIcon {
+    public Recording() {
+      super(DELAY, ICONS.toArray(new Icon[0]));
+    }
+
+    public static final int DELAY = 250;
+    public static final List<Icon> ICONS = asList(
+      AllIcons.Ide.Macro.Recording_1,
+      AllIcons.Ide.Macro.Recording_2,
+      AllIcons.Ide.Macro.Recording_3,
+      AllIcons.Ide.Macro.Recording_4);
+  }
+
   @Deprecated
   public static class Grey extends AnimatedIcon {
     public Grey() {

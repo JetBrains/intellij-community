@@ -1199,10 +1199,10 @@ public class AllIcons {
     public static final Icon LookupRelevance = IconLoader.getIcon("/ide/lookupRelevance.png"); // 12x12
 
     public static class Macro {
-      public static final Icon Recording_1 = IconLoader.getIcon("/ide/macro/recording_1.png"); // 16x16
-      public static final Icon Recording_2 = IconLoader.getIcon("/ide/macro/recording_2.png"); // 16x16
-      public static final Icon Recording_3 = IconLoader.getIcon("/ide/macro/recording_3.png"); // 16x16
-      public static final Icon Recording_4 = IconLoader.getIcon("/ide/macro/recording_4.png"); // 16x16
+      public static final Icon Recording_1 = IconLoader.getIcon("/ide/macro/recording_1.svg"); // 16x16
+      public static final Icon Recording_2 = IconLoader.getIcon("/ide/macro/recording_2.svg"); // 16x16
+      public static final Icon Recording_3 = IconLoader.getIcon("/ide/macro/recording_3.svg"); // 16x16
+      public static final Icon Recording_4 = IconLoader.getIcon("/ide/macro/recording_4.svg"); // 16x16
       public static final Icon Recording_stop = IconLoader.getIcon("/ide/macro/recording_stop.png"); // 16x16
 
     }
