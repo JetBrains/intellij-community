@@ -20,6 +20,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.intellij.sdk.add.AddSdkDialog
+import com.intellij.sdk.add.AddSdkView
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.packaging.PyExecutionException

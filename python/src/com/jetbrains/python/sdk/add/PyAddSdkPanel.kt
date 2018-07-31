@@ -19,7 +19,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.jetbrains.python.sdk.add.DialogFlowAction.OK
+import com.intellij.sdk.add.AddSdkStateListener
+import com.intellij.sdk.add.AddSdkView
+import com.intellij.sdk.add.DialogFlowAction
+import com.intellij.sdk.add.DialogFlowAction.OK
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
 import java.awt.Component
