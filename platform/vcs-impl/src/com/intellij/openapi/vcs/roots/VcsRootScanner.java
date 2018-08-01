@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsRootChecker;
@@ -86,6 +87,7 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
                                                   @NotNull ProjectRootManager projectRootManager,
                                                   @NotNull VirtualFile root,
                                                   @NotNull Function<VirtualFile, Result> dirFound) {
+    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
     Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor(NO_FOLLOW_SYMLINKS, depthLimit) {
       @NotNull
@@ -101,7 +103,7 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
           return result;
         }
 
-        if (ReadAction.compute(() -> project.isDisposed() || projectRootManager.getFileIndex().isExcluded(file))) {
+        if (ReadAction.compute(() -> project.isDisposed() || !file.equals(project.getBaseDir()) && !fileIndex.isInContent(file))) {
           return SKIP_CHILDREN;
         }
 
