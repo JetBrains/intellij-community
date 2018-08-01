@@ -166,7 +166,6 @@ public class ContainerUtilCollectionsTest {
       assertNull(map.get(strong));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -192,7 +191,6 @@ public class ContainerUtilCollectionsTest {
       assertEquals(0, map.get(strong));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -218,7 +216,6 @@ public class ContainerUtilCollectionsTest {
       assertNull(map.get(RANDOM_INT));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
