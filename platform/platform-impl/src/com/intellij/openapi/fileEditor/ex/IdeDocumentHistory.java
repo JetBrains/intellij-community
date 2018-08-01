@@ -18,26 +18,28 @@ package com.intellij.openapi.fileEditor.ex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class IdeDocumentHistory {
-  public static IdeDocumentHistory getInstance(Project project) {
+public interface IdeDocumentHistory {
+  static IdeDocumentHistory getInstance(Project project) {
     return project.getComponent(IdeDocumentHistory.class);
   }
 
-  public abstract void includeCurrentCommandAsNavigation();
-  public abstract void includeCurrentPlaceAsChangePlace();
-  public abstract void clearHistory();
+  void includeCurrentCommandAsNavigation();
+  void includeCurrentPlaceAsChangePlace();
+  void clearHistory();
 
-  public abstract void back();
-  public abstract void forward();
+  void back();
+  void forward();
 
-  public abstract boolean isBackAvailable();
-  public abstract boolean isForwardAvailable();
+  boolean isBackAvailable();
+  boolean isForwardAvailable();
 
-  public abstract void navigatePreviousChange();
-  public abstract void navigateNextChange();
-  public abstract boolean isNavigatePreviousChangeAvailable();
-  public abstract boolean isNavigateNextChangeAvailable();
+  void navigatePreviousChange();
+  void navigateNextChange();
+  boolean isNavigatePreviousChangeAvailable();
+  boolean isNavigateNextChangeAvailable();
 
-  public abstract VirtualFile[] getChangedFiles();
+  VirtualFile[] getChangedFiles();
+  boolean isRecentlyChanged(@NotNull VirtualFile file);
 }

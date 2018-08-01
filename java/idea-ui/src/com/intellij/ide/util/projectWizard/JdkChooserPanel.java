@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -223,7 +224,9 @@ public class JdkChooserPanel extends JPanel {
 
   public static Sdk chooseAndSetJDK(final Project project) {
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
+    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
+    final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"),
+                               frame != null ? frame : new JLabel("onair"), projectJdk);
     if (jdk == null) {
       return null;
     }

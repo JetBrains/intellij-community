@@ -9,7 +9,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.diagnostic.ThreadDumper;
@@ -796,8 +795,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       }
       Editor activeEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)dca.myPsiDocumentManager;
-      if (documentManager.hasUncommitedDocuments() || activeEditor==null) {
+
+      if (documentManager.hasUncommitedDocuments()) {
         // restart when everything committed
+        AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
+        return;
+      }
+
+      if (!ApplicationManager.getApplication().isOnAir() && activeEditor == null) {
         AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
         return;
       }
