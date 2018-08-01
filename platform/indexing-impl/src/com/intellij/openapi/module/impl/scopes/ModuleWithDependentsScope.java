@@ -28,9 +28,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,25 +58,29 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
   @NotNull
   private static Set<Module> buildDependents(@NotNull Module module) {
-    Set<Module> result = new THashSet<>();
+    // optimization: String hash code is one field read
+    Set<Module> result = new THashSet<>(new TObjectHashingStrategy<Module>() {
+      @Override
+      public int computeHashCode(Module m) {
+        return m.getName().hashCode();
+      }
+
+      @Override
+      public boolean equals(Module o1, Module o2) {
+        return o1 == o2;
+      }
+    });
     result.add(module);
 
     ModuleIndex index = getModuleIndex(module.getProject());
 
-    Queue<Module> walkingQueue = new Queue<>(10);
-    walkingQueue.addLast(module);
-
-    Set<Module> processedExporting = new THashSet<>();
-    while (!walkingQueue.isEmpty()) {
-      Module current = walkingQueue.pullFirst();
-      processedExporting.add(current);
+    HashSetQueue<Module> walkingQueue = new HashSetQueue<>();
+    walkingQueue.add(module);
+    for (Module current : walkingQueue) {
       result.addAll(index.plainUsages.get(current));
-      for (Module dependent : index.exportingUsages.get(current)) {
-        result.add(dependent);
-        if (processedExporting.add(dependent)) {
-          walkingQueue.addLast(dependent);
-        }
-      }
+      Collection<Module> exported = index.exportingUsages.get(current);
+      walkingQueue.addAll(exported);
+      result.addAll(exported);
     }
     return result;
   }
@@ -119,8 +124,8 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean isSearchInModuleContent(@NotNull Module aModule) {
-    return myModules.contains(aModule);
+  public boolean isSearchInModuleContent(@NotNull Module module) {
+    return myModules.contains(module);
   }
 
   @Override
@@ -131,8 +136,9 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-    ModuleManager moduleManager = ModuleManager.getInstance(myModule.getProject());
-    return ContainerUtil.mapNotNull(DirectoryIndex.getInstance(myModule.getProject()).getDependentUnloadedModules(myModule),
+    Project project = myModule.getProject();
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    return ContainerUtil.mapNotNull(DirectoryIndex.getInstance(project).getDependentUnloadedModules(myModule),
                                     moduleManager::getUnloadedModuleDescription);
   }
 
@@ -154,6 +160,6 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
   @Override
   public int hashCode() {
-    return myModule.hashCode();
+    return myModule.getName().hashCode();
   }
 }

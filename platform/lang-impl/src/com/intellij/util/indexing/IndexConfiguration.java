@@ -16,6 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -32,7 +33,7 @@ class IndexConfiguration {
     new THashMap<>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<>();
   private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<>();
-  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<>();
+  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<>(FileTypeManagerEx.FILE_TYPE_BY_NAME_HASHING_STRATEGY);
   private volatile boolean myFreezed;
 
   <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
@@ -68,8 +69,7 @@ class IndexConfiguration {
 
       if (associatedFileTypes != null && !associatedFileTypes.isEmpty()) {
         for(FileType fileType:associatedFileTypes) {
-          List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
-          if (ids == null) myFileType2IndicesWithFileTypeInfoMap.put(fileType, ids = new ArrayList<>(5));
+          List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.computeIfAbsent(fileType, __ -> new ArrayList<>(5));
           ids.add(name);
         }
       } else {
@@ -83,7 +83,8 @@ class IndexConfiguration {
     }
   }
 
-  List<ID<?, ?>> getFileTypesForIndex(FileType fileType) {
+  @NotNull
+  List<ID<?, ?>> getFileTypesForIndex(@NotNull FileType fileType) {
     assert myFreezed;
     List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
     if (ids == null) ids = myIndicesWithoutFileTypeInfo;

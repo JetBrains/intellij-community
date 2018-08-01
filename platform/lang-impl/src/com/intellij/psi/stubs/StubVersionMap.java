@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,10 +33,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.IndexingStamp;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TObjectLongHashMap;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +52,7 @@ class StubVersionMap {
   private static final Charset ourEncoding = CharsetToolkit.UTF8_CHARSET;
   private static final Logger LOG = Logger.getInstance(StubVersionMap.class);
   private final Map<FileType, Object> fileTypeToVersionOwner = new THashMap<>();
-  private final TObjectLongHashMap<FileType> fileTypeToVersion = new TObjectLongHashMap<>();
+  private final TObjectLongHashMap<FileType> fileTypeToVersion = new TObjectLongHashMap<>(FileTypeManagerEx.FILE_TYPE_BY_NAME_HASHING_STRATEGY);
   private final TLongObjectHashMap<FileType> versionToFileType = new TLongObjectHashMap<>();
   private long myStubIndexStamp;
 
