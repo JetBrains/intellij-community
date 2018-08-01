@@ -929,7 +929,11 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testParametrizedDuplicateKeepSignature() throws Exception {
-    doTest(true, () -> getFile().putUserData(ExtractMethodProcessor.SIGNATURE_CHANGE_ALLOWED, Boolean.FALSE));
+    doExactDuplicatesTest();
+  }
+
+  public void testRejectParametrizedDuplicate() throws Exception {
+    doExactDuplicatesTest();
   }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
@@ -1287,6 +1291,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testDuplicatePreserveComments() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDuplicateSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDuplicateSubexpressionWithParentheses() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testBeforeCommentAfterSelectedFragment() throws Exception {
     doTest();
   }
@@ -1360,6 +1376,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   private void doTest(boolean duplicates) throws Exception {
     doTest(duplicates, null);
+  }
+
+  private void doExactDuplicatesTest() throws Exception {
+    doTest(true, () -> getFile().putUserData(ExtractMethodProcessor.SIGNATURE_CHANGE_ALLOWED, Boolean.FALSE));
   }
 
   private void doTest(boolean duplicates, @Nullable Runnable prepare) throws Exception {

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
@@ -35,6 +36,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.NonNls
@@ -82,7 +84,6 @@ open class MultipleFileMergeDialog2(
     @Suppress("LeakingThis")
     init()
 
-    updateColumnSizes()
     updateTree()
     table.tree.selectionModel.addTreeSelectionListener { updateButtonState() }
     selectFirstFile()
@@ -108,14 +109,14 @@ open class MultipleFileMergeDialog2(
   override fun createCenterPanel(): JComponent {
     return panel(LCFlags.disableMagic) {
       val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
-      if (!description.isNullOrBlank()) {
+      if (!description.isBlank()) {
         row {
-          label(description!!)
+          label(description)
         }
       }
 
       row {
-        scrollPane(TreeTable(tableModel).also {
+        scrollPane(MyTable(tableModel).also {
           table = it
           it.tree.isRootVisible = false
           it.setTreeCellRenderer(virtualFileRenderer)
@@ -162,25 +163,63 @@ open class MultipleFileMergeDialog2(
       override fun getColumnClass(): Class<*> = TreeTableModel::class.java
     })
 
-    mergeSession?.mergeInfoColumns?.mapTo(columns) { ColumnInfoAdapter(it) }
+    val mergeInfoColumns = mergeSession?.mergeInfoColumns
+    if (mergeInfoColumns != null) {
+      var customColumnNames = mergeDialogCustomizer.columnNames
+      if (customColumnNames != null && customColumnNames.size != mergeInfoColumns.size) {
+        LOG.error("Custom column names ($customColumnNames) don't match default columns ($mergeInfoColumns)")
+        customColumnNames = null
+      }
+      mergeInfoColumns.mapIndexedTo(columns) { index, columnInfo ->
+        ColumnInfoAdapter(columnInfo, customColumnNames?.get(index) ?: columnInfo.name) }
+    }
     return columns.toTypedArray()
   }
 
-  private class ColumnInfoAdapter(private val base: ColumnInfo<Any, Any>) : ColumnInfo<DefaultMutableTreeNode, Any>(base.name) {
+  private class ColumnInfoAdapter(private val base: ColumnInfo<Any, Any>,
+                                  private val columnName: String) : ColumnInfo<DefaultMutableTreeNode, Any>(columnName) {
     override fun valueOf(node: DefaultMutableTreeNode) = (node.userObject as? VirtualFile)?.let { base.valueOf(it) }
     override fun getMaxStringValue() = base.maxStringValue
     override fun getAdditionalWidth() = base.additionalWidth
+    override fun getTooltipText() = base.tooltipText ?: columnName
   }
 
-  private fun updateColumnSizes() {
-    for ((index, columnInfo) in tableModel.columns.withIndex()) {
-      val column = table.columnModel.getColumn(index)
-      columnInfo.maxStringValue?.let {
-        val width = Math.max(table.getFontMetrics(table.font).stringWidth(it),
-                             table.getFontMetrics(table.tableHeader.font).stringWidth(columnInfo.name)) + columnInfo.additionalWidth
-        column.maxWidth = width
-        column.preferredWidth = width
+  private class MyTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
+
+    init {
+      getTableHeader().reorderingAllowed = false
+    }
+
+    override fun doLayout() {
+      if (getTableHeader().resizingColumn == null) {
+        updateColumnSizes()
       }
+      super.doLayout()
+    }
+
+    private fun updateColumnSizes() {
+      for ((index, columnInfo) in tableModel.columns.withIndex()) {
+        val column = columnModel.getColumn(index)
+        columnInfo.maxStringValue?.let {
+          val width = calcColumnWidth(it, columnInfo)
+          column.preferredWidth = width
+        }
+      }
+
+      var size = width
+      val fileColumn = 0
+      for (i in 0 until tableModel.columns.size) {
+        if (i == fileColumn) continue
+        size -= columnModel.getColumn(i).preferredWidth
+      }
+
+      columnModel.getColumn(fileColumn).preferredWidth = Math.max(size, JBUI.scale(200))
+    }
+
+    private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
+      val columnName = StringUtil.shortenTextWithEllipsis(columnInfo.name, 15, 7, true)
+      return Math.max(getFontMetrics(font).stringWidth(maxStringValue),
+                      getFontMetrics(tableHeader.font).stringWidth(columnName)) + columnInfo.additionalWidth
     }
   }
 

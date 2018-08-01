@@ -6,6 +6,7 @@ import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.fileSearchAndReplace
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
 import org.fest.swing.exception.ComponentLookupException
@@ -193,7 +194,7 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMavenSelectValues(
       logUIStep("Select `Single module` option")
       radioButton("Single module:").select()
     }
-    waitUntil { button("OK").isEnabled }
+    waitUntil("Wait for button OK is enabled") { button("OK").isEnabled }
     val cmb = combobox("Kotlin compiler and runtime version:")
     if (cmb.listItems().contains(kotlinVersion)) {
       logTestStep("Select kotlin version `$kotlinVersion`")

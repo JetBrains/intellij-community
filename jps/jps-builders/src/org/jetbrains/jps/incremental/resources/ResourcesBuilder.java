@@ -34,6 +34,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -65,25 +69,26 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     }
 
     try {
-      Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
-      holder.processDirtyFiles((target_, file, sourceRoot) -> {
-        Boolean isSkipped = skippedRoots.get(sourceRoot);
+      final Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
+      holder.processDirtyFiles((t, f, srcRoot) -> {
+        Boolean isSkipped = skippedRoots.get(srcRoot);
         if (isSkipped == null) {
-          File outputDir = target_.getOutputDir();
-          isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, sourceRoot.getRootFile()));
-          skippedRoots.put(sourceRoot, isSkipped);
+          File outputDir = t.getOutputDir();
+          isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, srcRoot.getRootFile()));
+          skippedRoots.put(srcRoot, isSkipped);
         }
         if (isSkipped.booleanValue()) {
           return true;
         }
         try {
-          copyResource(context, sourceRoot, file, outputConsumer);
+          copyResource(context, srcRoot, f, outputConsumer);
           return !context.getCancelStatus().isCanceled();
         }
         catch (IOException e) {
           LOG.info(e);
-          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
-          context.processMessage(new CompilerMessage("resources", BuildMessage.Kind.ERROR, e.getMessage(), sourcePath));
+          context.processMessage(
+            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(f.getPath()))
+          );
           return false;
         }
       });
@@ -129,19 +134,28 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
     context.processMessage(new ProgressMessage("Copying resources... [" + rd.getTarget().getModule().getName() + "]"));
 
-    final String outputPath = targetPath.toString();
-    final File targetFile = new File(outputPath);
-    FileUtil.copyContent(file, targetFile);
+    final File targetFile = new File(targetPath.toString());
     try {
+      final Path from = file.toPath();
+      final Path to = targetFile.toPath();
+      try {
+        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+      }
+      catch (NoSuchFileException e) {
+        final File parent = targetFile.getParentFile();
+        if (parent != null && parent.mkdirs()) {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat on successful target dir creation
+        }
+      }
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
     }
     catch (Exception e) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
     }
   }
 
   @NotNull
   public String getPresentableName() {
-    return "Resource Compiler";
+    return BUILDER_NAME;
   }
 }

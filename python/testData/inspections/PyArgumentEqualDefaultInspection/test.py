@@ -87,5 +87,12 @@ def decorator(arg='baz'):
 def f<error descr="'(' expected">:</error>
   pass
 
+# PY-30335
 with open('file', <weak_warning descr="Argument equals to default parameter value">None</weak_warning>) as file:
     pass
+
+# PY-29731
+def py29731(p=True):
+    pass
+
+py29731(<weak_warning descr="Argument equals to default parameter value">True</weak_warning>)

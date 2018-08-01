@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
@@ -263,6 +261,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
 
     final JPanel contentPane = new JPanel(new BorderLayout());
+    installFocusTraversalPolicy(contentPane, new LayoutFocusTraversalPolicy());
     contentPane.add(myHeader, BorderLayout.NORTH);
 
     JPanel innerPanel = new JPanel(new BorderLayout());
@@ -878,5 +877,24 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
       return name;
     }
+  }
+
+  /**
+   * Installs a focus traversal policy for the tool window.
+   * If the policy cannot handle a keystroke, it delegates the handling to
+   * the nearest ancestors focus traversal policy. For instance,
+   * this policy does not handle KeyEvent.VK_ESCAPE, so it can delegate the handling
+   * to a ThreeComponentSplitter instance.
+   */
+  public static void installFocusTraversalPolicy(@NotNull Container container, @NotNull FocusTraversalPolicy policy) {
+    container.setFocusCycleRoot(true);
+    container.setFocusTraversalPolicyProvider(true);
+    container.setFocusTraversalPolicy(policy);
+    installDefaultFocusTraversalKeys(container, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
+    installDefaultFocusTraversalKeys(container, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS);
+  }
+
+  private static void installDefaultFocusTraversalKeys(@NotNull Container container, int id) {
+    container.setFocusTraversalKeys(id, KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(id));
   }
 }

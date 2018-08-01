@@ -16,10 +16,9 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -28,24 +27,24 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 
-public abstract class VcsLogToolbarPopupActionGroup extends DumbAwareAction {
-  @NotNull
-  private final String myActionGroup;
+public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
 
-  public VcsLogToolbarPopupActionGroup(@NotNull String group, @NotNull Icon icon) {
-    myActionGroup = group;
-    getTemplatePresentation().setIcon(icon);
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  @Override
+  public boolean canBePerformed(DataContext context) {
+    return true;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DefaultActionGroup group = new DefaultActionGroup(ActionManager.getInstance().getAction(myActionGroup));
-
     ListPopup popup = JBPopupFactory.getInstance()
-                                    .createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS,
+                                    .createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS,
                                                             true,
                                                             VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
     Component component = e.getInputEvent().getComponent();

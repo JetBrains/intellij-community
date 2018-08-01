@@ -101,9 +101,14 @@ public class UIUtil {
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
   }
 
+  @Deprecated
   public static void decorateFrame(@NotNull JRootPane pane) {
-    if (Registry.is("ide.mac.allowDarkWindowDecorations")) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
+    decorateWindowHeader(pane);
+  }
+  
+  public static void decorateWindowHeader(@NotNull JRootPane pane) {
+    if (SystemInfo.isMac) {
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
     }
   }
 
@@ -2140,15 +2145,24 @@ public class UIUtil {
    */
   @NotNull
   public static BufferedImage createImage(Graphics g, int width, int height, int type) {
+    return createImage(g, width, height, type, RoundingMode.FLOOR);
+  }
+
+  /**
+   * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
+   */
+  @NotNull
+  public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
     if (g instanceof Graphics2D) {
       Graphics2D g2d = (Graphics2D)g;
       if (isJreHiDPI(g2d)) {
-        return RetinaImage.create(g2d, width, height, type);
+        return RetinaImage.create(g2d, width, height, type, rm);
       }
       //noinspection UndesirableClassUsage
-      return new BufferedImage(width, height, type);
+      return new BufferedImage(rm.round(width), rm.round(height), type);
     }
-    return createImage(width, height, type);  }
+    return createImage(rm.round(width), rm.round(height), type);
+  }
 
   /**
    * Creates a HiDPI-aware BufferedImage in the component scale.
@@ -2531,8 +2545,13 @@ public class UIUtil {
     drawCenteredString(g, rect, str, true, true);
   }
 
-  public static boolean isFocusAncestor(@NotNull final JComponent component) {
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+  /**
+   * @param component to check whether it has focus within its component hierarchy
+   * @return {@code true} if component or one of its children has focus
+   * @see Component#isFocusOwner()
+   */
+  public static boolean isFocusAncestor(@NotNull Component component) {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (owner == null) return false;
     if (owner == component) return true;
     return SwingUtilities.isDescendingFrom(owner, component);
@@ -2671,7 +2690,7 @@ public class UIUtil {
    * @return {@code true} if component is not {@code null} and can be focused
    * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
    */
-  public static boolean isFocusable(JComponent component) {
+  public static boolean isFocusable(@Nullable Component component) {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
   }
 

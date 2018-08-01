@@ -19,7 +19,7 @@ import com.jetbrains.python.testing.PyTestFrameworkService
 import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.testing.isTestElement
 
-const val decoratorName: String = "pytest.fixture"
+private const val decoratorName: String = "pytest.fixture"
 
 /**
  * If named parameter has fixture -- return it
@@ -27,23 +27,18 @@ const val decoratorName: String = "pytest.fixture"
 internal fun getFixture(element: PyNamedParameter, typeEvalContext: TypeEvalContext): PyTestFixture? {
   val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
   val func = PsiTreeUtil.getParentOfType(element, PyFunction::class.java) ?: return null
-  return getFixtures(module, func, typeEvalContext)
-    .filter { o -> o.name == element.name }
-    .sortedBy {
-      ModuleUtilCore.findModuleForPsiElement(it.function) != module
-    }
-    .firstOrNull()
+  return getFixtures(module, func, typeEvalContext).firstOrNull { o -> o.name == element.name }
 }
 
 /**
  * @return Boolean If named parameter has fixture or not
  */
-internal fun hasFixture(element: PyNamedParameter, typeEvalContext: TypeEvalContext) = getFixture(element, typeEvalContext) != null
+fun PyNamedParameter.isFixture(typeEvalContext: TypeEvalContext) = getFixture(this, typeEvalContext) != null
 
 /**
- * @return Boolean is function decorated as fixture
+ * @return Boolean is function decorated as fixture or marked so by EP
  */
-internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName) != null
+internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName) != null || isCustomFixture()
 
 
 /**
@@ -51,7 +46,15 @@ internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName
  * @property resolveTarget PyElement where this fixture is resolved
  * @property name String fixture name
  */
-internal data class PyTestFixture(val function: PyFunction, val resolveTarget: PyElement, val name: String)
+data class PyTestFixture(val function: PyFunction? = null, val resolveTarget: PyElement? = function, val name: String)
+
+
+fun findDecoratorsByName(module: Module, name: String): Iterable<PyDecorator> =
+  StubIndex.getElements(PyDecoratorStubIndex.KEY, name, module.project,
+                        GlobalSearchScope.union(
+                          arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
+                        PyDecorator::class.java)
+
 
 private fun createFixture(decorator: PyDecorator): PyTestFixture? {
   val target = decorator.target ?: return null
@@ -73,25 +76,27 @@ private val pyTestName = PyTestFrameworkService.getSdkReadableNameByFramework(Py
  *
  * @param forWhat function that you want to use fixtures with. Could be test or fixture itself.
  *
- * @return List<PyFunction> all py.test fixtures in project
+ * @return List<PyFunction> all pytest fixtures in project
  */
 internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: TypeEvalContext): List<PyTestFixture> {
   // Fixtures could be used only by test functions or other fixtures.
   val fixture = forWhat.isFixture()
-  val pyTestEnabled = TestRunnerService.getInstance(module).projectConfiguration == pyTestName
+  val pyTestEnabled = isPyTestEnabled(module)
   return if (
     fixture ||
     (pyTestEnabled && isTestElement(forWhat, ThreeState.NO, typeEvalContext)) ||
-    (PyTestFixtureSubjectDetectorExtension.EP_NAME.extensions.find { it.isSubjectForFixture(forWhat) } != null)
+    forWhat.isSubjectForFixture()
   ) {
-    StubIndex.getElements(PyDecoratorStubIndex.KEY, decoratorName, module.project,
-                          GlobalSearchScope.union(
-                            arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
-                          PyDecorator::class.java)
-      .mapNotNull { createFixture(it) }
-      .filterNot { fixture && it.name == forWhat.name } // Do not suggest fixture for itself
+    //Fixtures
+    (findDecoratorsByName(module, decoratorName)
+       .mapNotNull { createFixture(it) }
+     + getCustomFixtures(typeEvalContext, forWhat))
+      .filterNot { fixture && it.name == forWhat.name }.toList()  // Do not suggest fixture for itself
   }
   else emptyList()
 }
+
+internal fun isPyTestEnabled(module: Module) =
+  TestRunnerService.getInstance(module).projectConfiguration == pyTestName
 
 

@@ -61,6 +61,14 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myIpythonEnabled = enabled;
   }
 
+  public boolean isUseExistingConsole() {
+    return myState.myUseExistingConsole;
+  }
+
+  public void setUseExistingConsole(boolean enabled) {
+    myState.myUseExistingConsole = enabled;
+  }
+
   public static PyConsoleOptions getInstance(Project project) {
     return ServiceManager.getService(project, PyConsoleOptions.class);
   }
@@ -76,6 +84,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowVariablesByDefault = state.myShowVariablesByDefault;
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
+    myState.myUseExistingConsole = state.myUseExistingConsole;
   }
 
   public static class State {
@@ -84,6 +93,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowDebugConsoleByDefault = false;
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
+    public boolean myUseExistingConsole = false;
   }
 
   @Tag("console-settings")

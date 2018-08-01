@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -32,7 +32,9 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testStatementsUnambiguous() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
 
   fun testRequiresBare() =
-    variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named", "lib.auto", "lib.claimed")
+    variants("module M { requires <caret>",
+             "transitive", "static", "M2", "java.base", "java.se", "java.xml.bind", "java.xml.ws", "javax.doomed",
+             "lib.multi.release", "lib.named", "lib.auto", "lib.claimed")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
   fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")
@@ -42,7 +44,9 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testExportsQualified() = variants("module M { exports pkg.<caret> }", "main", "other", "empty")
   fun testExportsQualifiedUnambiguous() = complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other.<caret> }")
   fun testExportsTo() = complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
-  fun testExportsToList() = variants("module M { exports pkg.other to <caret> }", "M2", "java.base", "lib.multi.release", "lib.named")
+  fun testExportsToList() =
+    variants("module M { exports pkg.other to <caret> }",
+             "M2", "java.base", "java.se", "java.xml.bind", "java.xml.ws", "javax.doomed", "lib.multi.release", "lib.named")
   fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
 
   fun testUsesPrefixed() = complete("module M { uses p<caret> }", "module M { uses pkg.<caret> }")

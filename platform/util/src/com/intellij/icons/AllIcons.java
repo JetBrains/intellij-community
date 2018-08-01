@@ -1883,6 +1883,11 @@ public class AllIcons {
     public static final Icon Unshelve = IconLoader.getIcon("/vcs/Unshelve.svg"); // 16x16
     public static final Icon UnshelveSilent = IconLoader.getIcon("/vcs/unshelveSilent.svg"); // 16x16
 
+    public static class Vendors {
+      public static final Icon Github = IconLoader.getIcon("/vcs/vendors/github.svg"); // 16x16
+
+    }
+
   }
 
   public static class Webreferences {

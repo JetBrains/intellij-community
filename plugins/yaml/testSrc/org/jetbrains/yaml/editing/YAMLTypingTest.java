@@ -42,6 +42,14 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("\n");
   }
 
+  public void testPreserveDedent() {
+    doTest("\n");
+  }
+
+  public void testPreserveDedentAfterInlinedMap() {
+    doTest("\n");
+  }
+
   @SuppressWarnings("SameParameterValue")
   private void doTest(String insert) {
     String testName = getTestName(true);

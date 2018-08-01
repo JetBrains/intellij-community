@@ -100,6 +100,8 @@ class CommunityLibraryLicenses {
                        url: "http://coverage.readthedocs.org/"),
     new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "1.2.4", license: "MIT License",
                        url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
+    new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "3.0.2", license: "MIT License",
+                       url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
     new LibraryLicense(name: "Cucumber-Groovy", libraryName: "cucumber-groovy", version: "1.2.4", license: "MIT License",
                        url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
     new LibraryLicense(name: "Cucumber-Java", libraryName: "cucumber-java", version: "1.2.4", license: "MIT License",
@@ -185,7 +187,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.9", license: "LGPL 2",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.10", license: "LGPL 2",
                        url: "https://github.com/JetBrains/jediterm", licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/COPYING"),
     new LibraryLicense(name: "JEuclid", libraryName: "jeuclid-core-3.1.9.jar", version: "3.1.9", license: "Apache 2.0",
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
@@ -426,8 +428,10 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
 
-    new LibraryLicense(name: "delight-nashorn-sandbox", libraryName: "delight-nashorn-sandbox", version: "0.1.15", license: "Apache 2.0",
-                          url: "https://github.com/javadelight/delight-nashorn-sandbox", licenseUrl: "https://github.com/javadelight/delight-nashorn-sandbox/blob/master/LICENSE.TXT"),
+    new LibraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino", version: "1.7.8", license: "MPL 1.1",
+                       url: "http://www.mozilla.org/rhino/", licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
+    new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", version: "0.0.6", license: "Apache 2.0",
+                          url: "https://github.com/javadelight/delight-rhino-sandbox", licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
 
 
     jetbrainsLibrary("intellij-coverage"),
@@ -440,6 +444,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),
     jetbrainsLibrary("KotlinJavaRuntime"),
+    jetbrainsLibrary("KotlinScriptRuntime"),
     jetbrainsLibrary("kotlinx-coroutines-core"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8")
   ] as List<LibraryLicense>

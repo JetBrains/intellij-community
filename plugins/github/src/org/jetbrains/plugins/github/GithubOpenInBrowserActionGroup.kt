@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
@@ -25,14 +26,13 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
-import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GithubRepositoryPath
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
 open class GithubOpenInBrowserActionGroup
-  : ActionGroup("Open on GitHub", "Open corresponding link in browser", GithubIcons.Github_icon) {
+  : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github) {
 
   override fun update(e: AnActionEvent?) {
     if (e == null) return
@@ -147,7 +147,7 @@ open class GithubOpenInBrowserActionGroup
       }
 
       private fun openCommitInBrowser(path: GithubRepositoryPath, revisionHash: String) {
-        BrowserUtil.browse("https://$path/commit/$revisionHash")
+        BrowserUtil.browse("${path.toUrl()}/commit/$revisionHash")
       }
 
       private fun openFileInBrowser(project: Project,
@@ -190,13 +190,13 @@ open class GithubOpenInBrowserActionGroup
                                 relativePath: String,
                                 branch: String,
                                 path: GithubRepositoryPath): String? {
-        val builder = StringBuilder("https://")
+        val builder = StringBuilder()
 
         if (StringUtil.isEmptyOrSpaces(relativePath)) {
-          builder.append(path).append("/tree/").append(branch)
+          builder.append(path.toUrl()).append("/tree/").append(branch)
         }
         else {
-          builder.append(path).append("/blob/").append(branch).append('/').append(relativePath)
+          builder.append(path.toUrl()).append("/blob/").append(branch).append('/').append(relativePath)
         }
 
         if (editor != null && editor.document.lineCount >= 1) {

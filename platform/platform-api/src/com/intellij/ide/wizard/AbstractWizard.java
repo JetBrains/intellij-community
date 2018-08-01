@@ -135,20 +135,20 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       JPanel leftPanel = new JPanel();
       if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
-        TouchbarDataKeys.putClientPropertyDialogButton(myHelpButton, false, false, index++);
+        TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
       }
       leftPanel.add(myCancelButton);
-      TouchbarDataKeys.putClientPropertyDialogButton(myCancelButton, true, false, index++);
+      TouchbarDataKeys.putDialogButtonDescriptor(myCancelButton, index++);
       panel.add(leftPanel, BorderLayout.WEST);
 
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
-        TouchbarDataKeys.putClientPropertyDialogButton(myPreviousButton, true, false, index++);
+        TouchbarDataKeys.putDialogButtonDescriptor(myPreviousButton, index++).setMainGroup(true);
       }
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myNextButton);
-      TouchbarDataKeys.putClientPropertyDialogButton(myNextButton, true, true, index++);
+      TouchbarDataKeys.putDialogButtonDescriptor(myNextButton, index++).setMainGroup(true).setDefault(true);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);

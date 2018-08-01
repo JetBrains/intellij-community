@@ -2,8 +2,10 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.testGuiFramework.fixtures.GutterFixture
+import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
@@ -174,8 +176,8 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   }
 }
 
-fun GuiTestCase.checkRunConfiguration(vararg configuration: String) {
-  val cfgName = configuration[configuration.size - 1]
+fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
+  val cfgName = configuration.last()
   val runDebugConfigurations = "Run/Debug Configurations"
   ideFrame {
     logTestStep("Going to check presence of Run/Debug configuration `$cfgName`")
@@ -187,12 +189,27 @@ fun GuiTestCase.checkRunConfiguration(vararg configuration: String) {
     dialog(runDebugConfigurations) {
       assert(exists { jTree(*configuration) })
       jTree(*configuration).clickPath(*configuration)
+      for ((field, expectedValue) in expectedValues) {
+        logTestStep("Field `$field`has a value = `$expectedValue`")
+        checkOneValue(this@checkRunConfiguration, field, expectedValue)
+      }
       button("Cancel").click()
     }
   }
 }
 
-fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
+fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String, expectedValue: String){
+  val actualValue = when {
+    guiTestCase.exists {textfield(expectedField)} -> textfield(expectedField).text()
+    guiTestCase.exists { combobox(expectedField) } -> combobox(expectedField).selectedItem()
+    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
+  }
+  assert(actualValue == expectedValue) {
+    "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
+  }
+}
+
+fun GuiTestCase.checkProjectIsRun(configuration: String, message: String) {
   val buttonRun = "Run"
   logTestStep("Going to run configuration `$configuration`")
   ideFrame {
@@ -203,11 +220,11 @@ fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
     toolwindow(id = buttonRun) {
       content(tabName = configuration) {
         editor {
-          val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
-          assert(output.firstOrNull { it.contains(message) } != null){
-            "Run output:\n" +
-            "\t${output.joinToString("\n\t")}\n" +
-            "doesn't contain expected message `$message`"
+          GuiTestUtilKt.waitUntil("Wait for '$message' appears") {
+            val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
+            logInfo("output: ${output.map { "\n\t$it" }}")
+            logInfo("expected message = '$message'")
+            output.firstOrNull { it.contains(message) } != null
           }
         }
       }
@@ -221,13 +238,8 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
     editor {
       waitUntilFileIsLoaded()
       waitUntilErrorAnalysisFinishes()
-      assert(gutter.isGutterIconPresent(GutterFixture.GutterIcon.RUN_SCRIPT)) {
-        "No `Run` icons found on gutter panel"
-      }
+      gutter.waitUntilIconsShown(mapOf(GutterFixture.GutterIcon.RUN_SCRIPT to expectedNumberOfRunIcons))
       val gutterRunLines = gutter.linesWithGutterIcon(GutterFixture.GutterIcon.RUN_SCRIPT)
-      assert(gutterRunLines.size == expectedNumberOfRunIcons) {
-        "Found ${gutterRunLines.size} gutter icons `Run`, but expected $expectedNumberOfRunIcons"
-      }
       val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
       for ((index, line) in gutterRunLines.withIndex()) {
         // line numbers start with 1, but index in the contents list starts with 0

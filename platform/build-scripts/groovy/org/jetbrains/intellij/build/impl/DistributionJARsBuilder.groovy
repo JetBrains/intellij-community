@@ -478,7 +478,7 @@ class DistributionJARsBuilder {
             }
           }
         }
-        def outputResourceJars = new MultiValuesMap<String, String>()
+        def outputResourceJars = new MultiValuesMap<String, String>(true)
         actualModuleJars.values().forEach {
           def resourcesJarName = layout.localizableResourcesJarName(it)
           if (resourcesJarName != null) {

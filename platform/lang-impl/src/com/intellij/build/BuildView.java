@@ -319,6 +319,9 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   @Nullable
   @Override
   public Object getData(String dataId) {
+    if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+      return getConsoleView();
+    }
     Object data = super.getData(dataId);
     if (data != null) return data;
     StartBuildEvent startBuildEvent = myStartBuildEventRef.get();

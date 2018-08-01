@@ -206,6 +206,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.cucumber.java") {
       withModule("intellij.cucumber.jvmFormatter")
+      withModule("intellij.cucumber.jvmFormatter3")
       withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")
       withResource("../../community/lib/gherkin-2.12.2.jar", "lib")
       doNotCreateSeparateJarForLocalizableResources()
@@ -230,11 +231,6 @@ class CommunityRepositoryModules {
     // required for android plugin
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
-    },
-    plugin("intellij.statsCollector") {
-      withModule("intellij.statsCollector.features", "features.jar")
-      withModule("intellij.statsCollector.logEvents")
-      withResource("features/resources", "lib")
     }
   ]
 
@@ -248,9 +244,9 @@ class CommunityRepositoryModules {
       withModule("intellij.android.rt", "android-rt.jar", null)
 
       withModule("intellij.android", "android.jar", null)
-      withModule("intellij.android.android-adb", "android.jar")
-      withModule("intellij.android.android-debuggers", "android.jar")
-      withModule("intellij.android.android-lang", "android.jar")
+      withModule("intellij.android.adb", "android.jar")
+      withModule("intellij.android.debuggers", "android.jar")
+      withModule("intellij.android.lang", "android.jar")
       withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
@@ -265,8 +261,8 @@ class CommunityRepositoryModules {
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.apkanalyzer", "android.jar")
-      withModule("intellij.android.project-system", "android.jar")
-      withModule("intellij.android.project-system-gradle", "android.jar")
+      withModule("intellij.android.projectSystem", "android.jar")
+      withModule("intellij.android.projectSystem.gradle", "android.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")

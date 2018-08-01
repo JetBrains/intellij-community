@@ -13,13 +13,13 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
-  private val functionRef = SmartPointerManager.createPointer(fixture.function)
-  private val resolveRef = SmartPointerManager.createPointer(fixture.resolveTarget)
+class PyTestFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
+  private val functionRef = fixture.function?.let { SmartPointerManager.createPointer(it) }
+  private val resolveRef = fixture.resolveTarget?.let { SmartPointerManager.createPointer(it) }
 
-  override fun resolve() = resolveRef.element
+  override fun resolve() = resolveRef?.element
 
-  fun getFunction() = functionRef.element
+  fun getFunction() = functionRef?.element
 
   override fun getVariants() = emptyArray<Any>()
 
@@ -33,7 +33,7 @@ private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: 
 object PyTextFixtureTypeProvider : PyTypeProviderBase() {
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
     val param = referenceTarget as? PyNamedParameter ?: return null
-    val fixtureFunc = param.references.filterIsInstance(PyTextFixtureReference::class.java).firstOrNull()?.getFunction() ?: return null
+    val fixtureFunc = param.references.filterIsInstance(PyTestFixtureReference::class.java).firstOrNull()?.getFunction() ?: return null
     return context.getReturnType(fixtureFunc)?.let { Ref(it) }
 
   }
@@ -43,7 +43,7 @@ private object PyTestReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val namedParam = element as? PyNamedParameter ?: return emptyArray()
     val fixture = getFixture(namedParam, TypeEvalContext.codeAnalysis(element.project, element.containingFile)) ?: return emptyArray()
-    return arrayOf(PyTextFixtureReference(namedParam, fixture))
+    return arrayOf(PyTestFixtureReference(namedParam, fixture))
   }
 }
 

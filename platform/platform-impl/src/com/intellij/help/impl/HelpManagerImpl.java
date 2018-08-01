@@ -32,6 +32,7 @@ import com.intellij.openapi.help.WebHelpProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +85,7 @@ public class HelpManagerImpl extends HelpManager {
 
       String url = info.getWebHelpUrl();
       if (!url.endsWith("/")) url += "/";
-      url += productVersion + "/?" + id;
+      url += productVersion + "/?" + URLUtil.encodeURIComponent(id);
 
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
       return;

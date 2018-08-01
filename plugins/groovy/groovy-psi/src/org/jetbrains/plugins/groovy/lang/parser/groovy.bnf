@@ -264,10 +264,10 @@ private annotation_value ::= annotation | annotation_array_value | expression
 {
   name = 'annotation attribute initializer'
 }
-annotation_array_value ::= '[' <<comma_list annotation_value>>? ']'
-{
-  pin = 1
-}
+annotation_array_value ::= '[' annotation_array_item* ']' { pin = 1 }
+private annotation_array_item ::= <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
+private annotation_array_item_end ::= ',' | &']' | end_of_file
+private annotation_array_item_start ::= '@' | expression_start
 // endregion
 
 
@@ -351,14 +351,22 @@ private annotation_level ::= type_definition | parse_annotation_declaration
 
 
 // region Declarations
+private meta declaration ::= <<choice
+                                 <<d_modifiers <<after_modifiers>>>>
+                                 <<d_no_modifiers <<after_no_modifiers>>>>
+                             >>
+private meta d_modifiers ::= non_empty_modifier_list mark_left <<mb_nl_group <<after_modifiers>>>> { pin = 1 }
+private meta d_no_modifiers ::= empty_modifier_list mark_left <<after_no_modifiers>>
+
 private declaration_start_modifiers ::= non_empty_modifier_list mb_type_parameter_list mb_declaration_type_element { pin = 1 }
 private mb_type_parameter_list ::= [mb_nl type_parameter_list]
 private mb_declaration_type_element ::= [mb_nl declaration_type_element]
 private declaration_type_element ::= definitely_type_element | clear_variants_and_fail
-private definitely_type_element ::= <<definitelyTypeElement type_element (<<wasDefinitelyTypeElement>> | &declaration_lookahead)>>
+private definitely_type_element ::= <<definitelyTypeElement type_element declaration_lookahead>>
 
-private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
-private method_lookahead ::= method_identifier '('
+private declaration_lookahead ::= method_lookahead | variable_lookahead
+private variable_lookahead ::= &IDENTIFIER
+private method_lookahead ::= &(method_identifier '(')
 // endregion
 
 
@@ -372,7 +380,7 @@ private class_declaration_start_after_no_modifiers ::= class_declaration_start_a
                                                      | class_declaration_start_after_no_modifiers2
 private class_declaration_start_after_no_modifiers1 ::= capital_type_element !'('
 private class_declaration_start_after_no_modifiers2 ::= declaration_type_element
-private naked_method_declaration_start ::= empty_modifier_list &method_lookahead
+private naked_method_declaration_start ::= empty_modifier_list method_lookahead
 
 private class_declaration_tail ::= <<mb_nl_group (methods_tail | field_declaration)>>
 private methods_tail ::= constructor | method
@@ -453,7 +461,7 @@ private parameter_start ::= parameter_start_modifiers | parameter_start_no_modif
 private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
 private parameter_start_after_modifiers ::= parameter_type_element_silent? ellipsis?
 private parameter_start_no_modifiers ::= empty_modifier_list parameter_start_after_no_modifiers
-private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | &IDENTIFIER
+private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | variable_lookahead
 private parameter_type_element_silent ::= parameter_type_element | clear_variants_and_fail
 private parameter_type_element ::= primitive_type_element array_type_elements
                                  | qualified_class_type_element array_type_elements
@@ -608,7 +616,7 @@ fake variable_declaration ::= { elementTypeClass = 'org.jetbrains.plugins.groovy
 private parse_block_declaration ::= <<parseTailLeftFlat block_declaration_start block_declaration_tail>>
 private block_declaration_start ::= declaration_start_modifiers | block_declaration_start_no_modifiers
 private block_declaration_start_no_modifiers ::= empty_modifier_list block_declaration_type_element
-private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) &declaration_lookahead
+private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) declaration_lookahead
 private block_declaration_tail ::= <<mb_nl_group (method | variable_declaration_tail)>>
 private local_variable_declaration ::= <<parseTailLeftFlat block_declaration_start variable_declaration_tail>>
 
@@ -627,6 +635,8 @@ tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple tu
 private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (',' tuple_var_declaration_item)* ')'
 {
   consumeTokenMethod = 'consumeTokenFast'
+  pin = 2
+  pin('tuple_var_declaration_tuple_2_0') = 1
 }
 
 private tuple_var_declaration_item ::= type_element tuple_variable | tuple_variable
@@ -718,7 +728,7 @@ try_resource_list ::= '(' try_resource_list_item+ ')' { pin = 1 }
 private try_resource_list_item ::= local_variable_declaration try_resource_list_separator { pin = 1 }
 private try_resource_list_separator ::= &')' | separators | <<newLine>>
 
-catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block { pin = 1 }
+catch_clause ::= 'catch' '(' parse_catch_parameter ')' (mb_nl lazy_block) { pin = 1 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
 private catch_parameter_type_element ::= type_element_followed_by_identifier
@@ -736,7 +746,7 @@ while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
 
 do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
 
-private type_element_followed_by_identifier ::= type_element &IDENTIFIER
+private type_element_followed_by_identifier ::= type_element variable_lookahead
 private mb_type_element ::= type_element_followed_by_identifier?
 
 for_statement ::= 'for' (for_header mb_nl for_body) { pin('.*') = 1 }
@@ -746,11 +756,19 @@ private for_clause ::= for_in_clause | traditional_for_clause
 for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod = 'consumeTokenFast' }
 for_in_parameter ::= modifier_list mb_type_element IDENTIFIER | clear_variants_and_fail { elementType = parameter }
 
-traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl expression? { pin = 1 }
-private for_clause_initialization ::= traditional_for_parameter | expression | clear_variants_and_fail
-traditional_for_parameter ::= traditional_for_parameter_inner mb_initializer { elementType = parameter }
-private traditional_for_parameter_inner ::= non_empty_modifier_list mb_type_element IDENTIFIER
-                                          | empty_modifier_list type_element IDENTIFIER
+traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl for_clause_update? { pin = 1 }
+private for_clause_initialization ::= for_variable_declaration | expression | clear_variants_and_fail
+private for_clause_update ::= expression_list
+
+private for_variable_declaration ::= <<declaration fvd_after_modifiers fvd_after_no_modifiers>>
+private fvd_after_modifiers ::= fvd_tuple_tail | fvd_modifiers_type | fvd_tail
+left fvd_tuple_tail ::= tuple_var_declaration_tuple tuple_initializer { pin = 1 elementType = variable_declaration }
+private fvd_modifiers_type ::= <<definitelyTypeElement type_element variable_lookahead>> fvd_tail { pin = 1 }
+private fvd_after_no_modifiers ::= (capital_type_element variable_lookahead) fvd_tail { pin = 1 }
+private fvd_tail ::= variable_declaration_tail <<wrapLeft>>
+
+expression_list ::= expression (',' expression)*
+
 // FIXME get rid of this weird logic
 private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
 
@@ -835,7 +853,7 @@ unqualified_reference_expression ::= IDENTIFIER soft_type_argument_list?
                                    | 'this'
                                    | 'super'
                                    | code_reference_identifiers_soft &(reference_dot | '.&')
-                                   | (STR_SQ | STR_DQ) &string_literal_as_reference
+                                   | (STR_SQ | STR_DQ | regex_literal) &string_literal_as_reference
 {
   elementType = reference_expression
 }
@@ -900,18 +918,26 @@ private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
-new_expression ::= 'new' type_argument_list? new_expression_tail { pin = 1 }
-private new_expression_tail ::= new_expression_type (call_argument_list_start call_argument_list | array_declaration) { pin = 1 }
-private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
-
-new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition
-{
-  elementType = new_expression
-}
+new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition { elementType = new_expression }
 anonymous_type_definition ::= code_reference call_argument_list class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
+
+new_expression ::= 'new' type_argument_list? new_expression_creator { pin = 1 }
+private new_expression_creator ::= new_expression_type (l_paren_variant | new_expression_tail) { pin = 1 }
+private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
+private l_paren_variant ::= &'(' fail // adds a variant, to achieve "'(' expected" generated message
+private new_expression_tail ::= array_initializer_tail | array_declaration | call_argument_list
+
+private array_initializer_tail ::= array_initializer_declaration array_initializer
+array_initializer_declaration ::= array_dimensions+ { elementType = array_declaration }
+private array_dimensions ::= '['(']') { consumeTokenMethod = 'consumeTokenFast' }
+array_initializer ::= '{' mb_nl '}' | array_initializer_pin
+private array_initializer_pin ::=  '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}' { pin = 1 }
+private array_initializer_item ::= mb_nl expression
+private array_initializer_separator ::= mb_nl ','
+
 array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
 private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
@@ -984,11 +1010,10 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 }
 
 private priority1_4 ::= not_expression | cast_expression
-not_expression ::= ('~' | '!') expression { elementType = unary_expression }
+not_expression ::= ('~' | '!') mb_nl expression { elementType = unary_expression }
 cast_expression ::= &cast_expression_start '(' type_element ')' cast_operand
 private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
-private cast_operand ::= priority1_4 <<noParenthesized>> | clear_variants_and_fail | cast_parenthesized_expression
-cast_parenthesized_expression ::= '(' expression ')' { elementType = parenthesized_expression }
+private cast_operand ::= !empty_parens <<castOperandCheck>> priority1_4
 
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
@@ -1017,33 +1042,33 @@ multiplicative_expression ::= expression ('*' | '/' | '%') mb_nl expression
 additive_expression ::= expression ('+' | '-') mb_nl expression
 
 private shift_or_range ::= shift_expression | range_expression
-shift_expression ::= expression shift_sign expression
+shift_expression ::= expression shift_sign mb_nl expression
 private shift_sign ::= left_shift_sign | right_shift_unsigned_sign | right_shift_sign { consumeTokenMethod = 'consumeTokenFast' }
 left_shift_sign ::= '<' '<'
 right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
-range_expression ::= expression ('..' | '..<') expression
+range_expression ::= expression ('..' | '..<') mb_nl expression
 
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
 relational_expression ::= expression relational_operator mb_nl expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
-in_expression ::= expression mb_not ('in') expression
+in_expression ::= expression mb_not ('in') mb_nl expression
 instanceof_expression ::= expression instanceof_expression_tail
-private instanceof_expression_tail ::= mb_not ('instanceof') (type_element | expect_type) { pin = 2 }
-as_expression ::= expression 'as' type_element
+private instanceof_expression_tail ::= mb_not ('instanceof') mb_nl (type_element | expect_type) { pin = 2 }
+as_expression ::= expression 'as' mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
-equality_expression ::= expression <<equalityOperator>> expression
+equality_expression ::= expression <<equalityOperator>> mb_nl expression
 compare_expression ::= expression '<=>' mb_nl expression
 {
   elementType = relational_expression
 }
-regex_find_expression ::= expression '=~' expression
-regex_match_expression ::= expression '==~' expression
+regex_find_expression ::= expression '=~' mb_nl expression
+regex_match_expression ::= expression '==~' mb_nl expression
 
-band_expression ::= expression '&' expression
-xor_expression ::= expression '^' expression
-bor_expression ::= expression '|' expression
+band_expression ::= expression '&' mb_nl expression
+xor_expression ::= expression '^' mb_nl expression
+bor_expression ::= expression '|' mb_nl expression
 land_expression ::= expression '&&' mb_nl expression
 lor_expression ::= expression '||' mb_nl expression
 
@@ -1051,7 +1076,7 @@ private conditionals ::= ternary_expression | elvis_expression
 ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
-elvis_expression ::= expression '?:' mb_nl expression
+elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 {
   rightAssociative = true
 }
@@ -1099,8 +1124,7 @@ fake argument_list ::=
 
 empty_argument_list ::= { elementType = argument_list }
 
-private call_argument_list_start ::= &'(' // adds a variant, to achieve "'(' expected" generated message
-call_argument_list ::= '(' (')') | '(' paren_argument_list_inner ')'
+call_argument_list ::= empty_parens | '(' paren_argument_list_inner ')'
 {
   elementType = argument_list
   pin('call_argument_list_1') = 1
@@ -1215,6 +1239,7 @@ private nl ::= NL { consumeTokenMethod = 'consumeTokenFast' }
 // FIXME this rule allows error reporting in position before the new line
 private meta mb_nl_group ::= <<something>> | <<withProtectedLastVariantPos (nl <<something>>)>>
 private empty ::= ()
+private empty_parens ::= '('(')') { consumeTokenMethod = 'consumeTokenFast' }
 
 private mb_question ::= '?'? { consumeTokenMethod = 'consumeTokenFast' }
 private mb_not ::= '!'? { consumeTokenMethod = 'consumeTokenFast' }
@@ -1234,7 +1259,7 @@ private meta a_b_a_p ::= <<a>> (<<b>> <<a>>)* { pin('.*') = 1 }
 private meta comma_list ::= <<a_b_a <<item>> fast_comma>>
 private meta a_b_a ::= <<a>> (<<b>> <<a>>)* { pin = 1 }
 
-private meta paren_list ::= '('')' | '(' <<paren_list_inner <<item>>>> ')' { pin('paren_list_1') = 1 }
+private meta paren_list ::= empty_parens | '(' <<paren_list_inner <<item>>>> ')' { pin('paren_list_1') = 1 }
 private meta paren_list_inner ::= <<paren_list_item <<item>>>> <<paren_list_tail <<item>>>>*
 private meta paren_list_item ::= empty <<item>> { pin = 1 recoverWhile = paren_list_item_recovery }
 private meta paren_list_tail ::= ',' <<paren_list_item <<item>>>> { pin = 1 }
@@ -1265,4 +1290,5 @@ private external clear_error ::= clearError
 private external fail ::= noMatch
 private external end_of_file ::= eof
 private external no_nl ::= noNewLine
+private external mark_left ::= markLeft
 // endregion
