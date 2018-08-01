@@ -567,6 +567,13 @@ public class TypesUtil implements TypeConstants {
     return qName.equals(getQualifiedName(type));
   }
 
+  @Contract("null, _ -> false")
+  public static boolean isClassType(@Nullable PsiType type, @NotNull String... names) {
+    String fqn = getQualifiedName(type);
+    if (fqn == null) return false;
+    return ContainerUtil.or(names, it -> it.equals(fqn));
+  }
+
   public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
     final Map<PsiTypeParameter, PsiType> map = s1.getSubstitutionMap();
     Map<PsiTypeParameter, PsiType> result = new THashMap<>(map.size());

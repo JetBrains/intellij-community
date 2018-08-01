@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -80,9 +77,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 
 import java.util.*;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.GenericsUtil.isTypeArgumentsApplicable;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_INSTANCE_EXTENSIONS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_STATIC_EXTENSIONS;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
 /**
  * @author ven
@@ -820,8 +817,7 @@ public class PsiUtil {
           && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
           && method.getParameterList().isEmpty()) {
         final PsiType type = getSmartReturnType(method);
-        if (type != null && (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.isClassType(type,
-                                                                                                                     GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {
+        if (type != null && (TypesUtil.isClassType(type, JAVA_LANG_OBJECT, GROOVY_LANG_CLOSURE))) {
           return true;
         }
       }
