@@ -214,7 +214,8 @@ public class PluginManagerConfigurableNew
     editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(8));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 25));
-    editor.getEmptyText().appendText("Search plugins");
+    editor.getEmptyText()
+      .appendText("Search plugins", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, CellPluginComponent.GRAY_COLOR));
     editor.setOpaque(true);
     editor.setBackground(MAIN_BG_COLOR);
   }
@@ -1495,7 +1496,7 @@ public class PluginManagerConfigurableNew
       group.ui = uiGroup;
       myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
-      OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3D3F41));
+      OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3C3F41));
       panel.setBorder(JBUI.Borders.empty(4, 13));
 
       JLabel title = new JLabel(group.title);
@@ -3118,8 +3119,8 @@ public class PluginManagerConfigurableNew
   }
 
   public static abstract class CellPluginComponent extends JPanel {
-    private static final Color HOVER_COLOR = new JBColor(0xE9EEF5, 0x464A4D);
-    private static final Color GRAY_COLOR = new JBColor(Gray._130, Gray._120);
+    private static final Color HOVER_COLOR = new JBColor(0xF5F9FF, 0x36393B);
+    private static final Color GRAY_COLOR = new JBColor(Gray._120, Gray._135);
 
     protected final IdeaPluginDescriptor myPlugin;
 
@@ -5010,13 +5011,13 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static final Color DisabledColor = new JBColor(0xC6C6C6, 0x575859);
+  private static final Color DisabledColor = new JBColor(0xB1B1B1, 0x696969);
 
   @SuppressWarnings("UseJBColor")
   private static final Color WhiteForeground = new JBColor(Color.white, new Color(0xBBBBBB));
   @SuppressWarnings("UseJBColor")
   private static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
-  private static final Color GreenColor = new JBColor(0x5D9B47, 0x457335);
+  private static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
   @SuppressWarnings("UseJBColor")
   private static final Color GreenFocusedBackground = new Color(0xE1F6DA);
 
