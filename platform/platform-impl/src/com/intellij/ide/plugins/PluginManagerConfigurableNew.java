@@ -3626,23 +3626,24 @@ public class PluginManagerConfigurableNew
       }
       if (restart) {
         group.add(new ButtonAnAction(((ListPluginComponent)selection.get(0)).myRestartButton));
+        return;
       }
-      else {
-        int size = selection.size();
-        JButton[] buttons = new JButton[size];
 
-        for (int i = 0; i < size; i++) {
-          JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
-          if (button == null) {
-            buttons = null;
-            break;
-          }
-          buttons[i] = button;
-        }
+      int size = selection.size();
+      JButton[] updateButtons = new JButton[size];
 
-        if (buttons != null) {
-          group.add(new ButtonAnAction(buttons));
+      for (int i = 0; i < size; i++) {
+        JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
+        if (button == null) {
+          updateButtons = null;
+          break;
         }
+        updateButtons[i] = button;
+      }
+
+      if (updateButtons != null) {
+        group.add(new ButtonAnAction(updateButtons));
+        return;
       }
 
       Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
@@ -3678,45 +3679,51 @@ public class PluginManagerConfigurableNew
         }
       }
 
-      if (keyCode == KeyEvent.VK_SPACE) {
-        if (selection.size() == 1) {
-          myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
-        }
-        else {
-          Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-          myPluginModel.changeEnableDisable(result.second, result.first);
+      boolean restart = true;
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myRestartButton == null) {
+          restart = false;
+          break;
         }
       }
-      else if (keyCode == KeyEvent.VK_ENTER) {
-        boolean restart = true;
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myRestartButton == null) {
-            restart = false;
-            break;
-          }
+
+      boolean update = true;
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myUpdateButton == null) {
+          update = false;
+          break;
         }
+      }
+
+      if (keyCode == KeyEvent.VK_ENTER) {
         if (restart) {
           ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
-          return;
         }
-
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myUpdateButton == null) {
-            return;
+        else if (update) {
+          for (CellPluginComponent component : selection) {
+            ((ListPluginComponent)component).myUpdateButton.doClick();
           }
-        }
-        for (CellPluginComponent component : selection) {
-          ((ListPluginComponent)component).myUpdateButton.doClick();
         }
       }
-      else if (keyCode == KeyEvent.VK_BACK_SPACE) {
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
-            return;
+      else if (!restart && !update) {
+        if (keyCode == KeyEvent.VK_SPACE) {
+          if (selection.size() == 1) {
+            myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
+          }
+          else {
+            Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+            myPluginModel.changeEnableDisable(result.second, result.first);
           }
         }
-        for (CellPluginComponent component : selection) {
-          myPluginModel.doUninstall(this, component.myPlugin, null);
+        else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+          for (CellPluginComponent component : selection) {
+            if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+              return;
+            }
+          }
+          for (CellPluginComponent component : selection) {
+            myPluginModel.doUninstall(this, component.myPlugin, null);
+          }
         }
       }
     }
