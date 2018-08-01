@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -71,7 +72,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                            List<String> ids = contributors.stream()
                                                                           .map(contributor -> contributor.getSearchProviderId())
                                                                           .collect(Collectors.toList());
-                                           return new SearchEverywhereContributorFilterImpl<>(ids, id -> contributorsNames.get(id), id -> null);
+                                           return new PersistentSearchEverywhereContributorFilter<>(ids,
+                                                                                                    SearchEverywhereConfiguration.getInstance(project),
+                                                                                                    id -> contributorsNames.get(id), id -> null);
                                          }
     );
 
