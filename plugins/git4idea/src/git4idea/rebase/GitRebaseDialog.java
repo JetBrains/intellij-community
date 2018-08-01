@@ -10,6 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitRebaseParams;
@@ -26,8 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,77 +48,25 @@ public class GitRebaseDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(GitRebaseDialog.class);
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
-
-  /**
-   * Git root selector
-   */
-  protected ComboBox myGitRootComboBox;
-  /**
-   * The selector for branch to rebase
-   */
-  protected ComboBox myBranchComboBox;
-  /**
-   * The from branch combo box. This is used as base branch if different from onto branch
-   */
-  protected ComboBox myFromComboBox;
-  /**
-   * The validation button for from branch
-   */
-  private JButton myFromValidateButton;
-  /**
-   * The onto branch combobox.
-   */
-  protected ComboBox myOntoComboBox;
-  /**
-   * The validate button for onto branch
-   */
-  private JButton myOntoValidateButton;
-  /**
-   * Show tags in drop down
-   */
-  private JCheckBox myShowTagsCheckBox;
-  /**
-   * If selected, rebase is interactive
-   */
-  protected JCheckBox myInteractiveCheckBox;
-  /**
-   * The root panel of the dialog
-   */
-  private JPanel myPanel;
-  /**
-   * Preserve merges checkbox
-   */
-  private JCheckBox myPreserveMergesCheckBox;
-  /**
-   * The current project
-   */
-  protected final Project myProject;
-  /**
-   * The list of local branches
-   */
-  protected final List<GitBranch> myLocalBranches = new ArrayList<>();
-  /**
-   * The list of remote branches
-   */
-  protected final List<GitBranch> myRemoteBranches = new ArrayList<>();
-  /**
-   * The current branch
-   */
-  @Nullable protected GitBranch myCurrentBranch;
-  /**
-   * The tags
-   */
-  protected final List<GitTag> myTags = new ArrayList<>();
-  /**
-   * The validator for onto field
-   */
-  private final GitReferenceValidator myOntoValidator;
-  /**
-   * The validator for from field
-   */
-  private final GitReferenceValidator myFromValidator;
   @NotNull private final GitRebaseSettings mySettings;
 
+  private ComboBox myRootComboBox = new ComboBox();
+  private ComboBox myBranchComboBox = new ComboBox();
+  private JCheckBox myInteractiveCheckBox = new JCheckBox();
+  private JCheckBox myPreserveMergesCheckBox = new JCheckBox();
+  private ComboBox myOntoComboBox = new ComboBox();
+  private JButton myOntoValidateButton = new JButton("Validate");
+  private ComboBox myFromComboBox = new ComboBox();
+  private JButton myFromValidateButton = new JButton("Validate");
+  private JCheckBox myShowTagsCheckBox = new JCheckBox();
+  private final GitReferenceValidator myOntoValidator;
+  private final GitReferenceValidator myFromValidator;
+
+  private final Project myProject;
+  private final List<GitBranch> myLocalBranches = new ArrayList<>();
+  private final List<GitBranch> myRemoteBranches = new ArrayList<>();
+  private final List<GitTag> myTags = new ArrayList<>();
+  @Nullable private GitBranch myCurrentBranch;
   @Nullable private final String myOriginalOntoBranch;
 
   /**
@@ -126,19 +78,21 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   public GitRebaseDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
-    setTitle(GitBundle.getString("rebase.title"));
-    setOKButtonText(GitBundle.getString("rebase.button"));
-    init();
     myProject = project;
     mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
+
+    myOntoComboBox.setEditable(true);
+    myFromComboBox.setEditable(true);
+
+
     final Runnable validateRunnable = () -> validateFields();
-    myOntoValidator = new GitReferenceValidator(myProject, myGitRootComboBox, GitUIUtil.getTextField(myOntoComboBox), myOntoValidateButton,
+    myOntoValidator = new GitReferenceValidator(myProject, myRootComboBox, GitUIUtil.getTextField(myOntoComboBox), myOntoValidateButton,
                                                 validateRunnable);
-    myFromValidator = new GitReferenceValidator(myProject, myGitRootComboBox, GitUIUtil.getTextField(myFromComboBox), myFromValidateButton,
+    myFromValidator = new GitReferenceValidator(myProject, myRootComboBox, GitUIUtil.getTextField(myFromComboBox), myFromValidateButton,
                                                 validateRunnable);
-    GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, null);
-    myGitRootComboBox.addActionListener(new ActionListener() {
+    GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myRootComboBox, null);
+    myRootComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         validateFields();
@@ -154,12 +108,10 @@ public class GitRebaseDialog extends DialogWrapper {
     myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
 
     validateFields();
-  }
 
-  @Nullable
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myOntoComboBox;
+    setTitle(GitBundle.getString("rebase.title"));
+    setOKButtonText(GitBundle.getString("rebase.button"));
+    init();
   }
 
   private void overwriteOntoForCurrentBranch(@NotNull GitRebaseSettings settings) {
@@ -205,9 +157,6 @@ public class GitRebaseDialog extends DialogWrapper {
     }
   }
 
-  /**
-   * Validate fields
-   */
   private void validateFields() {
     if (GitUIUtil.getTextField(myOntoComboBox).getText().length() == 0) {
       setErrorText(null);
@@ -258,7 +207,7 @@ public class GitRebaseDialog extends DialogWrapper {
     };
     myShowTagsCheckBox.addActionListener(showListener);
     rootListener.actionPerformed(null);
-    myGitRootComboBox.addActionListener(rootListener);
+    myRootComboBox.addActionListener(rootListener);
     myBranchComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -267,9 +216,6 @@ public class GitRebaseDialog extends DialogWrapper {
     });
   }
 
-  /**
-   * Update branches when git root changed
-   */
   private void updateBranches() {
     myBranchComboBox.removeAllItems();
     for (GitBranch b : myLocalBranches) {
@@ -285,9 +231,6 @@ public class GitRebaseDialog extends DialogWrapper {
     updateTrackedBranch();
   }
 
-  /**
-   * Update onto and from comboboxes.
-   */
   protected void updateOntoFrom() {
     String onto = GitUIUtil.getTextField(myOntoComboBox).getText();
     String from = GitUIUtil.getTextField(myFromComboBox).getText();
@@ -309,9 +252,6 @@ public class GitRebaseDialog extends DialogWrapper {
     }
   }
 
-  /**
-   * Load tags and branches
-   */
   protected void loadRefs() {
     try {
       myLocalBranches.clear();
@@ -378,7 +318,7 @@ public class GitRebaseDialog extends DialogWrapper {
    * @return the currently selected git root
    */
   public VirtualFile gitRoot() {
-    return (VirtualFile)myGitRootComboBox.getSelectedItem();
+    return (VirtualFile)myRootComboBox.getSelectedItem();
   }
 
   @NotNull
@@ -407,25 +347,84 @@ public class GitRebaseDialog extends DialogWrapper {
     return new GitRebaseParams(branch, newBase, upstream, myInteractiveCheckBox.isSelected(), myPreserveMergesCheckBox.isSelected());
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  //Dialog UI
+
+  @Nullable
+  @Override
+  protected JComponent createCenterPanel() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createNorthPanel() {
+
+    //Init and setup components
+    JLabel gitRoot = new JLabel("Git Root:");
+    gitRoot.setDisplayedMnemonic(KeyEvent.VK_R);
+    gitRoot.setLabelFor(myRootComboBox);
+    myRootComboBox.setToolTipText(GitBundle.message("common.git.root.tooltip"));
+    JLabel gitBranch = new JLabel("Git Branch: ");
+    gitBranch.setDisplayedMnemonic(KeyEvent.VK_B);
+    gitBranch.setLabelFor(myBranchComboBox);
+    myBranchComboBox.setToolTipText(GitBundle.message("rebase.branch.tooltip"));
+    myInteractiveCheckBox.setText("Interactive");
+    myInteractiveCheckBox.setMnemonic(KeyEvent.VK_I);
+    myInteractiveCheckBox.setToolTipText(GitBundle.message("rebase.interactive.tooltip"));
+    myPreserveMergesCheckBox.setText("Preserve merges");
+    myPreserveMergesCheckBox.setMnemonic(KeyEvent.VK_P);
+    myPreserveMergesCheckBox.setToolTipText(GitBundle.message("rebase.preserve.merges.tooltip"));
+    JLabel onto = new JLabel("Onto: ");
+    onto.setDisplayedMnemonic(KeyEvent.VK_O);
+    onto.setLabelFor(myOntoComboBox);
+    myOntoComboBox.setToolTipText(GitBundle.message("rebase.onto.tooltip"));
+    JLabel from = new JLabel("From: ");
+    from.setDisplayedMnemonic(KeyEvent.VK_F);
+    from.setLabelFor(myFromComboBox);
+    myFromComboBox.setToolTipText(GitBundle.message("rebase.from.tooltip"));
+    myShowTagsCheckBox.setText("Show Tags");
+    myShowTagsCheckBox.setMnemonic(KeyEvent.VK_T);
+    myShowTagsCheckBox.setToolTipText(GitBundle.message("rebase.show.tags.tooltip"));
+
+    //Setup auxiliary panels
+    JPanel rebaseCheckboxes = new JPanel(new FlowLayout(FlowLayout.LEADING));
+    rebaseCheckboxes.add(myInteractiveCheckBox);
+    rebaseCheckboxes.add(myPreserveMergesCheckBox);
+
+    //Draw dialog
+    GridBag gb = new GridBag().
+      setDefaultAnchor(GridBagConstraints.LINE_START).
+      setDefaultInsets(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, 0, 0).
+      setDefaultFill(GridBagConstraints.HORIZONTAL);
+
+    JPanel mainPanel = new JPanel(new GridBagLayout());
+    mainPanel.add(gitRoot, gb.nextLine().next());
+    mainPanel.add(myRootComboBox, gb.next().weightx(1.0).coverLine(2));
+    mainPanel.add(gitBranch, gb.nextLine().next());
+    mainPanel.add(myBranchComboBox, gb.next().weightx(1.0).coverLine(2));
+    mainPanel.add(rebaseCheckboxes, gb.nextLine().next().setColumn(1));
+    mainPanel.add(onto, gb.nextLine().next());
+    mainPanel.add(myOntoComboBox, gb.next().weightx(1.0));
+    mainPanel.add(myOntoValidateButton, gb.next());
+    mainPanel.add(from, gb.nextLine().next());
+    mainPanel.add(myFromComboBox, gb.next().weightx(1.0));
+    mainPanel.add(myFromValidateButton, gb.next());
+    mainPanel.add(myShowTagsCheckBox, gb.nextLine().next().setColumn(1));
+
+    return mainPanel;
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myOntoComboBox;
+  }
+
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected JComponent createCenterPanel() {
-    return myPanel;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.Rebase";
