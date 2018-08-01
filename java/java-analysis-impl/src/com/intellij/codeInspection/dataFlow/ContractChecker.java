@@ -70,10 +70,18 @@ class ContractChecker extends DataFlowRunner {
   @Override
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     DfaMemoryState memState = instructionState.getMemoryState();
+    Instruction instruction = instructionState.getInstruction();
+    if (instruction instanceof ReturnInstruction) {
+      if (((ReturnInstruction)instruction).isViaException()) {
+        ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
+      } else {
+        myMayReturnNormally = true;
+      }
+    }
+
     if (memState.isEphemeral()) {
       return super.acceptInstruction(visitor, instructionState);
     }
-    Instruction instruction = instructionState.getInstruction();
     if (instruction instanceof CheckReturnValueInstruction) {
       PsiElement anchor = ((CheckReturnValueInstruction)instruction).getReturn();
       DfaValue retValue = memState.pop();
@@ -84,14 +92,6 @@ class ContractChecker extends DataFlowRunner {
       }
       return InstructionVisitor.nextInstruction(instruction, this, memState);
 
-    }
-
-    if (instruction instanceof ReturnInstruction) {
-      if (((ReturnInstruction)instruction).isViaException()) {
-        ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
-      } else {
-        myMayReturnNormally = true;
-      }
     }
 
     if (instruction instanceof MethodCallInstruction &&

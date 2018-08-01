@@ -54,4 +54,5 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testMutationSignatureProblems() { doTest(); }
   public void testNewThisParam() { doTest(); }
   public void testConditionsConflict() { doTest(); }
+  public void testWrongFailSuggestion() { doTest(); }
 }
