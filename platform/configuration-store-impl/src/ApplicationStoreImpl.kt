@@ -8,7 +8,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -16,7 +15,7 @@ import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 
-private class ApplicationPathMacroManager : BasePathMacroManager(null)
+private class ApplicationPathMacroManager : PathMacroManager(null)
 
 const val APP_CONFIG: String = "\$APP_CONFIG$"
 private const val FILE_STORAGE_DIR = "options"

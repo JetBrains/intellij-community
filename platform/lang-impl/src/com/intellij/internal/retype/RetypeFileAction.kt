@@ -2,7 +2,9 @@
 package com.intellij.internal.retype
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
+import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.internal.performance.latencyMap
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,6 +21,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import java.util.*
 
 /**
@@ -129,15 +132,16 @@ private class RetypeQueue(private val project: Project, private val retypeDelay:
       val root = structureView.treeModel.root as? PsiTreeElementBase<*> ?: return
       val range = findRangeOfSuitableElement(root) ?: return
       editor.selectionModel.setSelection(range.startOffset, range.endOffset)
+      editor.caretModel.moveToOffset(range.startOffset)
     }
     finally {
       Disposer.dispose(structureView)
     }
   }
 
-  private fun findRangeOfSuitableElement(treeElement: PsiTreeElementBase<*>): TextRange? {
+  private fun findRangeOfSuitableElement(treeElement: TreeElement): TextRange? {
     for (child in treeElement.children) {
-      val childRange = (child as? PsiTreeElementBase<*>)?.element?.textRange
+      val childRange = ((child as? StructureViewTreeElement)?.value as? PsiElement)?.textRange
       if (childRange != null) {
         if (childRange.length in 1000..2000) {
           return childRange

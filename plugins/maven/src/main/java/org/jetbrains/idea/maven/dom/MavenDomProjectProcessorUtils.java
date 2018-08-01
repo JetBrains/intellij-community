@@ -303,11 +303,14 @@ public class MavenDomProjectProcessorUtils {
     SearchProcessor<MavenDomPlugin, MavenDomPlugins> processor = new SearchProcessor<MavenDomPlugin, MavenDomPlugins>() {
       @Override
       protected MavenDomPlugin find(MavenDomPlugins mavenDomPlugins) {
-        if (!model.equals(mavenDomPlugins.getParentOfType(MavenDomProjectModel.class, true))) {
-          for (MavenDomPlugin domPlugin : mavenDomPlugins.getPlugins()) {
-            if (MavenPluginDomUtil.isPlugin(domPlugin, groupId, artifactId)) {
-              return domPlugin;
-            }
+        if (model.equals(mavenDomPlugins.getParentOfType(MavenDomProjectModel.class, true))) {
+          if (plugin.getParentOfType(MavenDomPluginManagement.class, false) != null) {
+            return null;
+          }
+        }
+        for (MavenDomPlugin domPlugin : mavenDomPlugins.getPlugins()) {
+          if (MavenPluginDomUtil.isPlugin(domPlugin, groupId, artifactId)) {
+            return domPlugin;
           }
         }
 

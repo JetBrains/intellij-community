@@ -6,11 +6,10 @@ import com.intellij.ide.actions.ImportModuleAction.createImportWizard
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class ImportProjectFromScriptAction: ExternalSystemAction() {
@@ -29,8 +28,7 @@ class ImportProjectFromScriptAction: ExternalSystemAction() {
       return false
     }
 
-    val containingModule = FileIndexFacade.getInstance(project).getModuleForFile(virtualFile) ?: return true
-    return ExternalSystemApiUtil.getExternalRootProjectPath(containingModule) == null
+    return GradleSettings.getInstance(project).getLinkedProjectSettings(virtualFile.parent.path) == null
   }
 
   override fun actionPerformed(e: AnActionEvent) {

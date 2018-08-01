@@ -481,6 +481,13 @@ public class PsiUtilCore {
     }
   }
 
+  @Nullable
+  public static PsiFileSystemItem findFileSystemItem(@Nullable Project project, @Nullable VirtualFile file) {
+    if (project == null || file == null) return null;
+    if (project.isDisposed() || !file.isValid()) return null;
+    return file.isDirectory() ? PsiManager.getInstance(project).findDirectory(file) : getPsiFile(project, file);
+  }
+
   /**
    * Tries to find PSI file for a virtual file and throws assertion error with debug info if it is null.
    */

@@ -56,11 +56,13 @@ public class CommandLineApplication {
       return new CommandLineDataContext();
     }
 
+    @NotNull
     @Override
     public DataContext getDataContext(Component component) {
       return getDataContext();
     }
 
+    @NotNull
     @Override
     public DataContext getDataContext(@NotNull Component component, int x, int y) {
       return getDataContext();

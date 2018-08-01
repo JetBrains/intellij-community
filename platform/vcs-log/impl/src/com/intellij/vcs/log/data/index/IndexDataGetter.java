@@ -259,7 +259,7 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       Set<FilePath> result = ContainerUtil.newHashSet();
       myIndexStorage.paths.iterateCommits(path, (changes, commit) -> result.add(changes.first));
-      return null;
+      return result;
     }, Collections.emptySet());
   }
 

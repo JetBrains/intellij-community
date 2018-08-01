@@ -1510,6 +1510,23 @@ public class JBUI {
   }
 
   public static class CurrentTheme {
+    public static class CustomFrameDecorations {
+      @NotNull
+      public static Color separatorForeground() {
+        return JBColor.namedColor("Separator.foreground", 0xcdcdcd);
+      }
+
+      @NotNull
+      public static Color titlePaneBackground() {
+        return JBColor.namedColor("TitlePane.background", paneBackground());
+      }
+
+      @NotNull
+      public static Color paneBackground() {
+        return JBColor.namedColor("Panel.background", 0xcdcdcd);
+      }
+    }
+
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {

@@ -40,7 +40,7 @@ public class HgRootChecker extends VcsRootChecker {
   }
 
   @Override
-  public boolean isVcsDir(@NotNull String path) {
-    return path.toLowerCase().endsWith(HgUtil.DOT_HG);
+  public boolean isVcsDir(@NotNull String dirName) {
+    return dirName.toLowerCase().equals(HgUtil.DOT_HG);
   }
 }

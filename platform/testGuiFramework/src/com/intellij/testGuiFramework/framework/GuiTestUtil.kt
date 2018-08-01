@@ -96,7 +96,6 @@ object GuiTestUtil {
   val MINUTE_TIMEOUT = timeout(1, MINUTES)
   val SHORT_TIMEOUT = timeout(2, MINUTES)
   val LONG_TIMEOUT = timeout(5, MINUTES)
-  val TEN_MIN_TIMEOUT = timeout(10, MINUTES)
   val FIFTEEN_MIN_TIMEOUT = timeout(15, MINUTES)
   val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
 

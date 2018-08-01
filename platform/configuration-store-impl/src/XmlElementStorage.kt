@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
@@ -8,6 +9,7 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.safeOutputStream
 import com.intellij.util.LineSeparator
@@ -136,18 +138,9 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       }
       else {
         val rootAttributes = LinkedHashMap<String, String>()
-        storage.pathMacroSubstitutor?.let { pathMacroSubstitutor ->
-          try {
-            for (element in elements) {
-              pathMacroSubstitutor.collapsePaths(element)
-            }
-          }
-          finally {
-            pathMacroSubstitutor.reset()
-          }
-        }
         storage.beforeElementSaved(elements, rootAttributes)
-        writer = XmlDataWriter(storage.rootElementName, elements, rootAttributes)
+        val macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
+        writer = XmlDataWriter(storage.rootElementName, elements, rootAttributes, macroManager)
       }
 
       // during beforeElementSaved() elements can be modified and so, even if our save() never returns empty list, at this point, elements can be an empty list
@@ -214,7 +207,10 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 }
 
-private class XmlDataWriter(private val rootElementName: String?, private val elements: List<Element>, private val rootAttributes: Map<String, String>) : StringDataWriter() {
+internal class XmlDataWriter(private val rootElementName: String?,
+                            private val elements: List<Element>,
+                            private val rootAttributes: Map<String, String>,
+                            private val macroManager: PathMacroManager?) : StringDataWriter() {
   override fun hasData(filter: DataWriterFilter): Boolean {
     return elements.any { filter.hasData(it) }
   }
@@ -222,6 +218,10 @@ private class XmlDataWriter(private val rootElementName: String?, private val el
   override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
     var lineSeparatorWithIndent = lineSeparator
     val hasRootElement = rootElementName != null
+
+    val replacePathMap = macroManager?.replacePathMap
+    val macroFilter = macroManager?.macroFilter
+
     if (hasRootElement) {
       lineSeparatorWithIndent += "  "
       writer.append('<').append(rootElementName)
@@ -230,7 +230,11 @@ private class XmlDataWriter(private val rootElementName: String?, private val el
         writer.append(entry.key)
         writer.append('=')
         writer.append('"')
-        writer.append(JDOMUtil.escapeText(entry.value, false, true))
+        var value = entry.value
+        if (replacePathMap != null) {
+          value = replacePathMap.substitute(JDOMUtil.escapeText(value, false, true), SystemInfoRt.isFileSystemCaseSensitive)
+        }
+        writer.append(JDOMUtil.escapeText(value, false, true))
         writer.append('"')
       }
 
@@ -243,13 +247,13 @@ private class XmlDataWriter(private val rootElementName: String?, private val el
       writer.append('>')
     }
 
-    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter())
-    val namespaceStack = JbXmlOutputter.NamespaceStack()
+    val xmlOutputter = JbXmlOutputter(lineSeparatorWithIndent, filter?.toElementFilter(), replacePathMap, macroFilter)
     for (element in elements) {
       if (hasRootElement) {
         writer.append(lineSeparatorWithIndent)
       }
-      xmlOutputter.printElement(writer, element, 0, namespaceStack)
+
+      xmlOutputter.printElement(writer, element, 0)
     }
 
     if (rootElementName != null) {
@@ -413,7 +417,7 @@ internal fun createDataWriterForElement(element: Element): DataWriter {
     override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
 
     override fun write(output: OutputStream, lineSeparator: String, filter: DataWriterFilter?) {
-      output.bufferedWriter().use { JbXmlOutputter(lineSeparator, filter?.toElementFilter()).output(element, it) }
+      output.bufferedWriter().use { JbXmlOutputter(lineSeparator, filter?.toElementFilter(), null, null).output(element, it) }
     }
   }
 }

@@ -24,6 +24,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 /**
  * @author nik
  */

@@ -32,6 +32,7 @@ import org.jetbrains.jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,10 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   private Generator<VirtualFile> javaFiles() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     List<VirtualFile> allFiles = new ArrayList<>(FilenameIndex.getAllFilesByExt(myProject, "java", projectScope));
+    if (allFiles.isEmpty()) {
+      throw new IllegalStateException("No java files in project???");
+    }
+    ContainerUtil.sort(allFiles, Comparator.comparing(VirtualFile::getPath));
     return Generator.sampledFrom(allFiles);
   }
 

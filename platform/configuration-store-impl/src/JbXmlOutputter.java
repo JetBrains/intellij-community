@@ -52,9 +52,11 @@
  */
 package com.intellij.configurationStore;
 
+import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.Stack;
 import org.jdom.*;
 import org.jdom.output.Format;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +68,7 @@ import java.io.Writer;
 import java.util.List;
 
 @SuppressWarnings("Duplicates")
-class JbXmlOutputter {
+final class JbXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 
   // For normal output
@@ -74,9 +76,19 @@ class JbXmlOutputter {
   @Nullable
   private final JDOMUtil.ElementOutputFilter elementFilter;
 
-  public JbXmlOutputter(@NotNull String lineSeparator, @Nullable JDOMUtil.ElementOutputFilter elementFilter) {
+  @Nullable
+  private final ReplacePathToMacroMap macroMap;
+  @Nullable
+  private final PathMacroFilter macroFilter;
+
+  public JbXmlOutputter(@NotNull String lineSeparator,
+                        @Nullable JDOMUtil.ElementOutputFilter elementFilter,
+                        @Nullable ReplacePathToMacroMap macroMap,
+                        @Nullable PathMacroFilter macroFilter) {
     this.format = DEFAULT_FORMAT.getLineSeparator().equals(lineSeparator) ? DEFAULT_FORMAT : JDOMUtil.createFormat(lineSeparator);
     this.elementFilter = elementFilter;
+    this.macroMap = macroMap;
+    this.macroFilter = macroFilter;
   }
 
   /**
@@ -100,7 +112,7 @@ class JbXmlOutputter {
     List<Content> content = doc.getContent();
     for (Content obj : content) {
       if (obj instanceof Element) {
-        printElement(out, doc.getRootElement(), 0, new NamespaceStack());
+        printElement(out, doc.getRootElement(), 0);
       }
       else if (obj instanceof Comment) {
         printComment(out, (Comment)obj);
@@ -144,7 +156,7 @@ class JbXmlOutputter {
   }
 
   public void output(@NotNull Element element, @NotNull Writer out) throws IOException {
-    printElement(out, element, 0, new NamespaceStack());
+    printElement(out, element, 0);
   }
 
   /**
@@ -157,7 +169,7 @@ class JbXmlOutputter {
    * @param out  <code>Writer</code> to use.
    */
   public void output(List<Content> list, Writer out) throws IOException {
-    printContentRange(out, list, 0, list.size(), 0, new NamespaceStack());
+    printContentRange(out, list, 0, list.size(), 0);
     out.flush();
   }
 
@@ -170,7 +182,7 @@ class JbXmlOutputter {
    * @param out      <code>Writer</code> to use.
    * @param encoding The encoding to add to the declaration
    */
-  protected void printDeclaration(Writer out, String encoding) throws IOException {
+  private void printDeclaration(Writer out, String encoding) throws IOException {
     // Only print the declaration if it's not being omitted
     if (!format.getOmitDeclaration()) {
       // Assume 1.0 version
@@ -193,7 +205,7 @@ class JbXmlOutputter {
    * @param docType <code>Document</code> whose declaration to write.
    * @param out     <code>Writer</code> to use.
    */
-  protected void printDocType(Writer out, DocType docType) throws IOException {
+  private void printDocType(Writer out, DocType docType) throws IOException {
 
     String publicID = docType.getPublicID();
     String systemID = docType.getSystemID();
@@ -231,7 +243,7 @@ class JbXmlOutputter {
    * @param comment <code>Comment</code> to write.
    * @param out     <code>Writer</code> to use.
    */
-  protected void printComment(Writer out, Comment comment)
+  private static void printComment(Writer out, Comment comment)
     throws IOException {
     out.write("<!--");
     out.write(comment.getText());
@@ -244,7 +256,7 @@ class JbXmlOutputter {
    * @param pi  <code>ProcessingInstruction</code> to write.
    * @param out <code>Writer</code> to use.
    */
-  protected void printProcessingInstruction(Writer out, ProcessingInstruction pi) throws IOException {
+  private void printProcessingInstruction(Writer out, ProcessingInstruction pi) throws IOException {
     String target = pi.getTarget();
     boolean piProcessed = false;
 
@@ -284,7 +296,7 @@ class JbXmlOutputter {
    * @param entity <code>EntityRef</code> to output.
    * @param out    <code>Writer</code> to use.
    */
-  protected void printEntityRef(Writer out, EntityRef entity)
+  private static void printEntityRef(Writer out, EntityRef entity)
     throws IOException {
     out.write("&");
     out.write(entity.getName());
@@ -297,7 +309,7 @@ class JbXmlOutputter {
    * @param cdata <code>CDATA</code> to output.
    * @param out   <code>Writer</code> to use.
    */
-  protected void printCDATA(Writer out, CDATA cdata) throws IOException {
+  private void printCDATA(Writer out, CDATA cdata) throws IOException {
     String str;
     if (format.getTextMode() == Format.TextMode.NORMALIZE) {
       str = cdata.getTextNormalize();
@@ -321,6 +333,11 @@ class JbXmlOutputter {
     else if (format.getTextMode() == Format.TextMode.TRIM) {
       str = str.trim();
     }
+
+    if (macroMap != null) {
+      str = macroMap.substitute(str, SystemInfoRt.isFileSystemCaseSensitive);
+    }
+
     out.write(escapeElementEntities(str));
   }
 
@@ -329,12 +346,11 @@ class JbXmlOutputter {
    * its <code>{@link Attribute}</code>s, and all contained (child)
    * elements, etc.
    *
-   * @param element    <code>Element</code> to output.
-   * @param out        <code>Writer</code> to use.
-   * @param level      <code>int</code> level of indention.
-   * @param namespaces <code>List</code> stack of Namespaces in scope.
+   * @param element <code>Element</code> to output.
+   * @param out     <code>Writer</code> to use.
+   * @param level   <code>int</code> level of indention.
    */
-  protected void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
+  public void printElement(Writer out, Element element, int level) throws IOException {
     if (elementFilter != null && !elementFilter.accept(element, level)) {
       return;
     }
@@ -344,17 +360,8 @@ class JbXmlOutputter {
     out.write('<');
     printQualifiedName(out, element);
 
-    // Mark our namespace starting point
-    int previouslyDeclaredNamespaces = namespaces.size();
-
-    // Print the element's namespace, if appropriate
-    printElementNamespace(out, element, namespaces);
-
-    // Print out additional namespace declarations
-    printAdditionalNamespaces(out, element, namespaces);
-
     if (element.hasAttributes()) {
-      printAttributes(out, element.getAttributes(), namespaces);
+      printAttributes(out, element.getAttributes());
     }
 
     // Depending on the settings (newlines, textNormalize, etc), we may
@@ -377,27 +384,21 @@ class JbXmlOutputter {
     else {
       out.write('>');
 
-      // For a special case where the content is only CDATA
-      // or Text we don't want to indent after the start or before the end tag.
+      // for a special case where the content is only CDATA or Text we don't want to indent after the start or before the end tag
       if (nextNonText(content, start) < size) {
-        // Case Mixed Content - normal indentation
+        // case Mixed Content - normal indentation
         newline(out);
-        printContentRange(out, content, start, size, level + 1, namespaces);
+        printContentRange(out, content, start, size, level + 1);
         newline(out);
         indent(out, level);
       }
       else {
-        // Case all CDATA or Text - no indentation
+        // case all CDATA or Text - no indentation
         printTextRange(out, content, start, size);
       }
       out.write("</");
       printQualifiedName(out, element);
       out.write('>');
-    }
-
-    // remove declared namespaces from stack
-    while (namespaces.size() > previouslyDeclaredNamespaces) {
-      namespaces.pop();
     }
   }
 
@@ -407,14 +408,13 @@ class JbXmlOutputter {
    * starting index is inclusive, while the ending index is
    * exclusive.
    *
-   * @param content    <code>List</code> of content to output
-   * @param start      index of first content node (inclusive.
-   * @param end        index of last content node (exclusive).
-   * @param out        <code>Writer</code> to use.
-   * @param level      <code>int</code> level of indentation.
-   * @param namespaces <code>List</code> stack of Namespaces in scope.
+   * @param content <code>List</code> of content to output
+   * @param start   index of first content node (inclusive.
+   * @param end     index of last content node (exclusive).
+   * @param out     <code>Writer</code> to use.
+   * @param level   <code>int</code> level of indentation.
    */
-  private void printContentRange(Writer out, List<Content> content, int start, int end, int level, NamespaceStack namespaces) throws IOException {
+  private void printContentRange(Writer out, List<Content> content, int start, int end, int level) throws IOException {
     boolean firstNode; // Flag for 1st node in content
     Object next;       // Node we're about to print
     int first, index;  // Indexes into the list of content
@@ -452,19 +452,17 @@ class JbXmlOutputter {
         printComment(out, (Comment)next);
       }
       else if (next instanceof Element) {
-        printElement(out, (Element)next, level, namespaces);
+        printElement(out, (Element)next, level);
       }
       else if (next instanceof ProcessingInstruction) {
         printProcessingInstruction(out, (ProcessingInstruction)next);
       }
       else {
-        // XXX if we get here then we have a illegal content, for
-        //     now we'll just ignore it (probably should throw
-        //     a exception)
+        // XXX if we get here then we have a illegal content, for now we'll just ignore it (probably should throw a exception)
       }
 
       index++;
-    } /* while */
+    }
   }
 
   /**
@@ -484,18 +482,18 @@ class JbXmlOutputter {
 
     previous = null;
 
-    // Remove leading whitespace-only nodes
+    // remove leading whitespace-only nodes
     start = skipLeadingWhite(content, start);
 
     int size = content.size();
     if (start < size) {
-      // And remove trialing whitespace-only nodes
+      // and remove trialing whitespace-only nodes
       end = skipTrailingWhite(content, end);
 
       for (int i = start; i < end; i++) {
         node = content.get(i);
 
-        // Get the unmangled version of the text we are about to print
+        // get the unmangled version of the text we are about to print
         if (node instanceof Text) {
           next = ((Text)node).getText();
         }
@@ -506,13 +504,12 @@ class JbXmlOutputter {
           throw new IllegalStateException("Should see only CDATA, Text, or EntityRef");
         }
 
-        // This may save a little time
+        // this may save a little time
         if (next == null || next.isEmpty()) {
           continue;
         }
 
-        // Determine if we need to pad the output (padding is
-        // only need in trim or normalizing mode)
+        // determine if we need to pad the output (padding is only need in trim or normalizing mode)
         if (previous != null) { // Not 1st node
           if (format.getTextMode() == Format.TextMode.NORMALIZE || format.getTextMode() == Format.TextMode.TRIM) {
             if (endsWithWhite(previous) || startsWithWhite(next)) {
@@ -538,81 +535,30 @@ class JbXmlOutputter {
   }
 
   /**
-   * This will handle printing of any needed <code>{@link Namespace}</code>
-   * declarations.
-   *
-   * @param ns  <code>Namespace</code> to print definition of
-   * @param out <code>Writer</code> to use.
-   */
-  private static void printNamespace(Writer out, Namespace ns,
-                                     NamespaceStack namespaces)
-    throws IOException {
-    String prefix = ns.getPrefix();
-    String uri = ns.getURI();
-
-    // Already printed namespace decl?
-    if (uri.equals(namespaces.getURI(prefix))) {
-      return;
-    }
-
-    out.write(" xmlns");
-    if (!prefix.isEmpty()) {
-      out.write(':');
-      out.write(prefix);
-    }
-    out.write('=');
-    out.write('"');
-    out.write(escapeAttributeEntities(uri));
-    out.write('"');
-    namespaces.push(ns);
-  }
-
-  /**
    * This will handle printing of a <code>{@link Attribute}</code> list.
    *
    * @param attributes <code>List</code> of Attribute objects
    * @param out        <code>Writer</code> to use
    */
-  protected void printAttributes(Writer out, List<Attribute> attributes, NamespaceStack namespaces) throws IOException {
+  private void printAttributes(Writer out, List<Attribute> attributes) throws IOException {
     for (Attribute attribute : attributes) {
-      Namespace ns = attribute.getNamespace();
-      if (ns != Namespace.NO_NAMESPACE && ns != Namespace.XML_NAMESPACE) {
-        printNamespace(out, ns, namespaces);
-      }
-
       out.write(' ');
       printQualifiedName(out, attribute);
       out.write('=');
       out.write('"');
-      out.write(escapeAttributeEntities(attribute.getValue()));
+
+      String value;
+      if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
+        value = macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false);
+      }
+      else {
+        value = attribute.getValue();
+      }
+
+      out.write(escapeAttributeEntities(value));
       out.write('"');
     }
   }
-
-  private static void printElementNamespace(Writer out, Element element, NamespaceStack namespaces) throws IOException {
-    // Add namespace decl only if it's not the XML namespace and it's
-    // not the NO_NAMESPACE with the prefix "" not yet mapped
-    // (we do output xmlns="" if the "" prefix was already used and we
-    // need to reclaim it for the NO_NAMESPACE)
-    Namespace ns = element.getNamespace();
-    if (ns == Namespace.XML_NAMESPACE) {
-      return;
-    }
-    if (!(ns == Namespace.NO_NAMESPACE && namespaces.getURI("") == null)) {
-      printNamespace(out, ns, namespaces);
-    }
-  }
-
-  private static void printAdditionalNamespaces(Writer out, Element element, NamespaceStack namespaces) throws IOException {
-    List<Namespace> list = element.getAdditionalNamespaces();
-    if (list != null) {
-      for (Namespace additional : list) {
-        printNamespace(out, additional, namespaces);
-      }
-    }
-  }
-
-  // * * * * * * * * * * Support methods * * * * * * * * * *
 
   /**
    * This will print a newline only if indent is not null.
@@ -769,61 +715,5 @@ class JbXmlOutputter {
       out.write(':');
     }
     out.write(a.getName());
-  }
-
-  public static class NamespaceStack {
-    /**
-     * The prefixes available
-     */
-    private final Stack<String> prefixes = new Stack<>();
-
-    /**
-     * The URIs available
-     */
-    private final Stack<String> uris = new Stack<>();
-
-    /**
-     * This will add a new <code>{@link Namespace}</code>
-     * to those currently available.
-     *
-     * @param ns <code>Namespace</code> to add.
-     */
-    public void push(Namespace ns) {
-      prefixes.push(ns.getPrefix());
-      uris.push(ns.getURI());
-    }
-
-    /**
-     * This will remove the topmost (most recently added)
-     * <code>{@link Namespace}</code>, and return its prefix.
-     *
-     * @return <code>String</code> - the popped namespace prefix.
-     */
-    public String pop() {
-      String prefix = prefixes.pop();
-      uris.pop();
-      return prefix;
-    }
-
-    /**
-     * This returns the number of available namespaces.
-     *
-     * @return <code>int</code> - size of the namespace stack.
-     */
-    public int size() {
-      return prefixes.size();
-    }
-
-    /**
-     * Given a prefix, this will return the namespace URI most
-     * recently (topmost) associated with that prefix.
-     *
-     * @param prefix <code>String</code> namespace prefix.
-     * @return <code>String</code> - the namespace URI for that prefix.
-     */
-    public String getURI(String prefix) {
-      int index = prefixes.lastIndexOf(prefix);
-      return index == -1 ? null : uris.get(index);
-    }
   }
 }

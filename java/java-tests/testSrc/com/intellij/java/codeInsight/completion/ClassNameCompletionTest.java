@@ -151,6 +151,12 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.checkResult("abc = java.lang.StringBuilder<caret>");
   }
 
+  public void testInsideForwardReferencingTypeBound() {
+    myFixture.configureByText("a.java", "class F<T extends Zo<caret>o, Zoo> {}");
+    complete();
+    myFixture.assertPreferredCompletionItems(0, "Zoo");
+  }
+
   public void testDoubleStringBuffer() {
     createClass("package java.lang; public class StringBuffer {}");
     doTest();

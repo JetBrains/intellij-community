@@ -1401,6 +1401,36 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.getProperty(new String(<Hint text=\"bytes:\"/>null, <HINT text=\"charsetName:\"/><caret>)) } }");
   }
 
+  public void testFieldAccessInsideMethodInvocation() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C {\n" +
+                  "  int x;\n" +
+                  "  void some(int a, int b) {}\n" +
+                  "  void other() { som<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/><caret><Hint text=\",b:\"/>); }\n" +
+                          "}");
+    type("this.");
+    complete("x");
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/>this.x<caret><Hint text=\",b:\"/>); }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<Hint text=\"a:\"/>this.x, <HINT text=\"b:\"/><caret>); }\n" +
+                          "}");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }

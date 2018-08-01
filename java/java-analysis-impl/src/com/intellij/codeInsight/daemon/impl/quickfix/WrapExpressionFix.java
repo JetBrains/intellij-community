@@ -105,6 +105,7 @@ public class WrapExpressionFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myExpression.isValid()
            && myExpression.getManager().isInProject(myExpression)
+           && !(myExpression.getParent() instanceof PsiSwitchLabelStatement)
            && myExpectedType != null
            && myExpectedType.isValid()
            && myExpression.getType() != null

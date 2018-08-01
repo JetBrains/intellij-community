@@ -190,7 +190,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
          ProgressManager.checkCanceled();
          dumbService.runReadActionInSmartMode(() -> {
            final PsiClass candidate = (PsiClass)referenceList.getParent();
-           if (checker.checkInheritance(candidate, false)) {
+           if (checker.checkInheritance(candidate)) {
              String fqn = candidate.getQualifiedName();
              synchronized (classesWithFqn) {
                Object value = classesWithFqn.get(fqn);
@@ -231,7 +231,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
 
     processConcurrentlyIfTooMany(anonymousCandidates, candidate-> {
-      if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate, false))) {
+      if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
         synchronized (result) {
           result.add(candidate);
         }

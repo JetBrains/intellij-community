@@ -190,7 +190,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
-                                        AllIcons.Debugger.Value, variablesView.getDefaultFocusedComponent());
+                                        AllIcons.Debugger.VariablesTab, variablesView.getDefaultFocusedComponent());
     result.setCloseable(false);
 
     ActionGroup group = getCustomizedActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);

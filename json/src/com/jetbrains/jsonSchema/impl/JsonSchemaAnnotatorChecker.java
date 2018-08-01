@@ -89,18 +89,20 @@ class JsonSchemaAnnotatorChecker {
   private static JsonSchemaAnnotatorChecker mergeErrors(@NotNull List<JsonSchemaAnnotatorChecker> list,
                                                         @NotNull List<JsonSchemaObject> selectedSchemas,
                                                         @NotNull JsonComplianceCheckerOptions options) {
-    final Set<String> skipErrors = selectedSchemas.stream().filter(Predicates.notNull())
+    final Set<String> propNames = selectedSchemas.stream().filter(Predicates.notNull())
       .map(schema -> schema.getProperties().keySet())
-      .flatMap(Set::stream).map(name -> JsonBundle.message("json.schema.annotation.not.allowed.property", name))
+      .flatMap(Set::stream)
       .collect(Collectors.toSet());
     final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(options);
 
     for (JsonSchemaAnnotatorChecker ch: list) {
       for (Map.Entry<PsiElement, JsonValidationError> element: ch.myErrors.entrySet()) {
-        if (skipErrors.contains(element.getValue().getMessage())) {
+        JsonValidationError error = element.getValue();
+        if (error.getFixableIssueKind() == JsonValidationError.FixableIssueKind.ProhibitedProperty
+          && propNames.contains(((JsonValidationError.ProhibitedPropertyIssueData)error.getIssueData()).propertyName)) {
           continue;
         }
-        checker.myErrors.put(element.getKey(), element.getValue());
+        checker.myErrors.put(element.getKey(), error);
       }
     }
     return checker;
@@ -456,6 +458,51 @@ class JsonSchemaAnnotatorChecker {
     return position;
   }
 
+  private static boolean checkEnumValue(@NotNull Object object,
+                                        @NotNull JsonLikePsiWalker walker,
+                                        @Nullable JsonValueAdapter adapter,
+                                        @NotNull String text,
+                                        @NotNull BiFunction<String, String, Boolean> stringEq) {
+    if (object instanceof EnumArrayValueWrapper) {
+      if (adapter instanceof JsonArrayValueAdapter) {
+        List<JsonValueAdapter> elements = ((JsonArrayValueAdapter)adapter).getElements();
+        Object[] values = ((EnumArrayValueWrapper)object).getValues();
+        if (elements.size() == values.length) {
+          for (int i = 0; i < values.length; i++) {
+            if (!checkEnumValue(values[i], walker, elements.get(i), walker.getNodeTextForValidation(elements.get(i).getDelegate()), stringEq)) return false;
+          }
+          return true;
+        }
+      }
+    }
+    else if (object instanceof EnumObjectValueWrapper) {
+      if (adapter instanceof JsonObjectValueAdapter) {
+        List<JsonPropertyAdapter> props = ((JsonObjectValueAdapter)adapter).getPropertyList();
+        Map<String, Object> values = ((EnumObjectValueWrapper)object).getValues();
+        if (props.size() == values.size()) {
+          for (JsonPropertyAdapter prop : props) {
+            if (!values.containsKey(prop.getName())) return false;
+            JsonValueAdapter value = prop.getValue();
+            if (value == null) continue;
+            if (!checkEnumValue(values.get(prop.getName()), walker, value, walker.getNodeTextForValidation(value.getDelegate()), stringEq)) return false;
+          }
+
+          return true;
+        }
+      }
+    }
+    else {
+      if (walker.onlyDoubleQuotesForStringLiterals()) {
+        if (stringEq.apply(object.toString(), text)) return true;
+      }
+      else {
+        if (equalsIgnoreQuotes(object.toString(), text, walker.quotesForStringLiterals(), stringEq)) return true;
+      }
+    }
+
+    return false;
+  }
+
   private void checkForEnum(PsiElement value, JsonSchemaObject schema) {
     //enum values + pattern -> don't check enum values
     if (schema.getEnum() == null || schema.getPattern() != null) return;
@@ -465,12 +512,7 @@ class JsonSchemaAnnotatorChecker {
     final List<Object> objects = schema.getEnum();
     BiFunction<String, String, Boolean> eq = myOptions.isCaseInsensitiveEnumCheck() ? String::equalsIgnoreCase : String::equals;
     for (Object object : objects) {
-      if (walker.onlyDoubleQuotesForStringLiterals()) {
-        if (eq.apply(object.toString(), text)) return;
-      }
-      else {
-        if (equalsIgnoreQuotes(object.toString(), text, walker.quotesForStringLiterals(), eq)) return;
-      }
+      if (checkEnumValue(object, walker, walker.createValueAdapter(value), text, eq)) return;
     }
     error("Value should be one of: [" + StringUtil.join(objects, o -> o.toString(), ", ") + "]", value,
           JsonValidationError.FixableIssueKind.NonEnumValue, null, JsonErrorPriority.MEDIUM_PRIORITY);

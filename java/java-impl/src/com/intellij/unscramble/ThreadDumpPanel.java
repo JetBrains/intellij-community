@@ -56,7 +56,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Resume, Daemon_sign);
   private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(Socket, Daemon_sign);
   private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(Idle, Daemon_sign);
-  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EdtBusy, Daemon_sign);
+  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.ProfileCPU, Daemon_sign);
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Menu_saveall, Daemon_sign);
   private final JBList myThreadList;
   private final List<ThreadState> myThreadDump;
@@ -224,7 +224,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       if ("idle".equals(threadState.getThreadStateDetail())) {
         return daemon ? IDLE_ICON_DAEMON : Idle;
       }
-      return daemon ? EDT_BUSY_ICON_DAEMON : EdtBusy;
+      return daemon ? EDT_BUSY_ICON_DAEMON : AllIcons.Actions.ProfileCPU;
     }
     return daemon ? RUNNING_ICON_DAEMON : AllIcons.Actions.Resume;
   }

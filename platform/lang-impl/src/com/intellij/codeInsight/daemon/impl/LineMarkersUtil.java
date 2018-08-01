@@ -114,7 +114,7 @@ class LineMarkersUtil {
       highlighter.putUserData(LINE_MARKER_INFO, info);
 
       LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = highlighter.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)highlighter.getGutterIconRenderer() : null;
-      boolean rendererChanged = oldRenderer == null || newRenderer == null || !newRenderer.equals(oldRenderer);
+      boolean rendererChanged = newRenderer == null || !newRenderer.equals(oldRenderer);
       boolean lineSeparatorColorChanged = !Comparing.equal(highlighter.getLineSeparatorColor(), info.separatorColor);
       boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
 

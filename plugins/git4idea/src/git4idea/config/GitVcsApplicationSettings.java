@@ -8,13 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The application wide settings for the git
  */
-@State(
-  name = "Git.Application.Settings",
-  storages = {
-    @Storage(value = "git.xml", roamingType = RoamingType.PER_OS),
-    @Storage(value = "vcs.xml", deprecated = true)
-  }
-)
+@State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.PER_OS))
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 

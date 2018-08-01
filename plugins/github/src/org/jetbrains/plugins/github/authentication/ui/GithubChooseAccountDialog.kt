@@ -58,6 +58,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: JComponent?,
     this.title = title
     setOKButtonText(okText)
     init()
+    accountsList.selectedIndex = 0
   }
 
   override fun doValidate(): ValidationInfo? {
@@ -74,4 +75,6 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: JComponent?,
       .addToCenter(JBScrollPane(accountsList).apply { preferredSize = JBDimension(150, 80) })
       .apply { setDefaultCheckBox?.run(::addToBottom) }
   }
+
+  override fun getPreferredFocusedComponent() = accountsList
 }

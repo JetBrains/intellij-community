@@ -39,13 +39,7 @@ public interface DataContext {
   @Nullable
   Object getData(@NonNls String dataId);
 
-  DataContext EMPTY_CONTEXT = new DataContext() {
-    @Nullable
-    @Override
-    public Object getData(@NonNls String dataId) {
-      return null;
-    }
-  };
+  DataContext EMPTY_CONTEXT = dataId -> null;
 
   /**
    * Returns the value corresponding to the specified data key. Some of the supported

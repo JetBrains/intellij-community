@@ -264,10 +264,10 @@ private annotation_value ::= annotation | annotation_array_value | expression
 {
   name = 'annotation attribute initializer'
 }
-annotation_array_value ::= '[' <<comma_list annotation_value>>? ']'
-{
-  pin = 1
-}
+annotation_array_value ::= '[' annotation_array_item* ']' { pin = 1 }
+private annotation_array_item ::= <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
+private annotation_array_item_end ::= ',' | &']' | end_of_file
+private annotation_array_item_start ::= '@' | expression_start
 // endregion
 
 
@@ -728,7 +728,7 @@ try_resource_list ::= '(' try_resource_list_item+ ')' { pin = 1 }
 private try_resource_list_item ::= local_variable_declaration try_resource_list_separator { pin = 1 }
 private try_resource_list_separator ::= &')' | separators | <<newLine>>
 
-catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block { pin = 1 }
+catch_clause ::= 'catch' '(' parse_catch_parameter ')' (mb_nl lazy_block) { pin = 1 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
 private catch_parameter_type_element ::= type_element_followed_by_identifier

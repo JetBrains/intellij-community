@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 import com.intellij.ide.projectWizard.kotlin.installKotlinPlugin.CreateSdksGuiTest
 import com.intellij.ide.projectWizard.kotlin.installKotlinPlugin.InstallPluginGuiTest
 import com.intellij.testGuiFramework.framework.FirstStartWith
+import com.intellij.testGuiFramework.framework.GuiTestSuite
 import com.intellij.testGuiFramework.framework.GuiTestSuiteRunner
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
@@ -16,11 +17,11 @@ import org.junit.runners.Suite
     KotlinCreateProjectGuiTestSuite.PreparationSteps::class
   , KotlinCreateProjectGuiTestSuite.KotlinCreateProject::class
 )
-class KotlinCreateProjectGuiTestSuite{
+class KotlinCreateProjectGuiTestSuite : GuiTestSuite() {
 
   @RunWith(GuiTestSuiteRunner::class)
   @RunWithIde(CommunityIde::class)
-   @FirstStartWith(CommunityIdeFirstStart::class)
+  @FirstStartWith(CommunityIdeFirstStart::class)
   @Suite.SuiteClasses(
         InstallPluginGuiTest::class
       , CreateSdksGuiTest::class

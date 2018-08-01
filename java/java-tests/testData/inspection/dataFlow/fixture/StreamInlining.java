@@ -238,4 +238,16 @@ public class StreamInlining {
   void testToArray(List<String> list) {
     list.stream().toArray(size -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
   }
+
+  Object testBoxingExplicit() {
+    return String.join("\n",
+                Stream.of(12, 22)
+                  .map(Object::toString)
+                  .collect(Collectors.toList())
+    );
+  }
+
+  public static void testBoxingExplicit2() {
+    double s = Stream.of(1).mapToDouble(x -> x * x).sum();
+  }
 }

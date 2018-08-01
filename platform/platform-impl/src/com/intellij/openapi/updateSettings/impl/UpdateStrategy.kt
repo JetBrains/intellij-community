@@ -3,7 +3,12 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.graph.GraphAlgorithms
+import com.intellij.util.graph.InboundSemiGraph
 import java.util.*
+
+private val NUMBER = Regex("\\d+")
 
 class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
   enum class State {
@@ -30,8 +35,8 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
 
     val newBuild = result?.first
     val updatedChannel = result?.second
-    val patch = newBuild?.patch(currentBuild)
-    return CheckForUpdateResult(newBuild, updatedChannel, patch)
+    val patches = if (newBuild != null) patches(newBuild, product, currentBuild) else null
+    return CheckForUpdateResult(newBuild, updatedChannel, patches)
   }
 
   private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>) =
@@ -43,6 +48,50 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
       if (n1.baselineVersion == lineage && n2.baselineVersion != lineage) 1
       else if (n2.baselineVersion == lineage && n1.baselineVersion != lineage) -1
       else n1.compareTo(n2)
+
+  private fun patches(newBuild: BuildInfo, product: Product, from: BuildNumber): UpdateChain? {
+    val single = newBuild.patches.find { it.isAvailable && it.fromBuild.compareTo(from) == 0 }
+    if (single != null) {
+      return UpdateChain(listOf(from, newBuild.number), single.size)
+    }
+
+    val upgrades = MultiMap<BuildNumber, BuildNumber>()
+    val sizes = mutableMapOf<Pair<BuildNumber, BuildNumber>, Int>()
+
+    product.channels.forEach { channel ->
+      channel.builds.forEach { build ->
+        val toBuild = build.number.withoutProductCode()
+        build.patches.forEach { patch ->
+          if (patch.isAvailable) {
+            val fromBuild = patch.fromBuild.withoutProductCode()
+            upgrades.putValue(toBuild, fromBuild)
+            if (patch.size != null) {
+              val maxSize = NUMBER.findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().max()
+              if (maxSize != null) sizes += (fromBuild to toBuild) to maxSize
+            }
+          }
+        }
+      }
+    }
+
+    val graph = object : InboundSemiGraph<BuildNumber> {
+      override fun getNodes() = upgrades.keySet() + upgrades.values()
+      override fun getIn(n: BuildNumber) = upgrades[n].iterator()
+    }
+    val path = GraphAlgorithms.getInstance().findShortestPath(graph, from.withoutProductCode(), newBuild.number.withoutProductCode())
+    if (path == null || path.size <= 2) return null
+
+    var total = 0
+    for (i in 1 until path.size) {
+      val size = sizes[path[i - 1] to path[i]]
+      if (size == null) {
+        total = -1
+        break
+      }
+      total += size
+    }
+    return UpdateChain(path, if (total > 0) total.toString() else null)
+  }
 
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("use {@link #UpdateStrategy(BuildNumber, UpdatesInfo, UserUpdateSettings)}")

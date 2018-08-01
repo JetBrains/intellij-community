@@ -185,7 +185,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       handler.addParameters("HEAD");
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 

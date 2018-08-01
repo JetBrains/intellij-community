@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -26,15 +27,16 @@ import java.io.File;
  * @author yole
  */
 public class PlatformVcsPathPresenter extends VcsPathPresenter {
+  @NotNull
   public String getPresentableRelativePathFor(final VirtualFile file) {
     return FileUtil.toSystemDependentName(file.getPath());
   }
 
+  @NotNull
   public String getPresentableRelativePath(final ContentRevision fromRevision, final ContentRevision toRevision) {
     RelativePathCalculator calculator = new RelativePathCalculator(toRevision.getFile().getPath(), fromRevision.getFile().getPath());
 
-    calculator.execute();
-    final String result = calculator.getResult();
-    return (result == null) ? null : result.replace("/", File.separator);
+    final String result = calculator.execute();
+    return result.replace("/", File.separator);
   }
 }

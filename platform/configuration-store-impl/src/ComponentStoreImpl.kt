@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.StateStorageManager.ExternalizationSession
+import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -82,6 +83,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override abstract val storageManager: StateStorageManager
 
+  internal fun getComponents(): Map<String, ComponentInfo> {
+    return components
+  }
+
   override fun initComponent(component: Any, isService: Boolean) {
     var componentName = ""
     try {
@@ -158,7 +163,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open fun afterSaveComponents(errors: MutableList<Throwable>) {
   }
 
-  protected  open fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, errors: MutableList<Throwable>): MutableList<Throwable>? {
+  protected open fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, errors: MutableList<Throwable>): MutableList<Throwable>? {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     val names = ArrayUtilRt.toStringArray(components.keys)
@@ -219,12 +224,15 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   @TestOnly
   override fun saveApplicationComponent(component: PersistentStateComponent<*>) {
-    val externalizationSession = storageManager.startExternalization() ?: return
+    // saveApplicationComponent is called for application level and externalizationSession must be not null
+    val externalizationSession = storageManager.startExternalization()!!
 
     val stateSpec = StoreUtil.getStateSpec(component)
+    LOG.info("saveApplicationComponent is called for ${stateSpec.name}")
     commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
     val sessions = externalizationSession.createSaveSessions()
     if (sessions.isEmpty()) {
+      LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
       return
     }
 
@@ -348,6 +356,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             state = deserializeState(Element("state"), stateClass, null)!!
           }
           else {
+            FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateSpec, stateClass, project)
             continue
           }
         }
@@ -356,7 +365,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           component.loadState(state)
         }
         finally {
-          stateGetter.close()
+          val stateAfterLoad = stateGetter.close()
+          (stateAfterLoad ?: state).let {
+            FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, it, project)
+          }
         }
         return true
       }

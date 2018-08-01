@@ -101,7 +101,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
       final boolean[][] canSwap = collectCanSwap(sections);
       final CatchSectionIndices[] duplicateIndices = getCatchSectionIndices(sections, canSwap, CatchSectionWrapper::areDuplicates);
-      final CatchSectionIndices[] emptyIndices = getCatchSectionIndices(sections, canSwap, CatchSectionWrapper::areEmpty);
+      final CatchSectionIndices[] emptyIndices = isOnTheFly() ? getCatchSectionIndices(sections, canSwap, CatchSectionWrapper::areEmpty) : null;
       if (duplicateIndices == null && emptyIndices == null) return;
 
       final boolean[] problems = new boolean[sections.length];

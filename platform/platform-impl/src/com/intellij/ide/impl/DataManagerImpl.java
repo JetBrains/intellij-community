@@ -166,12 +166,14 @@ public class DataManagerImpl extends DataManager {
     return data;
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(Component component) {
     //noinspection deprecation
     return new MyDataContext(component);
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {

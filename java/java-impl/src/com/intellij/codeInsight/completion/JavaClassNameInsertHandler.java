@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -44,7 +30,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
   static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new JavaClassNameInsertHandler();
 
   @Override
-  public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
+  public void handleInsert(@NotNull final InsertionContext context, @NotNull final JavaPsiClassReferenceElement item) {
     int offset = context.getTailOffset() - 1;
     final PsiFile file = context.getFile();
     if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false) != null) {
@@ -125,6 +111,22 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     if (fillTypeArgs && context.getCompletionChar() != '(') {
       JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
+    }
+    else if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
+             psiClass.getTypeParameters().length == 1 &&
+             PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+      wrapFollowingTypeInGenerics(context, context.getOffset(refEnd));
+    }
+  }
+
+  private static void wrapFollowingTypeInGenerics(InsertionContext context, int refEnd) {
+    PsiTypeElement typeElem = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), refEnd, PsiTypeElement.class, false);
+    if (typeElem != null) {
+      int typeEnd = typeElem.getTextRange().getEndOffset();
+      context.getDocument().insertString(typeEnd, ">");
+      context.getEditor().getCaretModel().moveToOffset(typeEnd + 1);
+      context.getDocument().insertString(refEnd, "<");
+      context.setAddCompletionChar(false);
     }
   }
 

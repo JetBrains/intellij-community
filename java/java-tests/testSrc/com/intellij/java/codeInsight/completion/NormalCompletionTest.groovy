@@ -1860,4 +1860,11 @@ class Abc {
     assert myFixture.lookupElements.size() == 1
   }
 
+  void "test smart enter wraps type arguments"() {
+    myFixture.configureByText 'a.java', 'class Foo<T> { F<caret>List<String> }'
+    myFixture.completeBasic()
+    myFixture.type(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)
+    myFixture.checkResult 'class Foo<T> { Foo<List<String>><caret> }'
+  }
+
 }

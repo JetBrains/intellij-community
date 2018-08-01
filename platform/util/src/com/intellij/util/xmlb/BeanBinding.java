@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.beans.Introspector;
 import java.lang.reflect.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BeanBinding extends NotNullDeserializeBinding {
   private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
@@ -269,7 +269,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
+  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     List<MutableAccessor> accessors = ourAccessorCache.get(aClass);
     if (accessors != null) {
       return accessors;
@@ -315,7 +315,6 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return accessors;
   }
 
-  // avoid assert for OCInspections.Properties
   private static boolean isAssertBindings(@NotNull Class<?> aClass) {
     do {
       Property property = aClass.getAnnotation(Property.class);

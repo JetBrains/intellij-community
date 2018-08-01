@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -11,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SearchTextField;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +62,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     Map<String, String> contributorsNames = new LinkedHashMap<>();
     myContributorFactories.forEach(factory -> {
       SearchEverywhereContributor contributor = factory.createContributor(initEvent);
-      myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter());
+      myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter(initEvent));
       contributors.add(contributor);
       contributorsNames.put(contributor.getSearchProviderId(), contributor.getGroupName());
     });
@@ -70,7 +72,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                            List<String> ids = contributors.stream()
                                                                           .map(contributor -> contributor.getSearchProviderId())
                                                                           .collect(Collectors.toList());
-                                           return new SearchEverywhereContributorFilterImpl<>(ids, id -> contributorsNames.get(id), id -> null);
+                                           return new PersistentSearchEverywhereContributorFilter<>(ids,
+                                                                                                    SearchEverywhereConfiguration.getInstance(project),
+                                                                                                    id -> contributorsNames.get(id), id -> null);
                                          }
     );
 
@@ -109,7 +113,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     }
 
     Dimension size = mySearchEverywhereUI.getMinimumSize();
-    myBalloon.setMinimumSize(withInsets(size));
+    JBInsets.addTo(size, myBalloon.getContent().getInsets());
+    myBalloon.setMinimumSize(size);
 
     myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
     Disposer.register(myBalloon, () -> {
@@ -142,14 +147,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       location.y /= 2;
       balloon.setLocation(location);
     }
-  }
-
-  private Dimension withInsets(Dimension size) {
-    Insets insets = myBalloon.getContent().getInsets();
-    return new Dimension(
-      size.width + insets.left + insets.right,
-      size.height + insets.top + insets.bottom
-    );
   }
 
   @Override
@@ -202,10 +199,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
       if (viewType == SearchEverywhereUI.ViewType.SHORT) {
         myBalloonFullSize = myBalloon.getSize();
+        JBInsets.removeFrom(myBalloonFullSize, myBalloon.getContent().getInsets());
         myBalloon.pack(false, true);
       } else {
         if (myBalloonFullSize == null) {
-          myBalloonFullSize = withInsets(mySearchEverywhereUI.getPreferredSize());
+          myBalloonFullSize = mySearchEverywhereUI.getPreferredSize();
+          JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
         }
         myBalloon.setSize(myBalloonFullSize);
       }

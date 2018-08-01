@@ -12,6 +12,7 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog;
 
 import javax.swing.*;
@@ -119,9 +120,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   }
 
   private void generateToken() {
-    GithubLoginDialog dialog = new GithubLoginDialog(myProject);
+    GithubLoginDialog dialog = new GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), myProject);
     dialog.withServer(getHost(), false);
-    dialog.setTokenNote("IntelliJ tasks plugin");
+    dialog.setClientName("Tasks Plugin");
     if (dialog.showAndGet()) {
       myToken.setText(dialog.getToken());
     }

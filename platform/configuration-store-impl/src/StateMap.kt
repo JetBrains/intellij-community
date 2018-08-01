@@ -144,7 +144,12 @@ class StateMap private constructor(private val names: Array<String>, private val
       return null
     }
 
-    val prev = states.getAndUpdate(index, { state -> if (archive && state is Element) archiveState(state).toByteArray() else state })
+    val prev = states.getAndUpdate(index) { state ->
+      when {
+        archive && state is Element -> archiveState(state).toByteArray()
+        else -> state
+      }
+    }
     return prev as? Element
   }
 

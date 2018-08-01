@@ -46,7 +46,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -564,7 +563,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
-    if (Experiments.isFeatureEnabled("new.search.everywhere") && e.getProject() != null) {
+    if (Registry.is("new.search.everywhere") && e.getProject() != null) {
       //todo[mikhail.sokolov] show new UI
       String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
 

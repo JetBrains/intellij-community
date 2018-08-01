@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.equals("Remove") || // IDEA-177220
            actionText.equals("Add \"use strict\" pragma") || // IDEA-187427
-           actionText.equals("Suppress for statement in injection") || // IDEA-187427
+           actionText.matches("Suppress for .* in injection") || // IDEA-187427
            super.shouldSkipIntention(actionText);
   }
 
@@ -174,6 +175,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
         break;
       }
       if (parent instanceof PsiVariable && expression instanceof PsiArrayInitializerExpression) break;
+      if (ErrorUtil.containsDeepError(parent)) break;
       result.add(expression);
       element = expression.getParent();
     }

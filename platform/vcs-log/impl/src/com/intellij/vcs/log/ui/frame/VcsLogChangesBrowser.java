@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -123,7 +124,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   protected List<AnAction> createToolbarActions() {
     return ContainerUtil.append(
       super.createToolbarActions(),
-      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
+      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionPlaces.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
     );
   }
 

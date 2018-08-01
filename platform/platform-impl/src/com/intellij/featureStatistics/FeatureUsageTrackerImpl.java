@@ -17,13 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
-@State(
-  name = "FeatureUsageStatistics",
-  storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-    @Storage(value = "feature.usage.statistics.xml", roamingType = RoamingType.DISABLED, deprecated = true)
-  }
-)
+@State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;

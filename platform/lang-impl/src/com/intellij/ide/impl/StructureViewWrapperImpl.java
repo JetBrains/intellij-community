@@ -11,6 +11,7 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -27,7 +28,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -55,7 +55,10 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
+  private static final Logger LOG = Logger.getInstance(StructureViewWrapperImpl.class);
   private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
+  private static final int REFRESH_TIME = 100; // time to check if a context file selection is changed or not
+  private static final int REBUILD_TIME = 100; // time to wait and merge requests to rebuild a tree model
 
   private final Project myProject;
   private final ToolWindowEx myToolWindow;
@@ -79,33 +82,37 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
+    JComponent component = myToolWindow.getComponent();
 
-    myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
+    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component, true);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     final TimerListener timerListener = new TimerListener() {
       @Override
       public ModalityState getModalityState() {
-        return ModalityState.stateForComponent(myToolWindow.getComponent());
+        return ModalityState.stateForComponent(component);
       }
 
       @Override
       public void run() {
-        checkUpdate();
+        loggedRun("check if update needed", StructureViewWrapperImpl.this::checkUpdate);
       }
     };
-    ActionManager.getInstance().addTimerListener(500, timerListener);
+    LOG.debug("timer to check if update needed: add");
+    ActionManager.getInstance().addTimerListener(REFRESH_TIME, timerListener);
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
+        LOG.debug("timer to check if update needed: remove");
         ActionManager.getInstance().removeTimerListener(timerListener);
       }
     });
 
-    myToolWindow.getComponent().addHierarchyListener(new HierarchyListener() {
+    component.addHierarchyListener(new HierarchyListener() {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if (BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+          LOG.debug("displayability changed");
           scheduleRebuild();
         }
       }
@@ -132,6 +139,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     final boolean insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner);
+    if (insideToolwindow) LOG.debug("inside structure view");
     if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive())) {
       return;
     }
@@ -175,6 +183,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
     if (forceRebuild) {
       myFile = file;
+      LOG.debug("show structure for file: ", file);
       scheduleRebuild();
     }
   }
@@ -199,7 +208,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     Runnable runnable = () -> {
       if (!Comparing.equal(myFileEditor, fileEditor)) {
         myFile = file;
-        rebuild();
+        LOG.debug("replace file on selection: ", file);
+        loggedRun("rebuild a structure immediately: ", this::rebuild);
       }
       if (myStructureView != null) {
         myStructureView.navigateToSelectedElement(requestFocus);
@@ -221,11 +231,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private void scheduleRebuild() {
     if (!myToolWindow.isVisible()) return;
+    LOG.debug("request to rebuild a structure");
     myUpdateQueue.queue(new Update("rebuild") {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        rebuild();
+        loggedRun("rebuild a structure: ", StructureViewWrapperImpl.this::rebuild);
       }
     });
   }
@@ -396,6 +407,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     public Object getData(@NonNls String dataId) {
       if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
       return null;
+    }
+  }
+
+  private static void loggedRun(@NotNull String message, @NotNull Runnable task) {
+    try {
+      if (LOG.isTraceEnabled()) LOG.trace(message + ": started");
+      task.run();
+    }
+    catch (Throwable throwable) {
+      LOG.warn(message, throwable);
+      throw throwable;
+    }
+    finally {
+      if (LOG.isTraceEnabled()) LOG.trace(message + ": finished");
     }
   }
 }

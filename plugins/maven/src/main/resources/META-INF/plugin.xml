@@ -29,6 +29,7 @@
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
     <extensionPoint name="executionEnvironmentProvider" interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
+    <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>

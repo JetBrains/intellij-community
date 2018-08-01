@@ -23,16 +23,17 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import java.util.HashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -57,6 +58,20 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
       }
     }
     parameterPropagationTest(method, methods, JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("T"));
+  }
+
+  public void testConflictingParameterName() {
+    final PsiMethod method = getPrimaryMethod();
+    final HashSet<PsiMethod> methods = new HashSet<>();
+    for (PsiReference reference : ReferencesSearch.search(method)) {
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
+      if (psiMethod != null) {
+        methods.add(psiMethod);
+      }
+    }
+    PsiClassType stringType = PsiType.getJavaLangString(getPsiManager(), GlobalSearchScope.allScope(getProject()));
+    final ParameterInfoImpl[] newParameters = {new ParameterInfoImpl(-1, "param", stringType)};
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(newParameters, new ThrownExceptionInfo[0], methods, null, method));
   }
 
   public void testExceptionSimple() {

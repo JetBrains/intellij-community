@@ -154,7 +154,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     final Document document = context.getDocument();
     final PsiFile file = context.getFile();
     final PsiMethod method = getObject();

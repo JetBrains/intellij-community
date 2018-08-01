@@ -4590,4 +4590,19 @@ public class UIUtil {
   public static boolean isRetina(@NotNull GraphicsDevice device) {
     return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
   }
+
+  /** Employs a common pattern to use {@code Graphics}. This is a non-distractive approach
+   * all modifications on {@code Graphics} are metter only inside the {@code Consumer} block
+   *
+   * @param originGraphics graphics to work with
+   * @param drawingConsumer you can use the Graphics2D object here safely
+   */
+  public static void useSafely(Graphics originGraphics, Consumer<? super Graphics2D> drawingConsumer) {
+    Graphics2D graphics = ((Graphics2D)originGraphics.create());
+    try {
+      drawingConsumer.consume(graphics);
+    } finally {
+      graphics.dispose();
+    }
+  }
 }

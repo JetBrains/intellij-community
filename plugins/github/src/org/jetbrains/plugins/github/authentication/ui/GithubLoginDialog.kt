@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AnimatedIcon
@@ -26,30 +28,32 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubApiUtil
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.GithubTask
+import org.jetbrains.plugins.github.authentication.util.GithubTokenCreator
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.chain
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
-import org.jetbrains.plugins.github.util.GithubUtil
+import java.awt.Component
 import java.awt.Cursor
 import java.net.UnknownHostException
+import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.html.HTMLEditorKit
 
-class GithubLoginDialog @JvmOverloads constructor(private val project: Project? = null,
-                                                  parent: JComponent? = null,
+class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: GithubApiRequestExecutor.Factory,
+                                                  private val project: Project? = null,
+                                                  parent: Component? = null,
                                                   private val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true },
                                                   title: String = "Log In to Github",
                                                   private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
-  private val serverTextField = ExtendableTextField(GithubApiUtil.DEFAULT_GITHUB_HOST)
+  private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST)
   private var centerPanel = Wrapper()
 
   private var southAdditionalPanel = Wrapper().apply { JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP) }
@@ -61,12 +65,12 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
 
   private var progressIndicator: ProgressIndicator? = null
   private val progressIcon = AnimatedIcon.Default()
-  private val progressExtension = ExtendableTextComponent.Extension({ progressIcon })
+  private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
   private lateinit var login: String
   private lateinit var token: String
 
-  var tokenNote: String = GithubUtil.DEFAULT_TOKEN_NOTE
+  var clientName: String = GithubTokenCreator.DEFAULT_CLIENT_NAME
   private var tokenAcquisitionError: ValidationInfo? = null
 
   init {
@@ -115,9 +119,11 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
     setBusy(true)
     tokenAcquisitionError = null
 
+    val server = getServer()
+    val executor = currentUi.createExecutor()
     service<ProgressManager>().runProcessWithProgressAsynchronously(object : Task.Backgroundable(project, "Not Visible") {
       override fun run(indicator: ProgressIndicator) {
-        val (newLogin, newToken) = currentUi.acquireLoginAndToken(indicator)
+        val (newLogin, newToken) = currentUi.acquireLoginAndToken(server, executor, indicator)
         login = newLogin
         token = newToken
       }
@@ -200,6 +206,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
 
   private inner class LoginPasswordCredentialsUI : CredentialsUI() {
     private val loginTextField = JBTextField()
+
     private val passwordField = JPasswordField()
     private val contextHelp = JEditorPane()
 
@@ -252,12 +259,25 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
       .addToCenter(LinkLabel.create("Sign up for Github", Runnable { BrowserUtil.browse("https://github.com") }))
       .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
 
-    override fun acquireLoginAndToken(indicator: ProgressIndicator): Pair<String, String> {
-      val server = getServer()
+    override fun createExecutor(): GithubApiRequestExecutor.WithBasicAuth {
+      val modalityState = ModalityState.stateForComponent(passwordField)
+      return executorFactory.create(loginTextField.text, passwordField.password, Supplier {
+        invokeAndWaitIfNeed(modalityState) {
+          Messages.showInputDialog(passwordField,
+                                   "Authentication Code",
+                                   "Github Two-Factor Authentication",
+                                   null)
+        }
+      })
+    }
+
+    override fun acquireLoginAndToken(server: GithubServerPath,
+                                      executor: GithubApiRequestExecutor,
+                                      indicator: ProgressIndicator): Pair<String, String> {
       if (!isAccountUnique(loginTextField.text, server)) throw LoginNotUniqueException()
 
-      val token = GithubApiTaskExecutor.execute(indicator, server, loginTextField.text, passwordField.password,
-                                                GithubTask { GithubApiUtil.getMasterToken(it, tokenNote) })
+      val token = GithubTokenCreator(server, executor, indicator).createMaster(clientName).token
+
       return loginTextField.text to token
     }
 
@@ -280,8 +300,8 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
 
   private inner class TokenCredentialsUI : CredentialsUI() {
     private val tokenTextField = JBTextField()
-    private val switchUiLink = LinkLabel.create("Log In with Username", { applyUi(passwordUi) })
 
+    private val switchUiLink = LinkLabel.create("Log In with Username") { applyUi(passwordUi) }
     fun setToken(token: String) {
       tokenTextField.text = token
     }
@@ -296,11 +316,16 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
 
     override fun getSouthPanel() = switchUiLink
 
-    override fun acquireLoginAndToken(indicator: ProgressIndicator): Pair<String, String> {
-      val login = GithubApiTaskExecutor.execute(indicator, getServer(), tokenTextField.text,
-                                                GithubTask { GithubApiUtil.getCurrentUser(it).login })
+    override fun createExecutor(): GithubApiRequestExecutor {
+      return executorFactory.create(tokenTextField.text)
+    }
 
-      if (!isAccountUnique(login, getServer())) throw LoginNotUniqueException(login)
+    override fun acquireLoginAndToken(server: GithubServerPath,
+                                      executor: GithubApiRequestExecutor,
+                                      indicator: ProgressIndicator): Pair<String, String> {
+      val login = executor.execute(indicator, GithubApiRequests.CurrentUser.get(server)).login
+
+      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
       return login to tokenTextField.text
     }
@@ -326,7 +351,11 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
     abstract fun getPreferredFocus(): JComponent
     abstract fun getSouthPanel(): JComponent
     abstract fun getValidator(): Validator
-    abstract fun acquireLoginAndToken(indicator: ProgressIndicator): Pair<String, String>
+    abstract fun createExecutor(): GithubApiRequestExecutor
+    abstract fun acquireLoginAndToken(server: GithubServerPath,
+                                      executor: GithubApiRequestExecutor,
+                                      indicator: ProgressIndicator): Pair<String, String>
+
     abstract fun handleAcquireError(error: Throwable): ValidationInfo
     abstract fun setBusy(busy: Boolean)
   }

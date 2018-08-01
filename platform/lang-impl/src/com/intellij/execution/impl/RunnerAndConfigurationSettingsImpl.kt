@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
@@ -294,7 +293,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       val replacePathMap = (macroManager as? ProjectPathMacroManager)?.replacePathMap
       if (replacePathMap != null) {
         replacePathMap.addReplacement(projectParentPath, '$' + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$/..", true)
-        BasePathMacroManager.collapsePaths(element, true, replacePathMap)
+        PathMacroManager.collapsePaths(element, true, replacePathMap)
         return
       }
     }

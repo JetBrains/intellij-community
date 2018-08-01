@@ -9,17 +9,19 @@ import git4idea.DialogManager
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
-import javax.swing.JComponent
+import java.awt.Component
 
 /**
  * Entry point for interactions with Github authentication subsystem
  */
-class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager) {
+class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager,
+                                                       private val executorFactory: GithubApiRequestExecutor.Factory) {
   @CalledInAny
   fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()
 
@@ -33,7 +35,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAny
   internal fun getOrRequestTokenForAccount(account: GithubAccount,
                                            project: Project? = null,
-                                           parentComponent: JComponent? = null,
+                                           parentComponent: Component? = null,
                                            modalityStateSupplier: () -> ModalityState = { ModalityState.any() }): String? {
     return getTokenForAccount(account) ?: invokeAndWaitIfNeed(modalityStateSupplier()) {
       requestNewToken(account, project, parentComponent)
@@ -41,8 +43,8 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   }
 
   @CalledInAwt
-  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: JComponent?): String? {
-    val dialog = GithubLoginDialog(project, parentComponent, message = "Missing access token for $account")
+  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component?): String? {
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
       .withToken()
@@ -63,7 +65,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     fun isAccountUnique(name: String, server: GithubServerPath) =
       accountManager.accounts.none { it.name == name && it.server == server }
 
-    val dialog = GithubLoginDialog(project, null, ::isAccountUnique)
+    val dialog = GithubLoginDialog(executorFactory, project, null, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
@@ -103,16 +105,6 @@ class GithubAuthenticationManager internal constructor(private val accountManage
       }
     }
     return true
-  }
-
-  @CalledInAwt
-  fun ensureHasAccountsWithTokens(project: Project): Boolean {
-    if (!ensureHasAccounts(project)) return false
-    var atLeastOneHasToken = false
-    for (account in getAccounts()) {
-      atLeastOneHasToken = getOrRequestTokenForAccount(account, project) != null
-    }
-    return atLeastOneHasToken
   }
 
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? {

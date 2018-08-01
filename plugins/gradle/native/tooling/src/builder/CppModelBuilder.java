@@ -60,6 +60,8 @@ public class CppModelBuilder implements ModelBuilderService {
   private static final boolean IS_48_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.8")) >= 0;
   private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER ||
                                                  GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.7")) >= 0;
+  private static final boolean IS_41_OR_BETTER = IS_47_OR_BETTER ||
+                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.1")) >= 0;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -69,6 +71,9 @@ public class CppModelBuilder implements ModelBuilderService {
   @Nullable
   @Override
   public Object buildAll(final String modelName, final Project project) {
+    if(!IS_41_OR_BETTER) {
+      return null;
+    }
     PluginContainer pluginContainer = project.getPlugins();
     if (!pluginContainer.hasPlugin(CppBasePlugin.class)) {
       if (pluginContainer.hasPlugin(CppPlugin.class)) {

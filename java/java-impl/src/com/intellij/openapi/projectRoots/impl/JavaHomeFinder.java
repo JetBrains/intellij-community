@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -64,15 +50,20 @@ public abstract class JavaHomeFinder {
     return new DefaultFinder();
   }
 
-  protected static void scanFolder(File folder, List<String> result) {
+  protected void scanFolder(File folder, List<String> result) {
     if (JdkUtil.checkForJdk(folder))
       result.add(folder.getAbsolutePath());
 
     for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY)) {
+      file = adjustPath(file);
       if (JdkUtil.checkForJdk(file)) {
         result.add(file.getAbsolutePath());
       }
     }
+  }
+
+  protected File adjustPath(File file) {
+    return file;
   }
 
   protected static File getJavaHome() {
@@ -98,7 +89,7 @@ public abstract class JavaHomeFinder {
     public List<String> findExistingJdks() {
       List<String> result = new ArrayList<>();
       for (String path : myPaths) {
-        JavaHomeFinder.scanFolder(new File(path), result);
+        scanFolder(new File(path), result);
       }
       return result;
     }
@@ -121,6 +112,17 @@ public abstract class JavaHomeFinder {
         }
       }
       return list;
+    }
+
+    @Override
+    protected File adjustPath(File file) {
+      File home = new File(file, "/Home");
+      if (home.exists()) return home;
+
+      home = new File(file, "Contents/Home");
+      if (home.exists()) return home;
+
+      return file;
     }
   }
 }

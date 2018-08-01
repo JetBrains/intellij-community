@@ -2187,9 +2187,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         return true;
       }
     }
-    if (myExactDuplicates != null) {
-      myDuplicates = myExactDuplicates.getDuplicates();
-    }
+    myDuplicates = myExactDuplicates != null ? myExactDuplicates.getDuplicates() : new ArrayList<>();
     return !myDuplicates.isEmpty();
   }
 

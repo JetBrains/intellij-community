@@ -16,43 +16,44 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.function.Predicate;
 
-public class IntersectionPackageSet extends PackageSetBase {
-  private final PackageSet myFirstSet;
-  private final PackageSet mySecondSet;
+public class IntersectionPackageSet extends CompoundPackageSet {
+  @NotNull
+  public static PackageSet create(@NotNull PackageSet... sets) {
+    if (sets.length == 0) throw new IllegalArgumentException("empty arguments");
+    return sets.length == 1 ? sets[0] : new IntersectionPackageSet(sets);
+  }
 
-  private String myText;
-
-  public IntersectionPackageSet(PackageSet firstSet, PackageSet secondSet) {
-    myFirstSet = firstSet;
-    mySecondSet = secondSet;
+  private IntersectionPackageSet(@NotNull PackageSet... sets) {
+    super(sets);
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
-  }
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+    PsiFile psiFile = null;
 
-  @Override
-  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
-    if (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, project, holder) : myFirstSet.contains(getPsiFile(file, project), holder)) {
-      if (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, project, holder) : mySecondSet.contains(getPsiFile(file, project), holder)) {
-        return true;
+    for (PackageSet set : mySets) {
+      if (set instanceof PackageSetBase) {
+        if (!((PackageSetBase)set).contains(file, project, holder)) {
+          return false;
+        }
+      }
+      else {
+        if (psiFile == null) {
+          psiFile = getPsiFile(file, project);
+        }
+        if (!set.contains(psiFile, holder)) return false;
       }
     }
-    return false;
-  }
-
-  @Override
-  @NotNull
-  public PackageSet createCopy() {
-    return new IntersectionPackageSet(myFirstSet.createCopy(), mySecondSet.createCopy());
+    return true;
   }
 
   @Override
@@ -61,46 +62,19 @@ public class IntersectionPackageSet extends PackageSetBase {
   }
 
   @Override
-  public PackageSet map(Function<PackageSet, PackageSet> transformation) {
-    PackageSet firstUpdated = transformation.apply(myFirstSet);
-    PackageSet secondUpdated = transformation.apply(mySecondSet);
-    if (firstUpdated != myFirstSet || secondUpdated != mySecondSet) {
-      return new UnionPackageSet(firstUpdated != myFirstSet ? firstUpdated : myFirstSet.createCopy(),
-                                 secondUpdated != mySecondSet ? secondUpdated : mySecondSet.createCopy());
-    }
-    return this;
-  }
-
-  @Override
-  public boolean anyMatches(Predicate<PackageSet> predicate) {
-    return predicate.test(myFirstSet) || predicate.test(mySecondSet);
+  public PackageSet map(@NotNull Function<? super PackageSet, ? extends PackageSet> transformation) {
+    return create(ContainerUtil.map(mySets, s -> transformation.apply(s), new PackageSet[mySets.length]));
   }
 
   @Override
   @NotNull
   public String getText() {
     if (myText == null) {
-      final StringBuilder buf = new StringBuilder();
-      boolean needParen = myFirstSet.getNodePriority() > getNodePriority();
-      if (needParen) buf.append('(');
-      buf.append(myFirstSet.getText());
-      if (needParen) buf.append(')');
-      buf.append("&&");
-      needParen = mySecondSet.getNodePriority() > getNodePriority();
-      if (needParen) buf.append('(');
-      buf.append(mySecondSet.getText());
-      if (needParen) buf.append(')');
-
-      myText = buf.toString();
+      myText = StringUtil.join(mySets, set -> {
+        boolean needParen = set.getNodePriority() > getNodePriority();
+        return (needParen ? "(" : "") + set.getText() + (needParen ? ")" : "");
+      }, "&&");
     }
     return myText;
-  }
-
-  public PackageSet getFirstSet() {
-    return myFirstSet;
-  }
-
-  public PackageSet getSecondSet() {
-    return mySecondSet;
   }
 }

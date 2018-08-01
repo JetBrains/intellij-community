@@ -214,7 +214,7 @@ public abstract class ProjectFileNodeUpdater {
     }
     else {
       LOG.debug("spent ", System.currentTimeMillis() - startedAt, "ms to collect ", size, " files to update @ ", invoker);
-      invoker.invokeLaterIfNeeded(() -> update(fromRoot, files));
+      invoker.invokeLaterIfNeeded(() -> updateStructure(fromRoot, files));
     }
   }
 
@@ -224,5 +224,5 @@ public abstract class ProjectFileNodeUpdater {
    * @param fromRoot     {@code true} if roots are changed
    * @param updatedFiles a set of modified files
    */
-  protected abstract void update(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles);
+  protected abstract void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles);
 }
