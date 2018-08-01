@@ -1,6 +1,5 @@
 import socket
 import struct
-import sys
 import threading
 
 from _shaded_thriftpy.thrift import TClient
@@ -92,7 +91,7 @@ class FramedWriter(object):
         bytes_written = 0
         while bytes_written < buf_len:
             # buffer_size will be updated on self.flush()
-            buffer_size = sys.getsizeof(self._buffer)
+            buffer_size = len(self._buffer)
 
             bytes_to_write = buf_len - bytes_written
 
