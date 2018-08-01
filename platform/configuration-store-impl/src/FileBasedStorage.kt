@@ -74,7 +74,10 @@ open class FileBasedStorage(file: Path,
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
 
     override fun save() {
-      if (!storage.blockSavingTheContent) {
+      if (storage.blockSavingTheContent) {
+        LOG.info("Save blocked for ${storage.fileSpec}")
+      }
+      else {
         super.save()
       }
     }
