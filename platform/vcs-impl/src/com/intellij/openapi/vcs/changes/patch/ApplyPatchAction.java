@@ -20,6 +20,7 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
+import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -216,11 +217,9 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, result12 -> result12.equals(MergeResult.CANCEL) ? "Abort..." : null);
       request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, viewer -> {
-        int result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
-                                                     XmlStringUtil.wrapInHtml(
-                                                      "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"),
-                                                     "Close Merge", "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
-
+        String options[] = {"_Abort Patch", "_Skip File", "Continue Merge"};
+        int result1 = MergeUtil.showConfirmDiscardChangesDialog(viewer.getComponent().getRootPane(), options, "Close Merge", XmlStringUtil.wrapInHtml(
+          "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"));
         if (result1 == Messages.YES) {
           applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
         }

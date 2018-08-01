@@ -25,7 +25,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
+
+import static com.intellij.openapi.ui.Messages.*;
 
 public class MergeUtil {
   @NotNull
@@ -69,7 +71,7 @@ public class MergeUtil {
 
     switch (result) {
       case CANCEL:
-        return "Abort";
+        return "Cancel";
       case LEFT:
         return "Accept Left";
       case RIGHT:
@@ -143,15 +145,42 @@ public class MergeUtil {
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
                                                              @NotNull MergeRequest request,
                                                              @NotNull MergeContext context) {
-    String message = DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message");
-    String title = DiffBundle.message("cancel.visual.merge.dialog.title");
     Couple<String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
+    String action = "Cancel Merge";
+    String message = null;
     if (customMessage != null) {
-      title = customMessage.first;
+      action = customMessage.first;
       message = customMessage.second;
     }
 
-    return Messages.showYesNoDialog(component.getRootPane(), message, title, Messages.getQuestionIcon()) == Messages.YES;
+    return confirmDiscardChanges(component, action, message);
+  }
+
+  public static boolean confirmDiscardChanges(@NotNull JComponent component,
+                                                  @NotNull String action,
+                                                  @Nullable String message) {
+
+    String exitAction;
+
+    if (message == null) {
+      message = "There are unsaved changes in the result file. Discard changes and " + action.toLowerCase() + " anyway?";
+      exitAction = "Discard Changes and " + action;
+      if (action.equals("Cancel Merge")) action = "Cancel File Merge";
+    }
+    else exitAction = action;
+
+    String[] options = {exitAction, "Continue Merge" };
+
+    return showConfirmDiscardChangesDialog(component, options, action, message) == YES;
+  }
+
+  public static int showConfirmDiscardChangesDialog(@NotNull JComponent component, @NotNull String[] options, String title, String message) {
+
+    if (canShowMacSheetPanel()) {
+      return MessagesService.getInstance().showMessageDialog(null, component, "", message, options, options.length-1, 0, getQuestionIcon(), null, false);
+    }
+
+    return MessagesService.getInstance().showMessageDialog(null, component, message, title, options, options.length-1, 0, getQuestionIcon(), null, false);
   }
 
   public static void putRevisionInfos(@NotNull MergeRequest request, @NotNull MergeData data) {

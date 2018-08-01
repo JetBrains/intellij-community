@@ -47,7 +47,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -66,13 +65,13 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
+import static com.intellij.diff.merge.MergeResult.*;
+import static com.intellij.diff.merge.MergeUtil.*;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
-
-import com.intellij.openapi.vcs.ex.Range;
 
 public class TextMergeViewer implements MergeTool.MergeViewer {
   private static final Logger LOG = Logger.getInstance(TextMergeViewer.class);
@@ -86,7 +85,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     myMergeContext = context;
     myMergeRequest = request;
 
-    DiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
+    DiffContext diffContext = new ProxyDiffContext(myMergeContext);
     ContentDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
                                                            getDiffContents(myMergeRequest),
                                                            getDiffContentTitles(myMergeRequest));
@@ -108,7 +107,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
   @NotNull
   private static List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
-    List<String> titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles());
+    List<String> titles = notNullizeContentTitles(mergeRequest.getContentTitles());
     titles.set(ThreeSide.BASE.getIndex(), DiffBundle.message("merge.version.title.merged.result"));
     return titles;
   }
@@ -140,7 +139,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     components.closeHandler = () -> {
       if (myViewer.myContentModified)
-        return MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+        return showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
       else
         return true;
     };
@@ -289,27 +288,24 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     @Nullable
     public Action getResolveAction(@NotNull final MergeResult result) {
-      String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
+      String caption = getResolveActionTitle(result, myMergeRequest, myMergeContext);
       return new AbstractAction(caption) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) && myContentModified &&
-              Messages.showYesNoDialog(myPanel.getRootPane(),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.message", result == MergeResult.LEFT ? 0 : 1),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.title"), Messages.getQuestionIcon()) != Messages.YES) {
+          if ((result == LEFT || result == RIGHT) && myContentModified &&
+              !confirmDiscardChanges(myPanel.getRootPane(), result == LEFT ? "Accept Left" : "Accept Right", null)) {
             return;
           }
-          if (result == MergeResult.RESOLVED) {
+          if (result == RESOLVED) {
             if ((getChangesCount() > 0 || getConflictsCount() > 0) &&
-                Messages.showYesNoDialog(myPanel.getRootPane(),
-                                         DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
-                                         DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                         Messages.getQuestionIcon()) != Messages.YES) {
+                !confirmDiscardChanges(myPanel.getRootPane(), DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                       DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message",
+                                                                getChangesCount(), getConflictsCount()))) {
               return;
             }
           }
-          if (result == MergeResult.CANCEL && myContentModified &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
+          if (result == CANCEL && myContentModified &&
+              !showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
             return;
           }
           destroyChangedBlocks();
@@ -374,13 +370,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
           @Override
           public void onCancel() {
-            myMergeContext.finishMerge(MergeResult.CANCEL);
+            myMergeContext.finishMerge(CANCEL);
           }
 
           @Override
           public void onThrowable(@NotNull Throwable error) {
             LOG.error(error);
-            myMergeContext.finishMerge(MergeResult.CANCEL);
+            myMergeContext.finishMerge(CANCEL);
           }
 
           @Override
@@ -636,7 +632,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           DiffUtil.showSuccessPopup(message, point, this, () -> {
             if (isDisposed()) return;
             destroyChangedBlocks();
-            myMergeContext.finishMerge(MergeResult.RESOLVED);
+            myMergeContext.finishMerge(RESOLVED);
           });
         });
       }

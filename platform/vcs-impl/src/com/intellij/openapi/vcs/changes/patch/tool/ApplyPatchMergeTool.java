@@ -20,7 +20,6 @@ import com.intellij.diff.merge.*;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -30,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+
+import static com.intellij.diff.merge.MergeResult.*;
 
 public class ApplyPatchMergeTool implements MergeTool {
   @NotNull
@@ -74,24 +75,22 @@ public class ApplyPatchMergeTool implements MergeTool {
     @Nullable
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
-      if (result == MergeResult.LEFT || result == MergeResult.RIGHT) return null;
+      if (result == LEFT || result == RIGHT) return null;
 
       String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
       return new AbstractAction(caption) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if (result == MergeResult.RESOLVED) {
+          if (result == RESOLVED) {
             int unresolved = getUnresolvedCount();
             if (unresolved != 0 &&
-                Messages.showYesNoDialog(getComponent().getRootPane(),
-                                         DiffBundle.message("apply.patch.partially.resolved.changes.confirmation.message", unresolved),
-                                         DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                         Messages.getQuestionIcon()) != Messages.YES) {
+                !MergeUtil.confirmDiscardChanges(getComponent().getRootPane(), DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle.message("apply.patch.partially.resolved.changes.confirmation.message", unresolved)))
+            {
               return;
             }
           }
 
-          if (result == MergeResult.CANCEL &&
+          if (result == CANCEL &&
               !MergeUtil.showExitWithoutApplyingChangesDialog(MyApplyPatchViewer.this, myMergeRequest, myMergeContext)) {
             return;
           }
@@ -125,7 +124,7 @@ public class ApplyPatchMergeTool implements MergeTool {
           String message = DiffBundle.message("apply.patch.all.changes.processed.message.text");
           DiffUtil.showSuccessPopup(message, point, this, () -> {
             if (isDisposed()) return;
-            myMergeContext.finishMerge(MergeResult.RESOLVED);
+            myMergeContext.finishMerge(RESOLVED);
           });
         });
       }

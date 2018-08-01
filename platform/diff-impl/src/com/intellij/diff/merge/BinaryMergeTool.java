@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.diff.merge.MergeUtil.*;
+
 public class BinaryMergeTool implements MergeTool {
   public static final BinaryMergeTool INSTANCE = new BinaryMergeTool();
 
@@ -45,7 +47,7 @@ public class BinaryMergeTool implements MergeTool {
   public boolean canShow(@NotNull MergeContext context, @NotNull MergeRequest request) {
     if (!(request instanceof ThreesideMergeRequest)) return false;
 
-    MergeUtil.ProxyDiffContext diffContext = new MergeUtil.ProxyDiffContext(context);
+    ProxyDiffContext diffContext = new ProxyDiffContext(context);
     for (DiffContent diffContent : ((ThreesideMergeRequest)request).getContents()) {
       if (!BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE.canShowContent(diffContent, diffContext)) return false;
     }
@@ -66,7 +68,7 @@ public class BinaryMergeTool implements MergeTool {
       myMergeContext = context;
       myMergeRequest = request;
 
-      myDiffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
+      myDiffContext = new ProxyDiffContext(myMergeContext);
       myDiffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
                                             getDiffContents(myMergeRequest),
                                             getDiffContentTitles(myMergeRequest));
@@ -81,7 +83,7 @@ public class BinaryMergeTool implements MergeTool {
 
     @NotNull
     private static List<String> getDiffContentTitles(@NotNull ThreesideMergeRequest mergeRequest) {
-      return MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles());
+      return notNullizeContentTitles(mergeRequest.getContentTitles());
     }
 
     //
@@ -109,7 +111,7 @@ public class BinaryMergeTool implements MergeTool {
       components.statusPanel = init.statusPanel;
       components.toolbarActions = init.toolbarActions;
 
-      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
+      components.closeHandler = () -> showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
 
       return components;
     }
@@ -118,7 +120,7 @@ public class BinaryMergeTool implements MergeTool {
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
       if (result == MergeResult.RESOLVED) return null;
-      return MergeUtil.createSimpleResolveAction(result, myMergeRequest, myMergeContext, this);
+      return createSimpleResolveAction(result, myMergeRequest, myMergeContext, this);
     }
 
     @Override
