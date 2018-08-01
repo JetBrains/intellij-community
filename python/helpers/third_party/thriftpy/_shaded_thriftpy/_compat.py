@@ -15,6 +15,7 @@ import types
 
 PY3 = sys.version_info[0] == 3
 PYPY = "__pypy__" in sys.modules
+JYTHON = sys.platform.startswith("java")
 
 UNIX = platform.system() in ("Linux", "Darwin")
 CYTHON = False  # Cython always disabled in pypy and windows
@@ -105,6 +106,33 @@ def init_func_generator(spec):
                                   code.co_lnotab,
                                   code.co_freevars,
                                   code.co_cellvars)
+    elif JYTHON:
+        from org.python.core import PyBytecode
+
+        # the following attributes are not available for `code` in Jython
+
+        co_stacksize = 2
+        # in Jython bytecode `LOAD_ATTR` instruction byte code differs from CPython
+        # 0x69 (`i` ASCII character) in Jython and 0x6A (`j` ASCII character) in CPython
+        co_code = b't\x00\x00\x83\x00\x00i\x01\x00\x83\x00\x00|\x00\x00_\x02\x00|\x00\x00i\x02\x00d\x01\x00=d\x00\x00S'
+        co_consts = (None, 'self')
+        co_names = ('locals', 'copy', '__dict__')
+        co_lnotab = b'\x00\x01\x12\x01'
+
+        new_code = PyBytecode(len(varnames),
+                              len(varnames),
+                              co_stacksize,
+                              code.co_flags,
+                              co_code,
+                              co_consts,
+                              co_names,
+                              varnames,
+                              code.co_filename,
+                              "__init__",
+                              code.co_firstlineno,
+                              co_lnotab,
+                              code.co_freevars,
+                              code.co_cellvars)
     else:
         new_code = types.CodeType(len(varnames),
                                   len(varnames),
