@@ -29,7 +29,7 @@ public class LowMemoryNotifier implements ApplicationComponent {
     IdePerformanceListener.Adapter handler = new IdePerformanceListener.Adapter() {
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
-        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.freeze");
+        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.freeze." + lengthInSeconds);
         FeatureUsageLogger.INSTANCE.log("lifecycle",
                                         "ide.freeze", Collections.singletonMap("durationSeconds", lengthInSeconds));
       }
