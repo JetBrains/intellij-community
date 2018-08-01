@@ -84,6 +84,7 @@ public class IOUtil {
   }
 
   private static final ThreadLocalCachedValue<byte[]> ourReadWriteBuffersCache = new ThreadLocalCachedValue<byte[]>() {
+    @NotNull
     @Override
     protected byte[] create() {
       return allocReadWriteUTFBuffer();
@@ -134,6 +135,7 @@ public class IOUtil {
 
   public static final Charset US_ASCII = Charset.forName("US-ASCII");
   private static final ThreadLocalCachedValue<char[]> spareBufferLocal = new ThreadLocalCachedValue<char[]>() {
+    @NotNull
     @Override
     protected char[] create() {
       return new char[STRING_LENGTH_THRESHOLD];
