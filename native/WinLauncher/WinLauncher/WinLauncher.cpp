@@ -536,10 +536,10 @@ bool LoadVMOptions()
     }
   }
 
-  std::wstring::size_type pos = module.find_last_of(L"\\bin\\", -1);
+  std::wstring::size_type pos = module.find_last_of('\\');
   if (pos > 0)
   {
-      files.push_back(module.substr(0, pos - 5) + L".vmoptions");
+    files.push_back(module.substr(0, pos - 4) + L".vmoptions");
   }
 
   if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH))
