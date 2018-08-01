@@ -13,7 +13,7 @@ class MockRootChecker(private val vcs: MockAbstractVcs) : VcsRootChecker() {
 
   override fun isRoot(path: String) = File(path, VcsRootBaseTest.DOT_MOCK).exists()
 
-  override fun isVcsDir(path: String) = path.toLowerCase().endsWith(VcsRootBaseTest.DOT_MOCK)
+  override fun isVcsDir(dirName: String) = dirName.toLowerCase() == VcsRootBaseTest.DOT_MOCK
 
   override fun isIgnored(root: VirtualFile, checkForIgnore: VirtualFile) = ignoredDirs.contains(checkForIgnore);
 
