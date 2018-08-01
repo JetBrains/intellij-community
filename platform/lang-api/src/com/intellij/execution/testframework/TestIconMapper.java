@@ -70,7 +70,7 @@ public class TestIconMapper implements PoolOfTestIcons {
   public static Icon getToolbarIcon(@NotNull TestStateInfo.Magnitude magnitude) {
     switch (magnitude) {
       case SKIPPED_INDEX:
-        return AllIcons.RunConfigurations.ShowIgnored;
+        return AllIcons.RunConfigurations.ToolbarSkipped;
       case COMPLETE_INDEX:
         return AllIcons.RunConfigurations.ToolbarPassed;
       case NOT_RUN_INDEX:
