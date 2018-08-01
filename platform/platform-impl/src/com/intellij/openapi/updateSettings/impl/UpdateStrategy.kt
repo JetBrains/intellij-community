@@ -4,8 +4,8 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.graph.GraphAlgorithms
 import com.intellij.util.graph.InboundSemiGraph
-import com.intellij.util.graph.impl.ShortestPathFinder
 import java.util.*
 
 private val NUMBER = Regex("\\d+")
@@ -78,7 +78,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
       override fun getNodes() = upgrades.keySet() + upgrades.values()
       override fun getIn(n: BuildNumber) = upgrades[n].iterator()
     }
-    val path = ShortestPathFinder(graph).findPath(from.withoutProductCode(), newBuild.number.withoutProductCode())
+    val path = GraphAlgorithms.getInstance().findShortestPath(graph, from.withoutProductCode(), newBuild.number.withoutProductCode())
     if (path == null || path.size <= 2) return null
 
     var total = 0
