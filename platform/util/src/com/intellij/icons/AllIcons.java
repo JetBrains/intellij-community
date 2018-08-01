@@ -1203,7 +1203,11 @@ public class AllIcons {
       public static final Icon Recording_2 = IconLoader.getIcon("/ide/macro/recording_2.svg"); // 16x16
       public static final Icon Recording_3 = IconLoader.getIcon("/ide/macro/recording_3.svg"); // 16x16
       public static final Icon Recording_4 = IconLoader.getIcon("/ide/macro/recording_4.svg"); // 16x16
-      public static final Icon Recording_stop = IconLoader.getIcon("/ide/macro/recording_stop.png"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Suspend */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon Recording_stop = IconLoader.getIcon("/actions/suspend.svg"); // 16x16
 
     }
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13

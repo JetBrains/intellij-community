@@ -35,7 +35,7 @@ public class StartStopMacroRecordingAction extends AnAction implements DumbAware
                                 : IdeBundle.message("action.start.macro.recording"));
 
     if (ActionPlaces.STATUS_BAR_PLACE.equals(e.getPlace())) {
-      e.getPresentation().setIcon(AllIcons.Ide.Macro.Recording_stop);
+      e.getPresentation().setIcon(AllIcons.Actions.Suspend);
     }
     else {
       e.getPresentation().setIcon(null);
