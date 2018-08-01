@@ -12,7 +12,7 @@ import os
 import sys
 import types
 from _shaded_ply import lex, yacc
-from .lexer import *  # noqa
+from _shaded_thriftpy.parser.lexer import *  # noqa
 from .exc import ThriftParserError, ThriftGrammerError
 from ..thrift import gen_init, TType, TPayload, TException
 
