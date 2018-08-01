@@ -11,6 +11,7 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -54,6 +55,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
+  private static final Logger LOG = Logger.getInstance(StructureViewWrapperImpl.class);
   private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
   private static final int REFRESH_TIME = 100; // time to check if a context file selection is changed or not
   private static final int REBUILD_TIME = 100; // time to wait and merge requests to rebuild a tree model
@@ -93,13 +95,15 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
       @Override
       public void run() {
-        checkUpdate();
+        loggedRun("check if update needed", StructureViewWrapperImpl.this::checkUpdate);
       }
     };
+    LOG.debug("timer to check if update needed: add");
     ActionManager.getInstance().addTimerListener(REFRESH_TIME, timerListener);
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
+        LOG.debug("timer to check if update needed: remove");
         ActionManager.getInstance().removeTimerListener(timerListener);
       }
     });
@@ -108,6 +112,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if (BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+          LOG.debug("displayability changed");
           scheduleRebuild();
         }
       }
@@ -134,6 +139,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     final boolean insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner);
+    if (insideToolwindow) LOG.debug("inside structure view");
     if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive())) {
       return;
     }
@@ -177,6 +183,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
     if (forceRebuild) {
       myFile = file;
+      LOG.debug("show structure for file: ", file);
       scheduleRebuild();
     }
   }
@@ -201,7 +208,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     Runnable runnable = () -> {
       if (!Comparing.equal(myFileEditor, fileEditor)) {
         myFile = file;
-        rebuild();
+        LOG.debug("replace file on selection: ", file);
+        loggedRun("rebuild a structure immediately: ", this::rebuild);
       }
       if (myStructureView != null) {
         myStructureView.navigateToSelectedElement(requestFocus);
@@ -223,11 +231,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private void scheduleRebuild() {
     if (!myToolWindow.isVisible()) return;
+    LOG.debug("request to rebuild a structure");
     myUpdateQueue.queue(new Update("rebuild") {
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        rebuild();
+        loggedRun("rebuild a structure: ", StructureViewWrapperImpl.this::rebuild);
       }
     });
   }
@@ -398,6 +407,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     public Object getData(@NonNls String dataId) {
       if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
       return null;
+    }
+  }
+
+  private static void loggedRun(@NotNull String message, @NotNull Runnable task) {
+    try {
+      if (LOG.isTraceEnabled()) LOG.trace(message + ": started");
+      task.run();
+    }
+    catch (Throwable throwable) {
+      LOG.warn(message, throwable);
+      throw throwable;
+    }
+    finally {
+      if (LOG.isTraceEnabled()) LOG.trace(message + ": finished");
     }
   }
 }
