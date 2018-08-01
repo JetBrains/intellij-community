@@ -37,8 +37,8 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
           <patch from="145.258" exclusions="win,mac,unix"/>
         </build>
       </channel>"""
-    assertNotNull(check("IU-145.596", ChannelStatus.RELEASE, channels).patch)
-    assertNull(check("IU-145.258", ChannelStatus.RELEASE, channels).patch)
+    assertNotNull(check("IU-145.596", ChannelStatus.RELEASE, channels).patches)
+    assertNull(check("IU-145.258", ChannelStatus.RELEASE, channels).patches)
   }
 
   @Test fun `order of builds does not matter`() {
@@ -227,9 +227,8 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
         </build>
       </channel>""")
     assertBuild("182.3684.40", result.newBuild)
-    assertThat(result.patch).isNull()
-    assertThat(result.patchChain?.chain).isEqualTo(listOf("182.3569.1", "182.3684.2", "182.3684.40").map(BuildNumber::fromString))
-    assertThat(result.patchChain?.size).isEqualTo(10)
+    assertThat(result.patches?.chain).isEqualTo(listOf("182.3569.1", "182.3684.2", "182.3684.40").map(BuildNumber::fromString))
+    assertThat(result.patches?.size).isEqualTo("10")
   }
 
   @Test fun `building patch chain across channels`() {
@@ -250,9 +249,8 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
         </build>
       </channel>""")
     assertBuild("182.3911.2", result.newBuild)
-    assertThat(result.patch).isNull()
-    assertThat(result.patchChain?.chain).isEqualTo(listOf("182.3684.40", "182.3684.41", "182.3911.2").map(BuildNumber::fromString))
-    assertThat(result.patchChain?.size).isEqualTo(-1)
+    assertThat(result.patches?.chain).isEqualTo(listOf("182.3684.40", "182.3684.41", "182.3911.2").map(BuildNumber::fromString))
+    assertThat(result.patches?.size).isNull()
   }
 
   private fun check(currentBuild: String,
