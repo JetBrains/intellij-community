@@ -53,7 +53,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.isFeatureEnabled("inline.browse.button");
     if (inlineBrowseButton) {
       ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
-        AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
+        getDefaultIcon(), getHoveredIcon(),
         UIBundle.message("component.with.browse.button.browse.button.tooltip.text"),
         this::notifyActionListeners));
       new DumbAwareAction() {
@@ -82,6 +82,16 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
     }
+  }
+
+  @NotNull
+  protected Icon getDefaultIcon() {
+    return AllIcons.General.OpenDisk;
+  }
+
+  @NotNull
+  protected Icon getHoveredIcon() {
+    return AllIcons.General.OpenDiskHover;
   }
 
   private void notifyActionListeners() {
