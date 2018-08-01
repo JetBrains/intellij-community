@@ -22,13 +22,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-@State(
-  name = "IntentionsCollector",
-  storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-    @Storage(value = "statistics.intentions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
-  }
-)
+@State(name = "IntentionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public class IntentionsCollector extends BaseUICollector implements PersistentStateComponent<IntentionsCollector.State> {
   private State myState = new State();
 

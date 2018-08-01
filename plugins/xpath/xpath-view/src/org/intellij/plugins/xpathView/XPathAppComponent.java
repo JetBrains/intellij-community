@@ -49,13 +49,7 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-@State(
-  name = "XPathView.XPathViewPlugin",
-  storages = {
-    @Storage("xpath.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"))
 public class XPathAppComponent implements PersistentStateComponent<Config>, DefaultLiveTemplatesProvider, ApplicationComponent {
   private static final String ACTION_FIND_NEXT = "FindNext";
   private static final String ACTION_FIND_PREVIOUS = "FindPrevious";

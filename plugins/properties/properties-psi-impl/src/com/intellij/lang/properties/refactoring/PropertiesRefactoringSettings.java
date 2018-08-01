@@ -8,13 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(
-  name = "PropertiesRefactoringSettings",
-  storages = {
-    @Storage("baseRefactoring.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "PropertiesRefactoringSettings", storages = @Storage("baseRefactoring.xml"))
 public class PropertiesRefactoringSettings implements PersistentStateComponent<PropertiesRefactoringSettings> {
   public boolean RENAME_SEARCH_IN_COMMENTS = false;
 

@@ -9,7 +9,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
@@ -25,14 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(
-  name = "DebuggerSettings",
-  defaultStateAsResource = true,
-  storages = {
-    @Storage("debugger.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "DebuggerSettings", defaultStateAsResource = true, storages = @Storage("debugger.xml"))
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
