@@ -1,46 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.components;
+package com.intellij.openapi.components
 
-import com.intellij.openapi.application.PathMacroFilter;
-import org.jdom.Attribute;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.PathMacroFilter
+import org.jdom.Attribute
+import org.jdom.Element
 
-/**
- * @author yole
- */
-public class CompositePathMacroFilter extends PathMacroFilter {
-  private final PathMacroFilter[] myFilters;
+class CompositePathMacroFilter(private val filters: Array<PathMacroFilter>) : PathMacroFilter() {
+  override fun skipPathMacros(element: Element) = filters.any { it.skipPathMacros(element) }
 
-  public CompositePathMacroFilter(PathMacroFilter[] filters) {
-    myFilters = filters;
-  }
+  override fun skipPathMacros(attribute: Attribute) = filters.any { it.skipPathMacros(attribute) }
 
-  @Override
-  public boolean skipPathMacros(@NotNull Element element) {
-    for (PathMacroFilter filter : myFilters) {
-      if (filter.skipPathMacros(element)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean skipPathMacros(@NotNull Attribute attribute) {
-    for (PathMacroFilter filter : myFilters) {
-      if (filter.skipPathMacros(attribute)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean recursePathMacros(@NotNull Attribute attribute) {
-    for (PathMacroFilter filter : myFilters) {
-      if (filter.recursePathMacros(attribute)) return true;
-    }
-    return false;
-  }
+  override fun recursePathMacros(attribute: Attribute) = filters.any { it.recursePathMacros(attribute) }
 }
