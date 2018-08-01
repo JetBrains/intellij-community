@@ -5,16 +5,14 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
-import com.intellij.testGuiFramework.driver.FinderPredicate
+import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
@@ -22,7 +20,6 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.AsyncProcessIcon
 import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JLabelFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.fixture.JSpinnerFixture
@@ -254,7 +251,7 @@ fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, time
 fun <S, C : Component> ComponentFixture<S, C>.jTree(
   vararg pathStrings: String,
   timeout: Long = defaultTimeout,
-  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
+  predicate: FinderPredicate = Predicate.equality
 ): ExtendedJTreePathFixture =
   if (target() is Container) ExtendedJTreePathFixture(GuiTestUtil.jTreeComponent(
     container = target() as Container,
@@ -274,7 +271,7 @@ fun <S, C : Component> ComponentFixture<S, C>.jTree(
 fun <S, C : Component> ComponentFixture<S, C>.checkboxTree(
   vararg pathStrings: String,
   timeout: Long = defaultTimeout,
-  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
+  predicate: FinderPredicate = Predicate.equality
 ): CheckboxTreeFixture =
   if (target() is Container) {
     val tree = GuiTestUtil.jTreeComponent(

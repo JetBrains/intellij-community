@@ -26,8 +26,6 @@ import com.intellij.openapi.util.text.StringUtil.isNotEmpty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
-import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
@@ -738,7 +736,7 @@ object GuiTestUtil {
   fun jTreeComponent(container: Container,
                      timeout: Long,
                      vararg pathStrings: String,
-                     predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): JTree {
+                     predicate: FinderPredicate = Predicate.equality): JTree {
     val myTree: JTree?
     try {
       myTree = if (pathStrings.isEmpty()) {

@@ -6,6 +6,8 @@ import com.intellij.testGuiFramework.cellReader.ProjectTreeCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.Predicate
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
 import org.fest.swing.core.MouseButton
@@ -219,7 +221,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     drop(tree, tree.scrollToMatchingPath(treePath).second!!)
   }
 
-  fun findPath(tree: JTree, stringPath: List<String>, predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): TreePath {
+  fun findPath(tree: JTree, stringPath: List<String>, predicate: FinderPredicate = Predicate.equality): TreePath {
     fun <T> List<T>.list2tree() = map { subList(0, indexOf(it) + 1) }
     lateinit var path: TreePath
     stringPath
@@ -231,7 +233,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     return path
   }
 
-  fun findPathToNode(tree: JTree, node: String, predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): TreePath{
+  fun findPathToNode(tree: JTree, node: String, predicate: FinderPredicate = Predicate.equality): TreePath{
 
     fun JTree.iterateChildren(root: Any, node: String, rootPath: TreePath, predicate: FinderPredicate): TreePath?{
       for(index in 0 until this.model.getChildCount(root)){
@@ -253,7 +255,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
            ?: throw LocationUnavailableException("Node `$node` not found")
   }
 
-  fun exists(tree: JTree, pathStrings: List<String>, predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): Boolean {
+  fun exists(tree: JTree, pathStrings: List<String>, predicate: FinderPredicate = Predicate.equality): Boolean {
     return try {
       findPath(tree, pathStrings, predicate)
       true

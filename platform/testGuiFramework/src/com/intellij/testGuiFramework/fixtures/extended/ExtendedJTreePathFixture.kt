@@ -4,9 +4,10 @@ package com.intellij.testGuiFramework.fixtures.extended
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException
 import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
-import com.intellij.testGuiFramework.driver.FinderPredicate
+import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.util.Predicate
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
@@ -18,7 +19,7 @@ import javax.swing.tree.TreePath
 open class ExtendedJTreePathFixture(
   val tree: JTree,
   private val stringPath: List<String>,
-  private val predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality,
+  private val predicate: FinderPredicate = Predicate.equality,
   robot: Robot = GuiRobotHolder.robot,
   private val myDriver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
 ) : JTreeFixture(robot, tree) {
@@ -26,7 +27,7 @@ open class ExtendedJTreePathFixture(
   constructor(
     tree: JTree,
     path: TreePath,
-    predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality,
+    predicate: FinderPredicate = Predicate.equality,
     robot: Robot = GuiRobotHolder.robot,
     driver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
   ) :

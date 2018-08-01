@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
@@ -572,7 +571,7 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
       guiTestCase.logUIStep("Include `${lib.mainPath.joinToString()}` to the project")
       checkboxTree(
         pathStrings = *lib.mainPath,
-        predicate = ExtendedJTreePathFinder.predicateWithVersion
+        predicate = Predicate.withVersion
       ).check()
     }
   }
