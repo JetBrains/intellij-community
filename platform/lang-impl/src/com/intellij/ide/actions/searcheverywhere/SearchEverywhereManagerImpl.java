@@ -61,7 +61,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     Map<String, String> contributorsNames = new LinkedHashMap<>();
     myContributorFactories.forEach(factory -> {
       SearchEverywhereContributor contributor = factory.createContributor(initEvent);
-      myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter());
+      myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter(initEvent));
       contributors.add(contributor);
       contributorsNames.put(contributor.getSearchProviderId(), contributor.getGroupName());
     });
