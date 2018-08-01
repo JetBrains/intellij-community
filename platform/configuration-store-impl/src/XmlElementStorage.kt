@@ -406,7 +406,7 @@ internal abstract class StringDataWriter : DataWriter {
 }
 
 internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
-  val out = BufferExposingByteArrayOutputStream(512)
+  val out = BufferExposingByteArrayOutputStream(1024)
   out.use { write(out, lineSeparator.separatorString) }
   return out
 }
