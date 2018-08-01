@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationWithDiscoverySupport> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
@@ -188,6 +189,15 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   public boolean isConfigurationFromContext(JavaTestConfigurationWithDiscoverySupport configuration, ConfigurationContext configurationContext) {
     final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
     return position != null && position.equals(getPosition(configuration));
+  }
+
+  protected static LinkedHashSet<String> collectMethodPatterns(@NotNull Location<PsiMethod>[] testMethods) {
+    return Arrays.stream(testMethods)
+          .map(method -> {
+            Iterator<Location<PsiClass>> ancestors = method.getAncestors(PsiClass.class, true);
+            return JavaExecutionUtil.getRuntimeQualifiedName(ancestors.next().getPsiElement()) + "," + method.getPsiElement().getName();
+          })
+          .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>, RunConfiguration, ConfigurationWithCommandLineShortener, RunProfileWithCompileBeforeLaunchOption {
