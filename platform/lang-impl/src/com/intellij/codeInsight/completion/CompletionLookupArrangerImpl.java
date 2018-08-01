@@ -341,9 +341,9 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   }
 
   private static void ensureEverythingVisibleAdded(LookupElementListPresenter lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
-    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+    final boolean addEverything = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir();
     final int limit = Math.max(lookup.getLastVisibleIndex(), model.size()) + ourUISettings.getMaxLookupListHeight() * 3;
-    addSomeItems(model, byRelevance, lastAdded -> false /*!testMode && model.size() >= limit*/);
+    addSomeItems(model, byRelevance, lastAdded -> !addEverything && model.size() >= limit);
   }
 
   private static void ensureItemAdded(Set<LookupElement> items,
