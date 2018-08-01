@@ -936,7 +936,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       body.accept(this);
     }
 
-    addInstruction(new FlushVariableInstruction(expressionValue));
+    if (expressionValue != null) {
+      addInstruction(new FlushVariableInstruction(expressionValue));
+    }
     finishElement(switchStmt);
   }
 
