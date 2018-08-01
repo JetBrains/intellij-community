@@ -25,7 +25,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(isTableCellEditor(c) ? 1 : 3).asUIResource();
+    return JBUI.insets(isTableCellEditor(c) ? 2 : 3).asUIResource();
   }
 
   @Override

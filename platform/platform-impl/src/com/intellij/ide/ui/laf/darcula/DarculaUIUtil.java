@@ -285,6 +285,7 @@ public class DarculaUIUtil {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         Rectangle r = new Rectangle(x, y, width, height);
+        boolean isCellRenderer = isTableCellEditor(c);
 
         if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
           JBInsets.removeFrom(r, JBUI.insets(2, 0));
@@ -301,7 +302,7 @@ public class DarculaUIUtil {
           borderArea.append(r, false);
 
           Rectangle innerRect = new Rectangle(r);
-          JBInsets.removeFrom(innerRect, JBUI.insets(2));
+          JBInsets.removeFrom(innerRect, JBUI.insets(isCellRenderer ? 1 : 2));
           borderArea.append(innerRect, false);
           g2.fill(borderArea);
         }
@@ -313,7 +314,7 @@ public class DarculaUIUtil {
         Object op = editorTextField.getClientProperty("JComponent.outline");
         if (op != null) {
           Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
-          bw = 2;
+          bw = isCellRenderer ? 1 : 2;
         } else {
           if (hasFocus) {
             g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
@@ -323,7 +324,10 @@ public class DarculaUIUtil {
           } else {
             g2.setColor(UIManager.getColor("TextField.borderColor"));
           }
-          JBInsets.removeFrom(r, JBUI.insets(1));
+
+          if (!isCellRenderer) {
+            JBInsets.removeFrom(r, JBUI.insets(1));
+          }
         }
 
         if (!editorTextField.isEnabled()) {
@@ -348,7 +352,7 @@ public class DarculaUIUtil {
       if (UIUtil.getParentOfType(ComboBoxCompositeEditor.class, c) != null) {
         return JBUI.emptyInsets().asUIResource();
       } else {
-        return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
+        return (isTableCellEditor(c) ? JBUI.insets(1) : isComboBoxEditor(c) ? JBUI.insets(1, 6) : JBUI.insets(4, 6)).asUIResource();
       }
     }
 
