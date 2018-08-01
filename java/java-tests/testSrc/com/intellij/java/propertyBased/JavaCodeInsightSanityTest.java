@@ -54,7 +54,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testRandomActivity() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    enableAlmostAllInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy()),
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
@@ -64,11 +64,17 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
+  private void enableAlmostAllInspections() {
+    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable(),
+                                        "BoundedWildcard" // IDEA-194460
+    );
+  }
+
   public void testPreserveComments() {
     boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
     try {
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
-      MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+      enableAlmostAllInspections();
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
                                       new InsertLineComment(file, "//simple end comment\n"));
