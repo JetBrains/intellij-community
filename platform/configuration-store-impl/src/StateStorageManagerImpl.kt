@@ -102,15 +102,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     LOG.assertTrue(!key.isEmpty())
 
     val value: String
-    if (expansion.contains("\\")) {
-      val message = "Macro $key set to system-dependent expansion $expansion"
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw IllegalArgumentException(message)
-      }
-      else {
-        LOG.warn(message)
-        value = FileUtilRt.toSystemIndependentName(expansion)
-      }
+    if (expansion.contains('\\')) {
+      LOG.error("Macro $key set to system-dependent expansion $expansion")
+      value = FileUtilRt.toSystemIndependentName(expansion)
     }
     else {
       value = expansion
