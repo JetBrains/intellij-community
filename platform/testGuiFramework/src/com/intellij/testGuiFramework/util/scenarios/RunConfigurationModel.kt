@@ -1,10 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.testGuiFramework.driver.FinderPredicate
+import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
@@ -61,16 +62,11 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
     val title: String,
     val kind: FieldKind,
     val custom: CustomConfigurationField? = null,
-    val predicate: FinderPredicate = predicateEquality) {
+    val predicate: FinderPredicate = Predicate.equality) {
 
     init {
       if (kind == FieldKind.Custom && custom == null)
         throw  IllegalStateException("Handler for custom field '$title' must be set")
-    }
-
-    companion object {
-      val predicateEquality: FinderPredicate = { left: String, right: String -> left == right }
-      val predicateStartsWith: FinderPredicate = { left: String, right: String -> left.startsWith(right) }
     }
 
     override fun toString() = "$title : $kind"
@@ -137,9 +133,9 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
     EnvVars(ConfigurationField("Environment variables:", FieldKind.Custom, custom = CustomConfigurationField.envVarsField)),
     UseModule(ConfigurationField("Use classpath of module:", FieldKind.Combo)),
     ProvidedScope(ConfigurationField("Include dependencies with \"Provided\" scope", FieldKind.Check)),
-    JRE(ConfigurationField("JRE:", FieldKind.Combo, predicate = ConfigurationField.predicateStartsWith)),
+    JRE(ConfigurationField("JRE:", FieldKind.Combo, predicate = Predicate.startWith)),
     ShortenCmdLine(ConfigurationField("Shorten command line:", FieldKind.Combo,
-                                      predicate = ConfigurationField.predicateStartsWith)),
+                                      predicate = Predicate.startWith)),
     CapturingSnapshots(ConfigurationField("Enable capturing form snapshots", FieldKind.Check)),
     BeforeLaunch(ConfigurationField("Before launch:", FieldKind.List))
   }
@@ -154,7 +150,7 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
     OnUpdateAction(ConfigurationField("On 'Update' action:", FieldKind.Combo)),
     ShowDialog(ConfigurationField("Show dialog", FieldKind.Check)),
     OnFrameDeactivation(ConfigurationField("On frame deactivation:", FieldKind.Combo)),
-    JRE(ConfigurationField("JRE:", FieldKind.Combo, predicate = ConfigurationField.predicateStartsWith)),
+    JRE(ConfigurationField("JRE:", FieldKind.Combo, predicate = Predicate.startWith)),
     ServerDomain(ConfigurationField("Server Domain:", FieldKind.Combo)),
     Username(ConfigurationField("Username:", FieldKind.Text)),
     Password(ConfigurationField("Password:", FieldKind.Text)),

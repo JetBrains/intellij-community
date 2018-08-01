@@ -11,5 +11,6 @@ object Predicate{
       left == right.dropLast(right.length - right.indexOfLast { it == ',' })
     else left == right
   }
+  val startWith: FinderPredicate = {left: String, right: String -> left.startsWith(right)}
 
 }
