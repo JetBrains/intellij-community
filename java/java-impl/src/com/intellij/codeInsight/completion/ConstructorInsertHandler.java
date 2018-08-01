@@ -80,7 +80,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     if (delegate instanceof PsiTypeLookupItem) {
       if (context.getDocument().getTextLength() > context.getTailOffset() &&
           context.getDocument().getCharsSequence().charAt(context.getTailOffset()) == '<') {
-        PsiJavaCodeReferenceElement ref = JavaClassNameInsertHandler.findJavaReference(context.getFile(), context.getTailOffset());
+        PsiJavaCodeReferenceElement ref = JavaClassNameInsertHandler.findJavaReference(context.getFile(), context.getTailOffset() - 1);
         if (ref != null) {
           PsiReferenceParameterList parameterList = ref.getParameterList();
           if (parameterList != null && context.getTailOffset() == parameterList.getTextRange().getStartOffset()) {
