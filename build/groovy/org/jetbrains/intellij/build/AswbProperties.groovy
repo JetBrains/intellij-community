@@ -37,7 +37,7 @@ class AswbProperties extends AndroidStudioProperties {
   String additionalIdeJvmArguments =
     "-Dstudio.projectview=true " +
     "-Dandroid.adb.path=/usr/bin/adb " +
-    "-Dandroid.sdk.custom.url=file:///google/data/ro/teams/android-sdk-g3-releng/android_sdk/aswb.xml " +
+    "-Dandroid.sdk.custom.url=file:///google/src/head/depot/google3/third_party/android/sdk_repo/repository.xml " +
     "-Djdk.util.zip.ensureTrailingSlash=false " + // upstream bug IDEA-177278 is fixed in 2017.2
     "-Dnele.mock.data=false " + // b/70291946
     "-Dcaches.indexerThreadsCount=24 " +
