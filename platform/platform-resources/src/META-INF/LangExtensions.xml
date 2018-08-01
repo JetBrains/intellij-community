@@ -317,6 +317,8 @@
                     serviceImplementation="com.intellij.ide.util.gotoByName.GotoFileConfiguration"/>
     <projectService serviceInterface="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"
                     serviceImplementation="com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration"/>
+    <projectService serviceInterface="com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration"
+                    serviceImplementation="com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration"/>
     <preloadingActivity implementation="com.intellij.ide.actions.GotoClassPresentationUpdater"/>
 
     <projectService serviceInterface="com.intellij.ide.hierarchy.HierarchyBrowserManager"
