@@ -73,7 +73,7 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
       VirtualFile file = event.getFile();
       if (file != null && file.isDirectory()) {
         visitDirsRecursivelyWithoutExcluded(myProject, myProjectManager, file, dir -> {
-          if (isVcsDir(dir.getPath())) {
+          if (isVcsDir(dir.getName())) {
             scheduleScan();
             return skipTo(file);
           }
