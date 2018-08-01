@@ -228,6 +228,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val externalizationSession = storageManager.startExternalization()!!
 
     val stateSpec = StoreUtil.getStateSpec(component)
+    LOG.info("saveApplicationComponent is called for ${stateSpec.name}")
     commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
     val sessions = externalizationSession.createSaveSessions()
     if (sessions.isEmpty()) {
