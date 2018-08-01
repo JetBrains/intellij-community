@@ -116,7 +116,22 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("\n");
   }
 
-  @SuppressWarnings("SameParameterValue")
+  public void testAutoDecreaseHyphenIndent() {
+    doTestForSettings("- ", false, true);
+  }
+
+  public void testAutoIncreaseHyphenIndent() {
+    doTestForSettings("- ", true, true);
+  }
+
+  public void testDoNotChangeHyphenIndent1() {
+    doTest("- ");
+  }
+
+  public void testDoNotChangeHyphenIndent2() {
+    doTest("- ");
+  }
+
   private void doTest(@NotNull String insert) {
     doTest(() -> myFixture.type(insert));
   }
@@ -132,9 +147,7 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(testName + ".after.yml");
   }
 
-  @SuppressWarnings("SameParameterValue")
   private void doTestForSettings(@NotNull String insert, boolean indentSequenceVal, boolean autoHyphen) {
-
     String testName = getTestName(true);
     String fileName = ObjectUtils.notNull(StringUtil.substringBefore(testName, "_"), testName);
     myFixture.configureByFile(fileName + ".before.yml");
