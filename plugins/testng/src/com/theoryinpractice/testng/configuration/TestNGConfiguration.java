@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TestNGConfiguration extends JavaTestConfigurationBase {
+public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySupport {
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
