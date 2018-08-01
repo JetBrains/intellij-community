@@ -141,29 +141,29 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files,
-                                                               final String title,
-                                                               @Nullable final String prompt,
-                                                               final String singleFileTitle,
-                                                               final String singleFilePromptTemplate,
-                                                               final VcsShowConfirmationOption confirmationOption);
+                                                               String title,
+                                                               @Nullable String prompt,
+                                                               @Nullable String singleFileTitle,
+                                                               @Nullable String singleFilePromptTemplate,
+                                                               @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
-  public abstract Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
-                                                                final String title,
-                                                                @Nullable final String prompt,
-                                                                final String singleFileTitle,
-                                                                final String singleFilePromptTemplate,
-                                                                final VcsShowConfirmationOption confirmationOption);
+  public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
+                                                                String title,
+                                                                @Nullable String prompt,
+                                                                @Nullable String singleFileTitle,
+                                                                @Nullable String singleFilePromptTemplate,
+                                                                @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
-  public Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
-                                                                final String title,
-                                                                @Nullable final String prompt,
-                                                                final String singleFileTitle,
-                                                                final String singleFilePromptTemplate,
-                                                                final VcsShowConfirmationOption confirmationOption,
-                                                                @Nullable String okActionName,
-                                                                @Nullable String cancelActionName) {
+  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
+                                                       String title,
+                                                       @Nullable String prompt,
+                                                       @Nullable String singleFileTitle,
+                                                       @Nullable String singleFilePromptTemplate,
+                                                       @NotNull VcsShowConfirmationOption confirmationOption,
+                                                       @Nullable String okActionName,
+                                                       @Nullable String cancelActionName) {
     return selectFilePathsToProcess(files, title, prompt, singleFileTitle, singleFilePromptTemplate, confirmationOption);
   };
   

@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public abstract class JsonLiteralImpl extends JsonLiteralMixin implements JsonLiteral {
 
-  public JsonLiteralImpl(ASTNode node) {
+  public JsonLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 

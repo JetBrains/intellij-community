@@ -32,6 +32,8 @@ import java.lang.ref.Reference;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 /**
  * This panel contains all tool stripes and JLayeredPanle at the center area. All tool windows are
  * located inside this layered pane.
@@ -46,7 +48,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final HashMap<String, StripeButton> myId2Button = new HashMap<>();
   private final HashMap<String, InternalDecorator> myId2Decorator = new HashMap<>();
-  private final HashMap<StripeButton, WindowInfoImpl> myButton2Info = new HashMap<>();
   private final HashMap<InternalDecorator, WindowInfoImpl> myDecorator2Info = new HashMap<>();
   private final HashMap<String, Float> myId2SplitProportion = new HashMap<>();
   private Pair<ToolWindow, Integer> myMaximizedProportion;
@@ -199,7 +200,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                               @NotNull Runnable finishCallBack) {
     final WindowInfoImpl copiedInfo = info.copy();
     myId2Button.put(copiedInfo.getId(), button);
-    myButton2Info.put(button, copiedInfo);
     return new AddToolStripeButtonCmd(button, copiedInfo, comparator, finishCallBack);
   }
 
@@ -240,13 +240,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *
    * @param id {@code ID} of the button to be removed.
    */
-  @NotNull
-  final FinalizableCommand createRemoveButtonCmd(@NotNull String id, @NotNull Runnable finishCallBack) {
-    final StripeButton button = getButtonById(id);
-    final WindowInfoImpl info = getButtonInfoById(id);
+  @Nullable
+  final FinalizableCommand createRemoveButtonCmd(@NotNull WindowInfoImpl info, @NotNull String id, @NotNull Runnable finishCallBack) {
+    StripeButton button = myId2Button.remove(id);
+    if (button == null) {
+      return null;
+    }
 
-    myButton2Info.remove(button);
-    myId2Button.remove(id);
     return new RemoveToolStripeButtonCmd(button, info, finishCallBack);
   }
 
@@ -299,21 +299,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myLayeredPane;
   }
 
-  @Nullable
-  private StripeButton getButtonById(final String id) {
-    return myId2Button.get(id);
-  }
-
   private InternalDecorator getDecoratorById(final String id) {
     return myId2Decorator.get(id);
-  }
-
-  /**
-   * @param id {@code ID} of tool stripe butoon.
-   * @return {@code WindowInfo} associated with specified tool stripe button.
-   */
-  private WindowInfoImpl getButtonInfoById(final String id) {
-    return myButton2Info.get(myId2Button.get(id));
   }
 
   /**
@@ -890,32 +877,26 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage = myLayeredPane.getTopImage();
-          final Graphics topGraphics = topImage.getGraphics();
 
-          Rectangle bounds;
+          Rectangle bounds =  myComponent.getBounds();
 
-          try {
+          useSafely(topImage.getGraphics(), topGraphics -> {
             myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
             myLayeredPane.moveToFront(myComponent);
             myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-            bounds = myComponent.getBounds();
             myComponent.paint(topGraphics);
             myLayeredPane.remove(myComponent);
-          }
-          finally {
-            topGraphics.dispose();
-          }
+          });
+
           // Prepare bottom image.
           final Image bottomImage = myLayeredPane.getBottomImage();
-          final Graphics bottomGraphics = bottomImage.getGraphics();
-          try {
+
+          useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             bottomGraphics.setClip(0, 0, bounds.width, bounds.height);
             bottomGraphics.translate(-bounds.x, -bounds.y);
             myLayeredPane.paint(bottomGraphics);
-          }
-          finally {
-            bottomGraphics.dispose();
-          }
+          });
+
           // Start animation.
           final Surface surface = new Surface(topImage, bottomImage, 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
@@ -988,31 +969,32 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class RemoveToolStripeButtonCmd extends FinalizableCommand {
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
+    private final ToolWindowAnchor myAnchor;
 
     RemoveToolStripeButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info, @NotNull Runnable finishCallBack) {
       super(finishCallBack);
       myButton = button;
       myInfo = info;
+      myAnchor = myInfo.getAnchor();
     }
 
     @Override
     public final void run() {
       try {
-        final ToolWindowAnchor anchor = myInfo.getAnchor();
-        if (ToolWindowAnchor.TOP == anchor) {
+        if (ToolWindowAnchor.TOP == myAnchor) {
           myTopStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.LEFT == anchor) {
+        else if (ToolWindowAnchor.LEFT == myAnchor) {
           myLeftStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.BOTTOM == anchor) {
+        else if (ToolWindowAnchor.BOTTOM == myAnchor) {
           myBottomStripe.removeButton(myButton);
         }
-        else if (ToolWindowAnchor.RIGHT == anchor) {
+        else if (ToolWindowAnchor.RIGHT == myAnchor) {
           myRightStripe.removeButton(myButton);
         }
         else {
-          LOG.error("unknown anchor: " + anchor);
+          LOG.error("unknown anchor: " + myAnchor);
         }
         validate();
         repaint();
@@ -1109,26 +1091,21 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
           final Image topImage = myLayeredPane.getTopImage();
-          final Graphics topGraphics = topImage.getGraphics();
-          try {
+          useSafely(topImage.getGraphics(), topGraphics -> {
             myComponent.paint(topGraphics);
-          }
-          finally {
-            topGraphics.dispose();
-          }
+          });
+
           // Prepare bottom image. This image contains picture of component that is located
           // under the component to is being removed.
           final Image bottomImage = myLayeredPane.getBottomImage();
-          final Graphics bottomGraphics = bottomImage.getGraphics();
-          try {
+
+          useSafely(bottomImage.getGraphics(), bottomGraphics -> {
             myLayeredPane.remove(myComponent);
             bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
             bottomGraphics.translate(-bounds.x, -bounds.y);
             myLayeredPane.paint(bottomGraphics);
-          }
-          finally {
-            bottomGraphics.dispose();
-          }
+          });
+
           // Remove component from the layered pane and start animation.
           final Surface surface = new Surface(topImage, bottomImage, -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
           myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
@@ -1186,7 +1163,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     @Override
     public void run() {
       try {
-        StripeButton stripeButton = getButtonById(myId);
+        StripeButton stripeButton = myId2Button.get(myId);
         if (stripeButton == null) {
           return;
         }

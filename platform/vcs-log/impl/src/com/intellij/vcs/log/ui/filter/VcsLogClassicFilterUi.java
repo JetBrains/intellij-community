@@ -125,7 +125,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi()));
     actionGroup.add(new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi()));
     actionGroup.add(new FilterActionComponent(
-      () -> new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager()).initUi()));
+      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myUi.getColorManager()).initUi()));
     return actionGroup;
   }
 
@@ -311,7 +311,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  private static class FileFilterModel extends FilterModel<VcsLogFileFilter> {
+  static class FileFilterModel extends FilterModel<VcsLogFileFilter> {
     @NotNull private static final String ROOTS = "roots";
     @NotNull private static final String STRUCTURE = "structure";
     @NotNull private final Set<VirtualFile> myRoots;
@@ -338,13 +338,18 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     @NotNull
-    private static List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
+    static List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
       return ContainerUtil.map(filter.getFiles(), FilePath::getPath);
     }
 
     @NotNull
     private static List<String> getFilterValues(@NotNull VcsLogRootFilter filter) {
       return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
+    }
+
+    @NotNull
+    static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
+      return new VcsLogStructureFilterImpl(ContainerUtil.map(values, VcsUtil::getFilePath));
     }
 
     @Nullable
@@ -380,11 +385,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
       if (selectedRoots.isEmpty()) return null;
       return new VcsLogRootFilterImpl(selectedRoots);
-    }
-
-    @NotNull
-    private static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return new VcsLogStructureFilterImpl(ContainerUtil.map(values, VcsUtil::getFilePath));
     }
 
     @NotNull

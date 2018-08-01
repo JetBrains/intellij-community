@@ -17,9 +17,21 @@ package com.intellij.codeInsight.hints;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleCompletionHintsAction extends ToggleAction {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+    if (psiFile == null || !"Java".equals(psiFile.getLanguage().getDisplayName())) {
+      e.getPresentation().setVisible(false);
+    }
+  }
+
   @Override
   public boolean isSelected(AnActionEvent e) {
     return CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;

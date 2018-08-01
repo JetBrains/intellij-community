@@ -1,12 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.formatter
 
-import com.intellij.application.options.CodeStyle
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -48,13 +45,13 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   }
 
   private List findSettings(String name) {
-    CodeStyleSettings settings = CodeStyle.getSettings(project)
-    try {
-      return [CommonCodeStyleSettings.getField(name), settings.getCommonSettings(GroovyLanguage.INSTANCE)]
-    }
-    catch (NoSuchFieldException ignored) {
-      return [GroovyCodeStyleSettings.getField(name), settings.getCustomSettings(GroovyCodeStyleSettings)]
-    }
+    return findField(CommonCodeStyleSettings, name)?.with { [it, getGroovySettings()] }
+      ?: findField(GroovyCodeStyleSettings, name)?.with { [it, getGroovyCustomSettings()] }
+      ?: findField(CommonCodeStyleSettings.IndentOptions, name)?.with { [it, getGroovySettings().getIndentOptions()] }
+  }
+
+  private static Field findField(Class<?> clazz, String name) {
+    return clazz.fields.find { it.name == name }
   }
 
   @Nullable
@@ -96,6 +93,8 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   void testMethod_call_par2() throws Throwable { doTest() }
 
+  void testArgumentsWrapIfLong() { doTest() }
+
   void testArgumentsDontWrapAlign() { doTest() }
 
   void testArgumentsWrapAlways() { doTest() }
@@ -111,6 +110,8 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   void testParametersWrapAlwaysDontAlign() { doTest() }
 
   void testParametersWrapAlwaysNl() { doTest() }
+
+  void testParametersComments() { doTest() }
 
   void testMethod_decl1() throws Throwable { doTest() }
 
@@ -169,4 +170,22 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   void testBracesNextLineShifted2() { doTest() }
 
   void testBracesEndLine() { doTest() }
+
+  void testArrayInitializerSpaces() { doTest() }
+
+  void testArrayInitializerDontWrap() { doTest() }
+
+  void testArrayInitializerWrapAlways() { doTest() }
+
+  void testArrayInitializerWrapAlwaysAlign() { doTest() }
+
+  void testArrayInitializerWrapAlwaysNl() { doTest() }
+
+  void testLabelIndentAbsolute() { doTest() }
+
+  void testLabelIndentRelative() { doTest() }
+
+  void testLabelIndentRelativeReverse() { doTest() }
+
+  void testBlankLinesInCode() { doTest() }
 }

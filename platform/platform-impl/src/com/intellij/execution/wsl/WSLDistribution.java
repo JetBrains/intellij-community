@@ -217,12 +217,8 @@ public class WSLDistribution {
             true
           );
           if (password != null) {
-            PrintWriter pw = new PrintWriter(input);
-            try {
+            try (PrintWriter pw = new PrintWriter(input)) {
               pw.println(password);
-            }
-            finally {
-              pw.close();
             }
           }
           else {
@@ -346,12 +342,6 @@ public class WSLDistribution {
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      if (windowsPath.length() > 2) {
-        char separator = windowsPath.charAt(2);
-        if (separator != '/' && separator != '\\') {
-          return null;
-        }
-      }
       return WSL_MNT_ROOT +
              Character.toLowerCase(windowsPath.charAt(0)) +
              FileUtil.toSystemIndependentName(windowsPath.substring(2));

@@ -58,7 +58,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
   private static final InsertHandlerDecorator<LookupElement> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
     @Override
-    public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
       final char completionChar = context.getCompletionChar();
       if (completionChar == '\'' || completionChar == '\"') {
         context.setAddCompletionChar(false);
@@ -353,8 +353,8 @@ public class XmlCompletionContributor extends CompletionContributor {
           s = StringUtil.trimEnd(s, ";");
 
           try {
-            final int unicodeChar = Integer.valueOf(s).intValue();
-            return result.withTypeText(String.valueOf((char)unicodeChar));
+            final char unicodeChar = (char)Integer.valueOf(s).intValue();
+            return result.withTypeText(String.valueOf(unicodeChar)).withLookupString(String.valueOf(unicodeChar));
           }
           catch (NumberFormatException e) {
             return result;
@@ -368,7 +368,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   private static class EntityRefInsertHandler extends BasicInsertHandler<LookupElement> {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       super.handleInsert(context, item);
       context.setAddCompletionChar(false);
       Editor editor = context.getEditor();

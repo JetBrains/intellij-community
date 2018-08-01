@@ -46,12 +46,7 @@ import java.util.List;
 public class XsltVariableContext implements VariableContext<XsltVariable> {
     public static final XsltVariableContext INSTANCE = new XsltVariableContext();
     
-    private final ResolveCache.Resolver RESOLVER = new ResolveCache.Resolver() {
-        @Nullable
-        public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
-            return resolveInner((XPathVariableReference)psiReference);
-        }
-    };
+    private final ResolveCache.Resolver RESOLVER = (psiReference, incompleteCode) -> resolveInner((XPathVariableReference)psiReference);
 
     @NotNull
     public XsltVariable[] getVariablesInScope(XPathElement element) {

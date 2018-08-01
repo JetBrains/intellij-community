@@ -58,6 +58,7 @@ import com.intellij.util.*
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
+import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.io.*
 import com.intellij.util.ref.GCUtil
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -922,7 +923,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
-      def map = storage.getIndexMap()
+      PersistentHashMap<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
       assertTrue(map.getReadOnly())
       assertTrue(map.getValueStorage().isReadOnly())
     } finally {

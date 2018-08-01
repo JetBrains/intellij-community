@@ -313,14 +313,6 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       }
     }
 
-    @Override
-    public void processTerminated(int exitCode) {
-    }
-
-    @Override
-    public void startFailed(Throwable exception) {
-    }
-
     @Nullable
     public String getBaseBranch() {
       return myBaseBranch;

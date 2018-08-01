@@ -36,6 +36,7 @@ public class TerminalSessionFileType extends FakeFileType {
     return getName() + " Fake File Type";
   }
 
+  @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
     return file instanceof TerminalSessionVirtualFileImpl;
   }

@@ -257,22 +257,21 @@ class PostHighlightingVisitor {
       return highlightInfo;
     }
 
-    boolean referenced = myRefCountHolder.isReferencedForRead(variable);
-    if (!referenced && !UnusedSymbolUtil.isImplicitRead(myProject, variable, progress)) {
+    if (!myRefCountHolder.isReferencedForRead(variable) && !UnusedSymbolUtil.isImplicitRead(myProject, variable, progress)) {
       String message = JavaErrorMessages.message("local.variable.is.not.used.for.reading", identifier.getText());
       HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable), myDeadCodeKey);
       return highlightInfo;
     }
 
-    if (!variable.hasInitializer()) {
-      referenced = myRefCountHolder.isReferencedForWrite(variable);
-      if (!referenced && !UnusedSymbolUtil.isImplicitWrite(myProject, variable, progress)) {
-        String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
-        final HighlightInfo unusedSymbolInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, QuickFixFactory.getInstance().createAddVariableInitializerFix(variable), myDeadCodeKey);
-        return unusedSymbolInfo;
-      }
+    if (!variable.hasInitializer() &&
+        !myRefCountHolder.isReferencedForWrite(variable) &&
+        !UnusedSymbolUtil.isImplicitWrite(myProject, variable, progress)) {
+      String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
+      final HighlightInfo unusedSymbolInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      QuickFixAction
+        .registerQuickFixAction(unusedSymbolInfo, QuickFixFactory.getInstance().createAddVariableInitializerFix(variable), myDeadCodeKey);
+      return unusedSymbolInfo;
     }
 
     return null;

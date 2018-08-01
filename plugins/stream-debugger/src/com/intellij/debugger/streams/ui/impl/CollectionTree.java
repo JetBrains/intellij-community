@@ -274,14 +274,18 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     int topIndex = 0;
     int bottomIndex = 1;
-    int topY = getRowBounds(rows[topIndex]).y;
+    Rectangle rowBounds = getRowBounds(rows[topIndex]);
+    if (rowBounds == null) return visibleRect;
+    int topY = rowBounds.y;
 
     final Result result = new Result();
     while (bottomIndex < rows.length) {
       final int nextY = getRowBounds(rows[bottomIndex]).y;
       while (nextY - topY > height) {
         topIndex++;
-        topY = getRowBounds(rows[topIndex]).y;
+        rowBounds = getRowBounds(rows[topIndex]);
+        if (rowBounds == null) return visibleRect;
+        topY = rowBounds.y;
       }
 
       if (bottomIndex - topIndex > result.count()) {

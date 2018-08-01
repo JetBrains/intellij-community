@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -91,7 +92,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     @Override
     public boolean isSuitableEntryElement(@NotNull PsiElement element) {
-      PsiLiteralExpression expression = tryCast(element, PsiLiteralExpression.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return false;
       return ExpressionUtils.computeConstantExpression(expression) instanceof String;
     }
@@ -106,7 +107,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   private static class IntLiteralSortingStrategy implements SortingStrategy {
     @Override
     public boolean isSuitableEntryElement(@NotNull PsiElement element) {
-      PsiLiteralExpression expression = tryCast(element, PsiLiteralExpression.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return false;
       return ExpressionUtils.computeConstantExpression(expression) instanceof Integer;
     }
@@ -120,11 +121,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   private static class EnumConstantSortingStrategy implements SortingStrategy {
     private static PsiType extractType(@NotNull PsiElement element) {
-      PsiReferenceExpression expression = tryCast(element, PsiReferenceExpression.class);
-      if (expression == null) return null;
-      PsiEnumConstant enumConstant = tryCast(expression.resolve(), PsiEnumConstant.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
+      PsiReferenceExpression referenceExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
+      if (referenceExpression == null) return null;
+      PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
       if (enumConstant == null) return null;
-      return expression.getType();
+      return referenceExpression.getType();
     }
 
     @Override
@@ -135,7 +137,10 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @NotNull
     @Override
     public Comparator<PsiElement> getComparator() {
-      return Comparator.comparing(el -> ((PsiReferenceExpression)el).getReferenceName());
+      return Comparator.comparing(el -> {
+        PsiExpression expr = (PsiExpression)el;
+        return ((PsiReferenceExpression)Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(expr))).getReferenceName();
+      });
     }
 
     @Override
@@ -714,13 +719,25 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       PsiParameter last = ArrayUtil.getLastElement(parameters);
       if (last == null) return null;
       if (!last.isVarArgs()) return null;
-      PsiExpression closestExpression = getClosestExpression(originElement);
+      PsiExpression closestExpression = getTopmostExpression(getClosestExpression(originElement));
       if (closestExpression == null) return null;
       int indexOfCurrent = Arrays.asList(arguments).indexOf(closestExpression);
       if (-1 == indexOfCurrent) return null;
       if (indexOfCurrent < parameters.length - 1) return null;
       if (arguments.length < parameters.length + MIN_ELEMENTS_COUNT - 1) return null;
       return Arrays.copyOfRange(arguments, parameters.length - 1, arguments.length);
+    }
+
+    @Nullable
+    private static PsiExpression getTopmostExpression(@Nullable final PsiExpression expression) {
+      if (expression == null) return null;
+      @NotNull PsiExpression current = expression;
+      while (true) {
+        PsiExpression parentExpr = tryCast(current.getParent(), PsiExpression.class);
+        if (parentExpr == null) break;
+        current = parentExpr;
+      }
+      return current;
     }
 
     @Nullable
@@ -764,6 +781,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         child = child.getNextSibling();
       }
       sortableList.generate(sb);
+
+      List<SortableEntry> entries = sortableList.myEntries;
+      SortableEntry last = entries.get(entries.size() - 1);
+      if (!last.myBeforeSeparator.isEmpty()) {
+        sb.append("\n");
+      }
       sb.append(")");
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(origin.getProject());
       call.replace(factory.createExpressionFromText(sb.toString(), call));
@@ -807,11 +830,25 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (!aClass.isEnum()) return null;
       PsiEnumConstant[] constants = PsiTreeUtil.getChildrenOfType(aClass, PsiEnumConstant.class);
       if (constants == null || constants.length < MIN_ELEMENTS_COUNT) return null;
+      PsiEnumConstant last = constants[constants.length - 1];
+      PsiElement lastEnumRelatedElement = getLastEnumDeclarationRelatedElement(last);
+      if (lastEnumRelatedElement.getTextRange().getEndOffset() <= origin.getTextOffset()) return null;
       PsiElement lBrace = aClass.getLBrace();
       if (lBrace == null) return null;
       PsiElement nextAfterLbrace = lBrace.getNextSibling();
       if (nextAfterLbrace == null) return null;
       return new EnumContext(Arrays.asList(constants), nextAfterLbrace);
+    }
+
+    private static @NotNull PsiElement getLastEnumDeclarationRelatedElement(@NotNull PsiEnumConstant last) {
+      PsiElement current = last.getNextSibling();
+      while (current instanceof PsiWhiteSpace
+             || current instanceof PsiComment
+             || (current instanceof PsiJavaToken && (((PsiJavaToken)current).getTokenType() == JavaTokenType.COMMA))
+      ) {
+        current = current.getNextSibling();
+      }
+      return current;
     }
 
     @NotNull

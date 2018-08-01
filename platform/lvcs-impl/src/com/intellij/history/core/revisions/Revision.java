@@ -50,7 +50,7 @@ public abstract class Revision {
   }
 
   public Pair<List<String>, Integer> getAffectedFileNames() {
-    return Pair.create(Collections.<String>emptyList(), 0);
+    return Pair.create(Collections.emptyList(), 0);
   }
 
   public abstract Entry findEntry();

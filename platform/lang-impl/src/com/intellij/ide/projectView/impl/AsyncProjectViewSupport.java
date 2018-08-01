@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarksListener;
@@ -14,8 +13,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -26,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.*;
+import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -36,14 +34,14 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
-import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
+import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 
 class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
-  private final TreeCollector<VirtualFile> myFileRoots = TreeCollector.createFileRootsCollector();
-  private final ProjectFileChangeListener myChangeListener;
+  private final ProjectFileNodeUpdater myNodeUpdater;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
@@ -57,20 +55,28 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.setComparator(comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-    myChangeListener = new ProjectFileChangeListener(myStructureTreeModel.getInvoker(), project, (module, file) -> {
-      if (myFileRoots.add(file)) {
-        myFileRoots.processLater(myStructureTreeModel.getInvoker(), roots -> roots.forEach(root -> updateByFile(root, true)));
+    myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
+      @Override
+      protected void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+        if (fromRoot) {
+          updateAll(null);
+        }
+        else {
+          long time = System.currentTimeMillis();
+          LOG.debug("found ", updatedFiles.size(), " changed files");
+          TreeCollector<VirtualFile> collector = TreeCollector.createFileRootsCollector();
+          for (VirtualFile file : updatedFiles) {
+            if (!file.isDirectory()) file = file.getParent();
+            if (file != null && findArea(file, project) != null) collector.add(file);
+          }
+          List<VirtualFile> roots = collector.get();
+          LOG.debug("found ", roots.size(), " roots in ", System.currentTimeMillis() - time, "ms");
+          myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> roots.forEach(root -> updateByFile(root, true)));
+        }
       }
-    });
+    };
     setModel(tree, myAsyncTreeModel);
     MessageBusConnection connection = project.getMessageBus().connect(parent);
-    connection.subscribe(VFS_CHANGES, myChangeListener);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        updateAll(null);
-      }
-    });
     connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
       public void bookmarkAdded(@NotNull Bookmark bookmark) {
@@ -105,14 +111,14 @@ class AsyncProjectViewSupport {
 
       @Override
       protected void addSubtreeToUpdateByRoot() {
-        updateAll(null);
+        myNodeUpdater.updateFromRoot();
       }
 
       @Override
       protected boolean addSubtreeToUpdateByElement(PsiElement element) {
         VirtualFile file = PsiUtilCore.getVirtualFile(element);
         if (file != null) {
-          myChangeListener.invalidate(file);
+          myNodeUpdater.updateFromFile(file);
         }
         else {
           updateByElement(element, true);
@@ -225,6 +231,11 @@ class AsyncProjectViewSupport {
   }
 
   private void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
+    // find first valid parent for removed file
+    while (!file.isValid()) {
+      file = file.getParent();
+      if (file == null) return;
+    }
     SmartList<TreePath> list = new SmartList<>();
     acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
       @NotNull

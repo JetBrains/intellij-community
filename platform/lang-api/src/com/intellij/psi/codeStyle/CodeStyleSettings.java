@@ -75,6 +75,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
   private final SoftMargins mySoftMargins = new SoftMargins();
 
+  private final ExcludedFiles myExcludedFiles = new ExcludedFiles();
+
   private int myVersion = CURR_VERSION;
 
   public CodeStyleSettings() {
@@ -855,6 +857,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     }
 
     mySoftMargins.deserializeFrom(element);
+    myExcludedFiles.deserializeFrom(element);
 
     migrateLegacySettings();
     notifySettingsLoaded();
@@ -866,6 +869,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
     mySoftMargins.serializeInto(element);
+    myExcludedFiles.serializeInto(element);
 
     myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
       CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
@@ -919,6 +923,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
    */
+  @NotNull
   public IndentOptions getIndentOptions(@Nullable FileType fileType) {
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
@@ -1043,6 +1048,18 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     if (!(fileType instanceof LanguageFileType)) return null;
     Language lang = ((LanguageFileType)fileType).getLanguage();
     return getIndentOptions(lang);
+  }
+
+  /**
+   * Returns language indent options or, if the language doesn't have any options of its own, indent options configured for other file
+   * types.
+   *
+   * @param language The language to get indent options for.
+   * @return Language indent options.
+   */
+  public IndentOptions getLanguageIndentOptions(@NotNull Language language) {
+    IndentOptions langOptions = getIndentOptions(language);
+    return langOptions != null ? langOptions : OTHER_INDENT_OPTIONS;
   }
 
   @Nullable
@@ -1467,5 +1484,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   public void setDefaultSoftMargins(List<Integer> softMargins) {
     mySoftMargins.setValues(softMargins);
+  }
+
+  @NotNull
+  public ExcludedFiles getExcludedFiles() {
+    return myExcludedFiles;
   }
 }

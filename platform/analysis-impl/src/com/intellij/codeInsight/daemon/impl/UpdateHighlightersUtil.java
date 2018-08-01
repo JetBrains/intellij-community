@@ -206,7 +206,7 @@ public class UpdateHighlightersUtil {
                                      @NotNull final Document document,
                                      @NotNull final TextRange range,
                                      @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                     @NotNull final List<HighlightInfo> infos,
+                                     @NotNull final List<? extends HighlightInfo> infos,
                                      @NotNull final MarkupModelEx markup,
                                      final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();

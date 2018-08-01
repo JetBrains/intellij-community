@@ -22,6 +22,6 @@ import org.jetbrains.annotations.Nullable;
 @Deprecated
 public class DiffPsiFileSupport {
   public static boolean isDiffFile(@Nullable VirtualFile file) {
-    return OutsidersPsiFileSupport.isDiffFile(file);
+    return OutsidersPsiFileSupport.isOutsiderFile(file);
   }
 }

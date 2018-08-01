@@ -81,6 +81,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$elvis2() throws Throwable { doTest() }
 
+  void testconditional$elvisNlBeforeOperator() { doTest() }
+
   void testconditional$ternaryQuestionOnly() { doTest() }
 
   void testconditional$ternaryWithoutElse() { doTest() }
@@ -182,6 +184,22 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testnew$emptyTypeArgs() { doTest() }
 
   void testnew$noArgumentList() { doTest() }
+
+  void testnew$emptyArrayInitializer() { doTest() }
+
+  void testnew$arrayInitializer() { doTest() }
+
+  void testnew$arrayInitializerTrailingComma() { doTest() }
+
+  void testnew$nestedArrayInitializer() { doTest() }
+
+  void testnew$noInitializer() { doTest() }
+
+  void testnew$noClosingBrace() { doTest() }
+
+  void testnew$closureAfterArrayDeclaration() { doTest() }
+
+  void testnew$closureAfterArrayInitializer() { doTest() }
 
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
@@ -636,6 +654,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$literalInvoked() { doTest() }
 
+  void testcommandExpr$slashyInvoked() { doTest() }
+
   void testcommandExpr$safeIndex() { doTest() }
 
   void testcommandExpr$safeIndexEmpty() { doTest() }
@@ -697,4 +717,16 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testindex$safeIndexNewLineAfterQ() { doTest() }
 
   void testindex$safeIndexNewLineBeforeQ() { doTest() }
+
+  void testnl$binary() { doTest() }
+
+  void testnl$cast() { doTest() }
+
+  void testnl$index() { doTest() }
+
+  void testnl$postfixDec() { doTest() }
+
+  void testnl$postfixInc() { doTest() }
+
+  void testnl$unary() { doTest() }
 }

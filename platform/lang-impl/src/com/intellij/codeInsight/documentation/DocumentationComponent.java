@@ -87,6 +87,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -253,6 +255,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
     myEditorPane.setEditable(false);
+    myEditorPane.setCaret(new DefaultCaret() {
+      @Override
+      protected void adjustVisibility(Rectangle r) {
+      }
+    });
     if (ScreenReader.isActive()) {
       // Note: Making the caret visible is merely for convenience
       myEditorPane.getCaret().setVisible(true);
@@ -724,12 +731,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (element != null && element.isValid()) {
       pointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     }
-    setDataInternal(pointer, text, new Rectangle(0, 0), ref);
+    setDataInternal(pointer, text, new Rectangle(0, 0), 0, ref);
   }
 
   private void setDataInternal(@Nullable SmartPsiElementPointer element,
                                @NotNull String text,
                                @NotNull Rectangle viewRect,
+                               int caretPosition,
                                @Nullable String ref) {
     myIsEmpty = false;
     if (myManager == null) return;
@@ -739,23 +747,32 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     highlightLink(-1);
 
-    myEditorPane.setText(decorate(text));
+    setTextFast(myEditorPane, decorate(text));
     applyFontProps();
 
     showHint();
 
     myText = text;
 
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
-      if (ref != null) {
-        myEditorPane.scrollToReference(ref);
-      }
-      else if (ScreenReader.isActive()) {
-        myEditorPane.setCaretPosition(0);
-      }
-    });
+    myEditorPane.setCaretPosition(caretPosition);
+    myEditorPane.scrollRectToVisible(viewRect);
+    if (ref != null) {
+      myEditorPane.scrollToReference(ref);
+    }
+  }
+
+  private static void setTextFast(@NotNull JEditorPane editorPane, @NotNull String text) {
+    EditorKit kit = editorPane.getEditorKit();
+    Document document = editorPane.getDocument();
+    editorPane.setDocument(kit.createDefaultDocument());
+    try {
+      document.remove(0, document.getLength());
+      kit.read(new StringReader(text), document, 0);
+    }
+    catch (IOException | BadLocationException ignore) { }
+    finally {
+      editorPane.setDocument(document);
+    }
   }
 
   private void showHint() {
@@ -1159,13 +1176,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, myExternalUrl, myProvider, rect, myHighlightedLink);
+    return new Context(
+      myElement, myText, myExternalUrl, myProvider,
+      rect, myEditorPane.getCaretPosition(), myHighlightedLink);
   }
 
   private void restoreContext(@NotNull Context context) {
     myExternalUrl = context.externalUrl;
     myProvider = context.provider;
-    setDataInternal(context.element, context.text, context.viewRect, null);
+    setDataInternal(context.element, context.text, context.viewRect, context.caretPosition, null);
     highlightLink(context.highlightedLink);
   }
 
@@ -1476,6 +1495,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     final String externalUrl;
     final DocumentationProvider provider;
     final Rectangle viewRect;
+    final int caretPosition;
     final int highlightedLink;
 
     Context(SmartPsiElementPointer element,
@@ -1483,18 +1503,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
             String externalUrl,
             DocumentationProvider provider,
             Rectangle viewRect,
+            int caretPosition,
             int highlightedLink) {
       this.element = element;
       this.text = text;
       this.externalUrl = externalUrl;
       this.provider = provider;
       this.viewRect = viewRect;
+      this.caretPosition = caretPosition;
       this.highlightedLink = highlightedLink;
     }
 
     @NotNull
     Context withText(@NotNull String text) {
-      return new Context(element, text, externalUrl, provider, viewRect, highlightedLink);
+      return new Context(element, text, externalUrl, provider,
+                         viewRect, caretPosition, highlightedLink);
     }
   }
 

@@ -841,4 +841,84 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                    "  }\n" +
                    "}");
   }
+
+  public void testOneOfBestChoiceSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOfBestChoiceSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"results\": [\n" +
+                       "    <warning descr=\"Missing required properties 'name', 'dateOfBirth'\">{\n" +
+                       "      \"type\": \"person\"\n" +
+                       "    }</warning>\n" +
+                       "  ]\n" +
+                       "}");
+  }
+
+  public void testAnyOfBestChoiceSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/anyOfBestChoiceSchema.json"));
+    doTest(schemaText, "[\n" +
+                       "  {\n" +
+                       "    \"directory\": \"/test\",\n" +
+                       "    \"arguments\": [\n" +
+                       "      \"a\"\n" +
+                       "    ],\n" +
+                       "    \"file\": <warning>\"\"</warning>\n" +
+                       "  }\n" +
+                       "] ");
+  }
+
+  public void testComplexOneOfSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complexOneOfSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": \"tab\"\n" +
+                       "  }");
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": <warning>\"ttab\"</warning>\n" +
+                       "  }");
+  }
+
+  public void testEnumCasing() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"type\": \"object\",\n" +
+                                      "\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"name\": { \"type\": \"string\", \"enum\": [\"aa\", \"bb\"] }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\n" +
+                   "  \"name\": \"aa\"\n" +
+                   "}");
+    doTest(schema, "{\n" +
+                   "  \"name\": <warning>\"aA\"</warning>\n" +
+                   "}");
+  }
+
+  public void testEnumArrayValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ [{\"x\": 5}, [true], \"q\"] ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>5</warning>}");
+    doTest(schema, "{\"foo\": <warning>[ ]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, true]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, [true]]</warning>}");
+    doTest(schema, "{\"foo\": [  { \"x\"   :   5 }  ,  [ true ]  , \"q\"  ]}");
+  }
+
+  public void testEnumObjectValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ {\"x\": 5} ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>{}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": 4}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": true}</warning>}");
+    doTest(schema, "{\"foo\": { \r  \"x\"  : \t  5 \n  }}");
+  }
 }

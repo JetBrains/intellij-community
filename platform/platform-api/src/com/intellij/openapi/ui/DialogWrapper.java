@@ -495,11 +495,11 @@ public abstract class DialogWrapper {
         actions.add(getOKAction());
       }
 
-      // move cancel action to the left
+      // move cancel action to the left of OK action, if present, and to the leftmost position otherwise
       int cancelNdx = actions.indexOf(getCancelAction());
       if (cancelNdx > 0) {
         actions.remove(getCancelAction());
-        actions.add(0, getCancelAction());
+        actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
       }
     }
     else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
@@ -523,8 +523,7 @@ public abstract class DialogWrapper {
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
-      final boolean isLeft = index < leftSideButtons.size();
-      TouchbarDataKeys.putClientPropertyDialogButton(button, !isLeft, false, index++);
+      TouchbarDataKeys.putDialogButtonDescriptor(button, index++).setMainGroup(index >= leftSideButtons.size());
     }
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
@@ -1409,14 +1408,17 @@ public abstract class DialogWrapper {
     }
   }
 
+  @Deprecated
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
+  @Deprecated
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
+  @Deprecated
   protected boolean isSouthStrictedToPreferredSize() {
     return true;
   }

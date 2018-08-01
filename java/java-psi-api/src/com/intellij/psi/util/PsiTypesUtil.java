@@ -336,7 +336,7 @@ public class PsiTypesUtil {
      * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
      */
   public static boolean isDenotableType(@Nullable PsiType type, @NotNull PsiElement context) {
-    if (type == null) return false;
+    if (type == null || type instanceof PsiWildcardType) return false;
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
     try {
       PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();

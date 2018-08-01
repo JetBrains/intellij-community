@@ -9,6 +9,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementEditorPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -48,34 +51,23 @@ public class FlipSetterCallIntention extends Intention {
   }
 
   private static void flipCall(PsiMethodCallExpression call) {
-    final PsiExpression qualifierExpression1 = call.getMethodExpression().getQualifierExpression();
-    if (qualifierExpression1 == null) {
-      return;
-    }
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
-    if (arguments.length != 1) {
-      return;
-    }
-    final PsiExpression argument = arguments[0];
-    if (!(argument instanceof PsiMethodCallExpression)) {
-      return;
-    }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)argument;
-    final PsiExpression qualifierExpression2 = methodCallExpression.getMethodExpression().getQualifierExpression();
-    if (qualifierExpression2 == null) {
-      return;
-    }
+    if (arguments.length != 1) return;
+    final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+    if (!(argument instanceof PsiMethodCallExpression)) return;
+    final PsiMethodCallExpression call2 = (PsiMethodCallExpression)argument;
+
+    final PsiExpression qualifierExpression1 = ExpressionUtils.getQualifierOrThis(call.getMethodExpression());
+    final PsiExpression qualifierExpression2 = ExpressionUtils.getQualifierOrThis(call2.getMethodExpression());
     final PsiMethod setter = call.resolveMethod();
-    final PsiMethod getter = methodCallExpression.resolveMethod();
+    final PsiMethod getter = call2.resolveMethod();
     final PsiMethod get = PropertyUtil.getReversePropertyMethod(setter);
     final PsiMethod set = PropertyUtil.getReversePropertyMethod(getter);
-    if (get == null || set == null) {
-      return;
-    }
+    if (get == null || set == null) return;
+    CommentTracker ct = new CommentTracker();
     final String text =
-      qualifierExpression2.getText() + "." + set.getName() + "(" + qualifierExpression1.getText() + "." + get.getName() + "())";
-    final PsiExpression newExpression = JavaPsiFacade.getElementFactory(call.getProject()).createExpressionFromText(text, call);
-    call.replace(newExpression);
+      ct.text(qualifierExpression2) + "." + set.getName() + "(" + ct.text(qualifierExpression1) + "." + get.getName() + "())";
+    ct.replaceAndRestoreComments(call, text);
   }
 
   private static boolean isSetGetMethodCall(PsiElement element) {
@@ -87,7 +79,7 @@ public class FlipSetterCallIntention extends Intention {
     if (arguments.length != 1) {
       return false;
     }
-    final PsiExpression argument = arguments[0];
+    final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
     if (!(argument instanceof PsiMethodCallExpression)) {
       return false;
     }

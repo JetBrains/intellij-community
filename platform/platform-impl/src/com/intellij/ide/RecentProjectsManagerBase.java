@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PathMacroManager;
@@ -549,7 +550,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  @SuppressWarnings("unused")
   protected String getRecentProjectMetadata(@SystemIndependent String path, @NotNull Project project) {
     return null;
   }
@@ -658,15 +658,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE);
       if (nameFile.exists()) {
         try {
-          final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET));
-          try {
+          try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET))) {
             String name = in.readLine();
             if (!StringUtil.isEmpty(name)) {
               return name.trim();
             }
-          }
-          finally {
-            in.close();
           }
         }
         catch (IOException ignored) { }
@@ -740,7 +736,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     @Override
     public void appStarting(Project projectFromCommandLine) {
-      if (projectFromCommandLine != null) return;
+      if (projectFromCommandLine != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
+        return;
+      }
+
       doReopenLastProject();
     }
 

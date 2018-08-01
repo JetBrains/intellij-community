@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.xmlb.annotations.Tag;
@@ -31,11 +29,11 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   @Override
   public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
-    Element serialized = new Element(myName);
     if (value == null) {
-      return serialized;
+      return null;
     }
 
+    Element serialized = new Element(myName);
     if (myBinding == null) {
       serialized.addContent(new Text(XmlSerializerImpl.convertToString(value)));
     }
@@ -97,7 +95,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element node) {
-    return node.getName().equals(myName);
+  public boolean isBoundTo(@NotNull Element element) {
+    return element.getName().equals(myName);
   }
 }

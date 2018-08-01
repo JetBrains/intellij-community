@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
@@ -58,6 +58,7 @@ public class ProjectBytecodeAnalysis {
   private final boolean nullableMethod;
   private final boolean nullableMethodTransitivity;
   private final EquationProvider<?> myEquationProvider;
+  private final NullableNotNullManager myNullabilityManager;
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ProjectBytecodeAnalysis.class);
@@ -65,6 +66,7 @@ public class ProjectBytecodeAnalysis {
 
   public ProjectBytecodeAnalysis(Project project) {
     myProject = project;
+    myNullabilityManager = NullableNotNullManager.getInstance(project);
     myEquationProvider = SKIP_INDEX ? new PlainEquationProvider(myProject) : new IndexedEquationProvider(myProject);
     nullableMethod = Registry.is(NULLABLE_METHOD);
     nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
@@ -75,8 +77,9 @@ public class ProjectBytecodeAnalysis {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return null;
     }
-    if (annotationFQN.equals(AnnotationUtil.NOT_NULL) || annotationFQN.equals(AnnotationUtil.NULLABLE) || annotationFQN.equals(
-      JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
+    if (annotationFQN.equals(myNullabilityManager.getDefaultNotNull()) ||
+        annotationFQN.equals(myNullabilityManager.getDefaultNullable()) ||
+        annotationFQN.equals(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
       PsiAnnotation[] annotations = findInferredAnnotations(listOwner);
       for (PsiAnnotation annotation : annotations) {
         if (annotationFQN.equals(annotation.getQualifiedName())) {
@@ -202,12 +205,12 @@ public class ProjectBytecodeAnalysis {
 
   public PsiAnnotation getNotNullAnnotation() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
-      CachedValueProvider.Result.create(createAnnotationFromText("@" + AnnotationUtil.NOT_NULL), ModificationTracker.NEVER_CHANGED));
+      CachedValueProvider.Result.create(createAnnotationFromText("@" + myNullabilityManager.getDefaultNotNull()), myNullabilityManager));
   }
 
   public PsiAnnotation getNullableAnnotation() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
-      CachedValueProvider.Result.create(createAnnotationFromText("@" + AnnotationUtil.NULLABLE), ModificationTracker.NEVER_CHANGED));
+      CachedValueProvider.Result.create(createAnnotationFromText("@" + myNullabilityManager.getDefaultNullable()), myNullabilityManager));
   }
 
   public PsiAnnotation createContractAnnotation(String contractValue) {

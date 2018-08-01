@@ -119,8 +119,8 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
   }
 
   private void collectHighlights(@NotNull PsiElement element,
-                                 @NotNull List<HighlightInfo> inside,
-                                 @NotNull List<HighlightInfo> outside,
+                                 @NotNull List<? super HighlightInfo> inside,
+                                 @NotNull List<? super HighlightInfo> outside,
                                  @NotNull ProperTextRange priorityRange) {
     EditorColorsScheme scheme = ObjectUtils.notNull(getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
     TextAttributes defaultAttrs = scheme.getAttributes(HighlighterColors.TEXT);
@@ -144,6 +144,7 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
         }
       }
       TextAttributes forcedAttributes;
+      List<? super HighlightInfo> result = priorityRange.contains(tr) ? inside : outside;
       if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
         forcedAttributes = TextAttributes.ERASE_MARKER;
       }
@@ -152,7 +153,7 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
           range(tr).
           textAttributes(TextAttributes.ERASE_MARKER).
           createUnconditionally();
-        (priorityRange.contains(tr) ? inside : outside).add(info);
+        result.add(info);
 
         forcedAttributes = new TextAttributes(attributes.getForegroundColor(), attributes.getBackgroundColor(),
                                               attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
@@ -162,7 +163,7 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
         range(tr).
         textAttributes(forcedAttributes).
         createUnconditionally();
-      (priorityRange.contains(tr) ? inside : outside).add(info);
+      result.add(info);
     }
   }
 

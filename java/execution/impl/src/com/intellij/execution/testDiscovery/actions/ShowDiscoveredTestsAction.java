@@ -4,7 +4,7 @@ package com.intellij.execution.testDiscovery.actions;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -52,6 +52,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -143,7 +144,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
       uFile.accept(new AbstractUastVisitor() {
         @Override
         public boolean visitMethod(@NotNull UMethod node) {
-          physicalMethods.add(node.getSourcePsi());
+          ContainerUtil.addAllNotNull(physicalMethods, node.getSourcePsi());
           return true;
         }
       });
@@ -224,7 +225,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
         .setSettingButton(new CompositeActiveComponent(runButton).getComponent())
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, __ -> pinActionListener.run())
-        .setMinSize(new JBDimension(500, 300));
+        .setMinSize(new JBDimension(500, 300))
+        .setDimensionServiceKey(ShowDiscoveredTestsAction.class.getSimpleName())
+      ;
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
@@ -249,14 +252,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     popup.showInBestPositionFor(dataContext);
 
-    Runnable whenDone = () -> {
-      popup.pack(true, true);
-      tree.setPaintBusy(false);
-    };
     processMethods(project, methods, (clazz, method, parameter) -> {
       tree.addTest(clazz, method, parameter);
       return true;
-    }, whenDone);
+    }, () -> tree.setPaintBusy(false));
   }
 
   public static void processMethods(@NotNull Project project,
@@ -284,17 +283,17 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
       for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
         byte frameworkId =
-          ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
+          ((JavaTestConfigurationWithDiscoverySupport)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
         TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
           PsiClass[] testClassPsi = {null};
           PsiMethod[] testMethodPsi = {null};
-          ReadAction.run(() -> {
+          ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
             testClassPsi[0] = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
             boolean checkBases = parameter != null; // check bases for parameterized tests
             if (testClassPsi[0] != null) {
               testMethodPsi[0] = ArrayUtil.getFirstElement(testClassPsi[0].findMethodsByName(testMethod, checkBases));
             }
-          });
+          }));
           if (testMethodPsi[0] != null) {
             if (!processor.process(testClassPsi[0], testMethodPsi[0], parameter)) return false;
           }

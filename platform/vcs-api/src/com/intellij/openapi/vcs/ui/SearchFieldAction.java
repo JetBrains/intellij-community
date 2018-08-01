@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.ui.SearchTextField;
@@ -44,7 +46,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
         if ((KeyEvent.VK_ENTER == e.getKeyCode()) || ('\n' == e.getKeyChar())) {
           e.consume();
           addCurrentTextToHistory();
-          actionPerformed(null);
+          perform();
         }
         return super.preprocessEventForTextField(e);
       }
@@ -52,12 +54,12 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
       @Override
       protected void onFocusLost() {
         myField.addCurrentTextToHistory();
-        actionPerformed(null);
+        perform();
       }
 
       @Override
       protected void onFieldCleared() {
-        actionPerformed(null);
+        perform();
       }
     };
     Border border = myField.getBorder();
@@ -83,6 +85,10 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
       myComponent.add(label);
     }
     myComponent.add(myField);
+  }
+
+  private void perform() {
+    actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
   }
 
   public String getText() {

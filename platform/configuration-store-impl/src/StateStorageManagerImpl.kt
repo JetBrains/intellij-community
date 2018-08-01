@@ -45,6 +45,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
+  val isStreamProviderPreventExportAction: Boolean
+    get() = compoundStreamProvider.providers.any { it.isDisableExportAction }
+
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     if (first) {
       compoundStreamProvider.providers.add(0, provider)
@@ -99,15 +102,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     LOG.assertTrue(!key.isEmpty())
 
     val value: String
-    if (expansion.contains("\\")) {
-      val message = "Macro $key set to system-dependent expansion $expansion"
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw IllegalArgumentException(message)
-      }
-      else {
-        LOG.warn(message)
-        value = FileUtilRt.toSystemIndependentName(expansion)
-      }
+    if (expansion.contains('\\')) {
+      LOG.error("Macro $key set to system-dependent expansion $expansion")
+      value = FileUtilRt.toSystemIndependentName(expansion)
     }
     else {
       value = expansion
@@ -299,11 +296,11 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     override val isUseVfsForWrite: Boolean
       get() = storageManager.isUseVfsForWrite
 
-    override fun beforeElementSaved(element: Element) {
+    override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
       if (rootElementName != null) {
-        storageManager.beforeElementSaved(element)
+        storageManager.beforeElementSaved(elements, rootAttributes)
       }
-      super.beforeElementSaved(element)
+      super.beforeElementSaved(elements, rootAttributes)
     }
 
     override fun beforeElementLoaded(element: Element) {
@@ -311,9 +308,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       super.beforeElementLoaded(element)
     }
 
-    override fun providerDataStateChanged(element: Element?, type: DataStateChanged) {
-      storageManager.providerDataStateChanged(this, element, type)
-      super.providerDataStateChanged(element, type)
+    override fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) {
+      storageManager.providerDataStateChanged(this, writer, type)
+      super.providerDataStateChanged(writer, type)
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
@@ -327,10 +324,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   open val isExternalSystemStorageEnabled: Boolean
     get() = false
 
-  protected open fun beforeElementSaved(element: Element) {
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
   }
 
-  protected open fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
+  protected open fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
   }
 
   protected open fun beforeElementLoaded(element: Element) {
@@ -502,7 +499,7 @@ internal val Storage.path: String
 
 
 internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml")) {
+  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == "other.xml" || collapsedPath == StoragePathMacros.CACHE_FILE)) {
     return RoamingType.DISABLED
   }
   else {

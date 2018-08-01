@@ -70,7 +70,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> addListener(JBPopupListener listener);
 
-  IPopupChooserBuilder<T> setSettingButton(Component abutton);
+  IPopupChooserBuilder<T> setSettingButton(Component button);
 
   IPopupChooserBuilder<T> setMayBeParent(boolean mayBeParent);
 

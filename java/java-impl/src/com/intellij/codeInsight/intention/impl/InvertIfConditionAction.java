@@ -213,6 +213,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       PsiStatement statement = factory.createStatementFromText("return;", ifStatement);
       statement = (PsiStatement) codeStyle.reformat(statement);
       if (thenBranch instanceof PsiBlockStatement) {
+        if (ifStatement.getParent() instanceof PsiIfStatement) {
+          ifStatement = (PsiIfStatement)wrapWithCodeBlock(ifStatement);
+          thenBranch = ifStatement.getThenBranch();
+          assert thenBranch != null;
+        }
         PsiCodeBlock codeBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
         PsiElement firstElement = codeBlock.getFirstBodyElement();
         PsiElement lastElement = codeBlock.getLastBodyElement();

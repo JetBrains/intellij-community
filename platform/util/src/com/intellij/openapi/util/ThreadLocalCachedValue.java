@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.ref.SoftReference;
 
 public abstract class ThreadLocalCachedValue<T> {
@@ -25,14 +27,16 @@ public abstract class ThreadLocalCachedValue<T> {
     if (value == null) {
       value = create();
       myThreadLocal.set(new SoftReference<T>(value));
-    } else {
+    }
+    else {
       init(value);
     }
     return value;
   }
 
-  protected void init(T value) {
+  protected void init(@NotNull T value) {
   }
 
+  @NotNull
   protected abstract T create();
 }

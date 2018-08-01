@@ -8,11 +8,14 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldRegionImpl> {
+  private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
+
   private boolean myIsExpanded;
   private final EditorImpl myEditor;
   private final String myPlaceholderText;
@@ -153,6 +156,16 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldR
     if (DocumentUtil.isInsideSurrogatePair(document, end)) {
       setIntervalEnd(end - 1);
     }
+  }
+
+  @Override
+  public void setInnerHighlightersMuted(boolean value) {
+    putUserData(MUTE_INNER_HIGHLIGHTERS, value ? Boolean.TRUE : null);
+  }
+
+  @Override
+  public boolean areInnerHighlightersMuted() {
+    return Boolean.TRUE.equals(getUserData(MUTE_INNER_HIGHLIGHTERS));
   }
 
   @Override

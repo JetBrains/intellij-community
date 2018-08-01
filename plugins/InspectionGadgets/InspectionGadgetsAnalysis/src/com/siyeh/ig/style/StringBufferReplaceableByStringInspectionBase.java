@@ -90,7 +90,7 @@ public class StringBufferReplaceableByStringInspectionBase extends BaseInspectio
         if (!(expression instanceof PsiMethodCallExpression)) return false;
         final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
         if (!isAppendCall(call)) return false;
-        expression = call.getMethodExpression().getQualifierExpression();
+        expression = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
       }
     }
   }
@@ -105,7 +105,7 @@ public class StringBufferReplaceableByStringInspectionBase extends BaseInspectio
       PsiExpressionList args = expression.getArgumentList();
       if (args == null) return false;
       PsiExpression[] expressions = args.getExpressions();
-      return expressions.length == 1 && ExpressionUtils.isLiteral(expressions[0], "");
+      return expressions.length == 1 && ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(expressions[0]), "");
     }
     return false;
   }
@@ -267,11 +267,10 @@ public class StringBufferReplaceableByStringInspectionBase extends BaseInspectio
 
     private boolean isCallToStringBuilderMethod(PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      PsiExpression qualifier = methodExpression.getQualifierExpression();
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       while (qualifier instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)qualifier;
-        final PsiReferenceExpression methodExpression1 = callExpression.getMethodExpression();
-        qualifier = methodExpression1.getQualifierExpression();
+        final PsiMethodCallExpression call = (PsiMethodCallExpression)qualifier;
+        qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
       }
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return false;

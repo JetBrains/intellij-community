@@ -178,31 +178,20 @@ open class DirectoryBasedStorage(private val dir: Path,
     }
 
     private fun saveStates(dir: VirtualFile, states: StateMap) {
-      val storeElement = Element(FileStorageCoreUtil.COMPONENT)
       for (fileName in states.keys()) {
         if (!dirtyFileNames.contains(fileName)) {
           continue
         }
 
-        var element: Element? = null
         try {
-          element = states.getElement(fileName) ?: continue
-          storage.pathMacroSubstitutor?.collapsePaths(element)
-
-          storeElement.setAttribute(FileStorageCoreUtil.NAME, storage.componentName!!)
-          storeElement.addContent(element)
-
+          val element = states.getElement(fileName) ?: continue
           val file = dir.getOrCreateChild(fileName, this)
           // we don't write xml prolog due to historical reasons (and should not in any case)
-          writeFile(null, this, file, storeElement, getOrDetectLineSeparator(file) ?: LineSeparator.getSystemLineSeparator(), false)
+          val macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
+          writeFile(null, this, file, XmlDataWriter(FileStorageCoreUtil.COMPONENT, listOf(element), mapOf(FileStorageCoreUtil.NAME to storage.componentName!!), macroManager), getOrDetectLineSeparator(file) ?: LineSeparator.getSystemLineSeparator(), false)
         }
         catch (e: IOException) {
           LOG.error(e)
-        }
-        finally {
-          if (element != null) {
-            element.detach()
-          }
         }
       }
     }

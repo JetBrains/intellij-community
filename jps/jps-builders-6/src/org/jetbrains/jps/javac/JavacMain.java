@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -37,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
-  
+
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
@@ -56,6 +42,7 @@ public class JavacMain {
                                 Collection<File> classpath,
                                 Collection<File> platformClasspath,
                                 Collection<File> modulePath,
+                                Collection<File> upgradeModulePath,
                                 Collection<File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
@@ -81,12 +68,13 @@ public class JavacMain {
     );
 
     if (!platformClasspath.isEmpty()) {
-      // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar 
+      // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar
       // and thus usage of symbol file for resolution, when this file is not expected to be used
       fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator());
       fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
       fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     }
+
     final Collection<String> _options = prepareOptions(options, compilingTool);
 
     try {
@@ -124,7 +112,7 @@ public class JavacMain {
           return false;
         }
       }
-      
+
       if (!platformClasspath.isEmpty()) {
         try {
           fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
@@ -136,16 +124,23 @@ public class JavacMain {
         }
       }
 
+      if (!upgradeModulePath.isEmpty()) {
+        try {
+          setModulePath(fileManager, "UPGRADE_MODULE_PATH", upgradeModulePath);
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
+      }
+
       if (!modulePath.isEmpty()) {
-        final JavaFileManager.Location modulePathLocation = StandardLocation.locationFor("MODULE_PATH");
-        if (modulePathLocation != null) { // if this option is supported
-          try {
-            fileManager.setLocation(modulePathLocation, modulePath);
-          }
-          catch (IOException e) {
-            fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-            return false;
-          }
+        try {
+          setModulePath(fileManager, "MODULE_PATH", modulePath);
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
         }
       }
 
@@ -227,6 +222,13 @@ public class JavacMain {
       }
     }
     return false;
+  }
+
+  private static void setModulePath(JavacFileManager fileManager, String option, Collection<File> path) throws IOException {
+    JavaFileManager.Location location = StandardLocation.locationFor(option);
+    if (location != null) { // if this option is supported
+      fileManager.setLocation(location, path);
+    }
   }
 
   // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
@@ -511,7 +513,7 @@ public class JavacMain {
       // both parameters should be non-null if properly initialized
       if (freelistField != null && emptyList != null) {
         // the access to static 'freeList' field is synchronized inside javac, so we must use "synchronized" too
-        synchronized (freelistField.getDeclaringClass()) { 
+        synchronized (freelistField.getDeclaringClass()) {
           freelistField.set(null, emptyList);
         }
       }
@@ -573,6 +575,4 @@ public class JavacMain {
       }
     }
   }
-
-
 }

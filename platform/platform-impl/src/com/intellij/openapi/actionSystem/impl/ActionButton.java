@@ -33,6 +33,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher.requestFocusInNonFocusedWindow;
 import static java.awt.event.KeyEvent.VK_SPACE;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
@@ -330,10 +331,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     super.paintComponent(g);
 
     paintButtonLook(g);
+    paintDownArrowIfGroup(g);
+  }
 
-    if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(6));
-    }
+  private void paintDownArrowIfGroup(Graphics g) {
+    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return;
+    Container parent = getParent();
+    boolean horizontal = !(parent instanceof ActionToolbarImpl) ||
+                         ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
+    int x = horizontal ? JBUI.scale(6) : JBUI.scale(5);
+    int y = horizontal ? JBUI.scale(5) : JBUI.scale(6);
+    AllIcons.General.Dropdown.paintIcon(this, g, x, y);
   }
 
   protected void paintButtonLook(Graphics g) {
@@ -360,6 +368,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected void processMouseEvent(MouseEvent e) {
+    requestFocusInNonFocusedWindow(e);
     super.processMouseEvent(e);
     if (e.isConsumed()) return;
     boolean skipPress = checkSkipPressForEvent(e);

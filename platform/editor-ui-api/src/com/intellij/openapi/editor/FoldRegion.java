@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,14 +12,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface FoldRegion extends RangeMarker {
   FoldRegion[] EMPTY_ARRAY = new FoldRegion[0];
-
-  /**
-   * If {@code Boolean.TRUE} value is set for this key on a collapsed fold region (see {@link #putUserData(Key, Object)}), 
-   * there will not be a visual indication that region contains certain highlighters inside. By default such indication is added.
-   * 
-   * @see com.intellij.openapi.editor.markup.RangeHighlighter#VISIBLE_IF_FOLDED
-   */
-  Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
 
   /**
    * Checks if the fold region is currently expanded.
@@ -50,4 +41,17 @@ public interface FoldRegion extends RangeMarker {
   FoldingGroup getGroup();
 
   boolean shouldNeverExpand();
+
+  /**
+   * If inner highlighters are muted for a collapsed fold region, there will not be a visual indication
+   * that region contains certain highlighters inside. By default such indication is added.
+   * <p>
+   * See also {@code isVisibleIfFolded()} method in {@code com.intellij.openapi.editor.ex.RangeHighlighterEx} class.
+   */
+  default void setInnerHighlightersMuted(boolean value) {}
+
+  /**
+   * @see #setInnerHighlightersMuted(boolean)
+   */
+  default boolean areInnerHighlightersMuted() { return false; }
 }

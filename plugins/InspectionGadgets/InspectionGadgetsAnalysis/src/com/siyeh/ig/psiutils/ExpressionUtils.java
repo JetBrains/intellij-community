@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2017 Bas Leijdekkers
+ * Copyright 2005-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -477,31 +477,35 @@ public class ExpressionUtils {
     return false;
   }
 
+  /**
+   * Returns true if given expression is an operand of String concatenation.
+   * Also works if expression parent is {@link PsiParenthesizedExpression}.
+   *
+   * @param expression expression to check
+   * @return true if given expression is an operand of String concatenation
+   */
   public static boolean isStringConcatenationOperand(PsiExpression expression) {
-    final PsiElement parent = expression.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (!(parent instanceof PsiPolyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression =
-      (PsiPolyadicExpression)parent;
-    if (!JavaTokenType.PLUS.equals(
-      polyadicExpression.getOperationTokenType())) {
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    if (!JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())) {
       return false;
     }
     final PsiExpression[] operands = polyadicExpression.getOperands();
     if (operands.length < 2) {
       return false;
     }
-    final int index = ArrayUtil.indexOf(operands, expression);
-    for (int i = 0; i < index; i++) {
-      final PsiType type = operands[i].getType();
+    for (int i = 0; i < operands.length; i++) {
+      final PsiExpression operand = operands[i];
+      if (PsiUtil.skipParenthesizedExprDown(operand) == expression) {
+        return i == 0 && TypeUtils.isJavaLangString(operands[1].getType());
+      }
+      final PsiType type = operand.getType();
       if (TypeUtils.isJavaLangString(type)) {
         return true;
       }
-    }
-    if (index == 0) {
-      final PsiType type = operands[index + 1].getType();
-      return TypeUtils.isJavaLangString(type);
     }
     return false;
   }
@@ -1278,12 +1282,19 @@ public class ExpressionUtils {
     return null;
   }
 
+  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
+                                                        PsiExpression replacement) {
+    return replacePolyadicWithParent(expressionToReplace, replacement, new CommentTracker());
+  }
+
   /**
    * Flattens second+ polyadic's operand replaced with another polyadic expression of the same type to the parent's operands.
    * 
    * Otherwise reparse would produce different expression.
    */
-  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace, PsiExpression replacement) {
+  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
+                                                        PsiExpression replacement, 
+                                                        CommentTracker tracker) {
     PsiElement parent = expressionToReplace.getParent();
     if (parent instanceof PsiPolyadicExpression && 
         replacement instanceof PsiPolyadicExpression &&
@@ -1291,10 +1302,16 @@ public class ExpressionUtils {
       int idx = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), expressionToReplace);
       if (idx >= 0) {
         PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
-        new CommentTracker().replaceAndRestoreComments(copyParentPolyadic.getOperands()[idx], replacement);
+        copyParentPolyadic.getOperands()[idx].replace(replacement);
         PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
                                                           .createExpressionFromText(copyParentPolyadic.getText(), parent);
-        return ((PsiPolyadicExpression)parent.replace(recreateCopyFromText)).getOperands()[idx];
+        PsiElement[] children = parent.getChildren();
+        for (PsiElement child : children) {
+          if (child != expressionToReplace) {
+            tracker.markUnchanged(child);
+          }
+        }
+        return ((PsiPolyadicExpression)tracker.replaceAndRestoreComments(parent, recreateCopyFromText)).getOperands()[idx];
       }
     }
     return null;

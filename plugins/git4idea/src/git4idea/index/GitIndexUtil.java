@@ -68,14 +68,14 @@ public class GitIndexUtil {
     h.endOptions();
     h.addRelativePaths(filePaths);
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
         ContainerUtil.addIfNotNull(result, parseListFilesStagedRecord(root, line));
       }
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
 
     return result;
   }
@@ -101,14 +101,14 @@ public class GitIndexUtil {
     h.endOptions();
     h.addRelativePaths(filePath);
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
         ContainerUtil.addIfNotNull(result, parseListTreeRecord(root, line));
       }
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
 
     return result;
   }
@@ -205,7 +205,7 @@ public class GitIndexUtil {
       h.addParameters("--cacheinfo", mode, blobHash.asString(), path);
     }
     h.endOptions();
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
   }
 
   @NotNull

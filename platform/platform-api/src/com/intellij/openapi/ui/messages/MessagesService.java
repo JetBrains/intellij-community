@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +27,7 @@ public interface MessagesService {
                         @Nullable Component parentComponent,
                         String message,
                         String title,
-                        String[] options,
+                        @NotNull String[] options,
                         int defaultOptionIndex,
                         int focusedOptionIndex,
                         Icon icon,

@@ -58,6 +58,7 @@ public interface NSTLibrary extends Library {
   int BUTTON_FLAG_SELECTED  = 1 << 1;
   int BUTTON_FLAG_COLORED   = 1 << 2;
   int BUTTON_FLAG_TOGGLE    = 1 << 3;
+  int BUTTON_FLAG_TRANSPARENT_BG = 1 << 4;
 
   int LAYOUT_WIDTH_MASK       = 0x0FFF;
   int LAYOUT_FLAG_MIN_WIDTH   = 1 << 15;

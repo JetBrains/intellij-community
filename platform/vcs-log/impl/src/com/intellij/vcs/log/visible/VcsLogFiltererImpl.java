@@ -18,12 +18,14 @@ package com.intellij.vcs.log.visible;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -109,11 +111,12 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     if (detailsFilters.isEmpty()) return new FilterByDetailsResult(null, false, commitCount);
 
     Set<Integer> filteredWidthIndex = null;
-    if (myIndex.canFilter(detailsFilters)) {
+    IndexDataGetter dataGetter = myIndex.getDataGetter();
+    if (dataGetter != null && dataGetter.canFilter(detailsFilters)) {
       Collection<VirtualFile> notIndexedRoots = ContainerUtil.filter(visibleRoots, root -> !myIndex.isIndexed(root));
 
       if (notIndexedRoots.size() < visibleRoots.size()) {
-        filteredWidthIndex = myIndex.filter(detailsFilters);
+        filteredWidthIndex = dataGetter.filter(detailsFilters);
         if (notIndexedRoots.isEmpty()) return new FilterByDetailsResult(filteredWidthIndex, false, commitCount);
         matchingHeads = getMatchingHeads(dataPack.getRefsModel(), notIndexedRoots, filters);
       }
@@ -312,12 +315,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         continue;
       }
 
-      VcsLogFilterCollection rootSpecificCollection = filterCollection;
-      if (rootSpecificCollection.get(VcsLogFilterCollection.ROOT_FILTER) != null) {
-        rootSpecificCollection = new VcsLogFilterCollectionBuilder(filterCollection)
-          .with(new VcsLogStructureFilterImpl(ContainerUtil.newHashSet(VcsLogUtil.getFilteredFilesForRoot(root, filterCollection))))
-          .build();
-      }
+      Set<FilePath> filesForRoot = VcsLogUtil.getFilteredFilesForRoot(root, filterCollection);
+      VcsLogStructureFilterImpl structureFilter = filesForRoot.isEmpty() ? null : new VcsLogStructureFilterImpl(filesForRoot);
+      VcsLogFilterCollection rootSpecificCollection = new VcsLogFilterCollectionBuilder(filterCollection).with(structureFilter).build();
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
       commits.addAll(ContainerUtil.map(matchingCommits, commit -> new CommitId(commit.getId(), root)));

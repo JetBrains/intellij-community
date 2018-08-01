@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.JButtonFixture
 import org.fest.swing.timing.Pause
 import javax.swing.JButton
@@ -49,16 +50,30 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    * Trying to click on Edit Configurations attempt times.
    */
   fun editConfigurations(attempts: Int = 5) {
-    for (i in 0 until attempts) {
-      showPopup()
-      Pause.pause(1000)
-      if (getEditConfigurationsState()) {
-        break
+    try {
+      JButtonFixture(myRobot, addConfigurationButton()).click()
+    }catch(e: ComponentLookupException) {
+      for (i in 0 until attempts) {
+        showPopup()
+        Pause.pause(1000)
+        if (getEditConfigurationsState()) {
+          break
+        }
+        //Close popup
+        showPopup()
       }
-      //Close popup
-      showPopup()
+      JBListPopupFixture.clickPopupMenuItem(EDIT_CONFIGURATIONS, false, null, myRobot, GuiTestUtil.THIRTY_SEC_TIMEOUT)
     }
-    JBListPopupFixture.clickPopupMenuItem(EDIT_CONFIGURATIONS, false, null, myRobot, GuiTestUtil.THIRTY_SEC_TIMEOUT)
+
+
+  }
+
+  /**
+   * Click on Add Configuration button.
+   * Available if no configurations are available in the RC list
+   */
+  fun addConfiguration() {
+    JButtonFixture(myRobot, addConfigurationButton()).click()
   }
 
   inner class RunActionFixture {
@@ -84,11 +99,22 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
     JButtonFixture(myRobot, getRunConfigurationListButton()).click()
   }
 
+  private fun addConfigurationButton(): JButton {
+    return myRobot.finder()
+      .find(myIde.target()) {
+        it is JButton
+        && it.text == "Add Configuration..."
+        && it.isShowing
+      } as JButton
+  }
+
   private fun getRunConfigurationListButton(): JButton {
     return myRobot.finder()
       .find(myIde.target()) {
         it is JButton
-        && it.parent.parent is ActionToolbarImpl && it.text != ""
+        && it.parent.parent is ActionToolbarImpl
+        && it.text != ""
+        && it.isShowing
       } as JButton
   }
 

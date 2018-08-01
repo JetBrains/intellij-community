@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.intellij.openapi.Disposable;
@@ -51,6 +37,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,18 +49,12 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-@State(
-  name = "HttpConfigurable",
-  storages = {
-    @Storage("proxy.settings.xml"),
-    // we use two storages due to backward compatibility, see http://crucible.labs.intellij.net/cru/CR-IC-5142
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
@@ -145,7 +126,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public void initComponent() {
-
     final HttpConfigurable currentState = getState();
     if (currentState != null) {
       final Element serialized = XmlSerializer.serializeIfNotDefault(currentState, new SkipDefaultsSerializationFilter());
@@ -169,7 +149,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         }
       }
     }
-
 
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
@@ -477,7 +456,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean isHttpProxyEnabledForUrl(@Nullable String url) {
     if (!USE_HTTP_PROXY) return false;
     URI uri = url != null ? VfsUtil.toUri(url) : null;
-    return uri == null || !mySelector.isProxyException(uri.getHost());
+    return uri == null || !isProxyException(uri.getHost());
   }
 
   /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
@@ -491,6 +470,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @NotNull
   public List<Pair<String, String>> getJvmProperties(boolean withAutodetection, @Nullable URI uri) {
     if (!USE_HTTP_PROXY && !USE_PROXY_PAC) {
+      return Collections.emptyList();
+    }
+
+    if (uri != null && isProxyException(uri)) {
       return Collections.emptyList();
     }
 
@@ -516,7 +499,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         }
       }
     }
-    else if (USE_PROXY_PAC && withAutodetection && uri != null) {
+    else if (withAutodetection && uri != null) {
       List<Proxy> proxies = CommonProxy.getInstance().select(uri);
       // we will just take the first returned proxy, but we have an option to test connection through each of them,
       // for instance, by calling prepareUrl()
@@ -542,6 +525,28 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       }
     }
     return result;
+  }
+
+  public boolean isProxyException(URI uri) {
+    String uriHost = uri.getHost();
+    return isProxyException(uriHost);
+  }
+
+  @Contract("null -> false")
+  public boolean isProxyException(@Nullable String uriHost) {
+    if (StringUtil.isEmptyOrSpaces(uriHost) || StringUtil.isEmptyOrSpaces(PROXY_EXCEPTIONS)) {
+      return false;
+    }
+
+    List<String> hosts = StringUtil.split(PROXY_EXCEPTIONS, ",");
+    for (String hostPattern : hosts) {
+      String regexpPattern = StringUtil.escapeToRegexp(hostPattern.trim()).replace("\\*", ".*");
+      if (Pattern.compile(regexpPattern).matcher(uriHost).matches()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static boolean isRealProxy(@NotNull Proxy proxy) {

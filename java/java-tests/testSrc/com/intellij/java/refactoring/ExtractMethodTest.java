@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -921,6 +922,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testParametrizedDuplicateKeepSignature() throws Exception {
+    doExactDuplicatesTest();
+  }
+
+  public void testRejectParametrizedDuplicate() throws Exception {
+    doExactDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");
@@ -1282,6 +1291,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testDuplicatePreserveComments() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDuplicateSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDuplicateSubexpressionWithParentheses() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testBeforeCommentAfterSelectedFragment() throws Exception {
     doTest();
   }
@@ -1354,7 +1375,16 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(boolean duplicates) throws Exception {
+    doTest(duplicates, null);
+  }
+
+  private void doExactDuplicatesTest() throws Exception {
+    doTest(true, () -> getFile().putUserData(ExtractMethodProcessor.SIGNATURE_CHANGE_ALLOWED, Boolean.FALSE));
+  }
+
+  private void doTest(boolean duplicates, @Nullable Runnable prepare) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
+    if (prepare != null) prepare.run();
     boolean success = performAction(true, duplicates);
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");

@@ -63,8 +63,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
@@ -340,7 +340,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   /**
    * Invokes an action by menu path
    *
-   * @param path the series of menu names, e.g. {@link invokeActionByMenuPath("Build", "Make Project")}
+   * @param path the series of menu names, e.g. {@code invokeActionByMenuPath("Build", "Make Project")}
    */
   public void invokeMenuPath(@NotNull String... path) {
     getMenuFixture().invokeMenuPath(path);
@@ -349,7 +349,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   /**
    * Returns a JMenuItem for a corresponding path
    *
-   * @param path the series of menu names, e.g. {@link invokeActionByMenuPath("Build", "Make Project")}
+   * @param path the series of menu names, e.g. {@code invokeActionByMenuPath("Build", "Make Project")}
    */
   public MenuFixture.MenuItemFixture getMenuPath(@NotNull String... path) {
     return getMenuFixture().getMenuItemFixture(path);
@@ -358,7 +358,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   /**
    * Invokes an action from main menu
    *
-   * @param mainMenuAction is the typical AnAction with ActionPlaces.MAIN_MENU
+   * @param mainMenuActionId is the typical AnAction with ActionPlaces.MAIN_MENU
    */
   public void invokeMainMenu(@NotNull String mainMenuActionId) {
     ActionManager actionManager = ActionManager.getInstance();
@@ -377,7 +377,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    * useful when the menu items can change dynamically, such as the labels of Undo actions, Run actions,
    * etc.
    *
-   * @param path the series of menu name regular expressions, e.g. {@link invokeActionByMenuPath("Build", "Make( Project)?")}
+   * @param path the series of menu name regular expressions, e.g. {@code invokeActionByMenuPath("Build", "Make( Project)?")}
    */
   public void invokeMenuPathRegex(@NotNull String... path) {
     getMenuFixture().invokeMenuPathRegex(path);
@@ -468,7 +468,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     waitForBackgroundTasksToFinish();
-    findGradleSyncAction().waitUntilEnabledAndShowing();
+    findGradleSyncAction().waitEnabledAndShowing();
     // TODO figure out why in IDEA 15 even though an action is enabled, visible and showing, clicking it (via UI testing infrastructure)
     // does not work consistently
 
@@ -533,7 +533,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   //    }
   //  }, LONG_TIMEOUT);
   //
-  //  findGradleSyncAction().waitUntilEnabledAndShowing();
+  //  findGradleSyncAction().waitEnabledAndShowing();
   //
   //  if (myGradleProjectEventListener.hasSyncError()) {
   //    RuntimeException syncError = myGradleProjectEventListener.getSyncError();

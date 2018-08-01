@@ -141,7 +141,7 @@ public class GitBranchUtil {
     h.setSilent(true);
 
     List<String> tags = new ArrayList<>();
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
@@ -150,17 +150,9 @@ public class GitBranchUtil {
     });
 
     GitCommandResult result = Git.getInstance().runCommandWithoutCollectingOutput(h);
-    result.getOutputOrThrow();
+    result.throwOnError();
 
     return tags;
-  }
-
-  /**
-   * Get tracked branch of the given branch
-   */
-  @Nullable
-  public static String getTrackedBranchName(Project project, VirtualFile root, String branchName) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedBranchKey(branchName));
   }
 
   @NotNull
@@ -348,7 +340,7 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  public static <T extends GitReference> List<T> sortBranchesByName(Collection<T> branches) {
+  public static <T extends GitReference> List<T> sortBranchesByName(@NotNull Collection<T> branches) {
     return branches.stream()
                    .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
                    .collect(Collectors.toList());

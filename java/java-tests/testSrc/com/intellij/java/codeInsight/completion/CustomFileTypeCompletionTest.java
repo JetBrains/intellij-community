@@ -16,15 +16,16 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.completion.LightCompletionTestCase;
+import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.openapi.fileTypes.MockLanguageFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
+public class CustomFileTypeCompletionTest extends LightFixtureCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/customFileType/";
 
   @NotNull
@@ -43,36 +44,31 @@ public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
 
   public void testWordCompletion() {
     configureByFile(BASE_PATH + "WordCompletion.cs");
-    testByCount(2, "while", "whiwhiwhi");
+    myFixture.assertPreferredCompletionItems(0, "while", "whiwhiwhi");
   }
 
   public void testErlang() {
     configureByFile(BASE_PATH + "Erlang.erl");
-    testByCount(2, "case", "catch");
+    myFixture.assertPreferredCompletionItems(0, "case", "catch");
   }
 
   public void testComment() {
     configureByFile(BASE_PATH + "foo.cs");
-    testByCount(0, new String[] { null });
+    assertEmpty(myFixture.getLookupElements());
   }
 
   public void testEmptyFile() {
-    configureFromFileText("a.cs", "<caret>");
+    myFixture.configureByText("a.cs", "<caret>");
     complete();
-    testByCount(1, "abstract", "x");
+    assertTrue(myFixture.getLookupElementStrings().contains("abstract"));
+    assertFalse(myFixture.getLookupElementStrings().contains("x"));
   }
 
   public void testPlainTextSubstitution() {
-    FileTypeManagerEx.getInstanceEx().registerFileType(MockLanguageFileType.INSTANCE, "xxx");
-    try {
-      configureFromFileText("a.xxx", "aaa a<caret>");
-      complete();
-      checkResultByText("aaa aaa<caret>");
-    }
-    finally {
-      FileTypeManagerEx.getInstanceEx().unregisterFileType(MockLanguageFileType.INSTANCE);
-
-    }
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.xxx", MockLanguageFileType.INSTANCE, "aaa a<caret>", 0, true);
+    myFixture.configureFromExistingVirtualFile(file.getViewProvider().getVirtualFile());
+    complete();
+    myFixture.checkResult("aaa aaa<caret>");
   }
 
 }

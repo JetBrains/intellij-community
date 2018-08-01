@@ -282,14 +282,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         TimingLog.LOG.debug("Project descriptor loaded");
         if (fsStateStream != null) {
           try {
-            try {
-              fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
-              applyFSEvent(pd, myInitialFSDelta, false);
-              TimingLog.LOG.debug("FS Delta loaded");
-            }
-            finally {
-              fsStateStream.close();
-            }
+            fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
+            applyFSEvent(pd, myInitialFSDelta, false);
+            TimingLog.LOG.debug("FS Delta loaded");
           }
           catch (Throwable e) {
             LOG.error(e);
@@ -459,8 +454,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-      final DataOutputStream out = new DataOutputStream(bytes);
-      try {
+      try (DataOutputStream out = new DataOutputStream(bytes)) {
         out.writeInt(BuildFSState.VERSION);
         out.writeLong(ordinal);
         out.writeBoolean(false);
@@ -471,9 +465,6 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
           out.write(b);
         }
-      }
-      finally {
-        out.close();
       }
 
       saveOnDisk(bytes, file);
@@ -489,15 +480,11 @@ final class BuildSession implements Runnable, CanceledStatus {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-      final DataOutputStream out = new DataOutputStream(bytes);
-      try {
+      try (DataOutputStream out = new DataOutputStream(bytes)) {
         out.writeInt(BuildFSState.VERSION);
         out.writeLong(myLastEventOrdinal);
         out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
-      }
-      finally {
-        out.close();
       }
 
       saveOnDisk(bytes, file);
@@ -546,16 +533,9 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   @Nullable
   private static DataInputStream createFSDataStream(File dataStorageRoot, final long currentEventOrdinal) {
-    try {
-      final File file = new File(dataStorageRoot, FS_STATE_FILE);
-      byte[] bytes;
-      final InputStream fs = new FileInputStream(file);
-      try {
-        bytes = FileUtil.loadBytes(fs, (int)file.length());
-      }
-      finally {
-        fs.close();
-      }
+    final File file = new File(dataStorageRoot, FS_STATE_FILE);
+    try (InputStream fs = new FileInputStream(file)) {
+      byte[] bytes = FileUtil.loadBytes(fs, (int)file.length());
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       final int version = in.readInt();
       if (version != BuildFSState.VERSION) {
@@ -593,12 +573,8 @@ final class BuildSession implements Runnable, CanceledStatus {
           cause = error;
         }
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        final PrintStream stream = new PrintStream(out);
-        try {
+        try (PrintStream stream = new PrintStream(out)) {
           cause.printStackTrace(stream);
-        }
-        finally {
-          stream.close();
         }
 
         final StringBuilder messageText = new StringBuilder();

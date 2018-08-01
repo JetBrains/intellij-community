@@ -311,6 +311,8 @@
     <group id="ParameterNameHints" popup="true">
       <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
       <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
+      <action id="ShowParameterHintsSettings" class="com.intellij.codeInsight.hints.ShowParameterHintsSettings"/>
+      <separator/>
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
     
@@ -1101,15 +1103,16 @@
     <group id="TouchBar">
       <group id="TouchBarDefault" text="Default">
         <reference ref="RunConfiguration"/>
-        <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
+        <group id="RunnerActionsTouchbar" text="Touchbar Run/Debug Actions"/> <!--filled from ExecutorRegistry-->
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <separator text="type.large"/>
-        <group id="TouchBarDefaultOptionalGroup">
+        <group id="TouchBarDefaultOptionalGroup" text="Optional Actions">
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
         </group>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
+          <reference ref="SelectInProjectView"/>
           <separator text="type.flexible"/>
         </group>
         <group id="TouchBarDefault_cmd" text="Default with Cmd key">
@@ -1143,23 +1146,32 @@
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <reference ref="XDebugger.MuteBreakpoints"/>
-        <separator text="type.large"/>
-        <group id="TouchBarDebug.StepButtons" compact="true">
+        <separator text="type.flexible"/>
+        <group id="TouchBarDebug.StepButtons" compact="true" text="Debugger Step Actions">
           <reference ref="StepOver"/>
           <reference ref="StepInto"/>
           <reference ref="StepOut"/>
         </group>
+        <separator text="type.small"/>
         <group id="TouchBarDebug_alt" text="Debugger with Alt key">
           <reference ref="ViewBreakpoints"/>
           <separator text="type.flexible"/>
-          <group id="TouchBarDebug.ForceStepButtons" compact="true">
+          <group id="TouchBarDebug.ForceStepButtons" compact="true" text="Debugger ForceStep Actions">
+            <reference ref="RunToCursor"/>
             <reference ref="ForceStepOver"/>
             <reference ref="ForceStepInto"/>
             <reference ref="SmartStepInto"/>
-            <reference ref="RunToCursor"/>
           </group>
+          <separator text="type.small"/>
         </group>
       </group>
     </group>
+
+    <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+    <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>

@@ -45,10 +45,7 @@ import java.util.function.Function;
 
 @State(
   name = "InspectionProfileManager",
-  storages = {
-    @Storage("editor.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  },
+  storages = @Storage("editor.xml"),
   additionalExportFile = InspectionProfileManager.INSPECTION_DIR
 )
 public class ApplicationInspectionProfileManager extends BaseInspectionProfileManager implements InspectionProfileManager, PersistentStateComponent<Element> {

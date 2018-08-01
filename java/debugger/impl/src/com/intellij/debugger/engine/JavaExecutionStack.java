@@ -226,7 +226,7 @@ public class JavaExecutionStack extends XExecutionStack {
             return;
           }
           // append agent stack after the next frame
-          relatedStack = StackCapturingLineBreakpoint.getAgentRelatedStack((JavaStackFrame)frame, suspendContext);
+          relatedStack = AsyncStacksUtils.getAgentRelatedStack((JavaStackFrame)frame, suspendContext);
         }
 
         myDebugProcess.getManagerThread().schedule(
@@ -241,7 +241,7 @@ public class JavaExecutionStack extends XExecutionStack {
       int i = 0;
       boolean separator = true;
       for (StackFrameItem stackFrame : asyncStack) {
-        if (i > StackCapturingLineBreakpoint.getMaxStackLength()) {
+        if (i > AsyncStacksUtils.getMaxStackLength()) {
           addFrameIfNeeded(new XStackFrame() {
             @Override
             public void customizePresentation(@NotNull ColoredTextContainer component) {

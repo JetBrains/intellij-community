@@ -81,11 +81,13 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     }
 
     Graph<BuildTarget<?>> graph = GraphGenerator.generate(new InboundSemiGraph<BuildTarget<?>>() {
+      @NotNull
       @Override
       public Collection<BuildTarget<?>> getNodes() {
         return allTargets;
       }
 
+      @NotNull
       @Override
       public Iterator<BuildTarget<?>> getIn(BuildTarget<?> n) {
         Collection<BuildTarget<?>> deps = myDependencies.get(n);

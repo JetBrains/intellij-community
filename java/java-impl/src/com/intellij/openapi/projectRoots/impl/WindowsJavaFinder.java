@@ -38,7 +38,7 @@ class WindowsJavaFinder extends JavaHomeFinder {
     File parentFile = javasFolder.getParentFile();
     File root = parentFile != null ? parentFile.getParentFile() : null;
     String name = parentFile != null ? parentFile.getName() : "";
-    if (name.contains("Program Files") && root != null) {
+    if (root != null && name.contains("Program Files")) {
       String x86Suffix = " (x86)";
       boolean x86 = name.endsWith(x86Suffix) && name.length() > x86Suffix.length();
       File anotherJavasFolder;

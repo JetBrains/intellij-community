@@ -632,7 +632,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
-                String name = qualifierExpression.getText() + StringUtil.capitalize(propertyName);
+                String name = ((PsiReferenceExpression)qualifierExpression).getReferenceName() + StringUtil.capitalize(propertyName);
                 return new NamesByExprInfo(propertyName, name);
               }
               return new NamesByExprInfo(propertyName);

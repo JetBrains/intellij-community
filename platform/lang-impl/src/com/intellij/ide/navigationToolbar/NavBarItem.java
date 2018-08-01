@@ -94,6 +94,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     return myAttributes;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }
@@ -193,11 +194,6 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   @Override
   protected boolean shouldDrawBackground() {
     return isSelected() && isFocusedOrPopupElement();
-  }
-
-  @Override
-  protected boolean shouldDrawMacShadow() {
-    return myUI.isDrawMacShadow(isSelected(), isFocused());
   }
 
   @Override

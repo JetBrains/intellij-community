@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 
@@ -89,9 +87,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withModule("intellij.java.uast", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
 
         withModule("intellij.java.rt", "idea_rt.jar", null)
-        withModule("intellij.tools.jetCheck", "jetCheck.jar")
         withArtifact("debugger-agent", "rt")
-        withArtifact("debugger-agent-storage", "rt")
         withProjectLibrary("Eclipse")
         withProjectLibrary("jgoodies-common")
         withProjectLibrary("commons-net")

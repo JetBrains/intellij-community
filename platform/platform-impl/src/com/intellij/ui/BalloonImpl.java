@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   /**
    * This key is supposed to be used as client property of content component (with value Boolean.TRUE) to suppress shadow painting
@@ -604,7 +606,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   /**
-   * Figure out the component to focus inside the {@link myContent} field.
+   * Figure out the component to focus inside the {@link #myContent} field.
    */
   @NotNull
   private Component getContentToFocus() {
@@ -1698,13 +1700,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       @SuppressWarnings("UndesirableClassUsage")
       BufferedImage image = UIUtil.createImage(g, getWidth(), getHeight(),
                                                BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-      Graphics2D imageGraphics = image.createGraphics();
-      //noinspection UseJBColor
-      imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
-      imageGraphics.fillRect(0, 0, getWidth(), getHeight());
+      useSafely(image.createGraphics(), imageGraphics -> {
+        //noinspection UseJBColor
+        imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
+        imageGraphics.fillRect(0, 0, getWidth(), getHeight());
 
-      super.paintChildren(imageGraphics);
-      imageGraphics.dispose();
+        super.paintChildren(imageGraphics);
+      });
+
       Graphics2D g2d = (Graphics2D)g.create();
       try {
         if (UIUtil.isJreHiDPI(g2d)) {
@@ -1807,10 +1810,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       if (myImage != null) return;
 
       myImage = UIUtil.createImage(myComp, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-      Graphics2D imageGraphics = (Graphics2D)myImage.getGraphics();
-      myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
-      paintChildrenImpl(imageGraphics);
-      imageGraphics.dispose();
+      useSafely(myImage.getGraphics(), imageGraphics -> {
+        myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, imageGraphics, pointTarget);
+        paintChildrenImpl(imageGraphics);
+      });
     }
 
 

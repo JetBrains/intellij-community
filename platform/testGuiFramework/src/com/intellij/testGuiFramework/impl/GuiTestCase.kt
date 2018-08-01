@@ -39,14 +39,12 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.image.ScreenshotTaker
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
-import org.fest.swing.timing.Timeout
 import org.junit.Rule
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -124,6 +122,11 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun pluginDialog(timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
+    val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
+    func(pluginDialog)
+    if (!needToKeepDialog) pluginDialog.waitTillGone()
+  }
 
   /**
    * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
@@ -137,7 +140,7 @@ open class GuiTestCase {
     else {
       val fileChooserDialog: JDialog
       try {
-        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeout.toInt()) {
+        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeout.toInt()) {
           robot().finder()
             .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
             .firstOrNull {
@@ -317,7 +320,7 @@ open class GuiTestCase {
     }
     else {
       try {
-        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds.toInt()) {
+        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeoutInSeconds.toInt()) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
             if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
@@ -332,6 +335,14 @@ open class GuiTestCase {
       }
     }
   }
+
+  /**
+   * Finds JDialog with a specific title (if title is null showing dialog should be only one)
+   */
+  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeoutInSeconds: Long): JDialog =
+    waitUntilFound(null, JDialog::class.java, timeoutInSeconds) {
+      title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
+    }
 
   fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
     try {
@@ -362,13 +373,6 @@ open class GuiTestCase {
     if (!scaleEnabled) return ""
     val uiScaleVal = GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale") ?: return ""
     return "@${uiScaleVal}x"
-  }
-
-
-  fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
-    Pause.pause(object : Condition(condition) {
-      override fun test() = testFunction()
-    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
   }
 
   fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {

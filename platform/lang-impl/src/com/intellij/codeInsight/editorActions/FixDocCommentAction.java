@@ -213,9 +213,8 @@ public class FixDocCommentAction extends EditorAction {
     int start = Math.min(calcStartReformatOffset(pair.first), calcStartReformatOffset(pair.second));
     int end = pair.second.getTextRange().getEndOffset();
 
-    int caretLine = document.getLineNumber(editor.getCaretModel().getOffset());
     reformatCommentKeepingEmptyTags(anchor.getContainingFile(), project, start, end);
-    editor.getCaretModel().moveToOffset(document.getLineEndOffset(caretLine));
+    editor.getCaretModel().moveToOffset(document.getLineEndOffset(document.getLineNumber(editor.getCaretModel().getOffset())));
 
     int caretOffset = caretModel.getOffset();
     if (caretOffset > 0 && caretOffset <= document.getTextLength()) {

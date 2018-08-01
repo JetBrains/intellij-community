@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -30,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -83,6 +85,11 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
   @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    fileChanged(file);
+  }
+
+  @Override
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     fileChanged(file);
   }
 
@@ -160,7 +167,30 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return myComponent;
   }
 
+  protected boolean isEmpty() {
+    return StringUtil.isEmpty(myComponent.getText()) && !myComponent.hasIcon();
+  }
+
+  @TestOnly
+  public void updateInTests(boolean immediately) {
+    update();
+    update.flush();
+    if (immediately) {
+      // for widgets with background activities, the first flush() adds handlers to be called
+      update.flush();
+    }
+  }
+
+  @TestOnly
+  public void flushUpdateInTests() {
+    update.flush();
+  }
+
   public void update() {
+    update(null);
+  }
+
+  public void update(@Nullable Runnable finishUpdate) {
     if (update.isDisposed()) return;
 
     update.cancelAllRequests();
@@ -210,8 +240,15 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       if (myStatusBar != null) {
         myStatusBar.updateWidget(ID());
       }
+
+      if (finishUpdate != null) {
+        finishUpdate.run();
+      }
+      afterVisibleUpdate(state);
     }, 200, ModalityState.any());
   }
+
+  protected void afterVisibleUpdate(@NotNull WidgetState state) {}
 
   protected static class WidgetState {
     /**

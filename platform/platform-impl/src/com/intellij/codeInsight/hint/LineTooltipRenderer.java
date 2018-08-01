@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
@@ -46,8 +47,6 @@ import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-
 /**
  * @author cdr
  */
@@ -56,10 +55,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   @NonNls @Nullable protected String myText;
 
   //is used for suppressing some events while processing links  
-  private volatile boolean myActiveLink = false;
+  private volatile boolean myActiveLink;
   //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
 
+  @FunctionalInterface
   protected interface TooltipReloader {
     void reload(boolean toExpand);
   }
@@ -75,12 +75,14 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  protected JPanel createMainPanel(@NotNull final HintHint hintHint,
-                                   @NotNull JComponent pane) {
+  private JPanel createMainPanel(@NotNull final HintHint hintHint, @NotNull JComponent pane) {
     JPanel grid = new JPanel(new GridBagLayout());
     GridBag bag = new GridBag()
       .anchor(GridBagConstraints.CENTER)
-      .fillCellHorizontally();
+      //weight is required for correct working scrollpane inside gridbaglayout
+      .weightx(1.0)
+      .weighty(1.0)
+      .fillCell();
 
     pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
     grid.add(pane, bag);
@@ -129,7 +131,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     scrollPane.setBackground(hintHint.getTextBackground());
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
-
     scrollPane.setViewportBorder(null);
 
     if (hintHint.isRequestFocus()) {
@@ -160,19 +161,19 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     };
 
 
-    TooltipReloader reloader = (toExpand) -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand);
+    TooltipReloader reloader = toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand);
 
     actions.add(new AnAction() {
       // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
       {
-        registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION), contentComponent);
+        registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION), contentComponent);
       }
 
       @Override
       public void actionPerformed(final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
-        hintHint.setRequestFocus(ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent));
-        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut", this.getClass());
+        hintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
+        ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut", getClass());
         reloader.reload(!expanded);
       }
     });
@@ -200,7 +201,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return;
           }
 
-          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink", this.getClass());
+          ActionsCollector.getInstance().record("tooltip.actions.show.description.morelink", getClass());
 
           reloader.reload(!expanded);
         }

@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
@@ -181,7 +180,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
     int visualY = myEditor.getLineHeight() * visualLine;
-    boolean isVisible = area.contains(area.x, visualY) && myWheelAccumulator == 0;
+    boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
     if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
       final Set<RangeHighlighter> highlighters = new THashSet<>();
@@ -490,11 +489,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected boolean isMacScrollbarHiddenAndXcodeLikeScrollbar() {
-      return super.isMacScrollbarHiddenAndXcodeLikeScrollbar() && EditorUtil.isRealFileEditor(myEditor);
-    }
-
-    @Override
     public boolean alwaysShowTrack() {
       if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !transparent();
       return super.alwaysShowTrack();
@@ -581,8 +575,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected boolean alwaysPaintThumb() {
-      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !(xcodeLikeScrollbar() && EditorUtil.isRealFileEditor(myEditor));
-      return super.alwaysPaintThumb();
+      return true;
     }
 
     @Override
@@ -613,10 +606,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void doPaintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle bounds) {
-      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) {
-        paintTrackBasement(g, bounds);
-        return;
-      }
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
 
@@ -840,7 +829,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
-      if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
       EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
       int buttonHeight = scrollBar.getDecScrollButtonHeight();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();

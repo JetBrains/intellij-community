@@ -124,22 +124,22 @@ public class ReplaceInProjectManager {
   public void replaceInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
     final FindManager findManager = FindManager.getInstance(myProject);
     final FindModel findModel;
+
+    final boolean isOpenInNewTabEnabled;
+    final boolean toOpenInNewTab;
+    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    if (selectedContent != null && selectedContent.isPinned()) {
+      toOpenInNewTab = true;
+      isOpenInNewTabEnabled = false;
+    }
+    else {
+      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
+      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+    }
     if (model == null) {
-      final boolean isOpenInNewTabEnabled;
-      final boolean toOpenInNewTab;
-      final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
-      if (selectedContent != null && selectedContent.isPinned()) {
-        toOpenInNewTab = true;
-        isOpenInNewTabEnabled = false;
-      }
-      else {
-        toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-        isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
-      }
 
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(true);
-      findModel.setOpenInNewTabVisible(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
       FindInProjectUtil.setDirectoryName(findModel, dataContext);
@@ -147,6 +147,7 @@ public class ReplaceInProjectManager {
     }
     else {
       findModel = model;
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     }
 
     findManager.showFindDialog(findModel, () -> {

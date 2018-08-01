@@ -137,11 +137,11 @@ public class UpdatedFilesReverseSide {
 
   public static Set<String> getPathsFromUpdatedFiles(final UpdatedFiles from) {
     UpdatedFilesReverseSide helper = new UpdatedFilesReverseSide(UpdatedFiles.create());
-    helper.accomulateFiles(from, DuplicateLevel.DUPLICATE_ERRORS);
+    helper.accumulateFiles(from, DuplicateLevel.DUPLICATE_ERRORS);
     return helper.myFileIdx.keySet();
   }
 
-  public void accomulateFiles(final UpdatedFiles from, final DuplicateLevel duplicateLevel) {
+  public void accumulateFiles(final UpdatedFiles from, final DuplicateLevel duplicateLevel) {
     final Parent topLevel = new TopLevelParent();
     for (FileGroup fromGroup : from.getTopLevelGroups()) {
       copyGroup(topLevel, fromGroup, duplicateLevel);

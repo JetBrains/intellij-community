@@ -13,6 +13,8 @@ import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -51,7 +53,9 @@ public class StackFrameItem {
   public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
     @Override
     public void onClick(MouseEvent event) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(null, CaptureConfigurable.class);
+      ShowSettingsUtil.getInstance().showSettingsDialog(
+        CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(event.getComponent())),
+        CaptureConfigurable.class);
       event.consume();
     }
   };

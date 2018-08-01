@@ -5,7 +5,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import git4idea.commands.Git;
 import git4idea.test.TestDialogHandler;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 
 import java.io.IOException;
@@ -109,10 +109,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
   }
 
   protected void checkGithubExists() throws IOException {
-    GithubRepoDetailed githubInfo = myApiTaskExecutor.execute(myAccount, c -> {
-      String username = GithubApiUtil.getCurrentUser(c).getLogin();
-      return GithubApiUtil.getDetailedRepoInfo(c, username, PROJECT_NAME);
-    });
+    GithubRepoDetailed githubInfo = myExecutor.execute(GithubApiRequests.Repos.get(myAccount.getServer(), myUsername, PROJECT_NAME));
     assertNotNull("GitHub repository does not exist", githubInfo);
   }
 }

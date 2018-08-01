@@ -60,7 +60,7 @@ public class ManifestCompletionContributor extends CompletionContributor {
 
   private static final InsertHandler<LookupElement> HEADER_INSERT_HANDLER = new InsertHandler<LookupElement>() {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       context.setAddCompletionChar(false);
       EditorModificationUtil.insertStringAtCaret(context.getEditor(), ": ");
       context.commitDocument();

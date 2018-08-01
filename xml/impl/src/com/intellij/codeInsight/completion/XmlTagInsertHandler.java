@@ -21,10 +21,12 @@ import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -53,19 +55,21 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   @Override
-  public void handleInsert(InsertionContext context, LookupElement item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Project project = context.getProject();
     Editor editor = context.getEditor();
+    Document document = InjectedLanguageUtil.getTopLevelEditor(editor).getDocument();
+    Ref<PsiElement> currentElementRef = Ref.create();
     // Need to insert " " to prevent creating tags like <tagThis is my text
-    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(XmlTagNameSynchronizer.SKIP_COMMAND, Boolean.TRUE);
-    final int offset = editor.getCaretModel().getOffset();
-    editor.getDocument().insertString(offset, " ");
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    PsiElement current = context.getFile().findElementAt(context.getStartOffset());
-    editor.getDocument().deleteString(offset, offset + 1);
-    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(XmlTagNameSynchronizer.SKIP_COMMAND, null);
+    XmlTagNameSynchronizer.runWithoutCancellingSyncTagsEditing(document, () -> {
+      final int offset = editor.getCaretModel().getOffset();
+      editor.getDocument().insertString(offset, " ");
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      currentElementRef.set(context.getFile().findElementAt(context.getStartOffset()));
+      editor.getDocument().deleteString(offset, offset + 1);
+    });
 
-    final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
+    final XmlTag tag = PsiTreeUtil.getContextOfType(currentElementRef.get(), XmlTag.class, true);
 
     if (tag == null) return;
 

@@ -400,16 +400,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
           try {
             Object finalConfig = config;
             WriteAction.run(() -> {
-              OutputStream outputStream = targetFile.getOutputStream(this);
-              try {
+              try (OutputStream outputStream = targetFile.getOutputStream(this)) {
                 if (exporter instanceof ConfigurableSchemeExporter) {
                   //noinspection unchecked
                   ((ConfigurableSchemeExporter)exporter).exportScheme(scheme, outputStream, finalConfig);
                 }
                 exporter.exportScheme(scheme, outputStream);
-              }
-              finally {
-                outputStream.close();
               }
             });
             message = ApplicationBundle

@@ -187,7 +187,11 @@ public class FindSuperElementsHelper {
 
     private boolean isOverridden(@NotNull PsiClass inheritor, @NotNull PsiMethod method, @NotNull PsiMethod superMethod, @NotNull PsiClass superInterface) {
       // calculate substitutor of containingClass --> inheritor
-      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myContainingClass, inheritor, PsiSubstitutor.EMPTY);
+      PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(myContainingClass, inheritor, PsiSubstitutor.EMPTY);
+      if (substitutor == null) {
+        return false; // queer EJB hierarchy
+      }
+
       // calculate substitutor of inheritor --> superInterface
       PsiSubstitutor superInterfaceSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superInterface, inheritor, substitutor);
 

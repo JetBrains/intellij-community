@@ -5,14 +5,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.SvnTestCase;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.InfoReliability;
@@ -40,14 +36,13 @@ import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.api.Revision.WORKING;
+import static org.junit.Assert.*;
 
-public class SvnQuickMergeTest extends Svn17TestCase {
-  private SvnVcs myVcs;
+public class SvnQuickMergeTest extends SvnTestCase {
   private String myBranchUrl;
   private File myBranchRoot;
   private VirtualFile myBranchVf;
   private SubTree myBranchTree;
-  private ChangeListManager myChangeListManager;
   private SvnTestCase.SubTree myTree;
 
   @Override
@@ -55,15 +50,13 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myVcs = SvnVcs.getInstance(myProject);
-    myChangeListManager = ChangeListManager.getInstance(myProject);
     myBranchUrl = prepareBranchesStructure();
     myBranchRoot = new File(myTempDirFixture.getTempDirPath(), "b1");
 
     runInAndVerifyIgnoreOutput("co", myBranchUrl, myBranchRoot.getPath());
-    Assert.assertTrue(myBranchRoot.exists());
+    assertTrue(myBranchRoot.exists());
     myBranchVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBranchRoot);
-    Assert.assertNotNull(myBranchVf);
+    assertNotNull(myBranchVf);
 
     myBranchTree = new SubTree(myBranchVf);
     myTree = new SubTree(myWorkingCopyDir);
@@ -78,7 +71,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     //((ApplicationImpl) ApplicationManager.getApplication()).setRunPooledInTest(true);
 
     runInAndVerifyIgnoreOutput(virtualToIoFile(myWorkingCopyDir), "up");
-    Thread.sleep(10);
   }
 
   @Test
@@ -88,17 +80,16 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     waitQuickMerge(myBranchUrl, new QuickMergeTestInteraction(true, null));
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
   }
 
   // if we create branches like this:
@@ -117,8 +108,8 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
   @Test
   public void testSelectRevisionsWithQuickSelectCheckForLocalChanges() throws Exception {
-    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info);
+    Info info = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
     final int totalChanges = 3;
@@ -128,7 +119,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     AtomicReference<String> selectionError = new AtomicReference<>();
@@ -146,30 +136,29 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       throw new RuntimeException(selectionError.get());
     }
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
-    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    PropertyValue value = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
-    Assert.assertEquals("/branches/b1:" + (numberBefore + 1), value.toString());
+    assertEquals("/branches/b1:" + (numberBefore + 1), value.toString());
   }
 
   // this test is mainly to check revisions selection. at the moment we are not sure whether we support
   // trunk->b1->b2 merges between trunk and b2
   @Test
   public void testSelectRevisionsWithQuickSelect() throws Exception {
-    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info);
+    Info info = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
     final int totalChanges = 3;
@@ -179,12 +168,11 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     // before copy
-    Info info2 = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info2);
+    Info info2 = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    assertNotNull(info2);
     final long numberBeforeCopy = info2.getRevision().getNumber();
 
     runInAndVerifyIgnoreOutput("copy", "-q", "-m", "copy1", myBranchUrl, myRepoUrl + "/branches/b2");
@@ -212,28 +200,27 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       throw new RuntimeException(selectionError.get());
     }
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS2File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    final Change fileChange = changeListManager.getChange(myTree.myS2File);
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
-    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    PropertyValue value = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
-    Assert.assertEquals("/branches/b2:" + (numberBeforeCopy + 2), value.toString());
+    assertEquals("/branches/b2:" + (numberBeforeCopy + 2), value.toString());
   }
 
   @Test
   public void testSelectRevisions() throws Exception {
-    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info);
+    Info info = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
     final int totalChanges = 10;
@@ -243,7 +230,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists ->
@@ -252,35 +238,34 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     waitQuickMerge(myBranchUrl, testInteraction);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
-    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    PropertyValue value = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
-    Assert.assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), value.toString());
+    assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), value.toString());
   }
 
   private WCInfo getWcInfo() {
     WCInfo found = null;
     final File workingIoFile = virtualToIoFile(myWorkingCopyDir);
-    final List<WCInfo> infos = myVcs.getAllWcInfos();
+    final List<WCInfo> infos = vcs.getAllWcInfos();
     for (WCInfo info : infos) {
       if (FileUtil.filesEqual(workingIoFile, new File(info.getPath()))) {
         found = info;
         break;
       }
     }
-    Assert.assertNotNull(found);
+    assertNotNull(found);
     return found;
   }
 
@@ -300,21 +285,20 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     waitQuickMerge(trunkUrl, new QuickMergeTestInteraction(false, null));
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
   }
 
   private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {
-    MergeContext mergeContext = new MergeContext(myVcs, parseUrl(sourceUrl, false), getWcInfo(), Url.tail(sourceUrl), myWorkingCopyDir);
+    MergeContext mergeContext = new MergeContext(vcs, parseUrl(sourceUrl, false), getWcInfo(), Url.tail(sourceUrl), myWorkingCopyDir);
     QuickMerge quickMerge = new QuickMerge(mergeContext, interaction);
 
     getApplication().invokeAndWait(quickMerge::execute);

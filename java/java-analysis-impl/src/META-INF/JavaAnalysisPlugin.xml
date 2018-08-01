@@ -208,7 +208,7 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.InspectionsBundle" key="unused.import.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" cleanupTool="true" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="SameReturnValue" bundle="messages.InspectionsBundle" key="inspection.same.return.value.display.name"
@@ -255,5 +255,10 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ObjectsEqualsCanBeSimplified"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="INFORMATION"
+                     key="inspection.objects.equals.can.be.simplified.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.style.ObjectsEqualsCanBeSimplifiedInspection"/>
   </extensions>
 </idea-plugin>

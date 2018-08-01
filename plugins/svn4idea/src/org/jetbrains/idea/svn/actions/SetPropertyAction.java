@@ -74,7 +74,7 @@ public class SetPropertyAction extends BasicAction {
       }
       for (VirtualFile file : files) {
         if (recursive && file.isDirectory()) {
-          VcsDirtyScopeManager.getInstance(vcs.getProject()).dirDirtyRecursively(file, true);
+          VcsDirtyScopeManager.getInstance(vcs.getProject()).dirDirtyRecursively(file);
         }
         else {
           VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file);

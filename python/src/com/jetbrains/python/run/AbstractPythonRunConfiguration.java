@@ -387,7 +387,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   /**
-   * Gets called after {@link #patchCommandLineForVirtualenv(com.intellij.openapi.projectRoots.SdkType, com.intellij.openapi.projectRoots.SdkType)}
+   * Gets called after {@link #patchCommandLineForVirtualenv(GeneralCommandLine, String)}
    * Does nothing here, real implementations should use alter running script name or use engulfer.
    *
    * @param commandLine

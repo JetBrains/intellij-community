@@ -35,7 +35,15 @@ import java.util.*;
  * @author egor
  */
 public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
-  private static final List<XLocalAttachDebugger> ourAttachDebuggers = Collections.singletonList(new XLocalAttachDebugger() {
+  private static class JavaLocalAttachDebugger implements XLocalAttachDebugger {
+    private final Project myProject;
+    private final LocalAttachInfo myInfo;
+
+    public JavaLocalAttachDebugger(@NotNull Project project, @NotNull LocalAttachInfo info) {
+      myProject = project;
+      myInfo = info;
+    }
+
     @NotNull
     @Override
     public String getDebuggerDisplayName() {
@@ -44,9 +52,6 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @Override
     public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) {
-      LocalAttachInfo info = getAttachInfo(processInfo, null);
-      assert info != null;
-
       // TODO: first need to remove circular dependency with intellij.java.execution.impl
       //RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
       //  .createRunConfiguration(StringUtil.notNullize(address.first) + ":" + address.second,
@@ -58,22 +63,22 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       //configuration.USE_SOCKET_TRANSPORT = true;
       //configuration.SERVER_MODE = false;
 
-      RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project).createRunConfiguration(
-        "localhost:" + info.myAddress,
+      RunnerAndConfigurationSettings runSettings = RunManager.getInstance(myProject).createRunConfiguration(
+        "localhost:" + myInfo.myAddress,
         Objects.requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
 
       RunConfiguration remoteConfiguration = runSettings.getConfiguration();
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST",
                               DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK);
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class,
-                              info.myUseSocket ? "PORT" : "SHMEM_ADDRESS", info.myAddress);
+                              myInfo.myUseSocket ? "PORT" : "SHMEM_ADDRESS", myInfo.myAddress);
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "USE_SOCKET_TRANSPORT",
-                              info.myUseSocket);
+                              myInfo.myUseSocket);
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "SERVER_MODE", false);
 
       ProgramRunnerUtil.executeConfiguration(runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
     }
-  });
+  }
 
   private static final Key<Map<String, LocalAttachInfo>> ADDRESS_MAP_KEY = Key.create("ADDRESS_MAP");
 
@@ -135,7 +140,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       });
     }
 
-    return getAttachInfo(processInfo, addressMap) != null ? ourAttachDebuggers : Collections.emptyList();
+    LocalAttachInfo info = getAttachInfo(processInfo, addressMap);
+    return info != null ? Collections.singletonList(new JavaLocalAttachDebugger(project, info)) : Collections.emptyList();
   }
 
   @Nullable

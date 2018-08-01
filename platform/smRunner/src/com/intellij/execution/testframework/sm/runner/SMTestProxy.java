@@ -18,18 +18,20 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents a test result tree node.
@@ -69,6 +71,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myConfig = false;
   //false:: printables appear as soon as they are discovered in the output; true :: predefined test structure
   private boolean myTreeBuildBeforeStart = false;
+  private CachedValue<Map<GlobalSearchScope, Ref<Location>>> myLocationMapCachedValue;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
@@ -92,6 +95,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setLocator(@NotNull SMTestLocator testLocator) {
     myLocator = testLocator;
+    myLocationMapCachedValue = null;
   }
 
   public void setConfig(boolean config) {
@@ -250,24 +254,39 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-    //determines location of test proxy
-    return getLocation(project, searchScope, myLocationUrl);
+    String locationUrl = getLocationUrl();
+    if (locationUrl == null || myLocator == null) {
+      return null;
+    }
+    if (myLocationMapCachedValue == null) {
+      myLocationMapCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
+        Map<GlobalSearchScope, Ref<Location>> value = ContainerUtil.newConcurrentMap(1);
+        // In some implementations calling `SMTestLocator.getLocation` might update the `ModificationTracker` from
+        // `SMTestLocator.getLocationCacheModificationTracker` call.
+        // Thus, calculate the first result in advance to cache with the updated modification tracker.
+        value.put(searchScope, Ref.create(computeLocation(project, searchScope, locationUrl)));
+        return CachedValueProvider.Result.create(value, myLocator.getLocationCacheModificationTracker(project));
+      }, false);
+    }
+    Map<GlobalSearchScope, Ref<Location>> value = myLocationMapCachedValue.getValue();
+    // Ref<Location> allows to cache null locations
+    Ref<Location> ref = value.computeIfAbsent(searchScope, scope -> Ref.create(computeLocation(project, searchScope, locationUrl)));
+    return ref.get();
   }
 
-  protected Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, String locationUrl) {
-    if (locationUrl != null && myLocator != null) {
-      String protocolId = VirtualFileManager.extractProtocol(locationUrl);
-      if (protocolId != null) {
-        String path = VirtualFileManager.extractPath(locationUrl);
-        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
-          return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
-            List<Location> locations = myLocator.getLocation(protocolId, path, myMetainfo, project, searchScope);
-            return !locations.isEmpty() ? locations.get(0) : null;
-          });
-        }
+  @Nullable
+  private Location computeLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String locationUrl) {
+    SMTestLocator locator = Objects.requireNonNull(myLocator);
+    String protocolId = VirtualFileManager.extractProtocol(locationUrl);
+    if (protocolId != null) {
+      String path = VirtualFileManager.extractPath(locationUrl);
+      if (!DumbService.isDumb(project) || DumbService.isDumbAware(locator)) {
+        return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+          List<Location> locations = locator.getLocation(protocolId, path, myMetainfo, project, searchScope);
+          return ContainerUtil.getFirstItem(locations);
+        });
       }
     }
-
     return null;
   }
 
@@ -924,10 +943,12 @@ public class SMTestProxy extends AbstractTestProxy {
 
     public void setRootLocationUrl(String locationUrl) {
       myRootLocationUrl = locationUrl;
+      ((SMTestProxy)this).myLocationMapCachedValue = null;
     }
 
+    @Nullable
     @Override
-    public String getRootLocation() {
+    public String getLocationUrl() {
       return myRootLocationUrl;
     }
 
@@ -938,13 +959,6 @@ public class SMTestProxy extends AbstractTestProxy {
     @Override
     public void setHandler(ProcessHandler handler) {
       myHandler = handler;
-    }
-
-    @Nullable
-    @Override
-    public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-      return myRootLocationUrl != null ? super.getLocation(project, searchScope, myRootLocationUrl)
-                                       : super.getLocation(project, searchScope);
     }
 
     @Override

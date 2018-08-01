@@ -52,8 +52,8 @@ public class MoveFilesOrDirectoriesUtil {
   /**
    * Moves the specified directory to the specified parent directory. Does not process non-code usages!
    *
-   * @param dir          the directory to move.
-   * @param newParentDir the directory to move {@code dir} into.
+   * @param aDirectory          the directory to move.
+   * @param destDirectory the directory to move {@code dir} into.
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException {

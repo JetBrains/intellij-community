@@ -22,6 +22,7 @@ import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -545,6 +546,8 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
       reportUsage(myProject, "git.branch.compare");
@@ -624,7 +627,7 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Checkout with Rebase",
+      super("Checkout and Rebase onto Current",
             String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
                           getBranchPresentation(branchName), getCurrentBranchPresentation(repositories), branchName),
             null);

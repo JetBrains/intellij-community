@@ -146,7 +146,8 @@ public final class Presentation implements Cloneable {
                 myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
                 myDisplayedMnemonicIndex = i - 1 - backShift;
               }
-            } else if (myMnemonic == 0) {
+            }
+            else {
               backShift++;
             }
           }

@@ -422,21 +422,11 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
 
     @Override
-    protected Match prefixExpressionsMatch(@NotNull PsiPrefixExpression prefixExpression1,
-                                           @NotNull PsiPrefixExpression prefixExpression2) {
-      if (isSideEffectUnaryOperator(prefixExpression1.getOperationTokenType())) {
+    protected Match unaryExpressionsMatch(@NotNull PsiUnaryExpression unaryExpression1, @NotNull PsiUnaryExpression unaryExpression2) {
+      if (isSideEffectUnaryOperator(unaryExpression1.getOperationTokenType())) {
         return EXACT_MISMATCH;
       }
-      return super.prefixExpressionsMatch(prefixExpression1, prefixExpression2);
-    }
-
-    @Override
-    protected Match postfixExpressionsMatch(@NotNull PsiPostfixExpression postfixExpression1,
-                                            @NotNull PsiPostfixExpression postfixExpression2) {
-      if (isSideEffectUnaryOperator(postfixExpression1.getOperationTokenType())) {
-        return EXACT_MISMATCH;
-      }
-      return super.postfixExpressionsMatch(postfixExpression1, postfixExpression2);
+      return super.unaryExpressionsMatch(unaryExpression1, unaryExpression2);
     }
 
     private static boolean isSideEffectUnaryOperator(IElementType tokenType) {

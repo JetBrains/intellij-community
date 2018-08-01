@@ -211,8 +211,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NotNull
   private AppletHtmlFile generateAppletTempPage() throws IOException {
     final File tempFile = FileUtil.createTempFile("AppletPage", ".html");
-    @NonNls final FileWriter writer = new FileWriter(tempFile);
-    try {
+    try (FileWriter writer = new FileWriter(tempFile)) {
       writer.write("<html>\n" +
                    "<head>\n" +
                    "<title>" + getOptions().getMainClassName() + "</title>\n" +
@@ -227,9 +226,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
       }
       writer.write("</applet>\n</body>\n</html>\n");
-    }
-    finally {
-      writer.close();
     }
     return new AppletHtmlFile(tempFile.getAbsolutePath(), tempFile);
   }

@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -49,10 +50,15 @@ public class TreeTester {
     return this;
   }
 
-  public void assertStructureEquals(String expected) {
+  @NotNull
+  public String constructTextRepresentation() {
     StringBuilder buffer = new StringBuilder();
     printSubTree(myNode, 0, buffer);
-    Assert.assertEquals(expected, buffer.toString());
+    return buffer.toString();
+  }
+
+  public void assertStructureEquals(String expected) {
+    Assert.assertEquals(expected, constructTextRepresentation());
   }
 
   private void printSubTree(TreeNode node, int level, StringBuilder result) {

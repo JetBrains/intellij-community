@@ -35,6 +35,8 @@ import java.awt.image.VolatileImage;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 /**
  * @author Pavel Fatin
  */
@@ -194,10 +196,10 @@ class ImmediatePainter {
 
     createOrUpdateImageBuffer(myEditor.getComponent(), bounds.getSize());
 
-    final Graphics imageGraphics = myImage.getGraphics();
-    imageGraphics.translate(-bounds.x, -bounds.y);
-    painter.consume(imageGraphics);
-    imageGraphics.dispose();
+    useSafely(myImage.getGraphics(), imageGraphics -> {
+      imageGraphics.translate(-bounds.x, -bounds.y);
+      painter.consume(imageGraphics);
+    });
 
     graphics.drawImage(myImage, bounds.x, bounds.y, null);
   }

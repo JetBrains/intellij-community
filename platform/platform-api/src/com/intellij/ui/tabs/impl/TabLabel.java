@@ -171,11 +171,6 @@ public class TabLabel extends JPanel implements Accessible {
   private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
-      protected boolean shouldDrawMacShadow() {
-        return SystemInfo.isMac || UIUtil.isUnderDarcula();
-      }
-
-      @Override
       protected boolean shouldDrawDimmed() {
         return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
       }
@@ -226,7 +221,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton()) {
+    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
       if (!UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
         insets.left = 3;
       }

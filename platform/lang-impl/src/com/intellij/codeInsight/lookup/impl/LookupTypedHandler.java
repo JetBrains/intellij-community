@@ -46,8 +46,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
 public class LookupTypedHandler extends TypedActionHandlerBase {
 
   public LookupTypedHandler(@Nullable TypedActionHandler originalHandler) {
@@ -182,9 +180,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
     if (filtersDecision != null) {
       return filtersDecision;
     }
-    throw new AssertionError("Typed char not handler by char filter: c=" + charTyped +
-                             "; prefix=" + lookup.getCurrentItem() +
-                             "; filters=" + Arrays.toString(getFilters()));
+    return CharFilter.Result.HIDE_LOOKUP;
   }
 
   @Nullable

@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
@@ -201,8 +202,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     testFolders.addAll(computeTestRoots(srcModule));
   }
 
-    @Nullable
+  @Nullable
   protected static PsiClass getContainingClass(PsiElement element) {
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    if (aClass == null) return null;
     return TestIntegrationUtils.findOuterClass(element);
   }
 

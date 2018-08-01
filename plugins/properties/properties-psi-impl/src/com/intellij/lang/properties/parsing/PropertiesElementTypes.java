@@ -22,15 +22,16 @@ public interface PropertiesElementTypes {
   PropertiesLanguage LANG = PropertiesLanguage.INSTANCE;
 
   ILightStubFileElementType FILE = new ILightStubFileElementType(LANG) {
+    @Override
     public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(ASTNode chameleon) {
       PsiElement psi = chameleon.getPsi();
-      assert (psi != null) : ("Bad chameleon: " + chameleon);
+      assert psi != null : "Bad chameleon: " + chameleon;
 
       Project project = psi.getProject();
       PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
       PsiBuilder builder = factory.createBuilder(project, chameleon);
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
-      assert (parserDefinition != null) : this;
+      assert parserDefinition != null : this;
       PropertiesParser parser = new PropertiesParser();
       return parser.parseLight(this, builder);
     }

@@ -7,7 +7,6 @@ import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -39,7 +38,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -504,10 +502,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static final String AGENT_FILE_NAME = "debugger-agent.jar";
-  private static final String STORAGE_FILE_NAME = "debugger-agent-storage.jar";
 
   private static void addDebuggerAgent(JavaParameters parameters) {
-    if (StackCapturingLineBreakpoint.isAgentEnabled()) {
+    if (AsyncStacksUtils.isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
       if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_FILE_NAME))) {
@@ -533,10 +530,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null, f -> {
-                String name = f.getName();
-                return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
-              });
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
+                agentFile.getAbsolutePath(), "captureAgent", null, f -> AGENT_FILE_NAME.equals(f.getName()));
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + generateAgentSettings());
               }
@@ -554,18 +549,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static String generateAgentSettings() {
-    Properties properties = new Properties();
-    if (Registry.is("debugger.capture.points.agent.debug")) {
-      properties.setProperty("debug", "true");
-    }
-    int idx = 0;
-    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getPoints()) {
-      properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
-                             point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myKey.asString());
-    }
+    Properties properties = CaptureSettingsProvider.getPointsProperties();
     if (!properties.isEmpty()) {
       try {
         File file = FileUtil.createTempFile("capture", ".props");

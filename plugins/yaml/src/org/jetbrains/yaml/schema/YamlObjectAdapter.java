@@ -30,7 +30,8 @@ public class YamlObjectAdapter implements JsonObjectValueAdapter {
 
   @Override
   public boolean isObject() {
-    return true;
+    PsiElement tag = myObject.getTag();
+    return tag == null || "!!map".equals(tag.getText());
   }
 
   @Override

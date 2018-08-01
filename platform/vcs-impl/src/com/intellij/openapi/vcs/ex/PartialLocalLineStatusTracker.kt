@@ -21,8 +21,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -55,7 +53,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
-import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
@@ -265,11 +262,7 @@ class PartialLocalLineStatusTracker(project: Project,
     if (!affectedBlocks.isEmpty()) {
       dropExistingUndoActions()
 
-      runInEdt(ModalityState.any()) {
-        for (block in affectedBlocks) {
-          updateHighlighter(block)
-        }
-      }
+      updateHighlighters()
     }
   }
 
@@ -512,12 +505,11 @@ class PartialLocalLineStatusTracker(project: Project,
   protected class MyLineStatusMarkerRenderer(override val tracker: PartialLocalLineStatusTracker) :
     LineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
 
-    override fun paint(editor: Editor, range: Range, g: Graphics) {
-      if (range !is LocalRange ||
-          range.changelistId == tracker.defaultMarker.changelistId) {
-        super.paint(editor, range, g)
-      } else {
-        paintIgnoredRange(g, editor, range)
+    override fun createMerger(editor: Editor): VisibleRangeMerger {
+      return object : VisibleRangeMerger(editor) {
+        override fun isIgnored(range: Range): Boolean {
+          return range is LocalRange && range.changelistId != tracker.defaultMarker.changelistId
+        }
       }
     }
 
@@ -545,7 +537,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
       val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
       object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent?) {
+        override fun actionPerformed(e: AnActionEvent) {
           link.linkLabel.doClick()
         }
       }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
@@ -762,10 +754,10 @@ class PartialLocalLineStatusTracker(project: Project,
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->
       block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
-      updateHighlighter(block)
     }
 
     updateAffectedChangeLists()
+    updateHighlighters()
   }
 
 

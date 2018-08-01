@@ -208,7 +208,7 @@ public class FoldingModelSupport {
     FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, PLACEHOLDER);
     if (value != null) {
       value.setExpanded(expanded);
-      value.putUserData(FoldRegion.MUTE_INNER_HIGHLIGHTERS, Boolean.TRUE);
+      value.setInnerHighlightersMuted(true);
     }
     return value;
   }

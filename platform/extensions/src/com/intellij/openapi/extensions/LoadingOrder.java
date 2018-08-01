@@ -140,6 +140,7 @@ public class LoadingOrder {
     }
 
     InboundSemiGraph<Orderable> graph = new InboundSemiGraph<Orderable>() {
+      @NotNull
       @Override
       public Collection<Orderable> getNodes() {
         List<Orderable> list = ContainerUtil.newArrayList(orderable);
@@ -147,6 +148,7 @@ public class LoadingOrder {
         return list;
       }
 
+      @NotNull
       @Override
       public Iterator<Orderable> getIn(Orderable n) {
         LoadingOrder order = cachedMap.get(n);

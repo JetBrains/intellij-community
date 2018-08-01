@@ -380,7 +380,7 @@ public class DarculaUIUtil {
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
 
   /**
-   * @Deprecated use LW.get() instead
+   * @deprecated use LW.get() instead
    */
   @SuppressWarnings("unused")
   @Deprecated
@@ -389,7 +389,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @Deprecated use BW.get() instead
+   * @deprecated use BW.get() instead
    */
   @Deprecated
   public static float bw() {
@@ -397,7 +397,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @Deprecated use COMPONENT_ARC.get() instead
+   * @deprecated use COMPONENT_ARC.get() instead
    */
   @Deprecated
   public static float arc() {
@@ -406,7 +406,7 @@ public class DarculaUIUtil {
 
   /**
    *
-   * @Deprecated use BUTTON_ARC.get() instead
+   * @deprecated use BUTTON_ARC.get() instead
    */
   @Deprecated
   public static float buttonArc() {

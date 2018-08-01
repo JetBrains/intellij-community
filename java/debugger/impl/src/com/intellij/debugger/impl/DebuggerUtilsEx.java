@@ -353,9 +353,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       EventSet events = suspendContext.getEventSet();
       if (!ContainerUtil.isEmpty(events)) {
         List<Pair<Breakpoint, Event>> eventDescriptors = ContainerUtil.newSmartList();
-        RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
         for (Event event : events) {
-          Requestor requestor = requestManager.findRequestor(event.request());
+          Requestor requestor = RequestManagerImpl.findRequestor(event.request());
           if (requestor instanceof Breakpoint) {
             eventDescriptors.add(Pair.create((Breakpoint)requestor, event));
           }
@@ -922,15 +921,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
 
   public static int getLambdaOrdinal(@NotNull String name) {
-    int pos = name.lastIndexOf('$');
-    if (pos > -1) {
-      try {
-        return Integer.parseInt(name.substring(pos + 1));
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-    return -1;
+    return StringUtil.parseInt(StringUtil.substringAfterLast(name, "$"), -1);
   }
 
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {

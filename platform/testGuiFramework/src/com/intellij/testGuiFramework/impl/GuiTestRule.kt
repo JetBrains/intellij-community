@@ -6,6 +6,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtil
@@ -134,8 +135,9 @@ class GuiTestRule : TestRule {
     private fun tearDownProject() {
       if (myProjectPath != null) {
         val ideFrameFixture = IdeFrameFixture.find(robot(), myProjectPath, null)
+        ideFrameFixture.waitForStartingIndexing()
         if (ideFrameFixture.target().isShowing) {
-          ideFrameFixture.closeProject()
+          DumbService.getInstance(ideFrameFixture.project).repeatUntilPassesInSmartMode { ideFrameFixture.closeProject() }
         }
         FileUtilRt.delete(myProjectPath!!)
       }
@@ -143,7 +145,9 @@ class GuiTestRule : TestRule {
         try {
           val ideFrameFixture = IdeFrameFixture.find(robot(), null, null, 2)
           if (ideFrameFixture.target().isShowing)
-            ideFrameFixture.closeProject()
+            DumbService.getInstance(ideFrameFixture.project).repeatUntilPassesInSmartMode {
+              ideFrameFixture.closeProject()
+            }
         }
         catch (e: ComponentLookupException) {
           // do nothing because ideFixture is already closed
@@ -253,7 +257,7 @@ class GuiTestRule : TestRule {
       try {
         val executorService = AppExecutorUtil.getAppExecutorService()
         //wait 10 second for the termination of all
-        if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) executorService.shutdownNow()
+        if (!executorService.awaitTermination(2, TimeUnit.SECONDS)) executorService.shutdownNow()
         MessagePool.getInstance().clearErrors()
       }
       catch (e: Exception) {

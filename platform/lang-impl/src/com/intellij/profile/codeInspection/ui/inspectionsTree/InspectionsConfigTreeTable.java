@@ -327,7 +327,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final HashSet<HighlightDisplayKey> tools = new HashSet<>();
       final List<InspectionConfigTreeNode> nodes = new ArrayList<>();
 
-      for (TreePath selectionPath : myTreeTable.getTree().getSelectionPaths()) {
+      TreePath[] selectionPaths = myTreeTable.getTree().getSelectionPaths();
+      if (selectionPaths == null) return;
+      for (TreePath selectionPath : selectionPaths) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
         collectInspectionFromNodes(node, tools, nodes);
       }

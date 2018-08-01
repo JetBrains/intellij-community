@@ -72,10 +72,19 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   public static void doCompletion(@NotNull final CompletionParameters parameters,
                                   @NotNull final CompletionResultSet result,
                                   @NotNull final JsonSchemaObject rootSchema) {
+    doCompletion(parameters, result, rootSchema, true);
+  }
+
+  public static void doCompletion(@NotNull final CompletionParameters parameters,
+                                  @NotNull final CompletionResultSet result,
+                                  @NotNull final JsonSchemaObject rootSchema,
+                                  boolean stop) {
     final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
     new Worker(rootSchema, parameters.getPosition(), completionPosition, result).work();
-    result.stopHere();
+    if (stop) {
+      result.stopHere();
+    }
   }
 
   @TestOnly
@@ -176,7 +185,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       JsonObjectValueAdapter object = propertyAdapter.getParentObject();
       if (object == null) return;
 
-      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
+      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
       checker.checkByScheme(object, schema.getIf());
       if (checker.isCorrect()) {
         JsonSchemaObject then = schema.getThen();
@@ -308,6 +317,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
+      else {
+        String type = jsonSchemaObject.getTypeDescription(true);
+        if (type != null) {
+          builder = builder.withTypeText(type, true);
+        }
+      }
 
       builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));
 
@@ -329,9 +344,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (type == null) return AllIcons.Nodes.Property;
       switch (type) {
         case _object:
-          return AllIcons.Json.Property_braces;
+          return AllIcons.Json.Object;
         case _array:
-          return AllIcons.Json.Property_brackets;
+          return AllIcons.Json.Array;
         default:
           return AllIcons.Nodes.Property;
       }
@@ -344,7 +359,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline) {
       return new InsertHandler<LookupElement>() {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           Editor editor = context.getEditor();
 
           if (!newline) {
@@ -362,7 +377,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                                                             boolean insertComma) {
       return new InsertHandler<LookupElement>() {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           ApplicationManager.getApplication().assertWriteAccessAllowed();
           Editor editor = context.getEditor();
           Project project = context.getProject();
@@ -395,7 +410,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       JsonSchemaType finalType = type;
       return new InsertHandler<LookupElement>() {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           ApplicationManager.getApplication().assertWriteAccessAllowed();
           Editor editor = context.getEditor();
           Project project = context.getProject();

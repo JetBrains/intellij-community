@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -23,12 +24,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
   name = "PathMacrosImpl",
   storages = @Storage(value = "path.macros.xml", roamingType = RoamingType.PER_OS)
 )
-public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element> {
+public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);
 
   private final Map<String, String> myLegacyMacros = new THashMap<>();
   private final Map<String, String> myMacros = new LinkedHashMap<>();
-  private int myModificationStamp = 0;
+  private long myModificationStamp = 0;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -86,8 +87,15 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
 
   @Override
   public void setIgnoredMacroNames(@NotNull final Collection<String> names) {
-    myIgnoredMacros.clear();
-    myIgnoredMacros.addAll(names);
+    try {
+      myLock.writeLock().lock();
+      myIgnoredMacros.clear();
+      myIgnoredMacros.addAll(names);
+    }
+    finally {
+      myModificationStamp++;
+      myLock.writeLock().unlock();
+    }
   }
 
   @Override
@@ -95,7 +103,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
   }
 
-  public int getModificationStamp() {
+  public long getModificationCount() {
     myLock.readLock().lock();
     try {
       return myModificationStamp;
@@ -197,7 +205,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   public Element getState() {
     try {
       Element element = new Element("state");
-      myLock.writeLock().lock();
+      myLock.readLock().lock();
 
       for (Map.Entry<String, String> entry : myMacros.entrySet()) {
         String value = entry.getValue();
@@ -217,7 +225,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
       return element;
     }
     finally {
-      myLock.writeLock().unlock();
+      myLock.readLock().unlock();
     }
   }
 
@@ -257,7 +265,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     }
   }
 
-  public void addMacroReplacements(ReplacePathToMacroMap result) {
+  public void addMacroReplacements(@NotNull ReplacePathToMacroMap result) {
     for (String name : getUserMacroNames()) {
       String value = getValue(name);
       if (!StringUtil.isEmptyOrSpaces(value)) {
@@ -266,7 +274,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     }
   }
 
-  public void addMacroExpands(ExpandMacroToPathMap result) {
+  public void addMacroExpands(@NotNull ExpandMacroToPathMap result) {
     for (String name : getUserMacroNames()) {
       String value = getValue(name);
       if (!StringUtil.isEmptyOrSpaces(value)) {

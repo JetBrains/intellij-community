@@ -607,7 +607,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     void appendText(@NotNull Object value, int row) {
       TrackingType trackingType = getTrackingType(row);
       if (trackingType != null) {
-        setIcon(AllIcons.Debugger.MemoryView.ClassTracked);
+        setIcon(AllIcons.Debugger.Db_watch);
         setTransparentIconBackground(true);
       }
 

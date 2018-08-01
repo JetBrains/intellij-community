@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.util;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,7 +66,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
                   int nextRow = nextColumn == 0 ? row + 1 : row;
                   if (nextRow > myTableView.getRowCount() - 1) {
                     if (myElements.isEmpty() || !ListTableWithButtons.this.isEmpty(myElements.get(myElements.size() - 1))) {
-                      ToolbarDecorator.findAddButton(myPanel).actionPerformed(null);
+                      ToolbarDecorator.findAddButton(myPanel).actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null));
                       return;
                     }
                     else {

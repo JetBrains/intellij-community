@@ -112,7 +112,13 @@ public class SideEffectChecker {
   }
 
   public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects, element);
+    return checkSideEffects(element, sideEffects, e -> false);
+  }
+
+  public static boolean checkSideEffects(@NotNull PsiExpression element,
+                                         @NotNull List<PsiElement> sideEffects,
+                                         Predicate<PsiElement> ignoreElement) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects, element, ignoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
   }

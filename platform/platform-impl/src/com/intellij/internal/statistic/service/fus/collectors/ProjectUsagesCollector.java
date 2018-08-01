@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -13,7 +12,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-//see ApplicationUsagesCollector class
+/** @see ApplicationUsagesCollector */
 public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   private static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector");

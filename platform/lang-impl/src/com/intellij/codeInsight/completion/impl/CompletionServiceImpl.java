@@ -285,21 +285,21 @@ public final class CompletionServiceImpl extends CompletionService {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 
-  @SuppressWarnings("unused")
   public CompletionLookupArranger createLookupArranger(CompletionParameters parameters) {
     return new CompletionLookupArrangerImpl(parameters).withAllItemsVisible();
   }
 
-  @SuppressWarnings("unused")
   public void handleCompletionItemSelected(CompletionParameters parameters,
                                            LookupElement lookupElement,
                                            PrefixMatcher prefixMatcher,
+                                           String additionalPrefix,
                                            char completionChar) {
 
+    String itemPattern = prefixMatcher.getPrefix() + additionalPrefix;
     LookupImpl.insertLookupString(parameters.getPosition().getProject(),
                                   parameters.getEditor(),
                                   lookupElement,
-                                  prefixMatcher, prefixMatcher.getPrefix(), prefixMatcher.getPrefix().length());
+                                  prefixMatcher, itemPattern, itemPattern.length());
     CodeCompletionHandlerBase handler =
       CodeCompletionHandlerBase.createHandler(parameters.getCompletionType(), true, parameters.isAutoPopup(), true);
     handler.handleCompletionElementSelected(parameters, lookupElement, completionChar);

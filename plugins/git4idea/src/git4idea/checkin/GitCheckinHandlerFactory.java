@@ -26,10 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
@@ -378,10 +375,12 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull
     private Collection<VirtualFile> getSelectedRoots() {
       ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      GitVcs git = GitVcs.getInstance(myProject);
       Collection<VirtualFile> result = new HashSet<>();
       for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
+        AbstractVcs vcs = vcsManager.getVcsFor(path);
         VirtualFile root = vcsManager.getVcsRootFor(path);
-        if (root != null) {
+        if (vcs.equals(git) && root != null) {
           result.add(root);
         }
       }

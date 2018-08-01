@@ -101,7 +101,7 @@ class SvnRootsDetector(private val myVcs: SvnVcs,
       .map { getWcDb(it) }
       .collect(toList())
 
-    LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles)
+    LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles, true, false, null)
   }
 
   private fun registerRootUrlFromNestedPoint(info: NestedCopyInfo, nestedRoots: MutableList<RootUrlInfo>) {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ListSelection;
@@ -10,7 +9,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -25,57 +23,45 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
-import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getVirtualFiles;
 
 /**
  * @deprecated Use {@link ChangesBrowserBase}
  */
 @Deprecated
-public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSafeDataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(OldChangesBrowserBase.class);
-
-  // for backgroundable rollback to mark
-  private boolean myDataIsDirty;
-  protected final Class<T> myClass;
-  protected final ChangesTreeList<T> myViewer;
+public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDataProvider, Disposable {
+  protected final ChangesTreeList<Change> myViewer;
   protected final JScrollPane myViewerScrollPane;
   protected ChangeList mySelectedChangeList;
-  protected List<T> myChangesToDisplay;
+  protected List<Change> myChangesToDisplay;
   protected final Project myProject;
   private final boolean myCapableOfExcludingChanges;
-  protected final JPanel myHeaderPanel;
-  private JComponent myBottomPanel;
   private DefaultActionGroup myToolBarGroup;
-  private String myToggleActionTitle = VcsBundle.message("commit.dialog.include.action.name");
 
-  private JComponent myDiffBottomComponent;
-
-  public static DataKey<OldChangesBrowserBase> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
   private AnAction myDiffAction;
   private final VirtualFile myToSelect;
   @NotNull private final DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
 
-  public void setChangesToDisplay(final List<T> changes) {
+  public void setChangesToDisplay(final List<Change> changes) {
     myChangesToDisplay = changes;
     myViewer.setChangesToDisplay(changes);
   }
@@ -85,18 +71,15 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
   }
 
   protected OldChangesBrowserBase(@NotNull final Project project,
-                                  @NotNull List<T> changes,
+                                  @NotNull List<Change> changes,
                                   final boolean capableOfExcludingChanges,
                                   final boolean highlightProblems,
                                   @Nullable final Runnable inclusionListener,
                                   @NotNull ChangesBrowser.MyUseCase useCase,
-                                  @Nullable VirtualFile toSelect,
-                                  @NotNull Class<T> clazz) {
+                                  @Nullable VirtualFile toSelect) {
     super(new BorderLayout());
     setFocusable(false);
 
-    myClass = clazz;
-    myDataIsDirty = false;
     myProject = project;
     myCapableOfExcludingChanges = capableOfExcludingChanges;
     myToSelect = toSelect;
@@ -104,17 +87,17 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     ChangeNodeDecorator decorator =
       ChangesBrowser.MyUseCase.LOCAL_CHANGES.equals(useCase) ? RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator() : null;
 
-    myViewer = new ChangesTreeList<T>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
-      protected DefaultTreeModel buildTreeModel(final List<T> changes, ChangeNodeDecorator changeNodeDecorator) {
+    myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
+      protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
         return OldChangesBrowserBase.this.buildTreeModel(changes, changeNodeDecorator, isShowFlatten());
       }
 
-      protected List<T> getSelectedObjects(final ChangesBrowserNode<?> node) {
+      protected List<Change> getSelectedObjects(final ChangesBrowserNode<?> node) {
         return OldChangesBrowserBase.this.getSelectedObjects(node);
       }
 
       @Nullable
-      protected T getLeadSelectedObject(final ChangesBrowserNode<?> node) {
+      protected Change getLeadSelectedObject(final ChangesBrowserNode<?> node) {
         return OldChangesBrowserBase.this.getLeadSelectedObject(node);
       }
 
@@ -124,40 +107,34 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
       }
     };
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
-    myHeaderPanel = new JPanel(new BorderLayout());
   }
 
   protected void init() {
     add(myViewerScrollPane, BorderLayout.CENTER);
 
-    myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
-    add(myHeaderPanel, BorderLayout.NORTH);
-
-    myBottomPanel = new JPanel(new BorderLayout());
-    add(myBottomPanel, BorderLayout.SOUTH);
+    add(createToolbar(), BorderLayout.NORTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
-    myViewer.setDoubleClickHandler(getDoubleClickHandler());
+    myViewer.setDoubleClickHandler(() -> showDiff());
   }
 
   @NotNull
-  protected abstract DefaultTreeModel buildTreeModel(final List<T> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten);
+  protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
+    return TreeModelBuilder.buildFromChanges(myProject, myViewer.getGrouping(), changes, changeNodeDecorator);
+  }
 
   @NotNull
-  protected abstract List<T> getSelectedObjects(@NotNull ChangesBrowserNode<?> node);
+  protected List<Change> getSelectedObjects(@NotNull final ChangesBrowserNode<?> node) {
+    return node.getAllChangesUnder();
+  }
 
   @Nullable
-  protected abstract T getLeadSelectedObject(@NotNull ChangesBrowserNode<?> node);
-
-  @NotNull
-  protected Runnable getDoubleClickHandler() {
-    return () -> showDiff();
-  }
-
-  protected void setInitialSelection(final List<? extends ChangeList> changeLists,
-                                     @NotNull List<T> changes,
-                                     final ChangeList initialListSelection) {
-    mySelectedChangeList = initialListSelection;
+  protected Change getLeadSelectedObject(@NotNull final ChangesBrowserNode<?> node) {
+    final Object o = node.getUserObject();
+    if (o instanceof Change) {
+      return (Change)o;
+    }
+    return null;
   }
 
   public void dispose() {
@@ -167,19 +144,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     myToolBarGroup.add(action);
   }
 
-  public void setDiffBottomComponent(JComponent diffBottomComponent) {
-    myDiffBottomComponent = diffBottomComponent;
-  }
-
-  public void setToggleActionTitle(final String toggleActionTitle) {
-    myToggleActionTitle = toggleActionTitle;
-  }
-
-  public JPanel getHeaderPanel() {
-    return myHeaderPanel;
-  }
-
-  public ChangesTreeList<T> getViewer() {
+  public ChangesTreeList<Change> getViewer() {
     return myViewer;
   }
 
@@ -191,7 +156,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
-      if (list.isEmpty()) list = getAllChanges();
+      if (list.isEmpty()) list = myViewer.getChanges();
       sink.put(VcsDataKeys.CHANGES, list.toArray(new Change[0]));
     }
     else if (key == VcsDataKeys.CHANGES_SELECTION) {
@@ -201,7 +166,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
       sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
     else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
-      final Change highestSelection = ObjectUtils.tryCast(myViewer.getHighestLeadSelection(), Change.class);
+      final Change highestSelection = myViewer.getHighestLeadSelection();
       sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, (highestSelection == null) ? new Change[]{} : new Change[]{highestSelection});
     }
     else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
@@ -212,9 +177,6 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.equals(key)) {
       sink.put(VcsDataKeys.IO_FILE_ARRAY, getSelectedIoFiles());
-    }
-    else if (key == DATA_KEY) {
-      sink.put(DATA_KEY, this);
     }
     else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
       final List<Change> selectedChanges = getSelectedChanges();
@@ -232,28 +194,24 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     }
   }
 
-  public void select(List<T> changes) {
+  public void select(List<Change> changes) {
     myViewer.select(changes);
-  }
-
-  public JComponent getBottomPanel() {
-    return myBottomPanel;
   }
 
   private class ToggleChangeAction extends CheckboxAction {
     public ToggleChangeAction() {
-      super(myToggleActionTitle);
+      super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 
     public boolean isSelected(AnActionEvent e) {
-      T change = ObjectUtils.tryCast(e.getData(VcsDataKeys.CURRENT_CHANGE), myClass);
+      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
 
       return myViewer.isIncluded(change);
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      T change = ObjectUtils.tryCast(e.getData(VcsDataKeys.CURRENT_CHANGE), myClass);
+      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return;
 
       if (state) {
@@ -269,9 +227,6 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     final ShowDiffContext context = new ShowDiffContext(isInFrame() ? DiffDialogHints.FRAME : DiffDialogHints.MODAL);
 
     context.addActions(createDiffActions());
-    if (myDiffBottomComponent != null) {
-      context.putChainContext(DiffUserDataKeysEx.BOTTOM_PANEL, myDiffBottomComponent);
-    }
 
     updateDiffContext(context);
 
@@ -296,12 +251,12 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
   }
 
   @NotNull
-  protected ListSelection<Change> getChangesSelection() {
-    final Change leadSelection = ObjectUtils.tryCast(myViewer.getLeadSelection(), Change.class);
+  private ListSelection<Change> getChangesSelection() {
+    final Change leadSelection = myViewer.getLeadSelection();
     List<Change> changes = getSelectedChanges();
 
     if (changes.size() < 2) {
-      List<Change> allChanges = getAllChanges();
+      List<Change> allChanges = myViewer.getChanges();
       if (allChanges.size() > 1 || changes.isEmpty()) {
         changes = allChanges;
       }
@@ -321,7 +276,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     return ModalityState.current().equals(ModalityState.NON_MODAL);
   }
 
-  protected List<AnAction> createDiffActions() {
+  private List<AnAction> createDiffActions() {
     List<AnAction> actions = new ArrayList<>();
     if (myCapableOfExcludingChanges) {
       actions.add(new ToggleChangeAction());
@@ -330,7 +285,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
   }
 
   public void rebuildList() {
-    myViewer.setChangesToDisplay(getCurrentDisplayedObjects(), myToSelect);
+    myViewer.setChangesToDisplay(getCurrentDisplayedChanges(), myToSelect);
   }
 
   public void setAlwayExpandList(final boolean value) {
@@ -338,7 +293,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
   }
 
   @NotNull
-  protected JComponent createToolbar() {
+  private JComponent createToolbar() {
     DefaultActionGroup toolbarGroups = new DefaultActionGroup();
     myToolBarGroup = new DefaultActionGroup();
     toolbarGroups.add(myToolBarGroup);
@@ -371,28 +326,11 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     toolBarGroup.add(myDiffAction);
   }
 
-  @NotNull
-  public abstract List<Change> getCurrentIncludedChanges();
 
   @NotNull
-  public List<Change> getCurrentDisplayedChanges() {
+  private List<Change> getCurrentDisplayedChanges() {
+    if (myChangesToDisplay != null) return myChangesToDisplay;
     return mySelectedChangeList != null ? ContainerUtil.newArrayList(mySelectedChangeList.getChanges()) : Collections.emptyList();
-  }
-
-  @NotNull
-  public abstract List<T> getCurrentDisplayedObjects();
-
-  @NotNull
-  public List<VirtualFile> getIncludedUnversionedFiles() {
-    return Collections.emptyList();
-  }
-
-  public int getUnversionedFilesCount() {
-    return 0;
-  }
-
-  public ChangeList getSelectedChangeList() {
-    return mySelectedChangeList;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -421,13 +359,12 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
   }
 
   @NotNull
-  public abstract List<Change> getSelectedChanges();
+  public List<Change> getSelectedChanges() {
+    return myViewer.getSelectedChanges();
+  }
 
   @NotNull
-  public abstract List<Change> getAllChanges();
-
-  @NotNull
-  protected Stream<VirtualFile> getSelectedFiles() {
+  private Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
       getAfterRevisionsFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)
@@ -435,7 +372,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
   }
 
   @NotNull
-  protected Stream<VirtualFile> getNavigatableFiles() {
+  private Stream<VirtualFile> getNavigatableFiles() {
     return Stream.concat(
       getFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)
@@ -444,27 +381,5 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
 
   public AnAction getDiffAction() {
     return myDiffAction;
-  }
-
-  public boolean isDataIsDirty() {
-    return myDataIsDirty;
-  }
-
-  public void setDataIsDirty(boolean dataIsDirty) {
-    myDataIsDirty = dataIsDirty;
-  }
-
-  public void setSelectionMode(@JdkConstants.TreeSelectionMode int mode) {
-    myViewer.setSelectionMode(mode);
-  }
-
-  @Contract(pure = true)
-  @NotNull
-  protected static <T> List<Change> findChanges(@NotNull Collection<T> items) {
-    return ContainerUtil.findAll(items, Change.class);
-  }
-
-  static boolean isUnderUnversioned(@NotNull ChangesBrowserNode node) {
-    return isUnderTag(new TreePath(node.getPath()), UNVERSIONED_FILES_TAG);
   }
 }

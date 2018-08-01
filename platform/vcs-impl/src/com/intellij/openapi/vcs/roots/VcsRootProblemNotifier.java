@@ -104,8 +104,8 @@ public class VcsRootProblemNotifier {
         return;
       }
 
-      // Don't display the notification about registered roots unless configured to do so
-      if (!Registry.is("vcs.root.auto.add.nofity")) {
+      // Don't display the notification about registered roots unless configured to do so (and unless there are invalid roots)
+      if (invalidRoots.isEmpty() && !Registry.is("vcs.root.auto.add.nofity")) {
         return;
       }
 
@@ -199,8 +199,7 @@ public class VcsRootProblemNotifier {
       if (invalidRoots.size() == 1) {
         VcsRootError rootError = invalidRoots.iterator().next();
         String vcsName = rootError.getVcsKey().getName();
-        description.append(String.format("The directory %s is registered as a %s root, but no %s repositories were found there.",
-                                         ROOT_TO_PRESENTABLE.fun(rootError), vcsName, vcsName));
+        description.append(getInvalidRootDescriptionItem(rootError, vcsName));
       }
       else {
         description.append("The following directories are registered as VCS roots, but they are not: <br/>" +
@@ -219,6 +218,13 @@ public class VcsRootProblemNotifier {
       }
     }
     return description.toString();
+  }
+
+  @VisibleForTesting
+  @NotNull
+  String getInvalidRootDescriptionItem(@NotNull VcsRootError rootError, @NotNull String vcsName) {
+    return String.format("The directory %s is registered as a %s root, but no %s repositories were found there.",
+                         ROOT_TO_PRESENTABLE.fun(rootError), vcsName, vcsName);
   }
 
   @NotNull
@@ -241,7 +247,7 @@ public class VcsRootProblemNotifier {
     else if (invalidRoots.isEmpty()) {
       String vcs = getVcsName(unregisteredRoots);
       String repository = pluralize("Repository", unregisteredRoots.size());
-      title = String.format(rootsAlreadyAdded ? "%s Integration Enabled" : "%s %s Found", vcs, repository);
+      title = rootsAlreadyAdded ? String.format("%s Integration Enabled", vcs) : String.format("%s %s Found", vcs, repository);
     }
     else {
       title = "VCS root configuration problems";

@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -133,6 +134,7 @@ abstract class FunctionHelper {
   @Contract("null, _, _ -> null")
   @Nullable
   static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if(expression == null) return null;
     PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if(!(type instanceof PsiClassType)) return null;

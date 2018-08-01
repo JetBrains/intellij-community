@@ -774,6 +774,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (!isModeConsistent(isCustomMessage)) return;
     myFinishedTestCount++;
     updateProgressOnTestDone();
+    updateStatusLabel(false);
   }
 
   private void updateOnTestIgnored() {
@@ -835,8 +836,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       if (myRoot == null) return;
       List<SMTestProxy> tests = myRoot.getAllTests();
       for (SMTestProxy proxy : tests) {
-        String url =
-          proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
+        String url = proxy.getLocationUrl();
         if (url != null) {
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
           DumbService.getInstance(getProject()).runWhenSmart(() -> {

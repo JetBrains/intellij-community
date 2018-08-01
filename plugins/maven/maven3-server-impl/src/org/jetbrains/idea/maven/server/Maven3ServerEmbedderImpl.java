@@ -760,7 +760,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   /**
-   * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, org.sonatype.aether.RepositorySystemSession)}
+   * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, RepositorySystemSession)}
    */
   private DependencyResolutionResult resolveDependencies(MavenProject project, RepositorySystemSession session) {
     DependencyResolutionResult resolutionResult;

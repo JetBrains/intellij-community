@@ -6,10 +6,13 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -83,11 +86,39 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       PsiJavaCodeReferenceElement classRef = expression.getClassReference();
+      ProblemDescriptor descriptor = null;
       if (ConstructionUtils.isReferenceTo(classRef, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
-        ProblemDescriptor descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression));
-        if (descriptor == null) return;
+        descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression));
+      }
+      else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING)) {
+        descriptor = getStringConstructorProblem(expression);
+      }
+      if (descriptor != null) {
         myHolder.registerProblem(descriptor);
       }
+    }
+
+    private ProblemDescriptor getStringConstructorProblem(PsiNewExpression expression) {
+      PsiExpressionList args = expression.getArgumentList();
+      if (args == null) return null;
+      if (args.isEmpty()) {
+        return myManager.createProblemDescriptor(expression, InspectionGadgetsBundle.message(
+          "inspection.redundant.string.constructor.message"),
+                                                 new StringConstructorFix(true),
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
+      }
+      if (args.getExpressionCount() == 1) {
+        PsiExpression arg = args.getExpressions()[0];
+        if (TypeUtils.isJavaLangString(arg.getType()) &&
+            (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7) || !STRING_SUBSTRING.matches(arg))) {
+          TextRange range = new TextRange(0, args.getStartOffsetInParent());
+          return myManager.createProblemDescriptor(expression, range,
+                                                   InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
+                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                                   new StringConstructorFix(false));
+        }
+      }
+      return null;
     }
 
     @Nullable
@@ -268,4 +299,44 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       statement.delete();
     }
   }
+
+  private static class StringConstructorFix extends InspectionGadgetsFix {
+    private final String myName;
+
+    private StringConstructorFix(boolean noArguments) {
+      if (noArguments) {
+        myName = InspectionGadgetsBundle.message(
+          "inspection.redundant.string.replace.with.empty.fix.name");
+      }
+      else {
+        myName = InspectionGadgetsBundle.message(
+          "inspection.redundant.string.replace.with.arg.fix.name");
+      }
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
+      final PsiExpressionList argList = expression.getArgumentList();
+      assert argList != null;
+      final PsiExpression[] args = argList.getExpressions();
+      CommentTracker commentTracker = new CommentTracker();
+      final String argText = (args.length == 1) ? commentTracker.text(args[0]) : "\"\"";
+
+      PsiReplacementUtil.replaceExpression(expression, argText, commentTracker);
+    }
+  }
+
 }

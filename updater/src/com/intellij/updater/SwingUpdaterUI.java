@@ -98,7 +98,12 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   @Override
   public void setDescription(String oldBuildDesc, String newBuildDesc) {
-    invokeLater(() -> myProcessTitle.setText("Updating " + oldBuildDesc + " to " + newBuildDesc + " ..."));
+    setDescription("Updating " + oldBuildDesc + " to " + newBuildDesc + " ...");
+  }
+
+  @Override
+  public void setDescription(String text) {
+    invokeLater(() -> myProcessTitle.setText(text.isEmpty() ? " " : text));
   }
 
   @Override

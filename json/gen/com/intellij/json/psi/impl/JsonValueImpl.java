@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public abstract class JsonValueImpl extends JsonElementImpl implements JsonValue {
 
-  public JsonValueImpl(ASTNode node) {
+  public JsonValueImpl(@NotNull ASTNode node) {
     super(node);
   }
 

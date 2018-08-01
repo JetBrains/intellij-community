@@ -6,6 +6,7 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.*
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -18,7 +19,9 @@ class ClosureToSamConverter : GrTypeConverter() {
 
   override fun isConvertibleEx(targetType: PsiType, actualType: PsiType, context: GroovyPsiElement,
                                currentPosition: ApplicableTo): ConversionResult? {
-    if (targetType !is PsiClassType || (actualType !is GrClosureType && !actualType.equalsToText(GROOVY_LANG_CLOSURE))) return null
+    if (targetType !is PsiClassType ||
+        actualType !is GrClosureType && !TypesUtil.isClassType(actualType, GROOVY_LANG_CLOSURE)) return null
+
     if (!isSamConversionAllowed(context)) return null
 
     val result = targetType.resolveGenerics()

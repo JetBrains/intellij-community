@@ -1,34 +1,15 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import junit.framework.Assert;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
@@ -45,17 +26,15 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.junit.Assert.*;
 
 /**
  * @author Irina.Chernushina
  * @since 3.05.2012
  */
-public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
+public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
-  private SvnVcs myVcs;
-  private VcsDirtyScopeManager myDirtyScopeManager;
-  private ChangeListManager myChangeListManager;
 
   @Override
   @Before
@@ -67,14 +46,11 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
     mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     clearWc(true);
 
-    myVcs = SvnVcs.getInstance(myProject);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    myChangeListManager = ChangeListManager.getInstance(myProject);
     myTraceClient = true;
   }
 
   private void clearWc(final boolean withSvn) throws Exception {
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     /*VfsUtil.processFilesRecursively(myWorkingCopyDir, new Processor<VirtualFile>() {
       @Override
       public boolean process(VirtualFile file) {
@@ -89,7 +65,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
                                       }
                                     });*/
     clearDirInCommand(myWorkingCopyDir, file -> withSvn || ! SvnUtil.isAdminDirectory(file));
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
   }
 
   @Test
@@ -105,43 +81,40 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
         System.out.println("========= TEST " + getTestName(data) + " =========");
       }
 
-      ((ChangeListManagerImpl) myChangeListManager).stopEveryThingIfInTestMode();
+      changeListManager.stopEveryThingIfInTestMode();
       myWorkingCopyDir = createDirInCommand(myWorkingCopyDir.getParent(), "test" + cnt);
       myTheirs = createDirInCommand(myTheirs.getParent(), "theirs" + cnt);
       mySvnClientRunner.checkout(myRepoUrl, myTheirs);
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
       sleep(200);
 
-      ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-        Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName())));
+      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), vcs.getName())));
       createSubTree(data);
       myTheirs.refresh(false, true);
-      final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
+      final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
       sleep(200);
 
-      ((ChangeListManagerImpl)myChangeListManager).forceGoInTestMode();
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
+      changeListManager.forceGoInTestMode();
+      refreshChanges();
+      refreshChanges();
 
       final String conflictFile = data.getConflictFile();
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
       final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
-      final Change change = myChangeListManager.getChange(filePath);
-      Assert.assertNotNull(change);
-      Assert.assertTrue(change instanceof ConflictedSvnChange);
+      final Change change = changeListManager.getChange(filePath);
+      assertNotNull(change);
+      assertTrue(change instanceof ConflictedSvnChange);
       final SvnRevisionNumber committedRevision =
         change.getBeforeRevision() != null ? (SvnRevisionNumber)change.getBeforeRevision().getRevisionNumber() : null;
       //SvnRevisionNumber committedRevision = new SvnRevisionNumber(Revision.of(cnt * 2 + 1));
-      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, null);
+      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(vcs, filePath, null);
 
       resolver.resolveSelectMineFull();
 
       myTheirs.refresh(false, true);
-      myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
       checkStatusesAfterMineFullResolve(data, conflictIoFile);
       checkFileContents(data, conflictIoFile);
 
@@ -154,54 +127,64 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
     for (TreeConflictData.FileData leftFile : leftFiles) {
       if (! leftFile.myIsDir && ! StringUtil.isEmpty(leftFile.myContents)) {
         final File ioFile = new File(myWorkingCopyDir.getPath(), leftFile.myRelativePath);
-        Assert.assertTrue(ioFile.exists());
+        assertTrue(ioFile.exists());
         final String text = FileUtil.loadFile(ioFile);
-        Assert.assertEquals(leftFile.myContents, text);
+        assertEquals(leftFile.myContents, text);
       }
     }
   }
 
   private void checkStatusesAfterMineFullResolve(TreeConflictData.Data data, File conflictIoFile) {
-    Status conflStatus = SvnUtil.getStatus(myVcs, conflictIoFile);
-    Assert.assertTrue(createTestFailedComment(data, conflictIoFile.getPath()) + " tree conflict resolved",
+    Status conflStatus = SvnUtil.getStatus(vcs, conflictIoFile);
+    assertTrue(createTestFailedComment(data, conflictIoFile.getPath()) + " tree conflict resolved",
                       conflStatus.getTreeConflict() == null);
     Collection<TreeConflictData.FileData> leftFiles = data.getLeftFiles();
     for (TreeConflictData.FileData file : leftFiles) {
       File exFile = new File(myWorkingCopyDir.getPath(), file.myRelativePath);
-      final Status status = SvnUtil.getStatus(myVcs, exFile);
+      final Status status = SvnUtil.getStatus(vcs, exFile);
       boolean theirsExists = new File(myTheirs.getPath(), file.myRelativePath).exists();
 
       if (StatusType.STATUS_UNVERSIONED.equals(file.myNodeStatus)) {
-        Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (file exists)", exFile.exists());
+        assertTrue(createTestFailedComment(data, exFile.getPath()) + " (file exists)", exFile.exists());
         if (theirsExists) {
           // should be deleted
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)", status == null || StatusType.STATUS_DELETED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)",
+                     status == null || StatusType.STATUS_DELETED.equals(status.getNodeStatus()));
         } else {
           // unversioned
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)", status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(data, exFile.getPath()) + " (unversioned)",
+                     status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()));
         }
       } else if (StatusType.STATUS_DELETED.equals(file.myNodeStatus)) {
-        Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (deleted status)", status != null && file.myNodeStatus.equals(status.getNodeStatus()));
+        assertTrue(createTestFailedComment(data, exFile.getPath()) + " (deleted status)",
+                   status != null && file.myNodeStatus.equals(status.getNodeStatus()));
       } else if (StatusType.STATUS_ADDED.equals(file.myNodeStatus)) {
-        Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (file exists)", exFile.exists());
+        assertTrue(createTestFailedComment(data, exFile.getPath()) + " (file exists)", exFile.exists());
         if (theirsExists) {
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)", status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)",
+                     status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
         } else {
-          Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)", status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(data, exFile.getPath()) + " (added status)",
+                     status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus()));
         }
       } else {
         if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
           // in theirs -> deleted
-          Assert.assertFalse(createTestFailedComment(data, file.myRelativePath) + " check deleted in theirs", theirsExists);
+          assertFalse(createTestFailedComment(data, file.myRelativePath) + " check deleted in theirs", theirsExists);
         } else {
           if (theirsExists) {
-            Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (normal node status)", status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+            assertTrue(createTestFailedComment(data, exFile.getPath()) + " (normal node status)",
+                       status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
           } else {
-            Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (normal node status)", status != null &&
-              (StatusType.STATUS_NORMAL.equals(status.getNodeStatus()) || StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())));
+            assertTrue(createTestFailedComment(data, exFile.getPath()) + " (normal node status)", status != null &&
+                                                                                                  (StatusType.STATUS_NORMAL
+                                                                                                     .equals(status.getNodeStatus()) ||
+                                                                                                   StatusType.STATUS_MODIFIED
+                                                                                                     .equals(status.getNodeStatus())));
           }
         }
-        Assert.assertTrue(createTestFailedComment(data, exFile.getPath()) + " (modified text status)", status != null && file.myContentsStatus.equals(status.getContentsStatus()));
+        assertTrue(createTestFailedComment(data, exFile.getPath()) + " (modified text status)",
+                   status != null && file.myContentsStatus.equals(status.getContentsStatus()));
       }
     }
   }
@@ -228,21 +211,19 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
 
       createSubTree(data);
-      final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
+      final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
 
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
+      refreshChanges();
+      refreshChanges();
 
       final String conflictFile = data.getConflictFile();
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
       final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
-      final Change change = myChangeListManager.getChange(filePath);
-      Assert.assertNotNull(change);
-      Assert.assertTrue(change instanceof ConflictedSvnChange);
+      final Change change = changeListManager.getChange(filePath);
+      assertNotNull(change);
+      assertTrue(change instanceof ConflictedSvnChange);
       final SvnRevisionNumber committedRevision =
         change.getBeforeRevision() != null ? (SvnRevisionNumber)change.getBeforeRevision().getRevisionNumber() : null;
       FilePath beforePath = null;
@@ -250,12 +231,12 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
         beforePath = change.getBeforeRevision().getFile();
       }
       //SvnRevisionNumber committedRevision = new SvnRevisionNumber(Revision.of(cnt * 2 + 1));
-      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, beforePath);
+      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(vcs, filePath, beforePath);
 
       resolver.resolveSelectTheirsFull();
 
     myTheirs.refresh(false, true);
-    myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
       VfsUtil.processFileRecursivelyWithoutIgnored(myTheirs, file -> {
         final String relative = VfsUtil.getRelativePath(file, myTheirs, File.separatorChar);
         File workingFile = new File(myWorkingCopyDir.getPath(), relative);
@@ -265,24 +246,24 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
           if (excluded != null && Arrays.asList(excluded).contains(relative)) {
             return true;
           }
-          Assert.assertTrue("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath(),
-                        exists);
+          assertTrue("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath(),
+                     exists);
         }
         final File theirsFile = virtualToIoFile(file);
-        Info theirsInfo = myVcs.getInfo(theirsFile);
-        Info thisInfo = myVcs.getInfo(workingFile);
+        Info theirsInfo = vcs.getInfo(theirsFile);
+        Info thisInfo = vcs.getInfo(workingFile);
         if (theirsInfo != null) {
-          Assert.assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
-                              ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),
-                              theirsInfo.getRevision().getNumber(), thisInfo.getRevision().getNumber());
+          assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
+                       ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),
+                       theirsInfo.getRevision().getNumber(), thisInfo.getRevision().getNumber());
           if (! theirsFile.isDirectory()){
             try {
               final String workText = FileUtil.loadFile(workingFile);
               final String theirsText = FileUtil.loadFile(theirsFile);
-              Assert.assertEquals(theirsText, workText);
+              assertEquals(theirsText, workText);
             }
             catch (IOException e) {
-              Assert.assertTrue(e.getMessage(), false);
+              assertTrue(e.getMessage(), false);
             }
           }
         }

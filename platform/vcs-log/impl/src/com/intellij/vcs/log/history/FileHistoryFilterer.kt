@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -197,7 +198,8 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         val liteLinearGraph = LinearGraphUtils.asLiteLinearGraph((graph as VisibleGraphImpl<*>).linearGraph)
         for (row in 0 until liteLinearGraph.nodesCount()) {
           // checking if commit is a root commit (which means file was added or renamed there)
-          if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()) {
+          if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()
+              && index is VcsLogModifiableIndex) {
             index.reindexWithRenames(graph.getRowInfo(row).commit, root)
           }
         }

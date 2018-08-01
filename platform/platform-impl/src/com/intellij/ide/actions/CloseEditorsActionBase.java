@@ -51,7 +51,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
         final EditorWindow window = windows [i];
         final EditorComposite [] editors = window.getEditors ();
         for (final EditorComposite editor : editors) {
-          if (isFileToClose(editor, window)) {
+          if (isFileToClose(editor, window) || isFileToCloseInContext(event.getDataContext(), editor, window)) {
             res.add(Pair.create(editor, window));
           }
         }
@@ -61,6 +61,10 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
   }
 
   protected abstract boolean isFileToClose(EditorComposite editor, EditorWindow window);
+
+  protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite editor, EditorWindow window) {
+    return false;
+  }
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);

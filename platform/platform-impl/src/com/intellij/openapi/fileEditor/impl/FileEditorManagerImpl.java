@@ -1293,7 +1293,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Nullable
   public FileEditor getSelectedEditor(@NotNull final VirtualFile file) {
     final Pair<FileEditor, FileEditorProvider> selectedEditorWithProvider = getSelectedEditorWithProvider(file);
-    return selectedEditorWithProvider == null ? null : selectedEditorWithProvider.getFirst();
+    return Pair.getFirst(selectedEditorWithProvider);
   }
 
 

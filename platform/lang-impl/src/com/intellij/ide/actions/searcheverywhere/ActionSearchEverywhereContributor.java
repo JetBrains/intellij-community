@@ -152,7 +152,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Void> createFilter() {
+    public SearchEverywhereContributorFilter<Void> createFilter(AnActionEvent initEvent) {
       return null;
     }
   }

@@ -105,12 +105,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       mySouthPanel.setContent(super.createSouthPanel());
     }
 
-    @Nullable
-    @Override
-    protected String getHelpId() {
-      return "help.id";
-    }
-
     @NotNull
     @Override
     protected Action[] createActions() {

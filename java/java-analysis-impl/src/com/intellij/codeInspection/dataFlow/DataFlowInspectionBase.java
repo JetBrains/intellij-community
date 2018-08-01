@@ -306,7 +306,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                           HashSet<PsiElement> reportedAnchors,
                                           DataFlowInstructionVisitor visitor) {
     visitor.sameValueAssignments().forEach(expr -> {
-      if(!reportedAnchors.add(expr)) return;
+      expr = PsiUtil.skipParenthesizedExprDown(expr);
+      if(expr == null || !reportedAnchors.add(expr)) return;
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expr, PsiAssignmentExpression.class);
       PsiElement context = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class, PsiClassInitializer.class);
       if (context instanceof PsiForStatement && PsiTreeUtil.isAncestor(((PsiForStatement)context).getInitialization(), expr, true)) {
@@ -330,15 +331,19 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     });
   }
 
-  private static void reportMutabilityViolations(ProblemsHolder holder,
+  private void reportMutabilityViolations(ProblemsHolder holder,
                                                  Set<PsiElement> reportedAnchors,
                                                  Set<PsiElement> violations,
                                                  String message) {
     for (PsiElement violation : violations) {
       if (reportedAnchors.add(violation)) {
-        holder.registerProblem(violation, message);
+        holder.registerProblem(violation, message, createMutabilityViolationFix(holder, violation));
       }
     }
+  }
+
+  protected LocalQuickFix createMutabilityViolationFix(ProblemsHolder holder, PsiElement violation) {
+    return null;
   }
 
   private void reportNullabilityProblems(ProblemsHolder holder,
@@ -681,7 +686,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private void reportConstantCondition(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
-    if (psiAnchor.getParent() instanceof PsiForeachStatement) {
+    if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiForeachStatement) {
       // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
       if (!evaluatesToTrue) {
         // loop on always non-empty collection -- nothing to report
@@ -720,11 +725,13 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
   private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {
     if (evaluatesToTrue) return null;
-    if (!(psiAnchor instanceof PsiMethodCallExpression) || !MethodCallUtils.isEqualsCall((PsiMethodCallExpression)psiAnchor)) return null;
-    PsiExpression arg = ArrayUtil.getFirstElement(((PsiMethodCallExpression)psiAnchor).getArgumentList().getExpressions());
+    if (!(psiAnchor instanceof PsiMethodCallExpression)) return null;
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)psiAnchor;
+    if (!MethodCallUtils.isEqualsCall(methodCallExpression)) return null;
+    PsiExpression arg = ArrayUtil.getFirstElement(methodCallExpression.getArgumentList().getExpressions());
     if (!ExpressionUtils.isNullLiteral(arg)) return null;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
-    return new EqualsToEqualityFix(parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent));
+    return EqualsToEqualityFix.buildFix(methodCallExpression, parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent));
   }
 
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression parent, final boolean onTheFly) {

@@ -83,8 +83,8 @@ import java.awt.event.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
@@ -123,10 +123,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
     myDirtyScopeManager = dirtyScopeManager;
     mySettings = settings;
-  }
-
-  public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    return false;
   }
 
   @Override
@@ -245,7 +241,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       if (!changedWithIndex.isEmpty() || Registry.is("git.force.commit.using.staging.area")) {
         runWithMessageFile(myProject, root, message, messageFile -> {
-          exceptions.addAll(commitUsingIndex(myProject, root, changes, changedWithIndex, messageFile));
+          exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile));
         });
         if (!exceptions.isEmpty()) return exceptions;
 
@@ -280,8 +276,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private List<VcsException> commitUsingIndex(@NotNull Project project,
-                                              @NotNull VirtualFile root,
+  private List<VcsException> commitUsingIndex(@NotNull GitRepository repository,
                                               @NotNull Collection<CommitChange> rootChanges,
                                               @NotNull Set<CommitChange> changedWithIndex,
                                               @NotNull File messageFile) {
@@ -290,10 +285,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
       Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
 
+      VirtualFile root = repository.getRoot();
       String rootPath = root.getPath();
 
+      List<File> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
+      if (!unmergedFiles.isEmpty()) {
+        throw new VcsException("Committing is not possible because you have unmerged files.");
+      }
+
       // Check what is staged besides our changes
-      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(project, root);
+      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
 
       // Reset staged changes which are not selected for commit
@@ -307,7 +308,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       if (!excludedStagedChanges.isEmpty()) {
         LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
-        resetExcluded(project, root, excludedStagedChanges);
+        resetExcluded(myProject, root, excludedStagedChanges);
       }
       try {
         List<FilePath> alreadyHandledPaths = getPaths(changedWithIndex);
@@ -320,18 +321,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         toRemove.removeAll(alreadyHandledPaths);
 
         LOG.debug(String.format("Updating index: added: %s, removed: %s", toAdd, toRemove));
-        updateIndex(project, root, toAdd, toRemove, exceptions);
+        updateIndex(myProject, root, toAdd, toRemove, exceptions);
         if (!exceptions.isEmpty()) return exceptions;
 
 
         // Commit the staging area
         LOG.debug("Performing commit...");
-        commitWithoutPaths(project, root, messageFile);
+        commitWithoutPaths(myProject, root, messageFile);
       }
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(project, root, excludedStagedChanges, exceptions);
+          restoreExcluded(myProject, root, excludedStagedChanges, exceptions);
         }
       }
     }
@@ -538,7 +539,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
       runWithMessageFile(myProject, root, message, moveMessageFile -> {
-        exceptions.addAll(commitUsingIndex(myProject, root, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
+        exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
       });
 
       return Pair.create(newRootChanges, exceptions);
@@ -673,7 +674,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
@@ -706,7 +707,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change));
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MV);
       h.addParameters("-f", beforePath.getPath(), afterPath.getPath());
-      Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+      Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
       return true;
     }
     catch (VcsException e) {
@@ -789,8 +790,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
-          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message,
-                                                                   null, "Commit All Files", CommonBundle.getCancelButtonText(), false);
+          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message, null, "Commit All Files",
+                                                                   CommonBundle.getCancelButtonText(), false);
           dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
           dialog.show();
           mergeAll.set(dialog.isOK());
@@ -849,7 +850,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--no-verify");
     }
     handler.endOptions();
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   /**
@@ -1002,7 +1003,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 

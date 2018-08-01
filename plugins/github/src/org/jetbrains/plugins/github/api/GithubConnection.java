@@ -47,6 +47,13 @@ import java.util.List;
 
 import static org.jetbrains.plugins.github.api.GithubApiUtil.fromJson;
 
+/**
+ * @deprecated use {@link GithubApiRequestExecutor} with {@link GithubApiRequests} and {@link GithubApiRequest}
+ * @see GithubApiRequestExecutorManager
+ * @see GithubApiRequestExecutor
+ * @see GithubApiRequestExecutor.Factory
+ */
+@Deprecated
 public class GithubConnection {
   private static final Logger LOG = GithubUtil.LOG;
 

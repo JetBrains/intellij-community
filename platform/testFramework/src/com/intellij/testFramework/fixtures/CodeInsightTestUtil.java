@@ -102,7 +102,8 @@ public class CodeInsightTestUtil {
     List<IntentionAction> availableIntentions = fixture.getAvailableIntentions();
     final IntentionAction intentionAction = findIntentionByText(availableIntentions, action);
     if (intentionAction == null) {
-      Assert.fail("Action not found: " + action + " in place: " + fixture.getElementAtCaret() + " among " + availableIntentions);
+      PsiElement element = fixture.getFile().findElementAt(fixture.getCaretOffset());
+      Assert.fail("Action not found: " + action + " in place: " + element + " among " + availableIntentions);
     }
     fixture.launchAction(intentionAction);
     fixture.checkResultByFile(after, false);

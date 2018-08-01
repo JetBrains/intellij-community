@@ -559,7 +559,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           }
         }
         else {
-          createDefaultEditAction(project, producer).actionPerformed(null);
+          perform(project, producer);
         }
       }
     };

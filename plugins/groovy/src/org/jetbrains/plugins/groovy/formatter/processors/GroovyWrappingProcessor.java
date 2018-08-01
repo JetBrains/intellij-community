@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRY_RESOURCE_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * @author Max Medvedev
@@ -87,6 +87,18 @@ public class GroovyWrappingProcessor {
       return createNoneWrap();
     }
 
+    if (myParentType == ARGUMENT_LIST) {
+      if (childType == T_LBRACK || childType == T_RBRACK) {
+        return createNoneWrap();
+      }
+    }
+
+    if (myParentType == APPLICATION_ARGUMENT_LIST) {
+      if (myNode.getFirstChildNode() == childNode) {
+        return createNoneWrap();
+      }
+    }
+
     if (myParentType == GroovyElementTypes.EXTENDS_CLAUSE || myParentType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
       if (childType == GroovyTokenTypes.kEXTENDS || childType == GroovyTokenTypes.kIMPLEMENTS) {
         return Wrap.createWrap(mySettings.EXTENDS_KEYWORD_WRAP, true);
@@ -95,6 +107,12 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == TRY_RESOURCE_LIST) {
       if (childType == GroovyTokenTypes.mLPAREN || childType == GroovyTokenTypes.mRPAREN) {
+        return createNoneWrap();
+      }
+    }
+
+    if (myParentType == ARRAY_INITIALIZER) {
+      if (childType == T_LBRACE || childType == T_RBRACE) {
         return createNoneWrap();
       }
     }
@@ -189,7 +207,7 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == GroovyElementTypes.COMMAND_ARGUMENTS) {
       myUsedDefaultWrap = true;
-      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, false);
+      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, myParentType == GroovyElementTypes.COMMAND_ARGUMENTS);
     }
 
     if (myParentType == TRY_RESOURCE_LIST) {
@@ -218,6 +236,11 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.ASSERT_STATEMENT) {
       return Wrap.createWrap(mySettings.ASSERT_STATEMENT_WRAP, false);
+    }
+
+    if (myParentType == ARRAY_INITIALIZER) {
+      myUsedDefaultWrap = true;
+      return Wrap.createWrap(mySettings.ARRAY_INITIALIZER_WRAP, false);
     }
 
     if (TokenSets.BLOCK_SET.contains(myParentType)) {

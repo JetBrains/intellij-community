@@ -34,6 +34,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
@@ -292,7 +293,7 @@ public class EditorWindow {
     }, myOwner);
   }
 
-  private void removeFromSplitter() {
+  void removeFromSplitter() {
     if (!inSplitter()) return;
 
     if (myOwner.getCurrentWindow() == this) {
@@ -314,9 +315,13 @@ public class EditorWindow {
       }
     }
     else if (parent instanceof EditorsSplitters) {
+      Component currentFocusComponent = getGlobalInstance().getFocusedDescendantFor(parent);
+
       parent.removeAll();
       parent.add(otherComponent, BorderLayout.CENTER);
       parent.revalidate();
+
+      if (currentFocusComponent != null) currentFocusComponent.requestFocusInWindow();
     }
     else {
       throw new IllegalStateException("Unknown container: " + parent);
@@ -612,7 +617,7 @@ public class EditorWindow {
   public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     final TComp comp;
     if (myTabbedPane != null) {
-      comp = (TComp)myTabbedPane.getSelectedComponent(ignorePopup);
+      comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
     }
     else if (myPanel.getComponentCount() != 0) {
       final Component component = myPanel.getComponent(0);

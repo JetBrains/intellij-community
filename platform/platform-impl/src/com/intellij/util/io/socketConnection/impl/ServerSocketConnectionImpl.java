@@ -80,12 +80,8 @@ public class ServerSocketConnectionImpl<Request extends AbstractRequest, Respons
       setStatus(ConnectionStatus.WAITING_FOR_CONNECTION, null);
       LOG.debug("waiting for connection on port " + getPort());
 
-      final Socket socket = myServerSocket.accept();
-      try {
+      try (Socket socket = myServerSocket.accept()) {
         attachToSocket(socket);
-      }
-      finally {
-        socket.close();
       }
     }
     finally {

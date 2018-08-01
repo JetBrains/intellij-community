@@ -96,6 +96,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNotEqualsDoesntImplyNotNullity() { doTest(); }
   public void testEqualsEnumConstant() { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
+  public void testIncompleteSwitchEnum() { doTest(); }
   public void testEnumConstantNotNull() { doTest(); }
   public void testCheckEnumConstantConstructor() { doTest(); }
   public void testCompareToEnumConstant() { doTest(); }
@@ -619,4 +620,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNanComparisonWrong() { doTest(); }
   public void testConstantMethods() { doTest(); }
   public void testPolyadicEquality() { doTest(); }
+  public void testBoxUnboxArrayElement() { doTest(); }
 }

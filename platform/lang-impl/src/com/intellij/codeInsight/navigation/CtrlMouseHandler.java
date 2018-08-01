@@ -191,6 +191,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       Editor editor = e.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       Point point = new Point(mouseEvent.getPoint());
+      if (editor.getInlayModel().getElementAt(point) != null) {
+        disposeHighlighter();
+        return;
+      }
       myTooltipProvider = new TooltipProvider(editor, editor.xyToLogicalPosition(point));
       myTooltipProvider.execute(browseMode);
     }

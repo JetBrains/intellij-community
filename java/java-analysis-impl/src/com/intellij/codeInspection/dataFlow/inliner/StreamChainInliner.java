@@ -246,7 +246,8 @@ public class StreamChainInliner implements CallInliner {
       if (!(type instanceof PsiPrimitiveType)) {
         type = PsiPrimitiveType.getUnboxedType(type);
       }
-      builder.push(builder.getFactory().getConstFactory().createDefault(Objects.requireNonNull(type)));
+      builder.push(builder.getFactory().getConstFactory().createDefault(Objects.requireNonNull(type)))
+        .boxUnbox(myCall, type, myCall.getType());
     }
 
     @Override
@@ -711,8 +712,10 @@ public class StreamChainInliner implements CallInliner {
     }
     if (single) {
       // exactly single element
+      PsiExpression arg = sourceCall.getArgumentList().getExpressions()[0];
       builder
-        .pushExpression(sourceCall.getArgumentList().getExpressions()[0])
+        .pushExpression(arg)
+        .boxUnbox(arg, inType)
         .chain(firstStep::before)
         .chain(firstStep::iteration);
       return;

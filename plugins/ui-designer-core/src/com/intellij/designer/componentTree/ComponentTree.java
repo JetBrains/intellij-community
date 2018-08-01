@@ -18,6 +18,7 @@ package com.intellij.designer.componentTree;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.designer.actions.DesignerActionPanel;
+import com.intellij.designer.actions.SelectAllAction;
 import com.intellij.designer.actions.StartInplaceEditing;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
@@ -84,7 +85,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myDesigner != null) {
-          myDesigner.getActionPanel().createSelectAllAction(myDesigner.getSurfaceArea()).actionPerformed(null);
+          ((SelectAllAction)myDesigner.getActionPanel().createSelectAllAction(myDesigner.getSurfaceArea())).perform();
         }
       }
     });

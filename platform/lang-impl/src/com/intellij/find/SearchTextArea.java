@@ -68,6 +68,7 @@ import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
+  public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
   private final JTextArea myTextArea;
@@ -128,6 +129,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        if (e.getType() == DocumentEvent.EventType.INSERT) {
+          myTextArea.putClientProperty(JUST_CLEARED_KEY, null);
+        }
         updateIconsLayout();
       }
     });
@@ -415,6 +419,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      myTextArea.putClientProperty(JUST_CLEARED_KEY, !myTextArea.getText().isEmpty());
       myTextArea.setText("");
     }
   }

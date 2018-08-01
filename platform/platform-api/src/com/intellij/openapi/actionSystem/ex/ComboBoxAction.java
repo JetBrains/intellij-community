@@ -110,7 +110,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
-  @SuppressWarnings("unused")
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(JComponent button, @NotNull  DataContext dataContext) {
     return createPopupActionGroup(button);

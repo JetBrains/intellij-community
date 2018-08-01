@@ -146,7 +146,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     return CodeInsightColors.LINE_NONE_COVERAGE;
   }
 
-  public boolean canDoAction(final MouseEvent e) {
+  public boolean canDoAction(@NotNull final MouseEvent e) {
     Component component = e.getComponent();
     if (component instanceof EditorGutterComponentEx) {
       EditorGutterComponentEx gutter = (EditorGutterComponentEx)component;
@@ -155,7 +155,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     return false;
   }
 
-  public void doAction(final Editor editor, final MouseEvent e) {
+  public void doAction(@NotNull final Editor editor, @NotNull final MouseEvent e) {
     e.consume();
     final JComponent comp = (JComponent)e.getComponent();
     final JRootPane rootPane = comp.getRootPane();

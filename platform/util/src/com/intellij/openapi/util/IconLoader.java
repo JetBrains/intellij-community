@@ -72,6 +72,11 @@ public final class IconLoader {
     clearCache();
   }
 
+  public static void removePathPatcher(@NotNull IconPathPatcher patcher) {
+    ourPatchers.remove(patcher);
+    clearCache();
+  }
+
   @Deprecated
   @NotNull
   public static Icon getIcon(@NotNull final Image image) {
@@ -514,7 +519,7 @@ public final class IconLoader {
     @NotNull
     private URL myUrl;
     private volatile boolean myDark;
-    private volatile boolean myDarkOverriden;
+    private volatile boolean myDarkOverridden;
     private volatile int numberOfPatchers = ourPatchers.size();
     private final boolean useCacheOnLoad;
     private int myClearCacheCounter = clearCacheCounter;
@@ -538,7 +543,7 @@ public final class IconLoader {
       myClassLoader = icon.myClassLoader;
       myUrl = icon.myUrl;
       myDark = icon.myDark;
-      myDarkOverriden = icon.myDarkOverriden;
+      myDarkOverridden = icon.myDarkOverridden;
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
       useCacheOnLoad = icon.useCacheOnLoad;
@@ -585,12 +590,12 @@ public final class IconLoader {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myClearCacheCounter = clearCacheCounter;
         myRealIcon = null;
-        if (!myDarkOverriden) myDark = USE_DARK_ICONS;
+        if (!myDarkOverridden) myDark = USE_DARK_ICONS;
         setGlobalFilter(IMAGE_FILTER);
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
           numberOfPatchers = ourPatchers.size();
-          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, null);
+          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, myClassLoader);
           String path = myOriginalPath == null ? null : patchedPath.first;
           if (patchedPath.second != null) {
             myClassLoader = patchedPath.second;
@@ -620,7 +625,7 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return (!myDarkOverriden && myDark == USE_DARK_ICONS) &&
+      return (!myDarkOverridden && myDark == USE_DARK_ICONS) &&
              getGlobalFilter() == IMAGE_FILTER &&
              numberOfPatchers == ourPatchers.size() &&
              myClearCacheCounter == clearCacheCounter;
@@ -667,7 +672,7 @@ public final class IconLoader {
     }
 
     private synchronized void setDark(boolean dark) {
-      myDarkOverriden = true;
+      myDarkOverridden = true;
       if (myDark != dark) {
         myRealIcon = null;
         myClearCacheCounter = -1;

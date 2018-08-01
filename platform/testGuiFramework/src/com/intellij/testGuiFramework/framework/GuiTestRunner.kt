@@ -41,8 +41,7 @@ import java.util.concurrent.TimeUnit
 class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
 
   private val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestRunner")!!
-  private val criticalError = Ref<Boolean>(false)
-
+  private val criticalError = Ref(false)
 
   fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
     if (!GuiTestStarter.isGuiTestThread())
@@ -75,9 +74,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
         val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
         SERVER_LOG.info("Starting IDE ($localIde) with port for running tests: ${server.getPort()}")
         runIde(port = server.getPort(), ide = localIde)
-        if (!server.isStarted()) {
-          server.start()
-        }
+        if (!server.isStarted()) server.start()
       }
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, testName)
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
@@ -99,7 +96,13 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
             Type.IGNORED -> {
               eachNotifier.fireTestIgnored(); testIsRunning = false
             }
-            Type.FAILURE -> eachNotifier.addFailure(message.content.obj as Throwable)
+            Type.FAILURE -> {
+              //reconstruct Throwable
+              val (className, messageFromException, stackTraceFromException) = message.content.obj as FailureException
+              val throwable = Throwable("thrown from $className: $messageFromException")
+              throwable.stackTrace = stackTraceFromException
+              eachNotifier.addFailure(throwable)
+            }
             Type.FINISHED -> {
               eachNotifier.fireTestFinished(); testIsRunning = false
             }
@@ -107,16 +110,17 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
           }
         }
         if (message.type == MessageType.RESTART_IDE) {
-          restartIdeAndStartTestAgain(server, method)
-          sendRunTestCommand(method, server)
+          restartIde(server, getIdeFromMethod(method))
+          sendRunTestCommand(method, testName, server)
         }
         if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
           val additionalInfoLabel = message.content
           if (additionalInfoLabel !is String) throw Exception("Additional info for a resuming test should have a String type!")
-          restartIdeAndStartTestAgain(server, method)
+          restartIde(server, getIdeFromMethod(method))
           sendResumeTestCommand(method, server, additionalInfoLabel)
         }
-      } catch (se: SocketException) {
+      }
+      catch (se: SocketException) {
         //let's fail this test and move to the next one test
         SERVER_LOG.warn("Server client connection is dead. Going to kill IDE process.")
         stopServerAndKillIde(server)
@@ -127,7 +131,11 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     }
   }
 
-  private fun restartIdeAndStartTestAgain(server: JUnitServer, method: FrameworkMethod) {
+  private fun getIdeFromMethod(method: FrameworkMethod): Ide {
+    return runner.ide ?: getIdeFromAnnotation(method.declaringClass)
+  }
+
+  private fun restartIde(server: JUnitServer, ide: Ide) {
     //close previous IDE
     server.send(TransportMessage(MessageType.CLOSE_IDE))
     //await to close previous process
@@ -136,8 +144,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     //restart JUnitServer to let accept a new connection
     server.stopServer()
     //start a new one IDE
-    val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
-    runIde(port = server.getPort(), ide = localIde)
+    runIde(port = server.getPort(), ide = ide)
     server.start()
   }
 
@@ -147,8 +154,9 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
   }
 
   private fun sendRunTestCommand(method: FrameworkMethod,
+                                 testName: String,
                                  server: JUnitServer) {
-    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
+    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, testName)
     server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
   }
 

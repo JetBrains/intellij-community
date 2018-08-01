@@ -160,15 +160,8 @@ public class StatisticsManagerImpl extends StatisticsManager {
     if (!createStoreFolder()) return;
     StatisticsUnit unit = getUnit(unitNumber);
     String path = getPathToUnit(unitNumber);
-    try{
-      OutputStream out = new BufferedOutputStream(new FileOutputStream(path));
-      out = new ScrambledOutputStream(out);
-      try {
-        unit.write(out);
-      }
-      finally{
-        out.close();
-      }
+    try (OutputStream out = new ScrambledOutputStream(new BufferedOutputStream(new FileOutputStream(path)))) {
+      unit.write(out);
     }
     catch(IOException e){
       Messages.showMessageDialog(

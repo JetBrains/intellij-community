@@ -105,7 +105,7 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
     return findByActionId(actionId, robot, container, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
-  public void waitUntilEnabledAndShowing() {
+  public ActionButtonFixture waitEnabledAndShowing() {
     Pause.pause(new Condition("wait for action to be enabled and showing") {
       @Override
       public boolean test() {
@@ -113,14 +113,12 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
           @Override
           protected Boolean executeInEDT() {
             ActionButton target = target();
-            if (target.getAction().getTemplatePresentation().isEnabledAndVisible()) {
-              return target.isShowing() && target.isVisible() && target.isEnabled();
-            }
-            return false;
+            return target.isShowing() && target.isVisible() && target.isEnabled();
           }
         });
       }
-    }, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    }, GuiTestUtil.INSTANCE.getTHIRTY_SEC_TIMEOUT());
+    return this;
   }
 
   @NotNull

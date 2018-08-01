@@ -47,6 +47,8 @@ public class VariableData extends AbstractVariableData {
     if (var == null) {
       return this;
     }
+    // The copied type needs to be valid in a non-physical copy of the original file.
+    // If the type references a class or a type variable declared in the original file, it might not work in the copy.
     PsiType type = JavaPsiFacade.getElementFactory(var.getProject()).createTypeFromText(this.type.getCanonicalText(), var);
     VariableData data = new VariableData(var, type);
     data.name = this.name;

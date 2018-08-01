@@ -88,7 +88,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
   private fun getNodeFixture(pathTo: Array<out String>): NodeFixture? {
     return try {
-      withPauseWhenNull(30) {
+      withPauseWhenNull(timeoutInSeconds = 30) {
         try {
           getNodeFixtureByPath(pathTo as Array<String>)
         }
@@ -146,8 +146,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         var childIsFound = false
         for (child in children) {
           child ?: throw Exception("Path element ($pathItem) is null")
-          val nodeText = getNodeText(child.userObject)
-          nodeText ?: throw AssertionError("Unable to get text of project view node for pathItem: $pathItem")
+          val nodeText = withPauseWhenNull("project view node for pathItem: $pathItem\"") { getNodeText(child.userObject) }
           if (nodeText == pathItem) {
             pivotRoot = child
             childIsFound = true
