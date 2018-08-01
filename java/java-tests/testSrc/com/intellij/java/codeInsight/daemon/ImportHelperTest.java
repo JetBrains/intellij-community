@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -42,8 +43,12 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.ui.UIUtil;
+import com.siyeh.ig.naming.ClassNamingConvention;
+import com.siyeh.ig.naming.NewClassNamingConventionInspection;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -313,6 +318,48 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  public void testEnsureOptimizeImportsWhenInspectionReportsErrors() {
+    @NonNls String text = "import java.util.List; class S { } <caret>";
+    configureByText(StdFileTypes.JAVA, text);
+    //ensure error will be provided by a local inspection
+    NewClassNamingConventionInspection tool = new NewClassNamingConventionInspection() {
+      @NotNull
+      @Override
+      public HighlightDisplayLevel getDefaultLevel() {
+        return HighlightDisplayLevel.ERROR;
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "Too short name";
+      }
+
+      @NotNull
+      @Override
+      public String getShortName() {
+        return "TooShortName";
+      }
+    };
+    tool.setEnabled(true, ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    enableInspectionTool(tool);
+    
+    CodeInsightWorkspaceSettings.getInstance(myProject).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    List<HighlightInfo> errs = highlightErrors();
+    //error corresponding to too short class name
+    assertEquals(1, errs.size());
+
+    assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+
+    type("/* */");
+    doHighlighting();
+    UIUtil.dispatchAllInvocationEvents();
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+  }
+
   public void testAutoImportWorks() {
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(StdFileTypes.JAVA, text);
@@ -381,7 +428,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     doHighlighting();
     UIUtil.dispatchAllInvocationEvents();
 
-    assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
 
   public void testAutoOptimizeDoesntSuddenlyRemoveImportsDuringTyping() {
