@@ -80,14 +80,16 @@ open class PluginTestCase : GuiTestCase() {
       popupClick("Plugins")
       pluginDialog {
         showInstalledPlugins()
-        showInstallPluginFromDiskDialog()
-        installPluginFromDiskDialog {
-          setPath(pluginPath)
-          clickOk()
-          ignoreComponentLookupException {
-            dialog(title = "Warning", timeout = 5) {
-              message("Warning") {
-                button("OK").click()
+        if (isPluginInstalled(pluginName).not()) {
+          showInstallPluginFromDiskDialog()
+          installPluginFromDiskDialog {
+            setPath(pluginPath)
+            clickOk()
+            ignoreComponentLookupException {
+              dialog(title = "Warning", timeout = 5) {
+                message("Warning") {
+                  button("OK").click()
+                }
               }
             }
           }
