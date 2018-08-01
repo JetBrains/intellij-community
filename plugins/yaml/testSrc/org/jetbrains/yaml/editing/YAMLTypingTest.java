@@ -28,19 +28,19 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testNewIndentedSequenceItem_indentedSequence() {
-    checkSameResultForAnySequenceIndent("\n", true);
+    doTest("\n", true);
   }
 
   public void testNewIndentedSequenceItem_sameIndent() {
-    checkSameResultForAnySequenceIndent("\n", false);
+    doTest("\n", false);
   }
 
   public void testNewSequenceItemZeroIndent_indentedSequence() {
-    checkSameResultForAnySequenceIndent("\n", true);
+    doTest("\n", true);
   }
 
   public void testNewSequenceItemZeroIndent_sameIndent() {
-    checkSameResultForAnySequenceIndent("\n", false);
+    doTest("\n", false);
   }
 
   public void testEmptyInlinedValue() {
@@ -67,7 +67,22 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("\n");
   }
 
-  @SuppressWarnings("SameParameterValue")
+  public void testAutoDecreaseHyphenIndent() {
+    doTest("- ", false);
+  }
+
+  public void testAutoIncreaseHyphenIndent() {
+    doTest("- ", true);
+  }
+
+  public void testDoNotChangeHyphenIndent1() {
+    doTest("- ");
+  }
+
+  public void testDoNotChangeHyphenIndent2() {
+    doTest("- ");
+  }
+
   private void doTest(@NotNull String insert) {
     String testName = getTestName(true);
     myFixture.configureByFile(testName + ".yml");
@@ -75,8 +90,7 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(testName + ".txt");
   }
 
-  @SuppressWarnings("SameParameterValue")
-  private void checkSameResultForAnySequenceIndent(@NotNull String insert, boolean indentSequenceVal) {
+  private void doTest(@NotNull String insert, boolean indentSequenceVal) {
     String testName = getTestName(true);
     String fileName = ObjectUtils.notNull(StringUtil.substringBefore(testName, "_"), testName);
     myFixture.configureByFile(fileName + ".yml");
