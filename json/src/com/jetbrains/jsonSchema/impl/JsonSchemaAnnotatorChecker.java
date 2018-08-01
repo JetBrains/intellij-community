@@ -89,18 +89,20 @@ class JsonSchemaAnnotatorChecker {
   private static JsonSchemaAnnotatorChecker mergeErrors(@NotNull List<JsonSchemaAnnotatorChecker> list,
                                                         @NotNull List<JsonSchemaObject> selectedSchemas,
                                                         @NotNull JsonComplianceCheckerOptions options) {
-    final Set<String> skipErrors = selectedSchemas.stream().filter(Predicates.notNull())
+    final Set<String> propNames = selectedSchemas.stream().filter(Predicates.notNull())
       .map(schema -> schema.getProperties().keySet())
-      .flatMap(Set::stream).map(name -> JsonBundle.message("json.schema.annotation.not.allowed.property", name))
+      .flatMap(Set::stream)
       .collect(Collectors.toSet());
     final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(options);
 
     for (JsonSchemaAnnotatorChecker ch: list) {
       for (Map.Entry<PsiElement, JsonValidationError> element: ch.myErrors.entrySet()) {
-        if (skipErrors.contains(element.getValue().getMessage())) {
+        JsonValidationError error = element.getValue();
+        if (error.getFixableIssueKind() == JsonValidationError.FixableIssueKind.ProhibitedProperty
+          && propNames.contains(((JsonValidationError.ProhibitedPropertyIssueData)error.getIssueData()).propertyName)) {
           continue;
         }
-        checker.myErrors.put(element.getKey(), element.getValue());
+        checker.myErrors.put(element.getKey(), error);
       }
     }
     return checker;
