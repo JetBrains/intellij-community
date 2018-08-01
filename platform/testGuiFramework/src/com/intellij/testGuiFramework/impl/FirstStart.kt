@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
@@ -145,7 +146,7 @@ abstract class FirstStart(val ideType: IdeType) {
         with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
           click()
           while (!button("Accept").isEnabled) {
-            scroll(10)
+            scrollDown()
           }
           LOG.info("Accept License Agreement/Privacy Policy dialog")
           button("Accept").click()
@@ -155,6 +156,11 @@ abstract class FirstStart(val ideType: IdeType) {
         LOG.warn("'License Agreement/Privacy Policy dialog hasn't been shown. Check registry...")
       }
     }
+  }
+
+  private fun scrollDown() {
+    val amount: Int = if (SystemInfo.isMac) -10 else 10
+    myRobot.rotateMouseWheel(amount)
   }
 
   private fun completeInstallation() {
