@@ -461,7 +461,7 @@ public class Runner {
         String message = "An error occurred when applying the patch:\n" +
                          error.getClass().getSimpleName() + ": " + error.getMessage() + "\n\n";
         if (!needRestore) {
-          message += ui.bold("No files were changed. Please retry applying the patch.");
+          message += ui.bold("No files were changed. Please retry applying the patches.");
         }
         else if (backupDir == null) {
           message += ui.bold("Files may be corrupted. Please reinstall the IDE.");
