@@ -35,11 +35,15 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     def path = vFile.path
 
     def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), (PsiElement)null)
-    assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
-    assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
-    assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]
-    assert ChooseByNameTest.calcPopupElements(popup, path + ':0') == [psiFile]
-    popup.close(false)
+    try {
+      assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
+      assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
+      assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]
+      assert ChooseByNameTest.calcPopupElements(popup, path + ':0') == [psiFile]
+    }
+    finally {
+      popup.close(false)
+    }
   }
 
   void "test prefer same-named classes visible in current module"() {
@@ -52,11 +56,15 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
 
     def place = myFixture.addClass("class A {}")
     def popup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), place)
-    def resultModules = ChooseByNameTest.calcPopupElements(popup, 'Foo').collect {
-      ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name
+    try {
+      def resultModules = ChooseByNameTest.calcPopupElements(popup, 'Foo').collect {
+        ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name
+      }
+      assert resultModules[0] == 'mod2'
     }
-    assert resultModules[0] == 'mod2'
-    popup.close(false)
+    finally {
+      popup.close(false)
+    }
   }
 
   void "test paths relative to topmost module"() {
@@ -64,10 +72,15 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm2', myFixture.tempDirFixture.findOrCreateDir("foo/bar"))
     def file = myFixture.addFileToProject('foo/bar/goo/doo.txt', '')
     def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), file)
-    assert ChooseByNameTest.calcPopupElements(popup, "doo", false) == [file]
-    assert ChooseByNameTest.calcPopupElements(popup, "goo/doo", false) == [file]
-    assert ChooseByNameTest.calcPopupElements(popup, "bar/goo/doo", false) == [file]
-    assert ChooseByNameTest.calcPopupElements(popup, "foo/bar/goo/doo", false) == [file]
+    try {
+      assert ChooseByNameTest.calcPopupElements(popup, "doo", false) == [file]
+      assert ChooseByNameTest.calcPopupElements(popup, "goo/doo", false) == [file]
+      assert ChooseByNameTest.calcPopupElements(popup, "bar/goo/doo", false) == [file]
+      assert ChooseByNameTest.calcPopupElements(popup, "foo/bar/goo/doo", false) == [file]
+    }
+    finally {
+      popup.close(false)
+    }
   }
 
 }
