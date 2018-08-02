@@ -67,6 +67,13 @@ public class ImageComponent extends JComponent {
     @NonNls
     private static final String FILE_NAME_VISIBLE_PROP = "FileName.visible";
 
+    /**
+     * @see #getUIClassID
+     * @see #readObject
+     */
+    @NonNls
+    private static final String uiClassID = "ImageComponentUI";
+
     private final ImageDocument document = new ImageDocumentImpl(this);
     private final Grid grid = new Grid();
     private final Chessboard chessboard = new Chessboard();
@@ -228,8 +235,13 @@ public class ImageComponent extends JComponent {
         return new Dimension(size.width - IMAGE_INSETS * 2, size.height - IMAGE_INSETS * 2);
     }
 
+    public String getUIClassID() {
+        return uiClassID;
+    }
+
     public void updateUI() {
-        setUI(new ImageComponentUI(this));
+      boolean customUI = UIManager.getDefaults().get(uiClassID) != null;
+      setUI(customUI ? UIManager.getUI(this) : new ImageComponentUI(this));
     }
 
     private static class ImageDocumentImpl implements ImageDocument {
