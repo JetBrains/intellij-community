@@ -16,7 +16,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -33,7 +32,7 @@ class IndexConfiguration {
     new THashMap<>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<>();
   private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<>();
-  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<>(FileTypeManagerEx.FILE_TYPE_BY_NAME_HASHING_STRATEGY);
+  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<>();
   private volatile boolean myFreezed;
 
   <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {

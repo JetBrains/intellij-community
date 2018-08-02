@@ -31,7 +31,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,18 +57,7 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
   @NotNull
   private static Set<Module> buildDependents(@NotNull Module module) {
-    // optimization: String hash code is one field read
-    Set<Module> result = new THashSet<>(new TObjectHashingStrategy<Module>() {
-      @Override
-      public int computeHashCode(Module m) {
-        return m.getName().hashCode();
-      }
-
-      @Override
-      public boolean equals(Module o1, Module o2) {
-        return o1 == o2;
-      }
-    });
+    Set<Module> result = new THashSet<>();
     result.add(module);
 
     ModuleIndex index = getModuleIndex(module.getProject());
@@ -160,6 +148,6 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
 
   @Override
   public int hashCode() {
-    return myModule.getName().hashCode();
+    return myModule.hashCode();
   }
 }

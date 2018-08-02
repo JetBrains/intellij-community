@@ -18,7 +18,6 @@ package com.intellij.openapi.fileTypes.ex;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,19 +47,4 @@ public abstract class FileTypeManagerEx extends FileTypeManager{
   public abstract void fireFileTypesChanged();
 
   public abstract void fireBeforeFileTypesChanged();
-
-
-  public static final TObjectHashingStrategy<FileType> FILE_TYPE_BY_NAME_HASHING_STRATEGY = new FileTypeByNameHashingStrategy();
-  // optimization: piggy-back on constant-time String hash code
-  private static class FileTypeByNameHashingStrategy implements TObjectHashingStrategy<FileType> {
-    @Override
-    public int computeHashCode(FileType type) {
-      return type.getName().hashCode();
-    }
-
-    @Override
-    public boolean equals(FileType o1, FileType o2) {
-      return o1 == o2;
-    }
-  }
 }
