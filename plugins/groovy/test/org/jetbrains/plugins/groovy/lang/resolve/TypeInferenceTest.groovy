@@ -89,6 +89,10 @@ class TypeInferenceTest extends TypeInferenceTestBase {
     assertTrue(ref.type.equalsToText("int"))
   }
 
+  void 'test binding from inside closure'() {
+    doTest "list = ['a', 'b']; list.each { <caret>it }", JAVA_LANG_STRING
+  }
+
   void testGrvy1209() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy1209/A.groovy").element
     assertTrue(ref.type.equalsToText("java.lang.String"))
