@@ -19,7 +19,7 @@ import java.util.List;
  * ({@link GradleConnector#forProjectDirectory(File)}).
  * <p/>
  * That's why we need to provide special code which maps that directory to exact config file.
- * 
+ *
  * @author Denis Zhdanov
  * @since 7/16/13 3:43 PM
  */
@@ -46,13 +46,15 @@ public class GradleConfigLocator implements ExternalSystemConfigLocator {
     if (result != null) {
       return result;
     }
-    
+
     for (VirtualFile child : configPath.getChildren()) {
       String name = child.getName();
       if (!name.endsWith(GradleConstants.EXTENSION) || !name.endsWith(GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
         continue;
       }
-      if (!GradleConstants.SETTINGS_FILE_NAME.equals(name) && !child.isDirectory()) {
+      if (!GradleConstants.SETTINGS_FILE_NAME.equals(name) &&
+          !GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME.equals(name) &&
+          !child.isDirectory()) {
         return child;
       }
     }
