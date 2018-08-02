@@ -27,6 +27,7 @@ import com.intellij.testGuiFramework.remote.server.JUnitServer
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.transport.*
 import com.intellij.testGuiFramework.testCases.PluginTestCase.Companion.PLUGINS_INSTALLED
+import com.intellij.testGuiFramework.testCases.SystemPropertiesTestCase.Companion.SYSTEM_PROPERTIES
 import org.junit.Assert
 import org.junit.AssumptionViolatedException
 import org.junit.internal.runners.model.EachTestNotifier
