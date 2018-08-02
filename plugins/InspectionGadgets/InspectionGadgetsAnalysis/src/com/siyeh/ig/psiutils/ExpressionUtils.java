@@ -1291,7 +1291,12 @@ public class ExpressionUtils {
    * Flattens second+ polyadic's operand replaced with another polyadic expression of the same type to the parent's operands.
    * 
    * Otherwise reparse would produce different expression.
+   *
+   * @return the updated PsiExpression (probably the parent of an expression to replace if it was necessary to update the parent);
+   * or null if no special treatment of given expression is necessary (in this case you can just call
+   * {@code tracker.replace(expressionToReplace, replacement)}.
    */
+  @Nullable
   public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
                                                         PsiExpression replacement, 
                                                         CommentTracker tracker) {
