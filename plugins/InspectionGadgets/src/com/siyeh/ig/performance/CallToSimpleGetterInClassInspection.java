@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,9 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.InlineCallFix;
+import com.siyeh.ig.fixes.InlineGetterSetterCallFix;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,22 +37,6 @@ public class CallToSimpleGetterInClassInspection extends CallToSimpleGetterInCla
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new InlineOrDeleteCallFix(InspectionGadgetsBundle.message("call.to.simple.getter.in.class.inline.quickfix"));
-  }
-
-  private static class InlineOrDeleteCallFix extends InlineCallFix {
-    public InlineOrDeleteCallFix(String name) {
-      super(name);
-    }
-  
-    @Override
-    protected void inline(Project project, PsiReferenceExpression methodExpression, PsiMethod method) {
-      final PsiElement statement = methodExpression.getParent().getParent();
-      if (statement instanceof PsiExpressionStatement) {
-        statement.delete();
-      } else {
-        super.inline(project, methodExpression, method);
-      }
-    }
+    return new InlineGetterSetterCallFix(true);
   }
 }
