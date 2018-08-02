@@ -538,7 +538,7 @@ fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath:
     guiTestCase.logUIStep("Add a new application server")
     combobox(textApplicationServer)
     buttons(buttonNew)[1].click()
-    popupClick(serverKind)
+    popupMenu(serverKind).clickSearchedItem()
     guiTestCase.dialog(serverKind) {
       typeText(serverInstallPath)
       button(buttonOk).click()

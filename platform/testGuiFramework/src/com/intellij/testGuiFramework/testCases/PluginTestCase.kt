@@ -58,7 +58,7 @@ open class PluginTestCase : GuiTestCase() {
   fun installPlugins(vararg pluginNames: String) {
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Plugins")
+      popupMenu("Plugins").clickSearchedItem()
       dialog("Plugins") {
         button("Install JetBrains plugin...").click()
         dialog("Browse JetBrains Plugins ") browsePlugins@ {
@@ -77,7 +77,7 @@ open class PluginTestCase : GuiTestCase() {
   fun installPluginFromDisk(pluginPath: String, pluginName: String) {
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Plugins")
+      popupMenu("Plugins").clickSearchedItem()
       dialog("Plugins") {
         //Check if plugin has already been installed
         try {

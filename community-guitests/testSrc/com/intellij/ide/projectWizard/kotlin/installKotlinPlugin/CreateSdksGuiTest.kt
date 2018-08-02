@@ -17,13 +17,13 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
     logTestStep("Create a JDK on the path `${KotlinTestProperties.jdk_path}`")
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Project Defaults")
-      popupClick("Project Structure")
+      popupMenu("Project Defaults").clickSearchedItem()
+      popupMenu("Project Structure").clickSearchedItem()
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")
         actionButton("Add New SDK").click()
-        popupClick("JDK")
+        popupMenu("JDK").clickSearchedItem()
         logUIStep("Open `Select Home Directory for JDK` dialog")
         dialog("Select Home Directory for JDK") {
           actionButton("Refresh").click()
@@ -43,8 +43,8 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
     logTestStep("Create a Kotlin SDK")
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Project Defaults")
-      popupClick("Project Structure")
+      popupMenu("Project Defaults").clickSearchedItem()
+      popupMenu("Project Structure").clickSearchedItem()
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")
@@ -56,7 +56,7 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
         catch (e: ComponentLookupException){
           logUIStep("Going to create $kotlinSdk")
           actionButton("Add New SDK").click()
-          popupClick(kotlinSdk)
+          popupMenu(kotlinSdk).clickSearchedItem()
           logUIStep("Going to check whether $kotlinSdk created")
           jTree(kotlinSdk, timeout = 1L)
         }

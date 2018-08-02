@@ -311,16 +311,6 @@ fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: L
   }
   else throw unableToFindComponent("""JTable with cell text "$cellText"""")
 
-
-/**
- * Finds popup on screen with item (itemName) and clicks on it item
- *
- * @timeout timeout in seconds to find JTextComponent component
- * @throws ComponentLookupException if component has not been found or timeout exceeded
- */
-fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String, timeout: Long = defaultTimeout) =
-  popupMenu(itemName, timeout = timeout.toFestTimeout()).clickSearchedItem()
-
 fun popupMenu(
   item: String,
   robot: Robot,

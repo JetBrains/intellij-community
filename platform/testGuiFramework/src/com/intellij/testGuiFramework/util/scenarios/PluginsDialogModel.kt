@@ -99,7 +99,7 @@ fun PluginsDialogModel.installPluginFromDisk(pluginFileName: String){
   with(connectDialog()){
     guiTestCase.logUIStep("Press `Install plugin from disk`")
     actionButtonByClass("").click()
-    popupClick("Install Plugin from Disk...")
+    popupMenu("Install Plugin from Disk...").clickSearchedItem()
     guiTestCase.chooseFileInFileChooser(pluginFileName)
     pressOk()
     ensureButtonOkHasPressed()

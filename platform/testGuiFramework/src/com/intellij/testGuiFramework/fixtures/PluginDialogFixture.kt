@@ -10,10 +10,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelButton
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.impl.popupClick
-import com.intellij.testGuiFramework.impl.waitUntilFound
-import com.intellij.testGuiFramework.impl.waitUntilFoundList
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.ui.components.BasicOptionButtonUI.ArrowButton
 import com.intellij.ui.components.JBOptionButton
 import org.fest.swing.core.Robot
@@ -48,7 +45,7 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
   fun showInstallPluginFromDiskDialog() {
     val actionButton: ActionButton = waitUntilFound(findTabHeader(), ActionButton::class.java, defaultTimeout) { true }
     robot().click(actionButton)
-    popupClick("Install Plugin from Disk...")
+    popupMenu("Install Plugin from Disk...").clickSearchedItem()
   }
 
   fun installPluginFromDiskDialog(func: InstallPluginFromDiskFixture.() -> Unit) {
