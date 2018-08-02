@@ -199,6 +199,7 @@ public class NavigationGutterIconBuilder<T> {
 
   @NotNull
   protected NotNullLazyValue<Collection<? extends GotoRelatedItem>> getGotoTargets() {
+    if (myTargets == null) return NotNullLazyValue.createConstantValue(Collections.emptyList());
     return createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider, evaluateAndForget(myTargets));
   }
 
