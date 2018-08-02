@@ -84,8 +84,8 @@ public class JsonSchemaComplianceChecker {
         if (checkIfAlreadyProcessed(entry.getKey())) continue;
         String value = entry.getValue().getMessage();
         if (myMessagePrefix != null) value = myMessagePrefix + value;
-        LocalQuickFix fix = entry.getValue().createFix(myWalker.getQuickFixAdapter(myHolder.getProject()));
-        if (fix == null) {
+        LocalQuickFix[] fix = entry.getValue().createFixes(myWalker.getQuickFixAdapter(myHolder.getProject()));
+        if (fix.length == 0) {
           myHolder.registerProblem(entry.getKey(), value);
         }
         else {

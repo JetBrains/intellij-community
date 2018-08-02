@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 /**
  * An adapter for line handler
  */
+@Deprecated
 public class GitLineHandlerAdapter implements GitLineHandlerListener {
   /**
    * {@inheritDoc}

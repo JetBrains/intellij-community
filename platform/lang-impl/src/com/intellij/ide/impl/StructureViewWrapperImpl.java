@@ -2,6 +2,7 @@
 
 package com.intellij.ide.impl;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -23,6 +24,7 @@ import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -78,6 +80,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private Runnable myPendingSelection;
   private boolean myFirstRun = true;
+  private int myActivityCount;
 
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
@@ -87,24 +90,23 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component, true);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
-    final TimerListener timerListener = new TimerListener() {
-      @Override
-      public ModalityState getModalityState() {
-        return ModalityState.stateForComponent(component);
-      }
+    Timer timer = UIUtil.createNamedTimer("StructureView", REFRESH_TIME, event -> {
+      int count = ActivityTracker.getInstance().getCount();
+      if (count == myActivityCount) return;
 
-      @Override
-      public void run() {
-        loggedRun("check if update needed", StructureViewWrapperImpl.this::checkUpdate);
-      }
-    };
+      ModalityState state = ModalityState.stateForComponent(component);
+      if (ModalityState.current().dominates(state)) return;
+
+      boolean successful = loggedRun("check if update needed", this::checkUpdate);
+      if (successful) myActivityCount = count; // to check on the next turn
+    });
     LOG.debug("timer to check if update needed: add");
-    ActionManager.getInstance().addTimerListener(REFRESH_TIME, timerListener);
+    timer.start();
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
         LOG.debug("timer to check if update needed: remove");
-        ActionManager.getInstance().removeTimerListener(timerListener);
+        timer.stop();
       }
     });
 
@@ -172,7 +174,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       StructureViewModel model = myStructureView.getTreeModel();
       StructureViewTreeElement treeElement = model.getRoot();
       Object value = treeElement.getValue();
-      if (value == null || 
+      if (value == null ||
           value instanceof PsiElement && !((PsiElement)value).isValid() ||
           myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
         forceRebuild = true;
@@ -347,7 +349,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       myPendingSelection = null;
       selection.run();
     }
-
   }
 
   private void updateHeaderActions(StructureView structureView) {
@@ -410,14 +411,19 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
   }
 
-  private static void loggedRun(@NotNull String message, @NotNull Runnable task) {
+  private static boolean loggedRun(@NotNull String message, @NotNull Runnable task) {
     try {
       if (LOG.isTraceEnabled()) LOG.trace(message + ": started");
       task.run();
+      return true;
+    }
+    catch (ProcessCanceledException exception) {
+      LOG.debug(message, ": canceled");
+      return false;
     }
     catch (Throwable throwable) {
       LOG.warn(message, throwable);
-      throw throwable;
+      return false;
     }
     finally {
       if (LOG.isTraceEnabled()) LOG.trace(message + ": finished");

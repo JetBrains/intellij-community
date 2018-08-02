@@ -481,6 +481,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private static final ThreadLocalCachedValue<AppendStream> ourFlyweightAppenderStream = new ThreadLocalCachedValue<AppendStream>() {
+    @NotNull
     @Override
     protected AppendStream create() {
       return new AppendStream();

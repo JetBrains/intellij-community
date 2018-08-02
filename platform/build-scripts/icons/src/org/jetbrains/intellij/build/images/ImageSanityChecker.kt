@@ -132,7 +132,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
       }
       log(WARNING, "This icon should have both SVG and PNG versions, but was not found\n" +
                    "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module,
-          notFoundImagesIds.map { ImagePaths(it, module.sourceRoots.first()) })
+          notFoundImagesIds.map { ImagePaths(it, module.sourceRoots.first(), false) })
     }
 
     process(filteredImages, WARNING, "This icon should have both SVG and PNG versions\n" +

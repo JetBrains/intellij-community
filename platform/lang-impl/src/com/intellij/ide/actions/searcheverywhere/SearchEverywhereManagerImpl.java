@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -61,7 +62,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     Map<String, String> contributorsNames = new LinkedHashMap<>();
     myContributorFactories.forEach(factory -> {
       SearchEverywhereContributor contributor = factory.createContributor(initEvent);
-      myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter());
+      myContributorFilters.computeIfAbsent(contributor.getSearchProviderId(), s -> factory.createFilter(initEvent));
       contributors.add(contributor);
       contributorsNames.put(contributor.getSearchProviderId(), contributor.getGroupName());
     });
@@ -71,7 +72,9 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                                            List<String> ids = contributors.stream()
                                                                           .map(contributor -> contributor.getSearchProviderId())
                                                                           .collect(Collectors.toList());
-                                           return new SearchEverywhereContributorFilterImpl<>(ids, id -> contributorsNames.get(id), id -> null);
+                                           return new PersistentSearchEverywhereContributorFilter<>(ids,
+                                                                                                    SearchEverywhereConfiguration.getInstance(project),
+                                                                                                    id -> contributorsNames.get(id), id -> null);
                                          }
     );
 
@@ -122,11 +125,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       myBalloonFullSize = null;
     });
 
-    calcPositionAndShow(project, myBalloon);
     if (mySearchEverywhereUI.getViewType() == SearchEverywhereUI.ViewType.SHORT) {
       myBalloonFullSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
-      myBalloon.pack(false, true);
+      Dimension prefSize = mySearchEverywhereUI.getPreferredSize();
+      myBalloon.setSize(prefSize);
     }
+    calcPositionAndShow(project, myBalloon);
   }
 
   private void calcPositionAndShow(Project project, JBPopup balloon) {

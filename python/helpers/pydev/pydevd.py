@@ -12,7 +12,7 @@ import atexit
 import os
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, IS_PYCHARM, get_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV
 from _pydev_bundle import fix_getpass
@@ -42,7 +42,7 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_fram
     dummy_trace_dispatch, show_frame_eval_warning
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
-from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
+from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads, wrap_asyncio
 from pydevd_file_utils import get_fullname, rPath
 
 
@@ -1050,6 +1050,8 @@ class PyDB:
             send_message("threading_event", 0, t.getName(), get_thread_id(t), "thread", "start", file, 1, None, parent=get_thread_id(t))
 
         if self.asyncio_analyser is not None:
+            if IS_PY36_OR_GREATER:
+                wrap_asyncio()
             # we don't have main thread in asyncio graph, so we should add a fake event
             send_message("asyncio_event", 0, "Task", "Task", "thread", "stop", file, 1, frame=None, parent=None)
 

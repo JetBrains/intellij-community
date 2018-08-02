@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.InlineCallFix;
+import com.siyeh.ig.fixes.InlineGetterSetterCallFix;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,6 +38,6 @@ public class CallToSimpleSetterInClassInspection extends CallToSimpleSetterInCla
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new InlineCallFix(InspectionGadgetsBundle.message("call.to.simple.setter.in.class.inline.quickfix"));
+    return new InlineGetterSetterCallFix(false);
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.intellij.lang.annotations.Language;
 
 @SuppressWarnings("ALL")
 public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
@@ -17,40 +18,44 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package p; public class A2 {}");
     myFixture.addClass("package p; public class ArrayList {}");
     myFixture.addClass("package p1; public class ArrayList {}");
-    
-    myFixture.configureByText(StdFileTypes.JAVA, "\n" +
-                                                 "import java.util.*;\n" +
-                                                 "import p.*;\n" +
-                                                 "import p1.ArrayList;\n" +
-                                                 "import p1.ArrayList;\n" +
-                                                 "public class Optimize {\n" +
-                                                 "    Class[] c = {\n" +
-                                                 "            Collection.class,\n" +
-                                                 "            List.class,\n" +
-                                                 "            ArrayList.class,\n" +
-                                                 "            A1.class,\n" +
-                                                 "            A2.class\n" +
-                                                 "    };\n" +
-                                                 "}\n");
+
+    @Language("JAVA")
+    String text = "\n" +
+                  "import java.util.*;\n" +
+                  "import p.*;\n" +
+                  "import p1.ArrayList;\n" +
+                  "import p1.ArrayList;\n" +
+                  "public class Optimize {\n" +
+                  "    Class[] c = {\n" +
+                  "            Collection.class,\n" +
+                  "            List.class,\n" +
+                  "            ArrayList.class,\n" +
+                  "            A1.class,\n" +
+                  "            A2.class\n" +
+                  "    };\n" +
+                  "}\n";
+    myFixture.configureByText(StdFileTypes.JAVA, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
-    myFixture.checkResult("import p.*;\n" +
-                          "import p1.ArrayList;\n" +
-                          "\n" +
-                          "import java.util.*;\n" +
-                          "public class Optimize {\n" +
-                          "    Class[] c = {\n" +
-                          "            Collection.class,\n" +
-                          "            List.class,\n" +
-                          "            ArrayList.class,\n" +
-                          "            A1.class,\n" +
-                          "            A2.class\n" +
-                          "    };\n" +
-                          "}\n");
+    @Language("JAVA")
+    String result = "import p.*;\n" +
+                    "import p1.ArrayList;\n" +
+                    "\n" +
+                    "import java.util.*;\n" +
+                    "public class Optimize {\n" +
+                    "    Class[] c = {\n" +
+                    "            Collection.class,\n" +
+                    "            List.class,\n" +
+                    "            ArrayList.class,\n" +
+                    "            A1.class,\n" +
+                    "            A2.class\n" +
+                    "    };\n" +
+                    "}\n";
+    myFixture.checkResult(result);
   }
 
   public void testStaticImportsOrder() throws Exception {
@@ -63,40 +68,44 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
                        "    public static String Long;\n" +
                        "    public static String Field4;" +
                        "}");
-    
-    myFixture.configureByText(StdFileTypes.JAVA, "\n" +
-                                                 "import static p.C1.*;\n" +
-                                                 "import static p.C1.Byte;\n" +
-                                                 "import static p.C2.Long;\n" +
-                                                 "import static p.C2.*;\n" +
-                                                 "\n" +
-                                                 "public class Main {\n" +
-                                                 "    public static void main(String[] args) {\n" +
-                                                 "        System.out.println(Byte);\n" +
-                                                 "        System.out.println(Field2);\n" +
-                                                 "        System.out.println(Long);\n" +
-                                                 "        System.out.println(Field4);\n" +
-                                                 "    }\n" +
-                                                 "}");
+
+    @Language("JAVA")
+    String text = "\n" +
+                  "import static p.C1.*;\n" +
+                  "import static p.C1.Byte;\n" +
+                  "import static p.C2.Long;\n" +
+                  "import static p.C2.*;\n" +
+                  "\n" +
+                  "public class Main {\n" +
+                  "    public static void main(String[] args) {\n" +
+                  "        System.out.println(Byte);\n" +
+                  "        System.out.println(Field2);\n" +
+                  "        System.out.println(Long);\n" +
+                  "        System.out.println(Field4);\n" +
+                  "    }\n" +
+                  "}";
+    myFixture.configureByText(StdFileTypes.JAVA, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
-    myFixture.checkResult("import static p.C1.Byte;\n" +
-                          "import static p.C1.*;\n" +
-                          "import static p.C2.Long;\n" +
-                          "import static p.C2.*;\n" +
-                          "\n" +
-                          "public class Main {\n" +
-                          "    public static void main(String[] args) {\n" +
-                          "        System.out.println(Byte);\n" +
-                          "        System.out.println(Field2);\n" +
-                          "        System.out.println(Long);\n" +
-                          "        System.out.println(Field4);\n" +
-                          "    }\n" +
-                          "}");
+    @Language("JAVA")
+    String result = "import static p.C1.Byte;\n" +
+                    "import static p.C1.*;\n" +
+                    "import static p.C2.Long;\n" +
+                    "import static p.C2.*;\n" +
+                    "\n" +
+                    "public class Main {\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "        System.out.println(Byte);\n" +
+                    "        System.out.println(Field2);\n" +
+                    "        System.out.println(Long);\n" +
+                    "        System.out.println(Field4);\n" +
+                    "    }\n" +
+                    "}";
+    myFixture.checkResult(result);
   }
 
   public void testStaticImportOnMethodFromSuperClass() {
@@ -109,38 +118,42 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
                        "  public static void m3() {}\n" +
                        "  public static void m4() {}\n" +
                        "}");
-    
-     myFixture.configureByText(StdFileTypes.JAVA, "\n" +
-                                                 "import static p.A.m1;\n" +
-                                                 "import static p.A.m2;\n" +
-                                                 "import static p.B.m3;\n" +
-                                                 "import static p.B.m4;\n" +
-                                                 "\n" +
-                                                 "public class Main {\n" +
-                                                 "    public static void main(String[] args) {\n" +
-                                                 "      m1();\n" +
-                                                 "      m2();\n" +
-                                                 "      m3();\n" +
-                                                 "      m4();\n" +
-                                                 "    }\n" +
-                                                 "}");
+
+    @Language("JAVA")
+    String text = "\n" +
+                  "import static p.A.m1;\n" +
+                  "import static p.A.m2;\n" +
+                  "import static p.B.m3;\n" +
+                  "import static p.B.m4;\n" +
+                  "\n" +
+                  "public class Main {\n" +
+                  "    public static void main(String[] args) {\n" +
+                  "      m1();\n" +
+                  "      m2();\n" +
+                  "      m3();\n" +
+                  "      m4();\n" +
+                  "    }\n" +
+                  "}";
+    myFixture.configureByText(StdFileTypes.JAVA, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
-    myFixture.checkResult("import static p.A.*;\n" +
-                          "import static p.B.*;\n" +
-                          "\n" +
-                          "public class Main {\n" +
-                          "    public static void main(String[] args) {\n" +
-                          "      m1();\n" +
-                          "      m2();\n" +
-                          "      m3();\n" +
-                          "      m4();\n" +
-                          "    }\n" +
-                          "}");
+    @Language("JAVA")
+    String result = "import static p.A.*;\n" +
+                    "import static p.B.*;\n" +
+                    "\n" +
+                    "public class Main {\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "      m1();\n" +
+                    "      m2();\n" +
+                    "      m3();\n" +
+                    "      m4();\n" +
+                    "    }\n" +
+                    "}";
+    myFixture.checkResult(result);
   }
 
   public void testConflictingSingleImportUsedInReferenceQualifier() {

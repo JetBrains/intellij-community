@@ -55,7 +55,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("new.search.everywhere") && e.getProject() != null) {
-      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e);
+      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e, false);
     } else {
       super.actionPerformed(e);
     }

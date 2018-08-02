@@ -40,7 +40,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
-public class JUnitConfiguration extends JavaTestConfigurationBase {
+public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final byte FRAMEWORK_ID = 0x0;
 

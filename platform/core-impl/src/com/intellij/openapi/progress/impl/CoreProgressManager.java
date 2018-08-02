@@ -36,15 +36,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.CoreProgressManager");
 
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
-  private final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
+  private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
   private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
-  // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
+  // indicator -> threads which are running under this indicator.
   // THashMap is avoided here because of tombstones overhead
-  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>();
+  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>(); // guarded by threadsUnderIndicator
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
@@ -136,7 +136,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public boolean hasUnsafeProgressIndicator() {
-    return myCurrentUnsafeProgressCount.get() > 0;
+    return myUnsafeProgressCount.get() > 0;
   }
 
   @Override
@@ -513,19 +513,20 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    if (progress == null) myCurrentUnsafeProgressCount.incrementAndGet();
+    if (progress == null) myUnsafeProgressCount.incrementAndGet();
 
     try {
       ProgressIndicator oldIndicator = null;
       boolean set = progress != null && progress != (oldIndicator = getProgressIndicator());
       if (set) {
         Thread currentThread = Thread.currentThread();
-        setCurrentIndicator(currentThread, progress);
+        long threadId = currentThread.getId();
+        setCurrentIndicator(threadId, progress);
         try {
           registerIndicatorAndRun(progress, currentThread, oldIndicator, process);
         }
         finally {
-          setCurrentIndicator(currentThread, oldIndicator);
+          setCurrentIndicator(threadId, oldIndicator);
         }
       }
       else {
@@ -533,7 +534,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }
     finally {
-      if (progress == null) myCurrentUnsafeProgressCount.decrementAndGet();
+      if (progress == null) myUnsafeProgressCount.decrementAndGet();
     }
   }
 
@@ -550,11 +551,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     List<Set<Thread>> threadsUnderThisIndicator = new ArrayList<>();
     synchronized (threadsUnderIndicator) {
       for (ProgressIndicator thisIndicator = indicator; thisIndicator != null; thisIndicator = thisIndicator instanceof WrappedProgressIndicator ? ((WrappedProgressIndicator)thisIndicator).getOriginalProgressIndicator() : null) {
-        Set<Thread> underIndicator = threadsUnderIndicator.get(thisIndicator);
-        if (underIndicator == null) {
-          underIndicator = new SmartHashSet<>();
-          threadsUnderIndicator.put(thisIndicator, underIndicator);
-        }
+        Set<Thread> underIndicator = threadsUnderIndicator.computeIfAbsent(thisIndicator, __ -> new SmartHashSet<>());
         boolean alreadyUnder = !underIndicator.add(currentThread);
         threadsUnderThisIndicator.add(alreadyUnder ? null : underIndicator);
 
@@ -674,16 +671,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return modality != null ? modality : ModalityState.NON_MODAL;
   }
 
-  private static void setCurrentIndicator(@NotNull Thread currentThread, ProgressIndicator indicator) {
-    long id = currentThread.getId();
+  private static void setCurrentIndicator(long threadId, ProgressIndicator indicator) {
     if (indicator == null) {
-      currentIndicators.remove(id);
-      threadTopLevelIndicators.remove(id);
+      currentIndicators.remove(threadId);
+      threadTopLevelIndicators.remove(threadId);
     }
     else {
-      currentIndicators.put(id, indicator);
-      if (!threadTopLevelIndicators.containsKey(id)) {
-        threadTopLevelIndicators.put(id, indicator);
+      currentIndicators.put(threadId, indicator);
+      if (!threadTopLevelIndicators.containsKey(threadId)) {
+        threadTopLevelIndicators.put(threadId, indicator);
       }
     }
   }

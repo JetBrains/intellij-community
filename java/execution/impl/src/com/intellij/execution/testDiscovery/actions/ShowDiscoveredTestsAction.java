@@ -4,7 +4,7 @@ package com.intellij.execution.testDiscovery.actions;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -283,7 +283,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
       for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
         byte frameworkId =
-          ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
+          ((JavaTestConfigurationWithDiscoverySupport)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
         TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
           PsiClass[] testClassPsi = {null};
           PsiMethod[] testMethodPsi = {null};

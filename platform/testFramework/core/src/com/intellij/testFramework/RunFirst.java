@@ -21,10 +21,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that annotated class contains performance tests that are so sensitive to just-in-time fluctuations that they
+ * Indicates that annotated class contains tests that should be run first.
+ * For example such tests are so sensitive to just-in-time or GC fluctuations that they
  * need a specially controlled environment to run, with minimum effects from other tests. 
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface JITSensitive {
+public @interface RunFirst {
 }

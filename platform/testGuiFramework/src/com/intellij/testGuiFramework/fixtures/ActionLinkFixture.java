@@ -85,7 +85,7 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
         Collection<ActionLink> found = robot.finder().findAll(container, new GenericTypeMatcher<ActionLink>(ActionLink.class) {
           @Override
           protected boolean isMatching(@NotNull ActionLink actionLink) {
-            if (actionLink.isVisible()) {
+            if (actionLink.isVisible() && actionLink.isShowing()) {
               return actionLink.getText().equals(actionName);
             }
             return false;

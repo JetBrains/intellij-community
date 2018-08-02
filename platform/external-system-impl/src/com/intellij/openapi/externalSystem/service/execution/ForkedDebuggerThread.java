@@ -303,7 +303,10 @@ class ForkedDebuggerThread extends Thread {
         return (ConsoleViewImpl)myMainExecutionConsole;
       }
       if (myMainExecutionConsole instanceof DataProvider) {
-        return (ConsoleViewImpl)((DataProvider)myMainExecutionConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
+        Object consoleView = ((DataProvider)myMainExecutionConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
+        if (consoleView instanceof ConsoleViewImpl) {
+          return (ConsoleViewImpl)consoleView;
+        }
       }
       return null;
     }
