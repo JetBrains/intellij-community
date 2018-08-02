@@ -4,6 +4,7 @@ package git4idea.checkin;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -18,6 +19,7 @@ import java.util.Objects;
  * This will create two commits: commit with explicit file movements,
  * and commit with content modifications in these files and the rest of affected files
  */
+@ApiStatus.Experimental
 public abstract class GitCheckinExplicitMovementProvider {
   public static final ExtensionPointName<GitCheckinExplicitMovementProvider> EP_NAME =
     ExtensionPointName.create("Git4Idea.GitCheckinExplicitMovementProvider");
@@ -36,13 +38,27 @@ public abstract class GitCheckinExplicitMovementProvider {
   @NotNull
   public abstract String getCommitMessage(@NotNull String originalCommitMessage);
 
+
+  @Deprecated
+  @NotNull
+  public Collection<Movement> collectExplicitMovements(@NotNull Project project,
+                                                       @NotNull List<FilePath> beforePaths,
+                                                       @NotNull List<FilePath> afterPaths) {
+    throw new UnsupportedOperationException();
+  }
+
   /**
+   * @param isActualCommit Whether actual commit will be performed or it's an intermediate check to update UI
+   *
    * @return file movements, that should be committed explicitly
    */
   @NotNull
-  public abstract Collection<Movement> collectExplicitMovements(@NotNull Project project,
-                                                                @NotNull List<FilePath> beforePaths,
-                                                                @NotNull List<FilePath> afterPaths);
+  public Collection<Movement> collectExplicitMovements(@NotNull Project project,
+                                                       @NotNull List<FilePath> beforePaths,
+                                                       @NotNull List<FilePath> afterPaths,
+                                                       boolean isActualCommit) {
+    return collectExplicitMovements(project, beforePaths, afterPaths);
+  }
 
   public static class Movement {
     @NotNull private final FilePath myBeforePath;
