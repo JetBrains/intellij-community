@@ -17,6 +17,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -123,18 +124,42 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   }
 
   private void updateAndroidStudioMetrics(boolean allowed) {
-    ILogger logger = getAndroidLogger();
-    ScheduledExecutorService scheduler = JobScheduler.getScheduler();
-    // Update the settings & tracker based on allowed state, will initialize on first call.
-    UsageTracker.updateSettingsAndTracker(allowed, logger, scheduler);
 
+    // Update the settings & tracker based on allowed state, will initialize on first call.
+    boolean updated = false;
+    try {
+        if (allowed == AnalyticsSettings.getOptedIn()) {
+          updated = false;
+        } else {
+          AnalyticsSettings.setOptedIn(allowed);
+          AnalyticsSettings.saveSettings();
+          updated = true;
+        }
+    } catch (IOException e) {
+      getAndroidLogger().error(e, "Unable to update analytics settings");
+    }
+    if (updated) {
+      initializeAndroidStudioUsageTrackerAndPublisher();
+    }
+  }
+
+  public void initializeAndroidStudioUsageTrackerAndPublisher() {
+    ILogger logger = getAndroidLogger();
+
+    AnalyticsSettings.initialize(logger);
+
+    ScheduledExecutorService scheduler = JobScheduler.getScheduler();
+    try {
+      UsageTracker.initialize(scheduler);
+    } catch (Exception e) {
+      logger.error(e, "Unable to initialize analytics tracker");
+      return;
+    }
     // Update usage tracker maximums for long-lived process.
     UsageTracker.setMaxJournalTime(10, TimeUnit.MINUTES);
     UsageTracker.setMaxJournalSize(1000);
 
     ApplicationInfo application = ApplicationInfo.getInstance();
-
-    // Update the publisher based on settings updated above, will initialize on first call.
     AnalyticsPublisher.updatePublisher(logger, scheduler, application.getStrictVersion());
   }
 
