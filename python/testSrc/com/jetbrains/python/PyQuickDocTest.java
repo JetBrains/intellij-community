@@ -556,6 +556,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     doMultiFileCheckByHTML("numpy.py");
   }
 
+  // PY-31025
+  public void testGoogleDocstringWithReturnValueDescriptionWithoutType() {
+    checkHTMLOnly();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";
