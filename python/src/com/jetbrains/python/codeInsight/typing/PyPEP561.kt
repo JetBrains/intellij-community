@@ -5,9 +5,9 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -77,9 +77,36 @@ fun resolveModuleAtStubPackage(name: QualifiedName,
  * Filters resolved elements according to their import priority in sys.path and
  * [PEP 561](https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order) rules.
  */
-fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?): List<PsiElement> =
-  if (resolved.all(::isNamespacePackage)) resolved
-  else listOfNotNull(resolved.maxBy { resolvedElementPriority(it, module) })
+fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?): List<PsiElement> {
+  if (resolved.isEmpty()) return emptyList()
+
+  val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
+
+  if (groupedResults.containsKey(Priority.NAMESPACE_PACKAGE) &&
+      groupedResults.headMap(Priority.NAMESPACE_PACKAGE).isEmpty()) return groupedResults[Priority.NAMESPACE_PACKAGE]!!
+
+  groupedResults.remove(Priority.NAMESPACE_PACKAGE)
+
+  if (groupedResults.containsKey(Priority.STUB_PACKAGE) && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty()) {
+    // stub packages + next by priority
+    // because stub packages could be partial
+
+    val stub = groupedResults[Priority.STUB_PACKAGE]!!.first()
+
+    val nextResults = groupedResults.tailMap(Priority.STUB_PACKAGE)
+    if (nextResults.isNotEmpty() &&
+        getPyTyped(stub).let { it != null && VfsUtilCore.loadText(it, "partial\n".length + 1) == "partial\n" }) {
+      // +1 to length is to ensure that py.typed has exactly this content
+      val nextByPriority = nextResults.values.asSequence().drop(1).take(1).flatten().firstOrNull()
+      return listOfNotNull(stub, nextByPriority)
+    }
+
+    return listOfNotNull(stub)
+  }
+  else {
+    return listOf(groupedResults.values.first().first())
+  }
+}
 
 private fun contextLanguageLevel(context: PyQualifiedNameResolveContext): LanguageLevel {
   context.foothold?.also { return LanguageLevel.forElement(it) }
@@ -109,12 +136,12 @@ private fun isNamespacePackage(element: PsiElement): Boolean {
  * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].
  */
 private fun resolvedElementPriority(element: PsiElement, module: Module?) = when {
-  isNamespacePackage(element) -> -2
-  isUserFile(element, module) -> if (pyi(element)) 8 else 7
-  isInStubPackage(element, module) -> 6
-  isInTypeShed(element) -> 2
-  isInInlinePackage(element, module) -> 4
-  else -> 0
+  isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
+  isUserFile(element, module) -> if (pyi(element)) Priority.USER_STUB else Priority.USER_CODE
+  isInStubPackage(element, module) -> Priority.STUB_PACKAGE
+  isInTypeShed(element) -> Priority.TYPESHED
+  isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
+  else -> Priority.OTHER
 }
 
 private fun isUserFile(element: PsiElement, module: Module?) =
@@ -143,7 +170,7 @@ private fun isInInlinePackage(element: PsiElement, module: Module?): Boolean {
   val result = !pyi(element) &&
                (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) &&
                isPEP561Enabled(module) &&
-               isInInlinePackage((element as PsiFileSystemItem).virtualFile, element.project)
+               getPyTyped(element) != null
 
   element.putUserData(INLINE_PACKAGE_KEY, result)
   return result
@@ -168,18 +195,28 @@ private fun isPEP561Enabled(module: Module?): Boolean {
 /**
  * See [https://www.python.org/dev/peps/pep-0561/#packaging-type-information]
  */
-private fun isInInlinePackage(file: VirtualFile?, project: Project): Boolean {
-  if (file == null) return false
+private fun getPyTyped(element: PsiElement?): VirtualFile? {
+  if (element == null) return null
+  val file = if (element is PsiFileSystemItem) element.virtualFile else element.containingFile?.virtualFile
+  if (file == null) return null
 
-  val root = ProjectFileIndex.getInstance(project).getClassRootForFile(file) ?: return false
+  val root = ProjectFileIndex.getInstance(element.project).getClassRootForFile(file) ?: return null
   var current = if (file.isDirectory) file else file.parent
 
   while (current != null && current != root && current.isDirectory) {
     val pyTyped = current.findChild("py.typed")
-    if (pyTyped != null && !pyTyped.isDirectory) return true
+    if (pyTyped != null && !pyTyped.isDirectory) return pyTyped
 
     current = current.parent
   }
 
-  return false
+  return null
+}
+
+/**
+ * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].
+ * Order is important, see [filterTopPriorityResults].
+ */
+private enum class Priority {
+  USER_STUB, USER_CODE, STUB_PACKAGE, INLINE_PACKAGE, TYPESHED, OTHER, NAMESPACE_PACKAGE
 }

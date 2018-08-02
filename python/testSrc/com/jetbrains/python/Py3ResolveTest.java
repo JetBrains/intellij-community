@@ -769,4 +769,44 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testTypeShedInsteadPy() {
     assertResolvesTo(PyTargetExpression.class, "MINYEAR", "datetime.pyi");
   }
+
+  // PY-30942
+  public void testInlinePackageInsteadPartialStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("foo.py", element.getContainingFile().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testNoInlinePackageInsteadStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+        )
+    );
+  }
 }
