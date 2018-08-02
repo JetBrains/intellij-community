@@ -46,6 +46,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
@@ -66,8 +67,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -364,38 +365,32 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public final PsiElement[] getSelectedPSIElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
-    List<PsiElement> psiElements = new ArrayList<>();
+    List<PsiElement> result = new ArrayList<>();
     for (TreePath path : paths) {
-      PsiElement psiElement = getElementFromNode(path.getLastPathComponent());
-      ContainerUtil.addIfNotNull(psiElements, psiElement);
+      result.addAll(getElementsFromNode(path.getLastPathComponent()));
     }
-    return PsiUtilCore.toPsiElementArray(psiElements);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
-  @Nullable
-  public PsiElement getElementFromNode(@Nullable Object node) {
-    Object o = getValueFromNode(node);
-    if (o instanceof PsiElement) {
-      return ((PsiElement)o).isValid() ? (PsiElement)o : null;
-    }
-    else if (o instanceof VirtualFile) {
-      return PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o);
-    }
-    Object userObject = TreeUtil.getUserObject(node);
-    if (userObject instanceof RootsProvider) {
-      for (VirtualFile root : ((RootsProvider)userObject).getRoots()) {
-        PsiFileSystemItem item = PsiUtilCore.findFileSystemItem(myProject, root);
-        if (item != null) return item;
-      }
-    }
-    return null;
+  @NotNull
+  public List<PsiElement> getElementsFromNode(@Nullable Object node) {
+    Object value = getValueFromNode(node);
+    JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile ? JBIterable.of(value) :
+                       value instanceof Object[] ? JBIterable.of((Object[])value) :
+                       value instanceof Iterable ? JBIterable.from((Iterable<?>)value) :
+                       JBIterable.of(TreeUtil.getUserObject(node));
+    return it.flatten(o -> o instanceof RootsProvider ? ((RootsProvider)o).getRoots() : Collections.singleton(o))
+      .map(o -> o instanceof VirtualFile ? PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)o) : o)
+      .filter(PsiElement.class)
+      .filter(PsiElement::isValid)
+      .toList();
   }
 
-  /** @deprecated use {@link AbstractProjectViewPane#getElementFromNode(Object)}**/
+  /** @deprecated use {@link AbstractProjectViewPane#getElementsFromNode(Object)}**/
   @Deprecated
   @Nullable
-  public PsiElement getPSIElementFromNode(TreeNode node) {
-    return getElementFromNode((Object)node);
+  public PsiElement getPSIElementFromNode(@Nullable TreeNode node) {
+    return ContainerUtil.getFirstItem(getElementsFromNode(node));
   }
 
   @Nullable
@@ -670,7 +665,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         @Nullable
         @Override
         protected PsiElement getPsiElement(@NotNull TreePath path) {
-          return getElementFromNode(path.getLastPathComponent());
+          return ContainerUtil.getFirstItem(getElementsFromNode(path.getLastPathComponent()));
         }
 
         @Nullable
