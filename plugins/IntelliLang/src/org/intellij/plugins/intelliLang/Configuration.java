@@ -219,6 +219,11 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   @Override
+  public void noStateLoaded() {
+    loadState(new Element("state"));
+  }
+
+  @Override
   public void loadState(@NotNull final Element element) {
     myInjections.clear();
 
