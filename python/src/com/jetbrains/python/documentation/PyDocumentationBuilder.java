@@ -335,7 +335,7 @@ public class PyDocumentationBuilder {
         docStringExpression = addInheritedDocString(pyFunction, pyClass);
       }
       if (docStringExpression != null) {
-        formatParametersAndReturnValue(docStringExpression, pyFunction);
+        addFunctionSpecificSections(docStringExpression, pyFunction);
       }
     }
     else if (elementDefinition instanceof PyFile) {
@@ -356,7 +356,7 @@ public class PyDocumentationBuilder {
     }
   }
 
-  private void formatParametersAndReturnValue(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
+  private void addFunctionSpecificSections(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
     final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
 
     final List<PyCallableParameter> parameters = function.getParameters(myContext);
