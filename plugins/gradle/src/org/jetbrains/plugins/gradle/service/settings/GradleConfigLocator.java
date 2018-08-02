@@ -42,10 +42,14 @@ public class GradleConfigLocator implements ExternalSystemConfigLocator {
     if (result != null) {
       return result;
     }
+    result = configPath.findChild(GradleConstants.KOTLIN_DSL_SCRIPT_NAME);
+    if (result != null) {
+      return result;
+    }
     
     for (VirtualFile child : configPath.getChildren()) {
       String name = child.getName();
-      if (!name.endsWith(GradleConstants.EXTENSION)) {
+      if (!name.endsWith(GradleConstants.EXTENSION) || !name.endsWith(GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
         continue;
       }
       if (!GradleConstants.SETTINGS_FILE_NAME.equals(name) && !child.isDirectory()) {
