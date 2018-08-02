@@ -28,6 +28,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   public static final int OPEN_PROJECT_ASK = -1;
   public static final int OPEN_PROJECT_NEW_WINDOW = 0;
   public static final int OPEN_PROJECT_SAME_WINDOW = 1;
+  public static final int OPEN_PROJECT_SAME_WINDOW_ATTACH = 2;
 
   public enum ProcessCloseConfirmation {ASK, TERMINATE, DISCONNECT}
 

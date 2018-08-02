@@ -159,16 +159,18 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
 
       if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK && !isReopen) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, false, "Open Project");
-        if (!dialog.showAndGet()) {
+
+        final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
+
+        if (exitCode == -1) {
           return null;
         }
-        if (dialog.isReplace()) {
+        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
           if (!ProjectUtil.closeAndDispose(projectToClose)) {
             return null;
           }
         }
-        else if (dialog.isAttach()) {
+        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
           if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
             return null;
           }
