@@ -335,7 +335,7 @@ public abstract class GotoActionBase extends AnAction {
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
 
-  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt) {
+  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
@@ -351,7 +351,7 @@ public abstract class GotoActionBase extends AnAction {
     }
 
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-    String searchText = StringUtil.nullize(getInitialText(true, evnt).first);
+    String searchText = StringUtil.nullize(getInitialText(useEditorSelection, evnt).first);
     seManager.show(searchProviderID, searchText, evnt);
   }
 
