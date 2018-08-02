@@ -1628,6 +1628,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
         PsiUtil.setModifierProperty(newMethod, PsiModifier.DEFAULT, true);
       }
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.PUBLIC, false);
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.PRIVATE, false);
+      PsiUtil.setModifierProperty(newMethod, PsiModifier.PROTECTED, false);
     }
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
