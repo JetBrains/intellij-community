@@ -230,13 +230,13 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectName).click()
       shortcut(Key.TAB)
-      shortcut(Modifier.CONTROL + Key.X)
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
       typeText(projectPath)
       if(template.isNotEmpty() && basePackage.isNotEmpty()){
         // base package is set only for Command Line app template
         logUIStep("Set Base package to `$basePackage`")
         textfield(textBasePackage).click()
-        shortcut(Modifier.CONTROL + Key.X)
+        shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
         typeText(basePackage)
       }
       logUIStep("Close New Project dialog with Finish")
@@ -273,7 +273,7 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X)
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
@@ -335,7 +335,7 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
       // Field "Project location" is located under additional panel and has location [0,0], that's why we usually click into field "Project name"
       textfield(textProjectName).click()
       shortcut(Key.TAB)
-      shortcut(Modifier.CONTROL + Key.X)
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
@@ -382,7 +382,7 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: 
 
       logUIStep("Fill `$textProjectLocation` with `$projectPath`")
       textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X)
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
       typeText(projectPath)
 
       logUIStep("Close New Project dialog with Finish")
@@ -403,7 +403,7 @@ fun NewProjectDialogModel.createKotlinProject(projectPath: String, framework: St
 
       logUIStep("Fill $textProjectLocation with `$projectPath`")
       textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X)
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
       typeText(projectPath)
 
       logUIStep("Close New Project dialog with Finish")
@@ -437,7 +437,7 @@ fun NewProjectDialogModel.createKotlinMPProject(
 
       logUIStep("Type root module name `$moduleName`")
       textfield(textRootModuleName).click()
-      shortcut(Modifier.CONTROL + Key.A)
+      shortcut(Modifier.CONTROL + Key.A, Modifier.META + Key.A)
       typeText(moduleName)
       if (!isJvmIncluded) {
         logUIStep("No need JVM module, uncheck `$checkCreateJvmModule`")
@@ -451,7 +451,7 @@ fun NewProjectDialogModel.createKotlinMPProject(
       button(buttonNext).click()
       logUIStep("Type $textProjectLocation `$projectPath`")
       textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.A)
+      shortcut(Modifier.CONTROL + Key.A, Modifier.META + Key.A)
       typeText(projectPath)
       button(buttonFinish).click()
     }
@@ -512,7 +512,7 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X)
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
       typeText(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
