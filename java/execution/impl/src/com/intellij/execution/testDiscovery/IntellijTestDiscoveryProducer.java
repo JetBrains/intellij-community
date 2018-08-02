@@ -48,7 +48,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       });
     }
     catch (HttpRequests.HttpStatusException http) {
-      LOG.debug("No tests found for " + methodFqn);
+      LOG.debug("No tests found for " + methodFqn, http);
     }
     catch (IOException e) {
       LOG.debug(e);
