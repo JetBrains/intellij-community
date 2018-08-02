@@ -70,10 +70,10 @@ fun loadElement(chars: CharSequence): Element = loadElement(CharSequenceReader(c
 fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).detachRootElement()
+fun loadElement(stream: InputStream): Element = loadDocument(stream.bufferedReader()).detachRootElement()
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedReader()).detachRootElement()
+fun loadElement(path: Path): Element = loadElement(path.inputStream())
 
 fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
