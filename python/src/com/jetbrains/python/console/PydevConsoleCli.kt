@@ -6,8 +6,14 @@ package com.jetbrains.python.console
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.ParamsGroup
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonCommandLineState
+import com.jetbrains.python.sdk.PythonEnvUtil
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import java.io.File
 
 const val MODE_OPTION = "mode"
 const val MODE_OPTION_SERVER_VALUE = "server"
@@ -27,8 +33,8 @@ private fun getOptionString(name: String, value: Any): String = "--$name=$value"
  *
  * @see PythonHelper.CONSOLE
  */
-fun GeneralCommandLine.setupPythonConsoleScriptInClientMode(port: Int) {
-  initializePydevConsoleScriptGroup().appendClientModeParameters(port)
+fun GeneralCommandLine.setupPythonConsoleScriptInClientMode(sdk: Sdk, port: Int) {
+  initializePydevConsoleScriptGroup(PythonSdkFlavor.getFlavor(sdk)).appendClientModeParameters(port)
 }
 
 /**
@@ -37,20 +43,32 @@ fun GeneralCommandLine.setupPythonConsoleScriptInClientMode(port: Int) {
  * (*pydevconsole.py*) and parameters required for running it in the *server*
  * mode.
  *
+ * Updates Python path according to the flavor defined in [sdkAdditionalData].
+ *
+ * @param sdkAdditionalData the additional data where [PythonSdkFlavor] is taken
+ *                          from
  * @param port the optional port that Python console script will listen at
  *
  * @see PythonHelper.CONSOLE
  */
 @JvmOverloads
-fun GeneralCommandLine.setupPythonConsoleScriptInServerMode(port: Int? = null) {
-  initializePydevConsoleScriptGroup().appendServerModeParameters(port)
+fun GeneralCommandLine.setupPythonConsoleScriptInServerMode(sdkAdditionalData: SdkAdditionalData, port: Int? = null) {
+  initializePydevConsoleScriptGroup((sdkAdditionalData as? PythonSdkAdditionalData)?.flavor).appendServerModeParameters(port)
 }
 
-private fun GeneralCommandLine.initializePydevConsoleScriptGroup(): ParamsGroup {
+private fun GeneralCommandLine.initializePydevConsoleScriptGroup(pythonSdkFlavor: PythonSdkFlavor?): ParamsGroup {
   val group: ParamsGroup = parametersList.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT)?.apply { parametersList.clearAll() }
                            ?: parametersList.addParamsGroup(PythonCommandLineState.GROUP_SCRIPT)
 
-  PythonHelper.CONSOLE.addToGroup(group, this)
+  val pythonPathEnv = hashMapOf<String, String>()
+  PythonHelper.CONSOLE.addToPythonPath(pythonPathEnv)
+  val consolePythonPath = pythonPathEnv[PythonEnvUtil.PYTHONPATH]
+  // here we get Python console path for the system interpreter
+  // let us convert it to the project interpreter path
+  consolePythonPath?.split(File.pathSeparator)?.let { pythonPathList ->
+    pythonSdkFlavor?.initPythonPath(pythonPathList, false, environment) ?: PythonEnvUtil.addToPythonPath(environment, pythonPathList)
+  }
+  group.addParameter(PythonHelper.CONSOLE.asParamString())
 
   return group
 }

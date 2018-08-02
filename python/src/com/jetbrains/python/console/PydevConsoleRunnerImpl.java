@@ -355,7 +355,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       exeGroup.addParametersString(runParams.getInterpreterOptions());
     }
 
-    PydevConsoleCli.setupPythonConsoleScriptInClientMode(cmd, port);
+    PydevConsoleCli.setupPythonConsoleScriptInClientMode(cmd, sdk, port);
 
     return cmd;
   }
