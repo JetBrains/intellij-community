@@ -17,7 +17,9 @@ import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 
 /**
@@ -65,11 +67,13 @@ public class IdeaLogger extends Log4jBasedLogger {
     };
   }
 
-  public static @Nullable String getOurCompilationTimestamp() {
+  @Nullable
+  public static String getOurCompilationTimestamp() {
     return ourCompilationTimestamp;
   }
 
-  public static @NotNull ThrowableRenderer getThrowableRenderer() {
+  @NotNull
+  public static ThrowableRenderer getThrowableRenderer() {
     return ourThrowableRenderer;
   }
 
@@ -105,27 +109,30 @@ public class IdeaLogger extends Log4jBasedLogger {
 
     String detailString = StringUtil.join(details, "\n");
 
-    if (ourErrorsOccurred == null) {
-      String s = message != null && !message.isEmpty() ? "Error message is '" + message + "'" : "";
-      String mess = "Logger errors occurred. See IDEA logs for details. " + s;
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourErrorsOccurred = new Exception(mess + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
+    if (!detailString.isEmpty()) {
+      detailString = "\nDetails: " + detailString;
     }
 
-    myLogger.error(message + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
-    logErrorHeader();
+    if (ourErrorsOccurred == null) {
+      String mess = "Logger errors occurred. See IDEA logs for details. " +
+                    (StringUtil.isEmpty(message) ? "" : "Error message is '" + message + "'");
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourErrorsOccurred = new Exception(mess + detailString, t);
+    }
+    myLogger.error(message + detailString, t);
+    logErrorHeader(t);
   }
 
-  private void logErrorHeader() {
+  private void logErrorHeader(@Nullable Throwable t) {
     myLogger.error(ourApplicationInfoProvider.getInfo());
 
     if (ourCompilationTimestamp != null) {
       myLogger.error("Internal version. Compiled " + ourCompilationTimestamp);
     }
 
-    myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown"));
-    myLogger.error("VM: " + System.getProperties().getProperty("java.vm.name", "unknown"));
-    myLogger.error("Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
+    myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown")+
+                   "; VM: " + System.getProperties().getProperty("java.vm.name", "unknown") +
+                   "; Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
