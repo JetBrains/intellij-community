@@ -40,8 +40,6 @@ import java.awt.image.BufferedImage;
 public class ThumbnailComponentUI extends ComponentUI {
     @NonNls
     private static final String DOTS = "...";
-    @NonNls
-    private static final String THUMBNAIL_COMPONENT_ERROR_STRING = "ThumbnailComponent.errorString";
 
     private static final Color LINE_COLOR = new Color(0x8E, 0xA8, 0xCE);
     private static final Color PNG_COLOR = new Color(0x80, 0x00, 0x80);
@@ -50,11 +48,6 @@ public class ThumbnailComponentUI extends ComponentUI {
     private static final Color BMP_COLOR = new Color(0x00, 0x00, 0x80);
 
     private static final ThumbnailComponentUI ui = new ThumbnailComponentUI();
-
-    static {
-        UIManager.getDefaults().put(THUMBNAIL_COMPONENT_ERROR_STRING,
-                ImagesBundle.message("thumbnails.component.error.text"));
-    }
 
 
     public void paint(Graphics g, JComponent c) {
@@ -266,7 +259,7 @@ public class ThumbnailComponentUI extends ComponentUI {
     }
 
     private String getSubmnailComponentErrorString() {
-        return UIManager.getString(THUMBNAIL_COMPONENT_ERROR_STRING);
+        return ImagesBundle.message("thumbnails.component.error.text");
     }
 
     private static Font getSmallFont() {
