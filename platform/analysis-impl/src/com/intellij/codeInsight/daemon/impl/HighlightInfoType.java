@@ -287,7 +287,7 @@ public interface HighlightInfoType {
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof HighlightInfoTypeImpl)) return false;
 
       final HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
 
