@@ -291,7 +291,7 @@ public class Runner {
     Utils.cleanup();
   }
 
-  private static boolean install(String patch, String destPath, UpdaterUI ui, boolean backup) {
+  private static boolean install(String patch, String destPath, UpdaterUI ui, boolean doBackup) {
     try {
       PatchFileCreator.PreparationResult preparationResult;
       File backupDir;
@@ -318,7 +318,7 @@ public class Runner {
         Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
 
         backupDir = null;
-        if (backup) {
+        if (doBackup) {
           backupDir = Utils.getTempFile("backup");
           if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
         }
