@@ -3,6 +3,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.impl.popupMenu
 import com.intellij.ui.popup.PopupFactoryImpl
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -42,7 +43,7 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    */
   fun configuration(name: String): RunActionFixture {
     showPopup()
-    JBListPopupFixture.clickPopupMenuItem(name, false, null, myRobot, GuiTestUtil.SHORT_TIMEOUT)
+    myIde.popupMenu(name, GuiTestUtil.SHORT_TIMEOUT).clickSearchedItem()
     return RunActionFixture()
   }
 
@@ -62,7 +63,7 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
         //Close popup
         showPopup()
       }
-      JBListPopupFixture.clickPopupMenuItem(EDIT_CONFIGURATIONS, false, null, myRobot, GuiTestUtil.THIRTY_SEC_TIMEOUT)
+      myIde.popupMenu(EDIT_CONFIGURATIONS, GuiTestUtil.SHORT_TIMEOUT).clickSearchedItem()
     }
 
 

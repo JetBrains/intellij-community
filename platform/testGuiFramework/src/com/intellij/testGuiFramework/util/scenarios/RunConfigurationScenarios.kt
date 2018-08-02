@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.button
-import com.intellij.testGuiFramework.impl.popupClick
+import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.logTestStep
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
@@ -27,9 +27,13 @@ fun RunConfigurationScenarios.openRunConfiguration(vararg configuration: String)
       logTestStep("Going to check presence of run/debug configuration `$configurationName`")
       navigationBar {
         assert(exists { button(configurationName) }) { "Button `$configurationName` not found on Navigation bar" }
-        button(configurationName).click()
-        popupClick(RunConfigurationScenarios.Constants.editConfigurationMenuItem)
       }
+      GuiTestUtilKt.waitUntil("Menu item '${RunConfigurationScenarios.Constants.editConfigurationMenuItem}' is enabled", GuiTestUtil.LONG_TIMEOUT.duration().toInt()){
+        shortcut(Key.ESCAPE)
+        button(configurationName).click()
+        popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem, GuiTestUtil.NO_TIMEOUT).isSearchedItemEnable()
+      }
+      popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem).clickSearchedItem()
     }
   }
 }

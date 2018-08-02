@@ -16,15 +16,19 @@ import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.AsyncProcessIcon
+import org.fest.swing.core.GenericTypeMatcher
+import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.JLabelFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.fixture.JSpinnerFixture
 import org.fest.swing.fixture.JTextComponentFixture
 import org.fest.swing.timing.Timeout
+import org.junit.Assert
 import java.awt.Component
 import java.awt.Container
 import java.util.concurrent.TimeUnit
@@ -315,10 +319,41 @@ fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: L
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
 fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String, timeout: Long = defaultTimeout) =
+  popupMenu(itemName, timeout = timeout.toFestTimeout()).clickSearchedItem()
+
+fun popupMenu(
+  item: String,
+  robot: Robot,
+  root: Container? = null,
+  timeout: Timeout = GuiTestUtil.defaultTimeout.toFestTimeout(),
+  predicate: FinderPredicate = Predicate.equality
+): JBListPopupFixture{
+  val jbList = GuiTestUtil.waitUntilFound(
+    robot,
+    root,
+    object : GenericTypeMatcher<JBList<*>>(JBList::class.java) {
+      override fun isMatching(component: JBList<*>): Boolean {
+        return JBListPopupFixture(component, item, predicate, robot).isSearchedItemPresent()
+      }
+    },
+    timeout)
+  return JBListPopupFixture(jbList, item, predicate, robot)
+
+}
+
+fun <S, C : Component> ComponentFixture<S, C>.popupMenu(
+  item: String,
+  timeout: Timeout = GuiTestUtil.defaultTimeout.toFestTimeout(),
+  predicate: FinderPredicate = Predicate.equality
+): JBListPopupFixture {
   if (target() is Container) {
-    JBListPopupFixture.clickPopupMenuItem(itemName, false, target() as Container, robot(), timeout.toFestTimeout())
+    val root: Container? = GuiTestUtil.getRootContainer(target())
+    Assert.assertNotNull(root)
+    return popupMenu(item, robot(), root, timeout, predicate)
   }
-  else throw unableToFindComponent("Popup")
+  else throw unableToFindComponent("JBList with item '${item}' not found")
+}
+
 
 /**
  * Finds a LinkLabel component in hierarchy of context component by a link name and returns fixture for it.

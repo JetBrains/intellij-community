@@ -22,6 +22,8 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.impl.ComponentFixtureUtilsKt;
+import com.intellij.testGuiFramework.util.Predicate;
 import org.fest.swing.core.ComponentDragAndDrop;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
@@ -126,7 +128,7 @@ public class EditorFixture {
    * file open.
    *
    * @param trim        if true, trim whitespace around the line
-   * @param caret typically "^" which will insert "^" to indicate the
+   * @param caret       typically "^" which will insert "^" to indicate the
    *                    caret position. If null, the caret position is not shown.
    * @param selectBegin the text string to insert at the beginning of the selection boundary
    * @param selectEnd   the text string to insert at the end of the selection boundary
@@ -228,7 +230,7 @@ public class EditorFixture {
    * Returns the contents of the current file, or null if there is no
    * file open.
    *
-   * @param caret typically "^" which will insert "^" to indicate the
+   * @param caret       typically "^" which will insert "^" to indicate the
    *                    caret position. If null, the caret position is not shown.
    * @param selectBegin the text string to insert at the beginning of the selection boundary
    * @param selectEnd   the text string to insert at the end of the selection boundary
@@ -773,7 +775,9 @@ public class EditorFixture {
   @NotNull
   public EditorFixture invokeIntentionAction(@NotNull String labelPrefix) {
     invokeAction(EditorFixture.EditorAction.SHOW_INTENTION_ACTIONS);
-    JBListPopupFixture.Companion.clickPopupMenuItem(labelPrefix, true, null, robot, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    ComponentFixtureUtilsKt
+      .popupMenu(labelPrefix, robot, null, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT(), Predicate.INSTANCE.getEquality())
+      .clickSearchedItem();
     return this;
   }
 
