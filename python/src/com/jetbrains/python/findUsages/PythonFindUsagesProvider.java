@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class PythonFindUsagesProvider implements FindUsagesProvider {
   @Override
   public boolean canFindUsagesFor(@NotNull final PsiElement psiElement) {
-    if (PyMagicLiteralTools.isMagicLiteral(psiElement)) {
+    if (PyMagicLiteralTools.couldBeMagicLiteral(psiElement)) {
       return true;
     }
     return (psiElement instanceof PsiNamedElement) || (psiElement instanceof PyReferenceExpression);
