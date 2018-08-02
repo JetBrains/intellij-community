@@ -6,7 +6,7 @@ import com.intellij.testFramework.PlatformTestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.TreeSet;
+import java.util.HashSet;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,7 +40,7 @@ public class PlatformIconsAPITest extends PlatformTestCase {
     return str.toString();
   }
 
-  public static final TreeSet<String> PUBLIC_API_ICONS = new TreeSet<>(Arrays.asList(
+  public static final HashSet<String> PUBLIC_API_ICONS = new HashSet<>(Arrays.asList(
     "/actions/addFacesSupport.png",
     "/actions/AddMulticaret.png",
     "/actions/allLeft.png",
