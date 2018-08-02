@@ -333,7 +333,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         boolean hasValues = !ContainerUtil.isEmpty(values);
         if (type != null || hasValues || jsonSchemaObject.getDefault() != null) {
           builder = builder.withInsertHandler(
-            hasValues && values.stream().map(v -> v.getClass()).distinct().count() == 1 ?
+            !hasValues || values.stream().map(v -> v.getClass()).distinct().count() == 1 ?
             createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma) :
             createDefaultPropertyInsertHandler(true, insertComma));
         }
