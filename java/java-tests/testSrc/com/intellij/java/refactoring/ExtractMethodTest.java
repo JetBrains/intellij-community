@@ -17,6 +17,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -1158,7 +1159,8 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getSelectionModel().getLeadSelectionOffset()), PsiClass.class);
     assertNotNull(psiClass);
-    boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, null, psiClass.getContainingClass());
+    boolean success =
+      performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, null, psiClass.getContainingClass(), null);
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
@@ -1303,6 +1305,34 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testInterfaceMethodVisibility() throws Exception {
+    final String doesNotExist = "foo.bar.baz.DoesNotExist";
+    final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(getProject());
+
+    final List<String> nullables = nullManager.getNullables();
+    final List<String> notNulls = nullManager.getNotNulls();
+    final String defaultNullable = nullManager.getDefaultNullable();
+    final String defaultNotNull = nullManager.getDefaultNotNull();
+    try {
+      nullManager.setNullables(doesNotExist);
+      nullManager.setNotNulls(doesNotExist);
+      nullManager.setDefaultNullable(doesNotExist);
+      nullManager.setDefaultNotNull(doesNotExist);
+
+      configureByFile(BASE_PATH + getTestName(false) + ".java");
+      boolean success =
+        performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, null, null, PsiModifier.PUBLIC);
+      assertTrue(success);
+      checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    }
+    finally {
+      nullManager.setNullables(ArrayUtil.toStringArray(nullables));
+      nullManager.setNotNulls(ArrayUtil.toStringArray(notNulls));
+      nullManager.setDefaultNullable(defaultNullable);
+      nullManager.setDefaultNotNull(defaultNotNull);
+    }
+  }
+
   public void testBeforeCommentAfterSelectedFragment() throws Exception {
     doTest();
   }
@@ -1428,7 +1458,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
                                              int... disabledParams)
     throws PrepareFailedException, IncorrectOperationException {
     return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, returnType, makeStatic,
-                                newNameOfFirstParam, null, disabledParams);
+                                newNameOfFirstParam, null, null, disabledParams);
   }
 
   public static boolean performExtractMethod(boolean doRefactor,
@@ -1441,6 +1471,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
                                              boolean makeStatic,
                                              String newNameOfFirstParam,
                                              PsiClass targetClass,
+                                             @Nullable @PsiModifier.ModifierConstant String methodVisibility,
                                              int... disabledParams)
     throws PrepareFailedException, IncorrectOperationException {
     int startOffset = editor.getSelectionModel().getSelectionStart();
@@ -1474,6 +1505,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     if (doRefactor) {
       processor.testTargetClass(targetClass);
       processor.testPrepare(returnType, makeStatic);
+      if (methodVisibility != null) processor.setMethodVisibility(methodVisibility);
       processor.testNullability();
       if (disabledParams != null) {
         for (int param : disabledParams) {
