@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.PluginConflictReporter;
 import com.intellij.diagnostic.PluginException;
@@ -256,6 +257,11 @@ public class PluginManager extends PluginManagerCore {
     else {
       throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
     }
+  }
+
+  // return plugin mentioned in this exception (only if all plugins are initialized, to avoid stack overflow when exception is thrown during plugin init)
+  public static IdeaPluginDescriptor findPluginIfInitialized(@NotNull Throwable t) {
+    return arePluginsInitialized() ? getPlugin(IdeErrorsDialog.findPluginId(t)) : null;
   }
 
   private static class StartupAbortedException extends RuntimeException {

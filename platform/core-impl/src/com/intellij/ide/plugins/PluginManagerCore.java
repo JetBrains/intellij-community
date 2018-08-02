@@ -121,6 +121,10 @@ public class PluginManagerCore {
     return ourPlugins;
   }
 
+  static synchronized boolean arePluginsInitialized() {
+    return ourPlugins != null;
+  }
+
   public static synchronized void setPlugins(@NotNull IdeaPluginDescriptor[] descriptors) {
     ourPlugins = descriptors;
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.LogMessage;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -138,7 +137,7 @@ public class IdeaLogger extends Log4jBasedLogger {
                    "; Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
     
-    IdeaPluginDescriptor plugin = t == null ? null : PluginManager.getPlugin(IdeErrorsDialog.findPluginId(t));
+    IdeaPluginDescriptor plugin = t == null ? null : PluginManager.findPluginIfInitialized(t);
     if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
       myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
     }
