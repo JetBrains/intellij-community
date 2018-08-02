@@ -322,17 +322,19 @@ public final class CommentTracker {
     }
     else if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
       PsiElement parent = element.getParent();
-      ASTNode dot = ((CompositeElement)parent).findChildByRole(ChildRole.DOT);
-      if (dot != null) {
-        PsiElement nextSibling = dot.getPsi().getNextSibling();
-        if (nextSibling != null && nextSibling.getTextLength() == 0) {
-          nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(nextSibling);
+      if (element instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)parent).getQualifier() == element) {
+        ASTNode dot = ((CompositeElement)parent).findChildByRole(ChildRole.DOT);
+        if (dot != null) {
+          PsiElement nextSibling = dot.getPsi().getNextSibling();
+          if (nextSibling != null && nextSibling.getTextLength() == 0) {
+            nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(nextSibling);
+          }
+          while (nextSibling != null) {
+            nextSibling = markUnchanged(nextSibling).getNextSibling();
+          }
         }
-        while (nextSibling != null) {
-          nextSibling = markUnchanged(nextSibling).getNextSibling();
-        }
-        element = parent;
       }
+      element = parent;
     }
     grabComments(element);
   }

@@ -17,7 +17,7 @@ public class UnnecessarilyQualifiedInnerClassAccessFixTest extends IGQuickFixesT
       "}",
 
       "class X {\n" +
-      "  /*1*//*2*/ Y foo;\n" +
+      "  /*2*//*1*/ Y foo;\n" +
       "  \n" +
       "  class Y{}\n" +
       "}"
