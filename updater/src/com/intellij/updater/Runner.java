@@ -108,18 +108,18 @@ public class Runner {
         ui = new ConsoleUpdaterUI();
       }
 
+      boolean backup = !hasArgument(args, "no-backup");
       boolean success;
       if (!new File(destFolder).isDirectory()) {
         ui.showError("Invalid target directory: " + destFolder);
         success = false;
       }
       else if (!"batch-install".equals(args[0])) {
-        boolean backup = !hasArgument(args, "no-backup");
         success = install(jarFile, destFolder, ui, backup);
       }
       else {
         String[] patches = args[2].split(File.pathSeparator);
-        success = install(patches, destFolder, ui);
+        success = install(patches, destFolder, ui, backup);
       }
       System.exit(success ? 0 : 1);
     }
@@ -294,7 +294,7 @@ public class Runner {
   private static boolean install(String patch, String destPath, UpdaterUI ui, boolean doBackup) {
     try {
       PatchFileCreator.PreparationResult preparationResult;
-      File backupDir;
+      File backupDir = null;
       PatchFileCreator.ApplicationResult applicationResult;
 
       try {
@@ -317,7 +317,6 @@ public class Runner {
         List<ValidationResult> problems = preparationResult.validationResults;
         Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
 
-        backupDir = null;
         if (doBackup) {
           backupDir = Utils.getTempFile("backup");
           if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
@@ -387,11 +386,11 @@ public class Runner {
     }
   }
 
-  private static boolean install(String[] patches, String dest, UpdaterUI ui) {
+  private static boolean install(String[] patches, String dest, UpdaterUI ui, boolean backup) {
     try {
       List<File> patchFiles = new ArrayList<>(patches.length);
       File destDir = new File(dest);
-      File backupDir;
+      File backupDir = null;
 
       try {
         logger().info("Extracting patch files...");
@@ -408,13 +407,15 @@ public class Runner {
           ui.checkCancelled();
         }
 
-        backupDir = Utils.getTempFile("backup");
-        if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+        if (backup) {
+          backupDir = Utils.getTempFile("backup");
+          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
 
-        logger().info("Backing up files...");
-        ui.startProcess("Backing up files...");
-        ui.setProgressIndeterminate();
-        Utils.copyDirectory(destDir.toPath(), backupDir.toPath());
+          logger().info("Backing up files...");
+          ui.startProcess("Backing up files...");
+          ui.setProgressIndeterminate();
+          Utils.copyDirectory(destDir.toPath(), backupDir.toPath());
+        }
       }
       catch (OperationCancelledException e) {
         logger().warn("cancelled", e);
@@ -462,6 +463,9 @@ public class Runner {
         if (!needRestore) {
           message += ui.bold("No files were changed. Please retry applying the patch.");
         }
+        else if (backupDir == null) {
+          message += ui.bold("Files may be corrupted. Please reinstall the IDE.");
+        }
         else {
           message += ui.bold("Files may be corrupted. The patch will attempt to revert the changes.");
         }
@@ -471,7 +475,7 @@ public class Runner {
 
       ui.setDescription("");
 
-      if (!completed && needRestore) {
+      if (!completed && needRestore && backupDir != null) {
         logger().info("Reverting...");
         ui.startProcess("Reverting...");
         ui.setProgressIndeterminate();
