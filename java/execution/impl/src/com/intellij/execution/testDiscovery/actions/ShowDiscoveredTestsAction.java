@@ -384,9 +384,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
   @NotNull
   private static String methodSignature(@NotNull PsiMethod method) {
-    return method.getName() +
-           TestDiscoveryInstrumentationUtils.SEPARATOR +
-           ClassUtil.getAsmMethodSignature(method);
+    String tail = TestDiscoveryInstrumentationUtils.SEPARATOR + ClassUtil.getAsmMethodSignature(method);
+    return (method.isConstructor() ? "<init>" : method.getName()) + tail;
   }
 
   private static String getName(PsiClass c) {
