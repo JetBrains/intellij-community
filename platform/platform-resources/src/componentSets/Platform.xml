@@ -26,7 +26,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.FSRecords</implementation-class>
+      <interface-class>com.intellij.openapi.vfs.newvfs.persistent.FSRecords</interface-class>
+      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl</implementation-class>
     </component>
 
     <component>

@@ -68,9 +68,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private final BulkFileListener myPublisher;
-  protected final FSRecords myFSRecords;
+  protected final FSRecordsImpl myFSRecords;
 
-  public PersistentFSImpl(@NotNull MessageBus bus, @NotNull FSRecords fsRecords) {
+  public PersistentFSImpl(@NotNull MessageBus bus, @NotNull FSRecordsImpl fsRecords) {
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
     myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);

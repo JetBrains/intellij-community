@@ -36,7 +36,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 public class PersistentFsTest extends PlatformTestCase {
-  private static final FSRecords ourFSRecords = FSRecords.getInstance();
+  private static final FSRecordsImpl ourFSRecords = (FSRecordsImpl)FSRecords.getInstance();
 
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;

@@ -2,6 +2,7 @@
 package com.intellij.platform.onair.vfs;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.messages.MessageBus;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OnAirPersistentFS extends PersistentFSImpl {
-  public OnAirPersistentFS(@NotNull MessageBus bus, @NotNull FSRecords fsRecords) {
+  public OnAirPersistentFS(@NotNull MessageBus bus, @NotNull FSRecordsImpl fsRecords) {
     super(bus, fsRecords);
   }
 
