@@ -78,7 +78,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static final Condition<BaseInjection> LANGUAGE_INJECTION_CONDITION =
     o -> Language.findLanguageByID(o.getInjectedLanguageId()) != null;
 
-  @State(name = Configuration.COMPONENT_NAME, storages = @Storage("IntelliLang.xml"))
+  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
   public static class App extends Configuration {
     private final List<BaseInjection> myDefaultInjections;
     private final AdvancedConfiguration myAdvancedConfiguration;
@@ -112,7 +112,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
   }
 
-  @State(name = Configuration.COMPONENT_NAME, storages = @Storage("IntelliLang.xml"))
+  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
   public static class Prj extends Configuration {
 
     private final Configuration myParentConfiguration;
@@ -216,11 +216,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   public AdvancedConfiguration getAdvancedConfiguration() {
     throw new UnsupportedOperationException("getAdvancedConfiguration should not be called");
-  }
-
-  @Override
-  public void noStateLoaded() {
-    loadState(new Element("state"));
   }
 
   @Override
