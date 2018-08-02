@@ -77,7 +77,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   private static final String RUN_ALL_ACTION_TEXT = "Run All Affected Tests";
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(
       isEnabled(e.getProject()) &&
       (findMethodAtCaret(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
@@ -85,7 +85,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
 
@@ -328,7 +328,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
         return new ActionButton(new AnAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             listener.run();
           }
         }, presentation, "ShowDiscoveredTestsToolbar", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
