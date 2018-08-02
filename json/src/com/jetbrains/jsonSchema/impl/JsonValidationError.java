@@ -7,6 +7,7 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -25,6 +26,8 @@ public class JsonValidationError {
 
   public enum FixableIssueKind {
     MissingProperty,
+    MissingOneOfProperty,
+    MissingAnyOfProperty,
     ProhibitedProperty,
     NonEnumValue,
     ProhibitedType,
@@ -34,6 +37,14 @@ public class JsonValidationError {
 
   public interface IssueData {
 
+  }
+
+  public static class MissingOneOfPropsIssueData implements IssueData {
+    public final Collection<MissingMultiplePropsIssueData> myExclusiveOptions;
+
+    public MissingOneOfPropsIssueData(Collection<MissingMultiplePropsIssueData> options) {
+      myExclusiveOptions = options;
+    }
   }
 
   public static class MissingMultiplePropsIssueData implements IssueData {
@@ -115,18 +126,21 @@ public class JsonValidationError {
     return myFixableIssueKind;
   }
 
-  @Nullable
-  public LocalQuickFix createFix(@Nullable JsonLikePsiWalker.QuickFixAdapter quickFixAdapter) {
-    if (quickFixAdapter == null) return null;
+  @NotNull
+  public LocalQuickFix[] createFixes(@Nullable JsonLikePsiWalker.QuickFixAdapter quickFixAdapter) {
+    if (quickFixAdapter == null) return LocalQuickFix.EMPTY_ARRAY;
     switch (myFixableIssueKind) {
       case MissingProperty:
-        return new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData, quickFixAdapter);
+        return new AddMissingPropertyFix[]{new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData, quickFixAdapter)};
+      case MissingOneOfProperty:
+      case MissingAnyOfProperty:
+        return ((MissingOneOfPropsIssueData)myIssueData).myExclusiveOptions.stream().map(d -> new AddMissingPropertyFix(d, quickFixAdapter)).toArray(LocalQuickFix[]::new);
       case ProhibitedProperty:
-        return new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData, quickFixAdapter);
+        return new RemoveProhibitedPropertyFix[]{new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData, quickFixAdapter)};
       case NonEnumValue:
-        return new SuggestEnumValuesFix(quickFixAdapter);
+        return new SuggestEnumValuesFix[]{new SuggestEnumValuesFix(quickFixAdapter)};
       default:
-        return null;
+        return LocalQuickFix.EMPTY_ARRAY;
     }
   }
 }

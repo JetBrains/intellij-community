@@ -75,7 +75,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"enum\": [1,2,3,\"18\"]}}}";
     doTest(schema, "prop: 18");
     doTest(schema, "prop: 2");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [1, 2, 3, \\\"18\\\"]\">6</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: 1, 2, 3, \\\"18\\\"\">6</warning>");
   }
 
   @SuppressWarnings("Duplicates")
@@ -231,7 +231,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("JSON") final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "prop: off");
     doTest(schema, "prop: 12");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [\\\"off\\\", \\\"warn\\\", \\\"error\\\"]\">wrong</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"off\\\", \\\"warn\\\", \\\"error\\\"\">wrong</warning>");
   }
 
   @SuppressWarnings("Duplicates")
@@ -243,7 +243,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "prop: b");
     doTest(schema, "prop: c");
     doTest(schema, "prop: a");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [\\\"a\\\", \\\"b\\\"]\">d</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"a\\\", \\\"b\\\", \\\"c\\\"\">d</warning>");
   }
 
   @SuppressWarnings("Duplicates")
@@ -253,7 +253,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     subSchemas.add("{\"enum\": [1,2,3]}");
     @Language("JSON") final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "prop: <warning descr=\"Schema validation: Is not multiple of 2\">1</warning>");
-    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: [1, 2, 3]\">4</warning>");
+    doTest(schema, "prop: <warning descr=\"Schema validation: Value should be one of: 1, 2, 3\">4</warning>");
     doTest(schema, "prop: 2");
   }
 
@@ -282,7 +282,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
   public void testInnerObjectPropValueInArray() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"array\", \"items\": {\"enum\": [1,2,3]}}}}";
     doTest(schema, "prop:\n - 1\n - 3");
-    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Value should be one of: [1, 2, 3]\">out</warning>");
+    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Value should be one of: 1, 2, 3\">out</warning>");
   }
 
   public void testAllOfProperties() throws Exception {
@@ -290,7 +290,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
 //    doTest(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: [33, 44]\">null</warning>");
     doTest(schema, "first: true\nsecond: 44\n<warning descr=\"Schema validation: Property 'other' is not allowed\">other: 15</warning>");
-    doTest(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: [33, 44]\">12</warning>");
+    doTest(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: 33, 44\">12</warning>");
   }
 
   public void testWithWaySelection() throws Exception {
@@ -318,7 +318,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "Auto: <warning descr=\"Schema validation: Type is not allowed. Expected: number.\">no</warning>\n" +
                    "BAe: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">22</warning>\n" +
                    "Boloto: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">2</warning>\n" +
-                   "Cyan: <warning descr=\"Schema validation: Value should be one of: [\\\"test\\\", \\\"em\\\"]\">me</warning>\n");
+                   "Cyan: <warning descr=\"Schema validation: Value should be one of: \\\"test\\\", \\\"em\\\"\">me</warning>\n");
   }
 
   public void testPatternPropertiesFromIssue() throws Exception {
@@ -338,7 +338,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "p1: 1\n" +
                    "p2: 3\n" +
                    "a2: auto!\n" +
-                   "a1: <warning descr=\"Schema validation: Value should be one of: [\\\"auto!\\\"]\">moto!</warning>\n"
+                   "a1: <warning descr=\"Schema validation: Value should be one of: \\\"auto!\\\"\">moto!</warning>\n"
                    );
   }
 
