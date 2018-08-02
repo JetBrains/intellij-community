@@ -209,7 +209,7 @@ class TestDirectory extends TestPackage {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String dirName = data.getDirName();
     return dirName.isEmpty() ? ExecutionBundle.message("all.tests.scope.presentable.text") 
-                             : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(dirName, '/'));
+                             : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(FileUtil.toSystemIndependentName(dirName), '/'));
   }
 
   @Override
