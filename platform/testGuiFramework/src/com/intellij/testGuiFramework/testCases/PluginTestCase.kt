@@ -20,8 +20,6 @@ import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
-import com.intellij.testGuiFramework.remote.transport.RestartIdeAndResumeContainer
-import com.intellij.testGuiFramework.remote.transport.RestartIdeCause
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.fest.swing.exception.WaitTimedOutError
 import java.io.File
@@ -41,6 +39,7 @@ open class PluginTestCase : GuiTestCase() {
   }
 
   fun installPluginAndRestart(installPluginsFunction: () -> Unit) {
+    val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
     if (guiTestRule.getTestName() == GuiTestOptions.getResumeTestName() &&
         GuiTestOptions.getResumeInfo() == PLUGINS_INSTALLED) {
     }
@@ -48,7 +47,7 @@ open class PluginTestCase : GuiTestCase() {
       //if plugins are not installed yet
       installPluginsFunction()
       //send restart message and resume this test to the server
-      GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, RestartIdeAndResumeContainer(RestartIdeCause.PLUGIN_INSTALLED))) ?: throw Exception(
+      GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, PLUGINS_INSTALLED)) ?: throw Exception(
         "Unable to get the client instance to send message.")
       //wait until IDE is going to restart
       GuiTestUtilKt.waitUntil("IDE will be closed", timeoutInSeconds = 120) { false }
@@ -127,7 +126,4 @@ open class PluginTestCase : GuiTestCase() {
     println("$pluginName plugin has been installed")
   }
 
-  companion object {
-    const val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
-  }
 }

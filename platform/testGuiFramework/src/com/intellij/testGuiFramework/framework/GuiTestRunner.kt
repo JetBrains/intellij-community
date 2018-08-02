@@ -26,8 +26,6 @@ import com.intellij.testGuiFramework.remote.IdeProcessControlManager
 import com.intellij.testGuiFramework.remote.server.JUnitServer
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.transport.*
-import com.intellij.testGuiFramework.testCases.PluginTestCase.Companion.PLUGINS_INSTALLED
-import com.intellij.testGuiFramework.testCases.SystemPropertiesTestCase.Companion.SYSTEM_PROPERTIES
 import org.junit.Assert
 import org.junit.AssumptionViolatedException
 import org.junit.internal.runners.model.EachTestNotifier
@@ -116,20 +114,10 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
           sendRunTestCommand(method, testName, server)
         }
         if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
-          if (message.content !is RestartIdeAndResumeContainer) throw Exception(
-            "Transport exception: Message with type RESTART_IDE_AND_RESUME should have content type RestartIdeAndResumeContainer but has a ${message.content?.javaClass?.canonicalName}")
-          when (message.content.restartIdeCause) {
-            RestartIdeCause.PLUGIN_INSTALLED -> {
-              restartIde(server, getIdeFromMethod(method))
-              sendResumeTestCommand(method, server, PLUGINS_INSTALLED)
-            }
-            RestartIdeCause.RUN_WITH_SYSTEM_PROPERTIES -> {
-              if (message.content !is RunWithSystemPropertiesContainer) throw Exception(
-                "Transport exception: message.content caused by RUN_WITH_SYSTEM_PROPERTIES should have RunWithSystemPropertiesContainer type, but have: ${message.content.javaClass.canonicalName}")
-              restartIde(server, getIdeFromMethod(method), additionalJvmOptions = message.content.systemProperties)
-              sendResumeTestCommand(method, server, SYSTEM_PROPERTIES)
-            }
-          }
+          val additionalInfoLabel = message.content
+          if (additionalInfoLabel !is String) throw Exception("Additional info for a resuming test should have a String type!")
+          restartIde(server, getIdeFromMethod(method))
+          sendResumeTestCommand(method, server, additionalInfoLabel)
         }
       }
       catch (se: SocketException) {
@@ -147,11 +135,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     return runner.ide ?: getIdeFromAnnotation(method.declaringClass)
   }
 
-  /**
-   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
-   * By default set as an empty array – no additional JVM options
-   */
-  private fun restartIde(server: JUnitServer, ide: Ide, additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+  private fun restartIde(server: JUnitServer, ide: Ide) {
     //close previous IDE
     server.send(TransportMessage(MessageType.CLOSE_IDE))
     //await to close previous process
@@ -160,7 +144,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     //restart JUnitServer to let accept a new connection
     server.stopServer()
     //start a new one IDE
-    runIde(port = server.getPort(), ide = ide, additionalJvmOptions = additionalJvmOptions)
+    runIde(port = server.getPort(), ide = ide)
     server.start()
   }
 
@@ -228,17 +212,12 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     }
   }
 
-  /**
-   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
-   * By default set as an empty array – no additional JVM options
-   */
-  private fun runIde(port: Int, ide: Ide, additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+  private fun runIde(port: Int, ide: Ide) {
     val testClassNames = runner.getTestClassesNames()
     if (testClassNames.isEmpty()) throw Exception("Test classes are not declared.")
     runIdeLocally(port = port,
                   ide = ide,
-                  testClassNames = testClassNames,
-                  additionalJvmOptions = additionalJvmOptions)
+                  testClassNames = testClassNames)
   }
 
   companion object {

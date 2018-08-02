@@ -72,16 +72,9 @@ object GuiTestLocalLauncher {
     modulesList.module(TEST_GUI_FRAMEWORK_MODULE_NAME) ?: throw Exception("Unable to find module '$TEST_GUI_FRAMEWORK_MODULE_NAME'")
   }
 
-
-  /**
-   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
-   * By default set as an empty array – no additional JVM options
-   */
-  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0),
-                    port: Int = 0,
-                    testClassNames: List<String> = emptyList(),
-                    additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
-    val args = createArgs(ide = ide, port = port, testClassNames = testClassNames, additionalJvmOptions = additionalJvmOptions)
+  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0, testClassNames: List<String> = emptyList()) {
+    //todo: check that we are going to run test locally
+    val args = createArgs(ide = ide, port = port, testClassNames = testClassNames)
     return startIde(ide = ide, args = args)
   }
 
@@ -142,21 +135,14 @@ object GuiTestLocalLauncher {
   private fun startIdeAndWait(ide: Ide, args: List<String>) = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
 
 
-  /**
-   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
-   * By default set as an empty array – no additional JVM options
-   */
   private fun createArgs(ide: Ide,
                          mainClass: String = "com.intellij.idea.Main",
                          port: Int = 0,
-                         testClassNames: List<String>,
-                         additionalJvmOptions: Array<Pair<String, String>> = emptyArray()):
-    List<String> = createArgsBase(ide = ide,
-                                  mainClass = mainClass,
-                                  commandName = GuiTestStarter.COMMAND_NAME,
-                                  port = port,
-                                  testClassNames = testClassNames,
-                                  additionalJvmOptions = additionalJvmOptions)
+                         testClassNames: List<String>): List<String> = createArgsBase(ide = ide,
+                                                                                      mainClass = mainClass,
+                                                                                      commandName = GuiTestStarter.COMMAND_NAME,
+                                                                                      port = port,
+                                                                                      testClassNames = testClassNames)
 
   private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String> = createArgsBase(
     ide = ide,
@@ -169,22 +155,17 @@ object GuiTestLocalLauncher {
   /**
    * customVmOptions should contain a full VM options formatted items like: customVmOptions = listOf("-Dapple.laf.useScreenMenuBar=true", "-Dide.mac.file.chooser.native=false").
    * GuiTestLocalLauncher passed all VM options from test, that starts with "-Dpass."
-   *
-   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
-   * By default set as an empty array – no additional JVM options
    */
   private fun createArgsBase(ide: Ide,
                              mainClass: String,
                              commandName: String?,
                              firstStartClassName: String = "undefined",
                              port: Int,
-                             testClassNames: List<String>,
-                             additionalJvmOptions: Array<Pair<String, String>> = emptyArray()): List<String> {
+                             testClassNames: List<String>): List<String> {
     val customVmOptions = getCustomPassedOptions()
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultAndCustomVmOptions(ide, customVmOptions))
-      .plus(additionalJvmOptions.map { val (key, value) = it; "-D$key=$value" })
       .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
       .plus(composeClasspathJar(ide.ideType.mainModule, testClassNames))
