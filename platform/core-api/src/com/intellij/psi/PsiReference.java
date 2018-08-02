@@ -101,7 +101,7 @@ public interface PsiReference {
    * @param element the element to check target for.
    * @return true if the reference targets that element, false otherwise.
    */
-  boolean isReferenceTo(PsiElement element);
+  boolean isReferenceTo(@NotNull PsiElement element);
 
   /**
    * Returns the array of String, {@link PsiElement} and/or {@link LookupElement}

@@ -103,7 +103,7 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element == resolve();
   }
 

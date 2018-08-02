@@ -103,7 +103,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             throw new IncorrectOperationException();
         }
 
-        public boolean isReferenceTo(PsiElement element) {
+        public boolean isReferenceTo(@NotNull PsiElement element) {
             return false;
         }
 

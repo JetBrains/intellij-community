@@ -70,7 +70,7 @@ abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implemen
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getManager().areElementsEquivalent(resolve(), element);
   }
 

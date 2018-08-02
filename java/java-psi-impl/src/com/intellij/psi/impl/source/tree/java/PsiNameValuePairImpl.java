@@ -195,7 +195,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       }
 
       @Override
-      public boolean isReferenceTo(PsiElement element) {
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         return element instanceof PsiMethod && element.equals(resolve());
       }
 

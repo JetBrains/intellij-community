@@ -103,7 +103,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       }
 
       @Override
-      public boolean isReferenceTo(PsiElement element) {
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         if (!(element instanceof PsiNamedElement)) return false;
         PsiNamedElement namedElement = (PsiNamedElement)element;
         if (!getCanonicalText().equals(namedElement.getName())) return false;

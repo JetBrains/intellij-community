@@ -84,7 +84,7 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return false;
   }
 

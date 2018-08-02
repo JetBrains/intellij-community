@@ -68,7 +68,7 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
     return myFile;
   }
 
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     if (!(element instanceof IProperty)) {
       return false;
     }

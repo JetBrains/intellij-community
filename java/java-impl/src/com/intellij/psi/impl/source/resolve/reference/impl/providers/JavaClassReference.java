@@ -168,7 +168,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return (element instanceof PsiMember || element instanceof PsiPackage) && super.isReferenceTo(element);
   }
 

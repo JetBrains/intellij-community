@@ -52,7 +52,7 @@ abstract class SimpleAttributeReference implements PsiReference {
         return getTextRange().shiftRight(1);
     }
 
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
         if (this instanceof PsiPolyVariantReference) {
             final PsiPolyVariantReference reference = (PsiPolyVariantReference)this;
             final ResolveResult[] results = reference.multiResolve(false);

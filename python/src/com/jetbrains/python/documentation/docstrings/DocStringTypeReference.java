@@ -83,7 +83,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (myType instanceof PyImportedModuleType) {
       return element.equals(PyUtil.turnInitIntoDir(resolve()));
     }

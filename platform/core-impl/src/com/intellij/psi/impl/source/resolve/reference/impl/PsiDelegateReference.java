@@ -53,7 +53,7 @@ public class PsiDelegateReference implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myDelegate.isReferenceTo(element);
   }
 

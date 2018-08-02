@@ -502,7 +502,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
    @Override
-   public boolean isReferenceTo(PsiElement element) {
+   public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
       PsiElement resolveResult = resolve();

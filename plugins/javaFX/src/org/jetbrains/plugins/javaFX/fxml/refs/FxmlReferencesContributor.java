@@ -242,7 +242,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return myPosition instanceof XmlTag ? ((XmlTag)myPosition).getName() : ((XmlAttributeValue)myPosition).getValue();
       }
 
-      public boolean isReferenceTo(PsiElement element) {
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         return myReference.isReferenceTo(element) || getReferencedClass() == element;
       }
 

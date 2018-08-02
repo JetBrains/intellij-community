@@ -79,7 +79,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
       if (element instanceof SchemaPrefix && element.getContainingFile() == myElement.getContainingFile()) {
         final PsiElement e = resolve();
         if (e instanceof SchemaPrefix) {

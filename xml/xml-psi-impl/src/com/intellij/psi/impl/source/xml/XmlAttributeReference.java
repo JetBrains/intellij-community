@@ -96,7 +96,7 @@ public class XmlAttributeReference implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myAttribute.getManager().areElementsEquivalent(element, resolve());
   }
 

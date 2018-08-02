@@ -189,7 +189,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element instanceof PsiMethod && getManager().areElementsEquivalent(element, resolve());
   }
 
