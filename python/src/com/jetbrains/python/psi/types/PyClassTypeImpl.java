@@ -869,8 +869,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (isDefinition() || PyUtil.isObjectClass(cls)) return true;
 
     final List<String> slots = cls.getSlots(context);
+    final Condition<PyTargetExpression> isDefinedTarget = target -> name.equals(target.getName()) && target.hasAssignedValue();
+
     return slots == null ||
-           slots.contains(name) && cls.findClassAttribute(name, true, context) == null ||
+           slots.contains(name) && !ContainerUtil.exists(cls.getClassAttributesInherited(context), isDefinedTarget) ||
            cls.findProperty(name, true, context) != null;
   }
 
