@@ -7,6 +7,8 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.button
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
+import com.intellij.testGuiFramework.remote.transport.RestartIdeAndResumeContainer
+import com.intellij.testGuiFramework.remote.transport.RestartIdeCause
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
@@ -52,7 +54,8 @@ fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
     actionFunction()
     testCase.logTestStep("Restart IDE")
     //send restart message and resume this test to the server
-    GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, PLUGINS_INSTALLED)) ?: throw Exception(
+    GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, RestartIdeAndResumeContainer(
+      RestartIdeCause.PLUGIN_INSTALLED))) ?: throw Exception(
       "Unable to get the client instance to send message.")
     //wait until IDE is going to restart
     GuiTestUtilKt.waitUntil("IDE will be closed", timeoutInSeconds = 120) { false }
