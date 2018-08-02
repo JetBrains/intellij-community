@@ -32,17 +32,17 @@ public abstract class Node extends DefaultMutableTreeNode {
   private int myCachedTextHash;
 
   private byte myCachedFlags; // guarded by this; bit packed flags below:
-  static final byte EXCLUDED_MASK = 1<<3;
-  private static final byte UPDATED_MASK = 1<<4;
-  private static final byte FORCE_UPDATE_MASK = 1<<5;
 
   private static final byte CACHED_INVALID_MASK = 1;
   private static final byte CACHED_READ_ONLY_MASK = 1 << 1;
-  private static final byte READ_ONLY_COMPUTED_MASK = 1<<2;
+  private static final byte READ_ONLY_COMPUTED_MASK = 1 << 2;
+  static final byte EXCLUDED_MASK = 1 << 3;
+  private static final byte UPDATED_MASK = 1 << 4;
+  private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
 
   @MagicConstant(intValues = {
     CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
-    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_MASK})
+    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK})
   private @interface FlagConstant {}
 
   private synchronized boolean isFlagSet(@FlagConstant byte mask) {
@@ -117,10 +117,10 @@ public abstract class Node extends DefaultMutableTreeNode {
     if (isDataValid != cachedValid ||
         isReadOnly != cachedReadOnly ||
         myCachedTextHash != text.hashCode() ||
-        isFlagSet(FORCE_UPDATE_MASK)) {
+        isFlagSet(FORCE_UPDATE_REQUESTED_MASK)) {
       setFlag(CACHED_INVALID_MASK, !isDataValid);
       setFlag(CACHED_READ_ONLY_MASK, isReadOnly);
-      setFlag(FORCE_UPDATE_MASK, false);
+      setFlag(FORCE_UPDATE_REQUESTED_MASK, false);
 
       myCachedTextHash = text.hashCode();
       updateNotify();
@@ -137,7 +137,7 @@ public abstract class Node extends DefaultMutableTreeNode {
   }
 
   void forceUpdate() {
-    setFlag(FORCE_UPDATE_MASK, true);
+    setFlag(FORCE_UPDATE_REQUESTED_MASK, true);
   }
 
   /**

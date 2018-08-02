@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -260,7 +261,7 @@ public class VfsData {
       int offset = getOffset(id) * 2 + 1;
       while (true) {
         int oldInt = myIntArray.get(offset);
-        int updated = value ? (oldInt | mask) : (oldInt & ~mask);
+        int updated = BitUtil.set(oldInt, mask, value);
         if (myIntArray.compareAndSet(offset, oldInt, updated)) {
           return;
         }
