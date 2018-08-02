@@ -217,7 +217,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, result12 -> result12.equals(MergeResult.CANCEL) ? "Abort..." : null);
       request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, viewer -> {
-        String options[] = {"_Abort Patch", "_Skip File", "Continue Merge"};
+        String[] options = {"_Abort Patch", "_Skip File", "Continue Merge"};
         int result1 = MergeUtil.showConfirmDiscardChangesDialog(viewer.getComponent().getRootPane(), options, "Close Merge", XmlStringUtil.wrapInHtml(
           "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"));
         if (result1 == Messages.YES) {

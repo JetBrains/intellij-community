@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.openapi.ui.Messages.*;
 
@@ -139,43 +140,30 @@ public class MergeUtil {
       return customHandler.value(viewer);
     }
 
-    return showExitWithoutApplyingChangesDialog(viewer.getComponent(), request, context);
-  }
-
-  public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
-                                                             @NotNull MergeRequest request,
-                                                             @NotNull MergeContext context) {
     Couple<String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
-    String action = "Cancel Merge";
-    String message = null;
     if (customMessage != null) {
-      action = customMessage.first;
-      message = customMessage.second;
+      String action = customMessage.first;
+      String message = customMessage.second;
+      return confirmDiscardChanges(viewer.getComponent(), action, message);
     }
 
-    return confirmDiscardChanges(component, action, message);
+    return confirmDiscardChanges(viewer.getComponent(), "Cancel Merge");
   }
 
   public static boolean confirmDiscardChanges(@NotNull JComponent component,
-                                                  @NotNull String action,
-                                                  @Nullable String message) {
+                                              @NotNull String actionName) {
+    String message = "There are unsaved changes in the result file. Discard changes and " + actionName.toLowerCase(Locale.ENGLISH) + " anyway?";
+    String action = "Discard Changes and " + actionName;
+    return confirmDiscardChanges(component, action, message);
+  }
 
-    String exitAction;
-
-    if (message == null) {
-      message = "There are unsaved changes in the result file. Discard changes and " + action.toLowerCase() + " anyway?";
-      exitAction = "Discard Changes and " + action;
-      if (action.equals("Cancel Merge")) action = "Cancel File Merge";
-    }
-    else exitAction = action;
-
-    String[] options = {exitAction, "Continue Merge" };
-
-    return showConfirmDiscardChangesDialog(component, options, action, message) == YES;
+  public static boolean confirmDiscardChanges(@NotNull JComponent component, @NotNull String action, @NotNull String message) {
+    String title = action.equals("Cancel Merge") ? "Cancel File Merge" : action;
+    String[] options = {action, "Continue Merge"};
+    return showConfirmDiscardChangesDialog(component, options, title, message) == YES;
   }
 
   public static int showConfirmDiscardChangesDialog(@NotNull JComponent component, @NotNull String[] options, String title, String message) {
-
     if (canShowMacSheetPanel()) {
       return MessagesService.getInstance().showMessageDialog(null, component, "", message, options, options.length-1, 0, getQuestionIcon(), null, false);
     }

@@ -84,8 +84,10 @@ public class ApplyPatchMergeTool implements MergeTool {
           if (result == RESOLVED) {
             int unresolved = getUnresolvedCount();
             if (unresolved != 0 &&
-                !MergeUtil.confirmDiscardChanges(getComponent().getRootPane(), DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle.message("apply.patch.partially.resolved.changes.confirmation.message", unresolved)))
-            {
+                !MergeUtil.confirmDiscardChanges(getComponent().getRootPane(),
+                                                 DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                                 DiffBundle.message("apply.patch.partially.resolved.changes.confirmation.message",
+                                                                    unresolved))) {
               return;
             }
           }

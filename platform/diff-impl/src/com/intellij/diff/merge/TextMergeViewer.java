@@ -293,14 +293,15 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
           if ((result == LEFT || result == RIGHT) && myContentModified &&
-              !confirmDiscardChanges(myPanel.getRootPane(), result == LEFT ? "Accept Left" : "Accept Right", null)) {
+              !confirmDiscardChanges(myPanel.getRootPane(), result == LEFT ? "Accept Left" : "Accept Right")) {
             return;
           }
           if (result == RESOLVED) {
             if ((getChangesCount() > 0 || getConflictsCount() > 0) &&
-                !confirmDiscardChanges(myPanel.getRootPane(), DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                !confirmDiscardChanges(myPanel.getRootPane(),
+                                       DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
                                        DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message",
-                                                                getChangesCount(), getConflictsCount()))) {
+                                                          getChangesCount(), getConflictsCount()))) {
               return;
             }
           }
