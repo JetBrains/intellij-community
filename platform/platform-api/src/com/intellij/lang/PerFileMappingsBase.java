@@ -252,7 +252,13 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     @SuppressWarnings("deprecation")
     List<PerFileMappingState> list = PerFileMappingState.read(element, getValueAttribute());
     synchronized (myMappings) {
-      myDeferredMappings = list;
+      if (list.isEmpty()) {
+        myMappings.clear();
+        myDeferredMappings = null;
+      }
+      else {
+        myDeferredMappings = list;
+      }
     }
   }
 
