@@ -4,6 +4,8 @@ import com.intellij.openapi.diagnostic.Logger
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import org.apache.thrift.transport.TTransport
+import org.apache.thrift.transport.TTransportException
+import java.io.IOException
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 
@@ -38,7 +40,15 @@ abstract class TCumulativeTransport : TTransport() {
     pipedInputStream.close()
   }
 
-  final override fun read(buf: ByteArray, off: Int, len: Int): Int = pipedInputStream.read(buf, off, len)
+  @Throws(TTransportException::class)
+  final override fun read(buf: ByteArray, off: Int, len: Int): Int {
+    try {
+      return pipedInputStream.read(buf, off, len)
+    }
+    catch (e: IOException) {
+      throw TTransportException(TTransportException.UNKNOWN, e)
+    }
+  }
 
   companion object {
     val LOG = Logger.getInstance(TCumulativeTransport::class.java)

@@ -174,7 +174,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       try {
         return "PyCharm".equals(myClient.handshake());
       }
-      catch (TException e) {
+      catch (PyConsoleProcessFinishedException | TException e) {
         throw new RuntimeException(e);
       }
     }
@@ -501,7 +501,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     try {
       myClient.interrupt();
     }
-    catch (TException e) {
+    catch (PyConsoleProcessFinishedException | TException e) {
       LOG.error(e);
     }
   }
@@ -520,7 +520,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public PyDebugValue evaluate(String expression, boolean execute, boolean doTrunc) throws PyDebuggerException {
     if (myClient != null) {
       try {
-        // @alexander todo add specific exception to the method (previously processed by `checkError()`)
         List<DebugValue> debugValues = myClient.evaluate(expression);
         return createPyDebugValue(debugValues.iterator().next(), this);
       }
@@ -536,11 +535,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public XValueChildrenList loadFrame() throws PyDebuggerException {
     if (myClient != null) {
       try {
-        // @alexander todo add specific exception to the method (previously processed by `checkError()`)
         List<DebugValue> frame = myClient.getFrame();
         return parseVars(frame, null, this);
       }
-      catch (TException e) {
+      catch (PyConsoleProcessFinishedException | TException e) {
         throw new PyDebuggerException("Get frame from console failed", e);
       }
     }
@@ -564,12 +562,11 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           final int seq = getNextFullValueSeq();
           myCallbackHashMap.put(seq, pyAsyncValues);
 
-          // @alexander todo add specific exception to the method (previously processed by `checkError()`)
           myClient.loadFullValue(seq, evaluationExpressions);
 
           // previously `loadFullValue()` might return `List<PyDebugValue>` but this is no longer true
         }
-        catch (TException e) {
+        catch (PyConsoleProcessFinishedException | TException e) {
           for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
             PyDebugValue value = asyncValue.getDebugValue();
             XValueNode node = value.getLastNode();
@@ -591,9 +588,11 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
     if (myClient != null) {
       try {
-        // @alexander todo add specific exception to the method (previously processed by `checkError()`)
         List<DebugValue> ret = myClient.getVariable(GetVariableCommand.composeName(var));
         return parseVars(ret, var, this);
+      }
+      catch (PyConsoleProcessFinishedException e) {
+        throw new PyDebuggerException(e.getLocalizedMessage(), e);
       }
       catch (TException e) {
         throw new PyDebuggerException("Get variable from console failed", e);
@@ -619,10 +618,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       try {
         // NOTE: The actual change is being scheduled in the exec_queue in main thread
         // This method is async now
-        // @alexander todo add specific exception to the method (previously processed by `checkError()`)
         myClient.changeVariable(variable.getEvaluationExpression(), value);
       }
-      catch (TException e) {
+      catch (PyConsoleProcessFinishedException | TException e) {
         throw new PyDebuggerException("Get change variable", e);
       }
     }
@@ -678,7 +676,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       // though `connectToDebugger` returns "connect complete" string, let us just ignore it
       myClient.connectToDebugger(localPort, dbgOpts, extraEnvs);
     }
-    catch (TException e) {
+    catch (PyConsoleProcessFinishedException | TException e) {
       throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", e);
     }
   }
