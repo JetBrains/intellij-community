@@ -189,6 +189,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     //close
     actions.add(createCloseAction(contentDescriptor));
 
+    // Scroll to the end
+    actions.add(PyConsoleUtil.createScrollToEndAction(myConsoleView.getEditor()));
+
     // run action
     actions.add(
       new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),

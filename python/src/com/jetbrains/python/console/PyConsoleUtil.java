@@ -20,17 +20,19 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -233,6 +235,39 @@ public class PyConsoleUtil {
       .registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_MASK, consoleView.getConsoleEditor().getComponent());
     anAction.getTemplatePresentation().setVisible(false);
     return anAction;
+  }
+
+  private static class ScrollToEndAction extends ToggleAction implements DumbAware {
+    private final Editor myEditor;
+
+    public ScrollToEndAction(@NotNull final Editor editor) {
+      super(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+            ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"), AllIcons.RunConfigurations.Scroll_down);
+      myEditor = editor;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      Document document = myEditor.getDocument();
+      return document.getLineCount() == 0 || document.getLineNumber(myEditor.getCaretModel().getOffset()) == document.getLineCount() - 1;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      if (state) {
+        EditorUtil.scrollToTheEnd(myEditor);
+      }
+      else {
+        int lastLine = Math.max(0, myEditor.getDocument().getLineCount() - 1);
+        LogicalPosition currentPosition = myEditor.getCaretModel().getLogicalPosition();
+        LogicalPosition position = new LogicalPosition(Math.max(0, Math.min(currentPosition.line, lastLine - 1)), currentPosition.column);
+        myEditor.getCaretModel().moveToLogicalPosition(position);
+      }
+    }
+  }
+
+  public static AnAction createScrollToEndAction(@NotNull final Editor editor) {
+    return new ScrollToEndAction(editor);
   }
 }
 
