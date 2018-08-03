@@ -142,19 +142,31 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public PydevConsoleRunnerImpl(@NotNull final Project project,
                                 @NotNull Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
+                                @NotNull final String title,
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                 @NotNull Consumer<String> rerunAction, String... statementsToExecute) {
     myProject = project;
     mySdk = sdk;
-    myTitle = consoleType.getTitle();
+    myTitle = title;
     myWorkingDir = workingDir;
     myConsoleType = consoleType;
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
     myStatementsToExecute = statementsToExecute;
     myRerunAction = rerunAction;
+  }
+
+  public PydevConsoleRunnerImpl(@NotNull final Project project,
+                                @NotNull Sdk sdk,
+                                @NotNull final PyConsoleType consoleType,
+                                @Nullable final String workingDir,
+                                @NotNull Map<String, String> environmentVariables,
+                                @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                @NotNull Consumer<String> rerunAction, String... statementsToExecute) {
+    this(project, sdk, consoleType, consoleType.getTitle(), workingDir, environmentVariables, settingsProvider, rerunAction,
+         statementsToExecute);
   }
 
   public void setConsoleTitle(String consoleTitle) {
