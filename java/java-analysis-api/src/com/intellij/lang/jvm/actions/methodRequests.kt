@@ -51,3 +51,13 @@ fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )
 }
+
+fun setMethodParametersRequest(parameters: Iterable<Map.Entry<String, JvmType>>): ChangeParametersRequest =
+  SimpleChangeParametersRequest(parameters.map { expectedParameter(it.value, it.key) })
+
+private class SimpleChangeParametersRequest(private val parameters: List<ExpectedParameter>) : ChangeParametersRequest {
+  override fun getExpectedParameters(): List<ExpectedParameter> = parameters
+
+  override fun isValid(): Boolean = true
+
+}
