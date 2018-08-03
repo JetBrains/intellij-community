@@ -80,6 +80,10 @@ public class PlatformUtils {
     return is(IDEA_CE_PREFIX);
   }
 
+  /**
+   * @deprecated use {@code com.android.tools.idea.IdeInfo#isAndroidStudio} except in analytics and random platform tweaks.
+   */
+  @Deprecated
   public static boolean isAndroidStudio() {
     return is(STUDIO_PREFIX);
   }
