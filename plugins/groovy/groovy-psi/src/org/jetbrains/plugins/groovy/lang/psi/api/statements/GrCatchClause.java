@@ -3,13 +3,11 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-/**
- * @author ilyas
- */
-public interface GrCatchClause extends GrParameterListOwner {
+public interface GrCatchClause extends GroovyPsiElement {
 
   @Nullable
   GrParameter getParameter();

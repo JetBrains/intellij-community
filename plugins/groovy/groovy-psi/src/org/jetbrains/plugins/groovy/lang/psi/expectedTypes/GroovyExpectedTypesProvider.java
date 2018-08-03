@@ -94,7 +94,7 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
-      GrParameterListOwner parent = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
+      GrParameterListOwner parent = PsiTreeUtil.getParentOfType(returnStatement, GrParameterListOwner.class);
       if (parent instanceof GrMethod) {
         GrTypeElement typeElement = ((GrMethod)parent).getReturnTypeElementGroovy();
         if (typeElement != null) {

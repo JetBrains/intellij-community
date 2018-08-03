@@ -22,7 +22,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
@@ -57,6 +55,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author ilyas
@@ -487,8 +486,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       if (parameter.isOptional()) return false;
 
       GrParameterListOwner owner = PsiTreeUtil.getParentOfType(element, GrParameterListOwner.class);
-      if (!(owner instanceof GrClosableBlock || owner instanceof GrMethod)) return false;
-      return checkForMapParameters(owner);
+      return owner != null && checkForMapParameters(owner);
     }
   }
 

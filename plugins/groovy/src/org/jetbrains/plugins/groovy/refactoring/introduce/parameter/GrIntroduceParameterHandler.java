@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
@@ -122,7 +121,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     PsiElement place = initialInfo.getContext();
     final List<GrParameterListOwner> scopes = new ArrayList<>();
     while (true) {
-      final GrParameterListOwner parent = PsiTreeUtil.getParentOfType(place, GrMethod.class, GrClosableBlock.class);
+      final GrParameterListOwner parent = PsiTreeUtil.getParentOfType(place, GrParameterListOwner.class);
       if (parent == null) break;
       scopes.add(parent);
       place = parent;

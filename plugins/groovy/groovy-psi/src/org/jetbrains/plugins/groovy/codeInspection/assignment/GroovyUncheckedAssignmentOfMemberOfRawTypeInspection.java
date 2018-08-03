@@ -13,12 +13,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -53,7 +51,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       if (value != null) {
         final PsiType type = value.getType();
         if (type != null) {
-          final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
+          final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrParameterListOwner.class);
           if (owner instanceof PsiMethod) {
             final PsiMethod method = (PsiMethod)owner;
             if (!method.isConstructor()) {

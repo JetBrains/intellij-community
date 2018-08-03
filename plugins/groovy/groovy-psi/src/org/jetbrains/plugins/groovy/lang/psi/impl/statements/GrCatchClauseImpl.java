@@ -5,24 +5,21 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
-/**
- * @author ilyas
- */
-public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchClause {
+public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchClause, GrParametersOwner {
+
   public GrCatchClauseImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -56,23 +53,6 @@ public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchCl
 
     GrParameter parameter = getParameter();
     return parameter == null || ResolveUtil.processElement(processor, parameter, state);
-  }
-
-  @NotNull
-  @Override
-  public GrParameter[] getParameters() {
-    final GrParameter parameter = getParameter();
-    return parameter != null ? new GrParameter[]{parameter} : GrParameter.EMPTY_ARRAY;
-  }
-
-  @Override
-  public GrParameterList getParameterList() {
-    return null;
-  }
-
-  @Override
-  public boolean isVarArgs() {
-    throw new IncorrectOperationException("Catch clause cannot have varargs");
   }
 
   @Override

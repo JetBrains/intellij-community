@@ -5,21 +5,18 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInClause, GrParameterListOwner {
+public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInClause {
 
   public GrForInClauseImpl(@NotNull ASTNode node) {
     super(node);
@@ -37,23 +34,6 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
   @Override
   public GrParameter getDeclaredVariable() {
     return findChildByClass(GrParameter.class);
-  }
-
-  @NotNull
-  @Override
-  public GrParameter[] getParameters() {
-    final GrParameter declaredVariable = getDeclaredVariable();
-    return declaredVariable == null ? GrParameter.EMPTY_ARRAY : new GrParameter[]{declaredVariable};
-  }
-
-  @Override
-  public GrParameterList getParameterList() {
-    return null;
-  }
-
-  @Override
-  public boolean isVarArgs() {
-    throw new IncorrectOperationException("For in clause cannot have varargs");
   }
 
   @Override
