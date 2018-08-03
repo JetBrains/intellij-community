@@ -3,7 +3,7 @@ package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.testGuiFramework.util.logTestStep
@@ -35,7 +35,7 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
       val envVarsField = CustomConfigurationField(
         actionIsPresent = { model: RunConfigurationModel, title: String ->
           with(model.connectDialog()) {
-            model.guiTestCase.exists { textfield(title, timeout = 1) }
+            model.guiTestCase.exists { textfield(title, timeout = Timeouts.noTimeout) }
           }
         },
         actionSetValue = { model, title: String, value: String ->
@@ -74,12 +74,12 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
     fun RunConfigurationModel.isFieldPresent(): Boolean {
       with(connectDialog()) {
         return when (kind) {
-          RunConfigurationModel.FieldKind.Text -> guiTestCase.exists { textfield(title, timeout = 1) }
-          RunConfigurationModel.FieldKind.Check -> guiTestCase.exists { checkbox(title, timeout = 1) }
+          RunConfigurationModel.FieldKind.Text -> guiTestCase.exists { textfield(title, timeout = Timeouts.noTimeout) }
+          RunConfigurationModel.FieldKind.Check -> guiTestCase.exists { checkbox(title, timeout = Timeouts.noTimeout) }
           RunConfigurationModel.FieldKind.Choice -> TODO()
           RunConfigurationModel.FieldKind.List -> TODO()
           RunConfigurationModel.FieldKind.Tree -> TODO()
-          RunConfigurationModel.FieldKind.Combo -> guiTestCase.exists { combobox(title, timeout = 1) }
+          RunConfigurationModel.FieldKind.Combo -> guiTestCase.exists { combobox(title, timeout = Timeouts.noTimeout) }
           RunConfigurationModel.FieldKind.Custom -> custom?.actionIsPresent?.invoke(this@isFieldPresent, title)
                                                     ?: throw IllegalStateException(
                                                       "Handler for field '$title' not set")
@@ -162,7 +162,7 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
 val GuiTestCase.runConfigModel by RunConfigurationModel
 
 fun RunConfigurationModel.connectDialog(): JDialogFixture =
-  guiTestCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true, GuiTestUtil.defaultTimeout)
+  guiTestCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true, Timeouts.defaultTimeout)
 
 fun RunConfigurationModel.checkConfigurationExistsAndSelect(vararg configuration: String) {
   with(connectDialog()) {

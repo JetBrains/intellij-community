@@ -2,8 +2,8 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
@@ -194,7 +194,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, defaultTimeout)
+  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, Timeouts.defaultTimeout)
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 fun LibrariesSet.isSetEmpty() = isEmpty() || all { it.isEmpty() }
@@ -470,7 +470,7 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
   with(guiTestCase) {
     with(connectDialog()) {
       // Group `Java` always exists
-      val list: JListFixture = jList(groupJava, timeout = 2L)
+      val list: JListFixture = jList(groupJava, timeout = Timeouts.seconds05)
       logTestStep("Check ${group} is present in the New Project dialog")
       assert(list.contents().contains(group.toString())) {
         "${group} group is absent (may be plugin not installed or Community edition runs instead of Ultimate)"

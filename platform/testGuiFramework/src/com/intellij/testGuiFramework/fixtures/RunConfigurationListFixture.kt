@@ -2,7 +2,7 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.popupMenu
 import com.intellij.ui.popup.PopupFactoryImpl
 import org.fest.swing.core.Robot
@@ -43,7 +43,7 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    */
   fun configuration(name: String): RunActionFixture {
     showPopup()
-    myIde.popupMenu(name, GuiTestUtil.SHORT_TIMEOUT).clickSearchedItem()
+    myIde.popupMenu(name, Timeouts.minutes02).clickSearchedItem()
     return RunActionFixture()
   }
 
@@ -63,7 +63,7 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
         //Close popup
         showPopup()
       }
-      myIde.popupMenu(EDIT_CONFIGURATIONS, GuiTestUtil.SHORT_TIMEOUT).clickSearchedItem()
+      myIde.popupMenu(EDIT_CONFIGURATIONS, Timeouts.minutes02).clickSearchedItem()
     }
 
 

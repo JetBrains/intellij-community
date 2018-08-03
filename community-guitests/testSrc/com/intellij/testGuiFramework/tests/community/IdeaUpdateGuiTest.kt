@@ -2,6 +2,7 @@
 package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.testGuiFramework.framework.RunWithIde
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.impl.actionLink
 import com.intellij.testGuiFramework.impl.button
@@ -24,7 +25,7 @@ class IdeaUpdateGuiTest : SystemPropertiesTestCase() {
   @Test
   fun testIdeaUpdate() {
     restartIdeWithSystemProperties(arrayOf(Pair("idea.updates.url", customUpdatesXml.toString())))
-    welcomeFrame { actionLink("Events", timeout = 60).click() }
+    welcomeFrame { actionLink("Events", timeout = Timeouts.minutes01).click() }
     clickTextInJEditorPane()
     dialog("IDE and Plugin Updates") { button("Remind Me Later").click() }
   }

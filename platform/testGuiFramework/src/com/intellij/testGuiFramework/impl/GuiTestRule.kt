@@ -22,6 +22,7 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getFailedTestVideoDirPath
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
@@ -232,7 +233,7 @@ class GuiTestRule : TestRule {
       // We close all modal dialogs left over, because they block the AWT thread and could trigger a deadlock in the next test.
       val closedModalDialogSet = hashSetOf<Dialog>()
       try {
-        waitUntil("all modal dialogs will be closed", timeoutInSeconds = 10) {
+        waitUntil("all modal dialogs will be closed", timeout = Timeouts.seconds10) {
           val modalDialog: Dialog = getActiveModalDialog() ?: return@waitUntil true
           if (closedModalDialogSet.contains(modalDialog)) {
             //wait a second to let a dialog be closed
@@ -319,7 +320,7 @@ class GuiTestRule : TestRule {
   }
 
   fun closeAllProjects() {
-    waitUntil("close all projects", 120) {
+    waitUntil("close all projects", Timeouts.defaultTimeout) {
       val openProjects = ProjectManager.getInstance().openProjects
       runOnEdt {
         TransactionGuard.submitTransaction(ApplicationManager.getApplication(), Runnable {
@@ -346,7 +347,7 @@ class GuiTestRule : TestRule {
     } ?: false
 
     if (welcomeFrameShown) {
-      waitUntil("Welcome frame to show up", 120) {
+      waitUntil("Welcome frame to show up", Timeouts.defaultTimeout) {
         Frame.getFrames().any { it === WelcomeFrame.getInstance() && it.isShowing }
       }
     }

@@ -2,7 +2,7 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.button
 import com.intellij.testGuiFramework.impl.jList

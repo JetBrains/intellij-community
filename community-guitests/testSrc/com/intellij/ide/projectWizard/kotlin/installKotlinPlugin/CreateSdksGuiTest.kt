@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.kotlin.installKotlinPlugin
 
 import com.intellij.ide.projectWizard.kotlin.model.KotlinGuiTestCase
 import com.intellij.ide.projectWizard.kotlin.model.KotlinTestProperties
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
@@ -50,7 +51,7 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
         jList("SDKs").clickItem("SDKs")
         val kotlinSdk = "Kotlin SDK"
         try{
-          jTree(kotlinSdk, timeout = 1L)
+          jTree(kotlinSdk, timeout = Timeouts.noTimeout)
           logInfo("$kotlinSdk exists")
         }
         catch (e: ComponentLookupException){
@@ -58,7 +59,7 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
           actionButton("Add New SDK").click()
           popupMenu(kotlinSdk).clickSearchedItem()
           logUIStep("Going to check whether $kotlinSdk created")
-          jTree(kotlinSdk, timeout = 1L)
+          jTree(kotlinSdk, timeout = Timeouts.seconds05)
         }
         finally {
           logUIStep("Close `$dialogName` dialog with OK")

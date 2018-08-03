@@ -4,6 +4,7 @@ package com.intellij.testGuiFramework.fixtures.extended
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException
 import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
@@ -97,7 +98,7 @@ open class ExtendedJTreePathFixture(
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeoutInSeconds = 2) {
+        GuiTestUtilKt.waitUntil(condition = "correct path to click is found", timeout = Timeouts.seconds02) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
               .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())

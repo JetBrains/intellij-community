@@ -2,7 +2,7 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
-import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -55,7 +55,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
           }
           return false
         }
-      }, GuiTestUtil.LONG_TIMEOUT)
+      }, Timeouts.minutes05)
 
       for (frame in Frame.getFrames()) {
         if (frame is FlatWelcomeFrame && frame.isShowing()) {

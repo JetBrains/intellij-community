@@ -3,7 +3,7 @@ package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
@@ -23,14 +23,14 @@ class PluginsDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
 val GuiTestCase.pluginsDialogModel: PluginsDialogModel by PluginsDialogModel
 
 fun PluginsDialogModel.connectDialog(): JDialogFixture =
-    testCase.dialog("Plugins", true, defaultTimeout)
+    testCase.dialog("Plugins", true, Timeouts.defaultTimeout)
 
 fun PluginsDialogModel.isPluginInstalled(pluginName: String): Boolean {
   val result = try {
     with(testCase) {
       logTestStep("Search `$pluginName` plugin")
       val dialog = connectDialog()
-      dialog.table(pluginName, timeout = 1L).cell(pluginName).click()
+      dialog.table(pluginName, timeout = Timeouts.seconds05).cell(pluginName).click()
     }
     true
   }
@@ -49,7 +49,7 @@ fun PluginsDialogModel.getPluginVersion(pluginName: String): String {
     with(testCase) {
       logTestStep("Search `$pluginName` plugin")
       val dialog = connectDialog()
-      dialog.table(pluginName, timeout = 1L).cell(pluginName).click()
+      dialog.table(pluginName, timeout = Timeouts.seconds05).cell(pluginName).click()
       logUIStep("Get installed version of `$pluginName` plugin")
       dialog.label("Version").text()?.removePrefix("version:")?.trim() ?: ""
     }
@@ -67,7 +67,7 @@ fun PluginsDialogModel.getPluginButton(pluginName: String, buttonName: String): 
     with(testCase) {
       logTestStep("Search `$pluginName` plugin")
       val dialog = connectDialog()
-      dialog.table(pluginName, timeout = 1L).cell(pluginName).click()
+      dialog.table(pluginName, timeout = Timeouts.seconds05).cell(pluginName).click()
       logUIStep("Search `$buttonName` button")
       dialog.button(buttonName)
     }
@@ -111,8 +111,8 @@ fun PluginsDialogModel.ensureButtonOkHasPressed() {
   try {
     testCase.logTestStep("Check that `Plugins` dialog closed")
     GuiTestUtilKt.waitUntilGone(robot = testCase.robot(),
-        timeoutInSeconds = 2,
-        matcher = GuiTestUtilKt.typeMatcher(
+                                timeout = Timeouts.seconds05,
+                                matcher = GuiTestUtilKt.typeMatcher(
             JDialog::class.java) { it.isShowing && it.title == dialogTitle })
   }
   catch (timeoutError: WaitTimedOutError) {

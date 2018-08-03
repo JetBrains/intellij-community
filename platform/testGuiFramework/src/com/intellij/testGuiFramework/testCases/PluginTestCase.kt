@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.testCases
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
@@ -51,7 +52,7 @@ open class PluginTestCase : GuiTestCase() {
       GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, RestartIdeAndResumeContainer(RestartIdeCause.PLUGIN_INSTALLED))) ?: throw Exception(
         "Unable to get the client instance to send message.")
       //wait until IDE is going to restart
-      GuiTestUtilKt.waitUntil("IDE will be closed", timeoutInSeconds = 120) { false }
+      GuiTestUtilKt.waitUntil("IDE will be closed", timeout = Timeouts.defaultTimeout) { false }
     }
   }
 
@@ -81,7 +82,7 @@ open class PluginTestCase : GuiTestCase() {
       dialog("Plugins") {
         //Check if plugin has already been installed
         try {
-          table(pluginName, timeout = 1L).cell(pluginName).click()
+          table(pluginName, timeout = Timeouts.seconds05).cell(pluginName).click()
           button("OK").click()
           ensureButtonOkHasPressed(this@PluginTestCase)
         }
@@ -93,7 +94,7 @@ open class PluginTestCase : GuiTestCase() {
         }
       }
       try {
-        message("IDE and Plugin Updates", timeout = 5L) {
+        message("IDE and Plugin Updates", timeout = Timeouts.seconds05) {
           button("Postpone").click()
         }
       }
@@ -106,7 +107,7 @@ open class PluginTestCase : GuiTestCase() {
     val dialogTitle = "Plugins"
     try {
       GuiTestUtilKt.waitUntilGone(robot = guiTestCase.robot(),
-                                  timeoutInSeconds = 2,
+                                  timeout = Timeouts.seconds05,
                                   matcher = GuiTestUtilKt.typeMatcher(
                                     JDialog::class.java) { it.isShowing && it.title == dialogTitle })
     }

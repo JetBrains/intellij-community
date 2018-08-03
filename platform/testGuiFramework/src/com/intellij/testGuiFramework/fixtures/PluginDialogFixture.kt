@@ -6,10 +6,10 @@ import com.intellij.ide.plugins.PluginManagerConfigurableNew.CellPluginComponent
 import com.intellij.ide.plugins.PluginManagerConfigurableNew.TabHeaderComponent
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelButton
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.ui.components.BasicOptionButtonUI.ArrowButton
 import com.intellij.ui.components.JBOptionButton
@@ -43,14 +43,14 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
   }
 
   fun showInstallPluginFromDiskDialog() {
-    val actionButton: ActionButton = waitUntilFound(findTabHeader(), ActionButton::class.java, defaultTimeout) { true }
+    val actionButton: ActionButton = waitUntilFound(findTabHeader(), ActionButton::class.java, Timeouts.defaultTimeout) { true }
     robot().click(actionButton)
     popupMenu("Install Plugin from Disk...").clickSearchedItem()
   }
 
   fun installPluginFromDiskDialog(func: InstallPluginFromDiskFixture.() -> Unit) {
     val installPluginFromDiskDialog: JDialog =
-      waitUntilFound(target(), JDialog::class.java, defaultTimeout) { it.title == "Choose Plugin File" }
+      waitUntilFound(target(), JDialog::class.java, Timeouts.defaultTimeout) { it.title == "Choose Plugin File" }
     func(InstallPluginFromDiskFixture(robot(), installPluginFromDiskDialog))
   }
 
@@ -59,27 +59,27 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
   fun cancel() = findAndClickCancelButton(this)
 
   fun findPluginsAppearedOnTheScreen(): Iterable<IdeaPluginDescriptor> =
-    waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java, defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
+    waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java, Timeouts.defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
 
   private fun findCheckBox(pluginName: String) =
-    waitUntilFound(findCellPluginComponent(pluginName), JCheckBox::class.java, defaultTimeout) { true }
+    waitUntilFound(findCellPluginComponent(pluginName), JCheckBox::class.java, Timeouts.defaultTimeout) { true }
 
   private fun findTabHeader(): TabHeaderComponent =
-    waitUntilFound(target(), TabHeaderComponent::class.java, defaultTimeout) { true }
+    waitUntilFound(target(), TabHeaderComponent::class.java, Timeouts.defaultTimeout) { true }
 
   private fun findPluginCardsPanel(): ConfigurableCardPanel =
-    waitUntilFound(target(), ConfigurableCardPanel::class.java, defaultTimeout) { true }
+    waitUntilFound(target(), ConfigurableCardPanel::class.java, Timeouts.defaultTimeout) { true }
 
   private fun findCellPluginComponent(pluginName: String): CellPluginComponent =
-    waitUntilFound(findPluginCardsPanel(), CellPluginComponent::class.java, defaultTimeout) { it.isShowing && it.pluginDescriptor.name == pluginName }
+    waitUntilFound(findPluginCardsPanel(), CellPluginComponent::class.java, Timeouts.defaultTimeout) { it.isShowing && it.pluginDescriptor.name == pluginName }
 
   private fun findPluginDetailsLink(pluginName: String): JLabel =
-    waitUntilFound(findCellPluginComponent(pluginName), JLabel::class.java, defaultTimeout) { it.text == pluginName }
+    waitUntilFound(findCellPluginComponent(pluginName), JLabel::class.java, Timeouts.defaultTimeout) { it.text == pluginName }
 
   class PluginDetailsFixture(robot: Robot, dialog: JDialog): JDialogFixture(robot, dialog) {
 
     fun pluginVersion(): String =
-      waitUntilFound(target(), JTextField::class.java, defaultTimeout) { it.text.startsWith("v") || it.text == "bundled" }.text
+      waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.text.startsWith("v") || it.text == "bundled" }.text
 
     fun isPluginEnabled(): Boolean = findEnableDisableButton().text == "Disable"
 
@@ -105,22 +105,22 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
     }
 
     fun uninstall() {
-      val arrowButton: ArrowButton = waitUntilFound(target(), ArrowButton::class.java, defaultTimeout) { true }
+      val arrowButton: ArrowButton = waitUntilFound(target(), ArrowButton::class.java, Timeouts.defaultTimeout) { true }
       robot().click(arrowButton)
 
-      val list : JList<*> = waitUntilFound(target(), JList::class.java, defaultTimeout) {
+      val list : JList<*> = waitUntilFound(target(), JList::class.java, Timeouts.defaultTimeout) {
         it.isShowing && it.isVisible && getUninstallItemIndex(it) != -1
       }
       robot().click(list, list.indexToLocation(getUninstallItemIndex(list)))
     }
 
     fun back() {
-      val backButton: JButton = waitUntilFound(target(), JButton::class.java, defaultTimeout) { it.text == "Plugins" }
+      val backButton: JButton = waitUntilFound(target(), JButton::class.java, Timeouts.defaultTimeout) { it.text == "Plugins" }
       robot().click(backButton)
     }
 
     private fun findEnableDisableButton(): JButton =
-      waitUntilFound(target(), JButton::class.java, defaultTimeout) { it !is JBOptionButton && (it.text == "Enable" || it.text == "Disable") }
+      waitUntilFound(target(), JButton::class.java, Timeouts.defaultTimeout) { it !is JBOptionButton && (it.text == "Enable" || it.text == "Disable") }
 
     private fun getUninstallItemIndex(list: JList<*>): Int = list.getNextMatch("Uninstall", 0, Position.Bias.Forward)
   }
@@ -129,7 +129,7 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
                                                                                           ContainerFixture<JDialog> {
     fun setPath(pluginPath: String) {
       val pluginPathTextField: JTextField =
-        waitUntilFound(target(), JTextField::class.java, defaultTimeout) { true }
+        waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { true }
       pluginPathTextField.text = pluginPath
     }
 

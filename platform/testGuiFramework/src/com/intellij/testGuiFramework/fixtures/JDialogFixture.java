@@ -15,7 +15,7 @@
  */
 package com.intellij.testGuiFramework.fixtures;
 
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.fixture.ContainerFixture;
@@ -47,7 +47,7 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
   @NotNull
   public static JDialogFixture find(@NotNull Robot robot, String title) {
-    return find(robot, title, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    return find(robot, title, Timeouts.INSTANCE.getMinutes02());
   }
 
   @NotNull

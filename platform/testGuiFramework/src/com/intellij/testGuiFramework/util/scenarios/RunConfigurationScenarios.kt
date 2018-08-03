@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.logTestStep
@@ -28,10 +28,10 @@ fun RunConfigurationScenarios.openRunConfiguration(vararg configuration: String)
       navigationBar {
         assert(exists { button(configurationName) }) { "Button `$configurationName` not found on Navigation bar" }
       }
-      GuiTestUtilKt.waitUntil("Menu item '${RunConfigurationScenarios.Constants.editConfigurationMenuItem}' is enabled", GuiTestUtil.LONG_TIMEOUT.duration().toInt()){
+      GuiTestUtilKt.waitUntil("Menu item '${RunConfigurationScenarios.Constants.editConfigurationMenuItem}' is enabled", Timeouts.minutes05){
         shortcut(Key.ESCAPE)
         button(configurationName).click()
-        popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem, GuiTestUtil.NO_TIMEOUT).isSearchedItemEnable()
+        popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem, Timeouts.noTimeout).isSearchedItemEnable()
       }
       popupMenu(RunConfigurationScenarios.Constants.editConfigurationMenuItem).clickSearchedItem()
     }

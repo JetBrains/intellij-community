@@ -15,11 +15,13 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JComboBoxFixture
+import org.fest.swing.timing.Timeout
 import javax.swing.JButton
 import javax.swing.JComboBox
 
@@ -34,23 +36,23 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
   }
 
   //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
-  fun selectItem(itemName: String, timeoutInSeconds: Int = 30): ComboBoxFixture {
-    waitUntil("item '$itemName' will be appeared in dropdown list", timeoutInSeconds) {
+  fun selectItem(itemName: String, timeout: Timeout = Timeouts.defaultTimeout): ComboBoxFixture {
+    waitUntil("item '$itemName' will be appeared in dropdown list", timeout) {
       doSelectItem { super.selectItem(itemName) }
     }
     return this
   }
 
   //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
-  fun selectItem(itemIndex: Int, timeoutInSeconds: Int = 30): ComboBoxFixture {
-    waitUntil("item with index $itemIndex will be appeared in dropdown list", timeoutInSeconds) {
+  fun selectItem(itemIndex: Int, timeout: Timeout = Timeouts.defaultTimeout): ComboBoxFixture {
+    waitUntil("item with index $itemIndex will be appeared in dropdown list", timeout) {
       doSelectItem { super.selectItem(itemIndex) }
     }
     return this
   }
 
   override fun selectItem(index: Int): ComboBoxFixture {
-    return selectItem(index, 30)
+    return selectItem(index)
   }
 
   /**

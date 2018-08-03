@@ -2,7 +2,7 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.impl.button
@@ -32,7 +32,7 @@ class EnvironmentVariablesModel(val testCase: GuiTestCase) : TestUtilsClass(test
 val GuiTestCase.envVarsModel by EnvironmentVariablesModel
 
 fun EnvironmentVariablesModel.connectDialog(): JDialogFixture =
-  testCase.dialog(EnvironmentVariablesModel.Constants.envVarsTitle, true, GuiTestUtil.defaultTimeout)
+  testCase.dialog(EnvironmentVariablesModel.Constants.envVarsTitle, true, Timeouts.defaultTimeout)
 
 fun EnvironmentVariablesModel.paste(property: String) {
   assert(property.contains(EnvironmentVariablesModel.Constants.pattern))

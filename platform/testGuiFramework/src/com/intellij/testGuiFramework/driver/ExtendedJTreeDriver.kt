@@ -18,6 +18,7 @@ import org.fest.swing.driver.JTreeLocation
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.timing.Timeout
 import org.fest.swing.util.Pair
 import org.fest.swing.util.Triple
 import java.awt.Point
@@ -109,9 +110,9 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.waitForChildrenToShowUp(path: TreePath) {
-    val timeoutInSeconds = robot.settings().timeoutToBeVisible() * 1000 // convert ms to s
     try {
-      GuiTestUtilKt.waitUntil("Waiting for children are shown up", timeoutInSeconds) { this.childCount(path) != 0 }
+      GuiTestUtilKt.waitUntil( "Waiting for children are shown up",
+        Timeout.timeout(robot.settings().timeoutToBeVisible().toLong())) { this.childCount(path) != 0 }
     }
     catch (waitTimedOutError: WaitTimedOutError) {
       throw LocationUnavailableException(waitTimedOutError.message!!)

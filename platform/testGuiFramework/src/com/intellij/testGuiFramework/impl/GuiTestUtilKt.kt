@@ -4,6 +4,8 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toSec
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -196,21 +198,21 @@ object GuiTestUtilKt {
   /**
    * waits for 30 sec timeout when functionProbeToNull() not return null
    *
-   * @throws WaitTimedOutError with the text: "Timed out waiting for $timeoutInSeconds second(s) until {@code conditionText} will be not null"
+   * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will", timeoutInSeconds: Int = 30, functionProbeToNull: () -> ReturnType?): ReturnType {
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will", timeout: Timeout = Timeouts.defaultTimeout, functionProbeToNull: () -> ReturnType?): ReturnType {
     var result: ReturnType? = null
-    waitUntil("$conditionText will be not null", timeoutInSeconds) {
+    waitUntil("$conditionText will be not null", timeout) {
       result = functionProbeToNull()
       result != null
     }
     return result!!
   }
 
-  fun waitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("$timeoutInSeconds second(s) until $condition") {
+  fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
+    Pause.pause(object : Condition("${timeout.toSec()} second(s) until $condition") {
       override fun test() = conditionalFunction()
-    }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
+    }, timeout)
   }
 
   fun silentWaitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
@@ -244,24 +246,24 @@ object GuiTestUtilKt {
   }
 
   fun <ComponentType : Component> waitUntilGone(robot: Robot,
-                                                timeoutInSeconds: Int = 30,
+                                                timeout: Timeout = Timeouts.seconds30,
                                                 root: Container? = null,
                                                 matcher: GenericTypeMatcher<ComponentType>) {
-    return GuiTestUtil.waitUntilGone(root, timeoutInSeconds, matcher)
+    return GuiTestUtil.waitUntilGone(root, timeout, matcher)
   }
 
-  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
-    waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppearInSeconds, timeoutToGoneInSeconds)
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppear: Timeout = Timeouts.seconds05, timeoutToGone: Timeout = Timeouts.defaultTimeout) {
+    waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppear, timeoutToGone)
   }
 
   fun waitProgressDialogUntilGone(robot: Robot,
                                   progressTitle: String,
-                                  timeoutToAppearInSeconds: Int = 5,
-                                  timeoutToGoneInSeconds: Int = 60) {
+                                  timeoutToAppear: Timeout = Timeouts.seconds30,
+                                  timeoutToGone: Timeout = Timeouts.defaultTimeout) {
     //wait dialog appearance. In a bad case we could pass dialog appearance.
     var dialog: JDialog? = null
     try {
-      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppearInSeconds) {
+      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppear) {
         dialog = findProgressDialog(robot, progressTitle)
         dialog != null
       }
@@ -269,7 +271,7 @@ object GuiTestUtilKt {
     catch (timeoutError: WaitTimedOutError) {
       return
     }
-    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGoneInSeconds) { dialog == null || !dialog!!.isShowing }
+    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGone) { dialog == null || !dialog!!.isShowing }
   }
 
   fun findProgressDialog(robot: Robot, progressTitle: String): JDialog? {

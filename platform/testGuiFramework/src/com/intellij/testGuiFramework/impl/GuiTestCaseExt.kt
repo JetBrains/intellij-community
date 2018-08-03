@@ -2,10 +2,10 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.testGuiFramework.fixtures.GutterFixture
-import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.util.*
-import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
@@ -152,7 +152,15 @@ fun GuiTestCase.mavenReimport() {
   ideFrame {
     toolwindow(id = "Maven") {
       content(tabName = "") {
-        actionButton("Reimport All Maven Projects").click()
+        val button = actionButton("Reimport All Maven Projects")
+        Pause.pause(object : Condition("Wait for button Reimport All Maven Projects to be enabled.") {
+          override fun test(): Boolean {
+            return button.isEnabled
+          }
+        }, Timeouts.minutes02)
+        robot().waitForIdle()
+        button.click()
+        robot().waitForIdle()
       }
     }
   }

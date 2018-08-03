@@ -21,7 +21,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.testGuiFramework.impl.ComponentFixtureUtilsKt;
 import com.intellij.testGuiFramework.util.Predicate;
 import org.fest.swing.core.ComponentDragAndDrop;
@@ -396,7 +396,7 @@ public class EditorFixture {
       public boolean test() {
         return editor.getContentComponent().isShowing();
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
 
     if (editor != null) {
       JComponent contentComponent = editor.getContentComponent();
@@ -776,13 +776,13 @@ public class EditorFixture {
   public EditorFixture invokeIntentionAction(@NotNull String labelPrefix) {
     invokeAction(EditorFixture.EditorAction.SHOW_INTENTION_ACTIONS);
     ComponentFixtureUtilsKt
-      .popupMenu(labelPrefix, robot, null, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT(), Predicate.INSTANCE.getEquality())
+      .popupMenu(labelPrefix, robot, null, Timeouts.INSTANCE.getMinutes02(), Predicate.INSTANCE.getEquality())
       .clickSearchedItem();
     return this;
   }
 
   public EditorNotificationPanelFixture notificationPanel() {
-    return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, 30);
+    return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, Timeouts.INSTANCE.getSeconds30());
   }
 
   /**
