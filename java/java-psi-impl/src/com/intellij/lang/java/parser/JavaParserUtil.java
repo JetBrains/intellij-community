@@ -33,6 +33,7 @@ public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
 
+  @FunctionalInterface
   public interface ParserWrapper {
     void parse(PsiBuilder builder);
   }
@@ -176,7 +177,7 @@ public class JavaParserUtil {
 
   @Nullable
   public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper, final boolean eatAll, final LanguageLevel level) {
-    final PsiElement psi = (chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi());
+    final PsiElement psi = chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
 

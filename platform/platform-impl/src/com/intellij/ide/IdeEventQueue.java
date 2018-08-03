@@ -97,13 +97,6 @@ public class IdeEventQueue extends EventQueue {
   private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
 
   /**
-   * We exit from suspend mode when this alarm is triggered and no mode WindowEvent.WINDOW_OPENED
-   * <p/>
-   * events in the queue. If WINDOW_OPENED event does exist then we restart the alarm.
-   */
-  private final Alarm mySuspendModeAlarm = new Alarm();
-
-  /**
    * Counter of processed events. It is used to assert that data context lives only inside single
    * <p/>
    * Swing event.
@@ -150,7 +143,7 @@ public class IdeEventQueue extends EventQueue {
         .append(event.getSource().getClass().getName()).append("]"), StringBuilder::append);
   }
 
-  private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
+  private void ifFocusEventsInTheQueue(Consumer<? super AWTEvent> yes, Runnable no) {
     if (!focusEventsList.isEmpty()) {
 
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
@@ -205,8 +198,6 @@ public class IdeEventQueue extends EventQueue {
         return;
       }
       application.assertIsDispatchThread();
-      final Window focusedWindow = keyboardFocusManager.getFocusedWindow();
-      final Component focusOwner = keyboardFocusManager.getFocusOwner();
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
@@ -221,14 +212,14 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private void abracadabraDaberBoreh() {
-    // we need to track if there are KeyBoardEvents in IdeEventQueue
-    // so we want to intercept all events posted to IdeEventQueue and increment counters
-    // However, we regular control flow goes like this:
+    // We need to track if there are KeyBoardEvents in IdeEventQueue
+    // So we want to intercept all events posted to IdeEventQueue and increment counters
+    // However, the regular control flow goes like this:
     //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
     // Instead, we do following:
     //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
     //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
-    // since that the control flow goes like this:
+    // After that the control flow goes like this:
     //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
     try {
       Class<?> aClass = Class.forName("sun.awt.PostEventQueue");
@@ -302,7 +293,7 @@ public class IdeEventQueue extends EventQueue {
     myPostProcessors.remove(dispatcher);
   }
 
-  private static void _addProcessor(@NotNull EventDispatcher dispatcher, Disposable parent, @NotNull Collection<EventDispatcher> set) {
+  private static void _addProcessor(@NotNull EventDispatcher dispatcher, Disposable parent, @NotNull Collection<? super EventDispatcher> set) {
     set.add(dispatcher);
     if (parent != null) {
       Disposer.register(parent, () -> set.remove(dispatcher));
@@ -372,7 +363,7 @@ public class IdeEventQueue extends EventQueue {
 
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     try (AccessToken ignored = startActivity(e)) {
-      _dispatchEvent(e, false);
+      _dispatchEvent(e);
     }
     catch (Throwable t) {
       processException(t);
@@ -489,45 +480,6 @@ public class IdeEventQueue extends EventQueue {
   }
 
   @NotNull
-  private static AWTEvent fixNonEnglishKeyboardLayouts(@NotNull AWTEvent e) {
-    if (!(e instanceof KeyEvent)) return e;
-
-    KeyEvent ke = (KeyEvent)e;
-
-    switch (ke.getID()) {
-      case KeyEvent.KEY_PRESSED:
-        break;
-      case KeyEvent.KEY_RELEASED:
-        break;
-    }
-
-
-    // NB: Standard keyboard layout is an English keyboard layout. If such
-    //     layout is active every KeyEvent that is received has
-    //     a @{code KeyEvent.getKeyCode} key code corresponding to
-    //     the @{code KeyEvent.getKeyChar} key char in the event.
-    //     For  example, VK_MINUS key code and '-' character
-    //
-    // We have a key char. On some non standard layouts it does not correspond to
-    // key code in the event.
-
-    int keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
-
-    // Now we have a correct key code as if we'd gotten  a KeyEvent for
-    // standard English layout
-
-    if (keyCodeFromChar == ke.getKeyCode() || keyCodeFromChar == KeyEvent.VK_UNDEFINED) {
-      return e;
-    }
-
-    // Farther we handle a non standard layout
-    // non-english layout
-    ke.setKeyCode(keyCodeFromChar);
-
-    return ke;
-  }
-
-  @NotNull
   private static AWTEvent mapEvent(@NotNull AWTEvent e) {
     if (SystemInfo.isXWindow && e instanceof MouseEvent && ((MouseEvent)e).getButton() > 3) {
       MouseEvent src = (MouseEvent)e;
@@ -591,7 +543,7 @@ public class IdeEventQueue extends EventQueue {
     return null;
   }
 
-  public void _dispatchEvent(@NotNull AWTEvent e, boolean typeAheadFlushing) {
+  private void _dispatchEvent(@NotNull AWTEvent e) {
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
@@ -659,7 +611,7 @@ public class IdeEventQueue extends EventQueue {
     // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
     // Key event dispatcher resets its state on KEY_RELEASED event
     if (e.getID() == KeyEvent.KEY_TYPED &&
-        (myKeyEventDispatcher.isPressedWasProcessed())) {
+        myKeyEventDispatcher.isPressedWasProcessed()) {
       ((KeyEvent)e).consume();
     }
 
@@ -723,14 +675,6 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     return false;
-  }
-
-  public static boolean isMouseEventAhead(@Nullable AWTEvent e) {
-    IdeEventQueue queue = getInstance();
-    return e instanceof MouseEvent ||
-           queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
-           queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
-           queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
   }
 
   private static boolean processAppActivationEvents(@NotNull AWTEvent e) {
@@ -828,7 +772,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void pumpEventsForHierarchy(Component modalComponent, @NotNull Condition<AWTEvent> exitCondition) {
+  public void pumpEventsForHierarchy(Component modalComponent, @NotNull Condition<? super AWTEvent> exitCondition) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
@@ -1102,14 +1046,13 @@ public class IdeEventQueue extends EventQueue {
       TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
     }
 
-    if (doesFocusGoIntoPopupFromWindowEvent(unwrappedEvent)) return true;
-
-    return false;
+    return doesFocusGoIntoPopupFromWindowEvent(unwrappedEvent);
   }
 
   private static Field nestedField;
 
-  private static @NotNull Field getSequencedEventNestedField (AWTEvent e) {
+  @NotNull
+  private static Field getSequencedEventNestedField(AWTEvent e) {
     if (nestedField == null) {
       nestedField = ReflectionUtil.getDeclaredField(e.getClass(), "nested");
     }
@@ -1117,7 +1060,8 @@ public class IdeEventQueue extends EventQueue {
     return nestedField;
   }
 
-  private static @NotNull  AWTEvent unwrapWindowEvent(@NotNull AWTEvent e) {
+  @NotNull
+  private static AWTEvent unwrapWindowEvent(@NotNull AWTEvent e) {
     AWTEvent unwrappedEvent = e;
     if (e.getClass().getName().contains("SequencedEvent")) {
       try {
@@ -1131,7 +1075,7 @@ public class IdeEventQueue extends EventQueue {
     return unwrappedEvent;
   }
 
-  private boolean isTypeaheadTimeoutExceeded(AWTEvent e) {
+  private boolean isTypeaheadTimeoutExceeded() {
     if (!delayKeyEvents.get()) return false;
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
     if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
@@ -1139,9 +1083,9 @@ public class IdeEventQueue extends EventQueue {
       // In this particular place it is possible to get a deadlock because of
       // sun.awt.PostEventQueue#flush implementation.
       // This is why we need to log the message on the event dispatch thread
-      super.postEvent(new InvocationEvent(this, () -> {
-        TYPEAHEAD_LOG.error(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay));
-      }));
+      super.postEvent(new InvocationEvent(this, () ->
+        TYPEAHEAD_LOG.error(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay))
+      ));
       return true;
     }
     return false;
@@ -1149,7 +1093,7 @@ public class IdeEventQueue extends EventQueue {
 
   private static boolean doesFocusGoIntoPopupFromWindowEvent(AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
-        (SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED)) {
+        SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
       if (UIUtil.isTypeAheadAware(((WindowEvent)e).getWindow())) {
         TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
         return true;
@@ -1246,7 +1190,7 @@ public class IdeEventQueue extends EventQueue {
         }
       }
 
-      if (isTypeaheadTimeoutExceeded(event)) {
+      if (isTypeaheadTimeoutExceeded()) {
         TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
         delayKeyEvents.set(false);
         flushDelayedKeyEvents();
@@ -1254,7 +1198,7 @@ public class IdeEventQueue extends EventQueue {
         if (Registry.is("action.aware.typeAhead.searchEverywhere")) {
           mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
         }
-      };
+      }
     }
 
     super.postEvent(event);
@@ -1307,16 +1251,6 @@ public class IdeEventQueue extends EventQueue {
     DEACTIVATED,
     TRIGGERED,
     DETECTED
-  }
-
-  private static class KeyMaskUtil {
-    static boolean thisModifierOnly (int maskToCheck, int oldStyleModifier, int newStyleModifier) {
-      int fullBitSetForModifier = oldStyleModifier | newStyleModifier;
-      int invertedFullBitSet = ~fullBitSetForModifier;
-      boolean noOtherModifiersPressed = (invertedFullBitSet & maskToCheck) == 0;
-      boolean isModifierSet = (maskToCheck & fullBitSetForModifier) != 0;
-      return noOtherModifiersPressed && isModifierSet;
-    }
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
