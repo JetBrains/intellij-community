@@ -18,9 +18,10 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,14 +34,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, ApplicationComponent {
+public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, BaseComponent {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
   public static final String RUNNERS_GROUP = "RunnerActions";
   public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
 
   private List<Executor> myExecutors = new ArrayList<>();
-  private ActionManager myActionManager;
   private final Map<String, Executor> myId2Executor = new THashMap<>();
   private final Set<String> myContextActionIdSet = new THashSet<>();
   private final Map<String, AnAction> myId2Action = new THashMap<>();
@@ -49,8 +49,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
   // [Project, ExecutorId, RunnerId]
   private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new THashSet<>());
 
-  public ExecutorRegistryImpl(ActionManager actionManager) {
-    myActionManager = actionManager;
+  public ExecutorRegistryImpl() {
   }
 
   synchronized void initExecutor(@NotNull Executor executor) {
@@ -70,15 +69,16 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     myContextActionIdSet.add(executor.getContextActionId());
   }
 
-  private void registerAction(@NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
-    AnAction action = myActionManager.getAction(actionId);
+  private static void registerAction(@NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction action = actionManager.getAction(actionId);
     if (action == null) {
-      myActionManager.registerAction(actionId, anAction);
+      actionManager.registerAction(actionId, anAction);
       map.put(actionId, anAction);
       action = anAction;
     }
 
-    ((DefaultActionGroup)myActionManager.getAction(groupId)).add(action);
+    ((DefaultActionGroup)actionManager.getAction(groupId)).add(action);
   }
 
   synchronized void deinitExecutor(@NotNull Executor executor) {
@@ -90,13 +90,14 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionId2Action);
   }
 
-  private void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
-    final DefaultActionGroup group = (DefaultActionGroup)myActionManager.getAction(groupId);
+  private static void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
+    ActionManager actionManager = ActionManager.getInstance();
+    final DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(groupId);
     if (group != null) {
-      group.remove(myActionManager.getAction(actionId));
+      group.remove(actionManager.getAction(actionId));
       final AnAction action = map.get(actionId);
       if (action != null) {
-        myActionManager.unregisterAction(actionId);
+        actionManager.unregisterAction(actionId);
         map.remove(actionId);
       }
     }
@@ -179,14 +180,18 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       }
     }
     myExecutors = null;
-    myActionManager = null;
   }
 
   private class ExecutorAction extends AnAction implements DumbAware {
     private final Executor myExecutor;
 
     private ExecutorAction(@NotNull final Executor executor) {
-      super(executor.getStartActionText(), executor.getDescription(), executor.getIcon());
+      super(executor.getStartActionText(), executor.getDescription(), new IconLoader.LazyIcon() {
+        @Override
+        protected Icon compute() {
+          return executor.getIcon();
+        }
+      });
       myExecutor = executor;
     }
 
@@ -213,7 +218,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getProject();
 
@@ -318,7 +323,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Project project = e.getProject();
       if (project == null || project.isDisposed()) {
         return;

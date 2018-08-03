@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JarApplicationConfigurationType extends ConfigurationTypeBase implements ConfigurationType {
@@ -21,7 +22,7 @@ public class JarApplicationConfigurationType extends ConfigurationTypeBase imple
 
   public JarApplicationConfigurationType() {
     super("JarApplication", ExecutionBundle.message("jar.application.configuration.name"),
-          ExecutionBundle.message("jar.application.configuration.description"), lazyIcon(() -> AllIcons.FileTypes.Archive));
+          ExecutionBundle.message("jar.application.configuration.description"), LazyUtil.create(() -> AllIcons.FileTypes.Archive));
     addFactory(new ConfigurationFactoryEx(this) {
       @Override
       public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {

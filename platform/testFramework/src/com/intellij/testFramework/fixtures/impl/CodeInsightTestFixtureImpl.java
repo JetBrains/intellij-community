@@ -1077,13 +1077,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
-        CodeStyle.dropTemporarySettings(getProject());
-        AutoPopupController.getInstance(getProject()).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+        Project project = getProject();
+        if (project != null) {
+          CodeStyle.dropTemporarySettings(project);
+          AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+        }
         DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
         closeOpenFiles();
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
-        // clear order entry roots cache
-        WriteAction.run(()->ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+        if (project != null) {
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+          // clear order entry roots cache
+          WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+        }
       }))
       .append(() -> {
         clearFileAndEditor();
@@ -1102,10 +1107,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private void closeOpenFiles() {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    EditorHistoryManager.getInstance(getProject()).removeAllFiles();
+    Project project = getProject();
+    if (project == null) {
+      return;
+    }
+
+    LookupManager.getInstance(project).hideActiveLookup();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
+    EditorHistoryManager.getInstance(project).removeAllFiles();
   }
 
   @NotNull

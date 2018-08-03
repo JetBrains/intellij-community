@@ -18,12 +18,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
@@ -96,12 +96,17 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
   // It should be public to be available from Upsource
   public static void registerProvidedSeverities() {
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+    for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType t : provider.getSeveritiesHighlightInfoTypes()) {
         HighlightSeverity highlightSeverity = t.getSeverity(null);
         SeverityRegistrar.registerStandard(t, highlightSeverity);
         TextAttributesKey attributesKey = t.getAttributesKey();
-        Icon icon = t instanceof HighlightInfoType.Iconable ? ((HighlightInfoType.Iconable)t).getIcon() : null;
+        Icon icon = t instanceof HighlightInfoType.Iconable ? new IconLoader.LazyIcon() {
+          @Override
+          protected Icon compute() {
+            return ((HighlightInfoType.Iconable)t).getIcon();
+          }
+        } : null;
         HighlightDisplayLevel.registerSeverity(highlightSeverity, attributesKey, icon);
       }
     }
