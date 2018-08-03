@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,14 +98,9 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @Nullable
   public static String getCachedValue(Project project, VirtualFile file, String requestedKey) {
     if (project.isDisposed() || !file.isValid() || DumbService.isDumb(project)) return NULL;
-    Collection<String> keys = FileBasedIndex.getInstance().getAllKeys(INDEX_ID, project);
-    for (String key: keys) {
-      if (requestedKey.equals(key)) {
-        List<String> values = FileBasedIndex.getInstance().getValues(INDEX_ID, key, GlobalSearchScope.fileScope(project, file));
-        if (values.size() == 1) {
-          return values.get(0);
-        }
-      }
+    List<String> values = FileBasedIndex.getInstance().getValues(INDEX_ID, requestedKey, GlobalSearchScope.fileScope(project, file));
+    if (values.size() == 1) {
+      return values.get(0);
     }
 
     return null;
