@@ -5,6 +5,7 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -46,3 +47,6 @@ fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modi
 
 fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> =
   createActions { it.createAddFieldActions(target, request) }
+
+fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> =
+  createActions { it.createChangeParametersActions(target, request) }
