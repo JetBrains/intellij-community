@@ -77,6 +77,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   private String myDescription;
   private char myMnemonic;
+  int index; // index in the list of bookmarks in the Navigate|Bookmarks|show
 
   public Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
     myFile = file;
@@ -110,7 +111,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   private void addHighlighter() {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
+    Document document = getCachedDocument();
     if (document != null) {
       createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
     }
@@ -147,30 +148,35 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return highlighter;
   }
 
+  @Deprecated
   @Nullable
   public Document getDocument() {
+    return getCachedDocument();
+  }
+
+  Document getCachedDocument() {
     return FileDocumentManager.getInstance().getCachedDocument(getFile());
   }
 
   public void release() {
-      int line = getLine();
-      if (line < 0) {
-        return;
-      }
-      final Document document = getDocument();
-      if (document == null) return;
-      MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
-      final Document markupDocument = markup.getDocument();
-      if (markupDocument.getLineCount() <= line) return;
-      RangeHighlighterEx highlighter = findMyHighlighter();
-      if (highlighter != null) {
-        myHighlighterRef = null;
-        highlighter.dispose();
-      }
+    int line = getLine();
+    if (line < 0) {
+      return;
+    }
+    final Document document = getCachedDocument();
+    if (document == null) return;
+    MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
+    final Document markupDocument = markup.getDocument();
+    if (markupDocument.getLineCount() <= line) return;
+    RangeHighlighterEx highlighter = findMyHighlighter();
+    if (highlighter != null) {
+      myHighlighterRef = null;
+      highlighter.dispose();
+    }
   }
 
   private RangeHighlighterEx findMyHighlighter() {
-    final Document document = getDocument();
+    final Document document = getCachedDocument();
     if (document == null) return null;
     RangeHighlighterEx result = SoftReference.dereference(myHighlighterRef);
     if (result != null) {
@@ -221,8 +227,8 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   @Nullable
-  public String getNotEmptyDescription() {
-    return StringUtil.isEmpty(myDescription) ? null : myDescription;
+  String nullizeEmptyDescription() {
+    return StringUtil.nullize(myDescription);
   }
 
   public boolean isValid() {
@@ -280,7 +286,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder(getQualifiedName());
-    String description = StringUtil.escapeXml(getNotEmptyDescription());
+    String description = StringUtil.escapeXml(nullizeEmptyDescription());
     if (description != null) {
       result.append(": ").append(description);
     }
@@ -323,7 +329,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
     }
-    String description = StringUtil.escapeXml(getNotEmptyDescription());
+    String description = StringUtil.escapeXml(nullizeEmptyDescription());
     if (description != null) {
       result.append(": ").append(description);
     }
