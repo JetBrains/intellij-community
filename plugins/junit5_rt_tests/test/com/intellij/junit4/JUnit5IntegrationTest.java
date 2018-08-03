@@ -235,6 +235,24 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       .collect(Collectors.toList()));
   }
 
+  public void testRunSpecificDisabledMethodByCondition() throws Exception {
+    PsiMethod aMethod = JavaPsiFacade.getInstance(myProject)
+      .findClass("disabled.DisabledConditionalMethod", GlobalSearchScope.projectScope(myProject))
+      .findMethodsByName("testDisabledMethod", false)[0];
+    RunConfiguration configuration = createConfiguration(aMethod);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertSize(0, processOutput.messages.stream().filter(TestIgnored.class::isInstance).map(TestIgnored.class::cast)
+      .collect(Collectors.toList()));
+
+    //assuming only suiteTreeNode/start/failed(no String to inject)/finish events
+    assertSize(4, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod(String)"))
+      .collect(Collectors.toList()));
+  }
+
   @NotNull
   public RunConfiguration createRunPackageConfiguration(final String packageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
