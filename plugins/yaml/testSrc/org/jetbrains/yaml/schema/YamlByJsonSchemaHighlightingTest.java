@@ -395,11 +395,11 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "}";
     doTest(schema,
                    "size: \n" +
-                   " <warning descr=\"Schema validation: Number of properties is greater than 3\">a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">1</warning>\n" +
+                   " a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">1</warning>\n" +
                    " b: 3\n" +
                    " c: 4\n" +
                    " a: <warning descr=\"Schema validation: Type is not allowed. Expected: boolean.\">5</warning>" +
-                   "</warning>\n");
+                   "\n");
   }
 
   public void testManyDuplicatesInArray() throws Exception {

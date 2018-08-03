@@ -347,10 +347,16 @@ class JsonSchemaAnnotatorChecker {
     List<JsonValidationError.MissingPropertyIssueData> allProps = ContainerUtil.newArrayList();
     for (String req: requiredNames) {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
+      Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
+      int enumCount = 0;
+      if (propertySchema != null && propertySchema.getEnum() != null && (enumCount = propertySchema.getEnum().size()) == 1) {
+        Object defaultObject = propertySchema.getEnum().get(0);
+        defaultValue = defaultObject instanceof String ? StringUtil.unquoteString((String)defaultObject) : defaultObject;
+      }
       allProps.add(new JsonValidationError.MissingPropertyIssueData(req,
                                                                     propertySchema == null ? null : propertySchema.getType(),
-                                                                    propertySchema == null ? null : propertySchema.getDefault(),
-                                                                    propertySchema != null && propertySchema.getEnum() != null));
+                                                                    defaultValue,
+                                                                    enumCount));
     }
 
     return new JsonValidationError.MissingMultiplePropsIssueData(allProps);
@@ -1008,9 +1014,12 @@ class JsonSchemaAnnotatorChecker {
                                                                           .min(Comparator.comparingInt(c -> c.ordinal()));
     int min = minAverage.orElse(AverageFailureAmount.Hard).ordinal();
 
+    int minErrorCount = candidateErroneousCheckers.stream().map(c -> c.getErrors().size()).min(Integer::compareTo).orElse(Integer.MAX_VALUE);
+
     MultiMap<PsiElement, JsonValidationError> allErrors = MultiMap.create();
     for (int i = 0; i < candidateErroneousCheckers.size(); i++) {
       JsonSchemaAnnotatorChecker checker = candidateErroneousCheckers.get(i);
+      if (checker.getErrors().size() > minErrorCount) continue;
       if (getAverageFailureAmount(checker).ordinal() <= min) {
         current = candidateErroneousSchemas.get(i);
         for (Map.Entry<PsiElement, JsonValidationError> entry: checker.getErrors().entrySet()) {
