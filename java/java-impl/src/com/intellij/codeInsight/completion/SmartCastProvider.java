@@ -55,7 +55,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
   }
 
   @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+  protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
     addCastVariants(parameters, result.getPrefixMatcher(), result, false);
   }
 

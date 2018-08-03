@@ -48,7 +48,7 @@ public class ManifestCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              public void addCompletions(@NotNull CompletionParameters parameters,
-                                        ProcessingContext context,
+                                        @NotNull ProcessingContext context,
                                         @NotNull CompletionResultSet resultSet) {
                for (String header : repository.getAllHeaderNames()) {
                  resultSet.addElement(LookupElementBuilder.create(header).withInsertHandler(HEADER_INSERT_HANDLER));

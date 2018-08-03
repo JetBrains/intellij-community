@@ -39,7 +39,7 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                final PsiFile file = parameters.getOriginalFile();
                DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(file);

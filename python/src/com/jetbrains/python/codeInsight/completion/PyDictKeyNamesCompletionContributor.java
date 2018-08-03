@@ -37,7 +37,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
       new CompletionProvider<CompletionParameters>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
           final PsiElement original = parameters.getOriginalPosition();
           final int offset = parameters.getOffset();
           if (original == null) return;

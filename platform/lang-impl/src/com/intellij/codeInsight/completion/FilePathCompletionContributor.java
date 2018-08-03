@@ -54,7 +54,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiReference psiReference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
         if (getReference(psiReference) != null && parameters.getInvocationCount() == 1) {
@@ -67,7 +67,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     CompletionProvider<CompletionParameters> provider = new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet _result) {
         if (!parameters.isExtendedCompletion()) {
           return;

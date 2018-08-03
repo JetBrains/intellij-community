@@ -66,7 +66,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   @Override
-  public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
+  public void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
 
     final List<ExpectedTypeInfo> infoCollection = Arrays.asList(infos);
