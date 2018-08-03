@@ -677,22 +677,17 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
   private AnAction createStopAction() {
-    AnAction generalStopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
-    final AnAction stopAction = new DumbAwareAction() {
+    return new DumbAwareAction("Stop Console", "Stop Python Console", AllIcons.Actions.Suspend) {
       @Override
       public void update(@NotNull AnActionEvent e) {
-        generalStopAction.update(e);
+        e.getPresentation().setEnabled(!isConsoleProcessTerminated());
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        e = stopConsole(e);
-
-        generalStopAction.actionPerformed(e);
+        stopConsole(e);
       }
     };
-    stopAction.copyFrom(generalStopAction);
-    return stopAction;
   }
 
   private class SoftWrapAction extends ToggleAction implements DumbAware {
@@ -758,6 +753,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       e = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
                             e.getPresentation(), e.getActionManager(), e.getModifiers());
       try {
+        myPydevConsoleCommunication.interrupt();
         closeCommunication();
         // waiting for REPL communication before destroying process handler
         Thread.sleep(300);
@@ -807,6 +803,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     if (!myProcessHandler.isProcessTerminated()) {
       myPydevConsoleCommunication.close();
     }
+  }
+
+  private boolean isConsoleProcessTerminated() {
+    return myProcessHandler.isProcessTerminated();
   }
 
   @NotNull
