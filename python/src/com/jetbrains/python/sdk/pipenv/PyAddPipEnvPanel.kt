@@ -58,6 +58,7 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   private val installPackagesCheckBox = JBCheckBox("Install packages from Pipfile").apply {
     isVisible = newProjectPath == null
+    isSelected = isVisible
   }
 
   private val pipEnvPathField = TextFieldWithBrowseButton().apply {
