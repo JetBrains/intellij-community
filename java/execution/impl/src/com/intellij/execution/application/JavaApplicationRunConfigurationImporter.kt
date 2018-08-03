@@ -28,6 +28,7 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
     consumeIfCast(cfg["jvmArgs"], String::class.java) { runConfiguration.vmParameters = it  }
     consumeIfCast(cfg["programParameters"], String::class.java) { runConfiguration.programParameters = it }
     consumeIfCast(cfg["envs"], Map::class.java) { runConfiguration.envs = it as MutableMap<String, String> }
+    consumeIfCast(cfg["workingDirectory"], String::class.java) { runConfiguration.workingDirectory = it }
   }
 
   override fun canImport(typeName: String): Boolean = typeName == "application"
