@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.JavaParserUtil;
@@ -30,26 +29,25 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaDocElementType;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
+import java.util.function.Supplier;
 
 public interface JavaDocElementType {
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
-    private final Constructor<? extends ASTNode> myConstructor;
+    private final Supplier<? extends ASTNode> myConstructor;
 
-    private JavaDocCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
+    private JavaDocCompositeElementType(@NonNls final String debugName, @NotNull Supplier<? extends ASTNode> nodeClass) {
       super(debugName);
-      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      myConstructor = nodeClass;
     }
 
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return ReflectionUtil.createInstance(myConstructor);
+      return myConstructor.get();
     }
   }
 
@@ -64,19 +62,14 @@ public interface JavaDocElementType {
     }
   }
 
-  IElementType DOC_TAG = new JavaDocCompositeElementType("DOC_TAG", PsiDocTagImpl.class);
-  IElementType DOC_INLINE_TAG = new JavaDocCompositeElementType("DOC_INLINE_TAG", PsiInlineDocTagImpl.class);
-  IElementType DOC_METHOD_OR_FIELD_REF = new JavaDocCompositeElementType("DOC_METHOD_OR_FIELD_REF", PsiDocMethodOrFieldRef.class);
-  IElementType DOC_PARAMETER_REF = new JavaDocCompositeElementType("DOC_PARAMETER_REF", PsiDocParamRef.class);
+  IElementType DOC_TAG = new JavaDocCompositeElementType("DOC_TAG", PsiDocTagImpl::new);
+  IElementType DOC_INLINE_TAG = new JavaDocCompositeElementType("DOC_INLINE_TAG", PsiInlineDocTagImpl::new);
+  IElementType DOC_METHOD_OR_FIELD_REF = new JavaDocCompositeElementType("DOC_METHOD_OR_FIELD_REF", PsiDocMethodOrFieldRef::new);
+  IElementType DOC_PARAMETER_REF = new JavaDocCompositeElementType("DOC_PARAMETER_REF", PsiDocParamRef::new);
   IElementType DOC_TAG_VALUE_ELEMENT = new IJavaDocElementType("DOC_TAG_VALUE_ELEMENT");
 
   ILazyParseableElementType DOC_REFERENCE_HOLDER = new JavaDocLazyElementType("DOC_REFERENCE_HOLDER") {
-    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        JavadocParser.parseJavadocReference(builder);
-      }
-    };
+    private final JavaParserUtil.ParserWrapper myParser = builder -> JavadocParser.parseJavadocReference(builder);
 
     @Nullable
     @Override
@@ -86,12 +79,7 @@ public interface JavaDocElementType {
   };
 
   ILazyParseableElementType DOC_TYPE_HOLDER = new JavaDocLazyElementType("DOC_TYPE_HOLDER") {
-    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        JavadocParser.parseJavadocType(builder);
-      }
-    };
+    private final JavaParserUtil.ParserWrapper myParser = builder -> JavadocParser.parseJavadocType(builder);
 
     @Nullable
     @Override
@@ -101,12 +89,7 @@ public interface JavaDocElementType {
   };
 
   ILazyParseableElementType DOC_COMMENT = new IReparseableElementType("DOC_COMMENT", JavaLanguage.INSTANCE) {
-    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
-      @Override
-      public void parse(final PsiBuilder builder) {
-        JavadocParser.parseDocCommentText(builder);
-      }
-    };
+    private final JavaParserUtil.ParserWrapper myParser = builder -> JavadocParser.parseDocCommentText(builder);
 
     @Override
     public ASTNode createNode(final CharSequence text) {
@@ -127,9 +110,7 @@ public interface JavaDocElementType {
       lexer.start(buffer);
       if (lexer.getTokenType() == DOC_COMMENT) {
         lexer.advance();
-        if (lexer.getTokenType() == null) {
-          return true;
-        }
+        return lexer.getTokenType() == null;
       }
       return false;
     }
