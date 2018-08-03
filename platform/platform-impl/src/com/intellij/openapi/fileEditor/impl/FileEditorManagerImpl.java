@@ -82,8 +82,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -133,7 +133,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     myListenerList =
       new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-    if (Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME).length > 0) {
+    if (!FileEditorAssociateFinder.EP_NAME.getExtensionList().isEmpty()) {
       myListenerList.add(new FileEditorManagerListener() {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {

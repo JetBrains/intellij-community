@@ -60,8 +60,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, VetoableProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
@@ -733,8 +733,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @NotNull
-  private static FileDocumentManagerListener[] getListeners() {
-    return FileDocumentManagerListener.EP_NAME.getExtensions();
+  private static List<FileDocumentManagerListener> getListeners() {
+    return FileDocumentManagerListener.EP_NAME.getExtensionList();
   }
 
   private static int getPreviewCharCount(@NotNull VirtualFile file) {

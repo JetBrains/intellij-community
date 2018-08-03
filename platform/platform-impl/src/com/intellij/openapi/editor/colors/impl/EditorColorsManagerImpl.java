@@ -148,7 +148,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       scheme = getScheme(wizardEditorScheme);
       LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
     }
-    
+
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
@@ -172,7 +172,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
+      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensionList()) {
         mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
       }
     }
@@ -191,7 +191,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
     }
   }
-  
+
   private void initEditableBundledSchemesCopies() {
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof BundledScheme) {
@@ -199,7 +199,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
     }
   }
-  
+
   private void resolveLinksToBundledSchemes() {
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
