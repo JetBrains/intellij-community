@@ -58,6 +58,7 @@ public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchCl
     return parameter == null || ResolveUtil.processElement(processor, parameter, state);
   }
 
+  @NotNull
   @Override
   public GrParameter[] getParameters() {
     final GrParameter parameter = getParameter();

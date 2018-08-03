@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInClause, GrParametersOwner {
+public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInClause, GrParameterListOwner {
 
   public GrForInClauseImpl(@NotNull ASTNode node) {
     super(node);
@@ -39,6 +39,7 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
     return findChildByClass(GrParameter.class);
   }
 
+  @NotNull
   @Override
   public GrParameter[] getParameters() {
     final GrParameter declaredVariable = getDeclaredVariable();

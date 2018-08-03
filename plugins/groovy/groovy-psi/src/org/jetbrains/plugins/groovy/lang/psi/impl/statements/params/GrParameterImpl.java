@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
@@ -195,7 +195,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   @Override
   @NotNull
   public PsiElement getDeclarationScope() {
-    final GrParametersOwner owner = PsiTreeUtil.getParentOfType(this, GrParametersOwner.class);
+    final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(this, GrParameterListOwner.class);
     assert owner != null;
     if (owner instanceof GrForClause) return owner.getParent();
     return owner;
