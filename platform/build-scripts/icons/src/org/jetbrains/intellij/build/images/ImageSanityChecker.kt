@@ -42,8 +42,9 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     checkHaveCompleteIconSet(images, module)
     checkHaveValidSize(images, module)
     checkAreNotAmbiguous(images, module)
-    checkSvgFallbackVersionsAreStubIcons(images, module)
-    checkOverridingFallbackVersionsAreStubIcons(images, module)
+    checkNoStubIcons(images, module)
+    checkNoSvgFallbackVersions(images, module)
+    checkNoOverridingFallbackVersions(images, module)
     checkIconsWithBothSvgAndPng(images, module)
   }
 
@@ -102,7 +103,13 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     }
   }
 
-  private fun checkSvgFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkNoStubIcons(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "copies of the stub.png image must be removed", module) { image ->
+      return@process image.files.none { STUB_PNG_MD5 == md5(it) }
+    }
+  }
+
+  private fun checkNoSvgFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
     val imagesWithSvgAndPng = IMAGES_WITH_BOTH_SVG_AND_PNG[module.name]
     val filteredImages = images.filter { !imagesWithSvgAndPng.contains(it.id) }
 
@@ -110,15 +117,15 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
       if (image.files.none { ImageExtension.fromFile(it) == SVG }) return@process true
 
       val legacyFiles = image.files.filter { ImageExtension.fromFile(it) != SVG }
-      return@process isStubFallbackVersion(legacyFiles)
+      return@process legacyFiles.isEmpty()
     }
   }
 
-  private fun checkOverridingFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
+  private fun checkNoOverridingFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "Overridden icons should be replaced with stub.png as fallback", module) { image ->
       if (image.deprecation?.replacement == null) return@process true
 
-      return@process isStubFallbackVersion(image.files)
+      return@process image.files.isEmpty()
     }
   }
 
