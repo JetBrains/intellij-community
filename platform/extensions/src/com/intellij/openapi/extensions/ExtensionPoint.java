@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface ExtensionPoint<T> {
   @NotNull
   String getName();
@@ -17,6 +19,9 @@ public interface ExtensionPoint<T> {
 
   @NotNull
   T[] getExtensions();
+
+  @NotNull
+  List<T> getExtensionList();
 
   boolean hasAnyExtensions();
 

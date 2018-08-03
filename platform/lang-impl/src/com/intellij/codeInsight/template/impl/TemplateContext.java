@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.extensions.ExtensionPointAndAreaListener;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -29,21 +19,47 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TemplateContext {
   private final Map<String, Boolean> myContextStates = ContainerUtil.newTroveMap();
 
-  private static class ContextInterner {
-    private static final Map<String, String> internMap = Arrays.stream(TemplateContextType.EP_NAME.getExtensions())
-      .map(TemplateContextType::getContextId)
-      .distinct()
-      .collect(Collectors.toMap(Function.identity(), Function.identity()));
-  }
+  private static final ClearableLazyValue<Map<String, String>> INTERN_MAP = new ClearableLazyValue<Map<String, String>>() {
+    {
+      TemplateManagerImpl.TEMPLATE_CONTEXT_EP.addExtensionPointListener(new ExtensionPointAndAreaListener<TemplateContextType>() {
+        @Override
+        public void areaReplaced(@NotNull ExtensionsArea oldArea) {
+          drop();
+        }
 
-  public TemplateContext createCopy()  {
+        @Override
+        public void extensionAdded(@NotNull TemplateContextType extension, @Nullable PluginDescriptor pluginDescriptor) {
+          drop();
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull TemplateContextType extension, @Nullable PluginDescriptor pluginDescriptor) {
+          drop();
+        }
+      });
+    }
+
+    @NotNull
+    @Override
+    protected Map<String, String> compute() {
+      return TemplateManagerImpl.getAllContextTypes().stream()
+        .map(TemplateContextType::getContextId)
+        .distinct()
+        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+    }
+  };
+
+  public TemplateContext createCopy() {
     TemplateContext cloneResult = new TemplateContext();
     cloneResult.myContextStates.putAll(myContextStates);
     return cloneResult;
@@ -90,11 +106,12 @@ public class TemplateContext {
   // used during initialization => no sync
   @VisibleForTesting
   public void readTemplateContext(@NotNull Element element) {
+    Map<String, String> internMap = INTERN_MAP.getValue();
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
       if (name != null && value != null) {
-        myContextStates.put(ContainerUtil.getOrElse(ContextInterner.internMap, name, name), Boolean.parseBoolean(value));
+        myContextStates.put(ContainerUtil.getOrElse(internMap, name, name), Boolean.parseBoolean(value));
       }
     }
 
@@ -174,7 +191,7 @@ public class TemplateContext {
   /**
    * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
    * Base value is `false`.
-   *
+   * <p>
    * If default value is defined (as in our example)  we must not take base value in account.
    * Because on init `setDefaultContext` will be called and we will have own value.
    * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
