@@ -117,10 +117,9 @@ public class UpdateZipAction extends BaseUpdateAction {
   }
 
   @Override
-  protected void doApply(final ZipFile patchFile, File backupDir, File toFile) throws IOException {
+  protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     File temp = Utils.getTempFile(toFile.getName());
-    //in case no backup is required
-    File source = backupDir == null ? toFile : getSource(backupDir);
+    File source = mandatoryBackup() ? getSource(Objects.requireNonNull(backupDir)) : toFile;
 
     try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(temp), 0)) {
       processZipFile(source, (entry, in) -> {

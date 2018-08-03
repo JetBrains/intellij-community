@@ -74,7 +74,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return myRangeMarker.getDocument().getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset()).toString();
   }
 
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     return resolve() == element;
   }
 

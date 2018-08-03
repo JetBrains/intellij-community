@@ -86,7 +86,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof SchemaPrefix) || !myName.equals(((SchemaPrefix)element).getName())) return false;
     return super.isReferenceTo(element);
   }

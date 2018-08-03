@@ -57,7 +57,7 @@ public abstract class StringLiteralReference implements PsiReference {
     return myValue;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return resolve() == element;
   }
 

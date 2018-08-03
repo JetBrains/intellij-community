@@ -324,8 +324,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return build;
   }
 
-  // made public for Upsource
-  public void registerExtensionPoints(@NotNull ExtensionsArea area) {
+  void registerExtensionPoints(@NotNull ExtensionsArea area) {
     if (myExtensionsPoints != null) {
       for (Element element : myExtensionsPoints.get(StringUtil.notNullize(area.getAreaClass()))) {
         area.registerExtensionPoint(this, element);
@@ -371,6 +370,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myReleaseDate;
   }
 
+  @Override
   public int getReleaseVersion() {
     return myReleaseVersion;
   }
@@ -557,6 +557,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  @Override
   @Deprecated
   public String getDownloads() {
     return null;
@@ -577,11 +578,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUseIdeaClassLoader;
   }
 
-  public boolean isUseCoreClassLoader() {
+  boolean isUseCoreClassLoader() {
     return myUseCoreClassLoader;
   }
 
-  public void setUseCoreClassLoader(final boolean useCoreClassLoader) {
+  void setUseCoreClassLoader(final boolean useCoreClassLoader) {
     myUseCoreClassLoader = useCoreClassLoader;
   }
 
@@ -603,7 +604,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return CommonBundle.messageOrDefault(bundle, createDescriptionKey(myId), myDescriptionChildText == null ? "" : myDescriptionChildText);
   }
 
-  public void insertDependency(@NotNull IdeaPluginDescriptor d) {
+  void insertDependency(@NotNull IdeaPluginDescriptor d) {
     PluginId[] deps = new PluginId[getDependentPluginIds().length + 1];
     deps[0] = d.getPluginId();
     System.arraycopy(myDependencies, 0, deps, 1, deps.length - 1);

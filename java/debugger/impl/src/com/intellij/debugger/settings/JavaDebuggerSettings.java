@@ -45,8 +45,6 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
       case HOTSWAP:
         return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"),
                                                        JavaHotSwapConfigurableUi.class, DebuggerSettings::getInstance));
-      case ROOT:
-        return singletonList(new CaptureConfigurable());
     }
     return Collections.emptyList();
   }

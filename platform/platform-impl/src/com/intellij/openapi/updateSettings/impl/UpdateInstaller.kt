@@ -29,21 +29,6 @@ object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun downloadPatchFile(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean, indicator: ProgressIndicator): File {
-    indicator.text = IdeBundle.message("update.downloading.patch.progress")
-    val product = ApplicationInfo.getInstance().build.productCode
-    val from = patch.fromBuild.withoutProductCode().asString()
-    val to = toBuild.withoutProductCode().asString()
-    val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
-    val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
-    val url = URL(patchesUrl, patchName).toString()
-    val patchFile = File(getTempDir(), "patch.jar")
-    HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
-    return patchFile
-  }
-
-  @JvmStatic
-  @Throws(IOException::class)
   fun downloadPatchChain(chain: List<BuildNumber>, forceHttps: Boolean, indicator: ProgressIndicator): List<File> {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 

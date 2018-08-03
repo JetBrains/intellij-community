@@ -58,7 +58,7 @@ public class JsonPropertyNameReference implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof JsonProperty)) {
       return false;
     }

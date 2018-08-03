@@ -163,7 +163,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     switch (getKind()) {
       case PACKAGE_REFERENCE:
         return referencesPackage(element);

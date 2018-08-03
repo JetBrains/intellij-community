@@ -468,7 +468,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     GroovyResolveResult[] results = multiResolve(false);
 
     for (GroovyResolveResult result : results) {

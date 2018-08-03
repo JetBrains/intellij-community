@@ -122,7 +122,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof PsiPackage)) return false;
     return getManager().areElementsEquivalent(resolve(), element);
   }

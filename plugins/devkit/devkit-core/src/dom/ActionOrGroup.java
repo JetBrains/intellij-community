@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 
 /**
  * @since 15
@@ -47,4 +48,8 @@ public interface ActionOrGroup extends DomElement {
   @Stubbed
   @Required(value = false)
   GenericAttributeValue<String> getDescription();
+
+  @NotNull
+  @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
+  GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
 }

@@ -83,8 +83,8 @@ import java.awt.event.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
@@ -524,7 +524,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     Set<Movement> movedPaths = new HashSet<>();
     for (GitCheckinExplicitMovementProvider provider : GitCheckinExplicitMovementProvider.EP_NAME.getExtensions()) {
-      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
+      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths, true);
       if (!providerMovements.isEmpty()) {
         message = provider.getCommitMessage(message);
         movedPaths.addAll(providerMovements);
@@ -674,7 +674,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
@@ -707,7 +707,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change));
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MV);
       h.addParameters("-f", beforePath.getPath(), afterPath.getPath());
-      Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+      Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
       return true;
     }
     catch (VcsException e) {
@@ -850,7 +850,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--no-verify");
     }
     handler.endOptions();
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   /**
@@ -1003,7 +1003,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.endOptions();
       handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      Git.getInstance().runCommand(handler).throwOnError();
     }
   }
 
@@ -1101,7 +1101,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myExplicitMovementProviders = filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
+      myExplicitMovementProviders = collectActiveMovementProviders(myProject);
 
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
@@ -1331,6 +1331,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(), virtualFile -> findGitDir(virtualFile) != null);
       GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
       return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
+    }
+
+    @NotNull
+    private List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
+      GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
+      List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
+      if (enabledProviders.isEmpty()) return Collections.emptyList();
+      if (!Registry.is("git.explicit.commit.renames.allow.multiple.calls")) return enabledProviders;
+
+      Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
+      List<FilePath> beforePaths = mapNotNull(changes, ChangesUtil::getBeforePath);
+      List<FilePath> afterPaths = mapNotNull(changes, ChangesUtil::getAfterPath);
+
+      return filter(enabledProviders, it -> !it.collectExplicitMovements(project, beforePaths, afterPaths, false).isEmpty());
     }
   }
 

@@ -45,10 +45,6 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
     });
   }
 
-  public void scroll(int times) {
-    robot().rotateMouseWheel(times);
-  }
-
   @NotNull
   public static JDialogFixture find(@NotNull Robot robot, String title) {
     return find(robot, title, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());

@@ -3,9 +3,12 @@ package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,10 +24,19 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
 
   @NotNull
   static Set<UsageDescriptor> getChangedValuesUsages() {
-    return Registry.getAll().stream()
-                   .filter(key -> key.isChangedFromDefault())
-                   .map(key -> new UsageDescriptor(key.getKey()))
-                   .collect(Collectors.toSet());
+    Set<UsageDescriptor> registry = Registry.getAll().stream()
+      .filter(key -> key.isChangedFromDefault())
+      .map(key -> new UsageDescriptor(key.getKey()))
+      .collect(Collectors.toSet());
+
+    Set<UsageDescriptor> experiments = Arrays.stream(Experiments.EP_NAME.getExtensions())
+      .filter(f -> Experiments.isFeatureEnabled(f.id))
+      .map(f -> new UsageDescriptor(f.id))
+      .collect(Collectors.toSet());
+
+    HashSet<UsageDescriptor> result = new HashSet<>(registry);
+    result.addAll(experiments);
+    return result;
   }
 
   @NotNull

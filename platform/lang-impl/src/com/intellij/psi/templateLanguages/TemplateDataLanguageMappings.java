@@ -59,7 +59,7 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   @Nullable
   @Override
   public Language getMapping(@Nullable VirtualFile file) {
-    final Language t = getMappingInner(file, getMappings(), myPropertyPusher.getFileDataKey());
+    Language t = getConfiguredMapping(file);
     return t == null || t == Language.ANY ? getDefaultMapping(file) : t;
   }
 

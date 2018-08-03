@@ -32,6 +32,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -66,6 +68,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -90,7 +93,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private EditorWindow mySplittedWindow;
   private boolean myCommittingToOriginal;
 
-  private final PsiFile myInjectedFile;
+  private PsiFile myInjectedFile;
   private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = ContainerUtil.newLinkedList();
 
   @Nullable
@@ -146,6 +149,10 @@ public class QuickEditHandler implements Disposable, DocumentListener {
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
+        if (event.getEditor().getDocument() == myOrigDocument) {
+          ApplicationManager.getApplication().invokeLater(() -> closeEditor(), myProject.getDisposed());
+          return;
+        }
         if (event.getEditor().getDocument() != myNewDocument) return;
         if (--useCount > 0) return;
         if (Boolean.TRUE.equals(myNewVirtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
@@ -161,15 +168,13 @@ public class QuickEditHandler implements Disposable, DocumentListener {
         lastShred.getHostRangeMarker().getEndOffset());
       myAltFullRange.setGreedyToLeft(true);
       myAltFullRange.setGreedyToRight(true);
-
       initGuardedBlocks(shreds);
-      myInjectedFile = null;
     }
     else {
       initMarkers(shreds);
       myAltFullRange = null;
-      myInjectedFile = injectedFile;
     }
+    myInjectedFile = injectedFile;
   }
 
   public boolean isValid() {
@@ -201,9 +206,9 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values
-      if (editor != null) {
+      if (editor instanceof EditorEx) {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
-        final FoldingModel foldingModel = editor.getFoldingModel();
+        final FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
         foldingModel.runBatchFoldingOperation(() -> {
           CharSequence sequence = myNewDocument.getImmutableCharSequence();
           for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
@@ -213,8 +218,13 @@ public class QuickEditHandler implements Disposable, DocumentListener {
             int end = o.getEndOffset();
             start += StringUtil.countChars(sequence, '\n', start, end, true);
             end -= StringUtil.countChars(sequence, '\n', end, start, true);
-            FoldRegion region = start <= end ? foldingModel.addFoldRegion(start, end, replacement) : null;
-            if (region != null) region.setExpanded(false);
+            if (start <= end) {
+              FoldRegion region = foldingModel.getFoldRegion(start, end);
+              if (region == null) {
+                region = foldingModel.createFoldRegion(start, end, replacement, null, true);
+              }
+              if (region != null) region.setExpanded(false);
+            }
           }
         });
       }
@@ -266,8 +276,14 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       }
     }
     else if (e.getDocument() == myOrigDocument) {
-      if (myCommittingToOriginal || myAltFullRange != null && myAltFullRange.isValid()) return;
-      ApplicationManager.getApplication().invokeLater(() -> closeEditor(), myProject.getDisposed());
+      if (myCommittingToOriginal) return;
+      if (!changesRange(TextRange.from(e.getOffset(), e.getNewLength()))) return;
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Component owner = FocusManager.getCurrentManager().getFocusOwner();
+        closeEditor();
+        owner.requestFocus();
+      }, myProject.getDisposed());
     }
   }
 
@@ -457,7 +473,23 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     return myNewFile;
   }
 
-  public boolean changesRange(TextRange range) {
+  public boolean tryReuse(@NotNull PsiFile injectedFile, TextRange hostRange) {
+
+    if (myInjectedFile == injectedFile) return changesRange(hostRange);
+
+    if ((myInjectedFile == null || !myInjectedFile.isValid()) && myAltFullRange != null) {
+      DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
+      if (documentWindow != null && documentWindow.getDelegate() == myAltFullRange.getDocument() && changesRange(hostRange)) {
+        myInjectedFile = injectedFile;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+
+  private boolean changesRange(TextRange range) {
     if (myAltFullRange != null) {
        return range.intersects(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
     }

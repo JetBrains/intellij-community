@@ -254,7 +254,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     }
 
     @Override
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
       return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
     }
 

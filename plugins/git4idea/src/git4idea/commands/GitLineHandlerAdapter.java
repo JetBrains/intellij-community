@@ -20,25 +20,12 @@ import com.intellij.openapi.util.Key;
 /**
  * An adapter for line handler
  */
+@Deprecated
 public class GitLineHandlerAdapter implements GitLineHandlerListener {
   /**
    * {@inheritDoc}
    */
   public void onLineAvailable(final String line, final Key outputType) {
-    // do nothing
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void processTerminated(final int exitCode) {
-    // do nothing
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void startFailed(final Throwable exception) {
     // do nothing
   }
 }

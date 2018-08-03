@@ -41,5 +41,8 @@ public @interface Property {
    */
   Style style() default Style.OPTION_TAG;
 
+  /**
+   * Whether to assert that class has at least one serializable property.
+   */
   boolean assertIfNoBindings() default true;
 }

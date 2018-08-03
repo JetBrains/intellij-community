@@ -9,7 +9,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
@@ -25,14 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(
-  name = "DebuggerSettings",
-  defaultStateAsResource = true,
-  storages = {
-    @Storage("debugger.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "DebuggerSettings", storages = @Storage("debugger.xml"))
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
@@ -49,6 +41,23 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String EVALUATE_FINALLY_ALWAYS = "EvaluateFinallyAlways";
   @NonNls public static final String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
   @NonNls public static final String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
+
+  private static final ClassFilter[] DEFAULT_STEPPING_FILTERS = new ClassFilter[]{
+    new ClassFilter("com.sun.*"),
+    new ClassFilter("java.*"),
+    new ClassFilter("javax.*"),
+    new ClassFilter("org.omg.*"),
+    new ClassFilter("sun.*"),
+    new ClassFilter("jdk.internal.*"),
+    new ClassFilter("junit.*"),
+    new ClassFilter("com.intellij.rt.*"),
+    new ClassFilter("com.yourkit.runtime.*"),
+    new ClassFilter("com.springsource.loaded.*"),
+    new ClassFilter("org.springsource.loaded.*"),
+    new ClassFilter("javassist.*"),
+    new ClassFilter("org.apache.webbeans.*"),
+    new ClassFilter("com.ibm.ws.*"),
+  };
 
   public boolean TRACING_FILTERS_ENABLED = true;
   public int DEBUGGER_TRANSPORT;
@@ -74,7 +83,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
-  private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
+  private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
 
   public boolean INSTRUMENTING_AGENT = true;
   private List<CapturePoint> myCapturePoints = new ArrayList<>();
@@ -105,7 +114,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @Override
   public Element getState() {
     Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
-    DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
+    if (!Arrays.equals(DEFAULT_STEPPING_FILTERS, mySteppingFilters)) {
+      DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
+    }
 
     for (ContentState eachState : myContentStates.values()) {
       final Element content = new Element("content");

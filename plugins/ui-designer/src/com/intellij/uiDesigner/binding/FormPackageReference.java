@@ -39,7 +39,7 @@ public class FormPackageReference extends ReferenceInForm {
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     if (!(element instanceof PsiPackage)) {
       return false;
     }

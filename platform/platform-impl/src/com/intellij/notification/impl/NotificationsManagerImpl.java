@@ -1015,8 +1015,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       setIcon(new Icon() {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - getIconHeight();
-          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, lineY);
+          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, y + 1);
         }
 
         @Override

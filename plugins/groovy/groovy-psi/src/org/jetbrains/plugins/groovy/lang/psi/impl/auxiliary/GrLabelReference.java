@@ -61,7 +61,7 @@ public class GrLabelReference implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return resolve() == element;
   }
 

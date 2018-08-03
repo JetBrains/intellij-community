@@ -96,7 +96,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                 throw new IncorrectOperationException();
             }
 
-            public boolean isReferenceTo(PsiElement element) {
+            public boolean isReferenceTo(@NotNull PsiElement element) {
                 return Comparing.equal(element, resolve());
             }
 

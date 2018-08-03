@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
@@ -843,8 +844,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-      Component component = contributor.getElementsRenderer(myResultsList)
-                                       .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (component == null) {
+        component = contributor.getElementsRenderer(myResultsList)
+          .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
         component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);

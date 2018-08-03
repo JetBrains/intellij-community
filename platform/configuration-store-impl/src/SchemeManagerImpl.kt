@@ -26,6 +26,7 @@ import com.intellij.util.*
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.catch
+import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
@@ -88,7 +89,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     get() = ioDirectory.toFile()
 
   override val allSchemeNames: Collection<String>
-    get() = schemes.let { if (it.isEmpty()) emptyList() else it.map { processor.getSchemeKey(it) } }
+    get() = schemes.mapSmart { processor.getSchemeKey(it) }
 
   override val allSchemes: List<T>
     get() = Collections.unmodifiableList(schemes)
@@ -185,8 +186,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }) {
       }
       else {
-        ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) {
-          for (file in it) {
+        ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) { directoryStream ->
+          for (file in directoryStream) {
             if (file.isDirectory()) {
               continue
             }
@@ -601,8 +602,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     if (isUseVfs) {
-      virtualDirectory?.let {
-        val childrenToDelete = it.children.filter { filesToDelete.contains(it.name) }
+      virtualDirectory?.let { virtualDir ->
+        val childrenToDelete = virtualDir.children.filter { filesToDelete.contains(it.name) }
         if (childrenToDelete.isNotEmpty()) {
           runUndoTransparentWriteAction {
             childrenToDelete.forEach { file ->

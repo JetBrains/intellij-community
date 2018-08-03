@@ -293,7 +293,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     }
 
     @Override
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
       if (element instanceof PsiClass && element == getContainingClass() && ((PsiClass)element).getConstructors().length == 0) {
         return true;
       }

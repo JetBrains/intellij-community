@@ -29,48 +29,43 @@ import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.util.Set;
 
 /**
  * Image file type manager.
- *
- * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
-
   private static final String IMAGE_FILE_TYPE_NAME = "Image";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
-  private static final UserFileType imageFileType;
+  private static final UserFileType imageFileType = new ImageFileType();
 
-  static {
-    imageFileType = new ImageFileType();
-    imageFileType.setIcon(ImagesIcons.ImagesFileType);
-    imageFileType.setName(IMAGE_FILE_TYPE_NAME);
-    imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+  public boolean isImage(@NotNull VirtualFile file) {
+    return file.getFileType() == imageFileType || file.getFileType() instanceof SvgFileType;
   }
 
-  public boolean isImage(VirtualFile file) {
-    return file.getFileType() instanceof ImageFileType || file.getFileType() instanceof SvgFileType;
-  }
-
+  @NotNull
   public FileType getImageFileType() {
     return imageFileType;
   }
 
-
   public static final class ImageFileType extends UserBinaryFileType {
-  }
+    private ImageFileType() {
+      setName(IMAGE_FILE_TYPE_NAME);
+      setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+    }
 
+    @Override
+    public Icon getIcon() {
+      return ImagesIcons.ImagesFileType;
+    }
+  }
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     final Set<String> processed = new THashSet<>();
-
-    final String[] readerFormatNames = ImageIO.getReaderFormatNames();
-    for (String format : readerFormatNames) {
-      final String ext = format.toLowerCase();
-      processed.add(ext);
+    for (String format : ImageIO.getReaderFormatNames()) {
+      processed.add(format.toLowerCase());
     }
-
     processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
 
     consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));

@@ -262,7 +262,7 @@ public class DfaValueFactory {
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 
   @NotNull
-  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions) {
+  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions, PsiType targetType) {
     DfaValue loopElement = null;
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = createValue(expression);
@@ -272,7 +272,7 @@ public class DfaValueFactory {
       loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
       if (loopElement == DfaUnknownValue.getInstance()) break;
     }
-    return loopElement == null ? DfaUnknownValue.getInstance() : loopElement;
+    return loopElement == null ? DfaUnknownValue.getInstance() : getExpressionFactory().boxUnbox(loopElement, targetType);
   }
 
   private static class ClassInitializationInfo {

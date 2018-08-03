@@ -104,6 +104,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacOSElCapitan = isMac && isOsVersionAtLeast("10.11");
   public static final boolean isMacOSSierra = isMac && isOsVersionAtLeast("10.12");
   public static final boolean isMacOSHighSierra = isMac && isOsVersionAtLeast("10.13");
+  public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
 
   @NotNull
   public static String getMacOSMajorVersion() {

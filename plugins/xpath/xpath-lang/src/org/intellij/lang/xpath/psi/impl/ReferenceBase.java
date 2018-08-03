@@ -63,7 +63,7 @@ public abstract class ReferenceBase implements PsiReference {
         throw new IncorrectOperationException("unsupported");
     }
 
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
         return Comparing.equal(resolve(), element);
     }
 

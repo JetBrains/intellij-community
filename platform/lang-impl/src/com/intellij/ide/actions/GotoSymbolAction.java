@@ -32,7 +32,7 @@ public class GotoSymbolAction extends GotoActionBase {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("new.search.everywhere")) {
-      showInSearchEverywherePopup(SymbolSearchEverywhereContributor.class.getSimpleName(), e);
+      showInSearchEverywherePopup(SymbolSearchEverywhereContributor.class.getSimpleName(), e, true);
     } else {
       super.actionPerformed(e);
     }

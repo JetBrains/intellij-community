@@ -36,16 +36,12 @@ public class ProjectLocatorImpl extends ProjectLocator {
   @Nullable
   public Project guessProjectForFile(@Nullable VirtualFile file) {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project == null && file != null) {
+      project = getPreferredProject(file);
+    }
     if (project != null && !project.isDisposed()) return project;
+    if (file == null) return null;
 
-    if (file == null) {
-      return null;
-    }
-
-    Project preferredProject = getPreferredProject(file);
-    if (preferredProject != null) {
-      return preferredProject;
-    }
     return ReadAction.compute(()->{
       ProjectManager projectManager = ProjectManager.getInstance();
       if (projectManager == null) return null;

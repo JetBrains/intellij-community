@@ -305,7 +305,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     settings.UI_SHOW_MODULE_GROUPS = !projectView.isFlattenModules(ScopeViewPane.ID);
     myBuilder = new FileTreeModelBuilder(myProject, new Marker() {
       @Override
-      public boolean isMarked(VirtualFile file) {
+      public boolean isMarked(@NotNull VirtualFile file) {
         return packageSet != null && (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, myProject, holder) : packageSet.contains(PackageSetBase.getPsiFile(file, myProject), holder));
       }
     }, settings);

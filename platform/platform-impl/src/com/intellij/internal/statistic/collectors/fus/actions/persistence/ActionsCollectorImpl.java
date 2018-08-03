@@ -21,13 +21,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-@State(
-  name = "ActionsCollector",
-  storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-    @Storage(value = "statistics.actions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
-  }
-)
+@State(name = "ActionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String DEFAULT_ID = "third.party.plugin.action";
   private final Set<String> myJBActions = new THashSet<>();

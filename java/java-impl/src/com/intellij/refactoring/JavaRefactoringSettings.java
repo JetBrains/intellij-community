@@ -8,7 +8,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "RefactoringSettings", storages = @Storage("other.xml"))
+@State(name = "RefactoringSettings", storages = {
+  @Storage("baseRefactoring.xml"),
+  @Storage(value = "other.xml", deprecated = true),
+})
 public class JavaRefactoringSettings implements PersistentStateComponent<JavaRefactoringSettings> {
   // properties should be public in order to get saved by DefaultExternalizable implementation
 

@@ -123,7 +123,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof GrParameter || element instanceof GrTypeParameter)) return false;
     return getManager().areElementsEquivalent(element, resolve());
   }

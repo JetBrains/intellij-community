@@ -238,19 +238,20 @@ public interface HighlightInfoType {
   class HighlightInfoTypeImpl implements HighlightInfoType, HighlightInfoType.UpdateOnTypingSuppressible {
     private final HighlightSeverity mySeverity;
     private final TextAttributesKey myAttributesKey;
-    private boolean myNeedsUpdateOnTyping;
+    private final boolean myNeedsUpdateOnTyping;
 
     //read external only
     HighlightInfoTypeImpl(@NotNull Element element) {
       mySeverity = new HighlightSeverity(element);
       myAttributesKey = new TextAttributesKey(element);
+      myNeedsUpdateOnTyping = false;
     }
 
-    public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, TextAttributesKey attributesKey) {
+    public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey) {
       this(severity, attributesKey, true);
     }
 
-    public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, TextAttributesKey attributesKey, boolean needsUpdateOnTyping) {
+    public HighlightInfoTypeImpl(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey, boolean needsUpdateOnTyping) {
       mySeverity = severity;
       myAttributesKey = attributesKey;
       myNeedsUpdateOnTyping = needsUpdateOnTyping;
@@ -268,7 +269,7 @@ public interface HighlightInfoType {
     }
 
     @Override
-    @SuppressWarnings({"HardCodedStringLiteral"})
+    @SuppressWarnings("HardCodedStringLiteral")
     public String toString() {
       return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + myAttributesKey + "]";
     }
@@ -286,7 +287,7 @@ public interface HighlightInfoType {
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof HighlightInfoTypeImpl)) return false;
 
       final HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
 
@@ -315,7 +316,7 @@ public interface HighlightInfoType {
     private final TextAttributesKey myAttributesKey;
     private final HighlightDisplayKey myToolKey;
 
-    public HighlightInfoTypeSeverityByKey(HighlightDisplayKey severityKey, TextAttributesKey attributesKey) {
+    HighlightInfoTypeSeverityByKey(HighlightDisplayKey severityKey, TextAttributesKey attributesKey) {
       myToolKey = severityKey;
       myAttributesKey = attributesKey;
     }
@@ -335,7 +336,7 @@ public interface HighlightInfoType {
     }
 
     @Override
-    @SuppressWarnings({"HardCodedStringLiteral"})
+    @SuppressWarnings("HardCodedStringLiteral")
     public String toString() {
       return "HighlightInfoTypeSeverityByKey[severity=" + myToolKey + ", key=" + myAttributesKey + "]";
     }
@@ -345,10 +346,12 @@ public interface HighlightInfoType {
     }
   }
 
+  @FunctionalInterface
   interface Iconable {
     Icon getIcon();
   }
 
+  @FunctionalInterface
   interface UpdateOnTypingSuppressible {
     boolean needsUpdateOnTyping();
   }

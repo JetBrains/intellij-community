@@ -61,21 +61,13 @@ internal class XmlSerializerTest {
     }
   }
 
-// commented for now, error level changed to WARN
-//  @Test fun emptyBeanSerialization() {
-//    class EmptyBean
-//
-//    try {
-//      testSerializer("<EmptyBean />", EmptyBean())
-//    }
-//    catch (e: AssertionError) {
-//      assertThat(e.message).startsWith("no accessors for class ")
-//    }
-//
-//    Assertions.fail("error expected")
-//  }
+  @Test fun `no error if no accessors`() {
+    class EmptyBean
 
-  @Test fun `supress no accessors warn`() {
+    testSerializer("<EmptyBean />", EmptyBean())
+  }
+
+  @Test fun `suppress no accessors warn`() {
     @Property(assertIfNoBindings = false)
     class EmptyBean
 

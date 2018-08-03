@@ -438,7 +438,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     IElementType i = getLastChildNode().getElementType();
     boolean resolvingToMethod = element instanceof PsiMethod;
     if (i == JavaTokenType.IDENTIFIER) {

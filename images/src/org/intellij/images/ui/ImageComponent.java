@@ -74,10 +74,6 @@ public class ImageComponent extends JComponent {
     @NonNls
     private static final String uiClassID = "ImageComponentUI";
 
-    static {
-        UIManager.getDefaults().put(uiClassID, ImageComponentUI.class.getName());
-    }
-
     private final ImageDocument document = new ImageDocumentImpl(this);
     private final Grid grid = new Grid();
     private final Chessboard chessboard = new Chessboard();
@@ -244,7 +240,8 @@ public class ImageComponent extends JComponent {
     }
 
     public void updateUI() {
-        setUI(UIManager.getUI(this));
+      boolean customUI = UIManager.getDefaults().get(uiClassID) != null;
+      setUI(customUI ? UIManager.getUI(this) : new ImageComponentUI(this));
     }
 
     private static class ImageDocumentImpl implements ImageDocument {

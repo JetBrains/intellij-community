@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -15,6 +16,7 @@ import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
@@ -78,7 +80,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
     public static final InsertHandler<LookupElement> INSTANCE = new MavenGroupIdInsertHandler();
 
     @Override
-    public void handleInsert(final InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
       if (TemplateManager.getInstance(context.getProject()).getActiveTemplate(context.getEditor()) != null) {
         return; // Don't brake the template.
       }

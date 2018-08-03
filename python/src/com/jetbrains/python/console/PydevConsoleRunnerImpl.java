@@ -802,7 +802,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(myConsoleView, myProcessHandler, myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
-    new ConsoleHistoryController(myConsoleType.getTypeId(), "", myConsoleView).install();
+    new ConsoleHistoryController(PyConsoleRootType.Companion.getInstance(), "", myConsoleView).install();
     return myConsoleExecuteActionHandler;
   }
 

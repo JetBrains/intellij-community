@@ -48,7 +48,7 @@ public class PsiReferenceWrapper implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myOriginalPsiReference.isReferenceTo(element);
   }
 

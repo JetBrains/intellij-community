@@ -66,7 +66,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     @NotNull
     private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
       @Override
-      public boolean contains(final VirtualFile file, NamedScopesHolder scopesHolder) {
+      public boolean contains(@NotNull final VirtualFile file, NamedScopesHolder scopesHolder) {
         return true;
       }
     });

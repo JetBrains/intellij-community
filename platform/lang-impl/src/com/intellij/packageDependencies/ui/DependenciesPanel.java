@@ -144,14 +144,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     myRightTreeMarker = new Marker() {
       @Override
-      public boolean isMarked(VirtualFile file) {
+      public boolean isMarked(@NotNull VirtualFile file) {
         return myIllegalsInRightTree.contains(file);
       }
     };
 
     myLeftTreeMarker = new Marker() {
       @Override
-      public boolean isMarked(VirtualFile file) {
+      public boolean isMarked(@NotNull VirtualFile file) {
         return myIllegalDependencies.containsKey(file);
       }
     };

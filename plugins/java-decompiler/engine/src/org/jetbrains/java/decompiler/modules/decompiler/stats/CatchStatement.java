@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -171,7 +169,7 @@ public class CatchStatement extends Statement {
       buf.append(vars.get(i - 1).toJava(indent, tracer));
       buf.append(") {").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
-      buf.append(ExprProcessor.jmpWrapper(stat, indent + 1, true, tracer)).appendIndent(indent)
+      buf.append(ExprProcessor.jmpWrapper(stat, indent + 1, false, tracer)).appendIndent(indent)
         .append("}");
     }
     buf.appendLineSeparator();

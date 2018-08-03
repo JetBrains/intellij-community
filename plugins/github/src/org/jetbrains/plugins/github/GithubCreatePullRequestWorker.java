@@ -45,8 +45,14 @@ import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
-import org.jetbrains.plugins.github.api.data.*;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
+import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubServerPath;
+import org.jetbrains.plugins.github.api.data.GithubBranch;
+import org.jetbrains.plugins.github.api.data.GithubPullRequest;
+import org.jetbrains.plugins.github.api.data.GithubRepo;
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
@@ -384,7 +390,7 @@ public class GithubCreatePullRequestWorker {
     String url = myGitHelper.getRemoteUrl(myServer, path);
 
     try {
-      myGit.addRemote(myGitRepository, path.getUser(), url).getOutputOrThrow();
+      myGit.addRemote(myGitRepository, path.getUser(), url).throwOnError();
       myGitRepository.update();
       fork.setRemoteName(path.getUser());
     }

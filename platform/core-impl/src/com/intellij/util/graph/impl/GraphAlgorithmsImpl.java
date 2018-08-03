@@ -6,6 +6,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -15,6 +16,12 @@ import java.util.*;
 public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish) {
+    return findShortestPath((InboundSemiGraph<Node>)graph, start, finish);
+  }
+
+  @Nullable
+  @Override
+  public <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish) {
     return new ShortestPathFinder<>(graph).findPath(start, finish);
   }
 

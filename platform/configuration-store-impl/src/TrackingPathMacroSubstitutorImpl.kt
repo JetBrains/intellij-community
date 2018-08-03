@@ -4,7 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.SmartHashSet
 
@@ -58,7 +57,7 @@ internal class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathM
       return
     }
 
-    LOG.debug { "Registering unknown macros ${unknownMacros.joinToString(", ")} in component $componentName" }
+    LOG.info("Registering unknown macros ${unknownMacros.joinToString(", ")} in component $componentName")
 
     synchronized(lock) {
       for (unknownMacro in unknownMacros) {

@@ -10,13 +10,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
-@State(
-  name = "RecentProjectsManager",
-  storages = {
-    @Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "RecentProjectsManager", storages = @Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED))
 public class RecentProjectsManagerImpl extends RecentProjectsManagerBase {
   public RecentProjectsManagerImpl(MessageBus messageBus) {
     super(messageBus);

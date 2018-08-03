@@ -4,7 +4,6 @@ package com.jetbrains.jsonSchema;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -21,6 +20,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +75,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         myDirtySchemas.removeAll(scope);
 
-        Collection<VirtualFile> finalScope = ReadAction.compute(() -> ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file) && myService.isSchemaFile(file)));
+        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file) && ((JsonSchemaServiceImpl)myService).isMappedSchema(file));
         if (finalScope.isEmpty()) return;
         if (myProject.isDisposed()) return;
         myProject.getMessageBus().syncPublisher(JSON_SCHEMA_CHANGED).run();
@@ -86,12 +86,12 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         Arrays.stream(editors).filter(editor -> editor instanceof EditorEx)
               .map(editor -> ((EditorEx)editor).getVirtualFile())
               .filter(file -> file != null && file.isValid())
-              .forEach(file -> ReadAction.run(() -> {
-                final Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
+              .forEach(file -> {
+                final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
                 if (schemaFiles.stream().anyMatch(finalScope::contains)) {
                   Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart);
                 }
-              }));
+              });
       };
     }
 

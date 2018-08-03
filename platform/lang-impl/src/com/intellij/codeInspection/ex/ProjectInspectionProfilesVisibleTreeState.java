@@ -6,7 +6,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "ProjectInspectionProfilesVisibleTreeState", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "ProjectInspectionProfilesVisibleTreeState", storages = {
+  @Storage(StoragePathMacros.CACHE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class ProjectInspectionProfilesVisibleTreeState implements PersistentStateComponent<VisibleTreeStateComponent> {
   private VisibleTreeStateComponent myComponent = new VisibleTreeStateComponent();
 

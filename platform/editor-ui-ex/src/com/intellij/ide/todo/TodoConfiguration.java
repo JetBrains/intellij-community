@@ -22,13 +22,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 
-@State(
-  name = "TodoConfiguration",
-  storages = {
-    @Storage("editor.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "TodoConfiguration", storages = @Storage("editor.xml"))
 public class TodoConfiguration implements PersistentStateComponent<Element> {
   private boolean myMultiLine = true;
   private TodoPattern[] myTodoPatterns;

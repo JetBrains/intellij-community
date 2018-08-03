@@ -703,7 +703,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     DefaultActionGroup group = new DefaultActionGroup() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         myButtonPanel.update();
       }
@@ -861,12 +861,12 @@ public class UsageViewImpl implements UsageViewEx {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
       }
     };
@@ -965,7 +965,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void restoreUsageExpandState(@NotNull Collection<UsageState> states) {
+  private void restoreUsageExpandState(@NotNull Collection<? extends UsageState> states) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     //always expand the last level group
     final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
@@ -1279,7 +1279,7 @@ public class UsageViewImpl implements UsageViewEx {
     updateOnSelectionChanged();
   }
 
-  private void queueUpdateBulk(@NotNull List<Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
+  private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty()) return;
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (Node node : toUpdate) {
@@ -1317,7 +1317,7 @@ public class UsageViewImpl implements UsageViewEx {
     return false;
   }
 
-  private void updateImmediatelyNodesUpToRoot(@NotNull Collection<Node> nodes) {
+  private void updateImmediatelyNodesUpToRoot(@NotNull Collection<? extends Node> nodes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();

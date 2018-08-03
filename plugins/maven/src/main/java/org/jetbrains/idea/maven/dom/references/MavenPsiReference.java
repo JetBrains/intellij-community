@@ -63,7 +63,7 @@ public abstract class MavenPsiReference implements PsiReference {
     return myRange;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(element, resolve());
   }
 

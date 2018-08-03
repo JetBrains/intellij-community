@@ -97,7 +97,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
 
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PropertiesFile) {
       final String name = ResourceBundleManager.getInstance(element.getProject()).getFullName((PropertiesFile)element);
       if (name != null && name.equals(myBundleName)) {

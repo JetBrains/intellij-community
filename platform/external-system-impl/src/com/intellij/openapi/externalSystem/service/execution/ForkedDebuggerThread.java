@@ -21,8 +21,8 @@ import com.intellij.execution.remote.RemoteConfigurationType;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -53,25 +53,25 @@ import java.net.Socket;
  */
 class ForkedDebuggerThread extends Thread {
   @NotNull
-  private final ProcessHandler myProcessHandler;
+  private final ProcessHandler myMainProcessHandler;
   @NotNull
   private final ServerSocket mySocket;
   @NotNull
   private final Project myProject;
-  private final ConsoleView myConsole;
+  @Nullable
+  private final ExecutionConsole myMainExecutionConsole;
 
-  public ForkedDebuggerThread(@NotNull ProcessHandler processHandler,
-                              @NotNull RunContentDescriptor runContentDescriptor,
+  public ForkedDebuggerThread(@NotNull ProcessHandler mainProcessHandler,
+                              @NotNull RunContentDescriptor mainRunContentDescriptor,
                               @NotNull ServerSocket socket,
                               @NotNull Project project) {
-    super("external task forked debuggJavaForkOptionser runner");
+    super("external task forked debugger runner");
     setDaemon(true);
-    myProcessHandler = processHandler;
     mySocket = socket;
     myProject = project;
-    myConsole = runContentDescriptor.getExecutionConsole() instanceof ConsoleView ?
-                (ConsoleView)runContentDescriptor.getExecutionConsole() : null;
-    myProcessHandler.addProcessListener(new ProcessAdapter() {
+    myMainProcessHandler = mainProcessHandler;
+    myMainExecutionConsole = mainRunContentDescriptor.getExecutionConsole();
+    myMainProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         closeSocket();
@@ -96,7 +96,7 @@ class ForkedDebuggerThread extends Thread {
 
   @Override
   public void run() {
-    while (!myProcessHandler.isProcessTerminated() && !myProcessHandler.isProcessTerminating() && !mySocket.isClosed()) {
+    while (!myMainProcessHandler.isProcessTerminated() && !myMainProcessHandler.isProcessTerminating() && !mySocket.isClosed()) {
       try {
         handleForkedProcessSignal(mySocket.accept());
       }
@@ -120,7 +120,7 @@ class ForkedDebuggerThread extends Thread {
     // the stream can not be closed in the current thread
     //noinspection IOResourceOpenedButNotSafelyClosed
     DataInputStream stream = new DataInputStream(accept.getInputStream());
-    myProcessHandler.addProcessListener(new ProcessAdapter() {
+    myMainProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         StreamUtil.closeStream(stream);
@@ -140,10 +140,10 @@ class ForkedDebuggerThread extends Thread {
           // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
           ProcessHandler forkedProcessHandler = descriptor.getProcessHandler();
           if (forkedProcessHandler != null) {
-            myProcessHandler.addProcessListener(new ProcessAdapter() {
+            myMainProcessHandler.addProcessListener(new ProcessAdapter() {
               @Override
               public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-                myProcessHandler.removeProcessListener(this);
+                myMainProcessHandler.removeProcessListener(this);
                 if (willBeDestroyed) {
                   forkedProcessHandler.destroyProcess();
                 }
@@ -244,43 +244,43 @@ class ForkedDebuggerThread extends Thread {
     }
 
     private void postLink() {
-      ProcessHandler handler = myDescriptor.getProcessHandler();
-      String addressDisplayName = "";
-      DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(handler);
-      if (debugProcess instanceof DebugProcessImpl) {
-        addressDisplayName = "(" + DebuggerBundle.getAddressDisplayName(((DebugProcessImpl)debugProcess).getConnection()) + ")";
-      }
-      String linkText = ExternalSystemBundle.message("debugger.open.session.tab");
-      String msg = ExternalSystemBundle.message("debugger.status.connected", myProcessName, addressDisplayName) + ". " + linkText + '\n';
-      if (myConsole instanceof DataProvider) {
-        Object executionConsole = ((DataProvider)myConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
-        if (executionConsole instanceof ConsoleViewImpl) {
-          int contentSize = myConsole.getContentSize();
-          myConsole.print(msg, ConsoleViewContentType.SYSTEM_OUTPUT);
-          myConsole.performWhenNoDeferredOutput(() -> {
-            EditorHyperlinkSupport hyperlinkSupport = ((ConsoleViewImpl)executionConsole).getHyperlinks();
-            int startOffset = contentSize + msg.indexOf(linkText) - 1;
-            myHyperlink = hyperlinkSupport.createHyperlink(startOffset, startOffset + linkText.length(), null, project -> {
-              // open tab
-              final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-              ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
-              Content content = contentManager.findContent(myProcessName);
-              if (content != null) {
-                contentManager.setSelectedContent(content, true, true);
-              }
-            });
-          });
+      ConsoleViewImpl mainConsoleView = getMainConsoleView();
+      if (mainConsoleView != null) {
+        ProcessHandler handler = myDescriptor.getProcessHandler();
+        String addressDisplayName = "";
+        DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(handler);
+        if (debugProcess instanceof DebugProcessImpl) {
+          addressDisplayName = "(" + DebuggerBundle.getAddressDisplayName(((DebugProcessImpl)debugProcess).getConnection()) + ")";
         }
+        String linkText = ExternalSystemBundle.message("debugger.open.session.tab");
+        String debuggerAttachedStatusMessage =
+          ExternalSystemBundle.message("debugger.status.connected", myProcessName, addressDisplayName) + ". " + linkText + '\n';
+
+        int contentSize = mainConsoleView.getContentSize();
+        mainConsoleView.print(debuggerAttachedStatusMessage, ConsoleViewContentType.SYSTEM_OUTPUT);
+        mainConsoleView.performWhenNoDeferredOutput(() -> {
+          EditorHyperlinkSupport hyperlinkSupport = mainConsoleView.getHyperlinks();
+          int startOffset = contentSize + debuggerAttachedStatusMessage.indexOf(linkText) - 1;
+          myHyperlink = hyperlinkSupport.createHyperlink(startOffset, startOffset + linkText.length(), null, project -> {
+            // open tab
+            final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+            ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
+            Content content = myDescriptor.getAttachedContent();
+            if (content != null) {
+              contentManager.setSelectedContent(content, true, true);
+            }
+          });
+        });
       }
     }
 
     private void removeLink() {
-      if (myHyperlink != null && myConsole instanceof DataProvider) {
-        Object executionConsole = ((DataProvider)myConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
-        if (executionConsole instanceof ConsoleViewImpl) {
+      if (myHyperlink != null) {
+        ConsoleViewImpl mainConsoleView = getMainConsoleView();
+        if (mainConsoleView != null) {
           ApplicationManager.getApplication().invokeLater(
             () -> {
-              EditorHyperlinkSupport hyperlinkSupport = ((ConsoleViewImpl)executionConsole).getHyperlinks();
+              EditorHyperlinkSupport hyperlinkSupport = mainConsoleView.getHyperlinks();
               int startOffset = myHyperlink.getStartOffset();
               int endOffset = myHyperlink.getEndOffset();
               TextAttributes inactiveTextAttributes = myHyperlink.getTextAttributes() != null
@@ -294,6 +294,21 @@ class ForkedDebuggerThread extends Thread {
           );
         }
       }
+    }
+
+    @Nullable
+    private ConsoleViewImpl getMainConsoleView() {
+      if (myMainExecutionConsole == null) return null;
+      if (myMainExecutionConsole instanceof ConsoleViewImpl) {
+        return (ConsoleViewImpl)myMainExecutionConsole;
+      }
+      if (myMainExecutionConsole instanceof DataProvider) {
+        Object consoleView = ((DataProvider)myMainExecutionConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
+        if (consoleView instanceof ConsoleViewImpl) {
+          return (ConsoleViewImpl)consoleView;
+        }
+      }
+      return null;
     }
   }
 }

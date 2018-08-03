@@ -141,7 +141,7 @@ public class GitBranchUtil {
     h.setSilent(true);
 
     List<String> tags = new ArrayList<>();
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
@@ -150,7 +150,7 @@ public class GitBranchUtil {
     });
 
     GitCommandResult result = Git.getInstance().runCommandWithoutCollectingOutput(h);
-    result.getOutputOrThrow();
+    result.throwOnError();
 
     return tags;
   }

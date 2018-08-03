@@ -95,9 +95,20 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   @Override
-  protected void doBackup(File toFile, File backupFile) throws IOException {
+  public boolean mandatoryBackup() {
+    return !myInPlace;
+  }
+
+  @Override
+  public void backup(File toDir, File backupDir) throws IOException {
     if (myInPlace) {
-      Utils.copy(toFile, backupFile);
+      Utils.copy(getFile(toDir), getFile(backupDir));
+    }
+    else {
+      File moveBackup = getSource(backupDir);
+      if (!moveBackup.exists()) {
+        Utils.copy(getSource(toDir), moveBackup);
+      }
     }
   }
 

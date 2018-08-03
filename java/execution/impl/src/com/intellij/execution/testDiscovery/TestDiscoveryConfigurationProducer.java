@@ -28,8 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
-public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
+public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationWithDiscoverySupport> {
   protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
     super(type);
   }
@@ -47,7 +48,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
 
   @Override
-  protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
+  protected boolean setupConfigurationFromContext(final JavaTestConfigurationWithDiscoverySupport configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
     if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
@@ -73,7 +74,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return false;
   }
 
-  private Module getTargetModule(JavaTestConfigurationBase configuration,
+  private Module getTargetModule(JavaTestConfigurationWithDiscoverySupport configuration,
                                  ConfigurationContext configurationContext,
                                  Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) {
     final RunnerAndConfigurationSettings template =
@@ -149,7 +150,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   @Override
-  protected Module findModule(JavaTestConfigurationBase configuration, Module contextModule) {
+  protected Module findModule(JavaTestConfigurationWithDiscoverySupport configuration, Module contextModule) {
     return null;
   }
 
@@ -185,9 +186,18 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   }
 
   @Override
-  public boolean isConfigurationFromContext(JavaTestConfigurationBase configuration, ConfigurationContext configurationContext) {
+  public boolean isConfigurationFromContext(JavaTestConfigurationWithDiscoverySupport configuration, ConfigurationContext configurationContext) {
     final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
     return position != null && position.equals(getPosition(configuration));
+  }
+
+  protected static LinkedHashSet<String> collectMethodPatterns(@NotNull Location<PsiMethod>[] testMethods) {
+    return Arrays.stream(testMethods)
+          .map(method -> {
+            Iterator<Location<PsiClass>> ancestors = method.getAncestors(PsiClass.class, true);
+            return JavaExecutionUtil.getRuntimeQualifiedName(ancestors.next().getPsiElement()) + "," + method.getPsiElement().getName();
+          })
+          .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   private class MyRunProfile implements WrappingRunConfiguration<RunConfiguration>, RunConfiguration, ConfigurationWithCommandLineShortener, RunProfileWithCompileBeforeLaunchOption {

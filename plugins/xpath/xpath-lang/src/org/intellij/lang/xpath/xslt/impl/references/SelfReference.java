@@ -69,7 +69,7 @@ class SelfReference implements PsiReference {
     return myValue;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return false;
   }
 

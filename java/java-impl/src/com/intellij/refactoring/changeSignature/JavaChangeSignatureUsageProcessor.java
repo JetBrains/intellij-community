@@ -46,6 +46,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
+import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
@@ -200,7 +201,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         fixActualArgumentsList(((PsiEnumConstant)element).getArgumentList(), (JavaChangeInfo)changeInfo, true, PsiSubstitutor.EMPTY);
         return true;
       }
-      else if (!(usage instanceof OverriderUsageInfo)) {
+      else if (!(usage instanceof OverriderUsageInfo) && !(usage instanceof UnresolvableCollisionUsageInfo)) {
         PsiReference reference = usage instanceof MoveRenameUsageInfo ? usage.getReference() : element.getReference();
         if (reference != null) {
           PsiElement target = changeInfo.getMethod();
@@ -1045,7 +1046,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       if (checkUnusedParameter) {
         checkParametersToDelete(myChangeInfo.getMethod(), toRemove, conflictDescriptions);
       }
-      checkContract(conflictDescriptions, myChangeInfo.getMethod());
+      checkContract(conflictDescriptions, myChangeInfo.getMethod(), false);
 
       for (UsageInfo usageInfo : usagesSet) {
         final PsiElement element = usageInfo.getElement();
@@ -1065,7 +1066,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             }
           }
 
-          checkContract(conflictDescriptions, method);
+          checkContract(conflictDescriptions, method, true);
         }
         else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
           conflictDescriptions.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
@@ -1104,9 +1105,14 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    private void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method) {
+    private void checkContract(MultiMap<PsiElement, String> conflictDescriptions, PsiMethod method, boolean override) {
       try {
         ContractConverter.convertContract(method, myChangeInfo);
+      }
+      catch (ContractConverter.ContractInheritedException e) {
+        if (!override) {
+          conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());
+        }
       }
       catch (ContractConverter.ContractConversionException e) {
         conflictDescriptions.putValue(method, "@Contract annotation cannot be updated automatically: " + e.getMessage());

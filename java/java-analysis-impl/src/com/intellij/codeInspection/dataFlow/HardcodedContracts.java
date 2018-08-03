@@ -137,9 +137,13 @@ public class HardcodedContracts {
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
               (call, paramCount) -> mathMinMax(false))
     .register(instanceCall(JAVA_LANG_STRING, "startsWith", "endsWith", "contains"),
-              ContractProvider.single(() -> MethodContract.singleConditionContract(
-                ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
-                ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse())));
+              ContractProvider.list(() -> Arrays.asList(
+                MethodContract.singleConditionContract(
+                  ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), RelationType.EQ,
+                  ContractValue.zero(), returnTrue()),
+                MethodContract.singleConditionContract(
+                  ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
+                  ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse()))));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();

@@ -266,7 +266,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
-  public TextAttributes getDefaultAttributes(TextAttributesKey key) {
+  public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
     final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
     // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
     // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show

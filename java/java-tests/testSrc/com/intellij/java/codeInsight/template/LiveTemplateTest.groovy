@@ -811,7 +811,7 @@ class Foo {{
       LookupElement[] calculateLookupItems(ExpressionContext context) {
         def finishTemplateHandler = new InsertHandler<LookupElement>() {
           @Override
-          void handleInsert(InsertionContext insertCtx, LookupElement item) {
+          void handleInsert(@NotNull InsertionContext insertCtx, @NotNull LookupElement item) {
             def stateRef = TemplateManagerImpl.getTemplateState(insertCtx.editor)
             assertFalse(stateRef.isFinished())
             stateRef.nextTab()

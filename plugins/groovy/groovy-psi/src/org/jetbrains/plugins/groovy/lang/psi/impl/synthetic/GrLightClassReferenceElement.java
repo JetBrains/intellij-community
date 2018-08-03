@@ -142,7 +142,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myManager.areElementsEquivalent(element, resolve());
   }
 

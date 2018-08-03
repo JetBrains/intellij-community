@@ -114,7 +114,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getManager().areElementsEquivalent(resolve(), element);
   }
 

@@ -58,16 +58,14 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final boolean myForceHttps;
   private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
-  private final PatchInfo myPatch;
-  private final ChainInfo myChain;
+  private final UpdateChain myPatches;
   private final boolean myWriteProtected;
   private final Pair<String, Color> myLicenseInfo;
   private final File myTestPatch;
 
   UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
-                   @Nullable PatchInfo patch,
-                   @Nullable ChainInfo chain,
+                   @Nullable UpdateChain patches,
                    boolean enableLink,
                    boolean forceHttps,
                    @Nullable Collection<PluginDownloader> updatedPlugins,
@@ -77,9 +75,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
     myNewBuild = newBuild;
-    myPatch = patch;
-    myChain = chain;
-    myWriteProtected = myPatch != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
+    myPatches = patches;
+    myWriteProtected = myPatches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = null;
@@ -91,7 +88,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
 
     FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown");
-    if (myPatch == null && myChain == null) {
+    if (myPatches == null) {
       FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.no.patch");
     }
     else if (!ApplicationManager.getApplication().isRestartCapable()) {
@@ -99,14 +96,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
   }
 
-  UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, PatchInfo patch, @Nullable File patchFile) {
+  UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
     super(true);
     myUpdatedChannel = channel;
     myForceHttps = true;
     myUpdatedPlugins = null;
     myNewBuild = newBuild;
-    myPatch = patch;
-    myChain = null;
+    myPatches = patches;
     myWriteProtected = false;
     myLicenseInfo = null;
     myTestPatch = patchFile;
@@ -153,7 +149,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   protected Action[] createActions() {
     List<Action> actions = ContainerUtil.newArrayList();
 
-    if (myPatch != null || myChain != null || myTestPatch != null) {
+    if (myPatches != null || myTestPatch != null) {
       boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
       actions.add(new AbstractAction(IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button")) {
         {
@@ -170,7 +166,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     List<ButtonInfo> buttons = myNewBuild.getButtons();
     for (ButtonInfo info : buttons) {
-      if (!info.isDownload() || myPatch == null && myChain == null) {
+      if (!info.isDownload() || myPatches == null) {
         actions.add(new ButtonAction(info));
       }
     }
@@ -205,12 +201,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          if (myPatch != null) {
-            File file = UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
-            command = UpdateInstaller.preparePatchCommand(file, indicator);
-          }
-          else if (myChain != null) {
-            List<File> files = UpdateInstaller.downloadPatchChain(myChain.getChain(), myForceHttps, indicator);
+          if (myPatches != null) {
+            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), myForceHttps, indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
           else {
@@ -343,11 +335,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       myCurrentVersion.setText(formatVersion(appInfo.getFullVersion(), appInfo.getBuild()));
       myNewVersion.setText(formatVersion(myNewBuild.getVersion(), myNewBuild.getNumber()));
 
-      if (myPatch != null && !StringUtil.isEmptyOrSpaces(myPatch.getSize())) {
-        myPatchInfo.setText(myPatch.getSize() + " MB");
-      }
-      else if (myChain != null && myChain.getSize() > 0) {
-        myPatchInfo.setText(myChain.getSize() + " MB");
+      if (myPatches != null && !StringUtil.isEmptyOrSpaces(myPatches.getSize())) {
+        myPatchInfo.setText(myPatches.getSize() + " MB");
       }
       else {
         myPatchLabel.setVisible(false);

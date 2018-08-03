@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -407,7 +407,7 @@ public class JavaCompletionUtil {
   private static LookupElement castQualifier(@NotNull LookupElement item, @NotNull PsiTypeLookupItem castTypeItem) {
     return LookupElementDecorator.withInsertHandler(item, new InsertHandlerDecorator<LookupElement>() {
       @Override
-      public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+      public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
         final Document document = context.getEditor().getDocument();
         context.commitDocument();
         final PsiFile file = context.getFile();
@@ -707,15 +707,15 @@ public class JavaCompletionUtil {
     return null;
   }
 
-  public static void insertParentheses(final InsertionContext context,
-                                       final LookupElement item,
+  public static void insertParentheses(@NotNull InsertionContext context,
+                                       @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams) {
     insertParentheses(context, item, overloadsMatter, hasParams, false);
   }
 
-  public static void insertParentheses(final InsertionContext context,
-                                       final LookupElement item,
+  public static void insertParentheses(@NotNull InsertionContext context,
+                                       @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams,
                                        final boolean forceClosingParenthesis) {

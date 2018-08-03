@@ -59,7 +59,7 @@ public class JavaFxCompletionContributor extends CompletionContributor {
     public static final JavaFxTagInsertHandler INSTANCE = new JavaFxTagInsertHandler();
 
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       super.handleInsert(context, item);
       final Object object = item.getObject();
       if (object instanceof JavaFxClassTagDescriptorBase) {

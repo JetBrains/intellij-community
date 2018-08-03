@@ -171,7 +171,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element instanceof XmlAttributeValue && myElement.getManager().areElementsEquivalent(element, resolve());
   }
 

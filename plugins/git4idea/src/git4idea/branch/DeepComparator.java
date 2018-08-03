@@ -44,7 +44,7 @@ import git4idea.GitBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -279,7 +279,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
       handler.addParameters(currentBranch, comparedBranch); // upstream - current branch; head - compared branch
 
       final Set<CommitId> pickedCommits = ContainerUtil.newHashSet();
-      handler.addLineListener(new GitLineHandlerAdapter() {
+      handler.addLineListener(new GitLineHandlerListener() {
         @Override
         public void onLineAvailable(String line, Key outputType) {
           // + 645caac042ff7fb1a5e3f7d348f00e9ceea5c317

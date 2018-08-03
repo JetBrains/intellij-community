@@ -80,7 +80,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     return null;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myElement.getManager().areElementsEquivalent(element, resolve());
   }
 }

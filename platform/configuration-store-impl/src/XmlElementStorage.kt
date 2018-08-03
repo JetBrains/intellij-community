@@ -207,7 +207,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 }
 
-private class XmlDataWriter(private val rootElementName: String?,
+internal class XmlDataWriter(private val rootElementName: String?,
                             private val elements: List<Element>,
                             private val rootAttributes: Map<String, String>,
                             private val macroManager: PathMacroManager?) : StringDataWriter() {
@@ -230,7 +230,11 @@ private class XmlDataWriter(private val rootElementName: String?,
         writer.append(entry.key)
         writer.append('=')
         writer.append('"')
-        writer.append(replacePathMap?.substitute(JDOMUtil.escapeText(entry.value, false, true), SystemInfoRt.isFileSystemCaseSensitive))
+        var value = entry.value
+        if (replacePathMap != null) {
+          value = replacePathMap.substitute(JDOMUtil.escapeText(value, false, true), SystemInfoRt.isFileSystemCaseSensitive)
+        }
+        writer.append(JDOMUtil.escapeText(value, false, true))
         writer.append('"')
       }
 
@@ -402,7 +406,7 @@ internal abstract class StringDataWriter : DataWriter {
 }
 
 internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
-  val out = BufferExposingByteArrayOutputStream(512)
+  val out = BufferExposingByteArrayOutputStream(1024)
   out.use { write(out, lineSeparator.separatorString) }
   return out
 }

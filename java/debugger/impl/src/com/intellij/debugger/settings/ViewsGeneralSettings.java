@@ -8,10 +8,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(
-  name = "ViewsSettings",
-  storages = @Storage("debugger.frameview.xml")
-)
+@State(name = "ViewsSettings", storages = {
+  @Storage("debugger.xml"),
+  @Storage(value = "debugger.frameview.xml", deprecated = true),
+})
 public class ViewsGeneralSettings implements PersistentStateComponent<ViewsGeneralSettings> {
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;

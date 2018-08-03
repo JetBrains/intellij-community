@@ -38,8 +38,10 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -92,7 +94,7 @@ public class ScopeEditorPanel {
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
 
-  public ScopeEditorPanel(@NotNull final Project project, final NamedScopesHolder holder) {
+  public ScopeEditorPanel(@NotNull final Project project, @NotNull NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
 
@@ -110,7 +112,7 @@ public class ScopeEditorPanel {
 
     myTreeMarker = new Marker() {
       @Override
-      public boolean isMarked(VirtualFile file) {
+      public boolean isMarked(@NotNull VirtualFile file) {
         return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, project, myHolder)
                                                                                    : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myProject), myHolder));
       }
@@ -220,13 +222,8 @@ public class ScopeEditorPanel {
 
   private static boolean invalidScopeInside(PackageSet currentScope) {
     if (currentScope instanceof InvalidPackageSet) return true;
-    if (currentScope instanceof UnionPackageSet) {
-      if (invalidScopeInside(((UnionPackageSet)currentScope).getFirstSet())) return true;
-      if (invalidScopeInside(((UnionPackageSet)currentScope).getSecondSet())) return true;
-    }
-    if (currentScope instanceof IntersectionPackageSet) {
-      if (invalidScopeInside(((IntersectionPackageSet)currentScope).getFirstSet())) return true;
-      if (invalidScopeInside(((IntersectionPackageSet)currentScope).getSecondSet())) return true;
+    if (currentScope instanceof CompoundPackageSet) {
+      return ContainerUtil.or(((CompoundPackageSet)currentScope).getSets(), s->invalidScopeInside(s));
     }
     if (currentScope instanceof ComplementPackageSet) {
       return invalidScopeInside(((ComplementPackageSet)currentScope).getComplementarySet());
@@ -311,8 +308,9 @@ public class ScopeEditorPanel {
     for (PackageSet set : selected) {
       if (myCurrentScope == null) {
         myCurrentScope = new ComplementPackageSet(set);
-      } else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? new ComplementPackageSet(set) : new IntersectionPackageSet(myCurrentScope, new ComplementPackageSet(set));
+      }
+      else if (myCurrentScope instanceof InvalidPackageSet) {
+        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? new ComplementPackageSet(set) : IntersectionPackageSet.create(myCurrentScope, new ComplementPackageSet(set));
       }
       else {
         final boolean[] append = {true};
@@ -320,8 +318,15 @@ public class ScopeEditorPanel {
         if (!append[0]) {
           myCurrentScope = simplifiedScope;
         }
+        else if (simplifiedScope == null) {
+          myCurrentScope = new ComplementPackageSet(set);
+        }
         else {
-          myCurrentScope = simplifiedScope != null ? new IntersectionPackageSet(simplifiedScope, new ComplementPackageSet(set)) : new ComplementPackageSet(set);
+          PackageSet[] sets = simplifiedScope instanceof IntersectionPackageSet ?
+                              ((IntersectionPackageSet)simplifiedScope).getSets() :
+                              new PackageSet[]{simplifiedScope};
+
+          myCurrentScope = IntersectionPackageSet.create(ArrayUtil.append(sets, new ComplementPackageSet(set)));
         }
       }
     }
@@ -336,15 +341,22 @@ public class ScopeEditorPanel {
         myCurrentScope = set;
       }
       else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? set : new UnionPackageSet(myCurrentScope, set);
+        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? set : UnionPackageSet.create(myCurrentScope, set);
       }
       else {
         final boolean[] append = {true};
         final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, true, append);
         if (!append[0]) {
           myCurrentScope = simplifiedScope;
-        } else {
-          myCurrentScope = simplifiedScope != null ? new UnionPackageSet(simplifiedScope, set) : set;
+        }
+        else if (simplifiedScope == null) {
+          myCurrentScope = set;
+        }
+        else {
+          PackageSet[] sets = simplifiedScope instanceof UnionPackageSet ?
+                              ((UnionPackageSet)simplifiedScope).getSets() :
+                              new PackageSet[]{simplifiedScope};
+          myCurrentScope = UnionPackageSet.create(ArrayUtil.append(sets, set));
         }
       }
     }
@@ -369,19 +381,15 @@ public class ScopeEditorPanel {
     }
 
     if (current instanceof UnionPackageSet) {
-      final PackageSet left = processComplementaryScope(((UnionPackageSet)current).getFirstSet(), added, checkComplementSet, append);
-      final PackageSet right = processComplementaryScope(((UnionPackageSet)current).getSecondSet(), added, checkComplementSet, append);
-      if (left == null) return right;
-      if (right == null) return left;
-      return new UnionPackageSet(left, right);
+      PackageSet[] sets = ((UnionPackageSet)current).getSets();
+      PackageSet[] processed = ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
+      return processed.length == 0 ? null : UnionPackageSet.create(processed);
     }
 
     if (current instanceof IntersectionPackageSet) {
-      final PackageSet left = processComplementaryScope(((IntersectionPackageSet)current).getFirstSet(), added, checkComplementSet, append);
-      final PackageSet right = processComplementaryScope(((IntersectionPackageSet)current).getSecondSet(), added, checkComplementSet, append);
-      if (left == null) return right;
-      if (right == null) return left;
-      return new IntersectionPackageSet(left, right);
+      PackageSet[] sets = ((IntersectionPackageSet)current).getSets();
+      PackageSet[] processed = ContainerUtil.mapNotNull(sets, s -> processComplementaryScope(s, added, checkComplementSet, append), new PackageSet[0]);
+      return processed.length == 0 ? null : IntersectionPackageSet.create(processed);
     }
 
     return current;

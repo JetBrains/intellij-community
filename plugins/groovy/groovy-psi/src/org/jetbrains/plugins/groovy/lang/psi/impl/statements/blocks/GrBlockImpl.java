@@ -13,10 +13,7 @@ import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.profiling.ResolveProfiler;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +95,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   @Override
   public Instruction[] getControlFlow() {
-    assert isValid();
+    PsiUtilCore.ensureValid(this);
     CachedValue<Instruction[]> controlFlow = getUserData(CONTROL_FLOW);
     if (controlFlow == null) {
       controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(() -> {

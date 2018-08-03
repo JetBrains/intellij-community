@@ -148,7 +148,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element){
+  public boolean isReferenceTo(@NotNull PsiElement element){
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
     }

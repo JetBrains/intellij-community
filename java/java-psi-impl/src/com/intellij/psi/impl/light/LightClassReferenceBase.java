@@ -125,7 +125,7 @@ abstract class LightClassReferenceBase extends LightElement implements PsiJavaCo
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element instanceof PsiClass && getManager().areElementsEquivalent(resolve(), element);
   }
 

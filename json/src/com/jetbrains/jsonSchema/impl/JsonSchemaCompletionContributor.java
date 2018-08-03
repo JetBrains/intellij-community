@@ -218,6 +218,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
       if (schema.getEnum() != null) {
         for (Object o : schema.getEnum()) {
+          if (myInsideStringLiteral && !(o instanceof String)) continue;
           addValueVariant(o.toString(), null);
         }
       }
@@ -329,8 +330,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (hasSameType(variants)) {
         final JsonSchemaType type = jsonSchemaObject.getType();
         final List<Object> values = jsonSchemaObject.getEnum();
-        if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
-          builder = builder.withInsertHandler(createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma));
+        boolean hasValues = !ContainerUtil.isEmpty(values);
+        if (type != null || hasValues || jsonSchemaObject.getDefault() != null) {
+          builder = builder.withInsertHandler(
+            !hasValues || values.stream().map(v -> v.getClass()).distinct().count() == 1 ?
+            createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma) :
+            createDefaultPropertyInsertHandler(true, insertComma));
         }
       } else if (!hasValue) {
         builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(false, insertComma));
@@ -359,7 +364,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline) {
       return new InsertHandler<LookupElement>() {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           Editor editor = context.getEditor();
 
           if (!newline) {
@@ -377,7 +382,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                                                             boolean insertComma) {
       return new InsertHandler<LookupElement>() {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           ApplicationManager.getApplication().assertWriteAccessAllowed();
           Editor editor = context.getEditor();
           Project project = context.getProject();
@@ -410,7 +415,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       JsonSchemaType finalType = type;
       return new InsertHandler<LookupElement>() {
         @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           ApplicationManager.getApplication().assertWriteAccessAllowed();
           Editor editor = context.getEditor();
           Project project = context.getProject();

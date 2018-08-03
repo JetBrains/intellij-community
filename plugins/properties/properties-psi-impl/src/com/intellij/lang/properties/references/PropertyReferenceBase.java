@@ -127,7 +127,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!isProperty(element)) return false;
     for (ResolveResult result : multiResolve(false)) {
       final PsiElement el = result.getElement();

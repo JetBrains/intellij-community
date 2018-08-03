@@ -56,7 +56,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("new.search.everywhere")) {
-      showInSearchEverywherePopup(FileSearchEverywhereContributor.class.getSimpleName(), e);
+      showInSearchEverywherePopup(FileSearchEverywhereContributor.class.getSimpleName(), e, true);
     } else {
       super.actionPerformed(e);
     }

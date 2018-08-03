@@ -331,11 +331,11 @@ public class FileTreeModelBuilder {
 
   @Nullable
   public PackageDependenciesNode addFileNode(final PsiFile file){
-    boolean isMarked = myMarker != null && myMarker.isMarked(file.getVirtualFile());
-    if (!isMarked) return null;
-
     final VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
+    boolean isMarked = myMarker != null && myMarker.isMarked(vFile);
+    if (!isMarked) return null;
+
     VirtualFile dirToReload = vFile.getParent();
     PackageDependenciesNode rootToReload = myModuleDirNodes.get(dirToReload);
     if (rootToReload == null && myFlattenPackages) {

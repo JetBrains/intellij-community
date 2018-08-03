@@ -160,7 +160,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myPatternExpression.isReferenceTo(element);
   }
 

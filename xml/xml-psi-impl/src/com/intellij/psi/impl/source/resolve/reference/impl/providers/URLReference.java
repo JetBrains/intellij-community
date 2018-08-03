@@ -190,7 +190,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myElement.getManager().areElementsEquivalent(resolve(),element);
   }
 

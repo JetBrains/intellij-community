@@ -1388,6 +1388,22 @@ done:
 FunctionEnd
 
 
+Function un.DeleteDirIfEmpty
+  FindFirst $R0 $R1 "$0\*.*"
+  strcmp $R1 "." 0 NoDelete
+   FindNext $R0 $R1
+   strcmp $R1 ".." 0 NoDelete
+    ClearErrors
+    FindNext $R0 $R1
+    IfErrors 0 NoDelete
+     FindClose $R0
+     Sleep 1000
+     RMDir "$0"
+  NoDelete:
+   FindClose $R0
+FunctionEnd
+
+
 Section "Uninstall"
   Call un.customUninstallActions
   SetRegView 32
@@ -1474,6 +1490,7 @@ skip_delete_settings:
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre32\bin\client\classes.jsa"
+  Delete "$INSTDIR\jre64\bin\server\classes.jsa"
 
   Push "Complete"
   Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
@@ -1482,11 +1499,13 @@ skip_delete_settings:
   Push "$INSTDIR\bin\$0"
   Call un.compareFileInstallationTime
   ${If} $9 != "Modified"
-    RMDir /r "$INSTDIR"
-  ${Else}
-    !include "unidea_win.nsh"
-    RMDir "$INSTDIR"
+    Delete "$INSTDIR\bin\idea.properties"
+    Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
+    Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
+  !include "unidea_win.nsh"
+  StrCpy $0 "$INSTDIR"
+  Call un.DeleteDirIfEmpty
 
 ; remove desktop shortcuts
 desktop_shortcut_launcher32:

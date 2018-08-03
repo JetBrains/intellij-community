@@ -129,7 +129,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         getNode().replaceChild(oldName.getLocalNode(), localNode);
     }
 
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
         if (element instanceof XPathVariable) {
             final XPathVariable resolved = resolve();
             if (getReferencedName().equals(((XPathVariable)element).getName())) {

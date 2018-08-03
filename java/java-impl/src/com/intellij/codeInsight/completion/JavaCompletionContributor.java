@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -596,7 +594,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
         LookupElementBuilder element = LookupElementBuilder.createWithIcon(method).withInsertHandler(new InsertHandler<LookupElement>() {
           @Override
-          public void handleInsert(InsertionContext context, LookupElement item) {
+          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
             final Editor editor = context.getEditor();
             TailType.EQ.processTail(editor, editor.getCaretModel().getOffset());
             context.setAddCompletionChar(false);
@@ -796,15 +794,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";";
     }
 
-    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiJavaCodeReferenceElement.class, false);
-    if (ref != null && !(ref instanceof PsiReferenceExpression)) {
-      return null;
+    PsiElement leaf = file.findElementAt(offset);
+    if (leaf instanceof PsiIdentifier || leaf instanceof PsiKeyword) {
+      return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
     }
 
-    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiAnnotation.class, false) != null) {
-      return null;
-    }
-    return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+    return null;
   }
 
   public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {
@@ -954,7 +949,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     @Override
-    public void handleInsert(InsertionContext context) {
+    public void handleInsert(@NotNull InsertionContext context) {
       super.handleInsert(context);
       Project project = context.getProject();
       Document document = context.getDocument();

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
@@ -30,8 +29,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -328,7 +327,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
-    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), change);
+    DefaultMutableTreeNode node = findNodeInTree(change);
     while (node != null) {
       if (node instanceof ChangesBrowserChangeListNode) {
         return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
@@ -390,6 +389,20 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @Override
   public void dropSelectionButUnderPoint(final Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
+  }
+
+  @Nullable
+  public DefaultMutableTreeNode findNodeInTree(Object userObject) {
+    if (userObject instanceof ChangeListChange) {
+      return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
+    }
+    return TreeUtil.findNodeWithObject(getRoot(), userObject);
+  }
+
+  @Nullable
+  public TreePath findNodePathInTree(Object userObject) {
+    DefaultMutableTreeNode node = findNodeInTree(userObject);
+    return node != null ? TreeUtil.getPathFromRoot(node) : null;
   }
 
   private static class DistinctChangePredicate implements Predicate<Change> {

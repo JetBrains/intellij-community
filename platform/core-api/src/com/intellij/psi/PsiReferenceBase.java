@@ -123,7 +123,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
@@ -162,7 +162,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     }
 
     @Override
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
       final ResolveResult[] results = multiResolve(false);
       for (ResolveResult result : results) {
         if (element.getManager().areElementsEquivalent(result.getElement(), element)) {

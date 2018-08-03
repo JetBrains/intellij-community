@@ -27,7 +27,7 @@ import com.intellij.util.ObjectUtils.consumeIfCast
 class ArtifactsImporter: ConfigurationHandler {
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val artifacts = configuration.find("artifacts") as? List<*> ?: return
+    val artifacts = configuration.find("ideArtifacts") as? List<*> ?: return
 
     if (artifacts.isEmpty()) {
       return

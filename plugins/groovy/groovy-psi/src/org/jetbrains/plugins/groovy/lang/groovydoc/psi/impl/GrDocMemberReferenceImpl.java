@@ -43,7 +43,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getManager().areElementsEquivalent(element, resolve());
   }
 

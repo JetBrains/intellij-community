@@ -137,7 +137,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             list.addMouseListener(mouseListener);
             list.addMouseMotionListener(mouseListener);
 
-            ThumbnailComponentUI componentUI = (ThumbnailComponentUI) UIManager.getUI(cellRenderer);
+            ThumbnailComponentUI componentUI = (ThumbnailComponentUI)ThumbnailComponentUI.createUI(cellRenderer);
             Dimension preferredSize = componentUI.getPreferredSize(cellRenderer);
 
             list.setFixedCellWidth(preferredSize.width);

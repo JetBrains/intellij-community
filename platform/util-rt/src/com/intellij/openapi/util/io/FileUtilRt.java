@@ -5,10 +5,7 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.lang.reflect.InvocationHandler;
@@ -188,6 +185,7 @@ public class FileUtilRt {
     return getExtension(fileName, "");
   }
 
+  @Contract("_,!null -> !null")
   public static CharSequence getExtension(@NotNull CharSequence fileName, @Nullable String defaultValue) {
     int index = StringUtilRt.lastIndexOf(fileName, '.', 0, fileName.length());
     if (index < 0) {
