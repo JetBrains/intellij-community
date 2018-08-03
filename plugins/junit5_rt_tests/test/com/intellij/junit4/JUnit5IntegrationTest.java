@@ -23,6 +23,8 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -53,6 +55,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
+     ModuleRootModificationUtil.updateModel(myModule, 
+                                           model -> model.addContentEntry(getTestContentRoot()).addSourceFolder(getTestContentRoot() + "/test1", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
     addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.2.0"), repoManager);
     addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
@@ -63,7 +67,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     ProcessOutput processOutput = doStartTestsProcess(configuration);
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
-    assertSize(2, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+    assertSize(4, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
   }
 
   public void testSelectedMethods() throws Exception {
@@ -168,7 +172,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   }
 
   public void testDirectory() throws Exception {
-    RunConfiguration configuration = createRunDirectoryConfiguration("mixed.v5");
+    RunConfiguration configuration = createRunDirectoryConfiguration("mixed.dir5");
     ProcessOutput processOutput = doStartTestsProcess(configuration);
 
     assertEmpty(processOutput.out);
@@ -272,6 +276,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     JUnitConfiguration.Data data = configuration.getPersistentData();
     data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
     data.setDirName(directories[0].getVirtualFile().getPath());
+    configuration.setModule(ModuleUtilCore.findModuleForPsiElement(directories[0]));
     return configuration;
   }
 }
