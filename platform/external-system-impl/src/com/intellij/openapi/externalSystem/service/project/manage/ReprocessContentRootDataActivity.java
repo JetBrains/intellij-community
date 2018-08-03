@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -14,7 +15,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +34,13 @@ public class ReprocessContentRootDataActivity implements StartupActivity, DumbAw
     final ContentRootDataService service = new ContentRootDataService();
     final IdeModifiableModelsProviderImpl modifiableModelsProvider = new IdeModifiableModelsProviderImpl(project);
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
       LOG.info("Adding 'reprocess content root data' activity to 'runWhenSmart' queue in project [hash=" + project.hashCode() + "]");
     }
-    DumbService.getInstance(project).runWhenSmart(
+    application.invokeLater(
         () -> {
-
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
+          if (application.isUnitTestMode()) {
             LOG.info("Reprocessing content root data for project [hash=" + project.hashCode() + "]" );
           }
           final boolean haveModulesToProcess = ModuleManager.getInstance(project).getModules().length > 0;
