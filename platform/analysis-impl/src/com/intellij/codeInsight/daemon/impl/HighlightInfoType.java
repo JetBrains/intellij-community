@@ -233,6 +233,7 @@ public interface HighlightInfoType {
   @NotNull
   HighlightSeverity getSeverity(@Nullable PsiElement psiElement);
 
+  @NotNull
   TextAttributesKey getAttributesKey();
 
   class HighlightInfoTypeImpl implements HighlightInfoType, HighlightInfoType.UpdateOnTypingSuppressible {
@@ -263,6 +264,7 @@ public interface HighlightInfoType {
       return mySeverity;
     }
 
+    @NotNull
     @Override
     public TextAttributesKey getAttributesKey() {
       return myAttributesKey;
@@ -316,7 +318,7 @@ public interface HighlightInfoType {
     private final TextAttributesKey myAttributesKey;
     private final HighlightDisplayKey myToolKey;
 
-    HighlightInfoTypeSeverityByKey(HighlightDisplayKey severityKey, TextAttributesKey attributesKey) {
+    HighlightInfoTypeSeverityByKey(@NotNull HighlightDisplayKey severityKey, @NotNull TextAttributesKey attributesKey) {
       myToolKey = severityKey;
       myAttributesKey = attributesKey;
     }
@@ -331,6 +333,7 @@ public interface HighlightInfoType {
     }
 
     @Override
+    @NotNull
     public TextAttributesKey getAttributesKey() {
       return myAttributesKey;
     }
