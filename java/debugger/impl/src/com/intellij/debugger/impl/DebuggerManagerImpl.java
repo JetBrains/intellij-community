@@ -199,7 +199,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
-    DebuggerSession session = DebuggerSession.create(environment.getSessionName(), debugProcess, environment);
+    DebuggerSession session = DebuggerSession.create(debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
     if (executionResult == null) {
       return null;

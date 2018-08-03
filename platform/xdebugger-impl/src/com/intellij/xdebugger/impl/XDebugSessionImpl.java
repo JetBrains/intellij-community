@@ -291,6 +291,9 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void reset() {
     breakpointsInitialized = false;
+    unsetPaused();
+    clearPausedData();
+    rebuildViews();
   }
 
   @Override
@@ -554,12 +557,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     myDispatcher.getMulticaster().beforeSessionResume();
     XSuspendContext context = mySuspendContext;
-    mySuspendContext = null;
-    myCurrentExecutionStack = null;
-    myCurrentStackFrame = null;
-    myTopFramePosition = null;
-    myActiveNonLineBreakpoint = null;
-    updateExecutionPosition();
+    clearPausedData();
     UIUtil.invokeLaterIfNeeded(() -> {
       if (mySessionTab != null) {
         mySessionTab.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
@@ -567,6 +565,15 @@ public class XDebugSessionImpl implements XDebugSession {
     });
     myDispatcher.getMulticaster().sessionResumed();
     return context;
+  }
+
+  private void clearPausedData() {
+    mySuspendContext = null;
+    myCurrentExecutionStack = null;
+    myCurrentStackFrame = null;
+    myTopFramePosition = null;
+    myActiveNonLineBreakpoint = null;
+    updateExecutionPosition();
   }
 
   @Override
@@ -896,12 +903,7 @@ public class XDebugSessionImpl implements XDebugSession {
           AppUIUtil.invokeOnEdt(() -> Disposer.dispose(myConsoleView));
         }
 
-        myTopFramePosition = null;
-        myCurrentExecutionStack = null;
-        myCurrentStackFrame = null;
-        mySuspendContext = null;
-
-        updateExecutionPosition();
+        clearPausedData();
 
         if (myValueMarkers != null) {
           myValueMarkers.clear();
