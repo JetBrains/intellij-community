@@ -2,9 +2,9 @@ import socket
 import struct
 import threading
 
+from _pydev_comm.io import PipeIO, readall
 from _shaded_thriftpy.thrift import TClient
-from _shaded_thriftpy.transport import TTransportBase, readall
-from _pydev_comm.io import PipeIO
+from _shaded_thriftpy.transport import TTransportBase
 
 REQUEST = 0
 RESPONSE = 1
@@ -59,8 +59,18 @@ class MultiplexedSocketReader(object):
         t.start()
 
     def _read_forever(self):
-        while True:
-            self._read_and_dispatch_next_frame()
+        try:
+            while True:
+                self._read_and_dispatch_next_frame()
+        except EOFError:
+            # normal Python Console termination
+            pass
+        finally:
+            self._close_pipes()
+
+    def _close_pipes(self):
+        self._request_pipe.close()
+        self._response_pipe.close()
 
 
 class SocketWriter(object):

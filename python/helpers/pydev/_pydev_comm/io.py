@@ -14,6 +14,8 @@ class PipeIO(object):
         self.buffer = bytearray()
         self.read_pos = 0
 
+        self._closed = False
+
     def _bytes_available(self):
         return self.read_pos < len(self.buffer)
 
@@ -32,6 +34,9 @@ class PipeIO(object):
         self.lock.acquire()
         try:
             while not self._bytes_available():
+                if self._closed:
+                    return bytes()
+
                 self.bytes_produced.wait()
 
             read_until_pos = min(self.read_pos + sz, len(self.buffer))
@@ -74,3 +79,39 @@ class PipeIO(object):
                 buf_pos = new_buf_pos
         finally:
             self.lock.release()
+
+    def close(self):
+        """Gracefully closes the `PipeIO`
+
+        Allows to read remaining bytes from this `PipeIO`.
+
+        Note that `close()` is expected to be invoked from the same thread as
+        `write()`.
+        """
+        self.lock.acquire()
+        try:
+            self._closed = True
+            # wake up the reader to let him find out that no more bytes will be
+            # available
+            self.bytes_produced.notifyAll()
+        finally:
+            self.lock.release()
+
+
+def readall(read_fn, sz):
+    """Reads `sz` bytes using `read_fn`
+
+    Raises `EOFError` if `read_fn` returned the empty byte array while reading
+    all `sz` bytes.
+    """
+    buff = b''
+    have = 0
+    while have < sz:
+        chunk = read_fn(sz - have)
+        have += len(chunk)
+        buff += chunk
+
+        if len(chunk) == 0:
+            raise EOFError
+
+    return buff
