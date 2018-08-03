@@ -23,7 +23,7 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile())) return;
 

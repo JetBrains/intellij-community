@@ -79,7 +79,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     boolean isEmptyObject = StringUtil.equalsIgnoreWhitespaces(text, "{}");
     boolean goInside = isEmptyArray || isEmptyObject || StringUtil.isQuotedString(text);
     TextRange range = goInside ? TextRange.create(1, text.length() - 1) : TextRange.create(0, text.length());
-    builder.replaceElement(value, range, myData.myMissingPropertyIssues.iterator().next().hasEnumItems || isEmptyObject
+    builder.replaceElement(value, range, myData.myMissingPropertyIssues.iterator().next().enumItemsCount > 1 || isEmptyObject
                                           ? new MacroCallNode(new CompleteMacro())
                                           : isEmptyArray ? new EmptyNode() : new ConstantNode(goInside ? StringUtil.unquoteString(text) : text));
     editor.getCaretModel().moveToOffset(newElement.getTextRange().getStartOffset());

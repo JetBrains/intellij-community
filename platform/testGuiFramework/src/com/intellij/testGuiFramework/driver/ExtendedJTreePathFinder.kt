@@ -2,6 +2,8 @@
 package com.intellij.testGuiFramework.driver
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.LoadingNode
 import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.exception.LocationUnavailableException
@@ -11,17 +13,15 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
-typealias FinderPredicate = (String, String) -> Boolean
-
 class ExtendedJTreePathFinder(val jTree: JTree) {
 
   private val cellReader: JTreeCellReader = ExtendedJTreeCellReader()
 
   fun findMatchingPath(vararg pathStrings: String): TreePath =
-    findMatchingPathByPredicate(predicateEquality, *pathStrings)
+    findMatchingPathByPredicate(Predicate.equality, *pathStrings)
 
   fun findMatchingPathWithVersion(vararg pathStrings: String): TreePath =
-    findMatchingPathByPredicate(predicateWithVersion, *pathStrings)
+    findMatchingPathByPredicate(Predicate.withVersion, *pathStrings)
 
   // this is ex-XPath version
   fun findMatchingPathByPredicate(predicate: FinderPredicate, vararg pathStrings: String): TreePath {
@@ -35,10 +35,10 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
   }
 
   fun exists(vararg pathStrings: String) =
-    existsByPredicate(predicateEquality, *pathStrings)
+    existsByPredicate(Predicate.equality, *pathStrings)
 
   fun existsWithVersion(vararg pathStrings: String) =
-    existsByPredicate(predicateWithVersion, *pathStrings)
+    existsByPredicate(Predicate.withVersion, *pathStrings)
 
   fun existsByPredicate(predicate: FinderPredicate, vararg pathStrings: String): Boolean {
     return try{
@@ -127,19 +127,9 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       "There is more than one node with value '$pathString' under \"$parentText\"")
   }
 
-  companion object {
-    val predicateEquality: FinderPredicate = { left: String, right: String -> left == right }
-    val predicateWithVersion = { left: String, right: String ->
-      val pattern = Regex(",\\s+\\(.*\\)$")
-      if (right.contains(pattern))
-        left == right.dropLast(right.length - right.indexOfLast { it == ',' })
-      else left == right
-    }
-  }
+  fun findPathToNode(node: String) = findPathToNodeByPredicate(node, Predicate.equality)
 
-  fun findPathToNode(node: String) = findPathToNodeByPredicate(node, predicateEquality)
-
-  fun findPathToNodeWithVersion(node: String) = findPathToNodeByPredicate(node, predicateWithVersion)
+  fun findPathToNodeWithVersion(node: String) = findPathToNodeByPredicate(node, Predicate.withVersion)
 
   fun findPathToNodeByPredicate(node: String, predicate: FinderPredicate): TreePath{
 //    expandNodes()

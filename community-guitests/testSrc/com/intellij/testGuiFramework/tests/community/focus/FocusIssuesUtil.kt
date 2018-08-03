@@ -2,7 +2,7 @@
 package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.textfield
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt

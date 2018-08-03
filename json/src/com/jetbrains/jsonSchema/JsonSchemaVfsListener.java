@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
@@ -65,6 +68,8 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     @NotNull private final JsonSchemaService myService;
     private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
     private final Runnable myRunnable;
+    private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+      "JsonVfsUpdaterExecutor");
 
     protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
       myProject = project;
@@ -89,7 +94,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
               .forEach(file -> {
                 final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
                 if (schemaFiles.stream().anyMatch(finalScope::contains)) {
-                  Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart);
+                  ReadAction.nonBlocking(() -> Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart)).submit(myTaskExecutor);
                 }
               });
       };

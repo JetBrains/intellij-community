@@ -47,7 +47,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public SmartPointerManagerImpl(Project project, PsiDocumentManagerBase psiDocManager) {
     myProject = project;
     myPsiDocManager = psiDocManager;
-    POINTERS_KEY = Key.create("SMART_POINTERS for "+project);
+    POINTERS_KEY = Key.create("SMART_POINTERS " + anonymize(project));
+  }
+
+  private static String anonymize(Project project) {
+    return project.isDefault() ? "default" : String.valueOf(project.hashCode());
   }
 
   public void fastenBelts(@NotNull VirtualFile file) {
@@ -155,7 +159,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     PsiFile containingFile = pointer.getContainingFile();
     int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
     if (refCount == -1) {
-      LOG.error("Double smart pointer removal: " + pointer);
+      LOG.error("Double smart pointer removal");
       return;
     }
 
@@ -170,12 +174,17 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
       if (containingFile == null) return;
 
-      assert containingFile.getProject() == myProject : "Project mismatch: expected " + myProject + ", got " + containingFile.getProject();
+      if (containingFile.getProject() != myProject) {
+        throw new AssertionError("Project mismatch: " + anonymize(myProject) + "!=" + anonymize(containingFile.getProject()));
+      }
 
       VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
       SmartPointerTracker pointers = getTracker(vFile);
       SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
       if (pointers != null && reference != null) {
+        if (reference.get() != pointer) {
+          throw new IllegalStateException("Reference points to " + reference.get());
+        }
         pointers.removeReference(reference, POINTERS_KEY);
       }
     }

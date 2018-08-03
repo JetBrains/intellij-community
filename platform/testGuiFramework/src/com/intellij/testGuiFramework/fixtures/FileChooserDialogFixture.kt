@@ -18,8 +18,7 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickOkButton
 import org.fest.reflect.core.Reflection.field
 import org.fest.swing.core.GenericTypeMatcher
@@ -61,7 +60,7 @@ class FileChooserDialogFixture private constructor(robot: Robot,
       override fun test(): Boolean {
         return fileSelected.get()
       }
-    }, SHORT_TIMEOUT)
+    }, Timeouts.minutes02)
 
     return this
   }
@@ -86,7 +85,7 @@ class FileChooserDialogFixture private constructor(robot: Robot,
         val text = textFieldFixture.text()
         return text != null && text.isNotEmpty()
       }
-    }, GuiTestUtil.THIRTY_SEC_TIMEOUT)
+    }, Timeouts.seconds30)
     return this
   }
 

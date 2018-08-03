@@ -2,10 +2,8 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
-import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.impl.GuiRobotHolder
-import com.intellij.testGuiFramework.impl.actionLink
-import com.intellij.testGuiFramework.impl.popupClick
+import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.impl.*
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Condition
@@ -41,7 +39,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
 
   fun openPluginsDialog()/*: JDialogFixture*/{
     actionLink("Configure").click()
-    popupClick("Plugins")
+    popupMenu("Plugins").clickSearchedItem()
     // TODO: make return JDialogFixture object of Plugins dialog
     // need to rework PluginsDialogModel to get rid of GuiTestCase object
   }
@@ -57,7 +55,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
           }
           return false
         }
-      }, GuiTestUtil.LONG_TIMEOUT)
+      }, Timeouts.minutes05)
 
       for (frame in Frame.getFrames()) {
         if (frame is FlatWelcomeFrame && frame.isShowing()) {

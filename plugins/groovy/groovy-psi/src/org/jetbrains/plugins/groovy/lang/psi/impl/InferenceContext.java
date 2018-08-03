@@ -90,9 +90,11 @@ public interface InferenceContext {
 
   class PartialContext extends TopInferenceContext {
     private final Map<String, PsiType> myTypes;
+    private final InferenceContext myInheritedContext;
 
-    public PartialContext(@NotNull Map<String, PsiType> types) {
+    public PartialContext(@NotNull Map<String, PsiType> types, @NotNull InferenceContext inheritedContext) {
       myTypes = types;
+      myInheritedContext = inheritedContext;
     }
 
     @Nullable
@@ -100,7 +102,12 @@ public interface InferenceContext {
     public PsiType getVariableType(@NotNull GrReferenceExpression ref) {
       String referenceName = ref.getReferenceName();
       if (myTypes.containsKey(referenceName)) return myTypes.get(referenceName);
-      return super.getVariableType(ref);
+      try {
+        myTypes.put(referenceName, null);
+        return myInheritedContext.getVariableType(ref);
+      } finally {
+        myTypes.remove(referenceName);
+      }
     }
   }
 }

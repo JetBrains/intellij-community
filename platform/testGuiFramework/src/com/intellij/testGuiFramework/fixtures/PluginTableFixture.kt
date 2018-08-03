@@ -16,7 +16,7 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.ide.plugins.PluginTable
-import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.timing.Condition
@@ -53,7 +53,7 @@ class PluginTableFixture(robot: Robot, pluginTable: PluginTable) : ComponentFixt
     val pluginTable = this.target()
     Pause.pause(object: Condition("wait until row appeared") {
       override fun test() = (findRow(pluginName) != null)
-    }, GuiTestUtil.SHORT_TIMEOUT)
+    }, Timeouts.minutes02)
     val cellRect = pluginTable.getCellRect(findRow(pluginName)!!, 0, false)
     robot().click(pluginTable, Point(cellRect.centerX.toInt(), cellRect.centerY.toInt()))
   }

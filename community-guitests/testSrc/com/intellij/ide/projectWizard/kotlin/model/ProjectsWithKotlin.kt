@@ -3,13 +3,14 @@ package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.fileSearchAndReplace
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Timeout
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -618,7 +619,7 @@ fun KotlinGuiTestCase.checkFacetState(facet: FacetStructure) {
 // TODO: remove it after GUI-59 fixing
 fun KotlinGuiTestCase.dialogWithoutClosing(title: String? = null,
                                            ignoreCaseTitle: Boolean = false,
-                                           timeout: Long = defaultTimeout,
+                                           timeout: Timeout = defaultTimeout,
                                            func: JDialogFixture.() -> Unit) {
   val dialog = dialog(title, ignoreCaseTitle, timeout)
   func(dialog)

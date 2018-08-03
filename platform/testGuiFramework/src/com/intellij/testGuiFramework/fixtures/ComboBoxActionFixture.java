@@ -16,7 +16,7 @@
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
@@ -104,7 +104,7 @@ public class ComboBoxActionFixture {
           }
         });
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
     comboBoxButtonFixture.click();
   }
 
@@ -127,7 +127,7 @@ public class ComboBoxActionFixture {
         }
         return false;
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
 
     final Integer appIndex = execute(new GuiQuery<Integer>() {
       @Override

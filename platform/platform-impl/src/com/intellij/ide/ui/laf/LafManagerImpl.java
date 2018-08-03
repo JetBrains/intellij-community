@@ -134,7 +134,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     lafList.add(new DarculaLookAndFeelInfo());
 
 
-    lafList.addAll(Arrays.stream(UIThemeProvider.EP_NAME.getExtensions())
+    lafList.addAll(UIThemeProvider.EP_NAME.getExtensionList().stream()
                          .map(UIThemeProvider::createTheme)
                          .filter(x -> x != null)
                          .map(UIThemeBasedLookAndFeelInfo::new)

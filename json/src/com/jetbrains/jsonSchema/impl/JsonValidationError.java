@@ -54,9 +54,18 @@ public class JsonValidationError {
       myMissingPropertyIssues = missingPropertyIssues;
     }
 
+    private static String getPropertyNameWithComment(MissingPropertyIssueData prop) {
+      String comment = "";
+      if (prop.enumItemsCount == 1) {
+        comment = " = " + prop.defaultValue.toString();
+      }
+      return "'" + prop.propertyName + "'" + comment;
+    }
+
     public String getMessage(boolean trimIfNeeded) {
       if (myMissingPropertyIssues.size() == 1) {
-        return "property '" + myMissingPropertyIssues.iterator().next().propertyName + "'";
+        MissingPropertyIssueData prop = myMissingPropertyIssues.iterator().next();
+        return "property " + getPropertyNameWithComment(prop);
       }
 
       Collection<MissingPropertyIssueData> namesToDisplay = myMissingPropertyIssues;
@@ -69,7 +78,15 @@ public class JsonValidationError {
         }
         trimmed = true;
       }
-      String allNames = myMissingPropertyIssues.stream().map(p -> "'" + p.propertyName + "'").collect(Collectors.joining(", "));
+      String allNames = myMissingPropertyIssues.stream().map(
+        MissingMultiplePropsIssueData::getPropertyNameWithComment).sorted((s1, s2) -> {
+        boolean firstHasEq = s1.contains("=");
+        boolean secondHasEq = s2.contains("=");
+        if (firstHasEq == secondHasEq) {
+          return s1.compareTo(s2);
+        }
+        return firstHasEq ? -1 : 1;
+      }).collect(Collectors.joining(", "));
       if (trimmed) allNames += ", ...";
       return "properties " + allNames;
     }
@@ -79,13 +96,13 @@ public class JsonValidationError {
     public final String propertyName;
     public final JsonSchemaType propertyType;
     public final Object defaultValue;
-    public final boolean hasEnumItems;
+    public final int enumItemsCount;
 
-    public MissingPropertyIssueData(String propertyName, JsonSchemaType propertyType, Object defaultValue, boolean hasEnumItems) {
+    public MissingPropertyIssueData(String propertyName, JsonSchemaType propertyType, Object defaultValue, int enumItemsCount) {
       this.propertyName = propertyName;
       this.propertyType = propertyType;
       this.defaultValue = defaultValue;
-      this.hasEnumItems = hasEnumItems;
+      this.enumItemsCount = enumItemsCount;
     }
   }
 

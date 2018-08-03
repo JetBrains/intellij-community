@@ -77,7 +77,7 @@ class ExtendedJComboboxCellReader : BasicJComboBoxCellReader(), JComboBoxCellRea
   private val REFERENCE_JLIST = newJList()
 
   override fun valueAt(comboBox: JComboBox<*>, index: Int): String? {
-    val item: Any = comboBox.getItemAt(index)
+    val item: Any? = comboBox.getItemAt(index)
     val listCellRenderer: ListCellRenderer<Any?> = comboBox.renderer as ListCellRenderer<Any?>
     val cellRendererComponent = listCellRenderer.getListCellRendererComponent(REFERENCE_JLIST, item, index, true, true)
     return getValueWithCellRenderer(cellRendererComponent)

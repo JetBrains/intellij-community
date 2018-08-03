@@ -299,7 +299,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }
 
     final MethodParameterInjection injection = makeParameterInjection(psiMethod, parameterIndex, languageId);
-    doEditInjection(project, injection, psiMethod);
+    doEditInjection(project, injection, host.getContainingFile(), psiMethod);
     return true;
   }
 
@@ -372,7 +372,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return null;
   }
 
-  private static void doEditInjection(final Project project, final MethodParameterInjection template, final PsiMethod contextMethod) {
+  private static void doEditInjection(final Project project,
+                                      final MethodParameterInjection template,
+                                      PsiFile psiFile,
+                                      final PsiMethod contextMethod) {
     final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final BaseInjection baseTemplate = new BaseInjection(template.getSupportId()).copyFrom(template);
     final MethodParameterInjection allMethodParameterInjection = createFrom(project, baseTemplate, contextMethod, true);
@@ -389,8 +392,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       originalCopy.setPlaceEnabled(currentPlace.getText(), true);
       methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
     }
-    mergePlacesAndAddToConfiguration(project, contextMethod.getContainingFile(), configuration, methodParameterInjection,
-                                     originalInjection);
+    mergePlacesAndAddToConfiguration(project, psiFile, configuration, methodParameterInjection, originalInjection);
   }
 
   private static void mergePlacesAndAddToConfiguration(@NotNull Project project,

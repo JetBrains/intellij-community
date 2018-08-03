@@ -15,10 +15,12 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
 import org.fest.swing.core.Robot
+import org.fest.swing.timing.Timeout
 import javax.swing.JLabel
 
 class EditorNotificationPanelFixture(val robot: Robot,
@@ -52,8 +54,8 @@ class EditorNotificationPanelFixture(val robot: Robot,
   private fun JLabel.nonNullSize() = this.height > 0 && this.width > 0
 
   companion object {
-    fun findEditorNotificationPanel(robot: Robot, timeoutInSeconds: Int = 30): EditorNotificationPanelFixture {
-      val panel = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeoutInSeconds) { findEditorNotificationPanel(robot) }
+    fun findEditorNotificationPanel(robot: Robot, timeout: Timeout = Timeouts.seconds30): EditorNotificationPanelFixture {
+      val panel = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) { findEditorNotificationPanel(robot) }
       return EditorNotificationPanelFixture(robot, panel)
     }
 

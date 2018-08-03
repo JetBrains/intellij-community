@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestThread
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
@@ -36,7 +37,7 @@ fun PluginsDialogScenarios.uninstallPlugin(pluginName: String) {
       else {
         pluginsDialogModel.pressCancel()
       }
-      dialog("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
+      dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
     }
     else
       pluginsDialogModel.pressCancel()
@@ -58,7 +59,7 @@ fun PluginsDialogScenarios.actionAndRestart(actionFunction: () -> Unit) {
       RestartIdeCause.PLUGIN_INSTALLED))) ?: throw Exception(
       "Unable to get the client instance to send message.")
     //wait until IDE is going to restart
-    GuiTestUtilKt.waitUntil("IDE will be closed", timeoutInSeconds = 120) { false }
+    GuiTestUtilKt.waitUntil("IDE will be closed", timeout = Timeouts.defaultTimeout) { false }
   }
 }
 
@@ -66,7 +67,7 @@ fun PluginsDialogScenarios.installPluginFromDisk(pluginFileName: String) {
   with(testCase) {
     welcomePageDialogModel.openPluginsDialog()
     pluginsDialogModel.installPluginFromDisk(pluginFileName)
-    dialog("IDE and Plugin Updates", timeout = 5L) { button("Postpone").click() }
+    dialog("IDE and Plugin Updates", timeout = Timeouts.seconds05) { button("Postpone").click() }
   }
 }
 

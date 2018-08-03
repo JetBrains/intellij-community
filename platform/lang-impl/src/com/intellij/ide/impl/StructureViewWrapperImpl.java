@@ -91,6 +91,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     Timer timer = UIUtil.createNamedTimer("StructureView", REFRESH_TIME, event -> {
+      if (!component.isShowing()) return;
+
       int count = ActivityTracker.getInstance().getCount();
       if (count == myActivityCount) return;
 

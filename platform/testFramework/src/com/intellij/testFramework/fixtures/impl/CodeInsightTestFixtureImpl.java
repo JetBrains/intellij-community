@@ -34,7 +34,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
@@ -150,7 +149,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
-  private ChooseByNameBase myChooseByNamePopup;
+  private ChooseByNamePopup myChooseByNamePopup;
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
@@ -1690,13 +1689,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    final ChooseByNameBase chooseByNamePopup = getMockChooseByNamePopup(contextForSorting);
+    final ChooseByNamePopup chooseByNamePopup = getMockChooseByNamePopup(contextForSorting);
     final ArrayList<Object> results = new ArrayList<>();
     chooseByNamePopup.getProvider().filterElements(chooseByNamePopup,
                                                    chooseByNamePopup.transformPattern(pattern),
                                                    searchEverywhere,
                                                    new MockProgressIndicator(),
                                                    new CommonProcessors.CollectProcessor<>(results));
+    chooseByNamePopup.close(true);
     return results;
   }
 
@@ -1707,7 +1707,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  private ChooseByNameBase getMockChooseByNamePopup(@Nullable PsiElement contextForSorting) {
+  private ChooseByNamePopup getMockChooseByNamePopup(@Nullable PsiElement contextForSorting) {
     final Project project = getProject();
     if (contextForSorting != null) {
       return ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), contextForSorting);

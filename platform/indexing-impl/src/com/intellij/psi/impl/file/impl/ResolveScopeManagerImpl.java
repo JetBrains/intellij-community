@@ -41,7 +41,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(
       key -> {
         GlobalSearchScope scope = null;
-        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensions()) {
+        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
           scope = resolveScopeProvider.getResolveScope(key, myProject);
           if (scope != null) break;
         }

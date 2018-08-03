@@ -25,7 +25,7 @@ public class GroovyValidationUtil {
 
   public static boolean validateNewParameterName(GrParameter variable, MultiMap<PsiElement,String> conflicts, @NotNull String varName) {
     GrParameterList list = PsiTreeUtil.getParentOfType(variable, GrParameterList.class);
-    GrParametersOwner owner = PsiTreeUtil.getParentOfType(variable, GrParametersOwner.class);
+    GrParameterListOwner owner = PsiTreeUtil.getParentOfType(variable, GrParameterListOwner.class);
     assert owner != null;
     for (GrParameter parameter : list.getParameters()) {
       if (parameter.equals(variable)) continue;
@@ -56,8 +56,8 @@ public class GroovyValidationUtil {
       }
       child = child.getNextSibling();
     }
-    if (parent instanceof GrParametersOwner) { //method or closure parameters
-      GrParametersOwner owner = (GrParametersOwner)parent;
+    if (parent instanceof GrParameterListOwner) { //method or closure parameters
+      GrParameterListOwner owner = (GrParameterListOwner)parent;
       for (GrParameter parameter : owner.getParameters()) {
         if (varName.equals(parameter.getName())) {
           addConflict(varName, parameter, conflicts);
