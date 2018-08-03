@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
@@ -11,7 +10,7 @@ public interface GrParameterListOwner extends GrParametersOwner {
   @NotNull
   GrParameter[] getParameters();
 
-  @Nullable
+  @NotNull
   GrParameterList getParameterList();
 
   boolean isVarArgs();

@@ -177,7 +177,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
       final GrParameterList list = owner.getParameterList();
-      assert list != null;
       final int index = list.getParameterNumber(param);
       if (!createNewFirstParam && index <= 0) { // bad undo
         return;
