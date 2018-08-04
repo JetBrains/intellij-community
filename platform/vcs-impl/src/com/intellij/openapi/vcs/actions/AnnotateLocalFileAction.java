@@ -68,7 +68,7 @@ public class AnnotateLocalFileAction {
   }
 
   private static boolean isSuspended(AnActionEvent e) {
-    VirtualFile file = assertNotNull(VcsContextFactory.SERVICE.getInstance().createContextOn(e).getSelectedFile());
+    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     return VcsAnnotateUtil.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
