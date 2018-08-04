@@ -120,10 +120,12 @@ class SmartPointerTracker {
 
   private void assertActual(@NotNull Key<SmartPointerTracker> expectedKey, @NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> refKey) {
     if (!isActual(file, refKey)) {
+      SmartPointerTracker another = file.getUserData(refKey);
       throw new AssertionError("Smart pointer list mismatch:" +
-                               " ref.key=" + expectedKey +
+                               " size=" + size +
+                               ", ref.key=" + expectedKey +
                                ", manager.key=" + refKey +
-                               (file.getUserData(refKey) != null ? "; has another pointer list" : ""));
+                               (another != null ? "; has another pointer list with size " + another.size : ""));
     }
   }
 
