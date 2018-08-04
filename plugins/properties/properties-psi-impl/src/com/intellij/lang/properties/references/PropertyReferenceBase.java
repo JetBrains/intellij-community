@@ -104,7 +104,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     /*PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
 
     if (myElement instanceof PsiLiteralExpression) {

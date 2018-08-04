@@ -113,7 +113,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return getManipulator().handleContentChange(myElement, getRangeInElement(), newElementName);
   }
 
@@ -205,7 +205,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
     //do nothing. the element will be renamed via PsiMetaData (com.intellij.refactoring.rename.RenameUtil.doRenameGenericNamedElement())
     @Override
-    public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
       return getElement();
     }
 

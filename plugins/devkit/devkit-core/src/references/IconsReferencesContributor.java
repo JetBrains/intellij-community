@@ -130,7 +130,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
             }
 
             @Override
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
               PsiElement element = resolve();
               PsiElement resultForFile = handleFile(element, lastRef -> lastRef.handleElementRename(newElementName));
               if (resultForFile != null) {
@@ -267,7 +267,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           }
 
           @Override
-          public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+          public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
             PsiElement field = resolve();
             PsiElement result = handleElement(field, newElementName);
             if (result != null) {

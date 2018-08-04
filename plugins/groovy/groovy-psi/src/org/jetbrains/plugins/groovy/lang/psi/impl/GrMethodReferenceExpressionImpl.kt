@@ -30,7 +30,7 @@ class GrMethodReferenceExpressionImpl(node: ASTNode) : GrReferenceExpressionImpl
 
   override fun hasMemberPointer(): Boolean = true
 
-  override fun handleElementRename(newElementName: String?): PsiElement {
+  override fun handleElementRename(newElementName: String): PsiElement {
     if (referenceName == CONSTRUCTOR_REFERENCE_NAME && resolvesToConstructors()) {
       return this // don't update reference name
     }

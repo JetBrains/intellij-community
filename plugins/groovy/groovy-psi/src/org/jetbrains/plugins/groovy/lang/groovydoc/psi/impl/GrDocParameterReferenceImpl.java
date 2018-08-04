@@ -108,7 +108,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     ASTNode node = getNode();
     ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createDocMemberReferenceNameFromText(newElementName).getNode();
     assert newNameNode != null;

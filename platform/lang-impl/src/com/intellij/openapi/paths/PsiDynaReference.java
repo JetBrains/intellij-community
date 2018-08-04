@@ -114,7 +114,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException{
     final PsiReference reference = chooseReference();
     if (reference != null) {
       return reference.handleElementRename(newElementName);

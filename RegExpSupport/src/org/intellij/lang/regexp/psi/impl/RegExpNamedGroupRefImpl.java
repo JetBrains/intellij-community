@@ -122,7 +122,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       }
 
       @Override
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         throw new UnsupportedOperationException();
       }
 

@@ -175,7 +175,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       }
 
       @Override
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         PsiIdentifier nameIdentifier = getNameIdentifier();
         if (nameIdentifier != null) {
           PsiImplUtil.setName(nameIdentifier, newElementName);

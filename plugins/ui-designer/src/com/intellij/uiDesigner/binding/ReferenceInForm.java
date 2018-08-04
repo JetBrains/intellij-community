@@ -45,7 +45,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return myFile;
   }
 
-  public PsiElement handleElementRename(final String newElementName){
+  public PsiElement handleElementRename(@NotNull final String newElementName){
     return handleElementRenameBase(newElementName);
   }
 

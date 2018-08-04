@@ -88,7 +88,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                 return getElement().getText();
             }
 
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
                 throw new IncorrectOperationException();
             }
 

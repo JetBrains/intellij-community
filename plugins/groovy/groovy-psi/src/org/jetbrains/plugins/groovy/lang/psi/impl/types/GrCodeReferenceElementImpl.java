@@ -46,7 +46,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (StringUtil.isJavaIdentifier(newElementName)) {
       return super.handleElementRename(newElementName);
     }

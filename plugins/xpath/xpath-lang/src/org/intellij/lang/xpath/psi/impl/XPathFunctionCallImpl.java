@@ -155,7 +155,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       final XPathFunctionCall child = (XPathFunctionCall)XPathChangeUtil.createExpression(getElement(), newElementName + "()");
 
       final PrefixedNameImpl newName = ((PrefixedNameImpl)child.getQName());

@@ -190,7 +190,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
 
       @Override
-      public PsiElement handleElementRename(String newElementName) {
+      public PsiElement handleElementRename(@NotNull String newElementName) {
         return null;
       }
 

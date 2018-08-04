@@ -126,7 +126,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (!PsiUtil.isValidReferenceName(newElementName)) {
       final PsiElement old = getReferenceNameElement();
       if (old == null) throw new IncorrectOperationException("ref has no name element");

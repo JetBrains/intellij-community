@@ -82,7 +82,7 @@ public interface PsiReference {
    * @return the new underlying element of the reference.
    * @throws IncorrectOperationException if the rename cannot be handled for some reason.
    */
-  PsiElement handleElementRename(String newElementName) throws IncorrectOperationException;
+  PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException;
 
   /**
    * Changes the reference so that it starts to point to the specified element. This is called,

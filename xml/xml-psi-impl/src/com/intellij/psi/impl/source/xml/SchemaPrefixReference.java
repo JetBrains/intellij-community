@@ -92,7 +92,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   }
 
   @Override
-  public PsiElement handleElementRename(String name) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String name) throws IncorrectOperationException {
     if (myElement instanceof XmlAttribute) {
       final XmlAttribute attr = (XmlAttribute)myElement;
       return ("xmlns".equals(attr.getNamespacePrefix()))

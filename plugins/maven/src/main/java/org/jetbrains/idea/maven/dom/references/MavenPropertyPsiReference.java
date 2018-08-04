@@ -362,7 +362,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return ElementManipulators.getManipulator(myElement).handleContentChange(myElement, myRange, newElementName);
   }
 

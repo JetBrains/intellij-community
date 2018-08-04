@@ -160,7 +160,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     throw new IncorrectOperationException("unary expression cannot be renamed to anything");
   }
 

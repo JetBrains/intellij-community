@@ -93,7 +93,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       myNameElement = ElementManipulators.getManipulator(myNameElement).handleContentChange(
         myNameElement,
         new TextRange(0,myNameElement.getTextLength()),
@@ -205,7 +205,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       final PsiElement elementAt = myElement.findElementAt(myRange.getStartOffset());
       return ElementManipulators.getManipulator(elementAt).handleContentChange(elementAt, getRangeInElement(), newElementName);
     }

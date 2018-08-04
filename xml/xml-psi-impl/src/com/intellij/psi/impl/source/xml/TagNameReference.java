@@ -123,7 +123,7 @@ public class TagNameReference implements PsiReference {
 
   @Override
   @Nullable
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final XmlTag element = getTagElement();
     if (element == null || !myStartTagFlag) return element;
 

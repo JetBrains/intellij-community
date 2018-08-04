@@ -132,7 +132,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 

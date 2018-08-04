@@ -97,7 +97,7 @@ public class SPIFile extends PsiFileBase {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       if (myClass != null) {
         final String className = ClassUtil.getJVMClassName(myClass);
         if (className != null) {
@@ -148,7 +148,7 @@ public class SPIFile extends PsiFileBase {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       String newPackageQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getCanonicalText()), newElementName);
       return getElement().setName(newPackageQName + getElement().getName().substring(getCanonicalText().length()));
     }

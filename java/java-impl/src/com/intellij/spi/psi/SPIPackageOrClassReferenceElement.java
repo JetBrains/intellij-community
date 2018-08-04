@@ -52,7 +52,7 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final SPIClassProvidersElementList firstChild =
       (SPIClassProvidersElementList)PsiFileFactory.getInstance(getProject())
         .createFileFromText("spi_dummy", SPIFileType.INSTANCE, newElementName).getFirstChild();

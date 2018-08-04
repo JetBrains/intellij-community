@@ -120,7 +120,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final ASTNode node = getNode();
     final ASTNode child = RenameUtil.createPrefixedNode(getManager(), newElementName, getLocalPart());
     node.getTreeParent().replaceChild(node, child);

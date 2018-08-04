@@ -67,7 +67,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     return rangeText.equals(baseName);
   }
 
-  public PsiElement handleElementRename(final String newElementName) {
+  public PsiElement handleElementRename(@NotNull final String newElementName) {
     return handleFileRename(newElementName, PropertiesFileType.DOT_DEFAULT_EXTENSION, false);
   }
 

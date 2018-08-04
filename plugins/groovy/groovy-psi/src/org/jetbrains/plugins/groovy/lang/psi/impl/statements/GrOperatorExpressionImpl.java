@@ -60,7 +60,7 @@ abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implemen
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     throw new IncorrectOperationException("assignment expression cannot be renamed");
   }
 

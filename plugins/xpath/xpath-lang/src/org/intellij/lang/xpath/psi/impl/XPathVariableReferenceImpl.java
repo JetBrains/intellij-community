@@ -107,7 +107,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return getText();
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         renameTo(newElementName);
         return this;
     }

@@ -37,7 +37,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return getElement();
   }
 

@@ -615,7 +615,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (getQualifierExpression() != null) {
       return renameDirectly(newElementName);
     }

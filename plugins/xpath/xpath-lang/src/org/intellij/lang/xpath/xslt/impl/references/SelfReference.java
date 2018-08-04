@@ -61,7 +61,7 @@ class SelfReference implements PsiReference {
     return myValue.getText();
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return myValue;
   }
 

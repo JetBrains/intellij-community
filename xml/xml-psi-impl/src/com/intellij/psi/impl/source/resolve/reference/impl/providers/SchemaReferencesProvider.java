@@ -97,7 +97,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       return ElementManipulators.getManipulator(myElement).handleContentChange(
         myElement,
         getRangeInElement(),
