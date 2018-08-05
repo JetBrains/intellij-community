@@ -44,7 +44,7 @@ public class DfaPsiType {
 
   @NotNull
   public TypeConstraint asConstraint() {
-    TypeConstraint constraint = TypeConstraint.EMPTY.withInstanceofValue(this);
+    TypeConstraint constraint = TypeConstraint.empty().withInstanceofValue(this);
     assert constraint != null;
     return constraint;
   }

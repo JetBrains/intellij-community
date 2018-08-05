@@ -621,4 +621,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testConstantMethods() { doTest(); }
   public void testPolyadicEquality() { doTest(); }
   public void testBoxUnboxArrayElement() { doTest(); }
+  public void testExactInstanceOf() { doTest(); }
 }
