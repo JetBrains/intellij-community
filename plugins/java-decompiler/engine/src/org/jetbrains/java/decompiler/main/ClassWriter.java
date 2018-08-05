@@ -820,7 +820,7 @@ public class ClassWriter {
             BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
             TextBuffer code = root.toJava(indent + 1, codeTracer);
 
-            hideMethod = (clinit || dinit || hideConstructor(wrapper, init, throwsExceptions, paramCount)) && code.length() == 0;
+            hideMethod = (code.length() == 0) && (clinit || dinit || hideConstructor(node, init, throwsExceptions, paramCount, flags));
 
             buffer.append(code);
 
@@ -859,13 +859,25 @@ public class ClassWriter {
     return !hideMethod;
   }
 
-  private static boolean hideConstructor(ClassWrapper wrapper, boolean init, boolean throwsExceptions, int paramCount) {
+  private static boolean hideConstructor(ClassNode node, boolean init, boolean throwsExceptions, int paramCount, int methodAccessFlags) {
+    
     if (!init || throwsExceptions || paramCount > 0 || !DecompilerContext.getOption(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR)) {
       return false;
     }
+	
+    ClassWrapper wrapper = node.getWrapper();
+	  StructClass cl = wrapper.getClassStruct();
+	  
+	  int classAccesFlags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
+    boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 
+    // default constructor requires same accessibility flags. Exception: enum constructor which is always private
+  	if(!isEnum && ((classAccesFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {  
+  	  return false;
+  	}
+	
     int count = 0;
-    for (StructMethod mt : wrapper.getClassStruct().getMethods()) {
+    for (StructMethod mt : cl.getMethods()) {
       if (CodeConstants.INIT_NAME.equals(mt.getName())) {
         if (++count > 1) {
           return false;
@@ -1030,6 +1042,8 @@ public class ClassWriter {
   private static final int CLASS_EXCLUDED = CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_STATIC;
   private static final int FIELD_EXCLUDED = CodeConstants.ACC_PUBLIC | CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL;
   private static final int METHOD_EXCLUDED = CodeConstants.ACC_PUBLIC | CodeConstants.ACC_ABSTRACT;
+
+  private static final int ACCESSIBILITY_FLAGS = CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE;
 
   private static void appendModifiers(TextBuffer buffer, int flags, int allowed, boolean isInterface, int excluded) {
     flags &= allowed;

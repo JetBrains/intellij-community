@@ -1,0 +1,26 @@
+public final class TestPrivateEmptyConstructor {
+   private TestPrivateEmptyConstructor() {
+   }// 4
+
+   public final void test() {
+      System.out.println("test");// 7
+   }// 8
+}
+
+class 'TestPrivateEmptyConstructor' {
+   method '<init> ()V' {
+      4      2
+   }
+
+   method 'test ()V' {
+      0      5
+      3      5
+      5      5
+      8      6
+   }
+}
+
+Lines mapping:
+4 <-> 3
+7 <-> 6
+8 <-> 7
