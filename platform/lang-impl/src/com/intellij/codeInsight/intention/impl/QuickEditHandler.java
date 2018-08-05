@@ -247,7 +247,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal) return;
-      if (!myEditChangesHandler.changesRange(TextRange.from(e.getOffset(), e.getNewLength()))) return;
+      if (!myEditChangesHandler.handlesRange(TextRange.from(e.getOffset(), e.getNewLength()))) return;
 
       ApplicationManager.getApplication().invokeLater(() -> {
         Component owner = FocusManager.getCurrentManager().getFocusOwner();
@@ -326,7 +326,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     return myNewFile;
   }
 
-  public boolean tryReuse(@NotNull PsiFile injectedFile, TextRange hostRange) {
+  public boolean tryReuse(@NotNull PsiFile injectedFile, @NotNull TextRange hostRange) {
     return myEditChangesHandler.tryReuse(injectedFile, hostRange);
   }
 

@@ -53,7 +53,7 @@ public class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandl
   }
 
   @Override
-  public void commitToOriginal(DocumentEvent e) {
+  public void commitToOriginal(@NotNull DocumentEvent e) {
     final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
     String newText = myNewDocument.getText();
     // prepare guarded blocks
@@ -100,17 +100,17 @@ public class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandl
   }
 
   @Override
-  public boolean tryReuse(@NotNull PsiFile injectedFile, TextRange hostRange) {
-    DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
+  public boolean tryReuse(@NotNull PsiFile newInjectedFile, @NotNull TextRange newHostRange) {
+    DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(newInjectedFile);
     if (documentWindow == null || documentWindow.getDelegate() != myAltFullRange.getDocument()) {
       return false;
     }
 
-    return super.tryReuse(injectedFile, hostRange);
+    return super.tryReuse(newInjectedFile, newHostRange);
   }
 
   @Override
-  public boolean changesRange(TextRange range) {
+  public boolean handlesRange(@NotNull TextRange range) {
     return range.intersects(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
   }
 

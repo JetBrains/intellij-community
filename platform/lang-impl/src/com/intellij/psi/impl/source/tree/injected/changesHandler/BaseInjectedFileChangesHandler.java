@@ -29,13 +29,13 @@ public abstract class BaseInjectedFileChangesHandler implements InjectedFileChan
 
 
   @Override
-  public boolean tryReuse(@NotNull PsiFile injectedFile, TextRange hostRange) {
-    if (myInjectedFile == injectedFile) return changesRange(hostRange);
+  public boolean tryReuse(@NotNull PsiFile newInjectedFile, @NotNull TextRange newHostRange) {
+    if (myInjectedFile == newInjectedFile) return handlesRange(newHostRange);
 
-    if ((myInjectedFile == null || !myInjectedFile.isValid())) {
-      DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
-      if (documentWindow != null && changesRange(hostRange)) {
-        myInjectedFile = injectedFile;
+    if (myInjectedFile == null || !myInjectedFile.isValid()) {
+      DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(newInjectedFile);
+      if (documentWindow != null && handlesRange(newHostRange)) {
+        myInjectedFile = newInjectedFile;
         return true;
       }
     }

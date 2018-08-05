@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
   }
 
   @Override
-  public void commitToOriginal(DocumentEvent e) {
+  public void commitToOriginal(@NotNull DocumentEvent e) {
     final String text = myNewDocument.getText();
     final Map<PsiLanguageInjectionHost, Set<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>> map = ContainerUtil
       .classify(myMarkers.iterator(),
@@ -100,7 +101,7 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
   }
 
   @Override
-  public boolean changesRange(TextRange range) {
+  public boolean handlesRange(@NotNull TextRange range) {
     if (!myMarkers.isEmpty()) {
       TextRange hostRange = TextRange.create(myMarkers.get(0).first.getStartOffset(),
                                              myMarkers.get(myMarkers.size() - 1).first.getEndOffset());

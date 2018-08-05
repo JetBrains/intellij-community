@@ -6,13 +6,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @since 2018.3
+ */
 public interface InjectedFileChangesHandler {
 
   boolean isValid();
 
-  void commitToOriginal(final DocumentEvent e);
+  void commitToOriginal(@NotNull DocumentEvent injectedDocumentEvent);
 
-  boolean tryReuse(@NotNull PsiFile injectedFile, TextRange hostRange);
+  boolean tryReuse(@NotNull PsiFile newInjectedFile, @NotNull TextRange newHostRange);
 
-  boolean changesRange(TextRange range);
+  boolean handlesRange(@NotNull TextRange range);
 }
