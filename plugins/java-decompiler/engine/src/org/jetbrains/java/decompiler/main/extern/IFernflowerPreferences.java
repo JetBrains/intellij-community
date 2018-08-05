@@ -17,6 +17,7 @@ public interface IFernflowerPreferences {
   String HIDE_DEFAULT_CONSTRUCTOR = "hdc";
   String DECOMPILE_GENERIC_SIGNATURES = "dgs";
   String NO_EXCEPTIONS_RETURN = "ner";
+  String KT_SYNCHRONIZED_MONITOR = "ksm";
   String DECOMPILE_ENUM = "den";
   String REMOVE_GET_CLASS_NEW = "rgn";
   String LITERALS_AS_IS = "lit";
@@ -61,6 +62,7 @@ public interface IFernflowerPreferences {
     defaults.put(HIDE_DEFAULT_CONSTRUCTOR, "1");
     defaults.put(DECOMPILE_GENERIC_SIGNATURES, "0");
     defaults.put(NO_EXCEPTIONS_RETURN, "1");
+    defaults.put(KT_SYNCHRONIZED_MONITOR, "1");
     defaults.put(DECOMPILE_ENUM, "1");
     defaults.put(REMOVE_GET_CLASS_NEW, "1");
     defaults.put(LITERALS_AS_IS, "0");
