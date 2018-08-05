@@ -71,8 +71,11 @@ public class NestedClassProcessor {
       else if (child.type != ClassNode.CLASS_MEMBER || (child.access & CodeConstants.ACC_STATIC) == 0) {
         insertLocalVars(node, child);
 
-        if (child.type == ClassNode.CLASS_LOCAL) {
-          setLocalClassDefinition(node.getWrapper().getMethods().getWithKey(child.enclosingMethod), child);
+        if (child.type == ClassNode.CLASS_LOCAL && child.enclosingMethod != null) {
+          MethodWrapper enclosingMethodWrapper = node.getWrapper().getMethods().getWithKey(child.enclosingMethod);
+          if(enclosingMethodWrapper != null) { // e.g. in case of switch-on-enum. FIXME: some proper handling of multiple enclosing classes 
+            setLocalClassDefinition(enclosingMethodWrapper, child);
+          }
         }
       }
     }
