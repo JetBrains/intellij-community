@@ -37,7 +37,8 @@ object FileResponses {
     return false
   }
 
-  fun prepareSend(request: HttpRequest, channel: Channel, lastModified: Long, filename: String, extraHeaders: HttpHeaders): HttpResponse? {
+  @JvmOverloads
+  fun prepareSend(request: HttpRequest, channel: Channel, lastModified: Long, filename: String, extraHeaders: HttpHeaders = EmptyHttpHeaders.INSTANCE): HttpResponse? {
     if (checkCache(request, channel, lastModified, extraHeaders)) {
       return null
     }
@@ -47,7 +48,9 @@ object FileResponses {
     response.addCommonHeaders()
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(lastModified))
-    response.headers().add(extraHeaders)
+    if (extraHeaders !== EmptyHttpHeaders.INSTANCE) {
+      response.headers().add(extraHeaders)
+    }
     return response
   }
 
