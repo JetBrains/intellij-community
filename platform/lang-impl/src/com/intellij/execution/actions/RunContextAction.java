@@ -2,17 +2,28 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.execution.SuggestUsingRunDashBoardUtil.promptUserToUseRunDashboard;
 
 public class RunContextAction extends BaseRunConfigurationAction {
   private final Executor myExecutor;
@@ -78,7 +89,43 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return Pair.create(!ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId()), true);
   }
 
-  /*package*/ boolean isForExecutor(@NotNull String executorId) {
-    return myExecutor.getId().equals(executorId);
+  @NotNull
+  @Override
+  protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
+                                              @NotNull List<ConfigurationFromContext> configurations) {
+    final List<AnAction> childActions = new ArrayList<>(super.createChildActions(context, configurations));
+    boolean isMultipleConfigurationsFromAlternativeLocations =
+      configurations.size() > 1 && configurations.get(0).isFromAlternativeLocation();
+    boolean isRunAction = myExecutor.getId().equals(DefaultRunExecutor.EXECUTOR_ID);
+    if (isMultipleConfigurationsFromAlternativeLocations && isRunAction) {
+      childActions.add(runAllConfigurationsAction(context, configurations));
+    }
+
+    return childActions;
   }
+
+  @NotNull
+  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<ConfigurationFromContext> configurationsFromContext) {
+    return new AnAction(
+      "Run all",
+      "Run all configurations available in this context",
+      LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)
+    ) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        GroupRunId groupRunId = new GroupRunId("Run all configurations from alternative context");
+        for (ConfigurationFromContext configuration : configurationsFromContext) {
+          RunConfigurationGroupUtil.setGroupRunId(configuration.getConfiguration(), groupRunId);
+        }
+
+        List<ConfigurationType> types = ContainerUtil.map(configurationsFromContext, context1 -> context1.getConfiguration().getType());
+        promptUserToUseRunDashboard(context.getProject(), types);
+
+        for (ConfigurationFromContext configuration : configurationsFromContext) {
+          ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), myExecutor);
+        }
+      }
+    };
+  }
+
 }
