@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
@@ -307,7 +306,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
   }
 
-  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
+  override fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
     try {
       saveProjectName()
     }
@@ -317,7 +316,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
 
     beforeSave(readonlyFiles)
 
-    super.doSave(saveSessions, readonlyFiles, errors)
+    super.doSave(saveSession, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
