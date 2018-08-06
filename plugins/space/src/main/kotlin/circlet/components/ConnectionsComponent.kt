@@ -25,8 +25,7 @@ class ConnectionsComponent : ApplicationComponent, LifetimedComponent by SimpleL
                 appLifetime = connectionLifetime,
                 server = url,
                 credentialsPersistence = IdeaPersistence.substorage("$url-"),
-                offlinePersistence = null,
-                notificationKind = NotificationKind.Ide
+                offlinePersistence = null
             ),
             connectionLifetime
         )
