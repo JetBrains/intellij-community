@@ -166,10 +166,12 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
 
     try {
       myLock.writeLock().lock();
-      myMacros.put(name, value);
+      String prevValue = myMacros.put(name, value);
+      if (!value.equals(prevValue)) {
+        myModificationStamp++;
+      }
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
