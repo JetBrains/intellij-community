@@ -21,15 +21,18 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Kireyev
  */
 public class DefaultPluginDescriptor implements PluginDescriptor {
-  private PluginId myPluginId;
-  private ClassLoader myPluginClassLoader;
+  @NotNull
+  private final PluginId myPluginId;
+  private final ClassLoader myPluginClassLoader;
 
   public DefaultPluginDescriptor(String pluginId) {
     myPluginId = PluginId.getId(pluginId);
+    myPluginClassLoader = null;
   }
 
   public DefaultPluginDescriptor(@NotNull PluginId pluginId) {
     myPluginId = pluginId;
+    myPluginClassLoader = null;
   }
 
   public DefaultPluginDescriptor(@NotNull PluginId pluginId, final ClassLoader pluginClassLoader) {
@@ -38,6 +41,7 @@ public class DefaultPluginDescriptor implements PluginDescriptor {
   }
 
   @Override
+  @NotNull
   public PluginId getPluginId() {
     return myPluginId;
   }
@@ -45,13 +49,5 @@ public class DefaultPluginDescriptor implements PluginDescriptor {
   @Override
   public ClassLoader getPluginClassLoader() {
     return myPluginClassLoader;
-  }
-
-  public void setPluginId(@NotNull PluginId pluginId) {
-    myPluginId = pluginId;
-  }
-
-  public void setPluginClassLoader(final ClassLoader pluginClassLoader) {
-    myPluginClassLoader = pluginClassLoader;
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -71,11 +72,11 @@ public abstract class ReorderableListController <T> {
 
   public void addMoveUpAction() {
     addAction(new AnAction(UIBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon()) {
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         ListUtil.moveSelectedItemsUp(myList);
       }
 
-      public void update(final AnActionEvent e) {
+      public void update(@NotNull final AnActionEvent e) {
         e.getPresentation().setEnabled(ListUtil.canMoveSelectedItemsUp(myList));
       }
     });
@@ -83,11 +84,11 @@ public abstract class ReorderableListController <T> {
 
   public void addMoveDownAction() {
     addAction(new AnAction(UIBundle.message("move.down.action.name"), null, AllIcons.Actions.MoveDown) {
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         ListUtil.moveSelectedItemsDown(myList);
       }
 
-      public void update(final AnActionEvent e) {
+      public void update(@NotNull final AnActionEvent e) {
         e.getPresentation().setEnabled(ListUtil.canMoveSelectedItemsDown(myList));
       }
     });
@@ -167,13 +168,13 @@ public abstract class ReorderableListController <T> {
         this.myCustomActionDescription = customActionDescription;
       }
 
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final V change = myBehaviour.performAction(e);
         if (change == null) return;
         myCustomActionDescription.runPostHandlers(change);
       }
 
-      public void update(final AnActionEvent e) {
+      public void update(@NotNull final AnActionEvent e) {
         myBehaviour.updateAction(e);
       }
     }

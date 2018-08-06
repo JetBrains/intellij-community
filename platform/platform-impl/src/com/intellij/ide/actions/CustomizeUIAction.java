@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -31,7 +32,7 @@ public class CustomizeUIAction extends AnAction {
     super("Customize Menus and Toolbars...");
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
     util.editConfigurable(project, new CustomizationConfigurable());

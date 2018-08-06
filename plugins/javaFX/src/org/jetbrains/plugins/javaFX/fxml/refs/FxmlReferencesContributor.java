@@ -208,7 +208,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return myReference.getCanonicalText();
       }
 
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         String oldText = getOldName();
         final TextRange range = getRangeInElement();
         final String newText =
@@ -242,7 +242,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return myPosition instanceof XmlTag ? ((XmlTag)myPosition).getName() : ((XmlAttributeValue)myPosition).getValue();
       }
 
-      public boolean isReferenceTo(PsiElement element) {
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         return myReference.isReferenceTo(element) || getReferencedClass() == element;
       }
 

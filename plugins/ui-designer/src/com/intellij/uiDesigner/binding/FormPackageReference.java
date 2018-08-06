@@ -39,7 +39,7 @@ public class FormPackageReference extends ReferenceInForm {
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     if (!(element instanceof PsiPackage)) {
       return false;
     }
@@ -49,7 +49,7 @@ public class FormPackageReference extends ReferenceInForm {
   }
 
   @Override
-  public PsiElement handleElementRename(final String newElementName) {
+  public PsiElement handleElementRename(@NotNull final String newElementName) {
     final String s = getRangeText();
     int pos = s.lastIndexOf("/");
     if (pos < 0) {

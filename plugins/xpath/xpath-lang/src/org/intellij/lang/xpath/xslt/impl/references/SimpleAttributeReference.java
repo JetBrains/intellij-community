@@ -52,7 +52,7 @@ abstract class SimpleAttributeReference implements PsiReference {
         return getTextRange().shiftRight(1);
     }
 
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
         if (this instanceof PsiPolyVariantReference) {
             final PsiPolyVariantReference reference = (PsiPolyVariantReference)this;
             final ResolveResult[] results = reference.multiResolve(false);
@@ -69,7 +69,7 @@ abstract class SimpleAttributeReference implements PsiReference {
         throw new UnsupportedOperationException();
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         myAttribute.setValue(getTextRange().replace(myAttribute.getValue(), newElementName));
         final XmlAttributeValue value = myAttribute.getValueElement();
         assert value != null;

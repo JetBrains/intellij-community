@@ -517,36 +517,36 @@ public class ScopeEditorPanel {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new AnAction(IdeBundle.message("button.include")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         includeSelected(false);
       }
     });
     actionGroup.add(new AnAction(IdeBundle.message("button.include.recursively")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         includeSelected(true);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isButtonEnabled(true));
       }
     });
 
     actionGroup.add(new AnAction(IdeBundle.message("button.exclude")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         excludeSelected(false);
       }
     });
     actionGroup.add(new AnAction(IdeBundle.message("button.exclude.recursively")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         excludeSelected(true);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isButtonEnabled(true));
       }
     });
@@ -688,7 +688,7 @@ public class ScopeEditorPanel {
       for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
-          public void actionPerformed(final AnActionEvent e) {
+          public void actionPerformed(@NotNull final AnActionEvent e) {
             DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             myUpdate.run();
           }
@@ -698,7 +698,7 @@ public class ScopeEditorPanel {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
       e.getPresentation().setText(provider.getDisplayName());

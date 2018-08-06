@@ -2,21 +2,25 @@
 
 package com.intellij.execution.configurations
 
+import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.util.ArrayUtil
+import com.intellij.util.LazyUtil
 import com.intellij.util.text.nullize
 import javax.swing.Icon
 
 private val EMPTY_FACTORIES = arrayOf<ConfigurationFactory>()
 
-abstract class ConfigurationTypeBase protected constructor(private val id: String, private val displayName: String, description: String? = null, private val icon: Lazy<Icon>?) : ConfigurationType {
+abstract class ConfigurationTypeBase protected constructor(private val id: String, private val displayName: String, description: String? = null, private val icon: NotNullLazyValue<Icon>?) : ConfigurationType {
   companion object {
     @JvmStatic
-    fun lazyIcon(producer: () -> Icon): Lazy<Icon> {
-      return lazy(LazyThreadSafetyMode.NONE, producer)
-    }
+    @Deprecated("Use LazyUtil.create", ReplaceWith("LazyUtil.create(producer)", "com.intellij.util.LazyUtil"))
+    fun lazyIcon(producer: () -> Icon): NotNullLazyValue<Icon> = LazyUtil.create(producer)
   }
 
-  constructor(id: String, displayName: String, description: String?, icon: Icon?) : this(id, displayName, description, icon?.let { lazyOf(it) })
+  @Deprecated("")
+  constructor(id: String, displayName: String, description: String?, icon: Lazy<Icon>) : this(id, displayName, description, LazyUtil.create { icon.value })
+
+  constructor(id: String, displayName: String, description: String?, icon: Icon?) : this(id, displayName, description, icon?.let { NotNullLazyValue.createConstantValue(it) })
 
   private var factories = EMPTY_FACTORIES
 

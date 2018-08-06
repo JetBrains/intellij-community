@@ -36,7 +36,7 @@ import java.util.*;
 
 public class SelectInAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");
     SelectInContext context = SelectInContextImpl.createContext(e);
     if (context == null) return;
@@ -53,7 +53,7 @@ public class SelectInAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
 
     if (SelectInContextImpl.createContext(event) == null) {
@@ -165,7 +165,7 @@ public class SelectInAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
     }
   }
 }

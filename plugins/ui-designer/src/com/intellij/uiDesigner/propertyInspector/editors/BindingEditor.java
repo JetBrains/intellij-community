@@ -34,6 +34,7 @@ import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -63,7 +64,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     );
 
     new AnAction(){
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {

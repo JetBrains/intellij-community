@@ -183,6 +183,10 @@ public abstract class PatchAction {
     return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile, myPatch.isNormalized());
   }
 
+  public boolean mandatoryBackup() {
+    return false;
+  }
+
   public void backup(File toDir, File backupDir) throws IOException {
     doBackup(getFile(toDir), getFile(backupDir));
   }

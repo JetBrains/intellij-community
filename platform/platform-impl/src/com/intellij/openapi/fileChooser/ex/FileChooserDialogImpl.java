@@ -204,12 +204,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         showRecentFilesPopup();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!IdeEventQueue.getInstance().isPopupActive());
       }
     }.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, myPathTextField.getField());

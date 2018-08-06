@@ -45,7 +45,7 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
 
   @SuppressWarnings({"ConstantConditions"})
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final XPathNodeTest expr =
             (XPathNodeTest)XPathChangeUtil.createExpression(getElement(), newElementName + ":x").getFirstChild().getChildren()[1];
     final ASTNode nameNode = getNameNode();

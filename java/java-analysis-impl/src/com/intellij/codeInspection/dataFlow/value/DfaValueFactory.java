@@ -86,6 +86,14 @@ public class DfaValueFactory {
   }
 
   @NotNull
+  public DfaValue createExactTypeValue(@Nullable PsiType type) {
+    if (type == null) return DfaUnknownValue.getInstance();
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(createDfaType(type)))
+      .with(DfaFactType.CAN_BE_NULL, false);
+    return getFactFactory().createValue(facts);
+  }
+
+  @NotNull
   public <T> DfaValue withFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType, @Nullable T factValue) {
     if(value instanceof DfaUnknownValue) {
       return getFactFactory().createValue(DfaFactMap.EMPTY.with(factType, factValue));

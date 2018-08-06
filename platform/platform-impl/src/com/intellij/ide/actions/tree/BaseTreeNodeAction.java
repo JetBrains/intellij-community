@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,7 +29,7 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Object sourceComponent = getSourceComponent(e);
     if (sourceComponent instanceof JTree) {
       performOn((JTree)sourceComponent);
@@ -40,7 +41,7 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
 
   protected abstract void performOn(JTree tree);
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(enabledOn(getSourceComponent(e)));
   }
 

@@ -186,7 +186,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     final KeyStroke oldHistoryKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, CTRL_DOWN_MASK);
     new DumbAwareAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
         while(keymap != null) {
           if ("Visual Studio".equals(keymap.getName())) {
@@ -198,7 +198,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         IdeTooltipManager.getInstance().show(
           new IdeTooltip(myTextArea, new Point(), new JLabel(
             "The shortcut was changed. Press " +
@@ -387,7 +387,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
@@ -418,7 +418,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTextArea.putClientProperty(JUST_CLEARED_KEY, !myTextArea.getText().isEmpty());
       myTextArea.setText("");
     }
@@ -431,7 +431,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       new DefaultEditorKit.InsertBreakAction().actionPerformed(new ActionEvent(myTextArea, 0, "action"));
     }
   }

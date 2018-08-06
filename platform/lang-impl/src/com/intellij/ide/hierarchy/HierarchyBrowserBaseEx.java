@@ -572,7 +572,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final void actionPerformed(final AnActionEvent event) {
+    public final void actionPerformed(@NotNull final AnActionEvent event) {
       final DataContext dataContext = event.getDataContext();
       final HierarchyBrowserBaseEx browser = (HierarchyBrowserBaseEx)dataContext.getData(myBrowserDataKey);
       if (browser == null) return;
@@ -596,7 +596,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
 
       final DataContext dataContext = event.getDataContext();
@@ -639,12 +639,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final void actionPerformed(final AnActionEvent e) {
+    public final void actionPerformed(@NotNull final AnActionEvent e) {
       doRefresh(false);
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
     }
@@ -669,7 +669,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public class ChangeScopeAction extends ComboBoxAction {
     @Override
-    public final void update(final AnActionEvent e) {
+    public final void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getProject();
       if (project == null) return;
@@ -723,7 +723,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
 
       @Override
-      public final void actionPerformed(final AnActionEvent e) {
+      public final void actionPerformed(@NotNull final AnActionEvent e) {
         selectScope(myScopeType);
       }
     }
@@ -734,7 +734,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         EditScopesDialog.showDialog(myProject, null);
         if (!getValidScopeNames().contains(getCurrentScopeType())) {
           selectScope(SCOPE_ALL);

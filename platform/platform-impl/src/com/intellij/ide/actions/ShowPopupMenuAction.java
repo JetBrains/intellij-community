@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +38,7 @@ public class ShowPopupMenuAction extends DumbAwareAction implements PopupAction 
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     RelativePoint relPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
 
     KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -61,7 +62,7 @@ public class ShowPopupMenuAction extends DumbAwareAction implements PopupAction 
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     e.getPresentation().setEnabled(focusManager.getFocusOwner() instanceof JComponent);
   }

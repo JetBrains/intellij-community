@@ -354,6 +354,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, progressIndicator.getModalityState());
   }
 
+  @NotNull
+  protected TaskRunnable createTaskRunnable(@NotNull Task task,
+                                            @NotNull ProgressIndicator indicator,
+                                            @Nullable Runnable continuation) {
+    return new TaskRunnable(task, indicator, continuation);
+  }
+
   private static class IndicatorDisposable implements Disposable {
     @NotNull private final ProgressIndicator myIndicator;
 
@@ -384,7 +391,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       indicatorDisposable = null;
     }
 
-    final Runnable process = new TaskRunnable(task, progressIndicator, continuation);
+    final Runnable process = createTaskRunnable(task, progressIndicator, continuation);
 
     TaskContainer action = new TaskContainer(task) {
       @Override
@@ -433,7 +440,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       @Override
       public void run() {
         try {
-          new TaskRunnable(task, getProgressIndicator()).run();
+          createTaskRunnable(task, getProgressIndicator(), null).run();
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -459,7 +466,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
 
-    final Runnable process = new TaskRunnable(task, progressIndicator);
+    final Runnable process = createTaskRunnable(task, progressIndicator, null);
 
     boolean processCanceled = false;
     Throwable exception = null;
@@ -484,7 +491,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  private static void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {
+  protected void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {
     try {
       if (error != null) {
         task.onThrowable(error);
@@ -705,13 +712,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  static class TaskRunnable extends TaskContainer {
+  protected static class TaskRunnable extends TaskContainer {
     private final ProgressIndicator myIndicator;
     private final Runnable myContinuation;
-
-    TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator) {
-      this(task, indicator, null);
-    }
 
     TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
       super(task);

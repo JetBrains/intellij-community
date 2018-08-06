@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -408,7 +409,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   //      }
   //      return myGradleProjectEventListener.isBuildFinished(buildMode);
   //    }
-  //  }, LONG_TIMEOUT);
+  //  }, Timeouts.INSTANCE.getMinutes05);
   //
   //  waitForBackgroundTasksToFinish();
   //  robot().waitForIdle();
@@ -465,7 +466,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         RunConfigurationComboBoxFixture runConfigurationComboBox = RunConfigurationComboBoxFixture.find(IdeFrameFixture.this);
         return isNotEmpty(runConfigurationComboBox.getText());
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
 
     waitForBackgroundTasksToFinish();
     findGradleSyncAction().waitEnabledAndShowing();
@@ -502,7 +503,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   //      public boolean test() {
   //        return myGradleProjectEventListener.isSyncStarted();
   //      }
-  //    }, SHORT_TIMEOUT);
+  //    }, Timeouts.INSTANCE.getMinutes02);
   //  }
   //  return this;
   //}
@@ -531,7 +532,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   //      }
   //      return syncFinished;
   //    }
-  //  }, LONG_TIMEOUT);
+  //  }, Timeouts.INSTANCE.getMinutes05);
   //
   //  findGradleSyncAction().waitEnabledAndShowing();
   //
@@ -559,7 +560,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
                            !progressManager.hasUnsafeProgressIndicator();
                   }
                 }
-      , GuiTestUtil.INSTANCE.getFIFTEEN_MIN_TIMEOUT());
+      , Timeouts.INSTANCE.getMinutes15());
     robot().waitForIdle();
     return this;
   }

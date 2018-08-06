@@ -54,18 +54,23 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected abstract fun loadData(): T
 
   fun disableSaving() {
-    LOG.debugOrInfoIfTestMode { "Disabled saving for ${toString()}" }
+    LOG.debugOrInfoIfTestMode { "Disable saving: ${toString()}" }
     isSavingDisabled = true
   }
 
   fun enableSaving() {
-    LOG.debugOrInfoIfTestMode { "Enabled saving ${toString()}" }
+    LOG.debugOrInfoIfTestMode { "Enable saving: ${toString()}" }
     isSavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
-    LOG.debugOrInfoIfTestMode { "Saving disabled for ${toString()}" }
-    return isSavingDisabled
+    if (isSavingDisabled) {
+      LOG.debugOrInfoIfTestMode { "Saving disabled: ${toString()}" }
+      return true
+    }
+    else {
+      return false
+    }
   }
 }
 

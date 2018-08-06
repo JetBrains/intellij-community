@@ -419,7 +419,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   private class MyFilterEnabledAction extends ComboBoxAction implements DumbAware {
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setText(((InstalledPluginsTableModel)pluginsModel).getEnabledFilter());
     }
@@ -431,7 +431,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       for (final String enabledValue : InstalledPluginsTableModel.ENABLED_VALUES) {
         gr.add(new DumbAwareAction(enabledValue) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             final IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
             final String filter = myFilter.getFilter().toLowerCase();
             ((InstalledPluginsTableModel)pluginsModel).setEnabledFilter(enabledValue, filter);
@@ -501,7 +501,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       chooseAndInstall(new InstalledPluginsTableModel(), pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
     }
   }

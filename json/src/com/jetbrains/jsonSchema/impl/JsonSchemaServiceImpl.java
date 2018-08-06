@@ -99,11 +99,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   @NotNull
   public Collection<VirtualFile> getSchemaFilesForFile(@NotNull final VirtualFile file) {
-    return getSchemasForFile(file, false);
+    return getSchemasForFile(file, false, false);
   }
 
   @NotNull
-  private Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single) {
+  public Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
     List<JsonSchemaFileProvider> providers = getProvidersForFile(file);
 
     // proper priority:
@@ -113,7 +113,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     // 4) schema catalog
 
     boolean checkSchemaProperty = true;
-    if (providers.stream().noneMatch(p -> p.getSchemaType() == SchemaType.userSchema)) {
+    if (!onlyUserSchemas && providers.stream().noneMatch(p -> p.getSchemaType() == SchemaType.userSchema)) {
       VirtualFile virtualFile = resolveFromSchemaProperty(file);
       if (virtualFile != null) return ContainerUtil.createMaybeSingletonList(virtualFile);
       checkSchemaProperty = false;
@@ -142,6 +142,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       } else selected = providers.get(0);
       VirtualFile schemaFile = selected.getSchemaFile();
       return ContainerUtil.createMaybeSingletonList(schemaFile);
+    }
+
+    if (onlyUserSchemas) {
+      return ContainerUtil.emptyList();
     }
 
     if (checkSchemaProperty) {
@@ -198,7 +202,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   @Override
   public JsonSchemaObject getSchemaObject(@NotNull final VirtualFile file) {
-    Collection<VirtualFile> schemas = getSchemasForFile(file, true);
+    Collection<VirtualFile> schemas = getSchemasForFile(file, true, false);
     if (schemas.size() == 0) return null;
     assert schemas.size() == 1;
     VirtualFile schemaFile = schemas.iterator().next();
@@ -236,9 +240,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return myState.getFiles().contains(file)
+    return isMappedSchema(file)
            || isSchemaByProvider(file)
            || hasSchemaSchema(file);
+  }
+
+  public boolean isMappedSchema(@NotNull VirtualFile file) {
+    return myState.getFiles().contains(file);
   }
 
   private boolean isSchemaByProvider(@NotNull VirtualFile file) {
@@ -262,7 +270,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public JsonSchemaVersion getSchemaVersion(@NotNull VirtualFile file) {
-    if (myState.getFiles().contains(file)) {
+    if (isMappedSchema(file)) {
       JsonSchemaFileProvider provider = myState.getProvider(file);
       if (provider != null) {
         return provider.getSchemaVersion();

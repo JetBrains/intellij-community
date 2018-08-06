@@ -3,6 +3,7 @@ package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.Key.A
 import com.intellij.testGuiFramework.util.Key.V
@@ -53,7 +54,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
 
   private fun GuiTestCase.checkFileAlreadyExistsDialog() {
     try {
-      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, 10L)
+      val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, Timeouts.seconds10)
       dialogFixture.button("Yes").click()
     } catch (cle: ComponentLookupException) { /*do nothing here */ }
   }

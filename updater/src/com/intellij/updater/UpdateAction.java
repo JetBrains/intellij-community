@@ -2,6 +2,7 @@
 package com.intellij.updater;
 
 import java.io.*;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -40,8 +41,7 @@ public class UpdateAction extends BaseUpdateAction {
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
 
-    //in case no backup is required
-    File source = backupDir == null ? toFile : getSource(backupDir);
+    File source = mandatoryBackup() ? getSource(Objects.requireNonNull(backupDir)) : toFile;
     if (!isMove()) {
       try (InputStream in = Utils.findEntryInputStream(patchFile, getPath())) {
         if (in == null) {

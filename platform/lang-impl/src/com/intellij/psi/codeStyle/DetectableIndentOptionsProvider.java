@@ -233,7 +233,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtilImpl.showSettingsDialog(e.getProject(), "preferences.sourceCode", "detect indent");
     }
   }
@@ -249,7 +249,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       CodeStyle.getSettings(myProject).AUTODETECT_INDENTS = true;
       notifyIndentOptionsChanged(myProject, null);
       myNotification.expire();

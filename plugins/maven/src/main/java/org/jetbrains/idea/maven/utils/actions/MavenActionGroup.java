@@ -18,10 +18,11 @@ package org.jetbrains.idea.maven.utils.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class MavenActionGroup extends DefaultActionGroup implements DumbAware {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     boolean available = isAvailable(e);
     e.getPresentation().setEnabled(available);

@@ -49,7 +49,7 @@ public class GitRootChecker extends VcsRootChecker {
 
   @Override
   public boolean isVcsDir(@NotNull String dirName) {
-    return dirName.toLowerCase().equals(GitUtil.DOT_GIT);
+    return dirName.equalsIgnoreCase(GitUtil.DOT_GIT);
   }
 
   @Override

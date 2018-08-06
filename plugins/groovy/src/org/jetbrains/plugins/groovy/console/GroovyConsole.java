@@ -143,7 +143,7 @@ public class GroovyConsole {
     actionGroup.addAll(consoleView.createConsoleActions());
     actionGroup.add(new CloseAction(defaultExecutor, descriptor, project) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         processHandler.destroyProcess(); // use force
         super.actionPerformed(e);
       }

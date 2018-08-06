@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,12 +33,12 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  final public void actionPerformed(AnActionEvent e) {
+  final public void actionPerformed(@NotNull AnActionEvent e) {
     FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
     actionPerformed(tree, e);
   }
 
-  final public void update(AnActionEvent e) {
+  final public void update(@NotNull AnActionEvent e) {
     FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
     if (tree != null) {
       e.getPresentation().setEnabled(true);

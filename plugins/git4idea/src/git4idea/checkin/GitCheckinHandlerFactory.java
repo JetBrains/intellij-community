@@ -378,9 +378,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       GitVcs git = GitVcs.getInstance(myProject);
       Collection<VirtualFile> result = new HashSet<>();
       for (FilePath path : ChangesUtil.getPaths(myPanel.getSelectedChanges())) {
-        AbstractVcs vcs = vcsManager.getVcsFor(path);
-        VirtualFile root = vcsManager.getVcsRootFor(path);
-        if (vcs.equals(git) && root != null) {
+        VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
+        VirtualFile root = vcsRoot.getPath();
+        AbstractVcs vcs = vcsRoot.getVcs();
+        if (git.equals(vcs) && root != null) {
           result.add(root);
         }
       }

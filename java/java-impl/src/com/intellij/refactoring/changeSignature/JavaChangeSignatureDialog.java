@@ -229,7 +229,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
     myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Supertypes) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<>();
         Consumer<Set<PsiMethod>> callback = psiMethods -> {
           myMethodsToPropagateExceptions = psiMethods;

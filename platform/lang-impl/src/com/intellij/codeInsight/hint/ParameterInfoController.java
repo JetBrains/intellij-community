@@ -183,6 +183,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     updateComponent();
   }
 
+  void setDescriptors(Object[] descriptors) {
+    myComponent.setDescriptors(descriptors);
+  }
+
   private void syncUpdateOnCaretMove() {
     myHandler.syncUpdateOnCaretMove(new MyLazyUpdateParameterInfoContext());
   }

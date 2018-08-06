@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import org.jetbrains.annotations.NotNull;
 
 public class InvokeQuickFixAction extends AnAction {
   private final InspectionResultsView myView;
@@ -37,7 +38,7 @@ public class InvokeQuickFixAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper(true);
     final InspectionRVContentProvider provider = myView.getProvider();
@@ -49,7 +50,7 @@ public class InvokeQuickFixAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ActionGroup fixes = (ActionGroup)ActionManager.getInstance().getAction("QuickFixes");
     if (fixes.getChildren(e).length == 0) {
       Messages.showInfoMessage(myView, "There are no applicable quick fixes", "Nothing Found to Fix");

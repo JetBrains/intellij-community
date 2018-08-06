@@ -2,6 +2,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.ScreenUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +11,7 @@ public class MaximizeActiveDialogAction extends WindowAction {
   private static final String NORMAL_BOUNDS = "NORMAL_BOUNDS";
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (myWindow instanceof JDialog) {
       doMaximize((JDialog)myWindow);
     }

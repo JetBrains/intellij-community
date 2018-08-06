@@ -23,7 +23,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +44,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return myFile;
   }
 
-  public PsiElement handleElementRename(final String newElementName){
+  public PsiElement handleElementRename(@NotNull final String newElementName){
     return handleElementRenameBase(newElementName);
   }
 
@@ -74,13 +73,8 @@ public abstract class ReferenceInForm implements PsiReference {
     return myRangeMarker.getDocument().getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset()).toString();
   }
 
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     return resolve() == element;
-  }
-
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean isSoft() {

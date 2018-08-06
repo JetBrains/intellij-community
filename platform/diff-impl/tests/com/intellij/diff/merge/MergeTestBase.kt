@@ -6,6 +6,8 @@ import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
+import com.intellij.diff.tools.util.base.IgnorePolicy
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
@@ -36,6 +38,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   }
 
   fun test(left: String, base: String, right: String, changesCount: Int, f: TestBuilder.() -> Unit) {
+    test(left, base, right, changesCount, IgnorePolicy.DEFAULT, f)
+  }
+
+  fun test(left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy, f: TestBuilder.() -> Unit) {
     val contentFactory = DiffContentFactoryImpl()
     val leftContent: DocumentContent = contentFactory.create(parseSource(left))
     val baseContent: DocumentContent = contentFactory.create(parseSource(base))
@@ -45,6 +51,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
 
     val context = MockMergeContext(project)
     val request = MockMergeRequest(leftContent, baseContent, rightContent, outputContent)
+
+    val settings = TextDiffSettings()
+    settings.ignorePolicy = policy
+    context.putUserData(TextDiffSettings.KEY, settings)
 
     val viewer = TextMergeTool.INSTANCE.createComponent(context, request) as TextMergeViewer
     try {
@@ -199,6 +209,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     //
     // Undo
     //
+
+    fun assertCantUndo() {
+      assertFalse(undoManager.isUndoAvailable(textEditor))
+    }
 
     fun undo(count: Int = 1) {
       if (count == -1) {

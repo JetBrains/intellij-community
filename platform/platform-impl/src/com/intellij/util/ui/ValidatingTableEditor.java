@@ -202,7 +202,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
     myRemoveButton = new AnActionButton(ApplicationBundle.message("button.remove"), IconUtil.getRemoveIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         removeSelected();
       }
     };

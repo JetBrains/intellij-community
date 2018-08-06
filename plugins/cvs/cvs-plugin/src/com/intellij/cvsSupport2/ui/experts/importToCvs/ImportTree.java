@@ -40,6 +40,8 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import java.util.HashMap;
 import java.util.HashSet;
+
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
@@ -98,13 +100,13 @@ public class ImportTree extends NodeRenderer {
 
   public AnAction createExcludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.exclude.from.import.action.name"), null, PlatformIcons.DELETE_ICON) {
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(isAtLeastOneFileIncluded(selectedFiles));
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           exclude(selectedFile);
@@ -127,13 +129,13 @@ public class ImportTree extends NodeRenderer {
 
   public AnAction createIncludeAction() {
     return new AnAction(CvsBundle.message("import.wizard.include.to.import.action.name"), null, IconUtil.getAddIcon()) {
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         final Presentation presentation = e.getPresentation();
         presentation.setEnabled(isAtLeastOneFileExcluded(selectedFiles));
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         for (VirtualFile selectedFile : selectedFiles) {
           include(selectedFile);

@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 public class TogglePopupHintsAction extends AnAction{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.actions.TogglePopupHintsAction");
@@ -46,13 +47,13 @@ public class TogglePopupHintsAction extends AnAction{
   }
 
   @Override
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     PsiFile psiFile=getTargetFile(e.getDataContext());
     e.getPresentation().setEnabled(psiFile!=null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e){
     PsiFile psiFile=getTargetFile(e.getDataContext());
     LOG.assertTrue(psiFile!=null);
     Project project = e.getProject();

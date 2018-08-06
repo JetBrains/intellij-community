@@ -172,7 +172,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       }
     }).addExtraAction(myCopyButton = new AnActionButton(ToolsBundle.message("tools.copy.button"), PlatformIcons.COPY_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         Tool originalTool = getSelectedTool();
 
         if (originalTool != null) {

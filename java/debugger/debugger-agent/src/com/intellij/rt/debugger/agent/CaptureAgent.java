@@ -22,6 +22,13 @@ public class CaptureAgent {
   private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
 
   public static void premain(String args, Instrumentation instrumentation) {
+    // never instrument twice
+    if (System.getProperty("intellij.debug.agent") != null) {
+      System.err.println("Capture agent: more than one agent is not allowed, skipping");
+      return;
+    }
+    System.setProperty("intellij.debug.agent", "true");
+
     ourInstrumentation = instrumentation;
     try {
       appendStorageJar(instrumentation);

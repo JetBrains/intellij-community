@@ -35,7 +35,8 @@ public abstract class PackageSetBase implements PackageSet {
 
   @Override
   public boolean contains(@NotNull PsiFile file, @Nullable NamedScopesHolder holder) {
-    return contains(file.getVirtualFile(), file.getProject(), holder);
+    VirtualFile virtualFile = file.getVirtualFile();
+    return virtualFile != null && contains(virtualFile, file.getProject(), holder);
   }
 
   @Nullable

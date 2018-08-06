@@ -56,7 +56,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
     Collection<AbstractTreeNode> nodesToAdd = getNodesToAdd(dataContext, true);
@@ -94,7 +94,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(canCreateNodes(e, myFavoritesListName));
   }
 

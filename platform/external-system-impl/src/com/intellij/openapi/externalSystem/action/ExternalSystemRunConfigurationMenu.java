@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     for (AnAction action : getChildActionsOrStubs()) {
       if (action instanceof ExecuteExternalSystemRunConfigurationAction) {
         remove(action);

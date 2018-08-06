@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @since 02.11.2006
  */
 public class RefreshAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     doRefresh(project);

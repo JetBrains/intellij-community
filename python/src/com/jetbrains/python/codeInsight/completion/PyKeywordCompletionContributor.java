@@ -402,7 +402,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       ,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeywords(result, TailType.NONE, PyNames.DEF, PyNames.CLASS, PyNames.FOR, PyNames.IF, PyNames.WHILE, PyNames.WITH);
           putKeywords(result, TailType.CASE_COLON, PyNames.TRY);
@@ -427,7 +427,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       inStatement,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeywords(result, TailType.SPACE, PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
           putKeywords(result, TailType.NONE, PyNames.PASS);
@@ -535,7 +535,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       ,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
@@ -552,7 +552,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       ,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailType.NONE, result);
         }
@@ -782,7 +782,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       myInsertHandler = insertHandler;
     }
 
-    protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context,
+    protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context,
                                   @NotNull final CompletionResultSet result) {
       for (String s : myKeywords) {
         final PythonLookupElement element = new PythonLookupElement(s, true, null);

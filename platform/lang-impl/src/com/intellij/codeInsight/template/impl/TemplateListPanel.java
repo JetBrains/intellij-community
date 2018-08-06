@@ -670,7 +670,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     final DefaultActionGroup move = new DefaultActionGroup("Move", true) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         boolean enabled = !templates.isEmpty();
         e.getPresentation().setEnabled(enabled);

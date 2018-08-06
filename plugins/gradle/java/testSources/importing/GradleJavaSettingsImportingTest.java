@@ -60,19 +60,22 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
 
   @Test
   public void testArtifactsSettingsImport() throws Exception {
-    importProject(
-      withGradleIdeaExtPlugin(
+    createProjectConfig(
+        "plugins {\n" +
+        "  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.4'\n" +
+        "}\n" +
         "import org.jetbrains.gradle.ext.*\n" +
         "idea {\n" +
         "  project.settings {\n" +
         "    ideArtifacts {\n" +
-        "      ideArtifact(\"myArt\") {\n" +
+        "      myArt {\n" +
         "         file(\"build.gradle\")\n" +
         "      }\n" +
         "    }\n" +
         "  }\n" +
-        "}")
+        "}"
     );
+    importProject();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
 
     final Artifact artifact = artifactManager.getArtifacts()[0];

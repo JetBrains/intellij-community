@@ -2013,6 +2013,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         //windowLocation.translate(windowLocation.x - point.x, windowLocation.y - point.y);
         window.setLocation(2 * windowBounds.x - point.x,  2 * windowBounds.y - point.y);
         window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height);
+        window.toFront();
       }
       finally {
         finish();

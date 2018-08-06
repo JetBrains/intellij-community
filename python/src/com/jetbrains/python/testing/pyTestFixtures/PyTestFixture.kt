@@ -18,7 +18,7 @@ import com.jetbrains.python.testing.isTestElement
 
 private val decoratorNames = arrayOf("pytest.fixture", "fixture")
 
-private fun PyDecoratorList.hasDecorator(vararg names: String) = names.map { findDecorator(it) }.firstOrNull() != null ?: false
+private fun PyDecoratorList.hasDecorator(vararg names: String) = names.any { findDecorator(it) != null }
 
 /**
  * If named parameter has fixture -- return it
@@ -50,12 +50,12 @@ data class PyTestFixture(val function: PyFunction? = null, val resolveTarget: Py
 
 
 fun findDecoratorsByName(module: Module, vararg names: String): Iterable<PyDecorator> =
-  names.map { name ->
+  names.flatMap { name ->
     StubIndex.getElements(PyDecoratorStubIndex.KEY, name, module.project,
                           GlobalSearchScope.union(
                             arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
                           PyDecorator::class.java)
-  }.flatten()
+  }
 
 
 private fun createFixture(decorator: PyDecorator): PyTestFixture? {

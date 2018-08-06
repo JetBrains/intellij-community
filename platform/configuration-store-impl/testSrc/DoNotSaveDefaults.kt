@@ -64,7 +64,7 @@ class DoNotSaveDefaultsTest {
     // wake up (edt, some configurables want read action)
     runInEdtAndWait {
       val picoContainer = componentManager.picoContainer
-      ServiceManagerImpl.processAllImplementationClasses(componentManager, { clazz, _ ->
+      ServiceManagerImpl.processAllImplementationClasses(componentManager) { clazz, _ ->
         val className = clazz.name
         // CvsTabbedWindow calls invokeLater in constructor
         if (className != "com.intellij.cvsSupport2.ui.CvsTabbedWindow"
@@ -73,12 +73,13 @@ class DoNotSaveDefaultsTest {
           picoContainer.getComponentInstance(className)
         }
         true
-      })
+      }
     }
 
     val propertyComponent = PropertiesComponent.getInstance()
     // <property name="file.gist.reindex.count" value="54" />
     propertyComponent.unsetValue("file.gist.reindex.count")
+    propertyComponent.unsetValue("android-component-compatibility-check")
     // <property name="CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2" value="1.0" />
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
     propertyComponent.unsetValue("ts.lib.d.ts.version")

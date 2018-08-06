@@ -489,7 +489,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private void installCloseOnEscapeAction(@NotNull JTextComponent c) {
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         close();
       }
     }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE), c);

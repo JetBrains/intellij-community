@@ -390,7 +390,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int row = myCommitsTable.getSelectedRow();
       assert row >= 0 && row < myTableModel.getRowCount();
       GitRebaseEntry entry = myTableModel.myEntries.get(row);
@@ -414,7 +414,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int[] selectedRows = myCommitsTable.getSelectedRows();
       for (int i : selectedRows) {
         myTableModel.setValueAt(myAction, i, MyTableModel.ACTION_COLUMN);

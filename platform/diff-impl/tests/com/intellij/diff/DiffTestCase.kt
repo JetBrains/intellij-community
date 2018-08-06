@@ -144,6 +144,37 @@ abstract class DiffTestCase : TestCase() {
     return set
   }
 
+  fun parseLineMatching(matching: String, text: CharSequence): BitSet {
+    assertEquals(matching.length, text.length)
+
+    val lines1 = matching.split('_', '*')
+    val lines2 = text.split('\n')
+    assertEquals(lines1.size, lines2.size)
+    for (i in 0..lines1.size - 1) {
+      assertEquals(lines1[i].length, lines2[i].length, "line $i")
+    }
+
+
+    val set = BitSet()
+
+    var index = 0
+    var lineNumber = 0
+    while (index < matching.length) {
+      var end = matching.indexOfAny(listOf("_", "*"), index) + 1
+      if (end == 0) end = matching.length
+
+      val line = matching.subSequence(index, end)
+      if (line.find { it != ' ' && it != '_' } != null) {
+        assert(!line.contains(' '))
+        set.set(lineNumber)
+      }
+      lineNumber++
+      index = end
+    }
+
+    return set
+  }
+
   //
   // Misc
   //

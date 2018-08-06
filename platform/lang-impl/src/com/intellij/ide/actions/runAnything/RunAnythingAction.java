@@ -572,14 +572,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean isEnabled = IS_ACTION_ENABLED.getValue();
     e.getPresentation().setVisible(isEnabled);
     e.getPresentation().setEnabled(isEnabled);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
       if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_CONTROL) {
         return;
@@ -918,7 +918,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final PropertiesComponent storage = PropertiesComponent.getInstance(e.getProject());
         final String[] values = storage.getValues(RUN_ANYTHING_HISTORY_KEY);
         if (values != null) {
@@ -934,7 +934,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(editor.getCaretPosition() == 0);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), editor, balloon);

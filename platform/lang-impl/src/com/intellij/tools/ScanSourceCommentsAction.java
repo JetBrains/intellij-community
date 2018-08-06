@@ -34,6 +34,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -45,7 +46,7 @@ public class ScanSourceCommentsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.tools.ScanSourceCommentsAction");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
 
     final Project p = e.getProject();
     final String file =

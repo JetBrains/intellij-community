@@ -1291,27 +1291,37 @@ public class ExpressionUtils {
    * Flattens second+ polyadic's operand replaced with another polyadic expression of the same type to the parent's operands.
    * 
    * Otherwise reparse would produce different expression.
+   *
+   * @return the updated PsiExpression (probably the parent of an expression to replace if it was necessary to update the parent);
+   * or null if no special treatment of given expression is necessary (in this case you can just call
+   * {@code tracker.replace(expressionToReplace, replacement)}.
    */
+  @Nullable
   public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
                                                         PsiExpression replacement, 
                                                         CommentTracker tracker) {
     PsiElement parent = expressionToReplace.getParent();
-    if (parent instanceof PsiPolyadicExpression && 
-        replacement instanceof PsiPolyadicExpression &&
-        ((PsiPolyadicExpression)parent).getOperationTokenType() == ((PsiPolyadicExpression)replacement).getOperationTokenType()) {
-      int idx = ArrayUtil.indexOf(((PsiPolyadicExpression)parent).getOperands(), expressionToReplace);
-      if (idx >= 0) {
-        PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
-        copyParentPolyadic.getOperands()[idx].replace(replacement);
-        PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
-                                                          .createExpressionFromText(copyParentPolyadic.getText(), parent);
-        PsiElement[] children = parent.getChildren();
-        for (PsiElement child : children) {
-          if (child != expressionToReplace) {
-            tracker.markUnchanged(child);
+    if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression parentPolyadic = (PsiPolyadicExpression)parent;
+      PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
+      IElementType parentTokenType = parentPolyadic.getOperationTokenType();
+      IElementType childTokenType = childPolyadic.getOperationTokenType();
+      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) ==
+          PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType)) {
+        int idx = ArrayUtil.indexOf(parentPolyadic.getOperands(), expressionToReplace);
+        if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
+          PsiPolyadicExpression copyParentPolyadic = (PsiPolyadicExpression)parent.copy();
+          copyParentPolyadic.getOperands()[idx].replace(replacement);
+          PsiExpression recreateCopyFromText = JavaPsiFacade.getElementFactory(parent.getProject())
+            .createExpressionFromText(copyParentPolyadic.getText(), parent);
+          PsiElement[] children = parent.getChildren();
+          for (PsiElement child : children) {
+            if (child != expressionToReplace) {
+              tracker.markUnchanged(child);
+            }
           }
+          return (PsiExpression)tracker.replaceAndRestoreComments(parent, recreateCopyFromText);
         }
-        return ((PsiPolyadicExpression)tracker.replaceAndRestoreComments(parent, recreateCopyFromText)).getOperands()[idx];
       }
     }
     return null;

@@ -16,10 +16,7 @@
 
 buildscript {
   repositories {
-    if (project.ext.inJetBrainsNetwork) {
-      maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
-    }
-    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
   }
   dependencies {
     classpath "de.undercouch:gradle-download-task:3.2.0"

@@ -70,7 +70,7 @@ public class MacMessagesTest extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent anActionEvent) {
+  public void actionPerformed(@NotNull final AnActionEvent anActionEvent) {
     JDialog controlDialog = new JDialog();
     controlDialog.setTitle("Messages testing control panel");
     controlDialog.setModalExclusionType(Dialog.ModalExclusionType.APPLICATION_EXCLUDE);

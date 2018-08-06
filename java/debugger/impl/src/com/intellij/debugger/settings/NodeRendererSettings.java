@@ -12,8 +12,8 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -38,7 +38,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "NodeRendererSettings", storages = @Storage("debugger.renderers.xml"))
+@State(name = "NodeRendererSettings", storages = {
+  @Storage("debugger.xml"),
+  @Storage(value = "debugger.renderers.xml", deprecated = true),
+})
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
   @NonNls public static final String RENDERER_TAG = "Renderer";
@@ -75,14 +78,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
   @NonNls private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
   @NonNls private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
-  
+
   public NodeRendererSettings() {
     // default configuration
     myHexRenderer.setEnabled(false);
     myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
   }
-  
+
   public static NodeRendererSettings getInstance() {
     return ServiceManager.getService(NodeRendererSettings.class);
   }

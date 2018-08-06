@@ -509,7 +509,7 @@ class BuildUtils {
           }
         }
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (action == null) {
             fromButton.doClick();
             return;
@@ -518,7 +518,7 @@ class BuildUtils {
           action.actionPerformed(new ActionEvent(fromButton, ActionEvent.ACTION_PERFORMED, null));
         }
         @Override
-        public void update(AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(action == null ? fromButton.isEnabled() : action.isEnabled());
           if (!useTextFromAction)
             e.getPresentation().setText(DialogWrapper.extractMnemonic(fromButton.getText()).second);

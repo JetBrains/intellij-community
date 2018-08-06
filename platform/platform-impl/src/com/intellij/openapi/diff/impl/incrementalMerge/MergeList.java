@@ -236,13 +236,13 @@ public class MergeList implements UserDataHolder {
       Icon arrowIcon = side == FragmentSide.SIDE1 ? AllIcons.Diff.ArrowRight : AllIcons.Diff.Arrow;
       AnAction applyAction = new DumbAwareAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, arrowIcon) {
         @Override
-        public void actionPerformed(@Nullable AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           apply(change);
         }
       };
       AnAction ignoreAction = new DumbAwareAction(DiffBundle.message("merge.dialog.ignore.change.action.name"), null, AllIcons.Diff.Remove) {
         @Override
-        public void actionPerformed(@Nullable AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           change.removeFromList();
         }
       };

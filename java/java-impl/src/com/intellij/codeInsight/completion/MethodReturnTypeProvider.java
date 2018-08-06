@@ -44,7 +44,7 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     addProbableReturnTypes(parameters, result);
     

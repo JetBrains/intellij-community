@@ -32,6 +32,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ import java.util.HashMap;
  * @author yole
  */
 public class AddComponentAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
@@ -116,7 +117,7 @@ public class AddComponentAction extends AnAction {
     }
   }
 
-  @Override public void update(AnActionEvent e) {
+  @Override public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (e.getData(GroupItem.DATA_KEY) != null ||
         e.getData(ComponentItem.DATA_KEY) != null) {

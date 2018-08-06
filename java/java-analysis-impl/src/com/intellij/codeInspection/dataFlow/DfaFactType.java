@@ -181,7 +181,7 @@ public abstract class DfaFactType<T> extends Key<T> {
   };
   /**
    * This fact represents a set of possible types of this value
-   * {@link TypeConstraint#EMPTY} value is equivalent to absent fact (not constrained)
+   * {@link TypeConstraint#empty()} value is equivalent to absent fact (not constrained)
    */
   public static final DfaFactType<TypeConstraint> TYPE_CONSTRAINT = new DfaFactType<TypeConstraint>("Constraints") {
     @Override
@@ -191,21 +191,13 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Override
     boolean isUnknown(@NotNull TypeConstraint fact) {
-      return fact.equals(TypeConstraint.EMPTY);
+      return fact.isEmpty();
     }
 
     @Nullable
     @Override
     TypeConstraint intersectFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
-      for (DfaPsiType type : right.getInstanceofValues()) {
-        left = left.withInstanceofValue(type);
-        if (left == null) return null;
-      }
-      for (DfaPsiType type : right.getNotInstanceofValues()) {
-        left = left.withNotInstanceofValue(type);
-        if (left == null) return null;
-      }
-      return left;
+      return left.intersect(right);
     }
 
     @Nullable

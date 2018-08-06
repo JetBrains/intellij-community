@@ -92,7 +92,7 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
     return myAttribute.getValue();
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     myAttribute.setValue(newElementName);
     final XmlAttributeValue value = myAttribute.getValueElement();
     assert value != null;
@@ -103,7 +103,7 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
     throw new UnsupportedOperationException();
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element == resolve();
   }
 

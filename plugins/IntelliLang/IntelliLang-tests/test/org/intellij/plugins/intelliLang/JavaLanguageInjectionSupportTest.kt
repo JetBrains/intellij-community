@@ -2,14 +2,21 @@
 package org.intellij.plugins.intelliLang
 
 import com.intellij.lang.Language
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
+import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 
 class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
@@ -96,6 +103,61 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
     TestCase.assertNull(currentPrintlnInjection())
     assertInjectedLangAtCaret(null)
+  }
+
+
+  fun testConfigUnInjectionAndUndo() {
+
+    val customInjection = BaseInjection("java").apply {
+      injectedLanguageId = "JSON"
+      setInjectionPlaces(
+        InjectionPlace(compiler.createElementPattern(
+          """psiParameter().ofMethod(0, psiMethod().withName("println").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
+          "println JSOM"), true
+        ),
+        InjectionPlace(compiler.createElementPattern(
+          """psiParameter().ofMethod(0, psiMethod().withName("print").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
+          "print JSON"), true
+        )
+      )
+    }
+
+    Configuration.getInstance().replaceInjections(listOf(customInjection), listOf(), true)
+
+    try {
+      myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              System.out.println("{\"a\": <caret> 1 }");
+          }
+      }
+    """)
+
+      assertInjectedLangAtCaret("JSON")
+      UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
+      assertInjectedLangAtCaret(null)
+      InjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile, Injectable.fromLanguage(Language.findLanguageByID("JSON")))
+      assertInjectedLangAtCaret("JSON")
+      undo(topLevelEditor)
+      assertInjectedLangAtCaret(null)
+    }
+    finally {
+      Configuration.getInstance().replaceInjections(listOf(), listOf(customInjection), true)
+    }
+  }
+
+  private fun undo(editor: Editor) {
+    UIUtil.invokeAndWaitIfNeeded(Runnable {
+      val oldTestDialog = Messages.setTestDialog(TestDialog.OK)
+      try {
+        val undoManager = UndoManager.getInstance(project)
+        val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
+        undoManager.undo(textEditor)
+      }
+      finally {
+        Messages.setTestDialog(oldTestDialog)
+      }
+    })
   }
 
 

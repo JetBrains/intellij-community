@@ -22,12 +22,13 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public abstract class SplitterActionBase extends AnAction implements DumbAware {
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     final Project project = event.getProject();
     final Presentation presentation = event.getPresentation();
     boolean inContextMenu = ActionPlaces.isPopupPlace(event.getPlace());

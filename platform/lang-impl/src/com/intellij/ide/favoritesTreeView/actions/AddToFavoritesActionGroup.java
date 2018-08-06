@@ -57,7 +57,7 @@ public class AddToFavoritesActionGroup extends ActionGroup implements DumbAware 
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     try {
       e.getPresentation().setVisible(AddToFavoritesAction.canCreateNodes(e));

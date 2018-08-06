@@ -524,7 +524,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     Set<Movement> movedPaths = new HashSet<>();
     for (GitCheckinExplicitMovementProvider provider : GitCheckinExplicitMovementProvider.EP_NAME.getExtensions()) {
-      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
+      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths, true);
       if (!providerMovements.isEmpty()) {
         message = provider.getCommitMessage(message);
         movedPaths.addAll(providerMovements);
@@ -1101,7 +1101,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myExplicitMovementProviders = filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
+      myExplicitMovementProviders = collectActiveMovementProviders(myProject);
 
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
@@ -1331,6 +1331,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(), virtualFile -> findGitDir(virtualFile) != null);
       GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
       return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
+    }
+
+    @NotNull
+    private List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
+      GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
+      List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
+      if (enabledProviders.isEmpty()) return Collections.emptyList();
+      if (!Registry.is("git.explicit.commit.renames.allow.multiple.calls")) return enabledProviders;
+
+      Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
+      List<FilePath> beforePaths = mapNotNull(changes, ChangesUtil::getBeforePath);
+      List<FilePath> afterPaths = mapNotNull(changes, ChangesUtil::getAfterPath);
+
+      return filter(enabledProviders, it -> !it.collectExplicitMovements(project, beforePaths, afterPaths, false).isEmpty());
     }
   }
 

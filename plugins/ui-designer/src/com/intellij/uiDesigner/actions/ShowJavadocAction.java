@@ -33,6 +33,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -43,7 +44,7 @@ import java.awt.*;
 public final class ShowJavadocAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.ShowJavadocAction");
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     final IntrospectedProperty introspectedProperty = inspector.getSelectedIntrospectedProperty();
     final PsiClass aClass = inspector.getComponentClass();
@@ -85,7 +86,7 @@ public final class ShowJavadocAction extends AnAction {
     });
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(inspector != null &&
                                    inspector.getSelectedIntrospectedProperty() != null &&

@@ -102,7 +102,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     return EMPTY_ARRAY;
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final MyResolveResult resolveResult = doResolve();
     if (resolveResult != null) {
       final PsiElement resolve = resolveResult.getElement();
@@ -145,7 +145,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     return super.handleElementRename(newElementName);
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     // optimization to exclude obvious variants
     final DomElement domElement = AntDomReferenceBase.toDomElement(element);
     if (domElement instanceof AntDomProperty) {
