@@ -80,7 +80,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
   public void onValidThread(@NotNull Runnable task) {
-    invoker.invokeLaterIfNeeded(task);
+    invoker.runOrInvokeLater(task);
   }
 
   @Override
