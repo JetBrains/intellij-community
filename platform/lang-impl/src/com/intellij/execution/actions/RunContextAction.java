@@ -20,6 +20,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
@@ -33,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -123,16 +123,13 @@ public class RunContextAction extends BaseRunConfigurationAction {
     ) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        GroupRunId groupRunId = new GroupRunId("Run all configurations from alternative context");
-        for (ConfigurationFromContext configuration : configurationsFromContext) {
-          RunConfigurationGroupUtil.setGroupRunId(configuration.getConfiguration(), groupRunId);
-        }
+        long groupId = ExecutionEnvironment.getNextUnusedExecutionId();
 
         List<ConfigurationType> types = ContainerUtil.map(configurationsFromContext, context1 -> context1.getConfiguration().getType());
         promptUserToUseRunDashboard(context.getProject(), types);
 
         for (ConfigurationFromContext configuration : configurationsFromContext) {
-          ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), myExecutor);
+          ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), myExecutor, groupId);
         }
       }
     };

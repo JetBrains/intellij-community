@@ -69,15 +69,11 @@ public abstract class BaseProgramRunner<Settings extends RunnerSettings> impleme
   static RunContentDescriptor postProcess(@NotNull ExecutionEnvironment environment, @Nullable RunContentDescriptor descriptor, @Nullable Callback callback) {
     if (descriptor != null) {
       descriptor.setExecutionId(environment.getExecutionId());
-      RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
       descriptor.setContentToolWindowId(ExecutionManager.getInstance(environment.getProject()).getContentManager()
-                                                        .getContentDescriptorToolWindowId(settings));
+                                          .getContentDescriptorToolWindowId(environment.getRunnerAndConfigurationSettings()));
+      RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
       if (settings != null) {
         descriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
-        GroupRunId groupRunId = RunConfigurationGroupUtil.getGroupRunId(settings.getConfiguration());
-        if (groupRunId != null) {
-          descriptor.setReusePolicy(groupRunId.createReusePolicy(descriptor.getDisplayName()));
-        }
       }
     }
     if (callback != null) {

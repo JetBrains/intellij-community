@@ -91,7 +91,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     if (environment.getProject().isDisposed()) return;
 
     RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
+    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), environment.getExecutionId() == 0);
   }
 
   private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
