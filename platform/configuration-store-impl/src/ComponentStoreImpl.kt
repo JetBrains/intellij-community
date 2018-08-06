@@ -238,15 +238,15 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
+      val errors: MutableList<Throwable> = SmartList<Throwable>()
       try {
         VfsRootAccess.allowRootAccess(absolutePath)
-        val errors: MutableList<Throwable> = SmartList<Throwable>()
         doSave(sessions, errors = errors)
-        CompoundRuntimeException.throwIfNotEmpty(errors)
       }
       finally {
         VfsRootAccess.disallowRootAccess(absolutePath)
       }
+      CompoundRuntimeException.throwIfNotEmpty(errors)
     }
   }
 
