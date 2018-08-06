@@ -86,9 +86,9 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     storageDataRef.set(loadState(element))
   }
 
-  override fun startExternalization(): StateStorage.ExternalizationSession? = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
+  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
 
-  protected abstract fun createSaveSession(states: StateMap): StateStorage.ExternalizationSession
+  protected abstract fun createSaveSession(states: StateMap): StateStorage.SaveSessionProducer
 
   override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
     val oldData = storageDataRef.get()
