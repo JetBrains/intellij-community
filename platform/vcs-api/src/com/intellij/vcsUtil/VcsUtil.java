@@ -19,7 +19,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -37,11 +36,9 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -527,27 +524,6 @@ public class VcsUtil {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
 
     return items.stream().collect(groupingBy(item -> notNull(manager.getVcsRootObjectFor(filePathMapper.fun(item)), FICTIVE_ROOT)));
-  }
-
-  @NotNull
-  public static Collection<VcsDirectoryMapping> findRoots(@NotNull VirtualFile rootDir, @NotNull Project project)
-    throws IllegalArgumentException {
-    if (!rootDir.isDirectory()) {
-      throw new IllegalArgumentException(
-        "Can't find VCS at the target file system path. Reason: expected to find a directory there but it's not. The path: "
-        + rootDir.getParent()
-      );
-    }
-    Collection<VcsRoot> roots = ServiceManager.getService(project, VcsRootDetector.class).detect(rootDir);
-    Collection<VcsDirectoryMapping> result = ContainerUtilRt.newArrayList();
-    for (VcsRoot vcsRoot : roots) {
-      VirtualFile vFile = vcsRoot.getPath();
-      AbstractVcs rootVcs = vcsRoot.getVcs();
-      if (rootVcs != null && vFile != null) {
-        result.add(new VcsDirectoryMapping(vFile.getPath(), rootVcs.getName()));
-      }
-    }
-    return result;
   }
 
   @NotNull
