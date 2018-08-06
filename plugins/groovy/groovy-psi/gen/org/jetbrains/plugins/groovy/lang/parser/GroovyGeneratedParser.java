@@ -3605,7 +3605,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'finally' lazy_block
+  // 'finally' (mb_nl lazy_block)
   public static boolean finally_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "finally_clause")) return false;
     if (!nextTokenIs(b, KW_FINALLY)) return false;
@@ -3613,9 +3613,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, FINALLY_CLAUSE, null);
     r = consumeToken(b, KW_FINALLY);
     p = r; // pin = 1
-    r = r && lazy_block(b, l + 1);
+    r = r && finally_clause_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // mb_nl lazy_block
+  private static boolean finally_clause_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "finally_clause_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && lazy_block(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
