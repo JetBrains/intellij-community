@@ -70,7 +70,7 @@ public class PyUnwrapperTest extends PyTestCase {
       @Override
       protected void selectOption(List<UnwrapHandler.MyUnwrapAction> options, Editor editor, PsiFile file) {
         assertTrue("No available options to unwrap", !options.isEmpty());
-        options.get(option).actionPerformed(null);
+        options.get(option).perform();
       }
     };
     h.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());

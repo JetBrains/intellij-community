@@ -167,7 +167,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       perform();
     }
 
-    void perform() {
+    public void perform() {
       final PsiFile file = myElement.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
