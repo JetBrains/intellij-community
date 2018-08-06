@@ -16,7 +16,6 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
   public static class State {
     public boolean INTERACTIVE = true;
     public boolean PRESERVE_MERGES = false;
-    public boolean SHOW_TAGS = false;
     public String ONTO = null;
   }
 
@@ -45,14 +44,6 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
 
   public void setPreserveMerges(boolean preserveMerges) {
     myState.PRESERVE_MERGES = preserveMerges;
-  }
-
-  public boolean showTags() {
-    return myState.SHOW_TAGS;
-  }
-
-  public void setShowTags(boolean showTags) {
-    myState.SHOW_TAGS = showTags;
   }
 
   @Nullable

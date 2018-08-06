@@ -17,13 +17,19 @@ package git4idea.rebase;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.*;
+import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
@@ -40,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -65,16 +70,17 @@ public class GitRebaseDialog extends DialogWrapper {
   private final ComboBox<String> myBranchComboBox = new ComboBox<>();
   private final JCheckBox myInteractiveCheckBox = new JCheckBox();
   private final JCheckBox myPreserveMergesCheckBox = new JCheckBox();
-  private final ComboBox<String> myOntoComboBox = new ComboBox<>();
-  private final ComboBox<String> myFromComboBox = new ComboBox<>();
-  private final JCheckBox myShowTagsCheckBox = new JCheckBox();
+  private final GitRefComboBox myOntoComboBox;
+  private final GitRefComboBox myFromComboBox;
+  private final CollectionComboBoxModel<String> myOntoComboBoxModel;
+  private final CollectionComboBoxModel<String> myFromComboBoxModel;
   private final myRefValidator myOntoValidator;
   private final myRefValidator myFromValidator;
 
   private final Project myProject;
   private final List<GitBranch> myLocalBranches = new ArrayList<>();
-  private final List<GitBranch> myRemoteBranches = new ArrayList<>();
-  private final List<GitTag> myTags = new ArrayList<>();
+  private final List<String> myAllBranches = new ArrayList<>();
+  private final List<String> completionVariants = new ArrayList<>();
   @Nullable private GitBranch myCurrentBranch;
   @Nullable private final String myOriginalOntoBranch;
 
@@ -91,8 +97,10 @@ public class GitRebaseDialog extends DialogWrapper {
     mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
-    myOntoComboBox.setEditable(true);
-    myFromComboBox.setEditable(true);
+    myOntoComboBox = new GitRefComboBox();
+    myFromComboBox = new GitRefComboBox();
+    myOntoComboBoxModel = myOntoComboBox.getGitRefComboModel();
+    myFromComboBoxModel = myFromComboBox.getGitRefComboModel();
 
     myOntoValidator = new myRefValidator(myOntoComboBox);
     myFromValidator = new myRefValidator(myFromComboBox);
@@ -101,59 +109,43 @@ public class GitRebaseDialog extends DialogWrapper {
 
     myInteractiveCheckBox.setSelected(mySettings.isInteractive());
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
-    myShowTagsCheckBox.setSelected(mySettings.showTags());
 
     setupListeners();
-    loadRefs();
-    updateBranches();
-
-    overwriteOntoForCurrentBranch(mySettings);
-    myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
-
-    validateFields();
 
     setTitle(GitBundle.getString("rebase.title"));
     setOKButtonText(GitBundle.getString("rebase.button"));
     init();
+
+    updateBranches();
+    overwriteOntoForCurrentBranch();
+    myOriginalOntoBranch = myOntoComboBox.getSelected();
   }
 
   private void setupListeners() {
     myRootComboBox.addActionListener(e -> {
       myOntoValidator.reset();
       myFromValidator.reset();
-      loadRefs();
       updateBranches();
       validateFields();
     });
     myBranchComboBox.addActionListener(e -> updateTrackedBranch());
-    DocumentAdapter ontoFromListener = new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+    DocumentListener ontoFromListener = new DocumentListener() {
+      @Override
+      public void documentChanged(DocumentEvent event) {
         validateFields();
       }
     };
-    GitUIUtil.getTextField(myOntoComboBox).getDocument().addDocumentListener(ontoFromListener);
-    GitUIUtil.getTextField(myFromComboBox).getDocument().addDocumentListener(ontoFromListener);
-    myShowTagsCheckBox.addActionListener(e -> updateOntoFrom());
-  }
-
-  protected void loadRefs() {
-    try {
-      myLocalBranches.clear();
-      myRemoteBranches.clear();
-      myTags.clear();
-      final VirtualFile root = gitRoot();
-      GitRepository repository = getSelectedRepository();
-      myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
-      myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
-      myCurrentBranch = repository.getCurrentBranch();
-      myTags.addAll(GitTag.list(myProject, root));
-    }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(myProject, e, "git branch -a");
-    }
+    myOntoComboBox.getTextField().getDocument().addDocumentListener(ontoFromListener);
+    myFromComboBox.getTextField().getDocument().addDocumentListener(ontoFromListener);
   }
 
   private void updateBranches() {
+
+    myLocalBranches.clear();
+    GitRepository repository = getSelectedRepository();
+    myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
+    myCurrentBranch = repository.getCurrentBranch();
+
     myBranchComboBox.removeAllItems();
     for (GitBranch b : myLocalBranches) {
       myBranchComboBox.addItem(b.getName());
@@ -164,33 +156,51 @@ public class GitRebaseDialog extends DialogWrapper {
     else {
       myBranchComboBox.setSelectedItem(0);
     }
-    updateOntoFrom();
-    updateTrackedBranch();
+
+    load();
   }
 
-  protected void updateOntoFrom() {
-    String onto = GitUIUtil.getTextField(myOntoComboBox).getText();
-    String from = GitUIUtil.getTextField(myFromComboBox).getText();
-    myFromComboBox.removeAllItems();
-    myOntoComboBox.removeAllItems();
-    addRefsToOntoAndFrom(myLocalBranches);
-    addRefsToOntoAndFrom(myRemoteBranches);
-    if (myShowTagsCheckBox.isSelected()) {
-      addRefsToOntoAndFrom(myTags);
-    }
-    GitUIUtil.getTextField(myOntoComboBox).setText(onto);
-    GitUIUtil.getTextField(myFromComboBox).setText(from);
+  private void load() {
+
+    myOntoComboBox.getSpinnerProgressManager().run(new Task.Backgroundable(myProject, "Load") {
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          completionVariants.clear();
+          myAllBranches.clear();
+          addToAllBranches(myLocalBranches);
+          addToAllBranches(sortBranchesByName(getSelectedRepository().getBranches().getRemoteBranches()));
+          completionVariants.addAll(myAllBranches);
+          for (GitReference ref : GitTag.list(myProject, gitRoot())) {
+            completionVariants.add(ref.getFullName());
+          }
+        }
+        catch (VcsException e) {
+          GitUIUtil.showOperationError(myProject, e, "git tag -l");
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        myOntoComboBoxModel.removeAll();
+        myFromComboBoxModel.removeAll();
+        myOntoComboBoxModel.add(myAllBranches);
+        myFromComboBoxModel.add(myAllBranches);
+        myOntoComboBox.setCompletionVariants(completionVariants);
+        myFromComboBox.setCompletionVariants(completionVariants);
+      }
+    });
   }
 
-  private void addRefsToOntoAndFrom(Collection<? extends GitReference> refs) {
-    for (GitReference ref: refs) {
-      myFromComboBox.addItem(ref.getFullName());
-      myOntoComboBox.addItem(ref.getFullName());
+  private void addToAllBranches(Collection<? extends GitReference> refs) {
+    for (GitReference ref : refs) {
+      myAllBranches.add(ref.getFullName());
     }
   }
 
   private void validateFields() {
-    if (GitUIUtil.getTextField(myOntoComboBox).getText().length() == 0) {
+    if (myOntoComboBox.getSelected().length() == 0) {
       setErrorText(null);
       setOKActionEnabled(false);
       return;
@@ -200,7 +210,7 @@ public class GitRebaseDialog extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    if (GitUIUtil.getTextField(myFromComboBox).getText().length() != 0 && myFromValidator.isInvalid()) {
+    if (myFromComboBox.getSelected().length() != 0 && myFromValidator.isInvalid()) {
       setErrorText("From reference is invalid: " + myFromValidator.getLastErrorText(), myFromComboBox);
       setOKActionEnabled(false);
       return;
@@ -237,26 +247,26 @@ public class GitRebaseDialog extends DialogWrapper {
         }
       }
       if (trackedBranch != null) {
-        myOntoComboBox.setSelectedItem(trackedBranch);
+        myOntoComboBoxModel.setSelectedItem(trackedBranch);
       }
       else {
-        GitUIUtil.getTextField(myOntoComboBox).setText("");
+        myOntoComboBoxModel.setSelectedItem("");
       }
-      GitUIUtil.getTextField(myFromComboBox).setText("");
+      myFromComboBoxModel.setSelectedItem("");
     }
     catch (VcsException e) {
       GitUIUtil.showOperationError(myProject, e, "git config");
     }
   }
 
-  private void overwriteOntoForCurrentBranch(@NotNull GitRebaseSettings settings) {
-    String onto = settings.getOnto();
+  private void overwriteOntoForCurrentBranch() {
+    String onto = mySettings.getOnto();
     if (onto != null && !onto.equals(myBranchComboBox.getSelectedItem())) {
       if (!isValidRevision(onto)) {
         mySettings.setOnto(null);
       }
       else {
-        myOntoComboBox.setSelectedItem(onto);
+        myOntoComboBoxModel.setSelectedItem(onto);
       }
     }
   }
@@ -293,8 +303,7 @@ public class GitRebaseDialog extends DialogWrapper {
   private void rememberFields() {
     mySettings.setInteractive(myInteractiveCheckBox.isSelected());
     mySettings.setPreserveMerges(myPreserveMergesCheckBox.isSelected());
-    mySettings.setShowTags(myShowTagsCheckBox.isSelected());
-    String onto = StringUtil.nullize(GitUIUtil.getTextField(myOntoComboBox).getText(), true);
+    String onto = StringUtil.nullize(myOntoComboBox.getSelected(), true);
     if (onto != null && !onto.equals(myOriginalOntoBranch)) {
       mySettings.setOnto(onto);
     }
@@ -317,8 +326,8 @@ public class GitRebaseDialog extends DialogWrapper {
     String selectedBranch = (String)myBranchComboBox.getSelectedItem();
     String branch = myCurrentBranch != null && !myCurrentBranch.getName().equals(selectedBranch) ? selectedBranch : null;
 
-    String from = GitUIUtil.getTextField(myFromComboBox).getText();
-    String onto = GitUIUtil.getTextField(myOntoComboBox).getText();
+    String from = myFromComboBox.getSelected();
+    String onto = myOntoComboBox.getSelected();
     String upstream;
     String newBase;
     if (isEmptyOrSpaces(from)) {
@@ -368,9 +377,6 @@ public class GitRebaseDialog extends DialogWrapper {
     from.setDisplayedMnemonic(KeyEvent.VK_F);
     from.setLabelFor(myFromComboBox);
     myFromComboBox.setToolTipText(GitBundle.message("rebase.from.tooltip"));
-    myShowTagsCheckBox.setText("Show Tags");
-    myShowTagsCheckBox.setMnemonic(KeyEvent.VK_T);
-    myShowTagsCheckBox.setToolTipText(GitBundle.message("rebase.show.tags.tooltip"));
 
     //Setup auxiliary panels
     JPanel rebaseCheckboxes = new JPanel(new FlowLayout(FlowLayout.LEADING));
@@ -384,8 +390,10 @@ public class GitRebaseDialog extends DialogWrapper {
       setDefaultFill(GridBagConstraints.HORIZONTAL);
 
     JPanel mainPanel = new JPanel(new GridBagLayout());
-    mainPanel.add(gitRoot, gb.nextLine().next());
-    mainPanel.add(myRootComboBox, gb.next().weightx(1.0));
+    if (myRepositoryManager.getRepositories().size()>1) {
+      mainPanel.add(gitRoot, gb.nextLine().next());
+      mainPanel.add(myRootComboBox, gb.next().weightx(1.0));
+    }
     mainPanel.add(gitBranch, gb.nextLine().next());
     mainPanel.add(myBranchComboBox, gb.next().weightx(1.0));
     mainPanel.add(rebaseCheckboxes, gb.nextLine().next().setColumn(1));
@@ -393,7 +401,6 @@ public class GitRebaseDialog extends DialogWrapper {
     mainPanel.add(myOntoComboBox, gb.next().weightx(1.0));
     mainPanel.add(from, gb.nextLine().next());
     mainPanel.add(myFromComboBox, gb.next().weightx(1.0));
-    mainPanel.add(myShowTagsCheckBox, gb.nextLine().next().setColumn(1));
 
     return mainPanel;
   }
@@ -401,7 +408,7 @@ public class GitRebaseDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myOntoComboBox;
+    return myOntoComboBox.getTextField();
   }
 
   @Override
@@ -416,18 +423,18 @@ public class GitRebaseDialog extends DialogWrapper {
 
   private class myRefValidator {
 
-    final ComboBox myComboBox;
+    final GitRefComboBox myComboBox;
     boolean myLastValidationFailed;
     String myLastRef;
     String myLastErrorText;
 
-    private myRefValidator(ComboBox comboBox) {
+    private myRefValidator(GitRefComboBox comboBox) {
       myComboBox = comboBox;
       myLastValidationFailed = false;
     }
 
     private void validate() {
-      String ref = GitUIUtil.getTextField(myComboBox).getText();
+      String ref = myComboBox.getSelected();
 
       if (ref.length() != 0) {
         try {
@@ -443,7 +450,7 @@ public class GitRebaseDialog extends DialogWrapper {
     }
 
     private boolean isInvalid() {
-      return GitUIUtil.getTextField(myComboBox).getText().equals(myLastRef) && myLastValidationFailed;
+      return myComboBox.getSelected().equals(myLastRef) && myLastValidationFailed;
     }
 
     private String getLastErrorText() {
@@ -454,6 +461,51 @@ public class GitRebaseDialog extends DialogWrapper {
       myLastValidationFailed = false;
       myLastRef = null;
       myLastErrorText = null;
+    }
+  }
+
+  private class GitRefComboBox extends ComboBox<String> {
+
+    private final ComponentVisibilityProgressManager mySpinnerProgressManager;
+    private final TextFieldWithAutoCompletion<String> myGitRefField;
+    private final CollectionComboBoxModel<String> myGitRefComboModel;
+    private static final int DEFAULT_WIDTH = 400;
+
+    public GitRefComboBox() {
+
+      super(DEFAULT_WIDTH);
+
+      myGitRefComboModel = new CollectionComboBoxModel<>();
+      myGitRefField = TextFieldWithAutoCompletion.create(myProject, myGitRefComboModel.getItems(), true, null);
+      JLabel progressSpinner = new JLabel(new AnimatedIcon.Default());
+      progressSpinner.setVisible(false);
+      mySpinnerProgressManager = new ComponentVisibilityProgressManager(progressSpinner);
+      Disposer.register(getDisposable(), mySpinnerProgressManager);
+
+      setEditable(true);
+      setEditor(ComboBoxCompositeEditor.withComponents(myGitRefField, progressSpinner));
+      setModel(myGitRefComboModel);
+    }
+
+    public String getSelected() {
+      return myGitRefField.getText();
+    }
+
+    public void setCompletionVariants(Collection<String> collection) {
+      myGitRefField.setVariants(collection);
+    }
+
+    public TextFieldWithAutoCompletion<String> getTextField() {
+      myGitRefField.selectAll();
+      return myGitRefField;
+    }
+
+    public ComponentVisibilityProgressManager getSpinnerProgressManager() {
+      return mySpinnerProgressManager;
+    }
+
+    public CollectionComboBoxModel<String> getGitRefComboModel() {
+      return myGitRefComboModel;
     }
   }
 }
