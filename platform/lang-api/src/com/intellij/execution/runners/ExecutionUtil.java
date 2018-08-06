@@ -176,14 +176,35 @@ public class ExecutionUtil {
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
-    doRunConfiguration(configuration, executor, null);
+    doRunConfiguration(configuration, executor, null, null);
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @NotNull ExecutionTarget target) {
-    doRunConfiguration(configuration, executor, target);
+    doRunConfiguration(configuration, executor, target, null);
   }
-  
-  private static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @Nullable ExecutionTarget targetOrNullForDefault) {
+
+  /**
+   * @param executionId Id that will be set for {@link ExecutionEnvironment} that is created to run configuration.
+   */
+  public static void runConfiguration(
+    @NotNull RunnerAndConfigurationSettings configuration,
+    @NotNull Executor executor,
+    @NotNull ExecutionTarget target,
+    long executionId
+  ) {
+    doRunConfiguration(configuration, executor, target, executionId);
+  }
+
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, long executionId) {
+    doRunConfiguration(configuration, executor, null, executionId);
+  }
+
+  private static void doRunConfiguration(
+    @NotNull RunnerAndConfigurationSettings configuration,
+    @NotNull Executor executor,
+    @Nullable ExecutionTarget targetOrNullForDefault,
+    @Nullable Long executionId
+  ) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder != null) {
       if (targetOrNullForDefault != null) {
@@ -191,6 +212,9 @@ public class ExecutionUtil {
       }
       else {
         builder.activeTarget();
+      }
+      if (executionId != null) {
+        builder.executionId(executionId);
       }
       ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
     }
