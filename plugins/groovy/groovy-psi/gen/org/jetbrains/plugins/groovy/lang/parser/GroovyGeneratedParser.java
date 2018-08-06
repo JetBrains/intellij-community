@@ -948,14 +948,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
+  // IDENTIFIER | string_literal_tokens | '*' | 'null' | 'class' | primitive_type | 'default'
   public static boolean argument_label(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_label")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, ARGUMENT_LABEL, "<argument label>");
     r = consumeTokenFast(b, IDENTIFIER);
-    if (!r) r = consumeTokenFast(b, STR_SQ);
-    if (!r) r = consumeTokenFast(b, STR_DQ);
+    if (!r) r = string_literal_tokens(b, l + 1);
     if (!r) r = consumeTokenFast(b, T_STAR);
     if (!r) r = consumeTokenFast(b, KW_NULL);
     if (!r) r = consumeTokenFast(b, KW_CLASS);
@@ -3448,7 +3447,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //                            | DOLLAR_SLASHY_BEGIN
   //                            | GSTRING_BEGIN
   //                            | SLASHY_BEGIN
-  //                            | STR_DQ | STR_SQ
   //                            | 'new'
   //                            | primitive_type
   //                            | simple_literal_tokens
@@ -3470,8 +3468,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeTokenFast(b, DOLLAR_SLASHY_BEGIN);
     if (!r) r = consumeTokenFast(b, GSTRING_BEGIN);
     if (!r) r = consumeTokenFast(b, SLASHY_BEGIN);
-    if (!r) r = consumeTokenFast(b, STR_DQ);
-    if (!r) r = consumeTokenFast(b, STR_SQ);
     if (!r) r = consumeTokenFast(b, KW_NEW);
     if (!r) r = parsePrimitiveType(b, l + 1);
     if (!r) r = simple_literal_tokens(b, l + 1);
@@ -4423,13 +4419,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER | STR_SQ | STR_DQ
+  // IDENTIFIER | string_literal_tokens
   static boolean method_identifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "method_identifier")) return false;
     boolean r;
     r = consumeTokenFast(b, IDENTIFIER);
-    if (!r) r = consumeTokenFast(b, STR_SQ);
-    if (!r) r = consumeTokenFast(b, STR_DQ);
+    if (!r) r = string_literal_tokens(b, l + 1);
     return r;
   }
 
@@ -5452,7 +5447,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // IDENTIFIER
-  //                                                      | STR_SQ | STR_DQ
+  //                                                      | string_literal_tokens
   //                                                      | regex_literal
   //                                                      | 'true'
   //                                                      | 'false'
@@ -5471,8 +5466,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, null, "<property selector>");
     r = consumeToken(b, IDENTIFIER);
-    if (!r) r = consumeToken(b, STR_SQ);
-    if (!r) r = consumeToken(b, STR_DQ);
+    if (!r) r = string_literal_tokens(b, l + 1);
     if (!r) r = regex_literal(b, l + 1);
     if (!r) r = consumeToken(b, KW_TRUE);
     if (!r) r = consumeToken(b, KW_FALSE);
@@ -5808,8 +5802,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //                                 | NUM_BIG_DECIMAL
   //                                 | NUM_FLOAT
   //                                 | NUM_DOUBLE
-  //                                 | STR_SQ
-  //                                 | STR_DQ
+  //                                 | string_literal_tokens
   //                                 | 'true'
   //                                 | 'false'
   //                                 | 'null'
@@ -5823,8 +5816,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeTokenFast(b, NUM_BIG_DECIMAL);
     if (!r) r = consumeTokenFast(b, NUM_FLOAT);
     if (!r) r = consumeTokenFast(b, NUM_DOUBLE);
-    if (!r) r = consumeTokenFast(b, STR_SQ);
-    if (!r) r = consumeTokenFast(b, STR_DQ);
+    if (!r) r = string_literal_tokens(b, l + 1);
     if (!r) r = consumeTokenFast(b, KW_TRUE);
     if (!r) r = consumeTokenFast(b, KW_FALSE);
     if (!r) r = consumeTokenFast(b, KW_NULL);
@@ -6183,6 +6175,18 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NOT_);
     r = !isApplicationArguments(b, l + 1);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // STRING_SQ | STRING_TSQ | STRING_DQ | STRING_TDQ
+  static boolean string_literal_tokens(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "string_literal_tokens")) return false;
+    boolean r;
+    r = consumeTokenFast(b, STRING_SQ);
+    if (!r) r = consumeTokenFast(b, STRING_TSQ);
+    if (!r) r = consumeTokenFast(b, STRING_DQ);
+    if (!r) r = consumeTokenFast(b, STRING_TDQ);
     return r;
   }
 
@@ -7947,7 +7951,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //                                    | 'this'
   //                                    | 'super'
   //                                    | code_reference_identifiers_soft &(reference_dot | '.&')
-  //                                    | (STR_SQ | STR_DQ | regex_literal) &string_literal_as_reference
+  //                                    | (string_literal_tokens | regex_literal) &string_literal_as_reference
   public static boolean unqualified_reference_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression")) return false;
     boolean r;
@@ -8011,7 +8015,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (STR_SQ | STR_DQ | regex_literal) &string_literal_as_reference
+  // (string_literal_tokens | regex_literal) &string_literal_as_reference
   private static boolean unqualified_reference_expression_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression_4")) return false;
     boolean r;
@@ -8022,12 +8026,11 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // STR_SQ | STR_DQ | regex_literal
+  // string_literal_tokens | regex_literal
   private static boolean unqualified_reference_expression_4_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression_4_0")) return false;
     boolean r;
-    r = consumeTokenSmart(b, STR_SQ);
-    if (!r) r = consumeTokenSmart(b, STR_DQ);
+    r = string_literal_tokens(b, l + 1);
     if (!r) r = regex_literal(b, l + 1);
     return r;
   }
