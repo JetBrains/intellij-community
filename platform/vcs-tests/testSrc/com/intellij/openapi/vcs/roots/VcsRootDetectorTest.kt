@@ -3,178 +3,164 @@
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.mkdir
-import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
-import one.util.streamex.StreamEx
+import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
-import java.util.Arrays.asList
 import java.util.Collections.emptyList
+
+private const val DOT_IDEA = PathMacroUtil.DIRECTORY_STORE_NAME
 
 class VcsRootDetectorTest : VcsRootBaseTest() {
 
-  fun `test no roots in project`() {
-    doTest(VcsRootConfiguration(), null)
+  fun `test no roots`() {
+    expect(emptyList())
   }
 
-  fun `test project under single mock root`() {
-    doTest(VcsRootConfiguration().vcsRoots("."), projectRoot, ".")
+  fun `test project dir is the only root`() {
+    projectRoot.initRepository()
+    expect(projectRoot)
   }
 
-  fun `test project with mock root under it`() {
-    cd(projectRoot)
-    mkdir("src")
-    mkdir(PathMacroUtil.DIRECTORY_STORE_NAME)
-    doTest(VcsRootConfiguration().vcsRoots("community"), projectRoot, "community")
+  fun `test root under project`() {
+    val roots = createVcsRoots(listOf("src"))
+    expect(roots)
   }
 
-  fun `test project with all subdirs under mock root should still be not fully controlled`() {
-    val dirNames = arrayOf(PathMacroUtil.DIRECTORY_STORE_NAME, "src", "community")
-    doTest(VcsRootConfiguration().vcsRoots(*dirNames), projectRoot, *dirNames)
+  fun `test 3 roots under project`() {
+    val vcsRoots = createVcsRoots(listOf(DOT_IDEA, "src", "community"))
+    expect(vcsRoots)
   }
 
-  fun `test project under vcs above it`() {
-    val subdir = "insideRepo"
-    cd(myRepository)
-    mkdir(subdir)
-    val vfile = myRepository.findChild(subdir)
-    doTest(VcsRootConfiguration().vcsRoots(myRepository.name), vfile, myRepository.name)
+  fun `test vcs root above project`() {
+    testRoot.initRepository()
+    expect(testRootFile)
   }
 
   fun `test one main and two nested sibling roots`() {
-    val names = arrayOf("community", "contrib", ".")
-    doTest(VcsRootConfiguration().vcsRoots(*names), projectRoot, *names)
+    projectRoot.initRepository()
+    val roots = createVcsRoots("community", "contrib")
+    expect(roots + projectRoot)
   }
 
   fun `test one above and one under`() {
-    val names = arrayOf(myRepository.name + "/community", ".")
-    doTest(VcsRootConfiguration().vcsRoots(*names), myRepository, *names)
+    testRoot.initRepository()
+    val roots = createVcsRoots("subroot")
+    expect(roots + testRootFile)
   }
 
   fun `test one above and one for project should show only project root`() {
-    val names = arrayOf(myRepository.name, ".")
-    doTest(VcsRootConfiguration().vcsRoots(*names), myRepository, myRepository.name)
+    testRoot.initRepository()
+    projectRoot.initRepository()
+    expect(projectRoot)
   }
 
   fun `test dont detect above if project is ignored there`() {
-    rootChecker.setIgnored(myRepository)
-    assertTrue(File(testRoot, DOT_MOCK).mkdir())
-    doTest(VcsRootConfiguration().vcsRoots(testRoot.path), myRepository)
+    rootChecker.setIgnored(projectRoot)
+    testRoot.initRepository()
+    expect(emptyList())
   }
 
   fun `test one above and several under project`() {
-    val names = arrayOf(".", myRepository.name + "/community", myRepository.name + "/contrib")
-    doTest(VcsRootConfiguration().vcsRoots(*names), myRepository, *names)
-  }
-
-  fun `test multiple above should be detected as one above`() {
-    val subdir = "insideRepo"
-    cd(myRepository)
-    mkdir(subdir)
-    val vfile = myRepository.findChild(subdir)
-    doTest(VcsRootConfiguration().vcsRoots(".", myRepository.name), vfile, myRepository.name)
+    testRoot.initRepository()
+    projectRoot.initRepository()
+    val roots = createVcsRoots("community", "contrib")
+    expect(roots + projectRoot)
   }
 
   fun `test unrelated root should not be detected`() {
-    doTest(VcsRootConfiguration().vcsRoots("another"), myRepository)
+    val file = File(testRoot, "another")
+    assertTrue(file.mkdir())
+    file.initRepository()
+    expect(emptyList())
   }
 
   fun `test linked source root alone should be detected`() {
-    val linkedRoot = "linked_root"
-    val linkedRootDir = File(testRoot, linkedRoot)
-    assertTrue(File(linkedRootDir, DOT_MOCK).mkdirs())
-    rootModel.addContentEntry(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir)!!)
-
-    val roots = detect(projectRoot)
-
-    assertEqualCollections(StreamEx.of(roots).map { it -> it.path!!.path }.toList(),
-                           listOf(toSystemIndependentName(linkedRootDir.path)))
+    val linkedRoot = File(testRoot, "linked_root").mkd()
+    val vf = linkedRoot.toVirtualFile()
+    linkedRoot.initRepository()
+    PsiTestUtil.addContentRoot(rootModule, vf)
+    expect(vf)
   }
 
   fun `test linked source root and project root should be detected`() {
-    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "linked_root")
-      .contentRoots("linked_root")
-    doTest(vcsRootConfiguration, projectRoot, ".", "linked_root")
+    val linkedRoot = File(testRoot, "linked_root").mkd()
+    val vf = linkedRoot.toVirtualFile()
+    linkedRoot.initRepository()
+    PsiTestUtil.addContentRoot(rootModule, vf)
+
+    projectRoot.initRepository()
+
+    expect(listOf(vf, projectRoot))
   }
 
-  fun `test linked source below mock root`() {
-    val vcsRootConfiguration = VcsRootConfiguration().contentRoots("linked_root/src")
-      .vcsRoots(".", "linked_root")
-    doTest(vcsRootConfiguration, projectRoot, ".", "linked_root")
+  fun `test two nested roots`() {
+    val roots = createVcsRoots("community", "content_root/subroot")
+    PsiTestUtil.addContentRoot(rootModule, projectRoot.findChild("content_root")!!)
+
+    expect(roots)
   }
 
-  // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
   fun `test dont scan deeper than2LevelsBelowAContentRoot`() {
     Registry.get("vcs.root.detector.folder.depth").setValue(2, testRootDisposable)
-    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
-      .contentRoots("content_root")
-    doTest(vcsRootConfiguration,
-           projectRoot, "community", "content_root/lev1")
+
+    val roots = createVcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
+    PsiTestUtil.addContentRoot(rootModule, projectRoot.findChild("content_root")!!)
+
+    expect(roots.subList(0, 2))
   }
 
   fun `test dont scan excluded dirs`() {
-    val vcsRootConfiguration = VcsRootConfiguration()
-      .contentRoots("community", "excluded")
-      .vcsRoots("community", "excluded/lev1")
-    setUp(vcsRootConfiguration, projectRoot)
+    val roots = createVcsRoots("community", "excluded/lev1")
 
     val excludedFolder = projectRoot.findChild("excluded")
     assertNotNull(excludedFolder)
     markAsExcluded(excludedFolder!!)
 
-    val vcsRoots = detect(projectRoot)
-    assertRoots(listOf("community"), getPaths(vcsRoots))
+    expect(roots[0])
   }
 
-  private fun assertRoots(expectedRelativePaths: Collection<String>, actual: Collection<String>) {
-    assertEqualCollections(actual, toAbsolute(expectedRelativePaths, project))
+  private fun createVcsRoots(vararg relativePaths: String) = createVcsRoots(listOf(*relativePaths))
+
+  private fun createVcsRoots(relativePaths: Collection<String>): List<VirtualFile> {
+    return relativePaths.map {
+      val file = File(projectPath, it)
+      assertTrue(file.mkdirs())
+      file.initRepository()
+      val vf = file.toVirtualFile()
+      PsiTestUtil.addContentRoot(rootModule, vf)
+      vf
+    }
+  }
+
+  private fun expect(vararg expectedRoots: VirtualFile) = expect(listOf(*expectedRoots))
+
+  private fun expect(expectedRoots: Collection<VirtualFile>) {
+    val detectedRoots = project.service<VcsRootDetector>().detect().map { it.path }
+    assertEqualCollections(detectedRoots, expectedRoots)
+  }
+
+  private fun File.toVirtualFile() = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)!!
+
+  private fun VirtualFile.initRepository() = VfsUtil.virtualToIoFile(this).initRepository()
+
+  private fun File.initRepository() : VirtualFile {
+    val file = File(this, DOT_MOCK)
+    assertTrue(file.mkdir())
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+  }
+
+  private fun File.mkd() : File {
+    assertTrue(this.mkdir())
+    return this
   }
 
   private fun markAsExcluded(dir: VirtualFile) {
-    ModuleRootModificationUtil.updateExcludedFolders(rootModel.module, dir, emptyList(), listOf(dir.url))
-  }
-
-  private fun detect(startDir: VirtualFile?): Collection<VcsRoot> {
-    return project.service<VcsRootDetector>().detect(startDir)
-  }
-
-  private fun doTest(vcsRootConfiguration: VcsRootConfiguration,
-                     startDir: VirtualFile?,
-                     vararg expectedPaths: String) {
-    setUp(vcsRootConfiguration, startDir)
-    val vcsRoots = detect(startDir)
-    assertRoots(asList(*expectedPaths), getPaths(
-      ContainerUtil.filter(vcsRoots) { root ->
-        assert(root.vcs != null)
-        root.vcs!!.keyInstanceMethod == vcs.keyInstanceMethod
-      }
-    ))
-  }
-
-  private fun setUp(vcsRootConfiguration: VcsRootConfiguration, startDir: VirtualFile?) {
-    initProject(vcsRootConfiguration)
-    startDir?.refresh(false, true)
-  }
-
-  private fun toAbsolute(relPaths: Collection<String>, project: Project): Collection<String> {
-    return relPaths.map {
-      toSystemIndependentName(File(project.basePath, it).canonicalPath)
-    }
-  }
-
-  private fun getPaths(files: Collection<VcsRoot>): Collection<String> {
-    return ContainerUtil.map(files) { root ->
-      val file = root.path!!
-      toSystemIndependentName(file.path)
-    }
+    ModuleRootModificationUtil.updateExcludedFolders(rootModule, dir, emptyList(), listOf(dir.url))
   }
 }

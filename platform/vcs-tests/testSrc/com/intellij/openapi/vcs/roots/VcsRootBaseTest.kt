@@ -4,10 +4,8 @@ package com.intellij.openapi.vcs.roots
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
-import com.intellij.openapi.roots.impl.RootModelImpl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.mkdir
@@ -15,8 +13,8 @@ import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vcs.test.VcsPlatformTest
 import java.io.File
@@ -26,10 +24,9 @@ internal const val DOT_MOCK = ".mock"
 
 abstract class VcsRootBaseTest : VcsPlatformTest() {
   protected lateinit var vcs: MockAbstractVcs
-  protected lateinit var myRepository: VirtualFile
 
   protected lateinit var rootChecker: MockRootChecker
-  protected lateinit var rootModel: RootModelImpl
+  protected lateinit var rootModule: Module
 
   private val extensionPoint: ExtensionPoint<VcsRootChecker>
     get() = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)
@@ -39,17 +36,14 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
     super.setUp()
 
     cd(projectRoot)
-    val module = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance())
-    rootModel = (ModuleRootManager.getInstance(module) as ModuleRootManagerImpl).rootModel
+    rootModule = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance())
     mkdir("repository")
     projectRoot.refresh(false, true)
-    myRepository = projectRoot.findChild("repository")!!
 
     vcs = MockAbstractVcs(myProject)
     rootChecker = MockRootChecker(vcs)
     extensionPoint.registerExtension(rootChecker)
     vcsManager.registerVcs(vcs)
-    myRepository.refresh(false, true)
   }
 
   @Throws(Exception::class)
@@ -78,7 +72,7 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
         for (root in contentRoots) {
           val f = projectRoot.findFileByRelativePath(root)
           if (f != null) {
-            rootModel.addContentEntry(f)
+            PsiTestUtil.addContentRoot(rootModule, f)
           }
         }
       })
