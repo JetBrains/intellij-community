@@ -116,7 +116,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
   public static class VcsAware extends DefaultActionGroup implements DumbAware {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       DataContext dataContext = e.getDataContext();
       Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, dataContext);
@@ -133,7 +133,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
   public static class NonVcsAware extends DefaultActionGroup implements DumbAware {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       Pair<SupportedVCS, AbstractVcs> pair = project == null ? Pair.empty() : getActiveVCS(project, e.getDataContext());
       e.getPresentation().setVisible(pair.first == SupportedVCS.NOT_IN_VCS);

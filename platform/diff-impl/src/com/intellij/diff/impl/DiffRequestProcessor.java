@@ -544,7 +544,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       if (!ExternalDiffTool.isEnabled()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -554,7 +554,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       try {
         ExternalDiffTool.showRequest(e.getProject(), myActiveRequest);
       }
@@ -568,7 +568,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
       DiffTool activeTool = myState.getActiveTool();
@@ -610,7 +610,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myForcedDiffTool == null);
     }
 
@@ -631,12 +631,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myPopupActionGroup.getChildrenCount() > 0);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Diff Actions", myPopupActionGroup, e.getDataContext(),
                                                                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
       popup.showInCenterOf(myPanel);

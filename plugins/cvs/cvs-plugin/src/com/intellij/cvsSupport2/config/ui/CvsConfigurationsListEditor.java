@@ -145,7 +145,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
         }
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           copySelectedConfiguration();
         }
       };

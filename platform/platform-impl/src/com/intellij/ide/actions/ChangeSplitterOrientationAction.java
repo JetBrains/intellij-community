@@ -18,12 +18,13 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
  */
 public final class ChangeSplitterOrientationAction extends SplitterActionBase {
-  public void actionPerformed(final AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final Project project = event.getProject();
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     fileEditorManager.changeSplitterOrientation ();

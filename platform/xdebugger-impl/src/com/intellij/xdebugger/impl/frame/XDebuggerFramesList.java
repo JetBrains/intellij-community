@@ -261,14 +261,14 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   public static class CopyStackAction extends DumbAwareAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
       //noinspection unchecked
       e.getPresentation().setEnabledAndVisible(framesList != null && ContainerUtil.getLastItem(framesList.getModel().getItems()) != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
       if (framesList != null) {
         framesList.copyStack();

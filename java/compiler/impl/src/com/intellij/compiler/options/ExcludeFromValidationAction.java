@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,7 +27,7 @@ public class ExcludeFromValidationAction extends AnAction {
     super(CompilerBundle.message("action.name.exclude.from.validation"));
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final Pair<ExcludesConfiguration, VirtualFile> pair = getExcludedConfigurationAndFile(e, project);
     if (pair == null) return;
@@ -46,7 +47,7 @@ public class ExcludeFromValidationAction extends AnAction {
   }
 
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean applicable = getExcludedConfigurationAndFile(e, project) != null;
     e.getPresentation().setVisible(applicable);

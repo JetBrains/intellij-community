@@ -1046,7 +1046,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       stopSearching();
 
       Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? getUsedContributors() : Collections.singleton(mySelectedTab.getContributor().get());
@@ -1145,7 +1145,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Boolean enabled = mySelectedTab.getContributor().map(contributor -> contributor.showInFindResults()).orElse(true);
       e.getPresentation().setEnabled(enabled);
     }

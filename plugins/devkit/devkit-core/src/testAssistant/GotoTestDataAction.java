@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.FilePathSplittingPolicy;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -37,7 +38,7 @@ class GotoTestDataAction extends AnAction implements Comparable {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     TestDataNavigationHandler.navigate(point, Collections.singletonList(myFilePath), myProject);
   }

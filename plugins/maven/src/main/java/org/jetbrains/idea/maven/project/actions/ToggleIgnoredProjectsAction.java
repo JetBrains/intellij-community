@@ -31,7 +31,7 @@ import java.util.List;
 
 public class ToggleIgnoredProjectsAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!isAvailable(e)) return;
 

@@ -16,6 +16,10 @@ class Main {
     }
 
   }
+
+  <T> T test() {
+    return (T)new One();
+  }
 }
 
 class One { }

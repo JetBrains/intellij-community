@@ -268,7 +268,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabledAndVisible()) {
         final RefEntity[] elements = getInvoker(e).getTree().getSelectedElements();

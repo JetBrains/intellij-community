@@ -26,6 +26,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.NotNull;
 
 public class RefreshLogAction extends RefreshAction {
   private static final Logger LOG = Logger.getInstance(RefreshLogAction.class);
@@ -35,7 +36,7 @@ public class RefreshLogAction extends RefreshAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUtil.triggerUsage(e);
 
     VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
@@ -60,7 +61,7 @@ public class RefreshLogAction extends RefreshAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
     e.getPresentation().setEnabledAndVisible(logManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.ui.ProjectPatternProvider;
+import org.jetbrains.annotations.NotNull;
 
 public final class GroupByScopeTypeAction extends ToggleAction {
   private final Runnable myUpdate;
@@ -41,7 +42,7 @@ public final class GroupByScopeTypeAction extends ToggleAction {
     myUpdate.run();
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     e.getPresentation().setVisible(!ProjectPatternProvider.FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE));
   }

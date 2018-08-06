@@ -115,13 +115,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     new AnAction(){
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         Project project = e.getProject();
         e.getPresentation().setEnabled(session != null && project != null && LookupManager.getInstance(project).getActiveLookup() == null);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         //doOKAction(); // do not evaluate on add to watches
         addToWatches();
       }
@@ -129,7 +129,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         IdeFocusManager.getInstance(project).requestFocus(myTreePanel.getTree(), true);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),

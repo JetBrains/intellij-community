@@ -176,7 +176,7 @@ public class JShellHandler {
     actionGroup.addAll(consoleView.createConsoleActions());
     actionGroup.add(new CloseAction(EXECUTOR, descriptor, project) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         jshellHandler.stop();
         if (!processHandler.waitFor(10000)) {
           processHandler.destroyProcess();

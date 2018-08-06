@@ -521,14 +521,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     new DumbAwareAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(
           e.getData(CommonDataKeys.EDITOR) == null ||
           SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField));
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
           myFileMaskField.hidePopup();
           return;
@@ -1475,7 +1475,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
 
       ListPopup listPopup =

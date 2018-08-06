@@ -42,6 +42,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -53,7 +54,7 @@ import java.util.List;
 public class GenerateMainAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.GenerateMainAction");
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -123,7 +124,7 @@ public class GenerateMainAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = isActionEnabled(e);
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);

@@ -26,9 +26,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
+import org.jetbrains.annotations.NotNull;
 
 public class AddChangeListAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     NewChangelistDialog dlg = new NewChangelistDialog(project);
     dlg.show();
@@ -58,7 +59,7 @@ public class AddChangeListAction extends AnAction implements DumbAware {
     return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
       e.getPresentation().setVisible(lists != null && lists.length > 0);

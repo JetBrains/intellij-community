@@ -496,7 +496,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Disposer.dispose(myUsagesPanel);
       DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
@@ -659,7 +659,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       boolean applied = ShowSettingsUtil.getInstance().editConfigurable(DependenciesPanel.this, new DependencyConfigurable(myProject));
       if (applied) {
         rebuild();
@@ -716,7 +716,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       boolean enabled = true;
       for (DependenciesBuilder builder : myBuilders) {
         enabled &= builder.getScope().isValid();
@@ -725,7 +725,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(() -> {
@@ -773,7 +773,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       @NonNls final String delim = "&nbsp;-&gt;&nbsp;";
       final StringBuffer buf = new StringBuffer();
       processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
@@ -794,7 +794,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final boolean[] direct = new boolean[]{true};
       processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
         direct [0] = false;
@@ -810,13 +810,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!getSelectedScope(myLeftTree).isEmpty());
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Set<PsiFile> selectedScope = getSelectedScope(myLeftTree);
       exclude(selectedScope);
       myExcluded.addAll(selectedScope);
@@ -833,13 +833,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(getScope() != null);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final AnalysisScope scope = getScope();
       LOG.assertTrue(scope != null);
       final DependenciesBuilder builder;
@@ -887,13 +887,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       PackageDependenciesNode node = myRightTree.getSelectedNode();
       e.getPresentation().setEnabled(node != null && node.canSelectInLeftTree(myDependencies));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       PackageDependenciesNode node = myRightTree.getSelectedNode();
       if (node != null) {
         PsiElement elt = node.getPsiElement();
@@ -928,7 +928,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
       final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
       if (leftNode != null && rightNode != null) {
@@ -977,7 +977,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
@@ -998,7 +998,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
-          public void actionPerformed(final AnActionEvent e) {
+          public void actionPerformed(@NotNull final AnActionEvent e) {
             mySettings.SCOPE_TYPE = provider.getShortName();
             DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             rebuild();
@@ -1009,7 +1009,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
       e.getPresentation().setText(provider.getDisplayName());

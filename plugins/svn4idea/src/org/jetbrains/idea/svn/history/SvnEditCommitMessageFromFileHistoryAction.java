@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
 public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
@@ -21,7 +22,7 @@ public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     final VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
@@ -53,7 +54,7 @@ public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
     final boolean isSvn = SvnVcs.getKey().equals(vcsKey);
     e.getPresentation().setVisible(isSvn);

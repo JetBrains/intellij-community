@@ -239,7 +239,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
   private class MqDeleteAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final List<String> names = getSelectedPatchNames();
       if (names.isEmpty()) return;
 
@@ -256,13 +256,13 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedRowsCount() != 0 && !myPatchTable.isEditing());
     }
   }
 
   private class MqRefreshAction extends DumbAwareAction {
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       refreshAll();
     }
   }

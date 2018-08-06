@@ -282,14 +282,14 @@ public class BackgroundImageDialog extends DialogWrapper {
   private AnAction createToggleAction(String target, String text) {
     class A extends IconWithTextAction implements DumbAware, Toggleable {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setText(text);
         e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, target.equals(myPreviewTarget));
         super.update(e);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         targetChanged(target);
         myToolbar.updateActionsImmediately();
       }

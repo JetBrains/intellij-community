@@ -71,7 +71,7 @@ public class CreateSnapShotAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.uiDesigner.snapShooter.CreateSnapShotAction");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     e.getPresentation().setVisible(project != null && view != null && hasDirectoryInPackage(project, view));
@@ -88,7 +88,7 @@ public class CreateSnapShotAction extends AnAction {
     return false;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (project == null || view == null) {

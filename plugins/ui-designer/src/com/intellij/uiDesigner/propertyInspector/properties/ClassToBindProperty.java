@@ -180,7 +180,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     }
 
     private final class MyCancelEditingAction extends AnAction{
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         fireEditingCancelled();
       }
     }

@@ -36,7 +36,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
 
   // Async update
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     final T data = prepareDataFromContext(e);
     final Presentation originalPresentation = e.getPresentation();
     if (!forceSyncUpdate(e) && isDumbAware()) {

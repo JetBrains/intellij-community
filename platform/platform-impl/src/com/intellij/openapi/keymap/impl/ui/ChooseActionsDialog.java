@@ -35,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -163,7 +164,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
                            AllIcons.Actions.ShortcutFilter) {
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myFilterComponent.reset();
         myActionsTree.reset(myKeymap, myQuicklists);
         myFilteringPanel.showPopup(searchToolbar, e.getInputEvent().getComponent());
@@ -172,14 +173,14 @@ public class ChooseActionsDialog extends DialogWrapper {
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
                            KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       @Override
-      public void update(AnActionEvent event) {
+      public void update(@NotNull AnActionEvent event) {
         boolean enabled = null != myFilteringPanel.getShortcut();
         Presentation presentation = event.getPresentation();
         presentation.setEnabled(enabled);
         presentation.setIcon(enabled ? AllIcons.Actions.Cancel : EmptyIcon.ICON_16);
       }
 
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myFilteringPanel.setShortcut(null);
         myActionsTree.filter(null, myQuicklists); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);

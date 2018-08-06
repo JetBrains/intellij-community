@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -31,7 +32,7 @@ import java.util.List;
 
 public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
@@ -51,7 +52,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     long moduleCount = 0;
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {

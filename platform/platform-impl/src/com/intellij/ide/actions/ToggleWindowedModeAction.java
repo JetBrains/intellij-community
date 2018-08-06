@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleWindowedModeAction extends ToggleAction implements DumbAware {
 
@@ -60,7 +61,7 @@ public class ToggleWindowedModeAction extends ToggleAction implements DumbAware 
     }
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();

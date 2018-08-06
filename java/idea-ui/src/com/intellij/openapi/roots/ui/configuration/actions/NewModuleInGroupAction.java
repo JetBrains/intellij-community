@@ -22,13 +22,14 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class NewModuleInGroupAction extends NewModuleAction {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     boolean mainMenu = ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     final ModuleGroup[] moduleGroups = ModuleGroup.ARRAY_DATA_KEY.getData(e.getDataContext());

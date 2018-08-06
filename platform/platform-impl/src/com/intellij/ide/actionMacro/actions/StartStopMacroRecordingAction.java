@@ -22,12 +22,13 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class StartStopMacroRecordingAction extends AnAction implements DumbAware {
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean isRecording = ActionMacroManager.getInstance().isRecording();
 
     e.getPresentation().setText(isRecording
@@ -42,7 +43,7 @@ public class StartStopMacroRecordingAction extends AnAction implements DumbAware
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (!ActionMacroManager.getInstance().isRecording()) {
       final ActionMacroManager manager = ActionMacroManager.getInstance();
       manager.startRecording(IdeBundle.message("macro.noname"));

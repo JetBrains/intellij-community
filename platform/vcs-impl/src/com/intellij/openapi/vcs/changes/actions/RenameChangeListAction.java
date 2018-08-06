@@ -15,11 +15,12 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistDialog;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RenameChangeListAction extends AnAction implements DumbAware {
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     LocalChangeList target = getTargetChangeList(e);
     final boolean visible = target != null && !target.isReadOnly();
     e.getPresentation().setEnabled(visible);
@@ -28,7 +29,7 @@ public class RenameChangeListAction extends AnAction implements DumbAware {
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     LocalChangeList target = getTargetChangeList(e);
     if (target != null) {

@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class MarkLibraryRootAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) return;
 
@@ -73,7 +73,7 @@ public class MarkLibraryRootAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     boolean visible = false;
     if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {

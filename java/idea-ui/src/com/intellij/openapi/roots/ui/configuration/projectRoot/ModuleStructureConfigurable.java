@@ -907,7 +907,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final NamedConfigurable namedConfigurable = getSelectedConfigurable();
       if (namedConfigurable instanceof ModuleConfigurable) {
         try {
@@ -1012,7 +1012,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       TreePath[] selectionPaths = myTree.getSelectionPaths();
       if (selectionPaths == null || selectionPaths.length != 1) {
         e.getPresentation().setEnabled(false);
@@ -1033,7 +1033,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       String defaultModuleName = "untitled";
       MyNode selectedNode = getSelectedNode();
       if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && selectedNode instanceof ModuleGroupNodeImpl) {

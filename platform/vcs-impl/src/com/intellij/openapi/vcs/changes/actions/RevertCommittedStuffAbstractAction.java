@@ -58,7 +58,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     myForPerformConvertor = forPerformConvertor;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;

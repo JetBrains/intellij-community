@@ -14,6 +14,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
@@ -113,7 +114,7 @@ public class AnnotationsPanel {
     final AnActionButton selectButton =
       new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           String selectedValue = getSelectedAnnotation();
           if (selectedValue == null) return;
           myDefaultAnnotation = selectedValue;

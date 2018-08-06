@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -66,7 +67,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     return false;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
@@ -80,7 +81,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     );
   }
 
-  public void update(final AnActionEvent event){
+  public void update(@NotNull final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);

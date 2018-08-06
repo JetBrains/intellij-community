@@ -312,5 +312,10 @@
     <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.editor.injectedFileChangesHandlerProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.InjectedFileChangesHandlerProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

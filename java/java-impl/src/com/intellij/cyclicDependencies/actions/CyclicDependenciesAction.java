@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,14 +46,14 @@ public class CyclicDependenciesAction extends AnAction{
     myTitle = AnalysisScopeBundle.message("action.cyclic.dependency.title");
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
       getInspectionScope(event.getDataContext()) != null || 
       event.getData(CommonDataKeys.PROJECT) != null);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Module module = LangDataKeys.MODULE.getData(dataContext);

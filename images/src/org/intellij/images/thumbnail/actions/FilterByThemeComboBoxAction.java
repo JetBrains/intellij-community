@@ -30,7 +30,7 @@ import java.util.Arrays;
 
 public final class FilterByThemeComboBoxAction extends ComboBoxAction {
     
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         boolean hasApplicableExtension = 

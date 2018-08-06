@@ -19,6 +19,7 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ import java.util.List;
  */
 public class ChangeProjectIconAction extends RecentProjectsWelcomeScreenActionBase {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     List<AnAction> elements = getSelectedElements(e);
     String path = ((ReopenProjectAction)elements.get(0)).getProjectPath();
     final ChangeProjectIconForm form = new ChangeProjectIconForm(path);
@@ -57,7 +58,7 @@ public class ChangeProjectIconAction extends RecentProjectsWelcomeScreenActionBa
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = getSelectedElements(e).size() == 1 && !hasGroupSelected(e);
     e.getPresentation().setEnabled(enabled);
   }

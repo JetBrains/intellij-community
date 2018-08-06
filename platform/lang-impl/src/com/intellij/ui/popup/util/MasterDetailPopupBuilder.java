@@ -64,13 +64,13 @@ public class MasterDetailPopupBuilder implements MasterController {
     });
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         chooseItems(true);
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, list);
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         chooseItems(true);
       }
     }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, list);
@@ -276,7 +276,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     if (myDoneRunnable != null) {
       new AnAction("Done") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           myDoneRunnable.run();
         }
       }.registerCustomShortcutSet(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK, myPopup.getContent());

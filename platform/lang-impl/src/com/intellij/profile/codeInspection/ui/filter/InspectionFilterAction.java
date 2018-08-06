@@ -53,7 +53,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, !myInspectionsFilter.isEmptyFilter());
   }
@@ -242,7 +242,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myFilterComponent.setFilter("\"New in " + version + "\"");
     }
   }

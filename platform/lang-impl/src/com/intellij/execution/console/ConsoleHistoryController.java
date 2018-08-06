@@ -285,7 +285,7 @@ public class ConsoleHistoryController {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       boolean hasHistory = getModel().hasHistory(); // need to check before next line's side effect
       Entry command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
       if (!myMultiline && command == null) return;
@@ -293,7 +293,7 @@ public class ConsoleHistoryController {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
       //enabled &= getModel().hasHistory(myNext);
@@ -332,13 +332,13 @@ public class ConsoleHistoryController {
   private class MyBrowseAction extends DumbAwareAction {
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       boolean enabled = hasHistory();
       e.getPresentation().setEnabled(enabled);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String title = myConsole.getTitle() + " History";
       final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true, true) {
 

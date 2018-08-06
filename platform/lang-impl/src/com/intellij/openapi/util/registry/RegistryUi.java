@@ -154,7 +154,7 @@ public class RegistryUi implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
       e.getPresentation().setText("Revert to Default");
       e.getPresentation().setIcon(AllIcons.General.Reset);
@@ -166,7 +166,7 @@ public class RegistryUi implements Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final RegistryValue rv = myModel.getRegistryValue(myTable.getSelectedRow());
       rv.resetToDefault();
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 0);
@@ -182,14 +182,14 @@ public class RegistryUi implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
       e.getPresentation().setText("Edit");
       e.getPresentation().setIcon(AllIcons.Actions.EditSource);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       startEditingAtSelection();
     }
   }

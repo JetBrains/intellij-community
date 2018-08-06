@@ -128,13 +128,13 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
                                      myTree.getSelectionModel().getSelectionMode() == DISCONTIGUOUS_TREE_SELECTION);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       TreeSelectionModel sm = myTree.getSelectionModel();
 
       String query = mySearch.getEnteredPrefix();

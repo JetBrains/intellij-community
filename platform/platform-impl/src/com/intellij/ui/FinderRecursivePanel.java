@@ -263,12 +263,12 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   private void installListActions(JBList list) {
     AnAction previousPanelAction = new AnAction("Previous", null, AllIcons.Actions.Back) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!isRootPanel());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         assert myParent != null;
         myParent.handleGotoPrevious();
       }
@@ -277,7 +277,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
     AnAction nextPanelAction = new AnAction("Next", null, AllIcons.Actions.Forward) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final T value = getSelectedValue();
         e.getPresentation().setEnabled(value != null &&
                                        hasChildren(value) &&
@@ -285,7 +285,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         FinderRecursivePanel finderRecursivePanel = (FinderRecursivePanel)getSecondComponent();
         finderRecursivePanel.handleGotoNext();
       }
@@ -295,12 +295,12 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     AnAction editAction = new AnAction("Edit", null, AllIcons.Actions.Edit) {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isEditable());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         performEditAction();
       }
     };

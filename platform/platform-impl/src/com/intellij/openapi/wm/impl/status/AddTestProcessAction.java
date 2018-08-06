@@ -34,7 +34,7 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
     super("Add Test Process");
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     new Task.Backgroundable(project, "Test Process", true, PerformInBackgroundOption.DEAF) {
       public void run(@NotNull final ProgressIndicator indicator) {

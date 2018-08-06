@@ -21,11 +21,12 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 public class MvcActionGroup extends DefaultActionGroup implements DumbAware {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
     Pair<MvcFramework, Module> pair = MvcActionBase.guessFramework(e);

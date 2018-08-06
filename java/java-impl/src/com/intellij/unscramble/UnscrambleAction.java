@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -56,12 +57,12 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
     }, app);
   }
   
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     new UnscrambleDialog(project).show();
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getProject();
     presentation.setEnabled(project != null);

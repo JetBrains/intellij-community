@@ -24,6 +24,8 @@ class GrMethodReferenceExpressionImpl(node: ASTNode) : GrReferenceExpressionImpl
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, GrMethodReferenceResolver)
   }
 
+  override fun getSameNameVariants(): Array<out GroovyResolveResult> = multiResolve(true)
+
   override fun getType(): PsiType? = TypeInferenceHelper.getCurrentContext().getExpressionType(this, ::getTypeFromCalculators)
 
   override fun getNominalType(): PsiType? = type

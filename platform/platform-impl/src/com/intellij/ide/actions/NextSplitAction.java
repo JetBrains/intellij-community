@@ -25,9 +25,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 public class NextSplitAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
@@ -38,7 +39,7 @@ public class NextSplitAction extends AnAction implements DumbAware {
     );
   }
 
-  public void update(final AnActionEvent event){
+  public void update(@NotNull final AnActionEvent event){
     final Project project = event.getProject();
     final Presentation presentation = event.getPresentation();
     if (project == null) {

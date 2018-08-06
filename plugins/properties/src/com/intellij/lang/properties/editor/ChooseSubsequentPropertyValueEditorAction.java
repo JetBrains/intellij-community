@@ -49,7 +49,7 @@ public class ChooseSubsequentPropertyValueEditorAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
       IdeFocusManager.getGlobalInstance().requestFocus(getNext(e).getContentComponent(), true);
     });

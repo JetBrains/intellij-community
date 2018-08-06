@@ -180,7 +180,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         }
 
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           myFilter.requestFocusInWindow();
         }
       };

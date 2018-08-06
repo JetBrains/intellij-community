@@ -46,7 +46,7 @@ public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ProjectSystemId systemId = getSystemId(e);
     if (systemId != null) {
       showSettingsFor(getProject(e), systemId);

@@ -30,12 +30,12 @@ import java.util.Arrays;
  */
 public class RemoveUsageAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getUsages(e).length > 0);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     process(getUsages(e), e.getData(UsageView.USAGE_VIEW_KEY));
   }
 

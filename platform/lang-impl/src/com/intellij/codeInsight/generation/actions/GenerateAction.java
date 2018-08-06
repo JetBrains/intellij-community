@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class GenerateAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
     Project project = ObjectUtils.assertNotNull(getEventProject(e));
@@ -47,7 +47,7 @@ public class GenerateAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -118,7 +118,7 @@ public class GenerateAction extends DumbAwareAction {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final Project project = getEventProject(e);
       assert project != null;
       final DumbService dumbService = DumbService.getInstance(project);

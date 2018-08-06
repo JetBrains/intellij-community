@@ -270,7 +270,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!myPrevNextConflictIterable.canGoPrev()) return;
       myPrevNextConflictIterable.goPrev();
     }
@@ -282,7 +282,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!myPrevNextConflictIterable.canGoNext()) return;
       myPrevNextConflictIterable.goNext();
     }

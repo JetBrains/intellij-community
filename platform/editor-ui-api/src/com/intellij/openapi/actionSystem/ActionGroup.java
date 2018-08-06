@@ -82,7 +82,7 @@ public abstract class ActionGroup extends AnAction {
    * This method can be called in popup menus if {@link #canBePerformed(DataContext)} is true
    */
   @Override
-  public void actionPerformed(AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e){
   }
 
   /**
