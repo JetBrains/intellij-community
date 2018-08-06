@@ -92,7 +92,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
         root.path!!.path
       })
     }
-    TestIntegrationEnabler(myVcs).enable(vcsRoots)
+    TestIntegrationEnabler(vcs).enable(vcsRoots)
     assertVcsRoots(vcsRootsList)
     if (mock_init != null) {
       assertMockInit(mock_init)
@@ -100,13 +100,13 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
     VcsTestUtil.assertNotificationShown(myProject, notification)
   }
 
-  internal fun assertMockInit(root: String) {
+  private fun assertMockInit(root: String) {
     val rootFile = File(projectRoot.path, root)
     assertTrue(File(rootFile.path, DOT_MOCK).exists())
   }
 
-  internal fun assertVcsRoots(expectedVcsRoots: Collection<String>) {
-    val actualRoots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcsWithoutFiltering(myVcs)
+  private fun assertVcsRoots(expectedVcsRoots: Collection<String>) {
+    val actualRoots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcsWithoutFiltering(vcs)
     VcsTestUtil.assertEqualCollections(expectedVcsRoots, actualRoots.map { it.path })
   }
 
@@ -114,7 +114,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
     return ContainerUtil.map(roots) { s ->
       val path = VcsTestUtil.toAbsolute(s, myProject)
       LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-      VcsRoot(myVcs, VcsUtil.getVirtualFile(path))
+      VcsRoot(vcs, VcsUtil.getVirtualFile(path))
     }
   }
 
