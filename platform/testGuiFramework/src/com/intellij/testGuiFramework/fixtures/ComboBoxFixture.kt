@@ -52,7 +52,8 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
   }
 
   override fun selectItem(index: Int): ComboBoxFixture {
-    return selectItem(index)
+    super.selectItem(index)
+    return this
   }
 
   /**
