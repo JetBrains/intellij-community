@@ -64,6 +64,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -611,7 +612,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private static boolean versionMatch(@Nullable Sdk sdk, String version) {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String versionString = sdk.getVersionString();
-      return versionString != null && versionString.contains(version);
+      return versionString != null && Objects.equals(JavaVersion.tryParse(versionString),JavaVersion.tryParse(version));
     }
     return false;
   }
