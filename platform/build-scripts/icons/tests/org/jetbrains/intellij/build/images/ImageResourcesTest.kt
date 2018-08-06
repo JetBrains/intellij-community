@@ -219,7 +219,7 @@ private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule)
     generator.processModule(module)
 
     generator.getModifiedClasses().forEach { (module, file, details) ->
-      failures.add(FailedTest(module, "image class file should be regenerated", file, details))
+      failures.add(FailedTest(module, "icon class file should be regenerated (run \"Generate icon classes\" configuration)", file, details))
     }
   }
 }
