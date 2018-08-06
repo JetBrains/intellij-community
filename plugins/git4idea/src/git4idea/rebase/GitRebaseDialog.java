@@ -35,7 +35,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.ui.GitReferenceValidator;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,17 +61,15 @@ public class GitRebaseDialog extends DialogWrapper {
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitRebaseSettings mySettings;
 
-  private ComboBox myRootComboBox = new ComboBox();
-  private ComboBox myBranchComboBox = new ComboBox();
-  private JCheckBox myInteractiveCheckBox = new JCheckBox();
-  private JCheckBox myPreserveMergesCheckBox = new JCheckBox();
-  private ComboBox myOntoComboBox = new ComboBox();
-  private JButton myOntoValidateButton = new JButton("Validate");
-  private ComboBox myFromComboBox = new ComboBox();
-  private JButton myFromValidateButton = new JButton("Validate");
-  private JCheckBox myShowTagsCheckBox = new JCheckBox();
-  private final GitReferenceValidator myOntoValidator;
-  private final GitReferenceValidator myFromValidator;
+  private final ComboBox myRootComboBox = new ComboBox();
+  private final ComboBox<String> myBranchComboBox = new ComboBox<>();
+  private final JCheckBox myInteractiveCheckBox = new JCheckBox();
+  private final JCheckBox myPreserveMergesCheckBox = new JCheckBox();
+  private final ComboBox<String> myOntoComboBox = new ComboBox<>();
+  private final ComboBox<String> myFromComboBox = new ComboBox<>();
+  private final JCheckBox myShowTagsCheckBox = new JCheckBox();
+  private final myRefValidator myOntoValidator;
+  private final myRefValidator myFromValidator;
 
   private final Project myProject;
   private final List<GitBranch> myLocalBranches = new ArrayList<>();
@@ -99,24 +94,19 @@ public class GitRebaseDialog extends DialogWrapper {
     myOntoComboBox.setEditable(true);
     myFromComboBox.setEditable(true);
 
+    myOntoValidator = new myRefValidator(myOntoComboBox);
+    myFromValidator = new myRefValidator(myFromComboBox);
 
-    final Runnable validateRunnable = () -> validateFields();
-    myOntoValidator = new GitReferenceValidator(myProject, myRootComboBox, GitUIUtil.getTextField(myOntoComboBox), myOntoValidateButton,
-                                                validateRunnable);
-    myFromValidator = new GitReferenceValidator(myProject, myRootComboBox, GitUIUtil.getTextField(myFromComboBox), myFromValidateButton,
-                                                validateRunnable);
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myRootComboBox, null);
-    myRootComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        validateFields();
-      }
-    });
 
     myInteractiveCheckBox.setSelected(mySettings.isInteractive());
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
     myShowTagsCheckBox.setSelected(mySettings.showTags());
 
-    setupBranches();
+    setupListeners();
+    loadRefs();
+    updateBranches();
+
     overwriteOntoForCurrentBranch(mySettings);
     myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
 
@@ -127,102 +117,40 @@ public class GitRebaseDialog extends DialogWrapper {
     init();
   }
 
-  private void overwriteOntoForCurrentBranch(@NotNull GitRebaseSettings settings) {
-    String onto = settings.getOnto();
-    if (onto != null && !onto.equals(myBranchComboBox.getSelectedItem())) {
-      if (!isValidRevision(onto)) {
-        mySettings.setOnto(null);
-      }
-      else {
-        myOntoComboBox.setSelectedItem(onto);
-      }
-    }
-  }
-
-  private boolean isValidRevision(@NotNull String revisionExpression) {
-    try {
-      GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
-      return true;
-    }
-    catch (VcsException e) {
-      LOG.debug(e);
-      return false;
-    }
-  }
-
-  @Override
-  protected void doOKAction() {
-    try {
-      rememberFields();
-    }
-    finally {
-      super.doOKAction();
-    }
-  }
-
-  private void rememberFields() {
-    mySettings.setInteractive(myInteractiveCheckBox.isSelected());
-    mySettings.setPreserveMerges(myPreserveMergesCheckBox.isSelected());
-    mySettings.setShowTags(myShowTagsCheckBox.isSelected());
-    String onto = StringUtil.nullize(GitUIUtil.getTextField(myOntoComboBox).getText(), true);
-    if (onto != null && !onto.equals(myOriginalOntoBranch)) {
-      mySettings.setOnto(onto);
-    }
-  }
-
-  private void validateFields() {
-    if (GitUIUtil.getTextField(myOntoComboBox).getText().length() == 0) {
-      setErrorText(null);
-      setOKActionEnabled(false);
-      return;
-    }
-    else if (myOntoValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.onto"), myOntoComboBox);
-      setOKActionEnabled(false);
-      return;
-    }
-    if (GitUIUtil.getTextField(myFromComboBox).getText().length() != 0 && myFromValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.from"), myFromComboBox);
-      setOKActionEnabled(false);
-      return;
-    }
-    if (GitRebaseUtils.isRebaseInTheProgress(myProject, gitRoot())) {
-      setErrorText(GitBundle.getString("rebase.in.progress"));
-      setOKActionEnabled(false);
-      return;
-    }
-    setErrorText(null);
-    setOKActionEnabled(true);
-  }
-
-  /**
-   * Setup branch drop down.
-   */
-  private void setupBranches() {
-    GitUIUtil.getTextField(myOntoComboBox).getDocument().addDocumentListener(new DocumentAdapter() {
+  private void setupListeners() {
+    myRootComboBox.addActionListener(e -> {
+      myOntoValidator.reset();
+      myFromValidator.reset();
+      loadRefs();
+      updateBranches();
+      validateFields();
+    });
+    myBranchComboBox.addActionListener(e -> updateTrackedBranch());
+    DocumentAdapter ontoFromListener = new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         validateFields();
       }
-    });
-    final ActionListener rootListener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        loadRefs();
-        updateBranches();
-      }
     };
-    final ActionListener showListener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateOntoFrom();
-      }
-    };
-    myShowTagsCheckBox.addActionListener(showListener);
-    rootListener.actionPerformed(null);
-    myRootComboBox.addActionListener(rootListener);
-    myBranchComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateTrackedBranch();
-      }
-    });
+    GitUIUtil.getTextField(myOntoComboBox).getDocument().addDocumentListener(ontoFromListener);
+    GitUIUtil.getTextField(myFromComboBox).getDocument().addDocumentListener(ontoFromListener);
+    myShowTagsCheckBox.addActionListener(e -> updateOntoFrom());
+  }
+
+  protected void loadRefs() {
+    try {
+      myLocalBranches.clear();
+      myRemoteBranches.clear();
+      myTags.clear();
+      final VirtualFile root = gitRoot();
+      GitRepository repository = getSelectedRepository();
+      myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
+      myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
+      myCurrentBranch = repository.getCurrentBranch();
+      myTags.addAll(GitTag.list(myProject, root));
+    }
+    catch (VcsException e) {
+      GitUIUtil.showOperationError(myProject, e, "git branch -a");
+    }
   }
 
   private void updateBranches() {
@@ -256,31 +184,29 @@ public class GitRebaseDialog extends DialogWrapper {
 
   private void addRefsToOntoAndFrom(Collection<? extends GitReference> refs) {
     for (GitReference ref: refs) {
-      myFromComboBox.addItem(ref);
-      myOntoComboBox.addItem(ref);
+      myFromComboBox.addItem(ref.getFullName());
+      myOntoComboBox.addItem(ref.getFullName());
     }
   }
 
-  protected void loadRefs() {
-    try {
-      myLocalBranches.clear();
-      myRemoteBranches.clear();
-      myTags.clear();
-      final VirtualFile root = gitRoot();
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-      if (repository != null) {
-        myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
-        myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
-        myCurrentBranch = repository.getCurrentBranch();
-      }
-      else {
-        LOG.error("Repository is null for root " + root);
-      }
-      myTags.addAll(GitTag.list(myProject, root));
+  private void validateFields() {
+    if (GitUIUtil.getTextField(myOntoComboBox).getText().length() == 0) {
+      setErrorText(null);
+      setOKActionEnabled(false);
+      return;
     }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(myProject, e, "git branch -a");
+    else if (myOntoValidator.isInvalid()) {
+      setErrorText("Onto reference is invalid: " + myOntoValidator.getLastErrorText(), myOntoComboBox);
+      setOKActionEnabled(false);
+      return;
     }
+    if (GitUIUtil.getTextField(myFromComboBox).getText().length() != 0 && myFromValidator.isInvalid()) {
+      setErrorText("From reference is invalid: " + myFromValidator.getLastErrorText(), myFromComboBox);
+      setOKActionEnabled(false);
+      return;
+    }
+    setErrorText(null);
+    setOKActionEnabled(true);
   }
 
   /**
@@ -295,7 +221,7 @@ public class GitRebaseDialog extends DialogWrapper {
         String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
         String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
         if (remote == null || mergeBranch == null) {
-          trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
+          trackedBranch = getSelectedRepository().getBranches().findBranchByName("master");
         }
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
@@ -320,6 +246,57 @@ public class GitRebaseDialog extends DialogWrapper {
     }
     catch (VcsException e) {
       GitUIUtil.showOperationError(myProject, e, "git config");
+    }
+  }
+
+  private void overwriteOntoForCurrentBranch(@NotNull GitRebaseSettings settings) {
+    String onto = settings.getOnto();
+    if (onto != null && !onto.equals(myBranchComboBox.getSelectedItem())) {
+      if (!isValidRevision(onto)) {
+        mySettings.setOnto(null);
+      }
+      else {
+        myOntoComboBox.setSelectedItem(onto);
+      }
+    }
+  }
+
+  private boolean isValidRevision(@NotNull String revisionExpression) {
+    try {
+      GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
+      return true;
+    }
+    catch (VcsException e) {
+      LOG.debug(e);
+      return false;
+    }
+  }
+
+  @Override
+  protected void doOKAction() {
+    if (GitRebaseUtils.isRebaseInTheProgress(myProject, gitRoot())) {
+      setErrorText(GitBundle.getString("rebase.in.progress"));
+      setOKActionEnabled(false);
+      return;
+    }
+    myOntoValidator.validate();
+    myFromValidator.validate();
+    validateFields();
+    try {
+      rememberFields();
+    }
+    finally {
+      super.doOKAction();
+    }
+  }
+
+  private void rememberFields() {
+    mySettings.setInteractive(myInteractiveCheckBox.isSelected());
+    mySettings.setPreserveMerges(myPreserveMergesCheckBox.isSelected());
+    mySettings.setShowTags(myShowTagsCheckBox.isSelected());
+    String onto = StringUtil.nullize(GitUIUtil.getTextField(myOntoComboBox).getText(), true);
+    if (onto != null && !onto.equals(myOriginalOntoBranch)) {
+      mySettings.setOnto(onto);
     }
   }
 
@@ -408,16 +385,14 @@ public class GitRebaseDialog extends DialogWrapper {
 
     JPanel mainPanel = new JPanel(new GridBagLayout());
     mainPanel.add(gitRoot, gb.nextLine().next());
-    mainPanel.add(myRootComboBox, gb.next().weightx(1.0).coverLine(2));
+    mainPanel.add(myRootComboBox, gb.next().weightx(1.0));
     mainPanel.add(gitBranch, gb.nextLine().next());
-    mainPanel.add(myBranchComboBox, gb.next().weightx(1.0).coverLine(2));
+    mainPanel.add(myBranchComboBox, gb.next().weightx(1.0));
     mainPanel.add(rebaseCheckboxes, gb.nextLine().next().setColumn(1));
     mainPanel.add(onto, gb.nextLine().next());
     mainPanel.add(myOntoComboBox, gb.next().weightx(1.0));
-    mainPanel.add(myOntoValidateButton, gb.next());
     mainPanel.add(from, gb.nextLine().next());
     mainPanel.add(myFromComboBox, gb.next().weightx(1.0));
-    mainPanel.add(myFromValidateButton, gb.next());
     mainPanel.add(myShowTagsCheckBox, gb.nextLine().next().setColumn(1));
 
     return mainPanel;
@@ -437,5 +412,48 @@ public class GitRebaseDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.Rebase";
+  }
+
+  private class myRefValidator {
+
+    final ComboBox myComboBox;
+    boolean myLastValidationFailed;
+    String myLastRef;
+    String myLastErrorText;
+
+    private myRefValidator(ComboBox comboBox) {
+      myComboBox = comboBox;
+      myLastValidationFailed = false;
+    }
+
+    private void validate() {
+      String ref = GitUIUtil.getTextField(myComboBox).getText();
+
+      if (ref.length() != 0) {
+        try {
+          GitRevisionNumber.resolve(myProject, gitRoot(), ref);
+        }
+        catch (VcsException e) {
+          setOKActionEnabled(false);
+          myLastValidationFailed = true;
+          myLastRef = ref;
+          myLastErrorText = e.getMessage();
+        }
+      }
+    }
+
+    private boolean isInvalid() {
+      return GitUIUtil.getTextField(myComboBox).getText().equals(myLastRef) && myLastValidationFailed;
+    }
+
+    private String getLastErrorText() {
+      return myLastErrorText;
+    }
+
+    private void reset() {
+      myLastValidationFailed = false;
+      myLastRef = null;
+      myLastErrorText = null;
+    }
   }
 }
