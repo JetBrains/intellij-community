@@ -79,7 +79,7 @@ public abstract class TypeConstraint {
     @NotNull
     @Override
     public String getPresentationText(@Nullable PsiType type) {
-      return myType.getPsiType().equals(type) ? "" : "exactly " + myType;
+      return type != null && DfaPsiType.normalizeType(type).equals(myType.getPsiType()) ? "" : "exactly " + myType;
     }
 
     @Nullable
