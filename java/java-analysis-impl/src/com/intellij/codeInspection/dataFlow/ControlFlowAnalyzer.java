@@ -650,7 +650,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (end == null || end == Long.MAX_VALUE || end == Integer.MAX_VALUE) return false;
     }
     PsiExpression initializer = loop.getInitializer();
-    PsiType type = initializer.getType();
+    PsiType type = loop.getCounter().getType();
     if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) return false;
     DfaValue origin = null;
     Object initialValue = ExpressionUtils.computeConstantExpression(initializer);
