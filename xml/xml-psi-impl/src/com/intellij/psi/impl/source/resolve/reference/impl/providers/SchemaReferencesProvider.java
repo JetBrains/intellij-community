@@ -24,7 +24,6 @@ import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
@@ -97,7 +96,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       return ElementManipulators.getManipulator(myElement).handleContentChange(
         myElement,
         getRangeInElement(),
@@ -113,12 +112,6 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
       return myElement.getManager().areElementsEquivalent(resolve(), element);
-    }
-
-    @Override
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override

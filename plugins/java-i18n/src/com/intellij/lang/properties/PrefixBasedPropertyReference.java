@@ -63,7 +63,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
     super.addKey(property, variants);
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final String keyPrefix = getKeyPrefix();
     if (keyPrefix != null) {
       if(newElementName.startsWith(keyPrefix)) {

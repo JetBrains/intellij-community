@@ -37,7 +37,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return getElement();
   }
 
@@ -180,11 +180,5 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
       if (result != EmptyGroovyResolveResult.INSTANCE) return new GroovyResolveResult[]{result};
     }
     return constructorCandidates;
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return EMPTY_ARRAY;
   }
 }

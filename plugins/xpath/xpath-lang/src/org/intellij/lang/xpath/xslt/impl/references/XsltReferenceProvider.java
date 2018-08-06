@@ -172,7 +172,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
 
 
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         if (!newElementName.equals(myParam.getName())) {
           myParam.setName(newElementName);
         }

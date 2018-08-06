@@ -26,7 +26,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -123,7 +122,7 @@ public class TagNameReference implements PsiReference {
 
   @Override
   @Nullable
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final XmlTag element = getTagElement();
     if (element == null || !myStartTagFlag) return element;
 
@@ -179,12 +178,6 @@ public class TagNameReference implements PsiReference {
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(element, resolve());
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants(){
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

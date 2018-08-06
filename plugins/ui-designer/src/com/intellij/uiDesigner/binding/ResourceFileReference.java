@@ -69,7 +69,7 @@ public class ResourceFileReference extends ReferenceInForm {
   }
 
   @Override
-  public PsiElement handleElementRename(final String newElementName) {
+  public PsiElement handleElementRename(@NotNull final String newElementName) {
     return handleFileRename(newElementName, "", true);
   }
 }

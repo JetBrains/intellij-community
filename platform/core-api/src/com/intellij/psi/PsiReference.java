@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ public interface PsiReference {
    * @return the new underlying element of the reference.
    * @throws IncorrectOperationException if the rename cannot be handled for some reason.
    */
-  PsiElement handleElementRename(String newElementName) throws IncorrectOperationException;
+  PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException;
 
   /**
    * Changes the reference so that it starts to point to the specified element. This is called,
@@ -109,12 +110,16 @@ public interface PsiReference {
    * of the returned array is used to build the lookup list for basic code completion. (The list
    * of visible identifiers may not be filtered by the completion prefix string - the
    * filtering is performed later by IDEA core.)
+   * <p>
+   * This method is default since 2018.3.
    *
    * @return the array of available identifiers.
    */
   @SuppressWarnings("JavadocReference")
   @NotNull
-  Object[] getVariants();
+  default Object[] getVariants() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
 
   /**
    * Returns false if the underlying element is guaranteed to be a reference, or true

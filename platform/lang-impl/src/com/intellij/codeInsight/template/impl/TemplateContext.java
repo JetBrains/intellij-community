@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -30,28 +31,30 @@ public class TemplateContext {
   private final Map<String, Boolean> myContextStates = ContainerUtil.newTroveMap();
 
   private static final ClearableLazyValue<Map<String, String>> INTERN_MAP = new ClearableLazyValue<Map<String, String>>() {
-    {
-      TemplateManagerImpl.TEMPLATE_CONTEXT_EP.addExtensionPointListener(new ExtensionPointAndAreaListener<TemplateContextType>() {
-        @Override
-        public void areaReplaced(@NotNull ExtensionsArea oldArea) {
-          drop();
-        }
-
-        @Override
-        public void extensionAdded(@NotNull TemplateContextType extension, @Nullable PluginDescriptor pluginDescriptor) {
-          drop();
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull TemplateContextType extension, @Nullable PluginDescriptor pluginDescriptor) {
-          drop();
-        }
-      });
-    }
+    private final AtomicBoolean isListenerAdded = new AtomicBoolean();
 
     @NotNull
     @Override
     protected Map<String, String> compute() {
+      if (isListenerAdded.compareAndSet(false, true)) {
+        TemplateManagerImpl.TEMPLATE_CONTEXT_EP.getValue().addExtensionPointListener(new ExtensionPointAndAreaListener<TemplateContextType>() {
+          @Override
+          public void areaReplaced(@NotNull ExtensionsArea oldArea) {
+            drop();
+          }
+
+          @Override
+          public void extensionAdded(@NotNull TemplateContextType extension, @Nullable PluginDescriptor pluginDescriptor) {
+            drop();
+          }
+
+          @Override
+          public void extensionRemoved(@NotNull TemplateContextType extension, @Nullable PluginDescriptor pluginDescriptor) {
+            drop();
+          }
+        });
+      }
+
       return TemplateManagerImpl.getAllContextTypes().stream()
         .map(TemplateContextType::getContextId)
         .distinct()

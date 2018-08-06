@@ -6,7 +6,6 @@ import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (StringUtil.isJavaIdentifier(newElementName)) {
       return super.handleElementRename(newElementName);
     }
@@ -205,12 +204,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return resolve(false).stream()
       .map(it -> it.getElement())
       .anyMatch(it -> manager.areElementsEquivalent(it, element));
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

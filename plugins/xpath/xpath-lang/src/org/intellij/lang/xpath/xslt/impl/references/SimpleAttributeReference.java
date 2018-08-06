@@ -69,7 +69,7 @@ abstract class SimpleAttributeReference implements PsiReference {
         throw new UnsupportedOperationException();
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         myAttribute.setValue(getTextRange().replace(myAttribute.getValue(), newElementName));
         final XmlAttributeValue value = myAttribute.getValueElement();
         assert value != null;

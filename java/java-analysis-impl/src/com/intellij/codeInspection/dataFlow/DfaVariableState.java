@@ -134,7 +134,7 @@ class DfaVariableState {
   @NotNull
   public TypeConstraint getTypeConstraint() {
     TypeConstraint fact = getFact(DfaFactType.TYPE_CONSTRAINT);
-    return fact == null ? TypeConstraint.EMPTY : fact;
+    return fact == null ? TypeConstraint.empty() : fact;
   }
 
   @Nullable

@@ -103,7 +103,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   }
 
   private fun checkNoSvgFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
-    process(images, WARNING, "SVG icons should use stub.png as fallback", module) { image ->
+    process(images, WARNING, "SVG icons should not use PNG icons as fallback", module) { image ->
       if (image.files.none { ImageExtension.fromFile(it) == SVG }) return@process true
 
       val legacyFiles = image.files.filter { ImageExtension.fromFile(it) != SVG }
@@ -112,7 +112,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   }
 
   private fun checkNoOverridingFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
-    process(images, WARNING, "Overridden icons should be replaced with stub.png as fallback", module) { image ->
+    process(images, WARNING, "Overridden icons should not use PNG icons as fallback", module) { image ->
       if (image.deprecation?.replacement == null) return@process true
 
       return@process image.files.isEmpty()

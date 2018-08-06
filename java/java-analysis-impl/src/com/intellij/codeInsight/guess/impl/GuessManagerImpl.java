@@ -577,7 +577,7 @@ public class GuessManagerImpl extends GuessManager {
     private void addConstraints(DfaInstructionState[] states) {
       for (DfaInstructionState state : states) {
         DfaMemoryState memoryState = state.getMemoryState();
-        if (myConstraint == TypeConstraint.EMPTY) return;
+        if (myConstraint == TypeConstraint.empty()) return;
         TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
         if (constraint == null) {
           constraint = myInitial;
@@ -585,7 +585,7 @@ public class GuessManagerImpl extends GuessManager {
         if (constraint != null) {
           myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
           if (myConstraint == null) {
-            myConstraint = TypeConstraint.EMPTY;
+            myConstraint = TypeConstraint.empty();
             return;
           }
         }

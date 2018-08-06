@@ -67,7 +67,7 @@ public abstract class MavenPsiReference implements PsiReference {
     return getElement().getManager().areElementsEquivalent(element, resolve());
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return null;
   }
 

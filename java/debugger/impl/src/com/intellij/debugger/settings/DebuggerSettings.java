@@ -8,7 +8,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
@@ -131,11 +130,12 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public void loadState(@NotNull Element state) {
     XmlSerializer.deserializeInto(this, state);
 
-    try {
-      setSteppingFilters(DebuggerUtilsEx.readFilters(state.getChildren("filter")));
+    List<Element> steppingFiltersElement = state.getChildren("filter");
+    if (steppingFiltersElement.isEmpty()) {
+      setSteppingFilters(DEFAULT_STEPPING_FILTERS);
     }
-    catch (InvalidDataException e) {
-      LOG.error(e);
+    else {
+      setSteppingFilters(DebuggerUtilsEx.readFilters(steppingFiltersElement));
     }
 
     myContentStates.clear();

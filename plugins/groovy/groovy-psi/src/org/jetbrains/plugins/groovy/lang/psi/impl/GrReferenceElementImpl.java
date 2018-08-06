@@ -77,7 +77,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       ASTNode node = nameElement.getNode();

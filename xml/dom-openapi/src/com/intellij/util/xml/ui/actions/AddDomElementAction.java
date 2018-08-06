@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.ui.actions;
 
 import com.intellij.ide.TypePresentationService;
@@ -23,13 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.CommonActionsPanel;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.TypeChooser;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,13 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AddDomElementAction extends AnAction {
-
   public AddDomElementAction() {
-    super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
+    super(ApplicationBundle.message("action.add"), null, IconUtil.getAddIcon());
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (!isEnabled(e)) {
       e.getPresentation().setEnabled(false);
       return;
@@ -62,13 +46,14 @@ public abstract class AddDomElementAction extends AnAction {
     }
     if (actions.length == 1) {
       e.getPresentation().setText(actions[0].getTemplatePresentation().getText());
-    } else {
+    }
+    else {
       final String actionText = getActionText(e);
       if (!actionText.endsWith("...")) {
         e.getPresentation().setText(actionText + (actions.length > 1 ? "..." : ""));
       }
     }
-    e.getPresentation().setIcon(DomCollectionControl.ADD_ICON);
+    e.getPresentation().setIcon(IconUtil.getAddIcon());
 
     super.update(e);
   }
@@ -107,7 +92,8 @@ public abstract class AddDomElementAction extends AnAction {
 
     if (component instanceof ActionButtonComponent) {
       groupPopup.showUnderneathOf(component);
-    } else {
+    }
+    else {
       groupPopup.showInBestPositionFor(e.getDataContext());
     }
   }
@@ -128,9 +114,9 @@ public abstract class AddDomElementAction extends AnAction {
         String name = TypePresentationService.getService().getTypePresentableName(rawType);
         Icon icon = null;
         if (!showAsPopup() || descriptions.length == 1) {
-//          if (descriptions.length > 1) {
-            icon = ElementPresentationManager.getIconForClass(rawType);
-//          }
+          //          if (descriptions.length > 1) {
+          icon = ElementPresentationManager.getIconForClass(rawType);
+          //          }
         }
         actions.add(createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, type, description));
       }
@@ -148,7 +134,8 @@ public abstract class AddDomElementAction extends AnAction {
     else {
       if (actions.size() > 1) {
         actions.add(Separator.getInstance());
-      } else if (actions.size() == 1) {
+      }
+      else if (actions.size() == 1) {
 
       }
     }
@@ -178,7 +165,7 @@ public abstract class AddDomElementAction extends AnAction {
     protected final ActionGroup myGroup;
 
     protected ShowPopupAction(ActionGroup group) {
-      super(ApplicationBundle.message("action.add"), null, DomCollectionControl.ADD_ICON);
+      super(ApplicationBundle.message("action.add"), null, IconUtil.getAddIcon());
       myGroup = group;
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }

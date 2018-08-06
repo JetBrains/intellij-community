@@ -579,7 +579,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
         }
       }
-      DfaValue value = factory.createTypeValue(type, nullability);
+      DfaValue value = instruction.getContext() instanceof PsiNewExpression ?
+                       factory.createExactTypeValue(type) :
+                       factory.createTypeValue(type, nullability);
       if (!instruction.shouldFlushFields() && instruction.getContext() instanceof PsiNewExpression) {
         value = factory.withFact(value, DfaFactType.LOCALITY, true);
       }
