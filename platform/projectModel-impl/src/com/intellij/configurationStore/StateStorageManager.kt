@@ -33,9 +33,7 @@ interface StateStorageManager {
   fun expandMacros(path: String): String
 
   interface ExternalizationSession {
-    fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any)
-
-    fun setStateInOldStorage(component: Any, componentName: String, state: Any)
+    fun getExternalizationSession(storage: StateStorage): StateStorage.ExternalizationSession?
 
     /**
      * return empty list if nothing to save

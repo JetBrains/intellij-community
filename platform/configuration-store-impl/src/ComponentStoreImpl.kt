@@ -253,14 +253,35 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun commitComponent(session: ExternalizationSession, info: ComponentInfo, componentName: String?) {
     val component = info.component
     @Suppress("DEPRECATION")
-    if (component is PersistentStateComponent<*>) {
-      component.state?.let {
-        val stateSpec = info.stateSpec!!
-        session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, it)
+    if (component is JDOMExternalizable) {
+      val effectiveComponentName = componentName ?: ComponentManagerImpl.getComponentName(component)
+      storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
+        session.getExternalizationSession(it)?.setState(component, effectiveComponentName, component)
       }
+      return
     }
-    else if (component is JDOMExternalizable) {
-      session.setStateInOldStorage(component, componentName ?: ComponentManagerImpl.getComponentName(component), component)
+
+    val state = (component as PersistentStateComponent<*>).state ?: return
+    val stateSpec = info.stateSpec!!
+    val stateStorageChooser = component as? StateStorageChooserEx
+    val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)
+    for (storageSpec in storageSpecs) {
+      @Suppress("IfThenToElvis")
+      var resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE)
+      if (resolution == Resolution.SKIP) {
+        continue
+      }
+
+      val storage = storageManager.getStateStorage(storageSpec)
+
+      if (resolution == Resolution.DO) {
+        resolution = storage.getResolution(component, StateStorageOperation.WRITE)
+        if (resolution == Resolution.SKIP) {
+          continue
+        }
+      }
+
+      session.getExternalizationSession(storage)?.setState(component, componentName ?: stateSpec.name, if (storageSpec.deprecated || resolution == Resolution.CLEAR) Element("empty") else state)
     }
   }
 

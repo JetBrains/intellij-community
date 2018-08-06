@@ -413,70 +413,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return normalizeFileSpec(result)
   }
 
-  override final fun startExternalization(): StateStorageManager.ExternalizationSession = object : StateStorageManager.ExternalizationSession {
-    private val sessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
-
-    override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
-      val stateStorageChooser = component as? StateStorageChooserEx
-      for (storageSpec in storageSpecs) {
-        @Suppress("IfThenToElvis")
-        var resolution = if (stateStorageChooser == null) Resolution.DO else stateStorageChooser.getResolution(storageSpec, StateStorageOperation.WRITE)
-        if (resolution == Resolution.SKIP) {
-          continue
-        }
-
-        val storage = getStateStorage(storageSpec)
-
-        if (resolution == Resolution.DO && component is PersistentStateComponent<*>) {
-          resolution = storage.getResolution(component, StateStorageOperation.WRITE)
-          if (resolution == Resolution.SKIP) {
-            continue
-          }
-        }
-
-        getExternalizationSession(storage)?.setState(component, componentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) Element("empty") else state)
-      }
-    }
-
-    override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-      getOldStorage(component, componentName, StateStorageOperation.WRITE)?.let {
-        getExternalizationSession(it)?.setState(component, componentName, state)
-      }
-    }
-
-    private fun getExternalizationSession(storage: StateStorage): StateStorage.ExternalizationSession? {
-      var session = sessions.get(storage)
-      if (session == null) {
-        session = storage.startExternalization()
-        if (session != null) {
-          sessions.put(storage, session)
-        }
-      }
-      return session
-    }
-
-    override fun createSaveSessions(): List<SaveSession> {
-      if (sessions.isEmpty()) {
-        return emptyList()
-      }
-
-      var saveSessions: MutableList<SaveSession>? = null
-      val externalizationSessions = sessions.values
-      for (session in externalizationSessions) {
-        val saveSession = session.createSaveSession()
-        if (saveSession != null) {
-          if (saveSessions == null) {
-            if (externalizationSessions.size == 1) {
-              return listOf(saveSession)
-            }
-            saveSessions = SmartList<SaveSession>()
-          }
-          saveSessions.add(saveSession)
-        }
-      }
-      return saveSessions ?: emptyList()
-    }
-  }
+  override final fun startExternalization(): StateStorageManager.ExternalizationSession = StateStorageManagerExternalizationSession()
 
   override final fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component, componentName, operation) ?: return null
@@ -484,6 +421,43 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
+}
+
+private class StateStorageManagerExternalizationSession : StateStorageManager.ExternalizationSession {
+  private val sessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
+
+  override fun getExternalizationSession(storage: StateStorage): StateStorage.ExternalizationSession? {
+    var session = sessions.get(storage)
+    if (session == null) {
+      session = storage.startExternalization()
+      if (session != null) {
+        sessions.put(storage, session)
+      }
+    }
+    return session
+  }
+
+  override fun createSaveSessions(): List<SaveSession> {
+    if (sessions.isEmpty()) {
+      return emptyList()
+    }
+
+    var saveSessions: MutableList<SaveSession>? = null
+    val externalizationSessions = sessions.values
+    for (session in externalizationSessions) {
+      val saveSession = session.createSaveSession()
+      if (saveSession != null) {
+        if (saveSessions == null) {
+          if (externalizationSessions.size == 1) {
+            return listOf(saveSession)
+          }
+          saveSessions = SmartList<SaveSession>()
+        }
+        saveSessions.add(saveSession)
+      }
+    }
+    return saveSessions ?: emptyList()
+  }
 }
 
 private fun String.startsWithMacro(macro: String): Boolean {

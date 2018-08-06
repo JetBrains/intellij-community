@@ -96,13 +96,7 @@ class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pat
 }
 
 private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
-  override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
-
-  override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-    externalizationSession.setState(component, componentName, state)
-  }
+  override fun getExternalizationSession(storage: StateStorage) = externalizationSession
 
   override fun createSaveSessions() = listOfNotNull(externalizationSession.createSaveSession())
 }
