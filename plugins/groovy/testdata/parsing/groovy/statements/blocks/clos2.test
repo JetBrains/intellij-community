@@ -31,7 +31,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Command arguments
             Literal
-              PsiElement(Gstring)('"bugaga"')
+              PsiElement(double quoted string)('"bugaga"')
         PsiElement(new line)('\n ')
         Literal
           PsiElement(Integer)('3')

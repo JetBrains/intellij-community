@@ -8,4 +8,4 @@ Groovy script
       PsiElement(.)('.')
       PsiElement(identifier)('b')
     PsiElement(.)('.')
-    PsiElement(string)(''c'')
+    PsiElement(single quoted string)(''c'')
