@@ -1338,7 +1338,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
       List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
       if (enabledProviders.isEmpty()) return Collections.emptyList();
-      if (!Registry.is("git.explicit.commit.renames.allow.multiple.calls")) return enabledProviders;
+      if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
 
       Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
       List<FilePath> beforePaths = mapNotNull(changes, ChangesUtil::getBeforePath);
