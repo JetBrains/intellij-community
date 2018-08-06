@@ -584,8 +584,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
-    final String version = vm.version();
-    if ("1.4.0".equals(version)) {
+    final String versionString = vm.version();
+    if ("1.4.0".equals(versionString)) {
       DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(
         myProject,
         DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
@@ -593,13 +593,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     if (getSession().getAlternativeJre() == null) {
       Sdk runjre = getSession().getRunJre();
-      if ((runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
+      JavaVersion version = JavaVersion.tryParse(versionString);
+      if (version != null && (runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
             DebuggerBundle.message("message.remote.jre.version.mismatch",
-                                   version,
+                                   versionString,
                                    runjre != null ? runjre.getVersionString() : "unknown",
                                    sdk.getName())
             , MessageType.INFO).notify(myProject);
@@ -609,10 +610,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean versionMatch(@Nullable Sdk sdk, String version) {
+  private static boolean versionMatch(@Nullable Sdk sdk, @NotNull JavaVersion version) {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String versionString = sdk.getVersionString();
-      return versionString != null && Objects.equals(JavaVersion.tryParse(versionString),JavaVersion.tryParse(version));
+      return versionString != null && version.equals(JavaVersion.tryParse(versionString));
     }
     return false;
   }
