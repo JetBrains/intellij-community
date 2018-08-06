@@ -561,6 +561,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-31148
+  public void testSphinxDocstringWithCombinedParamTypeAndDescription() {
+    checkHTMLOnly();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";
