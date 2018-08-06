@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractTestFrameworkCompilingIntegrationTest extends AbstractTestFrameworkIntegrationTest {
   private CompilerTester myCompilerTester;
-  
+
   protected abstract String getTestContentRoot();
 
   @Override
@@ -33,8 +33,8 @@ public abstract class AbstractTestFrameworkCompilingIntegrationTest extends Abst
     return (root != null ? new File(root, ".m2/repository") : new File(".m2/repository")).getAbsolutePath();
   }
 
-  protected void setupModule() throws Exception { 
-    ModuleRootModificationUtil.updateModel(myModule, 
+  protected void setupModule() throws Exception {
+    ModuleRootModificationUtil.updateModel(myModule,
                                            model -> model.addContentEntry(getTestContentRoot())
                                              .addSourceFolder(getTestContentRoot() + "/test", true));
 

@@ -38,13 +38,12 @@ public class CompilerTestUtil {
   }
 
   @TestOnly
+  // should be invoked in EDT
   public static void saveApplicationSettings() {
     IComponentStore store = getApplicationStore();
-    EdtTestUtil.runInEdtAndWait(() -> {
-      store.saveApplicationComponent((PersistentStateComponent<?>)ProjectJdkTable.getInstance());
-      store.saveApplicationComponent((PersistentStateComponent<?>)FileTypeManager.getInstance());
-      store.saveApplicationComponent((PersistentStateComponent<?>)PathMacros.getInstance());
-    });
+    store.saveApplicationComponent((PersistentStateComponent<?>)ProjectJdkTable.getInstance());
+    store.saveApplicationComponent((PersistentStateComponent<?>)FileTypeManager.getInstance());
+    store.saveApplicationComponent((PersistentStateComponent<?>)PathMacros.getInstance());
   }
 
   @NotNull
