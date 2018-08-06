@@ -69,6 +69,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   private void checkHTMLOnly() {
     final Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
+    assertNotNull("<the_ref> marker is missing in test data", originalElement);
     final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
     final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
                                                         originalElement.getTextOffset(),
@@ -563,6 +564,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-31148
   public void testSphinxDocstringWithCombinedParamTypeAndDescription() {
+    checkHTMLOnly();
+  }
+
+  // PY-31033
+  public void testDefaultValues() {
     checkHTMLOnly();
   }
 
