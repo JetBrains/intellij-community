@@ -25,7 +25,7 @@ public class SaveDocumentAction extends DumbAwareAction {
     e.getPresentation().setEnabled(getDocument(e) != null);
   }
 
-  private static Document getDocument(AnActionEvent e) {
+  private static Document getDocument(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor != null ? editor.getDocument() : null;
   }

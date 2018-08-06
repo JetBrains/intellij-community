@@ -93,7 +93,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
   }
 
   @Override
-  public void updateButton(AnActionEvent e) {
+  public void updateButton(@NotNull AnActionEvent e) {
     e.getPresentation().setText(getTemplatePresentation().getText());
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();

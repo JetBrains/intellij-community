@@ -77,7 +77,7 @@ public class SendToFavoritesAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(isEnabled(e));
   }
 
-  static boolean isEnabled(AnActionEvent e) {
+  static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return false;

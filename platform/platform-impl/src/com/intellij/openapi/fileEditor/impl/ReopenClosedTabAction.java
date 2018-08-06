@@ -41,7 +41,7 @@ public class ReopenClosedTabAction extends AnAction {
   }
 
   @Nullable
-  private static EditorWindow getEditorWindow(AnActionEvent e) {
+  private static EditorWindow getEditorWindow(@NotNull AnActionEvent e) {
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (component != null) {
       final EditorsSplitters splitters = UIUtil.getParentOfType(EditorsSplitters.class, component);

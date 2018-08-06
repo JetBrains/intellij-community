@@ -35,7 +35,7 @@ public class CutAction extends AnAction implements DumbAware {
     provider.performCut(e.getDataContext());
   }
 
-  private static CutProvider getAvailableCutProvider(AnActionEvent e) {
+  private static CutProvider getAvailableCutProvider(@NotNull AnActionEvent e) {
     CutProvider provider = PlatformDataKeys.CUT_PROVIDER.getData(e.getDataContext());
     Project project = e.getProject();
     if (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {

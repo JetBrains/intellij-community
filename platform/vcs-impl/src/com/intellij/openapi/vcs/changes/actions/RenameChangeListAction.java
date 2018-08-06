@@ -38,7 +38,7 @@ public class RenameChangeListAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  private static LocalChangeList getTargetChangeList(AnActionEvent e) {
+  private static LocalChangeList getTargetChangeList(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
     ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);

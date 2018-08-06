@@ -105,7 +105,7 @@ public class CreatePackageAction extends DumbAwareAction {
     e.getPresentation().setEnabled(enabled);
   }
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView ideView = e.getData(LangDataKeys.IDE_VIEW);
     if (project == null || ideView == null) {

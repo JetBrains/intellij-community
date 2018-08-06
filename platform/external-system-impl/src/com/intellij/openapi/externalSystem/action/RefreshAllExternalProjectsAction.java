@@ -97,7 +97,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     }
   }
 
-  private static List<ProjectSystemId> getSystemIds(AnActionEvent e) {
+  private static List<ProjectSystemId> getSystemIds(@NotNull AnActionEvent e) {
     final List<ProjectSystemId> systemIds = ContainerUtil.newArrayList();
 
     final ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());

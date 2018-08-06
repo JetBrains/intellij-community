@@ -38,31 +38,31 @@ public abstract class ExternalSystemToggleAction extends ToggleAction implements
     p.setEnabled(visible && isEnabled(e));
   }
 
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return hasProject(e);
   }
 
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     return true;
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     if (!isEnabled(e)) return false;
     return doIsSelected(e);
   }
 
-  protected abstract boolean doIsSelected(AnActionEvent e);
+  protected abstract boolean doIsSelected(@NotNull AnActionEvent e);
 
-  protected Project getProject(AnActionEvent e) {
+  protected Project getProject(@NotNull AnActionEvent e) {
     return e.getProject();
   }
 
-  protected boolean hasProject(AnActionEvent e) {
+  protected boolean hasProject(@NotNull AnActionEvent e) {
     return getProject(e) != null;
   }
 
-  protected ProjectSystemId getSystemId(AnActionEvent e) {
+  protected ProjectSystemId getSystemId(@NotNull AnActionEvent e) {
     return ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
   }
 
@@ -74,10 +74,10 @@ public abstract class ExternalSystemToggleAction extends ToggleAction implements
     getTemplatePresentation().setDescription(message);
   }
 
-  protected void setText(AnActionEvent e, String message) {
+  protected void setText(@NotNull AnActionEvent e, String message) {
     e.getPresentation().setText(message);
   }
-  protected void setDescription(AnActionEvent e, String message) {
+  protected void setDescription(@NotNull AnActionEvent e, String message) {
     e.getPresentation().setDescription(message);
   }
 }

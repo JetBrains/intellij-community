@@ -45,7 +45,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
   }
 
-  protected String getPopupTitle(AnActionEvent e) {
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
     return VcsBundle.message("vcs.quicklist.popup.title");
   }
 

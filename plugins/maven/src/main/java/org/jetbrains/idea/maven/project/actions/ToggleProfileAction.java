@@ -53,7 +53,7 @@ public class ToggleProfileAction extends MavenAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
     return getTargetState(e) != null;

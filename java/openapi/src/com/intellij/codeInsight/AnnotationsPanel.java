@@ -124,7 +124,7 @@ public class AnnotationsPanel {
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           String selectedValue = getSelectedAnnotation();
           e.getPresentation().setEnabled(selectedValue != null && !selectedValue.equals(myDefaultAnnotation));
         }

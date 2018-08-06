@@ -123,7 +123,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
       }
 
       @Override
-      public void updateButton(AnActionEvent e) {
+      public void updateButton(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myCheckboxTree != null && myCheckboxTree.canDuplicateSelectedTemplate());
       }
     };

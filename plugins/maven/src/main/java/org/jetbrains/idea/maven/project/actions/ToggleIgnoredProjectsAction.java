@@ -52,7 +52,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
     final DataContext context = e.getDataContext();

@@ -300,7 +300,7 @@ public class ConsoleHistoryController {
       e.getPresentation().setEnabled(enabled);
     }
 
-    private boolean isUpDownKey(AnActionEvent e) {
+    private boolean isUpDownKey(@NotNull AnActionEvent e) {
       final InputEvent event = e.getInputEvent();
       if (!(event instanceof KeyEvent)) {
         return false;

@@ -331,11 +331,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public interface Provider {
     boolean isEnabled(AnActionEvent e);
 
-    boolean isSuspended(AnActionEvent e);
+    boolean isSuspended(@NotNull AnActionEvent e);
 
     boolean isAnnotated(AnActionEvent e);
 
-    void perform(AnActionEvent e, boolean selected);
+    void perform(@NotNull AnActionEvent e, boolean selected);
   }
 
   private static class MyEditorNotificationPanel extends EditorNotificationPanel {

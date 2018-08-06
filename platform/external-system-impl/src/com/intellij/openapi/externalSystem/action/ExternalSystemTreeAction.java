@@ -28,12 +28,12 @@ import javax.swing.*;
  */
 public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && getTree(e) != null;
   }
 
   @Nullable
-  protected static JTree getTree(AnActionEvent e) {
+  protected static JTree getTree(@NotNull AnActionEvent e) {
     return ExternalSystemDataKeys.PROJECTS_TREE.getData(e.getDataContext());
   }
 

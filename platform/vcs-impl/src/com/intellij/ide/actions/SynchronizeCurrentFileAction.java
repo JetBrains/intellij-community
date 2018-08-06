@@ -90,7 +90,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   @NotNull
-  private static JBIterable<VirtualFile> getFiles(AnActionEvent e) {
+  private static JBIterable<VirtualFile> getFiles(@NotNull AnActionEvent e) {
     return JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
       .filter(o -> o.isInLocalFileSystem());
   }

@@ -60,7 +60,7 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
    * @return List of target nodes for this action.
    */
   @NotNull
-  protected List<T> getTargetNodes(AnActionEvent e) {
+  protected List<T> getTargetNodes(@NotNull AnActionEvent e) {
     C content = getTreeContent(e);
     if (content == null) {
       return Collections.emptyList();
@@ -93,7 +93,7 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
     return treeBuilder.getSelectedElements();
   }
 
-  protected abstract C getTreeContent(AnActionEvent e);
+  protected abstract C getTreeContent(@NotNull AnActionEvent e);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -124,11 +124,11 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
   protected void updatePresentation(@NotNull Presentation presentation, @Nullable T node) {
   }
 
-  protected void doActionPerformed(@NotNull C content, AnActionEvent e, List<T> nodes) {
+  protected void doActionPerformed(@NotNull C content, @NotNull AnActionEvent e, List<T> nodes) {
     nodes.forEach(node -> doActionPerformed(content, e, node));
   }
 
-  protected void doActionPerformed(@NotNull C content, AnActionEvent e, T node) {
+  protected void doActionPerformed(@NotNull C content, @NotNull AnActionEvent e, T node) {
     doActionPerformed(node);
   }
 

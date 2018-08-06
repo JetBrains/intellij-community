@@ -109,7 +109,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     showDiscoveredTests(project, dataContext, presentableName, method);
   }
 
-  private static void showDiscoveredTestsByChanges(AnActionEvent e) {
+  private static void showDiscoveredTestsByChanges(@NotNull AnActionEvent e) {
     Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     Project project = e.getProject();
     assert project != null;

@@ -202,7 +202,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
 
       @Override
-      public void updateButton(AnActionEvent e) {
+      public void updateButton(@NotNull AnActionEvent e) {
         super.updateButton(e);
         Object[] elements = getSelectedElements();
         Presentation presentation = e.getPresentation();

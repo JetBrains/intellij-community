@@ -55,7 +55,7 @@ public abstract class ToggleActionButton extends AnActionButton implements Toggl
   }
 
   @Override
-  public final void updateButton(AnActionEvent e) {
+  public final void updateButton(@NotNull AnActionEvent e) {
     final Boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, selected);

@@ -139,7 +139,7 @@ public abstract class ImportLayoutPanel extends JPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           int selectedImport = myImportLayoutTable.getSelectedRow();
           PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
           return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;

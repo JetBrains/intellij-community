@@ -104,7 +104,7 @@ class BeforeRunStepsPanel extends JPanel {
     });
     myDecorator.setEditActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         Pair<BeforeRunTask, BeforeRunTaskProvider<BeforeRunTask>> selection = getSelection();
         return selection != null && selection.getSecond().isConfigurable();
       }
@@ -117,7 +117,7 @@ class BeforeRunStepsPanel extends JPanel {
     });
     myDecorator.setAddActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return checkBeforeRunTasksAbility(true);
       }
     });

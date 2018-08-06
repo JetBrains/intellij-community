@@ -109,7 +109,7 @@ public class ExistingTemplatesComponent {
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final Object selection = patternTree.getLastSelectedPathComponent();
           if (selection instanceof DefaultMutableTreeNode) {
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;

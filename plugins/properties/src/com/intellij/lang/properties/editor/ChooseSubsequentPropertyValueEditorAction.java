@@ -61,7 +61,7 @@ public class ChooseSubsequentPropertyValueEditorAction extends AnAction {
     e.getPresentation().setEnabled(enabled);
   }
 
-  protected Editor getNext(AnActionEvent e) {
+  protected Editor getNext(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
       return null;

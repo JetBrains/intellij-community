@@ -98,11 +98,11 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(canCreateNodes(e, myFavoritesListName));
   }
 
-  public static boolean canCreateNodes(AnActionEvent e) {
+  public static boolean canCreateNodes(@NotNull AnActionEvent e) {
     return canCreateNodes(e, null);
   }
 
-  public static boolean canCreateNodes(AnActionEvent e, @Nullable String listName) {
+  public static boolean canCreateNodes(@NotNull AnActionEvent e, @Nullable String listName) {
     DataContext dataContext = e.getDataContext();
     if (e.getProject() == null) {
       return false;

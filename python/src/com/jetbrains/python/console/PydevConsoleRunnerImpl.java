@@ -741,7 +741,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
-  private AnActionEvent stopConsole(AnActionEvent e) {
+  private AnActionEvent stopConsole(@NotNull AnActionEvent e) {
     if (myPydevConsoleCommunication != null) {
       e = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
                             e.getPresentation(), e.getActionManager(), e.getModifiers());

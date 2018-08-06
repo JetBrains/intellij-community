@@ -203,7 +203,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
 

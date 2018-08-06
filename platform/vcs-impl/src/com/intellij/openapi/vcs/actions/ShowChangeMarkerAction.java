@@ -49,7 +49,7 @@ public abstract class ShowChangeMarkerAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static Data getDataFromContext(AnActionEvent e) {
+  private static Data getDataFromContext(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 

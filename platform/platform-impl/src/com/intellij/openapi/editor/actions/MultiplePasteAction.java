@@ -111,7 +111,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     }
   }
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     Object component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) return false;
     Editor editor = e.getData(CommonDataKeys.EDITOR);

@@ -315,7 +315,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }).
       setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
             if (item.allowedToRemove()) {
               return true;

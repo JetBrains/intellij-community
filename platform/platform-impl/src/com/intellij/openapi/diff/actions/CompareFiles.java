@@ -46,7 +46,7 @@ public class CompareFiles extends BaseDiffAction {
     }
   }
   
-  private static boolean isAvailable(AnActionEvent e) {
+  private static boolean isAvailable(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     DiffRequest diffRequest = e.getData(DIFF_REQUEST);
     if (diffRequest == null) {

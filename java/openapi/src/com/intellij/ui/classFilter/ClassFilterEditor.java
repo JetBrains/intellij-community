@@ -85,7 +85,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
         }
@@ -98,7 +98,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
         }

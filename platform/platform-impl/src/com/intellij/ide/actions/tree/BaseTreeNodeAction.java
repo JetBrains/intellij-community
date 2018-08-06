@@ -55,7 +55,7 @@ abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
     return false;
   }
 
-  private static Object getSourceComponent(AnActionEvent e) {
+  private static Object getSourceComponent(@NotNull AnActionEvent e) {
     return PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
   }
 }

@@ -35,7 +35,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private boolean myEnabled = true;
   private boolean myVisible = true;
   private ShortcutSet myShortcut;
-  private final AnAction myAction = null;
   private JComponent myContextComponent;
   private Set<AnActionButtonUpdater> myUpdaters;
 
@@ -81,14 +80,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    boolean myActionVisible = true;
-    boolean myActionEnabled = true;
-    if (myAction != null) {      
-      myAction.update(e);
-      myActionEnabled = e.getPresentation().isEnabled();
-      myActionVisible = e.getPresentation().isVisible();
-    }
-    boolean enabled = isEnabled() && isContextComponentOk() && myActionEnabled;
+    boolean enabled = isEnabled() && isContextComponentOk();
     if (enabled && myUpdaters != null) {
       for (AnActionButtonUpdater updater : myUpdaters) {
         if (!updater.isEnabled(e)) {
@@ -98,7 +90,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       }
     }
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(isVisible() && myActionVisible);
+    e.getPresentation().setVisible(isVisible());
 
     if (enabled) {
       updateButton(e);
@@ -112,7 +104,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     myUpdaters.add(updater);
   }
 
-  public void updateButton(AnActionEvent e) {
+  public void updateButton(@NotNull AnActionEvent e) {
     final JComponent component = getContextComponent();
     e.getPresentation().setEnabled(component != null && component.isShowing() && component.isEnabled());
   }
@@ -194,7 +186,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
 
     @Override
-    public void updateButton(AnActionEvent e) {
+    public void updateButton(@NotNull AnActionEvent e) {
       myAction.update(e);
       final boolean enabled = e.getPresentation().isEnabled();
       final boolean visible = e.getPresentation().isVisible();

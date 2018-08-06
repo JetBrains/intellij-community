@@ -351,7 +351,7 @@ public class VcsUtil {
    *         Returns not {@code null} if and only if exactly one file is available.
    */
   @Nullable
-  public static VirtualFile getOneVirtualFile(AnActionEvent e) {
+  public static VirtualFile getOneVirtualFile(@NotNull AnActionEvent e) {
     VirtualFile[] files = getVirtualFiles(e);
     return (files.length != 1) ? null : files[0];
   }
@@ -361,7 +361,7 @@ public class VcsUtil {
    * @return {@code VirtualFile}s available in the current context.
    *         Returns empty array if there are no available files.
    */
-  public static VirtualFile[] getVirtualFiles(AnActionEvent e) {
+  public static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return (files == null) ? VirtualFile.EMPTY_ARRAY : files;
   }

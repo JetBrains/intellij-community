@@ -1335,7 +1335,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     model.setFileFilter(mask);
   }
 
-  private void navigateToSelectedUsage(AnActionEvent e) {
+  private void navigateToSelectedUsage(@Nullable AnActionEvent e) {
     Navigatable[] navigatables = e != null ? e.getData(CommonDataKeys.NAVIGATABLE_ARRAY) : null;
     if (navigatables != null) {
       myBalloon.cancel();

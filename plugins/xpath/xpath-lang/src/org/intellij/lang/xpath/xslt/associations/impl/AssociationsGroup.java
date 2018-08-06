@@ -73,7 +73,7 @@ public class AssociationsGroup extends ActionGroup {
         return PsiManager.getInstance(project).isInProject(psiFile);
     }
 
-    private static boolean isVisible(AnActionEvent e) {
+    private static boolean isVisible(@NotNull AnActionEvent e) {
         final PsiFile psiFile = getPsiFile(e);
         if (psiFile == null) return false;
         return XsltSupport.isXsltFile(psiFile);

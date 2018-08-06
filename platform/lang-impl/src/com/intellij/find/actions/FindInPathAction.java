@@ -56,7 +56,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
     doUpdate(e);
   }
 
-  static void doUpdate(AnActionEvent e) {
+  static void doUpdate(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
@@ -65,7 +65,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
     }
   }
 
-  private static boolean isValidSearchScope(AnActionEvent e) {
+  private static boolean isValidSearchScope(@NotNull AnActionEvent e) {
     final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiDirectoryContainer) {
       return true;

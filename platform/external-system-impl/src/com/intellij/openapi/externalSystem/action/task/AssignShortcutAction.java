@@ -46,7 +46,7 @@ public class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && !isIgnoredNode(e);
   }
 

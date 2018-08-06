@@ -101,13 +101,13 @@ public class CombinePropertiesFilesAction extends AnAction {
   }
 
   @Nullable
-  private static List<ResourceBundle> getResourceBundles(AnActionEvent e) {
+  private static List<ResourceBundle> getResourceBundles(@NotNull AnActionEvent e) {
     final ResourceBundle[] resourceBundles = e.getData(ResourceBundle.ARRAY_DATA_KEY);
     return resourceBundles == null ? null : ContainerUtil.newArrayList(resourceBundles);
   }
 
   @Nullable
-  private static List<PropertiesFile> getPropertiesFiles(AnActionEvent e) {
+  private static List<PropertiesFile> getPropertiesFiles(@NotNull AnActionEvent e) {
     final PsiElement[] psiElements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (psiElements == null || psiElements.length == 0) {
       return null;

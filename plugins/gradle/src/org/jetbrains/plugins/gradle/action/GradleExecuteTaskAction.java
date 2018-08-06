@@ -59,13 +59,13 @@ import java.util.Map;
 public class GradleExecuteTaskAction extends ExternalSystemAction {
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     if (!super.isVisible(e)) return false;
     final ExternalProjectsView projectsView = ExternalSystemDataKeys.VIEW.getData(e.getDataContext());
     return projectsView == null || GradleConstants.SYSTEM_ID.equals(getSystemId(e));
   }
 
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return true;
   }
 

@@ -35,7 +35,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 public class GradleOpenProjectCompositeConfigurationAction extends ExternalSystemAction {
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     if (getSystemId(e) == null) return false;
 
@@ -43,7 +43,7 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
   }
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     final Project project = getProject(e);
     if (project == null) return false;
     ProjectSystemId systemId = getSystemId(e);

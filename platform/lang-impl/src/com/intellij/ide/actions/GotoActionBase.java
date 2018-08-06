@@ -81,7 +81,7 @@ public abstract class GotoActionBase extends AnAction {
     }
   }
 
-  protected abstract void gotoActionPerformed(AnActionEvent e);
+  protected abstract void gotoActionPerformed(@NotNull AnActionEvent e);
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
@@ -93,7 +93,7 @@ public abstract class GotoActionBase extends AnAction {
     presentation.setVisible(hasContributors);
   }
 
-  protected boolean hasContributors(final DataContext dataContext) {
+  protected boolean hasContributors(@NotNull DataContext dataContext) {
     return true;
   }
 

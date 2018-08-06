@@ -40,7 +40,7 @@ public abstract class EditorToggleDecorationAction extends ToggleAction implemen
   }
 
   @Nullable
-  private static Editor getEditor(AnActionEvent e) {
+  private static Editor getEditor(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
   }
 

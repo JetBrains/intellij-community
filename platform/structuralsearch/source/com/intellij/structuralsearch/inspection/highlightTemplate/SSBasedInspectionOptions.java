@@ -120,7 +120,7 @@ public class SSBasedInspectionOptions {
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final Project project = e.getProject();
           return project != null && !DumbService.isDumb(project);
         }
@@ -137,7 +137,7 @@ public class SSBasedInspectionOptions {
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final Project project = e.getProject();
           return project != null && !DumbService.isDumb(project);
         }
