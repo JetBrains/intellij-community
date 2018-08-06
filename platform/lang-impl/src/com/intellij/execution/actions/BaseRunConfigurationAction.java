@@ -16,13 +16,13 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -34,9 +34,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +44,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.execution.SuggestUsingRunDashBoardUtil.promptUserToUseRunDashboard;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
@@ -66,56 +62,32 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   private AnAction[] getChildren(DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    if (Registry.is("suggest.all.run.configurations.from.context") || context.findExisting() == null) {
-      final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
-      boolean isMultipleConfigurationsFromAlternativeLocations = producers.size() > 1 && producers.get(0).isFromAlternativeLocation();
-      boolean isRunAction = this instanceof RunContextAction && ((RunContextAction)this).isForExecutor(DefaultRunExecutor.EXECUTOR_ID);
-      boolean createRunAll = isMultipleConfigurationsFromAlternativeLocations && isRunAction;
-      if (producers.size() > 1) {
-        final List<AnAction> childActions = new ArrayList<>();
-        for (final ConfigurationFromContext fromContext : producers) {
-          final ConfigurationType configurationType = fromContext.getConfigurationType();
-          final String actionName = childActionName(fromContext);
-          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              perform(fromContext, context);
-            }
-          };
-          anAction.getTemplatePresentation().setText(actionName, false);
-          childActions.add(anAction);
-        }
-        if (createRunAll) {
-          childActions.add(runAllConfigurationsAction(context, producers));
-        }
-        return childActions.toArray(AnAction.EMPTY_ARRAY);
-      }
+    if (!Registry.is("suggest.all.run.configurations.from.context") && context.findExisting() != null) {
+      return EMPTY_ARRAY;
     }
-    return EMPTY_ARRAY;
+    return createChildActions(context, getConfigurationsFromContext(context)).toArray(EMPTY_ARRAY);
   }
 
   @NotNull
-  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<ConfigurationFromContext> configurationsFromContext) {
-    return new AnAction(
-      "Run all",
-      "Run all configurations available in this context",
-      LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)
-    ) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        GroupRunId groupRunId = new GroupRunId("Run all configurations from alternative context");
-        for (ConfigurationFromContext configuration : configurationsFromContext) {
-          RunConfigurationGroupUtil.setGroupRunId(configuration.getConfiguration(), groupRunId);
+  protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
+                                              @NotNull List<ConfigurationFromContext> configurations) {
+    if (configurations.size() <= 1) {
+      return Collections.emptyList();
+    }
+    final List<AnAction> childActions = new ArrayList<>();
+    for (final ConfigurationFromContext fromContext : configurations) {
+      final ConfigurationType configurationType = fromContext.getConfigurationType();
+      final String actionName = childActionName(fromContext);
+      final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          perform(fromContext, context);
         }
-
-        List<ConfigurationType> types = ContainerUtil.map(configurationsFromContext, context1 -> context1.getConfiguration().getType());
-        promptUserToUseRunDashboard(context.getProject(), types);
-
-        for (ConfigurationFromContext configuration : configurationsFromContext) {
-          perform(configuration, context);
-        }
-      }
-    };
+      };
+      anAction.getTemplatePresentation().setText(actionName, false);
+      childActions.add(anAction);
+    }
+    return childActions;
   }
 
   @NotNull
