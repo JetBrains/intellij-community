@@ -44,7 +44,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
@@ -516,15 +515,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private Pair<Collection<CommitChange>, List<VcsException>> commitExplicitRenames(@NotNull GitRepository repository,
                                                                                    @NotNull Collection<CommitChange> changes,
                                                                                    @NotNull String message) {
+    List<GitCheckinExplicitMovementProvider> providers =
+      filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
+
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
-    List<FilePath> beforePaths = ContainerUtil.mapNotNull(changes, it -> it.beforePath);
-    List<FilePath> afterPaths = ContainerUtil.mapNotNull(changes, it -> it.afterPath);
+    List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
+    List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
 
     Set<Movement> movedPaths = new HashSet<>();
-    for (GitCheckinExplicitMovementProvider provider : GitCheckinExplicitMovementProvider.EP_NAME.getExtensions()) {
-      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths, true);
+    for (GitCheckinExplicitMovementProvider provider : providers) {
+      Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
       if (!providerMovements.isEmpty()) {
         message = provider.getCommitMessage(message);
         movedPaths.addAll(providerMovements);
@@ -541,6 +543,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       runWithMessageFile(myProject, root, message, moveMessageFile -> {
         exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile));
       });
+
+      List<Couple<FilePath>> committedMovements = mapNotNull(movedChanges, it -> Couple.of(it.beforePath, it.afterPath));
+      for (GitCheckinExplicitMovementProvider provider : providers) {
+        provider.afterMovementsCommitted(myProject, committedMovements);
+      }
 
       return Pair.create(newRootChanges, exceptions);
     }
@@ -1344,7 +1351,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       List<FilePath> beforePaths = mapNotNull(changes, ChangesUtil::getBeforePath);
       List<FilePath> afterPaths = mapNotNull(changes, ChangesUtil::getAfterPath);
 
-      return filter(enabledProviders, it -> !it.collectExplicitMovements(project, beforePaths, afterPaths, false).isEmpty());
+      return filter(enabledProviders, it -> !it.collectExplicitMovements(project, beforePaths, afterPaths).isEmpty());
     }
   }
 
