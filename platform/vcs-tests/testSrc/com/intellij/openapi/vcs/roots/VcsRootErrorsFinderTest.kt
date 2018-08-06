@@ -13,214 +13,212 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.roots;
+package com.intellij.openapi.vcs.roots
 
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsRootError;
-import com.intellij.openapi.vcs.VcsRootErrorImpl;
-import com.intellij.openapi.vcs.VcsTestUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.VcsRootError
+import com.intellij.openapi.vcs.VcsRootErrorImpl
+import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.util.containers.ContainerUtil
+import java.io.IOException
+import java.util.*
 
 
 /**
  * @author Nadya Zabrodina
  */
-public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
+class VcsRootErrorsFinderTest : VcsRootBaseTest() {
 
-  static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @Throws(Exception::class)
+  public override fun setUp() {
+    super.setUp()
   }
 
-  public void testNoRootsThenNoErrors() throws IOException {
-    doTest(new VcsRootConfiguration());
+  @Throws(IOException::class)
+  fun testNoRootsThenNoErrors() {
+    doTest(VcsRootConfiguration())
   }
 
-  public void testSameOneRootInBothThenNoErrors() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".")
-        .mappings(".");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testSameOneRootInBothThenNoErrors() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
+      .mappings(".")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testSameTwoRootsInBothThenNoErrors() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "community")
-        .mappings(".", "community");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testSameTwoRootsInBothThenNoErrors() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
+      .mappings(".", "community")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testOneMockRootNoVCSRootsThenError() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".")
-        .unregErrors(".");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testOneMockRootNoVCSRootsThenError() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
+      .unregErrors(".")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testOneVCSRootNoMockRootsThenError() throws IOException {
+  @Throws(IOException::class)
+  fun testOneVCSRootNoMockRootsThenError() {
 
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mappings(".")
-        .extraErrors(".");
-    doTest(vcsRootConfiguration);
+    val vcsRootConfiguration = VcsRootConfiguration().mappings(".")
+      .extraErrors(".")
+    doTest(vcsRootConfiguration)
   }
 
 
-  public void testOneRootButDifferentThenTwoErrors() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".")
-        .mappings("community")
-        .unregErrors(".").extraErrors("community");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testOneRootButDifferentThenTwoErrors() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
+      .mappings("community")
+      .unregErrors(".").extraErrors("community")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testTwoRootsOneMatchingOneDifferentThenTwoErrors() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "community")
-        .mappings(".", "contrib")
-        .unregErrors("community").extraErrors("contrib");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testTwoRootsOneMatchingOneDifferentThenTwoErrors() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
+      .mappings(".", "contrib")
+      .unregErrors("community").extraErrors("contrib")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testTwoRootsInMockRootOneMatchingInVCSThenError() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "community")
-        .mappings(".")
-        .unregErrors("community");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testTwoRootsInMockRootOneMatchingInVCSThenError() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
+      .mappings(".")
+      .unregErrors("community")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testTwoRootsBothNotMatchingThenFourErrors() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "community")
-        .mappings("another", "contrib")
-        .unregErrors("community", ".").extraErrors("contrib", "another");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testTwoRootsBothNotMatchingThenFourErrors() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
+      .mappings("another", "contrib")
+      .unregErrors("community", ".").extraErrors("contrib", "another")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testProjectRootNoMockRootsThenErrorAboutExtraRoot() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration()
-        .mappings(PROJECT)
-        .extraErrors(PROJECT);
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testProjectRootNoMockRootsThenErrorAboutExtraRoot() {
+    val vcsRootConfiguration = VcsRootConfiguration()
+      .mappings(PROJECT)
+      .extraErrors(PROJECT)
+    doTest(vcsRootConfiguration)
   }
 
-  public void testProjectRootFullUnderMockRootThenCorrect() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".")
-        .mappings(PROJECT);
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testProjectRootFullUnderMockRootThenCorrect() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
+      .mappings(PROJECT)
+    doTest(vcsRootConfiguration)
   }
 
-  public void testProjectRootMockRootForAContentRootBelowProjectThenError() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots("content_root")
-        .contentRoots("content_root").mappings(PROJECT)
-        .unregErrors("content_root").extraErrors(PROJECT);
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testProjectRootMockRootForAContentRootBelowProjectThenError() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("content_root")
+      .contentRoots("content_root").mappings(PROJECT)
+      .unregErrors("content_root").extraErrors(PROJECT)
+    doTest(vcsRootConfiguration)
   }
 
-  public void testProjectRootMockRootBelowProjectFolderNotInAContentRootThenUnregisteredRootError() throws IOException {
+  @Throws(IOException::class)
+  fun testProjectRootMockRootBelowProjectFolderNotInAContentRootThenUnregisteredRootError() {
     // this is to be fixed: auto-detection of MockRoot repositories in subfolders for the <Project> mapping
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots("community")
-        .contentRoots(".").mappings(PROJECT)
-        .unregErrors("community").extraErrors(PROJECT);
-    doTest(vcsRootConfiguration);
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("community")
+      .contentRoots(".").mappings(PROJECT)
+      .unregErrors("community").extraErrors(PROJECT)
+    doTest(vcsRootConfiguration)
   }
 
-  public void testProjectRootMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
-        .mappings(PROJECT)
-        .contentRoots(".", "content_root", "../linked_source_root")
-        .unregErrors("content_root", "../linked_source_root", "folder");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testProjectRootMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
+      .mappings(PROJECT)
+      .contentRoots(".", "content_root", "../linked_source_root")
+      .unregErrors("content_root", "../linked_source_root", "folder")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testProjectRootForFolderMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
-        .mappings(PROJECT, "folder")
-        .contentRoots(".", "content_root", "../linked_source_root")
-        .unregErrors("content_root", "../linked_source_root");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testProjectRootForFolderMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
+      .mappings(PROJECT, "folder")
+      .contentRoots(".", "content_root", "../linked_source_root")
+      .unregErrors("content_root", "../linked_source_root")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testProjectRootMockRootLikeInIDEAProjectThenError() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "community", "contrib").mappings(PROJECT)
-        .contentRoots(".", "community", "contrib").unregErrors("community", "contrib");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testProjectRootMockRootLikeInIDEAProjectThenError() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community", "contrib").mappings(PROJECT)
+      .contentRoots(".", "community", "contrib").unregErrors("community", "contrib")
+    doTest(vcsRootConfiguration)
   }
 
-  public void testRealMockRootRootDeeperThanThreeLevelsShouldBeDetected() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "community", "contrib", "community/level1/level2/level3")
-        .contentRoots(".", "community", "contrib").mappings(PROJECT, "community/level1/level2/level3")
-        .unregErrors("community", "contrib");
-    doTest(vcsRootConfiguration);
+  @Throws(IOException::class)
+  fun testRealMockRootRootDeeperThanThreeLevelsShouldBeDetected() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community", "contrib", "community/level1/level2/level3")
+      .contentRoots(".", "community", "contrib").mappings(PROJECT, "community/level1/level2/level3")
+      .unregErrors("community", "contrib")
+    doTest(vcsRootConfiguration)
   }
 
-  private void doTest(@NotNull VcsRootConfiguration vcsRootConfiguration) throws IOException {
-    initProject(vcsRootConfiguration);
-    addVcsRoots(vcsRootConfiguration.getVcsMappings());
+  @Throws(IOException::class)
+  private fun doTest(vcsRootConfiguration: VcsRootConfiguration) {
+    initProject(vcsRootConfiguration)
+    addVcsRoots(vcsRootConfiguration.vcsMappings)
 
-    Collection<VcsRootError> expected = new ArrayList<>();
-    expected.addAll(unregAll(vcsRootConfiguration.getUnregErrors()));
-    expected.addAll(extraAll(vcsRootConfiguration.getExtraErrors()));
-    projectRoot.refresh(false, true);
-    Collection<VcsRootError> actual = ContainerUtil.filter(new VcsRootErrorsFinder(myProject).find(),
-                                                           error -> error.getVcsKey().equals(myVcs.getKeyInstanceMethod()));
-    VcsTestUtil.assertEqualCollections(actual, expected);
+    val expected = ArrayList<VcsRootError>()
+    expected.addAll(unregAll(vcsRootConfiguration.unregErrors))
+    expected.addAll(extraAll(vcsRootConfiguration.extraErrors))
+    projectRoot.refresh(false, true)
+    val actual = ContainerUtil.filter(VcsRootErrorsFinder(myProject).find()
+    ) { error -> error.vcsKey == myVcs.keyInstanceMethod }
+    VcsTestUtil.assertEqualCollections(actual, expected)
   }
 
-  void addVcsRoots(@NotNull Collection<String> relativeRoots) {
-    for (String root : relativeRoots) {
-      if (root.equals(PROJECT)) {
-        vcsManager.setDirectoryMapping("", myVcsName);
+  internal fun addVcsRoots(relativeRoots: Collection<String>) {
+    for (root in relativeRoots) {
+      if (root == PROJECT) {
+        vcsManager.setDirectoryMapping("", myVcsName)
       }
       else {
-        String absoluteRoot = VcsTestUtil.toAbsolute(root, myProject);
-        vcsManager.setDirectoryMapping(absoluteRoot, myVcsName);
+        val absoluteRoot = VcsTestUtil.toAbsolute(root, myProject)
+        vcsManager.setDirectoryMapping(absoluteRoot, myVcsName)
       }
     }
   }
 
-  @NotNull
-  Collection<VcsRootError> unregAll(@NotNull Collection<String> paths) {
-    Collection<VcsRootError> unregRoots = new ArrayList<>();
-    for (String path : paths) {
-      unregRoots.add(unreg(path));
+  internal fun unregAll(paths: Collection<String>): Collection<VcsRootError> {
+    val unregRoots = ArrayList<VcsRootError>()
+    for (path in paths) {
+      unregRoots.add(unreg(path))
     }
-    return unregRoots;
+    return unregRoots
   }
 
-  @NotNull
-  Collection<VcsRootError> extraAll(@NotNull Collection<String> paths) {
-    Collection<VcsRootError> extraRoots = new ArrayList<>();
-    for (String path : paths) {
-      extraRoots.add(extra(path));
+  internal fun extraAll(paths: Collection<String>): Collection<VcsRootError> {
+    val extraRoots = ArrayList<VcsRootError>()
+    for (path in paths) {
+      extraRoots.add(extra(path))
     }
-    return extraRoots;
+    return extraRoots
   }
 
-  @NotNull
-  VcsRootError unreg(@NotNull String path) {
-    return new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, VcsTestUtil.toAbsolute(path, myProject), myVcsName);
+  internal fun unreg(path: String): VcsRootError {
+    return VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, VcsTestUtil.toAbsolute(path, myProject), myVcsName)
   }
 
-  @NotNull
-  VcsRootError extra(@NotNull String path) {
-    return new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, PROJECT.equals(path) ? PROJECT : VcsTestUtil.toAbsolute(path, myProject),
-                                myVcsName);
+  internal fun extra(path: String): VcsRootError {
+    return VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, if (PROJECT == path) PROJECT else VcsTestUtil.toAbsolute(path, myProject),
+                            myVcsName)
+  }
+
+  companion object {
+
+    internal val PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT
   }
 }

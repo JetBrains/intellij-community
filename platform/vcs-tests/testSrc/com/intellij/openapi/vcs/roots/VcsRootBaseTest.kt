@@ -1,71 +1,65 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.roots;
+package com.intellij.openapi.vcs.roots
 
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsRootChecker;
-import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.vcs.test.VcsPlatformTest;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
+import com.intellij.openapi.roots.impl.RootModelImpl
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.VcsRootChecker
+import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.EdtTestUtil
+import com.intellij.util.ThrowableRunnable
+import com.intellij.vcs.test.VcsPlatformTest
+import java.io.File
+import java.io.IOException
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.mkdir;
+internal val DOT_MOCK = ".mock"
 
-public abstract class VcsRootBaseTest extends VcsPlatformTest {
+abstract class VcsRootBaseTest : VcsPlatformTest() {
+  protected lateinit var myVcs: MockAbstractVcs
+  protected lateinit var myVcsName: String
+  protected lateinit var myRepository: VirtualFile
 
-  static final String DOT_MOCK = ".mock";
+  protected lateinit var myRootChecker: MockRootChecker
+  protected lateinit var myRootModel: RootModelImpl
 
-  protected MockAbstractVcs myVcs;
-  protected String myVcsName;
-  protected VirtualFile myRepository;
+  @Throws(Exception::class)
+  override fun setUp() {
+    super.setUp()
 
-  protected MockRootChecker myRootChecker;
-  protected Module myRootModule;
+    cd(projectRoot)
+    val module = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance())
+    myRootModel = (ModuleRootManager.getInstance(module) as ModuleRootManagerImpl).rootModel
+    mkdir("repository")
+    projectRoot.refresh(false, true)
+    myRepository = projectRoot.findChild("repository")!!
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    cd(projectRoot);
-    myRootModule = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance());
-    mkdir("repository");
-    projectRoot.refresh(false, true);
-    myRepository = projectRoot.findChild("repository");
-
-    myVcs = new MockAbstractVcs(myProject);
-    ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
-    myRootChecker = new MockRootChecker(myVcs);
-    point.registerExtension(myRootChecker);
-    vcsManager.registerVcs(myVcs);
-    myVcsName = myVcs.getName();
-    myRepository.refresh(false, true);
+    myVcs = MockAbstractVcs(myProject)
+    val point = extensionPoint
+    myRootChecker = MockRootChecker(myVcs)
+    point.registerExtension(myRootChecker)
+    vcsManager.registerVcs(myVcs)
+    myVcsName = myVcs.name
+    myRepository.refresh(false, true)
   }
 
-  private static ExtensionPoint<VcsRootChecker> getExtensionPoint() {
-    return Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
+  @Throws(Exception::class)
+  override fun tearDown() {
     try {
-      getExtensionPoint().unregisterExtension(myRootChecker);
-      vcsManager.unregisterVcs(myVcs);
+      extensionPoint.unregisterExtension(myRootChecker)
+      vcsManager.unregisterVcs(myVcs)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
@@ -75,77 +69,79 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
    *
    * @param mockRoots path to actual .mock roots, relative to the project dir.
    */
-  public void initProject(@NotNull VcsRootConfiguration vcsRootConfiguration)
-    throws IOException {
-    createDirs(vcsRootConfiguration.getVcsRoots());
-    Collection<String> contentRoots = vcsRootConfiguration.getContentRoots();
-    createProjectStructure(myProject, contentRoots);
+  internal fun initProject(vcsRootConfiguration: VcsRootConfiguration) {
+    createDirs(vcsRootConfiguration.vcsRoots)
+    val contentRoots = vcsRootConfiguration.contentRoots
+    createProjectStructure(myProject, contentRoots)
     if (!contentRoots.isEmpty()) {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        for (String root : contentRoots) {
-          VirtualFile f = projectRoot.findFileByRelativePath(root);
+      EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+        for (root in contentRoots) {
+          val f = projectRoot.findFileByRelativePath(root)
           if (f != null) {
-            PsiTestUtil.addContentRoot(myRootModule, f);
+            myRootModel.addContentEntry(f)
           }
         }
-      });
+      })
     }
   }
 
-  void createProjectStructure(@NotNull Project project, @NotNull Collection<String> paths) {
-    for (String path : paths) {
-      cd(project.getBaseDir().getPath());
-      File f = new File(project.getBasePath(), path);
-      f.mkdirs();
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+  internal fun createProjectStructure(project: Project, paths: Collection<String>) {
+    for (path in paths) {
+      cd(project.baseDir.path)
+      val f = File(project.basePath, path)
+      f.mkdirs()
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)
     }
-    projectRoot.refresh(false, true);
+    projectRoot.refresh(false, true)
   }
 
-  private void createDirs(@NotNull Collection<String> mockRoots) throws IOException {
-    File baseDir;
+  @Throws(IOException::class)
+  private fun createDirs(mockRoots: Collection<String>) {
+    val baseDir: File
     if (mockRoots.isEmpty()) {
-      return;
+      return
     }
 
-    baseDir = VfsUtilCore.virtualToIoFile(myProject.getBaseDir());
-    int maxDepth = findMaxDepthAboveProject(mockRoots);
-    File projectDir = createChild(baseDir, maxDepth - 1);
-    cd(projectDir.getPath());
-    for (String path : mockRoots) {
-      File mockDir = new File(new File(projectDir, path), DOT_MOCK);
-      mockDir.mkdirs();
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockDir);
+    baseDir = VfsUtilCore.virtualToIoFile(myProject.baseDir)
+    val maxDepth = findMaxDepthAboveProject(mockRoots)
+    val projectDir = createChild(baseDir, maxDepth - 1)
+    cd(projectDir.path)
+    for (path in mockRoots) {
+      val mockDir = File(File(projectDir, path), DOT_MOCK)
+      mockDir.mkdirs()
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockDir)
     }
   }
 
-  @NotNull
-  private static File createChild(@NotNull File base, int depth) throws IOException {
-    File dir = base;
+  private val extensionPoint = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)
+
+  @Throws(IOException::class)
+  private fun createChild(base: File, depth: Int): File {
+    var dir = base
     if (depth < 0) {
-      return dir;
+      return dir
     }
-    for (int i = 0; i < depth; ++i) {
-      dir = FileUtil.createTempDirectory(dir, "grdt", null);
+    for (i in 0 until depth) {
+      dir = FileUtil.createTempDirectory(dir, "grdt", null)
     }
-    return dir;
+    return dir
   }
 
   // Assuming that there are no ".." inside the path - only in the beginning
-  static int findMaxDepthAboveProject(@NotNull Collection<String> paths) {
-    int max = 0;
-    for (String path : paths) {
-      String[] splits = path.split("/");
-      int count = 0;
-      for (String split : splits) {
-        if (split.equals("..")) {
-          count++;
+  internal fun findMaxDepthAboveProject(paths: Collection<String>): Int {
+    var max = 0
+    for (path in paths) {
+      val splits = path.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+      var count = 0
+      for (split in splits) {
+        if (split == "..") {
+          count++
         }
       }
       if (count > max) {
-        max = count;
+        max = count
       }
     }
-    return max;
+    return max
   }
 }

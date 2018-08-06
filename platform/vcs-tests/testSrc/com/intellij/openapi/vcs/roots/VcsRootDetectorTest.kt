@@ -1,205 +1,201 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.openapi.vcs.roots;
+package com.intellij.openapi.vcs.roots
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import junit.framework.TestCase
+import one.util.streamex.StreamEx
+import org.jetbrains.jps.model.serialization.PathMacroUtil
+import java.io.File
+import java.io.IOException
+import java.util.Arrays.asList
+import java.util.Collections.emptyList
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
+class VcsRootDetectorTest : VcsRootBaseTest() {
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.mkdir;
-import static com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
-public class VcsRootDetectorTest extends VcsRootBaseTest {
-
-  public void testNoRootsInProject() throws IOException {
-    doTest(new VcsRootConfiguration(), null);
+  @Throws(IOException::class)
+  fun testNoRootsInProject() {
+    doTest(VcsRootConfiguration(), null)
   }
 
-  public void testProjectUnderSingleMockRoot() throws IOException {
-    doTest(new VcsRootConfiguration().vcsRoots("."), projectRoot, ".");
+  @Throws(IOException::class)
+  fun testProjectUnderSingleMockRoot() {
+    doTest(VcsRootConfiguration().vcsRoots("."), projectRoot, ".")
   }
 
-  public void testProjectWithMockRootUnderIt() throws IOException {
-    cd(projectRoot);
-    mkdir("src");
-    mkdir(PathMacroUtil.DIRECTORY_STORE_NAME);
-    doTest(new VcsRootConfiguration().vcsRoots("community"), projectRoot, "community");
+  @Throws(IOException::class)
+  fun testProjectWithMockRootUnderIt() {
+    cd(projectRoot)
+    mkdir("src")
+    mkdir(PathMacroUtil.DIRECTORY_STORE_NAME)
+    doTest(VcsRootConfiguration().vcsRoots("community"), projectRoot, "community")
   }
 
-  public void testProjectWithAllSubdirsUnderMockRootShouldStillBeNotFullyControlled() throws IOException {
-    String[] dirNames = {PathMacroUtil.DIRECTORY_STORE_NAME, "src", "community"};
-    doTest(new VcsRootConfiguration().vcsRoots(dirNames), projectRoot, dirNames);
+  @Throws(IOException::class)
+  fun testProjectWithAllSubdirsUnderMockRootShouldStillBeNotFullyControlled() {
+    val dirNames = arrayOf(PathMacroUtil.DIRECTORY_STORE_NAME, "src", "community")
+    doTest(VcsRootConfiguration().vcsRoots(*dirNames), projectRoot, *dirNames)
   }
 
-  public void testProjectUnderVcsAboveIt() throws IOException {
-    String subdir = "insideRepo";
-    cd(myRepository);
-    mkdir(subdir);
-    VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(new VcsRootConfiguration().vcsRoots(myRepository.getName()), vfile, myRepository.getName()
-    );
+  @Throws(IOException::class)
+  fun testProjectUnderVcsAboveIt() {
+    val subdir = "insideRepo"
+    cd(myRepository)
+    mkdir(subdir)
+    val vfile = myRepository.findChild(subdir)
+    doTest(VcsRootConfiguration().vcsRoots(myRepository.name), vfile, myRepository.name
+    )
   }
 
-  public void testIDEAProject() throws IOException {
-    String[] names = {"community", "contrib", "."};
-    doTest(new VcsRootConfiguration().vcsRoots(names), projectRoot, names);
+  @Throws(IOException::class)
+  fun testIDEAProject() {
+    val names = arrayOf("community", "contrib", ".")
+    doTest(VcsRootConfiguration().vcsRoots(*names), projectRoot, *names)
   }
 
-  public void testOneAboveAndOneUnder() throws IOException {
-    String[] names = {myRepository.getName() + "/community", "."};
-    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, names);
+  @Throws(IOException::class)
+  fun testOneAboveAndOneUnder() {
+    val names = arrayOf(myRepository.name + "/community", ".")
+    doTest(VcsRootConfiguration().vcsRoots(*names), myRepository, *names)
   }
 
-  public void testOneAboveAndOneForProjectShouldShowOnlyProjectRoot() throws IOException {
-    String[] names = {myRepository.getName(), "."};
-    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, myRepository.getName());
+  @Throws(IOException::class)
+  fun testOneAboveAndOneForProjectShouldShowOnlyProjectRoot() {
+    val names = arrayOf(myRepository.name, ".")
+    doTest(VcsRootConfiguration().vcsRoots(*names), myRepository, myRepository.name)
   }
 
-  public void testDontDetectAboveIfProjectIsIgnoredThere() throws IOException {
-    myRootChecker.setIgnored(myRepository);
-    assertTrue(new File(testRoot, DOT_MOCK).mkdir());
-    doTest(new VcsRootConfiguration().vcsRoots(testRoot.getPath()), myRepository);
+  @Throws(IOException::class)
+  fun testDontDetectAboveIfProjectIsIgnoredThere() {
+    myRootChecker.setIgnored(myRepository)
+    assertTrue(File(testRoot, DOT_MOCK).mkdir())
+    doTest(VcsRootConfiguration().vcsRoots(testRoot.path), myRepository)
   }
 
-  public void testOneAboveAndSeveralUnderProject() throws IOException {
-    String[] names = {".", myRepository.getName() + "/community", myRepository.getName() + "/contrib"};
-    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, names);
+  @Throws(IOException::class)
+  fun testOneAboveAndSeveralUnderProject() {
+    val names = arrayOf(".", myRepository.name + "/community", myRepository.name + "/contrib")
+    doTest(VcsRootConfiguration().vcsRoots(*names), myRepository, *names)
   }
 
-  public void testMultipleAboveShouldBeDetectedAsOneAbove() throws IOException {
-    String subdir = "insideRepo";
-    cd(myRepository);
-    mkdir(subdir);
-    VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(new VcsRootConfiguration().vcsRoots(".", myRepository.getName()), vfile, myRepository.getName());
+  @Throws(IOException::class)
+  fun testMultipleAboveShouldBeDetectedAsOneAbove() {
+    val subdir = "insideRepo"
+    cd(myRepository)
+    mkdir(subdir)
+    val vfile = myRepository.findChild(subdir)
+    doTest(VcsRootConfiguration().vcsRoots(".", myRepository.name), vfile, myRepository.name)
   }
 
-  public void testUnrelatedRootShouldNotBeDetected() throws IOException {
-    doTest(new VcsRootConfiguration().vcsRoots("another"), myRepository);
+  @Throws(IOException::class)
+  fun testUnrelatedRootShouldNotBeDetected() {
+    doTest(VcsRootConfiguration().vcsRoots("another"), myRepository)
   }
 
-  public void testLinkedSourceRootAloneShouldBeDetected() {
-    String linkedRoot = "linked_root";
-    File linkedRootDir = new File(testRoot, linkedRoot);
-    assertTrue(new File(linkedRootDir, DOT_MOCK).mkdirs());
-    PsiTestUtil.addContentRoot(myRootModule, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir));
+  fun testLinkedSourceRootAloneShouldBeDetected() {
+    val linkedRoot = "linked_root"
+    val linkedRootDir = File(testRoot, linkedRoot)
+    assertTrue(File(linkedRootDir, DOT_MOCK).mkdirs())
+    myRootModel.addContentEntry(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(linkedRootDir)!!)
 
-    Collection<VcsRoot> roots = detect(projectRoot);
+    val roots = detect(projectRoot)
 
-    assertEqualCollections(StreamEx.of(roots).map(it -> it.getPath().getPath()).toList(),
-                           singletonList(toSystemIndependentName(linkedRootDir.getPath())));
+    assertEqualCollections(StreamEx.of(roots).map { it -> it.path!!.path }.toList(),
+                           listOf(toSystemIndependentName(linkedRootDir.path)))
   }
 
-  public void testLinkedSourceRootAndProjectRootShouldBeDetected() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots(".", "linked_root")
-        .contentRoots("linked_root");
-    doTest(vcsRootConfiguration, projectRoot, ".", "linked_root");
+  @Throws(IOException::class)
+  fun testLinkedSourceRootAndProjectRootShouldBeDetected() {
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "linked_root")
+      .contentRoots("linked_root")
+    doTest(vcsRootConfiguration, projectRoot, ".", "linked_root")
   }
 
-  public void testLinkedSourceBelowMockRoot() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().contentRoots("linked_root/src")
-        .vcsRoots(".", "linked_root");
-    doTest(vcsRootConfiguration, projectRoot, ".", "linked_root");
+  @Throws(IOException::class)
+  fun testLinkedSourceBelowMockRoot() {
+    val vcsRootConfiguration = VcsRootConfiguration().contentRoots("linked_root/src")
+      .vcsRoots(".", "linked_root")
+    doTest(vcsRootConfiguration, projectRoot, ".", "linked_root")
   }
 
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
-  public void testDontScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
-    Registry.get("vcs.root.detector.folder.depth").setValue(2, getTestRootDisposable());
-    VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
-        .contentRoots("content_root");
+  @Throws(IOException::class)
+  fun testDontScanDeeperThan2LevelsBelowAContentRoot() {
+    Registry.get("vcs.root.detector.folder.depth").setValue(2, testRootDisposable)
+    val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
+      .contentRoots("content_root")
     doTest(vcsRootConfiguration,
-           projectRoot, "community", "content_root/lev1");
+           projectRoot, "community", "content_root/lev1")
   }
 
-  public void testDontScanExcludedDirs() throws IOException {
-    VcsRootConfiguration vcsRootConfiguration = new VcsRootConfiguration()
-        .contentRoots("community", "excluded")
-        .vcsRoots("community", "excluded/lev1");
-    setUp(vcsRootConfiguration, projectRoot);
+  @Throws(IOException::class)
+  fun testDontScanExcludedDirs() {
+    val vcsRootConfiguration = VcsRootConfiguration()
+      .contentRoots("community", "excluded")
+      .vcsRoots("community", "excluded/lev1")
+    setUp(vcsRootConfiguration, projectRoot)
 
-    VirtualFile excludedFolder = projectRoot.findChild("excluded");
-    assertNotNull(excludedFolder);
-    markAsExcluded(excludedFolder);
+    val excludedFolder = projectRoot.findChild("excluded")
+    TestCase.assertNotNull(excludedFolder)
+    markAsExcluded(excludedFolder!!)
 
-    Collection<VcsRoot> vcsRoots = detect(projectRoot);
-    assertRoots(singletonList("community"), getPaths(vcsRoots));
+    val vcsRoots = detect(projectRoot)
+    assertRoots(listOf("community"), getPaths(vcsRoots))
   }
 
-  private void assertRoots(@NotNull Collection<String> expectedRelativePaths, @NotNull Collection<String> actual) {
-    assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject));
+  private fun assertRoots(expectedRelativePaths: Collection<String>, actual: Collection<String>) {
+    assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject))
   }
 
-  private void markAsExcluded(@NotNull VirtualFile dir) {
-    ModuleRootModificationUtil.updateExcludedFolders(myRootModule, dir, emptyList(), singletonList(dir.getUrl()));
+  private fun markAsExcluded(dir: VirtualFile) {
+    ModuleRootModificationUtil.updateExcludedFolders(myRootModel.module, dir, emptyList(), listOf(dir.url))
   }
 
-  @NotNull
-  public static Collection<String> toAbsolute(@NotNull Collection<String> relPaths, @NotNull final Project project) {
-    return ContainerUtil.map(relPaths, s -> {
-      try {
-        return toSystemIndependentName(new File(project.getBasePath(), s).getCanonicalPath());
+  private fun detect(startDir: VirtualFile?): Collection<VcsRoot> {
+    return ServiceManager.getService(myProject, VcsRootDetector::class.java).detect(startDir)
+  }
+
+  @Throws(IOException::class)
+  private fun doTest(vcsRootConfiguration: VcsRootConfiguration,
+                     startDir: VirtualFile?,
+                     vararg expectedPaths: String) {
+    setUp(vcsRootConfiguration, startDir)
+    val vcsRoots = detect(startDir)
+    assertRoots(asList(*expectedPaths), getPaths(
+      ContainerUtil.filter(vcsRoots) { root ->
+        assert(root.vcs != null)
+        root.vcs!!.keyInstanceMethod == myVcs.keyInstanceMethod
       }
-      catch (IOException e) {
-        fail();
-        e.printStackTrace();
-        return null;
-      }
-    });
+    ))
   }
 
-  @NotNull
-  static Collection<String> getPaths(@NotNull Collection<VcsRoot> files) {
-    return ContainerUtil.map(files, root -> {
-      VirtualFile file = root.getPath();
-      assert file != null;
-      return toSystemIndependentName(file.getPath());
-    });
+  @Throws(IOException::class)
+  private fun setUp(vcsRootConfiguration: VcsRootConfiguration, startDir: VirtualFile?) {
+    initProject(vcsRootConfiguration)
+    startDir?.refresh(false, true)
   }
 
-  @NotNull
-  private Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
-    return ServiceManager.getService(myProject, VcsRootDetector.class).detect(startDir);
+  fun toAbsolute(relPaths: Collection<String>, project: Project): Collection<String> {
+    return relPaths.map {
+      toSystemIndependentName(File(project.basePath, it).canonicalPath)
+    }
   }
 
-  public void doTest(@NotNull VcsRootConfiguration vcsRootConfiguration,
-                     @Nullable VirtualFile startDir,
-                     @NotNull String... expectedPaths) throws IOException {
-    setUp(vcsRootConfiguration, startDir);
-    Collection<VcsRoot> vcsRoots = detect(startDir);
-    assertRoots(asList(expectedPaths), getPaths(
-      ContainerUtil.filter(vcsRoots, root -> {
-        assert root.getVcs() != null;
-        return root.getVcs().getKeyInstanceMethod().equals(myVcs.getKeyInstanceMethod());
-      })
-    ));
-  }
-
-  private void setUp(@NotNull VcsRootConfiguration vcsRootConfiguration, @Nullable VirtualFile startDir) throws IOException {
-    initProject(vcsRootConfiguration);
-    if (startDir != null) {
-      startDir.refresh(false, true);
+  internal fun getPaths(files: Collection<VcsRoot>): Collection<String> {
+    return ContainerUtil.map(files) { root ->
+      val file = root.path!!
+      toSystemIndependentName(file.path)
     }
   }
 }
