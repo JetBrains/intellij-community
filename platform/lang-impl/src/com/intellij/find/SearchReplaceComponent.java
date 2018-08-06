@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.BooleanGetter;
@@ -487,7 +488,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   private void installCloseOnEscapeAction(@NotNull JTextComponent c) {
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         close();
