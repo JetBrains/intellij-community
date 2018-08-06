@@ -465,7 +465,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     Object data = myCurrentView.getData(dataId);
     if (data != null) {
       return data;

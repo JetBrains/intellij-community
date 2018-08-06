@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -126,7 +127,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   }
 
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
 
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;

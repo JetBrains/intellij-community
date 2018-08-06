@@ -745,7 +745,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return myActionPanel.getData(dataId);
   }
 
@@ -1102,7 +1102,7 @@ public abstract class DesignerEditorPanel extends JPanel
           final AnAction[] defaultAction = new AnAction[1];
           DefaultActionGroup popupGroup = new DefaultActionGroup() {
             @Override
-            public boolean canBePerformed(DataContext context) {
+            public boolean canBePerformed(@NotNull DataContext context) {
               return true;
             }
 

@@ -85,7 +85,7 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {

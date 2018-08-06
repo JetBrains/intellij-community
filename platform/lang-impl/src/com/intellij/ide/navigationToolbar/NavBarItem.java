@@ -210,7 +210,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return myPanel.getDataImpl(dataId, this, () -> JBIterable.of(myObject));
   }
 

@@ -580,7 +580,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.build.tool.window";
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();

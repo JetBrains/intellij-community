@@ -300,7 +300,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       super.paintComponent(g);
     }
 
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
         return selectedNodes.length == 1 && selectedNodes[0].getUserObject() instanceof MigrationNode

@@ -1053,7 +1053,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
       if (currentProjectViewPane != null) {
         final Object paneSpecificData = currentProjectViewPane.getData(dataId);

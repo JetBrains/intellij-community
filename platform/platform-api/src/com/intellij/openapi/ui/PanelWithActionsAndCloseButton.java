@@ -74,7 +74,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     }
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)){
       return myHelpId;
     }

@@ -248,7 +248,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     };
     DataProvider helpDataProvider = new DataProvider() {
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         return PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
       }
     };
@@ -575,7 +575,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.getName().equals(dataId)) {
       // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
       // with raw white spaces. See IDEA-86633 for more details.
@@ -1282,7 +1282,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private static boolean isToolbar(AnActionEvent e) {
+  private static boolean isToolbar(@NotNull AnActionEvent e) {
     return ActionPlaces.JAVADOC_TOOLBAR.equals(e.getPlace());
   }
 

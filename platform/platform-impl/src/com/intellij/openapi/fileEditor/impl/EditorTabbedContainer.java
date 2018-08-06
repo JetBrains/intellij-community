@@ -468,7 +468,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
   private final class MyDataProvider implements DataProvider {
     @Override
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }

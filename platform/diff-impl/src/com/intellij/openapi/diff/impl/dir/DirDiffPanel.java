@@ -494,7 +494,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myModel.getProject();
     }

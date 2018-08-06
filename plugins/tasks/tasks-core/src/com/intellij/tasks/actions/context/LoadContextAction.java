@@ -203,7 +203,7 @@ public class LoadContextAction extends BaseTaskAction {
       }
 
       @Override
-      public boolean canBePerformed(DataContext context) {
+      public boolean canBePerformed(@NotNull DataContext context) {
         return true;
       }
 

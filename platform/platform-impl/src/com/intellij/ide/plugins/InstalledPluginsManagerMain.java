@@ -283,7 +283,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     DataManager.registerDataProvider(table, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
           return copyProvider;
         }

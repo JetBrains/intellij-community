@@ -369,7 +369,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     Object selectedValue = getSelectedValue();
     if (selectedValue == null) return null;
 

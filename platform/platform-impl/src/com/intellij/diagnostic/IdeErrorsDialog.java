@@ -770,7 +770,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public void entryWasRead() { }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return CURRENT_TRACE_KEY.is(dataId) ? selectedMessage().getThrowableText() : null;
   }
 

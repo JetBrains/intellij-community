@@ -63,7 +63,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
   }
 
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }

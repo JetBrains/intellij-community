@@ -1439,7 +1439,7 @@ public class PluginManagerConfigurableNew
     DataManager.registerDataProvider(component, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
           return copyProvider;
         }

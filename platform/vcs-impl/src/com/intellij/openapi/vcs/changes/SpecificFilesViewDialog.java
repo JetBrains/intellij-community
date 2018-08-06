@@ -53,7 +53,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     myView = new ChangesListView(project) {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (shownDataKey.is(dataId)) {
           return getSelectedVirtualFiles(null);
         }

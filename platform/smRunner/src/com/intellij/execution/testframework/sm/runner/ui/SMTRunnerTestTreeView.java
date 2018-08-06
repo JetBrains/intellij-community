@@ -67,7 +67,7 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (SM_TEST_RUNNER_VIEW.is(dataId)) {
       return this;
     }

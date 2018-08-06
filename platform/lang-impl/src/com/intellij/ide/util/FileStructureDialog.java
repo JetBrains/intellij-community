@@ -408,7 +408,7 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       Object selectedElement = myCommanderPanel.getSelectedValue();
 
       if (selectedElement instanceof TreeElement) selectedElement = ((StructureViewTreeElement)selectedElement).getValue();

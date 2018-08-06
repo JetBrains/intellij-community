@@ -368,7 +368,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private class EvaluationMainPanel extends BorderLayoutPanel implements DataProvider {
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (KEY.is(dataId)) {
         return XDebuggerEvaluationDialog.this;
       }

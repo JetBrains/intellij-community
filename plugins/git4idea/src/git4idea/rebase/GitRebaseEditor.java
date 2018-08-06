@@ -177,7 +177,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyProvider;
     }

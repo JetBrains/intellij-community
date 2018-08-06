@@ -453,7 +453,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   @Override
   @Nullable
   @NonNls
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PackageDependenciesNode selectedNode = myRightTree.getSelectedNode();
       if (selectedNode != null) {
@@ -747,7 +747,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private static class MyTree extends Tree implements DataProvider {
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       PackageDependenciesNode node = getSelectedNode();
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return node;

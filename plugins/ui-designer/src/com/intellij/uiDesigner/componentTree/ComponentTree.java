@@ -231,7 +231,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
    * binding of currently selected component (if any)
    */
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }

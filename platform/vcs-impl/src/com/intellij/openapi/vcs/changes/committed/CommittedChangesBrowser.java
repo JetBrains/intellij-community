@@ -59,7 +59,7 @@ public class CommittedChangesBrowser extends SimpleChangesBrowser {
     myUseCase = useCase;
   }
 
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
       return myUseCase;
     }

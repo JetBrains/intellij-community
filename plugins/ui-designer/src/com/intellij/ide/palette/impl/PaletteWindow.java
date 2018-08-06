@@ -238,7 +238,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }

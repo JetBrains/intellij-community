@@ -323,7 +323,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
     }

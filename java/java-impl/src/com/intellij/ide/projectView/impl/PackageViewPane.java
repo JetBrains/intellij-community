@@ -89,7 +89,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final PackageElement selectedPackageElement = getSelectedPackageElement();
       if (selectedPackageElement != null) {

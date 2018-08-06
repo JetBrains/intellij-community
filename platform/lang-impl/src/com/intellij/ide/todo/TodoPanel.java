@@ -344,7 +344,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {

@@ -159,7 +159,7 @@ public final class EmptyAction extends AnAction {
     }
 
     @Override
-    public boolean canBePerformed(DataContext context) {
+    public boolean canBePerformed(@NotNull DataContext context) {
       return myDelegate.canBePerformed(context);
     }
 

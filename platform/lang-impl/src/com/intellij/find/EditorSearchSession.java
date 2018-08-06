@@ -225,7 +225,7 @@ public class EditorSearchSession implements SearchSession,
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (SearchSession.KEY.is(dataId)) {
       return this;
     }

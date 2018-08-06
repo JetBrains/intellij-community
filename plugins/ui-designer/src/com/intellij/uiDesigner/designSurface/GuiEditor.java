@@ -523,7 +523,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }

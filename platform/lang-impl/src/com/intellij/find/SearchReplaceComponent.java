@@ -266,7 +266,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
       return mySearchTextComponent.getText();
     }

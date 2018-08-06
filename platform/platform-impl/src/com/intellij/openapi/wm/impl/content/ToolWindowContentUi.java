@@ -573,7 +573,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) return myWindow;
 
     if (CloseAction.CloseTarget.KEY.is(dataId)) {

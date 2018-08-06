@@ -295,7 +295,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myModule.getProject();
       }

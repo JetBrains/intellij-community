@@ -395,7 +395,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (SHELVED_CHANGELIST_KEY.is(dataId)) {
         final Set<ShelvedChangeList> changeLists = getSelectedLists(false);
 

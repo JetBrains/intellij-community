@@ -3125,7 +3125,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (myDataProvider != null) {
       final Object value = myDataProvider.getData(dataId);
       if (value != null) return value;

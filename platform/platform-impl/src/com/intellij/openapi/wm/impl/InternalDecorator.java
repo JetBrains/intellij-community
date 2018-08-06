@@ -187,7 +187,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
       return myToolWindow;
     }

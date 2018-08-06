@@ -290,7 +290,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return null;
   }
 
@@ -878,7 +878,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     DataManager.registerDataProvider(panel, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         final Object value = myList.getSelectedValue();
         if (CommonDataKeys.PSI_ELEMENT.is(dataId) && value instanceof PsiElement) {
           return value;
@@ -1000,7 +1000,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
         return getTextEditor().getText();
       }

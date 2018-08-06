@@ -539,7 +539,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     @Override
-    public boolean isVisible(AnActionEvent event) {
+    public boolean isVisible(@NotNull AnActionEvent event) {
       return !myGroupingSupport.isNone() || !myIsModelFlat;
     }
   }
@@ -663,7 +663,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myTreeCopyProvider;
     }

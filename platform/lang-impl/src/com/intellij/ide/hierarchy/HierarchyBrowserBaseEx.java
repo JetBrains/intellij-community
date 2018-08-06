@@ -476,7 +476,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (getBrowserDataKey().equals(dataId)) {
       return this;
     }

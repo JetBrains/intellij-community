@@ -308,7 +308,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       return PlatformDataKeys.COPY_PROVIDER.is(dataId) ? this : null;
     }
 

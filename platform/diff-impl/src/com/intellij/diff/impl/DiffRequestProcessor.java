@@ -890,7 +890,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       Object data;
 
       DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());

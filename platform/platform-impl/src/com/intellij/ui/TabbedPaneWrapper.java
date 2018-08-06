@@ -354,7 +354,7 @@ public class TabbedPaneWrapper  {
      * Make possible to search down for DataProviders
      */
     @Override
-    public Object getData(final String dataId) {
+    public Object getData(@NotNull final String dataId) {
       if(myComponent instanceof DataProvider){
         return ((DataProvider)myComponent).getData(dataId);
       }

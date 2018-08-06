@@ -233,7 +233,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myBuilder.select(file);
   }
 
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return getSelectedValue();
     }

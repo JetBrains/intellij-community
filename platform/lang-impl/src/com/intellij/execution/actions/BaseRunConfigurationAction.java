@@ -108,7 +108,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @Override
-  public boolean canBePerformed(DataContext dataContext) {
+  public boolean canBePerformed(@NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && DumbService.isDumb(project)) {
       return false;

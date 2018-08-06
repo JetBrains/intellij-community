@@ -28,6 +28,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   protected Project myProject;
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
   }
 

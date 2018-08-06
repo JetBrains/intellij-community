@@ -259,7 +259,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
         return myTextField.getText();
       }

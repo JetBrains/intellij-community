@@ -652,7 +652,7 @@ public class DynamicToolWindowWrapper {
 
     @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getSelectedElement();
       }

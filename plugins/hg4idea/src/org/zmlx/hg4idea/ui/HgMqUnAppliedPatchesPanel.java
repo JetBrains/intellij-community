@@ -217,7 +217,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (MQ_PATCHES.is(dataId)) {
       return this;
     }

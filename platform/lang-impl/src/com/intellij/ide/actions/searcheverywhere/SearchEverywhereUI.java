@@ -283,7 +283,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     IntStream indicesStream = Arrays.stream(myResultsList.getSelectedIndices())
                                     .filter(i -> !myListModel.isMoreElement(i));
 

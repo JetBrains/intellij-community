@@ -170,7 +170,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
 
     IdeaTestApplication.getInstance().setDataProvider(new DataProvider() {
       @Override
-      Object getData(@NonNls String dataId) {
+      Object getData(@NotNull @NonNls String dataId) {
         if (SHOW_HIDDEN_KEY.is(dataId) && passFlag) return Boolean.TRUE;
         return null
       }

@@ -278,7 +278,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
 
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.CONTENT_MANAGER.is(dataId)) {
           return myManager;
         }

@@ -281,7 +281,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return null;
   }
 
@@ -1489,7 +1489,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
         return getTextEditor().getText();
       }

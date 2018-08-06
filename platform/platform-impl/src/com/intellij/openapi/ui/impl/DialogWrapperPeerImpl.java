@@ -574,7 +574,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       final DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper instanceof DataProvider) {
         return ((DataProvider)wrapper).getData(dataId);
@@ -966,7 +966,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         final DialogWrapper wrapper = myDialogWrapper.get();
         return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
       }

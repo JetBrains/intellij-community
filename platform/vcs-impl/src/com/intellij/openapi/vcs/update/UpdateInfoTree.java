@@ -230,7 +230,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
       return null;
     }

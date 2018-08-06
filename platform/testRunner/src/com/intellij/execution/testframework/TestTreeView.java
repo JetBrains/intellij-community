@@ -92,7 +92,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     setLargeModel(true);
   }
 
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }

@@ -455,7 +455,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HelpID.COMMANDER;
     }

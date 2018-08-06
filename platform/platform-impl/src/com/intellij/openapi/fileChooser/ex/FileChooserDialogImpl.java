@@ -568,7 +568,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       super(new BorderLayout(0, 0));
     }
 
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PATH_FIELD.is(dataId)) {
         return (PathField)FileChooserDialogImpl.this::toggleShowTextField;
       }

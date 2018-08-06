@@ -34,7 +34,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   private boolean myAutoPackHeight = true;
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
       return mySearchField.getText();
     }

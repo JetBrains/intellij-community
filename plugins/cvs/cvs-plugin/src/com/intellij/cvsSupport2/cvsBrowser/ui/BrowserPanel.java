@@ -217,7 +217,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile cvsVirtualFile = getCvsVirtualFile();
       if (cvsVirtualFile == null || !cvsVirtualFile.isValid()) return null;

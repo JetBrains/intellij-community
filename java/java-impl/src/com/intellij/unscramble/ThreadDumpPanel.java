@@ -157,7 +157,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
       return myExporterToTextFile;
     }
