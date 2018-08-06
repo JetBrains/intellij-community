@@ -146,9 +146,9 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   public void initializeAndroidStudioUsageTrackerAndPublisher() {
     ILogger logger = getAndroidLogger();
 
-    AnalyticsSettings.initialize(logger);
-
     ScheduledExecutorService scheduler = JobScheduler.getScheduler();
+    AnalyticsSettings.initialize(logger, scheduler);
+
     try {
       UsageTracker.initialize(scheduler);
     } catch (Exception e) {
