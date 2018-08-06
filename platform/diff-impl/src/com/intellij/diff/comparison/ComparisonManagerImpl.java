@@ -98,13 +98,9 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull CharSequence text3,
                                               @NotNull ComparisonPolicy policy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    LineOffsets lineOffsets1 = LineOffsetsUtil.create(text1);
-    LineOffsets lineOffsets2 = LineOffsetsUtil.create(text2);
-    LineOffsets lineOffsets3 = LineOffsetsUtil.create(text3);
-
-    List<CharSequence> lineTexts1 = getLineContents(text1, lineOffsets1);
-    List<CharSequence> lineTexts2 = getLineContents(text2, lineOffsets2);
-    List<CharSequence> lineTexts3 = getLineContents(text3, lineOffsets3);
+    List<CharSequence> lineTexts1 = getLineContents(text1);
+    List<CharSequence> lineTexts2 = getLineContents(text2);
+    List<CharSequence> lineTexts3 = getLineContents(text3);
 
     List<MergeRange> ranges = ByLine.compare(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
     return convertIntoMergeLineFragments(ranges);
@@ -117,13 +113,9 @@ public class ComparisonManagerImpl extends ComparisonManager {
                                             @NotNull CharSequence text3,
                                             @NotNull ComparisonPolicy policy,
                                             @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    LineOffsets lineOffsets1 = LineOffsetsUtil.create(text1);
-    LineOffsets lineOffsets2 = LineOffsetsUtil.create(text2);
-    LineOffsets lineOffsets3 = LineOffsetsUtil.create(text3);
-
-    List<CharSequence> lineTexts1 = getLineContents(text1, lineOffsets1);
-    List<CharSequence> lineTexts2 = getLineContents(text2, lineOffsets2);
-    List<CharSequence> lineTexts3 = getLineContents(text3, lineOffsets3);
+    List<CharSequence> lineTexts1 = getLineContents(text1);
+    List<CharSequence> lineTexts2 = getLineContents(text2);
+    List<CharSequence> lineTexts3 = getLineContents(text3);
 
     List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
     return convertIntoMergeLineFragments(ranges);
@@ -501,7 +493,8 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static List<CharSequence> getLineContents(@NotNull CharSequence text, @NotNull LineOffsets lineOffsets) {
+  private static List<CharSequence> getLineContents(@NotNull CharSequence text) {
+    LineOffsets lineOffsets = LineOffsetsUtil.create(text);
     return getLineContents(0, lineOffsets.getLineCount(), text, lineOffsets);
   }
 
