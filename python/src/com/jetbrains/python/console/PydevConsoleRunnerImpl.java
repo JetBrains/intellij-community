@@ -408,7 +408,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         throw new ExecutionException(e.getMessage(), e);
       }
 
-      return new CommandLineProcess(generalCommandLine.createProcess(), generalCommandLine.getCommandLineString());
+      Process process = generalCommandLine.createProcess();
+      myPydevConsoleCommunication.setPythonConsoleProcess(process);
+      return new CommandLineProcess(process, generalCommandLine.getCommandLineString());
     }
   }
 
