@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -59,7 +58,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
@@ -212,21 +210,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myInitialized.doWhenDone(
       () -> {
         if (code != null) {
-          ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", true) {
             @Override
             public void run(@NotNull final ProgressIndicator indicator) {
-              long time = System.currentTimeMillis();
               while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
                 if (indicator.isCanceled()) {
                   break;
-                }
-                if (System.currentTimeMillis() - time > 1000) {
-                  if (editor != null) {
-                    UIUtil.invokeLaterIfNeeded(
-                      () -> HintManager.getInstance()
-                                       .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
-                  }
-                  return;
                 }
                 TimeoutUtil.sleep(300);
               }
