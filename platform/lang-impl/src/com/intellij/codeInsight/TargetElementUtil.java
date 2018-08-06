@@ -3,7 +3,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -347,7 +346,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Nullable
   private PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
-    PsiElement result = doGetReferenceOrReferencedElement(file, editor, flags, offset);
+    PsiElement result = doGetReferenceOrReferencedElement(editor, flags, offset);
     PsiElement languageElement = file.findElementAt(offset);
     Language language = languageElement != null ? languageElement.getLanguage() : file.getLanguage();
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(language);
@@ -358,7 +357,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  private PsiElement doGetReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
+  private static PsiElement doGetReferenceOrReferencedElement(Editor editor, int flags, int offset) {
     PsiReference ref = findReference(editor, offset);
     if (ref == null) return null;
 
@@ -369,17 +368,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
       if (element != null) return element;
     }
 
-    PsiManager manager = file.getManager();
-    PsiElement refElement = ref.resolve();
-    if (refElement == null) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        DaemonCodeAnalyzer.getInstance(manager.getProject()).updateVisibleHighlighters(editor);
-      }
-      return null;
-    }
-    else {
-      return refElement;
-    }
+    return ref.resolve();
   }
 
   @Override
