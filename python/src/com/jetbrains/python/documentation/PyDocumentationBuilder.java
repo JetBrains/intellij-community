@@ -423,6 +423,13 @@ public class PyDocumentationBuilder {
         }
       }
     }
+    // Reference expression can be passed as the target element in Python console
+    if (myElement instanceof PyReferenceExpression) {
+      final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)myElement);
+      if (resolved != null) {
+        return resolved;
+      }
+    }
     return myElement;
   }
 
