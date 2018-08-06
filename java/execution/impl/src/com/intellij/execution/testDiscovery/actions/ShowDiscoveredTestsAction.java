@@ -154,7 +154,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     return methods
       .stream()
-      .map(m -> ObjectUtils.tryCast(Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi(), PsiMethod.class))
+      .map(m -> UastContextKt.toUElement(m))
+      .filter(Objects::nonNull)
+      .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
       .filter(Objects::nonNull)
       .toArray(PsiMethod.ARRAY_FACTORY::create);
   }
