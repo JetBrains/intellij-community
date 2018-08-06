@@ -100,7 +100,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
       }
 
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
           final File file = virtualToIoFile(vFile);
@@ -133,13 +133,13 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
         registerCustomShortcutSet(CommonShortcuts.getDelete(), myWorkingCopiesList);
       }
 
-      public void update(final AnActionEvent e) {
+      public void update(@NotNull final AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         final int idx = (myWorkingCopiesList == null) ? -1 : myWorkingCopiesList.getSelectedIndex();
         presentation.setEnabled(idx != -1);
       }
 
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final int idx = myWorkingCopiesList.getSelectedIndex();
         if (idx != -1) {
           final DefaultListModel model = (DefaultListModel)myWorkingCopiesList.getModel();

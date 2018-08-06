@@ -39,6 +39,7 @@ import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -196,13 +197,13 @@ class AssociationsEditor {
       super(myManager);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final PsiFile selection = (PsiFile)getTreeSelection(myTree);
       addAssociation(selection);
       myListModel.update(selection);
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getTreeSelection(myTree) instanceof PsiFile);
     }
   }
@@ -212,7 +213,7 @@ class AssociationsEditor {
       super("Remove", "Remove Association", IconUtil.getRemoveIcon());
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final PsiFile selection = (PsiFile)getTreeSelection(myTree);
       final PsiFile listSelection = (PsiFile)getListSelection();
 
@@ -220,7 +221,7 @@ class AssociationsEditor {
       myListModel.update(selection);
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getListSelection() instanceof PsiFile);
     }
 

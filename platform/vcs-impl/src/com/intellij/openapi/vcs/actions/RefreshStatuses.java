@@ -21,16 +21,17 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import org.jetbrains.annotations.NotNull;
 
 public class RefreshStatuses extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     boolean isEnabled = project != null &&
         ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0;

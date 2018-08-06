@@ -56,7 +56,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     super(UpdateCopyrightProcessor.TITLE, UpdateCopyrightProcessor.TITLE);
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final boolean enabled = isEnabled(event);
     event.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(event.getPlace())) {

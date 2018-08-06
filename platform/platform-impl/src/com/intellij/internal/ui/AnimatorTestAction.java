@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AnimatorTestAction extends AnAction {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> SwingUtilities.invokeLater(() -> TimeoutUtil.sleep(30)), 0, 123, TimeUnit.MILLISECONDS);
 

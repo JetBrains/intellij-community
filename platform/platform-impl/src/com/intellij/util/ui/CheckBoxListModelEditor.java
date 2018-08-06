@@ -77,7 +77,7 @@ public class CheckBoxListModelEditor<T> {
   public CheckBoxListModelEditor<T> copyAction(final @NotNull Consumer<T> consumer) {
     toolbarDecorator.addExtraAction(new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         int[] indices = list.getSelectedIndices();
         if (indices == null || indices.length == 0) {
           return;

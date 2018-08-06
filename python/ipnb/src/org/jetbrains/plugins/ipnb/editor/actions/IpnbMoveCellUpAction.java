@@ -29,7 +29,7 @@ public class IpnbMoveCellUpAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     IpnbFilePanel ipnbFilePanel = myEditor.getIpnbFilePanel();
     IpnbEditablePanel selectedCellPanel = ipnbFilePanel.getSelectedCellPanel();
     if (selectedCellPanel != null) {

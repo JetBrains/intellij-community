@@ -158,7 +158,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     if (model.isOperationsEnabled()) {
       new DumbAwareAction("Change diff operation") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           changeOperationForSelection();
         }
       }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);

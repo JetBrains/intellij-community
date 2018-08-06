@@ -6,11 +6,12 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
 
   @Override
-  public void actionPerformed(final AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -36,7 +37,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);

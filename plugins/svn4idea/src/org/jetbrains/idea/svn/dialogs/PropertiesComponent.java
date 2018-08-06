@@ -221,27 +221,27 @@ public class PropertiesComponent extends JPanel {
 
   private static class CloseAction extends DumbAwareAction {
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Close");
       e.getPresentation().setDescription("Close this tool window");
       e.getPresentation().setIcon(AllIcons.Actions.Cancel);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project p = e.getData(CommonDataKeys.PROJECT);
       ToolWindowManager.getInstance(p).unregisterToolWindow(ID);
     }
   }
 
   private class RefreshAction extends DumbAwareAction {
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Refresh");
       e.getPresentation().setDescription("Reload properties");
       e.getPresentation().setIcon(AllIcons.Actions.Refresh);
       e.getPresentation().setEnabled(myFile != null);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       setFile(myVcs, myFile);
       updateFileStatus(false);
     }
@@ -271,14 +271,14 @@ public class PropertiesComponent extends JPanel {
 
   private class SetKeywordsAction extends BasePropertyAction {
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Edit Keywords");
       e.getPresentation().setDescription("Manage svn:keywords property");
       e.getPresentation().setIcon(AllIcons.Actions.Properties);
       e.getPresentation().setEnabled(myFile != null && myFile.isFile());
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       PropertyValue propValue = null;
       try {
@@ -298,14 +298,14 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class DeletePropertyAction extends BasePropertyAction {
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Delete Property");
       e.getPresentation().setDescription("Delete selected property");
       e.getPresentation().setIcon(AllIcons.General.Remove);
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       setProperty(getSelectedPropertyName(), null, false, true);
       updateFileView(false);
     }
@@ -313,14 +313,14 @@ public class PropertiesComponent extends JPanel {
 
   private class AddPropertyAction extends BasePropertyAction {
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Add Property");
       e.getPresentation().setDescription("Add new property");
       e.getPresentation().setIcon(IconUtil.getAddIcon());
       e.getPresentation().setEnabled(myFile != null);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, null,
                                                        myFile.isDirectory());
@@ -334,14 +334,14 @@ public class PropertiesComponent extends JPanel {
   }
 
   private class EditPropertyAction extends BasePropertyAction {
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Edit Property");
       e.getPresentation().setDescription("Edit selected property value");
       e.getPresentation().setIcon(AllIcons.Actions.EditSource);
       e.getPresentation().setEnabled(myFile != null && getSelectedPropertyName() != null);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, getSelectedPropertyName(), myFile.isDirectory());
       boolean recursive = false;
@@ -365,7 +365,7 @@ public class PropertiesComponent extends JPanel {
       myIsFollowSelection = state;
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setIcon(AllIcons.General.AutoscrollFromSource);
       e.getPresentation().setText("Follow Selection");

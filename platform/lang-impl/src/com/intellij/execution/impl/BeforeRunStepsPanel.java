@@ -24,6 +24,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -280,7 +281,7 @@ class BeforeRunStepsPanel extends JPanel {
           continue;
         AnAction providerAction = new AnAction(provider.getName(), null, provider.getIcon()) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             BeforeRunTask task = provider.createTask(myRunConfiguration);
             if (task == null)  return;
 

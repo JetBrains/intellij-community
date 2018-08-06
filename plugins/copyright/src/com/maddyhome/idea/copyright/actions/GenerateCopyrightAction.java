@@ -26,11 +26,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GenerateCopyrightAction extends AnAction
 {
-    public void update(AnActionEvent e)
+    public void update(@NotNull AnActionEvent e)
     {
         Presentation presentation = e.getPresentation();
         DataContext context = e.getDataContext();
@@ -59,7 +60,7 @@ public class GenerateCopyrightAction extends AnAction
       return file;
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
         DataContext context = e.getDataContext();
         Project project = e.getProject();
         assert project != null;

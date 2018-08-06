@@ -23,6 +23,7 @@ import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 public final class RunAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
@@ -32,7 +33,7 @@ public final class RunAction extends AnAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ExecutionHandler.runBuild(
       myAntBuildMessageView.getBuildFile(),
       myAntBuildMessageView.getTargets(),
@@ -40,7 +41,7 @@ public final class RunAction extends AnAction {
       e.getDataContext(), myAntBuildMessageView.getAdditionalProperties(), AntBuildListener.NULL);
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(myAntBuildMessageView.isStopped());
   }

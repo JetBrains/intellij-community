@@ -23,6 +23,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public final class StartInplaceEditingAction extends AnAction{
     myEditor = editor;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
     final RadComponent component = selection.get(0);
     final Property defaultInplaceProperty = component.getDefaultInplaceProperty();
@@ -51,7 +52,7 @@ public final class StartInplaceEditingAction extends AnAction{
                                                           component.getDefaultInplaceEditorBounds(), new InplaceContext(true));
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
 

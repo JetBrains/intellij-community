@@ -165,7 +165,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   }
 
   private final class MyCancelEditingAction extends AnAction{
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       fireEditingCancelled();
     }
   }

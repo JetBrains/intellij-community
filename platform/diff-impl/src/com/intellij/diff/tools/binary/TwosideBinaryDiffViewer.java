@@ -205,7 +205,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       VirtualFile baseFile = getContentFile(myBaseSide);
       VirtualFile targetFile = getContentFile(myBaseSide.other());
 
@@ -214,7 +214,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final VirtualFile baseFile = getContentFile(myBaseSide);
       final VirtualFile targetFile = getContentFile(myBaseSide.other());
       assert baseFile != null && targetFile != null;

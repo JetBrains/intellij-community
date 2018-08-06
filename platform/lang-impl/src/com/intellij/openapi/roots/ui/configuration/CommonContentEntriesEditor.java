@@ -432,7 +432,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooser.chooseFiles(myDescriptor, myProject, myLastSelectedDir, files -> {
         myLastSelectedDir = files.get(0);
         addContentEntries(VfsUtilCore.toVirtualFileArray(files));

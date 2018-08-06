@@ -22,11 +22,12 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 
 public class SearchWebAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     CopyProvider provider = PlatformDataKeys.COPY_PROVIDER.getData(dataContext);
     if (provider == null) {
@@ -39,7 +40,7 @@ public class SearchWebAction extends AnAction implements DumbAware {
     }
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     CopyProvider provider = PlatformDataKeys.COPY_PROVIDER.getData(dataContext);

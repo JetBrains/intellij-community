@@ -424,14 +424,14 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       control.doEdit();
       control.reset();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       final boolean visible = control != null && control.isEditable();
       e.getPresentation().setVisible(visible);
@@ -446,14 +446,14 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       control.doRemove();
       control.reset();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final boolean enabled;
       final DomCollectionControl control = getDomCollectionControl(e);
       if (control != null) {

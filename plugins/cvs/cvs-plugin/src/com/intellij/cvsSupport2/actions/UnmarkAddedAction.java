@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -42,11 +43,11 @@ public class UnmarkAddedAction extends AnAction{
     myVisibility.addCondition(ActionOnSelectedElement.FILES_ARE_LOCALLY_ADDED);
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VcsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {

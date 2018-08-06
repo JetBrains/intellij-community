@@ -1219,12 +1219,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       goBack();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myBackStack.isEmpty());
       if (!isToolbar(e)) {
@@ -1239,12 +1239,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       goForward();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myForwardStack.isEmpty());
       if (!isToolbar(e)) {
@@ -1262,7 +1262,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       super.actionPerformed(e);
       JBPopup hint = myHint;
       if (hint != null && hint.isVisible()) {
@@ -1294,7 +1294,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myElement == null) {
         return;
       }
@@ -1306,7 +1306,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(hasExternalDoc());
     }
@@ -1543,7 +1543,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mySettingsPanel, myFontSizeSlider).createPopup();
       setFontSizeSliderSize(getQuickDocFontSize());
       mySettingsPanel.setVisible(true);
@@ -1587,7 +1587,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class PreviousLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int linkCount = getLinkCount();
       if (linkCount <= 0) return;
       highlightLink(myHighlightedLink < 0 ? (linkCount - 1) : (myHighlightedLink + linkCount - 1) % linkCount);
@@ -1596,7 +1596,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class NextLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int linkCount = getLinkCount();
       if (linkCount <= 0) return;
       highlightLink((myHighlightedLink + 1) % linkCount);
@@ -1605,7 +1605,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ActivateLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       activateLink(myHighlightedLink);
     }
   }
@@ -1714,12 +1714,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myToolwindowCallback != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myToolwindowCallback.run();
     }
   }
@@ -1730,12 +1730,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myHint != null && myHint.getDimensionServiceKey() != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
       myHint.setDimensionServiceKey(null);
       showHint();

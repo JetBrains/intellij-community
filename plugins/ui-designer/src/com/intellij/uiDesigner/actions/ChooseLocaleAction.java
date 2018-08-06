@@ -74,7 +74,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     return myLastEditor;
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(getEditor(e) != null);
   }
 
@@ -92,7 +92,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
       myLocale = locale;
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myEditor.setStringDescriptorLocale(myLocale);
       if (myUpdateText) {
         myPresentation.setText(getTemplatePresentation().getText());

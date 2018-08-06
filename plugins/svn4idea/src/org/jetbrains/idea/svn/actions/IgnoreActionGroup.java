@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.ignore.FileGroupInfo;
@@ -64,7 +65,7 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final FileGroupInfo fileGroupInfo = new FileGroupInfo();
 
     myHelperAction.setFileIterationListener(fileGroupInfo);

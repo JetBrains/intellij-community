@@ -18,13 +18,14 @@ package com.intellij.ide.actions;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class PasteAction extends AnAction implements DumbAware {
   public PasteAction() {
     setEnabledInModalContext(true);
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
@@ -38,7 +39,7 @@ public class PasteAction extends AnAction implements DumbAware {
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     PasteProvider provider = PlatformDataKeys.PASTE_PROVIDER.getData(dataContext);
     if (provider != null && provider.isPasteEnabled(dataContext)) {

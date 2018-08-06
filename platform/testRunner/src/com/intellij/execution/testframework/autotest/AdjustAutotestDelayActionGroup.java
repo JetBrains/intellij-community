@@ -37,7 +37,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     RunContentDescriptor descriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(myDataContext);
     boolean visible = false;
     if (descriptor != null) {

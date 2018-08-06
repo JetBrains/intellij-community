@@ -96,7 +96,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     if (myDeletableFiles) {
       AnAction deleteAction = new DeleteAction(null, null, IconUtil.getRemoveIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           super.actionPerformed(e);
           myFileList.refresh();
         }

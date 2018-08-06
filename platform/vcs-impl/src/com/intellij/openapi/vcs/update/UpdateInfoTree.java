@@ -417,7 +417,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       updateTreeModel();
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!myGroupByChangeList);
     }
@@ -444,7 +444,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       }
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myCanGroupByChangeList);
     }
@@ -502,7 +502,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       updateTreeModel();
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!myGroupByChangeList && getFilterScopeName() != null);
     }

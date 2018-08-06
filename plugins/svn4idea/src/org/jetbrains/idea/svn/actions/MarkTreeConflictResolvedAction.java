@@ -50,7 +50,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final MyChecker checker = new MyChecker(e);
     e.getPresentation().setVisible(checker.isEnabled());
     e.getPresentation().setEnabled(checker.isEnabled());
@@ -96,7 +96,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MyChecker checker = new MyChecker(e);
     if (! checker.isEnabled()) return;
 

@@ -80,7 +80,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     boolean myActionVisible = true;
     boolean myActionEnabled = true;
     if (myAction != null) {      
@@ -189,7 +189,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myAction.actionPerformed(new AnActionEventWrapper(e, this));
     }
 

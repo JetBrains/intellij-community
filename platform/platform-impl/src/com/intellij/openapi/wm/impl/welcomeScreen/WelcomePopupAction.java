@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +49,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
    */
   protected abstract boolean isSilentlyChooseSingleOption();
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     showPopup(e);
   }
 
@@ -65,7 +66,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
     if (group.getChildrenCount() == 0) {
       group.add(new AnAction(getTextForEmpty()) {
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           group.setPopup(false);
         }
       } );

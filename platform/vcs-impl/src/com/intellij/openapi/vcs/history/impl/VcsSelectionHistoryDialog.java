@@ -477,12 +477,12 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       setShortcutSet(CommonShortcuts.getDiff());
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(myList.getSelectedRowCount() > 1 ||
                                      myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myLocalRevision);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       IntPair range = getSelectedRevisionsRange();
 
       VcsFileRevision beforeRevision = range.val2 < myRevisions.size() ? myRevisions.get(range.val2) : VcsFileRevision.NULL;
@@ -504,11 +504,11 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myLocalRevision);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       VcsFileRevision revision = myList.getSelectedObject();
       if (revision == null) return;
 

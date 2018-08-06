@@ -35,7 +35,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MyLocallyDeletedChecker locallyDeletedChecker = new MyLocallyDeletedChecker(e);
     if (! locallyDeletedChecker.isEnabled()) return;
 
@@ -58,7 +58,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends DumbAwareActio
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final MyLocallyDeletedChecker locallyDeletedChecker = new MyLocallyDeletedChecker(e);
     e.getPresentation().setVisible(locallyDeletedChecker.isEnabled());
     e.getPresentation().setEnabled(locallyDeletedChecker.isEnabled());

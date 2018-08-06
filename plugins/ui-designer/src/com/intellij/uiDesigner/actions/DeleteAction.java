@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import icons.UIDesignerIcons;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -33,7 +34,7 @@ public final class DeleteAction extends AnAction {
     getTemplatePresentation().setIcon(UIDesignerIcons.DeleteCell);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if (editor == null || selection == null || selection.getFocusedIndex() < 0) return;
@@ -41,7 +42,7 @@ public final class DeleteAction extends AnAction {
     selection.getContainer().revalidate();
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if(selection == null || selection.getContainer() == null){

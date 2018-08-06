@@ -94,7 +94,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FileDocumentManager.getInstance().saveAllDocuments();
       final UpdatedFiles updatedFiles = UpdatedFiles.create();
       for (final HgRepository repository : myRepositories) {
@@ -112,7 +112,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       HgUpdateCommand.updateTo(myBranchName, myRepositories, null);
     }
   }
@@ -125,7 +125,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       HgRepository repository = myRepositories.get(0);

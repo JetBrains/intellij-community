@@ -34,6 +34,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.wizard.DataBindingWizard;
 import com.intellij.uiDesigner.wizard.Generator;
 import com.intellij.uiDesigner.wizard.WizardData;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -42,7 +43,7 @@ import com.intellij.uiDesigner.wizard.WizardData;
 public final class DataBindingWizardAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.DataBindingWizardAction");
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project;
     final VirtualFile formFile;
     GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
@@ -125,7 +126,7 @@ public final class DataBindingWizardAction extends AnAction{
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setVisible(FormEditingUtil.getActiveEditor(e.getDataContext()) != null);
   }
 

@@ -79,7 +79,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

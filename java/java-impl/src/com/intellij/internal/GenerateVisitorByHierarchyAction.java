@@ -60,7 +60,7 @@ import java.util.List;
 public class GenerateVisitorByHierarchyAction extends AnAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Ref<String> visitorNameRef = Ref.create("MyVisitor");
     final Ref<PsiClass> parentClassRef = Ref.create(null);
     final Project project = e.getData(CommonDataKeys.PROJECT);
@@ -167,7 +167,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 

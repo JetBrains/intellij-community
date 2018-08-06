@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,12 +87,12 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
   private class MyCloseAction extends CloseTabToolbarAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myCloseEnabled);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myContentManager != null) {
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {

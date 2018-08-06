@@ -30,7 +30,7 @@ public class AddTestProcessActionIndefinite extends AnAction implements DumbAwar
     super("Add Test Process");
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
     new Task.Backgroundable(project, "Test", true) {

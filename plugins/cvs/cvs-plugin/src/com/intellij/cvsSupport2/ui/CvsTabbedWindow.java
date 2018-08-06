@@ -172,7 +172,7 @@ public class CvsTabbedWindow implements Disposable {
       super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       new ConfigureCvsGlobalSettingsDialog(e.getProject()).show();
     }
   }
@@ -182,13 +182,13 @@ public class CvsTabbedWindow implements Disposable {
       super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
       e.getPresentation().setEnabled(data instanceof CvsException);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
       CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)Objects.requireNonNull(data)).getCvsRoot(), myProject);
     }

@@ -257,12 +257,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     final AnAction backAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myHistory.back();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
@@ -272,12 +272,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     final AnAction forwardAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myHistory.forward();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(myHistory.canGoForward());
       }

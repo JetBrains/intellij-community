@@ -58,7 +58,7 @@ public class CustomisedActionGroup extends ActionGroup {
     return myGroup.isPopup();
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myGroup.update(e);
   }
 
@@ -73,7 +73,7 @@ public class CustomisedActionGroup extends ActionGroup {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myGroup.actionPerformed(e);
   }
 

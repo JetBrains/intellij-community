@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -29,7 +30,7 @@ import com.intellij.openapi.project.Project;
  */
 public abstract class ExternalSystemToggleAction extends ToggleAction implements DumbAware {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation p = e.getPresentation();
     final boolean visible = isVisible(e);

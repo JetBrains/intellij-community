@@ -271,7 +271,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
     }
     final DefaultActionGroup consoleActionGroup = new DefaultActionGroup() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         String eventViewName = BuildTreeConsoleView.class.getName();
         e.getPresentation().setVisible(!BuildView.this.isViewEnabled(eventViewName));

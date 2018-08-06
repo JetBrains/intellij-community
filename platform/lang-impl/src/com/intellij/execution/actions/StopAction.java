@@ -43,7 +43,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
   }
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
@@ -91,7 +91,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);

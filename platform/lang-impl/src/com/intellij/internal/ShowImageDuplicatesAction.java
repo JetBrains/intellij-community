@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -38,7 +39,7 @@ public class ShowImageDuplicatesAction extends AnAction {
   private static final List<String> IMAGE_EXTENSIONS = Arrays.asList("png", "jpg", "jpeg", "gif", "tiff", "bmp");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
     ProgressManager.getInstance()
@@ -118,7 +119,7 @@ public class ShowImageDuplicatesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
   }
 

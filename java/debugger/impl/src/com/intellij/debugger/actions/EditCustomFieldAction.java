@@ -41,7 +41,7 @@ public class EditCustomFieldAction extends XDebuggerTreeActionBase {
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     boolean enabled = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {

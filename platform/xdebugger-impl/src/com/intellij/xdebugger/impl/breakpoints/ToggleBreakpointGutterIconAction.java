@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author nik
@@ -35,7 +36,7 @@ class ToggleBreakpointGutterIconAction extends DumbAwareAction {
     copyShortcutFrom(action);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myBreakpoint.setEnabled(!myBreakpoint.isEnabled());
   }
 }

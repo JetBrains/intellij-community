@@ -678,7 +678,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
       final Object root = treeModel.getRoot();
       if (!(root instanceof CheckedTreeNode)) return;
@@ -701,7 +701,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
       final Object root = treeModel.getRoot();
       if (!(root instanceof CheckedTreeNode)) return;
@@ -750,7 +750,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       boolean showSelectedRowsOnly = myShowSelectedRowsOnly;
       if (showSelectedRowsOnly) {
         myShowSelectedRowsOnly = false;

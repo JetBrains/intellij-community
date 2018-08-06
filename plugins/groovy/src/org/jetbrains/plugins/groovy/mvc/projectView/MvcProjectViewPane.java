@@ -459,7 +459,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       scrollFromSource();
     }
   }

@@ -635,7 +635,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       List<Object> changes = getSelectedUserObjects();
       if (changes.isEmpty()) changes = getAllUserObjects();
       toggleChanges(changes);

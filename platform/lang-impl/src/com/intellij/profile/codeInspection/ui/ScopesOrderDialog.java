@@ -56,7 +56,7 @@ public class ScopesOrderDialog extends DialogWrapper {
       }
     }).addExtraAction(new AnActionButton("Edit Scopes", AllIcons.Actions.Edit) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
         reloadScopeList();
       }

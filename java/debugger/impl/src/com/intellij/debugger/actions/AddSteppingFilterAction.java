@@ -20,9 +20,10 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 
 public class AddSteppingFilterAction extends DebuggerAction {
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     DebugProcessImpl process = debuggerContext.getDebugProcess();
     if (process == null) {
@@ -48,7 +49,7 @@ public class AddSteppingFilterAction extends DebuggerAction {
     });
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(PopFrameAction.getStackFrameProxy(e) != null);
   }
 

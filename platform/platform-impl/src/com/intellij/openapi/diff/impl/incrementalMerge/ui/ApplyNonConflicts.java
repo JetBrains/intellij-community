@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
     myDiffPanel = diffPanel;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MergeList mergeList = MergeList.fromDataContext(e.getDataContext());
     assert mergeList != null;
 
@@ -66,7 +67,7 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     MergeList mergeList = MergeList.fromDataContext(e.getDataContext());
     e.getPresentation().setEnabled(getNotConflicts(mergeList).hasNext());
   }

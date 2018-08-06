@@ -14,13 +14,14 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class InterruptThreadAction extends DebuggerAction{
   
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerTreeNodeImpl[] nodes = getSelectedNodes(e.getDataContext());
     if (nodes == null) {
       return;
@@ -61,7 +62,7 @@ public class InterruptThreadAction extends DebuggerAction{
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
     boolean visible = false;

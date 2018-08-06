@@ -38,6 +38,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableTreeModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
@@ -78,7 +79,7 @@ public class AnnotationProcessorsPanel extends JPanel {
         final JPanel treePanel =
           ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Forward) {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               final MyModuleNode node = (MyModuleNode)myTree.getSelectionPath().getLastPathComponent();
               final TreePath[] selectedNodes = myTree.getSelectionPaths();
               final ProcessorConfigProfile nodeProfile = ((ProfileNode)node.getParent()).myProfile;

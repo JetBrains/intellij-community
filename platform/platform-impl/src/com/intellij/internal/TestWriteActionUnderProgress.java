@@ -8,13 +8,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class TestWriteActionUnderProgress extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
     boolean success;
 

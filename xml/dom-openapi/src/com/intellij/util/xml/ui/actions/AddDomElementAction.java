@@ -59,7 +59,7 @@ public abstract class AddDomElementAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final AnAction[] actions = getChildren(e);
     if (actions.length > 1) {
       final DefaultActionGroup group = new DefaultActionGroup();
@@ -171,7 +171,7 @@ public abstract class AddDomElementAction extends AnAction {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final ListPopup groupPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null,
                                                             myGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true);

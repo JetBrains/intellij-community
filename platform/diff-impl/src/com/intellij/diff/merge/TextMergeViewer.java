@@ -1215,12 +1215,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(hasNonConflictedChanges(mySide));
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         applyNonConflictedChanges(mySide);
       }
 
@@ -1241,12 +1241,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(hasResolvableConflictedChanges());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         applyResolvableConflictedChanges();
       }
     }
@@ -1261,7 +1261,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         DiffContent baseContent = ThreeSide.BASE.select(myMergeRequest.getContents());
         String baseTitle = ThreeSide.BASE.select(myMergeRequest.getContentTitles());
 
@@ -1379,12 +1379,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(getTextSettings().isEnableLstGutterMarkersInMerge());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (!myLineStatusTracker.isValid()) return;
 
         int line = getEditor().getCaretModel().getLogicalPosition().line;

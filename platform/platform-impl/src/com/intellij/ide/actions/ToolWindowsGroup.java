@@ -55,7 +55,7 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
   };
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
   }
 

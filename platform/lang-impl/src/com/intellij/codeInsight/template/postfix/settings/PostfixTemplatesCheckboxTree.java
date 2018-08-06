@@ -253,7 +253,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       if (StringUtil.isEmpty(providerName)) continue;
       group.add(new DumbAwareAction(providerName) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           PostfixTemplateEditor editor = provider.createEditor(null);
           if (editor != null) {
             PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(PostfixTemplatesCheckboxTree.this, editor, providerName, null);

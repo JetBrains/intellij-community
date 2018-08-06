@@ -30,11 +30,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class MergeFilesAction extends AnAction implements DumbAware {
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DataContext context = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null){
@@ -47,7 +48,7 @@ public class MergeFilesAction extends AnAction implements DumbAware {
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext context = e.getDataContext();
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (files == null || files.length != 3){

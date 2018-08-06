@@ -22,13 +22,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 public class CommanderViewActionGroup extends DefaultActionGroup  implements DumbAware {
   public CommanderViewActionGroup() {
     super();
   }
 
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

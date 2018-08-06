@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Toggle grid lines over image.
@@ -41,7 +42,7 @@ public final class ToggleGridAction extends ToggleAction implements DumbAware {
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     ImageEditorActionUtil.setEnabled(e);
     e.getPresentation().setText(isSelected(e) ? "Hide Grid" : "Show Grid");

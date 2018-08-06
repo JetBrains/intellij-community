@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Shows the popup of all tabs when single row editor tab layout is used and all tabs don't fit on the screen.
@@ -26,7 +27,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
  */
 public class TabListAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     JBTabsImpl tabs = e.getData(JBTabsImpl.NAVIGATION_ACTIONS_KEY);
     if (tabs != null) {
       tabs.showMorePopup(null);
@@ -34,7 +35,7 @@ public class TabListAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isTabListAvailable(e));
   }
 

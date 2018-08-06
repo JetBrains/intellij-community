@@ -172,7 +172,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);

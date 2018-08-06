@@ -112,7 +112,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
 
       AnAction action = new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (mySelection != item && selectionChanged(item)) {
             mySelection = item;
             AbstractComboBoxAction.this.update(item, myPresentation, false);

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -49,7 +50,7 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
     final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
 

@@ -107,14 +107,14 @@ public class RightMarginForm {
 
   private class ResetRightMarginAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myRightMarginField.resetToDefault();
     }
   }
 
   private class ResetGuidesAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myVisualGuidesField.clear();
     }
   }

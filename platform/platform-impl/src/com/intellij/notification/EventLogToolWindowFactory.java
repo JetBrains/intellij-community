@@ -108,7 +108,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().editConfigurable(myProject, new NotificationsConfigurable());
     }
   }

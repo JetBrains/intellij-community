@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -53,25 +54,25 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
     Clock.setTime(0);
     ActionManager.getInstance().registerAction(MY_SHIFT_SHIFT_ACTION, new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myShiftShiftActionInvocationCount++;
       }
     });
     ActionManager.getInstance().registerAction(MY_SHIFT_KEY_ACTION, new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myShiftKeyActionInvocationCount++;
       }
     });
     ActionManager.getInstance().registerAction(MY_SHIFT_SHIFT_KEY_ACTION, new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myShiftShiftKeyActionInvocationCount++;
       }
     });
     ActionManager.getInstance().registerAction(MY_SHIFT_OTHER_KEY_ACTION, new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myShiftOtherKeyActionInvocationCount++;
       }
     });

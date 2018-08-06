@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.ImportDialog;
 
 /**
@@ -31,7 +32,7 @@ import org.jetbrains.idea.svn.dialogs.ImportDialog;
  */
 public class ImportToRepositoryAction extends AnAction implements DumbAware {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Presentation presentation = e.getPresentation();
@@ -39,7 +40,7 @@ public class ImportToRepositoryAction extends AnAction implements DumbAware {
       (project == null || (! ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning())));
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();

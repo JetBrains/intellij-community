@@ -535,7 +535,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     contentManager.setSelectedContent(content);
 
     extraActions.add(new CloseTabToolbarAction() {
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         contentManager.removeContent(content);
       }
     });

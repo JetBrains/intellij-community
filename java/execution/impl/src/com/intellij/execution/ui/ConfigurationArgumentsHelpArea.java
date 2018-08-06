@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,7 +88,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final StringSelection contents = new StringSelection(myHelpArea.getText().trim());
       CopyPasteManager.getInstance().setContents(contents);
     }

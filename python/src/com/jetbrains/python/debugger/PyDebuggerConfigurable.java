@@ -130,7 +130,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
 
     myActionLink = new ActionLink("Clear caches", new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         PySignatureCacheManager.getInstance(myProject).clearCache();
       }
     });

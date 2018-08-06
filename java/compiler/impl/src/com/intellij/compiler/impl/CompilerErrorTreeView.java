@@ -57,7 +57,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   }
 
   private class SuppressJavacWarningsAction extends AnAction {
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final NavigatableMessageElement messageElement = (NavigatableMessageElement)getSelectedErrorTreeElement();
       final String[] text = messageElement.getText();
       final String id = text[0].substring(1, text[0].indexOf("]"));
@@ -78,7 +78,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setVisible(false);
       presentation.setEnabled(false);

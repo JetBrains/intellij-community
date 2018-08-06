@@ -189,7 +189,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     new AnAction() {
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         VirtualFile file = getFileFromSelection();
         if (file != null) {
           final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);

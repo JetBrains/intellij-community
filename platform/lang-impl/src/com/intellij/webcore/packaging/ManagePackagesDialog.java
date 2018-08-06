@@ -100,7 +100,7 @@ public class ManagePackagesDialog extends DialogWrapper {
 
     final AnActionButton reloadButton = new AnActionButton("Reload List of Packages", AllIcons.Actions.Refresh) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myPackages.setPaintBusy(true);
         final Application application = ApplicationManager.getApplication();
         application.executeOnPooledThread(() -> {

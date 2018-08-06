@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -74,7 +75,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     }
 
     @Override
-    public final void update(AnActionEvent e) {
+    public final void update(@NotNull AnActionEvent e) {
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
       presentation.setText("Group by: " + separator, false);
@@ -91,7 +92,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         if (separator.equals(getCurrentSeparator())) continue;
         AnAction action = new AnAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             ((PropertiesGroupingStructureViewModel)getTreeModel()).setSeparator(separator);
             setActionActive(GroupByWordPrefixes.ID, true);
             refillActionGroup();
@@ -111,7 +112,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       }
 
       @Override
-      public final void actionPerformed(AnActionEvent e) {
+      public final void actionPerformed(@NotNull AnActionEvent e) {
         String[] strings = ArrayUtil.toStringArray(myPredefinedSeparators);
         String current = getCurrentSeparator();
         String separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),

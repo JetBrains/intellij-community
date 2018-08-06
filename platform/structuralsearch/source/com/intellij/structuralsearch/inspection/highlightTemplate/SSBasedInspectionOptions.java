@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -83,7 +84,7 @@ public class SSBasedInspectionOptions {
             final AnAction[] children = new AnAction[]{
               new AnAction(SSRBundle.message("SSRInspection.add.search.template.button")) {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   addTemplate(new SearchDialogFactory() {
                     @Override
                     public SearchDialog createDialog(SearchContext searchContext) {
@@ -94,7 +95,7 @@ public class SSBasedInspectionOptions {
               },
               new AnAction(SSRBundle.message("SSRInspection.add.replace.template.button")) {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   addTemplate(new SearchDialogFactory() {
                     @Override
                     public SearchDialog createDialog(SearchContext searchContext) {

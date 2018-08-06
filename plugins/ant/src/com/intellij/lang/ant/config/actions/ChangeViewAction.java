@@ -21,6 +21,7 @@ import com.intellij.lang.ant.config.execution.AntBuildMessageView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import icons.AntIcons;
+import org.jetbrains.annotations.NotNull;
 
 public final class ChangeViewAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
@@ -30,7 +31,7 @@ public final class ChangeViewAction extends AnAction {
     myAntBuildMessageView = antBuildMessageView;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myAntBuildMessageView.changeView();
   }
 }

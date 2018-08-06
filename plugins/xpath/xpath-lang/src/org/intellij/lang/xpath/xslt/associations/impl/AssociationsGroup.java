@@ -58,7 +58,7 @@ public class AssociationsGroup extends ActionGroup {
         return children;
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setVisible(isVisible(e));
         e.getPresentation().setEnabled(isEnabled(e));
     }

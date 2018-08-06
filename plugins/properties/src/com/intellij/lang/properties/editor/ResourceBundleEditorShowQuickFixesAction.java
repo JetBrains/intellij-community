@@ -52,7 +52,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ResourceBundleEditor editor = getEditor(e);
     LOG.assertTrue(editor != null);
     final ResourceBundlePropertyStructureViewElement element = (ResourceBundlePropertyStructureViewElement)editor.getSelectedElementIfOnlyOne();
@@ -94,7 +94,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final ResourceBundleEditor editor = getEditor(e);
     e.getPresentation().setEnabledAndVisible(editor != null &&
                                              editor.getSelectedElementIfOnlyOne() instanceof ResourceBundlePropertyStructureViewElement);

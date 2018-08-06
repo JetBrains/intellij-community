@@ -582,7 +582,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       addBuildFile();
     }
   }
@@ -594,12 +594,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       removeSelectedBuildFiles();
     }
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       event.getPresentation().setEnabled(getCurrentBuildFile() != null);
     }
   }
@@ -611,12 +611,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       runSelection(e.getDataContext());
     }
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       final String place = event.getPlace();
       if (ActionPlaces.ANT_EXPLORER_TOOLBAR.equals(place)) {
@@ -647,7 +647,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
       final Presentation presentation = e.getPresentation();
@@ -655,7 +655,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null || !buildFile.exists()) {
         return;
@@ -762,13 +762,13 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final AntExecuteBeforeRunDialog dialog = new AntExecuteBeforeRunDialog(myProject, myTarget);
       dialog.show();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTarget.getModel().getBuildFile().exists());
     }
   }
@@ -781,7 +781,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       final List<String> targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
       final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(targets);
@@ -794,7 +794,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
       e.getPresentation().setEnabled(paths != null && paths.length > 1 && canRunSelection());
     }
@@ -820,7 +820,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doAction();
     }
 
@@ -861,7 +861,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
@@ -916,12 +916,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       new EditKeymapsDialog(myProject, myActionId).show();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myActionId != null && ActionManager.getInstance().getAction(myActionId) != null);
     }
   }

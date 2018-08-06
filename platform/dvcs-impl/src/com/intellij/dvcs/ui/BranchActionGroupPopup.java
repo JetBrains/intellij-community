@@ -449,7 +449,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       setExpanded(!myIsExpanded);
       InputEvent event = e.getInputEvent();
       if (event != null && event.getSource() instanceof JComponent) {

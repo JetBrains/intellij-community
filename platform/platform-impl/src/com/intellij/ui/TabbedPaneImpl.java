@@ -96,7 +96,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
       }
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         int index = getSelectedIndex() + 1;
         if (index >= getTabCount()) {
           index = 0;
@@ -114,7 +114,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
       }
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         int index = getSelectedIndex() - 1;
         if (index < 0) {
           index = getTabCount() - 1;

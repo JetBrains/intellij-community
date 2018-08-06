@@ -20,9 +20,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionEventVisitor;
 import com.intellij.openapi.actionSystem.KeyboardGestureAction;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class TestGestureAction extends AnAction implements KeyboardGestureAction, DumbAware {
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     e.accept(new AnActionEventVisitor() {
       @Override
       public void visitGestureInitEvent(final AnActionEvent e) {

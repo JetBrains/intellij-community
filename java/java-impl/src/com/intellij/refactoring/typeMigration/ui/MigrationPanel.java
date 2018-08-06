@@ -352,7 +352,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final DefaultMutableTreeNode[] selectedNodes = myRootsTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
@@ -378,12 +378,12 @@ public class MigrationPanel extends JPanel implements Disposable {
       return MIGRATION_USAGES_KEYS.getData(context.getDataContext());
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final TreePath[] selectionPaths = myRootsTree.getSelectionPaths();
       e.getPresentation().setEnabled(selectionPaths != null && selectionPaths.length > 0);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final TypeMigrationUsageInfo[] usages = getUsages(e);
       assert usages != null;
       for (TypeMigrationUsageInfo usageInfo : usages) {

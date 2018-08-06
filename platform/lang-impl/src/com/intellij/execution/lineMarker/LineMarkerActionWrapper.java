@@ -80,7 +80,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myOrigin.update(wrapEvent(e));
   }
 
@@ -104,7 +104,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myOrigin.actionPerformed(wrapEvent(e));
   }
 

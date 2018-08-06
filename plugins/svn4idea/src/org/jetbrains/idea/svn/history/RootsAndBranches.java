@@ -377,7 +377,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       for (MergeInfoHolder holder : myHolders.values()) {
         if (holder.refreshEnabled(false)) {
           e.getPresentation().setEnabled(true);
@@ -387,7 +387,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       e.getPresentation().setEnabled(false);
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
 
@@ -397,7 +397,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private class HighlightFrom extends DumbAwareToggleAction {
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       presentation.setIcon(SvnIcons.ShowIntegratedFrom);
@@ -429,7 +429,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(myHighlightingOn);

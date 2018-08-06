@@ -29,6 +29,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -41,7 +42,7 @@ public abstract class TestErrorViewAction extends AnAction{
   private long myMillis = 0L;
   private int myMessageCount = 0;
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return;

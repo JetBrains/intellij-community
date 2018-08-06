@@ -426,7 +426,7 @@ class LookupUi {
         }
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
           UISettings.getInstance().setSortLookupElementsLexicographically(makeAlpha);
           updateSorting();

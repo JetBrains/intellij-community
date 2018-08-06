@@ -15,6 +15,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.TimeUnit
 
@@ -232,7 +233,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
   private static AnAction createAction(String text) {
     new AnAction(text) {
       @Override
-      void actionPerformed(AnActionEvent e) {
+      void actionPerformed(@NotNull AnActionEvent e) {
       }
     }
   }
@@ -240,7 +241,7 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
   private static DefaultActionGroup createActionGroup(String text, boolean hideByDefault) {
     new DefaultActionGroup(text, true) {
       @Override
-      void update(AnActionEvent e) {
+      void update(@NotNull AnActionEvent e) {
         e.presentation.setVisible(!hideByDefault || Boolean.valueOf(e.getData(SHOW_HIDDEN_KEY)))
       }
     }

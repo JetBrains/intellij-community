@@ -123,7 +123,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     });
     new AnAction("Toggle") {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myParamsTable);

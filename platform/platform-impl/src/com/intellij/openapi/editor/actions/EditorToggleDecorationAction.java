@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware {
@@ -44,7 +45,7 @@ public abstract class EditorToggleDecorationAction extends ToggleAction implemen
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getEditor(e) != null);
   }

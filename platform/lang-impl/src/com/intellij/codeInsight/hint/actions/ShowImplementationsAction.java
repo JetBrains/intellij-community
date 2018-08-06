@@ -81,7 +81,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     performForContext(e.getDataContext(), true);
   }
 
@@ -91,7 +91,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
   }

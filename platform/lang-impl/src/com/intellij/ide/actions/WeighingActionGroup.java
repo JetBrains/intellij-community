@@ -34,7 +34,7 @@ public abstract class WeighingActionGroup extends ActionGroup {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     getDelegate().update(e);
   }
 

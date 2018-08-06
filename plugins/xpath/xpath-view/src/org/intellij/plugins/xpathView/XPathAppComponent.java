@@ -127,7 +127,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
       if (editor != null) {
         if (HighlighterUtil.hasHighlighters(editor)) {
@@ -179,7 +179,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     }
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       origAction.update(event);
     }

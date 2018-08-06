@@ -23,12 +23,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class DeleteComponentAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
@@ -52,7 +53,7 @@ public class DeleteComponentAction extends AnAction {
     palette.fireGroupsChanged();
   }
 
-  @Override public void update(AnActionEvent e) {
+  @Override public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);

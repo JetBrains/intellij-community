@@ -114,7 +114,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
         }
       }).addExtraAction(new DumbAwareActionButton("Add JIRA Pattern", IconUtil.getAddJiraPatternIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter JIRA installation URL:",
                                               "Add JIRA Issue Navigation Pattern", Messages.getQuestionIcon());
           if (s == null) {
@@ -128,7 +128,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
         }
       }).addExtraAction(new DumbAwareActionButton("Add YouTrack Pattern", IconUtil.getAddYouTrackPatternIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, "Enter YouTrack installation URL:",
                                               "Add YouTrack Issue Navigation Pattern", Messages.getQuestionIcon());
           if (s == null) {

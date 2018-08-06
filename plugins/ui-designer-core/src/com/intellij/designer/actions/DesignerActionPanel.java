@@ -104,7 +104,7 @@ public class DesignerActionPanel implements DataProvider {
 
     AnAction selectParent = new AnAction("Select Parent", "Select Parent", null) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myDesigner.getToolProvider().processKeyEvent(new KeyEvent(myDesigner.getSurfaceArea().getNativeComponent(),
                                                                   KeyEvent.KEY_PRESSED, 0, 0,
                                                                   KeyEvent.VK_ESCAPE,

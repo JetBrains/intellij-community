@@ -26,7 +26,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     UIManager.LookAndFeelInfo current = lafMan.getCurrentLookAndFeel();
     for (UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           switchLafAndUpdateUI(lafMan, lf, false);
         }
       });

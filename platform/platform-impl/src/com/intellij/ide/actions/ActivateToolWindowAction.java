@@ -73,7 +73,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     Presentation presentation = e.getPresentation();
     if (project == null || project.isDisposed()) {
@@ -102,7 +102,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) return;
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -43,7 +44,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
       final JBScrollPane log = new JBScrollPane(myText);
       final AnAction clear = new AnAction("Clear", "Clear log", AllIcons.General.Reset) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           myText.setText(null);
         }
       };

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
+import org.jetbrains.annotations.NotNull;
 
 public final class ToggleTagsPanelAction extends ToggleAction {
     public static final String TAGS_PANEL_VISIBLE = "tags.panel.visible";
@@ -38,7 +39,7 @@ public final class ToggleTagsPanelAction extends ToggleAction {
         view.refresh();
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
         e.getPresentation().setEnabledAndVisible(view != null);
         e.getPresentation().setText(isSelected(e) ? "Hide Tags Panel" : "Show Tags Panel");

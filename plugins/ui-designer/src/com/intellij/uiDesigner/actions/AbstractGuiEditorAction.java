@@ -44,7 +44,7 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
     myModifying = modifying;
   }
 
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor != null) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
@@ -72,7 +72,7 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
 
   protected abstract void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e);
 
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor == null) {
       e.getPresentation().setVisible(false);

@@ -153,7 +153,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected AnAction createRestorePopupAction() {
     return new AnAction("Open as Popup", getRestorePopupDescription(), AllIcons.General.Pin_tab) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         restorePopupBehavior();
       }
     };
