@@ -338,7 +338,22 @@ public class MatchPatchPaths {
   }
 
   private boolean variantMatchedToProjectDir(@NotNull AbstractFilePatchInProgress variant) {
-    return variant.getCurrentStrip() == 0 && myBaseDir.equals(variant.getBase());
+    if (variant.getCurrentStrip() == 0) {
+      return myBaseDir.equals(variant.getBase());
+    }
+
+    int upDirCount = 0;
+    VirtualFile base = myBaseDir;
+
+    for (String part : getPathParts(variant.getOriginalBeforePath())) {
+      if (!part.equals("..")) break;
+
+      upDirCount++;
+      if (base != null) base = base.getParent();
+    }
+
+    return upDirCount == variant.getCurrentStrip() &&
+           base != null && base.equals(variant.getBase());
   }
 
   @Nullable
