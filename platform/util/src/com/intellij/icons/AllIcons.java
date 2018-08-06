@@ -123,7 +123,7 @@ public class AllIcons {
 
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon FileStatus = IconLoader.getIcon("/actions/fileStatus.png"); // 16x16
+    public static final Icon FileStatus = IconLoader.getIcon("/actions/fileStatus.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Filter */
     @SuppressWarnings("unused")
@@ -210,7 +210,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Multicaret = IconLoader.getIcon("/actions/multicaret.svg"); // 16x16
+    public static final Icon Multicaret = IconLoader.getIcon("/actions/multicaret.svg");
     public static final Icon New = IconLoader.getIcon("/actions/new.svg"); // 16x16
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.svg"); // 16x16
 
@@ -301,7 +301,7 @@ public class AllIcons {
 
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ShowViewer = IconLoader.getIcon("/actions/showViewer.png"); // 16x16
+    public static final Icon ShowViewer = IconLoader.getIcon("/actions/showViewer.png");
     public static final Icon ShowWriteAccess = IconLoader.getIcon("/actions/showWriteAccess.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp */
@@ -373,17 +373,17 @@ public class AllIcons {
     /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Atrule = IconLoader.getIcon("/css/atrule.png"); // 16x16
+    public static final Icon Atrule = IconLoader.getIcon("/css/atrule.png");
 
     /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Import = IconLoader.getIcon("/css/import.png"); // 16x16
+    public static final Icon Import = IconLoader.getIcon("/css/import.png");
 
     /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Property = IconLoader.getIcon("/css/property.png"); // 16x16
+    public static final Icon Property = IconLoader.getIcon("/css/property.png");
 
   }
 
@@ -391,15 +391,15 @@ public class AllIcons {
 
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon DoubleComboArrow = IconLoader.getIcon("/darcula/doubleComboArrow.png"); // 7x11
+    public static final Icon DoubleComboArrow = IconLoader.getIcon("/darcula/doubleComboArrow.png");
 
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeNodeCollapsed = IconLoader.getIcon("/darcula/treeNodeCollapsed.png"); // 9x9
+    public static final Icon TreeNodeCollapsed = IconLoader.getIcon("/darcula/treeNodeCollapsed.png");
 
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TreeNodeExpanded = IconLoader.getIcon("/darcula/treeNodeExpanded.png"); // 9x9
+    public static final Icon TreeNodeExpanded = IconLoader.getIcon("/darcula/treeNodeExpanded.png");
 
   }
 
@@ -461,7 +461,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Db_field_warning_breakpoint = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_field_warning_breakpoint = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png");
     public static final Icon Db_invalid_breakpoint = IconLoader.getIcon("/debugger/db_invalid_breakpoint.svg"); // 12x12
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint */
@@ -478,7 +478,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Db_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_method_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_method_warning_breakpoint.png");
     public static final Icon Db_muted_breakpoint = IconLoader.getIcon("/debugger/db_muted_breakpoint.svg"); // 12x12
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
@@ -493,7 +493,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Db_muted_disabled_breakpoint_process = IconLoader.getIcon("/debugger/db_muted_disabled_breakpoint_process.png"); // 16x16
+    public static final Icon Db_muted_disabled_breakpoint_process = IconLoader.getIcon("/debugger/db_muted_disabled_breakpoint_process.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
@@ -511,7 +511,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Db_muted_field_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_field_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_field_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_field_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_invalid_breakpoint */
     @SuppressWarnings("unused")
@@ -532,7 +532,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Db_muted_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_warning_breakpoint.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_muted_breakpoint */
     @SuppressWarnings("unused")
@@ -557,7 +557,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Db_muted_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_warning_breakpoint.png");
     public static final Icon Db_no_suspend_breakpoint = IconLoader.getIcon("/debugger/db_no_suspend_breakpoint.svg"); // 12x12
     public static final Icon Db_no_suspend_field_breakpoint = IconLoader.getIcon("/debugger/db_no_suspend_field_breakpoint.svg"); // 12x12
     public static final Icon Db_no_suspend_method_breakpoint = IconLoader.getIcon("/debugger/db_no_suspend_method_breakpoint.svg"); // 12x12
@@ -584,7 +584,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Db_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
     public static final Icon Db_watch = IconLoader.getIcon("/debugger/db_watch.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 */
@@ -727,7 +727,7 @@ public class AllIcons {
 
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16
+    public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png");
     public static final Icon GutterCheckBox = IconLoader.getIcon("/diff/gutterCheckBox.svg"); // 12x12
     public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.svg"); // 12x12
     public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.svg"); // 12x12
@@ -838,7 +838,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); // 32x32
+    public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png");
 
     /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
     @SuppressWarnings("unused")
@@ -865,7 +865,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); // 32x32
+    public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png");
     public static final Icon Divider = IconLoader.getIcon("/general/divider.png"); // 2x19
     public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png"); // 16x16
     public static final Icon Dropdown = IconLoader.getIcon("/general/dropdown.png"); // 16x16
@@ -939,7 +939,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon IjLogo = IconLoader.getIcon("/general/ijLogo.png"); // 16x16
+    public static final Icon IjLogo = IconLoader.getIcon("/general/ijLogo.png");
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); // 10x14
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import */
@@ -963,13 +963,13 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png"); // 16x16
+    public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png");
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
+    public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png");
     public static final Icon Layout = IconLoader.getIcon("/general/layout.svg"); // 16x16
     public static final Icon LayoutEditorOnly = IconLoader.getIcon("/general/layoutEditorOnly.png"); // 16x16
     public static final Icon LayoutEditorPreview = IconLoader.getIcon("/general/layoutEditorPreview.png"); // 16x16
@@ -1013,7 +1013,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Progress = IconLoader.getIcon("/general/progress.png"); // 8x10
+    public static final Icon Progress = IconLoader.getIcon("/general/progress.png");
     public static final Icon ProjectConfigurable = IconLoader.getIcon("/general/projectConfigurable.svg"); // 9x9
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ProjectConfigurable */
@@ -1087,7 +1087,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon UninstallPlugin = IconLoader.getIcon("/general/uninstallPlugin.png"); // 16x16
+    public static final Icon UninstallPlugin = IconLoader.getIcon("/general/uninstallPlugin.png");
     public static final Icon Warning = IconLoader.getIcon("/general/warning.svg"); // 16x16
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.svg"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.svg"); // 32x32
@@ -1302,7 +1302,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon DataSourceImport = IconLoader.getIcon("/javaee/dataSourceImport.png"); // 16x16
+    public static final Icon DataSourceImport = IconLoader.getIcon("/javaee/dataSourceImport.png");
     public static final Icon DbSchemaImportBig = IconLoader.getIcon("/javaee/dbSchemaImportBig.png"); // 32x32
     public static final Icon Ejb_jar_xml = IconLoader.getIcon("/javaee/ejb-jar_xml.png"); // 16x16
     public static final Icon EjbClass = IconLoader.getIcon("/javaee/ejbClass.png"); // 16x16
