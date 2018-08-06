@@ -356,10 +356,8 @@ public class MatchPatchPaths {
 
   @Nullable
   private static FileBaseMatch compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
-    while ((parent != null) && (idx >= 0)) {
-      if (!parent.getName().equals(parts[idx])) {
-        return new FileBaseMatch(parent, idx + 1);
-      }
+    while (parent != null && idx >= 0 &&
+           parent.getName().equals(parts[idx])) {
       parent = parent.getParent();
       --idx;
     }
