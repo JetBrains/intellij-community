@@ -38,33 +38,29 @@ public class ReprocessContentRootDataActivity implements StartupActivity, DumbAw
     if (application.isUnitTestMode()) {
       LOG.info("Adding 'reprocess content root data' activity to 'runWhenSmart' queue in project [hash=" + project.hashCode() + "]");
     }
-    application.invokeLater(
-        () -> {
-          if (application.isUnitTestMode()) {
-            LOG.info("Reprocessing content root data for project [hash=" + project.hashCode() + "]" );
-          }
-          final boolean haveModulesToProcess = ModuleManager.getInstance(project).getModules().length > 0;
-          if (!haveModulesToProcess) {
-            return;
-          }
+    application.invokeLater(() -> {
+      if (application.isUnitTestMode()) {
+        LOG.info("Reprocessing content root data for project [hash=" + project.hashCode() + "]" );
+      }
+      final boolean haveModulesToProcess = ModuleManager.getInstance(project).getModules().length > 0;
+      if (!haveModulesToProcess) {
+        return;
+      }
 
-          try {
-            for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
-              ProjectSystemId id = manager.getSystemId();
-              for (ExternalProjectInfo info : dataManager.getExternalProjectsData(project, id)) {
-                DataNode<ProjectData> projectStructure = info.getExternalProjectStructure();
-                if (projectStructure != null) {
-                  Collection<DataNode<ContentRootData>> roots = ExternalSystemApiUtil.findAllRecursively(projectStructure, CONTENT_ROOT);
-                  service.importData(roots, null, project, modifiableModelsProvider);
-                }
-              }
+      try {
+        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+          ProjectSystemId id = manager.getSystemId();
+          for (ExternalProjectInfo info : dataManager.getExternalProjectsData(project, id)) {
+            DataNode<ProjectData> projectStructure = info.getExternalProjectStructure();
+            if (projectStructure != null) {
+              Collection<DataNode<ContentRootData>> roots = ExternalSystemApiUtil.findAllRecursively(projectStructure, CONTENT_ROOT);
+              service.importData(roots, null, project, modifiableModelsProvider);
             }
-          } finally {
-            ExternalSystemApiUtil.doWriteAction(() -> modifiableModelsProvider.commit());
           }
         }
-    );
-
-
+      } finally {
+        ExternalSystemApiUtil.doWriteAction(() -> modifiableModelsProvider.commit());
+      }
+    }, project.getDisposed());
   }
 }
