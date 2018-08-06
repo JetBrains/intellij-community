@@ -264,7 +264,7 @@ public final class SearchScope {
     }
 
     @Override
-    public boolean processFile(VirtualFile fileOrDir) {
+    public boolean processFile(@NotNull VirtualFile fileOrDir) {
       if (!fileOrDir.isDirectory() && myCondition.value(fileOrDir)) {
         myProcessor.process(fileOrDir);
       }

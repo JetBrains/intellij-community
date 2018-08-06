@@ -388,7 +388,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
 
     @Override
-    public boolean processFile(final VirtualFile virtualFile) {
+    public boolean processFile(@NotNull final VirtualFile virtualFile) {
       if (!virtualFile.isDirectory()) {
         final String fileName = virtualFile.getName();
         myIndicator.setText2(fileName);
