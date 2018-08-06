@@ -254,7 +254,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       ApplicationManager.getApplication().invokeLater(() -> {
         Component owner = FocusManager.getCurrentManager().getFocusOwner();
         closeEditor();
-        owner.requestFocus();
+        if (owner != null) owner.requestFocus();
       }, myProject.getDisposed());
     }
   }
