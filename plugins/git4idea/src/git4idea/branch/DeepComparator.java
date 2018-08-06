@@ -79,6 +79,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     }
 
     Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), branchToCompare);
+    LOG.debug("Highlighting requested: " + repositories);
     if (repositories.isEmpty()) {
       removeHighlighting();
       return;
@@ -149,7 +150,10 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     }
 
     String comparedBranch = myTask.myComparedBranch;
-    if (!myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs()))) {
+    String singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
+    if (!myTask.myComparedBranch.equals(singleFilteredBranch)) {
+      LOG.debug(String.format("Branch filter changed. Compared branch: %s, filtered branch: %s",
+                              myTask.myComparedBranch, singleFilteredBranch));
       stopAndUnhighlight();
       notifyHighlightingCancelled();
       return;
@@ -168,6 +172,8 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
         highlightInBackground(comparedBranch, provider);
       }
       else {
+        LOG.debug(String.format("Repositories with current branches changed. Actual:\n%s\nExpected:\n%s",
+                                repositories, repositoriesWithCurrentBranches));
         removeHighlighting();
       }
     }
