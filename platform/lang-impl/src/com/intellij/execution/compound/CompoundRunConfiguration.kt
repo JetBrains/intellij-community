@@ -110,12 +110,11 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
       getConfigurationsWithEffectiveRunTargets().map { it.settings.configuration.type }
     )
 
-    val groupRunId = GroupRunId(debugName = "Compound run configuration: $name")
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
+        val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
         for ((settings, target) in getConfigurationsWithEffectiveRunTargets()) {
-          settings.configuration.groupRunId = groupRunId
-          ExecutionUtil.runConfiguration(settings, executor, target)
+          ExecutionUtil.runConfiguration(settings, executor, target, groupId)
         }
       }
       null
