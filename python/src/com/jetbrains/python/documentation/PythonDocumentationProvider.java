@@ -283,6 +283,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         result.append(": ");
         result.append(formatTypeWithLinks(paramType, function, context));
       }
+      final String defaultValue = parameter.getDefaultValueText();
+      if (defaultValue != null) {
+        // According to PEP 8 equal sign should be surrounded by spaces if annotation is present
+        result.append(showType ? " = " : "=");
+        result.append(escaped(defaultValue));
+      }
       first = false;
     }
 
