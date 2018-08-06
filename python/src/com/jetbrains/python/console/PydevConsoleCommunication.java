@@ -756,16 +756,18 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       final List<PyAsyncValue<String>> values = myCallbackHashMap.remove(requestSeq);
       try {
         List<PyDebugValue> debugValues = response.stream()
-                                                 .map(value -> createPyDebugValue(value, PydevConsoleCommunication.this))
-                                                 .collect(Collectors.toList());
+          .map(value -> createPyDebugValue(value, PydevConsoleCommunication.this))
+          .collect(Collectors.toList());
         for (int i = 0; i < debugValues.size(); ++i) {
           PyDebugValue resultValue = debugValues.get(i);
           values.get(i).getCallback().ok(resultValue.getValue());
         }
       }
       catch (Exception e) {
-        for (PyFrameAccessor.PyAsyncValue vars : values) {
-          vars.getCallback().error(new PyDebuggerException(response.toString()));
+        if (values != null) {
+          for (PyFrameAccessor.PyAsyncValue vars : values) {
+            vars.getCallback().error(new PyDebuggerException(response.toString()));
+          }
         }
       }
     }
