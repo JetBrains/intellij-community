@@ -508,6 +508,8 @@
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
     <languageCompilerRefAdapter implementation="com.intellij.compiler.backwardRefs.JavaCompilerRefAdapter"/>
+    <editor.injectedFileChangesHandlerProvider language="JAVA"
+                                               implementationClass="com.intellij.psi.impl.source.tree.injected.JavaInjectedFileChangesHandlerProvider"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Field assignment can be moved to initializer"

@@ -1,14 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.impl.source.tree.injected.changesHandler;
+package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.codeInsight.intention.impl.QuickEditHandler;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.InjectedFileChangesHandler;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.Extensions;
@@ -19,7 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.changesHandler.BaseInjectedFileChangesHandler;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -28,14 +26,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
+public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
+
+  @Override
+  public InjectedFileChangesHandler createFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
+                                                             Editor editor,
+                                                             Document newDocument,
+                                                             PsiFile injectedFile) {
+    return new JavaInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile);
+  }
+}
+
+class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
 
   @NotNull
   private final RangeMarker myAltFullRange;
 
-  public JavaInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
-                                        Document newDocument,
-                                        PsiFile injectedFile) {
+  JavaInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
+                                 Document newDocument,
+                                 PsiFile injectedFile) {
     super(editor, newDocument, injectedFile);
 
     PsiLanguageInjectionHost.Shred firstShred = ContainerUtil.getFirstItem(shreds);

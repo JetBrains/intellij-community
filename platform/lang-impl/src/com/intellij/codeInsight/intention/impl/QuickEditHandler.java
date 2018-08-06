@@ -53,7 +53,6 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler;
-import com.intellij.psi.impl.source.tree.injected.changesHandler.JavaInjectedFileChangesHandler;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
@@ -149,8 +148,11 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       }
     }, this);
 
-    if ("JAVA".equals(firstShred.getHost().getLanguage().getID())) {
-      myEditChangesHandler = new JavaInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
+
+    InjectedFileChangesHandlerProvider changesHandlerFactory =
+      InjectedFileChangesHandlerProvider.EP.forLanguage(firstShred.getHost().getLanguage());
+    if (changesHandlerFactory != null) {
+      myEditChangesHandler = changesHandlerFactory.createFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
     }
     else {
       myEditChangesHandler = new CommonInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);

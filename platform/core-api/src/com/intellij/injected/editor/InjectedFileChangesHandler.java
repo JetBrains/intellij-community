@@ -4,11 +4,13 @@ package com.intellij.injected.editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @since 2018.3
  */
+@ApiStatus.Experimental
 public interface InjectedFileChangesHandler {
 
   boolean isValid();
