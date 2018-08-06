@@ -187,21 +187,20 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     //close
     actions.add(createCloseAction(contentDescriptor));
 
-    // Scroll to the end
-    actions.add(PyConsoleUtil.createScrollToEndAction(myConsoleView.getEditor()));
-
     // run action
     actions.add(
       new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
                                myConsoleExecuteActionHandler));
 
-    // Help
-    actions.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
+    // Scroll to the end
+    actions.add(PyConsoleUtil.createScrollToEndAction(myConsoleView.getEditor()));
+
+    // Print
+    actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
 
     actions.add(new SoftWrapAction());
 
     toolbarActions.addAll(actions);
-
 
     actions.add(0, createRerunAction());
 
@@ -214,6 +213,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     toolbarActions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
 
     toolbarActions.add(new ConnectDebuggerAction());
+    toolbarActions.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
 
     DefaultActionGroup settings = new DefaultActionGroup("Settings", true);
     settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
@@ -732,9 +732,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         e = stopConsole(e);
-
         clearContent(descriptor);
-
         generalCloseAction.actionPerformed(e);
       }
     };
