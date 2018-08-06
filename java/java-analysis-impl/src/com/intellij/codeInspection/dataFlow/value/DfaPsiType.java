@@ -17,10 +17,9 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCapturedWildcardType;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -78,15 +77,10 @@ public class DfaPsiType {
   public static PsiType normalizeType(@NotNull PsiType psiType) {
     int dimensions = psiType.getArrayDimensions();
     psiType = psiType.getDeepComponentType();
-    if (psiType instanceof PsiCapturedWildcardType) {
-      psiType = ((PsiCapturedWildcardType)psiType).getUpperBound();
-    }
     if (psiType instanceof PsiWildcardType) {
       psiType = ((PsiWildcardType)psiType).getExtendsBound();
     }
-    if (psiType instanceof PsiClassType) {
-      psiType = ((PsiClassType)psiType).rawType();
-    }
+    psiType = TypeConversionUtil.erasurePreservingIntersection(psiType);
     while (dimensions-- > 0) {
       psiType = psiType.createArrayType();
     }
