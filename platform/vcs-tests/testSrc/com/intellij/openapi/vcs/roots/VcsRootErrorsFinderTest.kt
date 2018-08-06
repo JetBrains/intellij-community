@@ -27,29 +27,29 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
 
   private val PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT
   
-  fun testNoRootsThenNoErrors() {
+  fun `test no roots then no errors`() {
     doTest(VcsRootConfiguration())
   }
 
-  fun testSameOneRootInBothThenNoErrors() {
+  fun `test same one root in both then no errors`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
       .mappings(".")
     doTest(vcsRootConfiguration)
   }
 
-  fun testSameTwoRootsInBothThenNoErrors() {
+  fun `test same two roots in both then no errors`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
       .mappings(".", "community")
     doTest(vcsRootConfiguration)
   }
 
-  fun testOneMockRootNoVCSRootsThenError() {
+  fun `test one mock root no VCS roots then error`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
       .unregErrors(".")
     doTest(vcsRootConfiguration)
   }
 
-  fun testOneVCSRootNoMockRootsThenError() {
+  fun `test one VCS root no mock roots then error`() {
 
     val vcsRootConfiguration = VcsRootConfiguration().mappings(".")
       .extraErrors(".")
@@ -57,55 +57,55 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
   }
 
 
-  fun testOneRootButDifferentThenTwoErrors() {
+  fun `test one root but different then two errors`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
       .mappings("community")
       .unregErrors(".").extraErrors("community")
     doTest(vcsRootConfiguration)
   }
 
-  fun testTwoRootsOneMatchingOneDifferentThenTwoErrors() {
+  fun `test two roots one matching one different then two errors`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
       .mappings(".", "contrib")
       .unregErrors("community").extraErrors("contrib")
     doTest(vcsRootConfiguration)
   }
 
-  fun testTwoRootsInMockRootOneMatchingInVCSThenError() {
+  fun `test two roots in mock root one matching in VCS then error`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
       .mappings(".")
       .unregErrors("community")
     doTest(vcsRootConfiguration)
   }
 
-  fun testTwoRootsBothNotMatchingThenFourErrors() {
+  fun `test two roots both not matching then four errors`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community")
       .mappings("another", "contrib")
       .unregErrors("community", ".").extraErrors("contrib", "another")
     doTest(vcsRootConfiguration)
   }
 
-  fun testProjectRootNoMockRootsThenErrorAboutExtraRoot() {
+  fun `test project root no mock roots then error about extra root`() {
     val vcsRootConfiguration = VcsRootConfiguration()
       .mappings(PROJECT)
       .extraErrors(PROJECT)
     doTest(vcsRootConfiguration)
   }
 
-  fun testProjectRootFullUnderMockRootThenCorrect() {
+  fun `test project root full under mock root then correct`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".")
       .mappings(PROJECT)
     doTest(vcsRootConfiguration)
   }
 
-  fun testProjectRootMockRootForAContentRootBelowProjectThenError() {
+  fun `test project root mock root for a content root below project then error`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("content_root")
       .contentRoots("content_root").mappings(PROJECT)
       .unregErrors("content_root").extraErrors(PROJECT)
     doTest(vcsRootConfiguration)
   }
 
-  fun testProjectRootMockRootBelowProjectFolderNotInAContentRootThenUnregisteredRootError() {
+  fun `test project root mock root below project folder not in a content root then unregistered root error`() {
     // this is to be fixed: auto-detection of MockRoot repositories in subfolders for the <Project> mapping
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("community")
       .contentRoots(".").mappings(PROJECT)
@@ -113,7 +113,7 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
     doTest(vcsRootConfiguration)
   }
 
-  fun testProjectRootMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() {
+  fun `test project root mock root for full project content root linked source folder below project then errors`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
       .mappings(PROJECT)
       .contentRoots(".", "content_root", "../linked_source_root")
@@ -121,7 +121,7 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
     doTest(vcsRootConfiguration)
   }
 
-  fun testProjectRootForFolderMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() {
+  fun `test project root for folder mock root for full project content root linked source folder below project then errors`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
       .mappings(PROJECT, "folder")
       .contentRoots(".", "content_root", "../linked_source_root")
@@ -129,13 +129,13 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
     doTest(vcsRootConfiguration)
   }
 
-  fun testProjectRootMockRootLikeInIDEAProjectThenError() {
+  fun `test project root mock root like in i d e a project then error`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community", "contrib").mappings(PROJECT)
       .contentRoots(".", "community", "contrib").unregErrors("community", "contrib")
     doTest(vcsRootConfiguration)
   }
 
-  fun testRealMockRootRootDeeperThanThreeLevelsShouldBeDetected() {
+  fun `test real mock root root deeper than three levels should be detected`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots(".", "community", "contrib", "community/level1/level2/level3")
       .contentRoots(".", "community", "contrib").mappings(PROJECT, "community/level1/level2/level3")
       .unregErrors("community", "contrib")

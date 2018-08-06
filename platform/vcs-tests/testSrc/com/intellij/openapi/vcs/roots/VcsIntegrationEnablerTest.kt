@@ -41,31 +41,31 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
     myTestRoot = projectRoot.parent
   }
 
-  fun testOneRootForTheWholeProjectThenJustAddVcsRoot() {
+  fun `test one root for the whole project then just add vcs root`() {
     doTest(given("."), null, null)
   }
 
-  fun testNoMockRootsThenInitAndNotify() {
+  fun `test no mock roots then init and notify`() {
     doTest(given(),
            notification("Created mock repository in " + projectRoot.presentableUrl), ".", VcsTestUtil.toAbsolute(".", myProject))
   }
 
-  fun testBelowMockNoInsideThenNotify() {
+  fun `test below mock no inside then notify`() {
     doTest(given(".."),
            notification("Added mock root: " + myTestRoot!!.presentableUrl))
   }
 
-  fun testMockForProjectSomeInsideThenNotify() {
+  fun `test mock for project some inside then notify`() {
     doTest(given(".", "community"),
            notification("Added mock roots: " + projectRoot.presentableUrl + ", " + getPresentationForRoot("community")))
   }
 
-  fun testBelowMockSomeInsideThenNotify() {
+  fun `test below mock some inside then notify`() {
     doTest(given("..", "community"),
            notification("Added mock roots: " + myTestRoot!!.presentableUrl + ", " + getPresentationForRoot("community")))
   }
 
-  fun testNotUnderMockSomeInsideThenNotify() {
+  fun `test not under mock some inside then notify`() {
     doTest(given("community", "contrib"),
            notification(
              "Added mock roots: " + getPresentationForRoot("community") + ", " + getPresentationForRoot("contrib"))
