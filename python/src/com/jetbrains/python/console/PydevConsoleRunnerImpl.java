@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -59,7 +58,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMappingSettings;
@@ -173,19 +171,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myConsoleTitle = consoleTitle;
   }
 
-  private List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
-                                            final RunContentDescriptor contentDescriptor) {
-    //toolbarActions.add(backspaceHandlingAction);
-
+  private List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions) {
     toolbarActions.add(createRerunAction());
 
     List<AnAction> actions = ContainerUtil.newArrayList();
 
     //stop
     actions.add(createStopAction());
-
-    //close
-    actions.add(createCloseAction(contentDescriptor));
 
     // run action
     actions.add(
@@ -324,8 +316,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(null, myProcessHandler, panel, "Error running console");
-
-    actionGroup.add(createCloseAction(contentDescriptor));
 
     showContentDescriptor(contentDescriptor);
   }
@@ -595,9 +585,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     contentDescriptor.setFocusComputable(() -> myConsoleView.getConsoleEditor().getContentComponent());
     contentDescriptor.setAutoFocusContent(true);
 
-
     // tool bar actions
-    final List<AnAction> actions = fillToolBarActions(toolbarActions, contentDescriptor);
+    final List<AnAction> actions = fillToolBarActions(toolbarActions);
     registerActionShortcuts(actions, myConsoleView.getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     getConsoleView().addConsoleFolding(false, false);
@@ -688,7 +677,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        stopConsole(e);
+        stopConsole();
       }
     };
   }
@@ -720,39 +709,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
-  private AnAction createCloseAction(final RunContentDescriptor descriptor) {
-    final AnAction generalCloseAction = new CloseAction(getExecutor(), descriptor, myProject);
-
-    final AnAction stopAction = new DumbAwareAction() {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        generalCloseAction.update(e);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        e = stopConsole(e);
-        clearContent(descriptor);
-        generalCloseAction.actionPerformed(e);
-      }
-    };
-    stopAction.copyFrom(generalCloseAction);
-    return stopAction;
-  }
-
-  protected void clearContent(RunContentDescriptor descriptor) {
-    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-    if (toolWindow != null && toolWindow.getToolWindow() != null) {
-      Content content = toolWindow.getToolWindow().getContentManager().findContent(descriptor.getDisplayName());
-      assert content != null;
-      toolWindow.getToolWindow().getContentManager().removeContent(content, true);
-    }
-  }
-
-  private AnActionEvent stopConsole(@NotNull AnActionEvent e) {
+  private void stopConsole() {
     if (myPydevConsoleCommunication != null) {
-      e = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
-                            e.getPresentation(), e.getActionManager(), e.getModifiers());
       try {
         myPydevConsoleCommunication.interrupt();
         closeCommunication();
@@ -763,7 +721,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         // Ignore
       }
     }
-    return e;
   }
 
   protected AnAction createSplitLineAction() {
