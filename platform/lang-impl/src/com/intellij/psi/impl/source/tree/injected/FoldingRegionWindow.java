@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -7,9 +7,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import org.jetbrains.annotations.NotNull;
 
-class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
+public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   private final EditorWindow myEditorWindow;
 
   private final FoldRegion myHostRegion;
@@ -57,7 +58,7 @@ class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   }
 
   @Override
-  public RangeMarkerEx getDelegate() {
-    return (RangeMarkerEx)myHostRegion;
+  public FoldRegionImpl getDelegate() {
+    return (FoldRegionImpl)myHostRegion;
   }
 }
