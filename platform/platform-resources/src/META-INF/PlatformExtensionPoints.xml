@@ -315,7 +315,7 @@
 
     <extensionPoint qualifiedName="com.intellij.editor.injectedFileChangesHandlerProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.openapi.editor.InjectedFileChangesHandlerProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.injected.editor.InjectedFileChangesHandlerProvider"/>
     </extensionPoint>
   </extensionPoints>
 </idea-plugin>

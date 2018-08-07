@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.injected.editor.InjectedFileChangesHandler;
+import com.intellij.injected.editor.InjectedFileChangesHandlerProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;

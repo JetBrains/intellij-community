@@ -8,6 +8,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Handles host language specific communications between <b>fragment editor</b> and the host-document.
+ *
+ * Could be implemented for better injected fragment editing in raw string literals or concatenated strings.
+ *
  * @since 2018.3
  */
 @ApiStatus.Experimental
@@ -17,7 +21,14 @@ public interface InjectedFileChangesHandler {
 
   void commitToOriginal(@NotNull DocumentEvent injectedDocumentEvent);
 
+  /**
+   * @return return true if this handler should be used for the given injected file and text range.
+   * Returning true implies that this handler was successfully set up for the given values
+   */
   boolean tryReuse(@NotNull PsiFile newInjectedFile, @NotNull TextRange newHostRange);
 
-  boolean handlesRange(@NotNull TextRange range);
+  /**
+   * @return true if given {@code hostRange} corresponds to the injected fragment managed by this handler
+   */
+  boolean handlesRange(@NotNull TextRange hostRange);
 }
