@@ -93,10 +93,10 @@
     <orderEntry type="module" module-name="intellij.java.manifest" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.jira" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.decompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
@@ -110,15 +110,15 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.updater" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.jps" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.remoteServers.git" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.jps.javacRefScanner8" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.images.build" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.images.build" scope="TEST" />
     <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
