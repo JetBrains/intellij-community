@@ -59,7 +59,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
-    DefaultActionGroup diffGroup = new DefaultActionGroup("Compare With", true);
+    DefaultActionGroup diffGroup = new DefaultActionGroup("Compare Contents", true);
     diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
     diffGroup.add(Separator.create("Compare Contents"));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT));
