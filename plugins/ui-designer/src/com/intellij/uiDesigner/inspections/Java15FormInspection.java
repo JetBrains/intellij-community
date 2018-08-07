@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,7 +25,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.ResetValueAction;
@@ -61,8 +60,8 @@ public class Java15FormInspection extends BaseFormInspection {
       final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, prop.getName(), false, true);
       if (getter == null) continue;
       final LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {
-        registerError(component, collector, prop, "@since " + Java15APIUsageInspectionBase.getShortName(languageLevel));
+      if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {
+        registerError(component, collector, prop, "@since " + Java15APIUsageInspection.getShortName(languageLevel));
       }
     }
   }

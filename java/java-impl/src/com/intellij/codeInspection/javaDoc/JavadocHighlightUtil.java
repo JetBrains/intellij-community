@@ -35,7 +35,7 @@ public class JavadocHighlightUtil {
   @SuppressWarnings("SameParameterValue")
   public interface ProblemHolder {
     Project project();
-    JavaDocLocalInspectionBase inspection();
+    JavaDocLocalInspection inspection();
 
     void problem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix);
     void eolProblem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix);
@@ -46,7 +46,7 @@ public class JavadocHighlightUtil {
     LocalQuickFix registerTagFix(@NotNull String tag);
   }
 
-  static boolean isJavaDocRequired(@NotNull JavaDocLocalInspectionBase inspection, @NotNull PsiModifierListOwner element) {
+  static boolean isJavaDocRequired(@NotNull JavaDocLocalInspection inspection, @NotNull PsiModifierListOwner element) {
     if (element instanceof PsiPackage) {
       return 1 <= getAccessNumber(inspection.PACKAGE_OPTIONS);
     }
@@ -85,16 +85,16 @@ public class JavadocHighlightUtil {
     return false;
   }
 
-  private static int getAccessNumber(JavaDocLocalInspectionBase.Options options) {
+  private static int getAccessNumber(JavaDocLocalInspection.Options options) {
     return getAccessNumber(options.ACCESS_JAVADOC_REQUIRED_FOR);
   }
 
   private static int getAccessNumber(String accessModifier) {
-    if (accessModifier.startsWith(JavaDocLocalInspectionBase.NONE)) return 0;
-    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PUBLIC)) return 1;
-    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PROTECTED)) return 2;
-    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PACKAGE_LOCAL)) return 3;
-    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PRIVATE)) return 4;
+    if (accessModifier.startsWith(JavaDocLocalInspection.NONE)) return 0;
+    if (accessModifier.startsWith(JavaDocLocalInspection.PUBLIC)) return 1;
+    if (accessModifier.startsWith(JavaDocLocalInspection.PROTECTED)) return 2;
+    if (accessModifier.startsWith(JavaDocLocalInspection.PACKAGE_LOCAL)) return 3;
+    if (accessModifier.startsWith(JavaDocLocalInspection.PRIVATE)) return 4;
 
     return 5;
   }
@@ -105,7 +105,7 @@ public class JavadocHighlightUtil {
   }
 
   static void checkRequiredTags(@NotNull PsiDocTag[] tags,
-                                @NotNull JavaDocLocalInspectionBase.Options options,
+                                @NotNull JavaDocLocalInspection.Options options,
                                 @NotNull PsiElement toHighlight,
                                 @NotNull ProblemHolder holder) {
     boolean[] isTagRequired = new boolean[TAGS_TO_CHECK.length];
@@ -113,7 +113,7 @@ public class JavadocHighlightUtil {
     boolean someTagsAreRequired = false;
 
     for (int i = 0; i < TAGS_TO_CHECK.length; i++) {
-      someTagsAreRequired |= (isTagRequired[i] = JavaDocLocalInspectionBase.isTagRequired(options, TAGS_TO_CHECK[i]));
+      someTagsAreRequired |= (isTagRequired[i] = JavaDocLocalInspection.isTagRequired(options, TAGS_TO_CHECK[i]));
     }
 
     if (!someTagsAreRequired) return;

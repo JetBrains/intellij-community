@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  private final BooleanMethodIsAlwaysInvertedInspectionBase myGlobalTool;
+  private final BooleanMethodIsAlwaysInvertedInspection myGlobalTool;
 
-  BooleanMethodIsAlwaysInvertedLocalInspection(BooleanMethodIsAlwaysInvertedInspectionBase globalTool) {
+  BooleanMethodIsAlwaysInvertedLocalInspection(BooleanMethodIsAlwaysInvertedInspection globalTool) {
     myGlobalTool = globalTool;
   }
 
@@ -52,7 +52,7 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
       if (!(element instanceof PsiReferenceExpression)) return false;
       PsiMethodCallExpression methodCallExpression = ObjectUtils.tryCast(element.getParent(), PsiMethodCallExpression.class);
       if (methodCallExpression == null) return false;
-      boolean isInverted = BooleanMethodIsAlwaysInvertedInspectionBase.isInvertedMethodCall(methodCallExpression);
+      boolean isInverted = BooleanMethodIsAlwaysInvertedInspection.isInvertedMethodCall(methodCallExpression);
       if (isInverted) {
         usageCount[0]++;
         return true;
