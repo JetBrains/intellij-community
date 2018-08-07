@@ -5,7 +5,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParserUtils.adapt_builder_;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CODE_REFERENCE;
@@ -14,11 +13,6 @@ public class GroovyParser extends GroovyGeneratedParser {
 
   public boolean parseDeep() {
     return false;
-  }
-
-  @Deprecated
-  public static void parseExpression(PsiBuilder builder) {
-    new GroovyParser().parseLight(GroovyElementTypes.EXPRESSION, builder);
   }
 
   //gsp directives, scriptlets and such
