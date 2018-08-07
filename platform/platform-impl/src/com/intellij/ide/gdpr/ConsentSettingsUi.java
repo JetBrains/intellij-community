@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
+import com.android.tools.analytics.AnalyticsSettings;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -93,7 +94,9 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     if (addCheckBox) {
-      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(consent.getName().toLowerCase(Locale.US)), consent.isAccepted());
+      // Android Studio has its own metrics settings
+      // final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(consent.getName().toLowerCase(Locale.US)), consent.isAccepted());
+      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(consent.getName().toLowerCase(Locale.US)), AnalyticsSettings.getOptedIn());
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);

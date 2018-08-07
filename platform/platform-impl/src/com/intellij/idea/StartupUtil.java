@@ -156,7 +156,9 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
-      AppUIUtil.showUserAgreementAndConsentsIfNeeded();
+
+      // Android Studio doesn't want JetBrain's User Agreement, we show our consent screen slightly later from AndroidStudioInitializer
+      // AppUIUtil.showUserAgreementAndConsentsIfNeeded();
     }
 
     appStarter.start(newConfigFolder);

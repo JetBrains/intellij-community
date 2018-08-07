@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.gdpr;
 
+import com.android.tools.analytics.AnalyticsSettings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
@@ -203,11 +204,16 @@ public final class ConsentOptions {
       catch (IOException e) {
         LOG.info(e);
       }
-      UsageStatisticsPersistenceComponent.getInstance().updateAndroidStudioMetrics();
+      UsageStatisticsPersistenceComponent.updateAndroidStudioMetrics();
     }
   }
 
   private static boolean needReconfirm(Map<String, Consent> defaults, Map<String, ConfirmedConsent> confirmed) {
+    // Android Studio has its own metrics settings that take precedence. We still fall through the defaults, to ensure
+    // we don't repeat asking for opting-in every time.
+    if (AnalyticsSettings.getOptedIn()) {
+      return false;
+    }
     for (Consent defConsent : defaults.values()) {
       if (defConsent.isDeleted()) {
         continue;
