@@ -12,12 +12,15 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -234,8 +237,13 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     assertEquals(path, substituted);
   }
 
-  public static void assertElementEquals(final Element element, String value, Module module) throws IOException {
-    assertEquals(value, JbXmlOutputter.collapseMacrosAndWrite(element, module).replace('\n', ' ').replace("  ", ""));
+  public static void assertElementEquals(@NotNull Element element, @NotNull String value, @NotNull Module module) throws IOException {
+    try {
+      assertThat(JbXmlOutputter.collapseMacrosAndWrite(element, module)).isEqualTo(JDOMUtil.writeElement(JDOMUtil.load(value)));
+    }
+    catch (JDOMException e) {
+      throw new IOException(e);
+    }
   }
 
   private File getTestRoot() {
