@@ -10,6 +10,6 @@ public class CompilationUnit {
 
   @Deprecated
   public static void parseFile(PsiBuilder builder, GroovyParser parser) {
-    parser.parse(GroovyElementTypes.GROOVY_FILE, builder);
+    parser.parseLight(GroovyElementTypes.GROOVY_FILE, builder);
   }
 }

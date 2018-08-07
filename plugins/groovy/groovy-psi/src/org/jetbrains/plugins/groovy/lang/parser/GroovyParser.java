@@ -18,7 +18,7 @@ public class GroovyParser extends GroovyGeneratedParser {
 
   @Deprecated
   public static void parseExpression(PsiBuilder builder) {
-    new GroovyParser().parse(GroovyElementTypes.EXPRESSION, builder);
+    new GroovyParser().parseLight(GroovyElementTypes.EXPRESSION, builder);
   }
 
   //gsp directives, scriptlets and such

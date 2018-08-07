@@ -10,6 +10,6 @@ public class ConstructorBody {
 
   @Deprecated
   public static void parseConstructorBodyDeep(PsiBuilder builder, GroovyParser parser) {
-    parser.parse(GroovyElementTypes.CONSTRUCTOR_BLOCK, builder);
+    parser.parseLight(GroovyElementTypes.CONSTRUCTOR_BLOCK, builder);
   }
 }
