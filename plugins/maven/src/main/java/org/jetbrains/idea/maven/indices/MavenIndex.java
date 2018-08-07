@@ -517,6 +517,7 @@ public class MavenIndex {
   public synchronized void addArtifact(final File artifactFile) {
     doIndexTask(() -> {
       IndexedMavenId id = myData.addArtifact(artifactFile);
+      if (id == null) return null;
 
       myData.hasGroupCache.put(id.groupId, true);
 
