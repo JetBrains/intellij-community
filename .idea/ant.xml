@@ -7,4 +7,7 @@
       </properties>
     </buildFile>
   </component>
+  <component name="GantSettings">
+    <option name="SDK_HOME" value="$PROJECT_DIR$/build/lib/gant" />
+  </component>
 </project>

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -20,12 +21,17 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeBean> {
+public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeBean>, ModificationTracker {
   private final PsiModificationTrackerImpl myTracker;
-  private SdkHomeBean mySdkHome;
+  private SdkHomeBean mySdkHome = new SdkHomeBean();
 
-  protected SdkHomeSettings(Project project) {
+  protected SdkHomeSettings(@NotNull Project project) {
     myTracker = (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return mySdkHome.getModificationCount();
   }
 
   @Override
@@ -37,7 +43,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
   public void loadState(@NotNull SdkHomeBean state) {
     SdkHomeBean oldState = mySdkHome;
     mySdkHome = state;
-    if (oldState != null) {
+    if (!StringUtil.equals(oldState.getSdkHome(), state.getSdkHome())) {
       myTracker.incCounter();
     }
   }
@@ -48,7 +54,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
       return null;
     }
 
-    @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"}) final String sdk_home = state.SDK_HOME;
+    @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"}) final String sdk_home = state.getSdkHome();
     if (StringUtil.isEmpty(sdk_home)) {
       return null;
     }
