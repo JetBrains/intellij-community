@@ -68,8 +68,8 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
@@ -240,9 +240,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       DefaultActionGroup diffGroup = new DefaultActionGroup("Compare With", true);
       diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
       diffGroup.add(Separator.create("Compare Contents"));
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE, true));
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE, true));
-      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, true));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE));
+      diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.LEFT));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.BASE));
       diffGroup.add(new ShowDiffWithBaseAction(ThreeSide.RIGHT));

@@ -366,8 +366,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   protected class TextShowPartialDiffAction extends ShowPartialDiffAction {
-    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
-      super(mode, hasFourSides);
+    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode) {
+      super(mode);
     }
 
     @NotNull
