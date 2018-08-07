@@ -23,7 +23,7 @@ import java.util.List;
  */
 public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeBean>, ModificationTracker {
   private final PsiModificationTrackerImpl myTracker;
-  private SdkHomeBean mySdkHome = new SdkHomeBean();
+  private SdkHomeBean mySdkHome = null;
 
   protected SdkHomeSettings(@NotNull Project project) {
     myTracker = (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
@@ -31,7 +31,8 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
 
   @Override
   public long getModificationCount() {
-    return mySdkHome.getModificationCount();
+    SdkHomeBean sdkHome = mySdkHome;
+    return sdkHome == null ? 0 : sdkHome.getModificationCount();
   }
 
   @Override
@@ -43,13 +44,14 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
   public void loadState(@NotNull SdkHomeBean state) {
     SdkHomeBean oldState = mySdkHome;
     mySdkHome = state;
-    if (!StringUtil.equals(oldState.getSdkHome(), state.getSdkHome())) {
+    // do not increment on a first load
+    if (oldState != null && !StringUtil.equals(oldState.getSdkHome(), state.getSdkHome())) {
       myTracker.incCounter();
     }
   }
 
   @Nullable
-  private static VirtualFile calcHome(final SdkHomeBean state) {
+  private static VirtualFile calcHome(@Nullable SdkHomeBean state) {
     if (state == null) {
       return null;
     }
