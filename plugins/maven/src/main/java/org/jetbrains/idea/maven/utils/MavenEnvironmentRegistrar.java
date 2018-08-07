@@ -1,13 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.util.io.FileUtil;
 
 public class MavenEnvironmentRegistrar implements BaseComponent {
-  private static final String MAVEN_REPOSITORY = "MAVEN_REPOSITORY";
-
   @Override
   public void initComponent() {
     registerPathVariable();
@@ -24,6 +23,6 @@ public class MavenEnvironmentRegistrar implements BaseComponent {
       }
     }
 
-    macros.setMacro(MAVEN_REPOSITORY, repository);
+    macros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, repository);
   }
 }
