@@ -397,6 +397,15 @@ public class Foundation {
     public ID at(int index) {
       return invoke(myDelegate, "objectAtIndex:", index);
     }
+
+    @NotNull
+    public List<ID> getList() {
+      List<ID> result = new ArrayList<ID>();
+      for (int i = 0; i < count(); i++) {
+        result.add(at(i));
+      }
+      return result;
+    }
   }
 
   public static class NSData {
