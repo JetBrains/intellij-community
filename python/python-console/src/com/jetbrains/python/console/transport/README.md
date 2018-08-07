@@ -40,9 +40,9 @@ To implement this idea let each message be flagged whether the message is a requ
 
 #### Java Implementation
 
-On Java side the message with direction flag is `com.jetbrains.python.console.thrift.DirectedMessage`. The incoming message is parsed into 
-`DirectedMessage` using `com.jetbrains.python.console.thrift.DirectedMessageCodec`. The message content is dispatched then via 
-`com.jetbrains.python.console.thrift.DirectedMessageHandler` either to request or response stream and will be handled accordingly by
+On Java side the message with direction flag is `com.jetbrains.python.console.transport.DirectedMessage`. The incoming message is parsed into 
+`DirectedMessage` using `com.jetbrains.python.console.transport.DirectedMessageCodec`. The message content is dispatched then via 
+`com.jetbrains.python.console.transport.DirectedMessageHandler` either to request or response stream and will be handled accordingly by
 *server-side Thrift service* or *client-side Thrift service*.
 
 *Netty* handlers are asynchronous so that requests for *server-side service* and responses for *client-side service* are processed 

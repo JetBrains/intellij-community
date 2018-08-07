@@ -1,4 +1,4 @@
-package com.jetbrains.python.console.thrift
+package com.jetbrains.python.console.transport
 
 import com.intellij.openapi.diagnostic.Logger
 import io.netty.buffer.ByteBuf

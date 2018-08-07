@@ -1,4 +1,4 @@
-package com.jetbrains.python.console.thrift
+package com.jetbrains.python.console.transport
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
