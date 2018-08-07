@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.application.options.PathMacrosImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
@@ -14,6 +13,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
 
@@ -65,7 +65,7 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
     }
   }
 
-  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == "${PathMacrosImpl.EXT_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}") null else super.getMacroSubstitutor(fileSpec)
+  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
 
   override val isUseXmlProlog: Boolean
     get() = false
