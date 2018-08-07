@@ -39,6 +39,14 @@ else:
             s = s.decode("utf-8")
         return s
 
+# `LOAD_ATTR` constants of `org.python.core.Opcode` class differs in Jython 2.7.0 and Jython 2.7.1
+# <= Jython 2.7.1b3
+# `Opcode` class in Jython 2.7.0 has the comment: "derived from CPython 2.5.2 Include/opcode.h"
+JYTHON_2_7_0_LOAD_ATTR = 105
+# >= Jython 2.7.1rc1
+# `Opcode` class in Jython 2.7.1 has the comment: "derived from CPython 2.7.12 Include/opcode.h"
+JYTHON_2_7_1_LOAD_ATTR = 106
+
 
 def with_metaclass(meta, *bases):
     """Create a base class with a metaclass for py2 & py3
@@ -112,9 +120,27 @@ def init_func_generator(spec):
         # the following attributes are not available for `code` in Jython
 
         co_stacksize = 2
-        # in Jython bytecode `LOAD_ATTR` instruction byte code differs from CPython
-        # 0x69 (`i` ASCII character) in Jython and 0x6A (`j` ASCII character) in CPython
-        co_code = b't\x00\x00\x83\x00\x00i\x01\x00\x83\x00\x00|\x00\x00_\x02\x00|\x00\x00i\x02\x00d\x01\x00=d\x00\x00S'
+        if sys.version_info < (2, 7, 1):
+            load_attr = JYTHON_2_7_0_LOAD_ATTR
+        else:
+            load_attr = JYTHON_2_7_1_LOAD_ATTR
+
+        #  0 LOAD_GLOBAL              0 (locals)
+        #  3 CALL_FUNCTION            0
+        #  6 LOAD_ATTR                1 (copy)
+        #  9 CALL_FUNCTION            0
+        # 12 LOAD_FAST                0 (self)
+        # 15 STORE_ATTR               2 (__dict__)
+        #
+        # 18 LOAD_FAST                0 (self)
+        # 21 LOAD_ATTR                2 (__dict__)
+        # 24 LOAD_CONST               1 ('self')
+        # 27 DELETE_SUBSCR
+        # 28 LOAD_CONST               0 (None)
+        # 31 RETURN_VALUE
+
+        co_code = b't\x00\x00\x83\x00\x00{0:c}\x01\x00\x83\x00\x00|\x00\x00_\x02\x00' \
+                  b'|\x00\x00{0:c}\x02\x00d\x01\x00=d\x00\x00S'.format(load_attr)
         co_consts = (None, 'self')
         co_names = ('locals', 'copy', '__dict__')
         co_lnotab = b'\x00\x01\x12\x01'
