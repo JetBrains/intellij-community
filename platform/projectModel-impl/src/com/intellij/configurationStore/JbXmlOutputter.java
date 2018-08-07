@@ -54,6 +54,8 @@ package com.intellij.configurationStore;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacroFilter;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,11 +66,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.xml.transform.Result;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
 
 @SuppressWarnings("Duplicates")
-final class JbXmlOutputter {
+public final class JbXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 
   // For normal output
@@ -89,6 +92,19 @@ final class JbXmlOutputter {
     this.elementFilter = elementFilter;
     this.macroMap = macroMap;
     this.macroFilter = macroFilter;
+  }
+
+  public static void collapseMacrosAndWrite(@NotNull Element element, @NotNull ComponentManager project, @NotNull Writer writer) throws IOException {
+    PathMacroManager macroManager = PathMacroManager.getInstance(project);
+    JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroManager.getReplacePathMap(), macroManager.getMacroFilter());
+    xmlWriter.output(element, writer);
+  }
+
+  @NotNull
+  public static String collapseMacrosAndWrite(@NotNull Element element, @NotNull ComponentManager project) throws IOException {
+    StringWriter writer = new StringWriter();
+    collapseMacrosAndWrite(element, project, writer);
+    return writer.toString();
   }
 
   /**

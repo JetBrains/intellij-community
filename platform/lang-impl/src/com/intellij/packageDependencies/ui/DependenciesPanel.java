@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.packageDependencies.ui;
 
@@ -9,6 +7,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.ExporterToTextFile;
@@ -16,7 +15,6 @@ import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleManager;
@@ -30,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -49,11 +46,9 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,8 +60,9 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.io.IOException;
 import java.util.List;
+import java.util.*;
 
 public class DependenciesPanel extends JPanel implements Disposable, DataProvider {
   private final Map<PsiFile, Set<PsiFile>> myDependencies;
@@ -237,7 +233,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       for (PsiFile from : searchIn) {
         for (PsiFile to : initialSearchFor) {
           final List<List<PsiFile>> paths = builder.findPaths(from, to);
-          Collections.sort(paths, (p1, p2) -> p1.size() - p2.size());
+          Collections.sort(paths, Comparator.comparingInt(List::size));
           for (List<PsiFile> path : paths) {
             if (!path.isEmpty()){
               path.add(0, from);
@@ -389,7 +385,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private TreeModel buildTreeModel(Set<PsiFile> deps, Marker marker) {
-    return PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE).createTreeModel(myProject, deps, marker,
+    return Objects.requireNonNull(PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE)).createTreeModel(myProject, deps, marker,
                                                                                                              mySettings);
   }
 
@@ -470,13 +466,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(
-    JTree tree,
-    Object value,
-    boolean selected,
-    boolean expanded,
-    boolean leaf,
-    int row,
-    boolean hasFocus
+      @NotNull JTree tree,
+      Object value,
+      boolean selected,
+      boolean expanded,
+      boolean leaf,
+      int row,
+      boolean hasFocus
   ){
       PackageDependenciesNode node = (PackageDependenciesNode)value;
       if (node.isValid()) {
@@ -692,8 +688,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         }
         rootElement.addContent(fileElement);
       }
-      PathMacroManager.getInstance(myProject).collapsePaths(rootElement);
-      return JDOMUtil.writeDocument(new Document(rootElement), SystemProperties.getLineSeparator());
+
+      try {
+        return JbXmlOutputter.collapseMacrosAndWrite(rootElement, myProject);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return "";
+      }
     }
 
     @NotNull
@@ -821,6 +823,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       exclude(selectedScope);
       myExcluded.addAll(selectedScope);
       final TreePath[] paths = myLeftTree.getSelectionPaths();
+      assert paths != null;
       for (TreePath path : paths) {
         TreeUtil.removeLastPathComponent(myLeftTree, path);
       }
@@ -954,6 +957,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           }
         }
         final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
+        assert provider != null;
         PackageSet leftPackageSet = provider.createPackageSet(leftNode, true);
         if (leftPackageSet == null) {
           leftPackageSet = provider.createPackageSet(leftNode, false);
@@ -984,6 +988,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
       if (leftNode != null && rightNode != null) {
         final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
+        assert provider != null;
         presentation.setEnabled((provider.createPackageSet(leftNode, true) != null || provider.createPackageSet(leftNode, false) != null) &&
                                 (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
       }
@@ -1012,6 +1017,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
+      assert provider != null;
       e.getPresentation().setText(provider.getDisplayName());
       e.getPresentation().setIcon(provider.getIcon());
     }
