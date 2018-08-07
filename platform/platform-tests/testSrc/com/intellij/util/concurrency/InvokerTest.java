@@ -18,16 +18,15 @@ package com.intellij.util.concurrency;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.concurrency.Promise;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,19 +34,22 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import static javax.swing.SwingUtilities.isEventDispatchThread;
+
 /**
  * @author Sergey.Malenkov
  */
 public class InvokerTest {
-  private static final List<Future<?>> futures = Collections.synchronizedList(new ArrayList<>());
+  private static final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
   private final Disposable parent = Disposer.newDisposable();
+
   @After
   public void tearDown() throws Exception {
     while (!futures.isEmpty()) {
-      List<Future<?>> a = new ArrayList<>(futures);
+      List<Promise<?>> a = new ArrayList<>(futures);
       futures.clear();
-      for (Future<?> future : a) {
-        future.get(100,TimeUnit.SECONDS);
+      for (Promise<?> future : a) {
+        future.blockingGet(100, TimeUnit.SECONDS);
       }
     }
     Disposer.dispose(parent);
@@ -273,7 +275,7 @@ public class InvokerTest {
 
 
   private static void test(Invoker invoker, CountDownLatch latch, Consumer<? super AtomicReference<String>> consumer) {
-    Assert.assertFalse("EDT should not be used to start this test", invoker instanceof Invoker.EDT && SwingUtilities.isEventDispatchThread());
+    Assert.assertFalse("EDT should not be used to start this test", invoker instanceof Invoker.EDT && isEventDispatchThread());
     AtomicReference<String> error = new AtomicReference<>();
     futures.add(invoker.invokeLater(() -> consumer.accept(error)));
     String message;
