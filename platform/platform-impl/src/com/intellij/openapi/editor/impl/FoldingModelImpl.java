@@ -558,7 +558,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   }
 
   @Override
-  public void moveTextHappened(int start, int end, int base) {
+  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
     if (!myEditor.getDocument().isInBulkUpdate()) {
       myFoldTree.rebuild();
     }
