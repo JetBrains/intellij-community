@@ -89,7 +89,7 @@ public class DfaValueFactory {
   public DfaValue createExactTypeValue(@Nullable PsiType type) {
     if (type == null) return DfaUnknownValue.getInstance();
     DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(createDfaType(type)))
-      .with(DfaFactType.CAN_BE_NULL, false);
+      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     return getFactFactory().createValue(facts);
   }
 

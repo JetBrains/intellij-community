@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
@@ -1170,7 +1171,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     for (DfaVariableValue value : vars) {
-      if (!value.isFlushableByCalls()) continue;
+      if (value.isNegated() || !value.isFlushableByCalls()) continue;
       DfaVariableValue qualifier = value.getQualifier();
       if (qualifier != null) {
         if (getValueFact(qualifier, DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE ||
@@ -1184,22 +1185,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private boolean shouldMarkFlushed(@NotNull DfaVariableValue value) {
     if (value.getInherentNullability() != Nullability.NULLABLE) return false;
-    if (getVariableState(value).getFact(DfaFactType.NULLABILITY) == DfaNullability.FLUSHED) return true;
-    int eqClassIndex = getEqClassIndex(value);
-    if (eqClassIndex < 0) return false;
-
-    EqClass eqClass = myEqClasses.get(eqClassIndex);
-    if (eqClass == null) return false;
-    DfaConstValue nullConst = myFactory.getConstFactory().getNull();
-    if (eqClass.findConstant(true) == nullConst) return true;
-
-    for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
-      EqClass otherClass = pair.getOtherClass(eqClassIndex);
-      if (otherClass != null && otherClass.findConstant(true) == nullConst) {
-        return true;
-      }
-    }
-    return false;
+    return getVariableState(value).getFact(DfaFactType.NULLABILITY) == DfaNullability.FLUSHED || isNull(value) || isNotNull(value);
   }
 
   @NotNull
@@ -1231,8 +1217,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableValue qualifier = variable.getQualifier();
     if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write
-      qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls)
-               .forEach(val -> doFlush(val, shouldMarkFlushed(val)));
+      List<DfaVariableValue> toFlush =
+        qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls)
+          .filter(var -> !var.isNegated()).collect(Collectors.toList());
+      toFlush.forEach(val -> doFlush(val, shouldMarkFlushed(val)));
     }
   }
 

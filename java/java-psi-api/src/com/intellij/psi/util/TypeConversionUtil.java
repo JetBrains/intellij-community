@@ -1204,7 +1204,9 @@ public class TypeConversionUtil {
         PsiType[] types = Stream.of(extendsList).map(PsiClassType::resolve).filter(Objects::nonNull)
           .map(psiClass -> getClassErasedType(psiClass, visited, beforeSubstitutor, typeParameter, true))
           .toArray(PsiType[]::new);
-        return PsiIntersectionType.createIntersection(true, types);
+        return types.length == 0 ?
+               PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope()) :
+               PsiIntersectionType.createIntersection(true, types);
       }
       return getClassErasedType(extendsList[0].resolve(), visited, beforeSubstitutor, typeParameter, false);
     }
