@@ -143,7 +143,6 @@
           <fileset dir="${project.home}/../studio/google/cloud/tools/android-studio-plugin/src"/>
           <fileset dir="${project.home}/../studio/google/cloud/tools/core-plugin/src"/>
           <fileset dir="${project.home}/../studio/google/cloud/tools/google-login-plugin/src"/>
-          <fileset dir="${project.home}/../studio/google/login/src"/>
           <fileset dir="${project.home}/../vendor/google/android-apk/src"/>
           <fileset dir="${project.home}/../vendor/google/android-ndk/src"/>
           <fileset dir="${project.home}/../vendor/google/dogfood/plugin/src"/>
