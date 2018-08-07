@@ -15,10 +15,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @deprecated Use XmlSerializer instead.
+ */
+@Deprecated
 public class JDOMExternalizer {
   private JDOMExternalizer() {
   }
 
+  /**
+   * @deprecated Use XmlSerializer instead.
+   */
+  @Deprecated
   public static void write(Element root, @NonNls String name, String value) {
     @NonNls Element element = new Element("setting");
     element.setAttribute(Constants.NAME, name);
@@ -26,15 +34,18 @@ public class JDOMExternalizer {
     root.addContent(element);
   }
 
+  @Deprecated
   public static void write(Element root, @NonNls String name, boolean value) {
     write(root, name, Boolean.toString(value));
   }
+
+  @Deprecated
   public static void write(Element root, String name, int value) {
     write(root, name, Integer.toString(value));
   }
 
   public static boolean readBoolean(Element root, @NonNls String name) {
-    return Boolean.valueOf(readString(root, name)).booleanValue();
+    return Boolean.parseBoolean(readString(root, name));
   }
 
   public static int readInteger(Element root, String name, int defaultValue) {

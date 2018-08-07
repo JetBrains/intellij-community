@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc;
 
@@ -19,13 +17,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -171,9 +170,9 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     super.writeExternal(element);
     JDOMExternalizer.write(element, "vmparams", vmParams);
     JDOMExternalizer.write(element, "cmdLine", cmdLine);
-    JDOMExternalizer.write(element, "depsClasspath", depsClasspath);
+    JdomKt.addOptionTag(element, "depsClasspath", Boolean.toString(depsClasspath), "setting");
     JDOMExternalizer.writeMap(element, envs, null, "env");
-    JDOMExternalizer.write(element, "passParentEnv", passParentEnv);
+    JdomKt.addOptionTag(element, "passParentEnv", Boolean.toString(passParentEnv), "setting");
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
@@ -260,9 +259,9 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     protected void addEnvVars(final JavaParameters params) {
       Map<String, String> envVars = new HashMap<>(envs);
       envVars.putAll(params.getEnv());
-      
+
       params.setupEnvs(envVars, passParentEnv);
-      
+
       MvcFramework.addJavaHome(params, myModule);
     }
 
