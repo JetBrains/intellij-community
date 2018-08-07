@@ -60,6 +60,7 @@ public abstract class Invoker implements Disposable {
    * until all pending events have been processed.
    *
    * @param task a task to execute asynchronously on the valid thread
+   * @return an object to control task processing
    */
   @NotNull
   public final CancellablePromise<?> invokeLater(@NotNull Runnable task) {
@@ -71,6 +72,7 @@ public abstract class Invoker implements Disposable {
    *
    * @param task  a task to execute asynchronously on the valid thread
    * @param delay milliseconds for the initial delay
+   * @return an object to control task processing
    */
   @NotNull
   public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
@@ -88,6 +90,7 @@ public abstract class Invoker implements Disposable {
    * or asynchronously after all pending tasks have been processed.
    *
    * @param task a task to execute on the valid thread
+   * @return an object to control task processing
    */
   @NotNull
   public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
