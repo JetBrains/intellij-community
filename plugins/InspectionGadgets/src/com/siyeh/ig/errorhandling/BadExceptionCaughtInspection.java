@@ -35,6 +35,8 @@ import java.util.List;
 public class BadExceptionCaughtInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
+  public String exceptionsString = "";
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet exceptions =
     new ExternalizableStringSet(
       "java.lang.NullPointerException",
@@ -43,8 +45,6 @@ public class BadExceptionCaughtInspection extends BaseInspection {
       "java.lang.IndexOutOfBoundsException",
       "java.util.ConcurrentModificationException"
     );
-  @SuppressWarnings("PublicField")
-  public String exceptionsString = "";
 
   public BadExceptionCaughtInspection() {
     if (!exceptionsString.isEmpty()) {

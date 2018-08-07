@@ -37,6 +37,9 @@ import java.util.List;
 public class BadExceptionDeclaredInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
+  public String exceptionsString = "";
+
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet exceptions =
     new ExternalizableStringSet(
       "java.lang.Throwable",
@@ -47,8 +50,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
       "java.lang.ClassCastException",
       "java.lang.ArrayIndexOutOfBoundsException"
     );
-  @SuppressWarnings("PublicField")
-  public String exceptionsString = "";
+
   @SuppressWarnings("PublicField")
   public boolean ignoreTestCases = false; // keep for compatibility
   @SuppressWarnings("PublicField")
