@@ -4,6 +4,7 @@
 package com.jetbrains.python.console
 
 import com.intellij.util.ConcurrencyUtil
+import com.jetbrains.python.console.protocol.PythonConsoleBackendService
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -20,7 +21,8 @@ fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                     pythonConsoleProcess: Process): PythonConsoleBackendServiceDisposable {
   val executorService = ConcurrencyUtil.newSingleThreadExecutor(PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME)
   // make the `PythonConsoleBackendService.Iface` process-aware and thread-safe
-  val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(PythonConsoleBackendService.Iface::class.java),
+  val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(
+    PythonConsoleBackendService.Iface::class.java),
                                      InvocationHandler { _, method, args ->
                                        // we evaluate the original method in the other thread in order to control it
                                        val future = executorService.submit(Callable {

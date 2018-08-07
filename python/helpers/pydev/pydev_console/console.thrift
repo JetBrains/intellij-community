@@ -1,4 +1,4 @@
-namespace java com.jetbrains.python.console
+namespace java com.jetbrains.python.console.protocol
 
 /**
  * `com.jetbrains.python.console.PydevConsoleCommunication`

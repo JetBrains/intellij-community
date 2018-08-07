@@ -4,6 +4,8 @@
 package com.jetbrains.python.console
 
 import com.intellij.xdebugger.frame.XValueChildrenList
+import com.jetbrains.python.console.protocol.DebugValue
+import com.jetbrains.python.console.protocol.GetArrayResponse
 import com.jetbrains.python.debugger.ArrayChunk
 import com.jetbrains.python.debugger.ArrayChunkBuilder
 import com.jetbrains.python.debugger.PyDebugValue
