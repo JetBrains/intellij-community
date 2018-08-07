@@ -61,6 +61,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     DefaultActionGroup diffGroup = new DefaultActionGroup("Compare With", true);
     diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
+    diffGroup.add(Separator.create("Compare Contents"));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT, false));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT, false));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, false));
