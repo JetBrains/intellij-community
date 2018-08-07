@@ -70,7 +70,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Thrift RPC client for sending messages to the server.
    */
-  private PythonConsoleBackendService.Iface myClient;
+  private PythonConsoleBackendServiceDisposable myClient;
 
   /**
    * This is the server responsible for giving input to a raw_input() requested.
@@ -222,17 +222,18 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   /**
-   * Returns thread safe {@link PythonConsoleBackendService.Iface}: requests to
-   * the returned {@link PythonConsoleBackendService.Iface} will be processed
-   * sequentially. Also if Python Console process is detected to be finished
-   * the current request will be interrupted with
-   * {@link PyConsoleProcessFinishedException}.
+   * Returns thread safe, Python Console process-aware and disposable
+   * {@link PythonConsoleBackendService.Iface}. Requests to the returned
+   * {@link PythonConsoleBackendService.Iface} will be processed sequentially.
+   * If Python Console process is detected to be finished the current request
+   * will be interrupted and {@link PyConsoleProcessFinishedException} is
+   * thrown.
    *
    * @return thread safe and related Python Console process-aware
    * {@link PythonConsoleBackendService.Iface}
    */
   @NotNull
-  private PythonConsoleBackendService.Iface getPythonConsoleBackendClient() {
+  private PythonConsoleBackendServiceDisposable getPythonConsoleBackendClient() {
     if (myClient == null) {
       myClient = PythonConsoleClientUtil.synchronizedPythonConsoleClient(PydevConsoleCommunication.class.getClassLoader(),
                                                                          getInitialPythonConsoleBackendClient(), getPythonConsoleProcess());
@@ -264,6 +265,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           catch (Exception e) {
             //Ok, we can ignore this one on close.
           }
+          finally {
+            getPythonConsoleBackendClient().dispose();
+          }
         }
       }.queue();
     }
@@ -291,6 +295,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           }
           catch (Exception e) {
             //Ok, we can ignore this one on close.
+          }
+          finally {
+            getPythonConsoleBackendClient().dispose();
           }
           indicator.setText2("Waiting for Python Console process to finish...");
           try {
@@ -333,8 +340,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       }
       finally {
         if (myServer != null) {
-          myServer.stop();
+          Future<Void> stopFuture = myServer.stop();
           myServer = null;
+          stopFuture.get();
         }
       }
       return null;

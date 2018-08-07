@@ -8,60 +8,57 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 private const val PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME: String = "Python Console Command Executor"
 
-@JvmOverloads
 fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                     delegate: PythonConsoleBackendService.Iface,
-                                    pythonConsoleProcess: Process? = null): PythonConsoleBackendService.Iface {
-  val executorService = newSingleThreadPythonConsoleCommandExecutor()
-  return Proxy.newProxyInstance(loader, arrayOf<Class<*>>(PythonConsoleBackendService.Iface::class.java),
-                                InvocationHandler { _, method, args ->
-                                  // we evaluate the original method in the other thread in order to control it
-                                  val future = executorService.submit(Callable {
-                                    return@Callable invokeOriginalMethod(args, method, delegate)
-                                  })
+                                    pythonConsoleProcess: Process): PythonConsoleBackendServiceDisposable {
+  val executorService = ConcurrencyUtil.newSingleThreadExecutor(PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME)
+  // make the `PythonConsoleBackendService.Iface` process-aware and thread-safe
+  val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(PythonConsoleBackendService.Iface::class.java),
+                                     InvocationHandler { _, method, args ->
+                                       // we evaluate the original method in the other thread in order to control it
+                                       val future = executorService.submit(Callable {
+                                         return@Callable invokeOriginalMethod(args, method, delegate)
+                                       })
 
-                                  if (pythonConsoleProcess == null) {
-                                    try {
-                                      return@InvocationHandler future.get()
-                                    }
-                                    catch (e: ExecutionException) {
-                                      throw e.cause ?: e
-                                    }
-                                  }
-
-                                  while (true) {
-                                    try {
-                                      return@InvocationHandler future.get(10L, TimeUnit.MILLISECONDS)
-                                    }
-                                    catch (e: TimeoutException) {
-                                      if (!pythonConsoleProcess.isAlive) {
-                                        val exitValue = pythonConsoleProcess.exitValue()
-                                        throw PyConsoleProcessFinishedException(exitValue)
-                                      }
-                                      // continue waiting for the end of the operation execution
-                                    }
-                                    catch (e: ExecutionException) {
-                                      if (!pythonConsoleProcess.isAlive) {
-                                        val exitValue = pythonConsoleProcess.exitValue()
-                                        throw PyConsoleProcessFinishedException(exitValue)
-                                      }
-                                      throw e.cause ?: e
-                                    }
-                                  }
-                                }) as PythonConsoleBackendService.Iface
-}
-
-/**
- * Creates new single thread executor with [ThreadPoolExecutor.keepAliveTime]
- * equals to 60 sec.
- */
-private fun newSingleThreadPythonConsoleCommandExecutor(): ExecutorService {
-  val threadFactory = ConcurrencyUtil.newNamedThreadFactory(PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME)
-  return ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>(), threadFactory)
+                                       while (true) {
+                                         try {
+                                           return@InvocationHandler future.get(10L, TimeUnit.MILLISECONDS)
+                                         }
+                                         catch (e: TimeoutException) {
+                                           if (!pythonConsoleProcess.isAlive) {
+                                             val exitValue = pythonConsoleProcess.exitValue()
+                                             throw PyConsoleProcessFinishedException(exitValue)
+                                           }
+                                           // continue waiting for the end of the operation execution
+                                         }
+                                         catch (e: ExecutionException) {
+                                           if (!pythonConsoleProcess.isAlive) {
+                                             val exitValue = pythonConsoleProcess.exitValue()
+                                             throw PyConsoleProcessFinishedException(exitValue)
+                                           }
+                                           throw e.cause ?: e
+                                         }
+                                       }
+                                     }) as PythonConsoleBackendService.Iface
+  // make the `proxy` disposable
+  return object : PythonConsoleBackendServiceDisposable, PythonConsoleBackendService.Iface by proxy {
+    override fun dispose() {
+      executorService.shutdownNow()
+      try {
+        while (!executorService.awaitTermination(1L, TimeUnit.SECONDS)) Unit
+      }
+      catch (e: InterruptedException) {
+        Thread.currentThread().interrupt()
+      }
+    }
+  }
 }
 
 private fun invokeOriginalMethod(args: Array<out Any>?, method: Method, delegate: Any): Any? {
