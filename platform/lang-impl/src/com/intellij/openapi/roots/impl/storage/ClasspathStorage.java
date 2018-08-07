@@ -181,7 +181,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public SaveSessionProducer createSaveSessionProducer() {
     return myConverter.startExternalization();
   }
@@ -253,18 +253,6 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     @Override
     public List<String> getFilePaths() {
       return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public SaveSessionProducer startExternalization() {
-      return new SaveSessionProducer() {
-        @Nullable
-        @Override
-        public SaveSession createSaveSession() {
-          return null;
-        }
-      };
     }
 
     @Override

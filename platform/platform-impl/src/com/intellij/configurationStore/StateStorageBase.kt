@@ -16,11 +16,11 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
-  override final fun <S : Any> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
+  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
     return getState(component, componentName, stateClass, reload, mergeInto)
   }
 
-  fun <S: Any> getState(component: Any?, componentName: String, stateClass: Class<S>, reload: Boolean = false, mergeInto: S? = null): S? {
+  fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, reload: Boolean = false, mergeInto: T? = null): T? {
     return deserializeState(getSerializedState(getStorageData(reload), component, componentName, archive = true), stateClass, mergeInto)
   }
 

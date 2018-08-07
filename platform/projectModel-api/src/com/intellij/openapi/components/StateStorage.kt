@@ -1,48 +1,41 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.components;
+package com.intellij.openapi.components
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.io.IOException
 
-import java.io.IOException;
-import java.util.Set;
-
-public interface StateStorage {
+interface StateStorage {
   /**
    * You can call this method only once.
    * If state exists and not archived - not-null result.
    * If doesn't exists or archived - null result.
    */
-  @Nullable
-  <T> T getState(@Nullable Object component, @NotNull String componentName, @NotNull Class<T> stateClass, @Nullable T mergeInto, boolean reload);
+  fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T?
 
-  boolean hasState(@NotNull String componentName, boolean reloadData);
+  fun hasState(componentName: String, reloadData: Boolean): Boolean
 
-  @Nullable
-  SaveSessionProducer createSaveSessionProducer();
+  fun createSaveSessionProducer(): SaveSessionProducer?
 
   /**
    * Get changed component names
    */
-  void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames);
+  fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>)
 
-  @NotNull
-  default StateStorageChooserEx.Resolution getResolution(@NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
-    return StateStorageChooserEx.Resolution.DO;
+  fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): StateStorageChooserEx.Resolution {
+    return StateStorageChooserEx.Resolution.DO
   }
 
   interface SaveSessionProducer {
-    default void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state) {
-    }
+    @Throws(IOException::class)
+    fun setState(component: Any?, componentName: String, state: Any?)
 
     /**
      * return null if nothing to save
      */
-    @Nullable
-    SaveSession createSaveSession();
+    fun createSaveSession(): SaveSession?
   }
 
   interface SaveSession {
-    void save() throws IOException;
+    @Throws(IOException::class)
+    fun save()
   }
 }

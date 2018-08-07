@@ -151,7 +151,6 @@ abstract class ComponentStoreImpl : IComponentStore {
       doSave(externalizationSession, readonlyFiles, errors)
     }
 
-    externalizationSession?.save(readonlyFiles, errors)
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
@@ -259,6 +258,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val state = (component as PersistentStateComponent<*>).state ?: return
     val stateSpec = info.stateSpec!!
+    val effectiveComponentName = componentName ?: stateSpec.name
     val stateStorageChooser = component as? StateStorageChooserEx
     val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)
     for (storageSpec in storageSpecs) {
@@ -277,7 +277,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
       }
 
-      session.getExternalizationSession(storage)?.setState(component, componentName ?: stateSpec.name, if (storageSpec.deprecated || resolution == Resolution.CLEAR) Element("empty") else state)
+      session.getExternalizationSession(storage)?.setState(component, effectiveComponentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) null else state)
     }
   }
 

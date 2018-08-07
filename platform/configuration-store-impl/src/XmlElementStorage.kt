@@ -312,7 +312,7 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>? = null):
 
 internal fun Element.normalizeRootName(): Element {
   if (org.jdom.JDOMInterner.isInterned(this)) {
-    if (FileStorageCoreUtil.COMPONENT == name) {
+    if (name == FileStorageCoreUtil.COMPONENT) {
       return this
     }
     else {
@@ -323,7 +323,7 @@ internal fun Element.normalizeRootName(): Element {
   }
   else {
     if (parent != null) {
-      LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
+      LOG.warn("State element must not have parent: ${JDOMUtil.writeElement(this)}")
       detach()
     }
     name = FileStorageCoreUtil.COMPONENT

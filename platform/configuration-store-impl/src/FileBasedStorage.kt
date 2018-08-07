@@ -261,7 +261,11 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
       is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
     }
-    throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
+    throw ReadOnlyModificationException(file, object : StateStorage.SaveSession {
+      override fun save() {
+        doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
+      }
+    })
   }
 
   runUndoTransparentWriteAction {
@@ -306,7 +310,11 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
       deleteFile(requestor, virtualFile)
     }
     else {
-      throw ReadOnlyModificationException(virtualFile, StateStorage.SaveSession { deleteFile(requestor, virtualFile) })
+      throw ReadOnlyModificationException(virtualFile, object : StateStorage.SaveSession {
+        override fun save() {
+          deleteFile(requestor, virtualFile)
+        }
+      })
     }
   }
 }

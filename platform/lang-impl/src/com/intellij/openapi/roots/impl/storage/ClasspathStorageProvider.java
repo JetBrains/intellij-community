@@ -48,8 +48,10 @@ public interface ClasspathStorageProvider {
     @NotNull
     List<String> getFilePaths();
 
-    @NotNull
-    StateStorage.SaveSessionProducer startExternalization();
+    @Nullable
+    default StateStorage.SaveSessionProducer startExternalization() {
+      return null;
+    }
 
     void readClasspath(@NotNull ModifiableRootModel model) throws IOException;
   }

@@ -50,42 +50,37 @@ final class ClasspathSaveSession implements StateStorage.SaveSessionProducer, St
   }
 
   @Override
-  public void setState(Object component, @NotNull String componentName, @NotNull Object state) {
+  public void setState(Object component, @NotNull String componentName, @Nullable Object state) throws IOException {
+    CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
+
+    Element oldClassPath;
     try {
-      CachedXmlDocumentSet fileSet = EclipseClasspathStorageProvider.getFileCache(module);
+      oldClassPath = fileSet.load(EclipseXml.CLASSPATH_FILE, true);
+    }
+    catch (Exception e) {
+      EclipseClasspathWriter.LOG.warn(e);
+      oldClassPath = null;
+    }
 
-      Element oldClassPath;
-      try {
-        oldClassPath = fileSet.load(EclipseXml.CLASSPATH_FILE, true);
-      }
-      catch (Exception e) {
-        EclipseClasspathWriter.LOG.warn(e);
-        oldClassPath = null;
-      }
-
-      ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)component;
-      if (oldClassPath != null || moduleRootManager.getSourceRoots().length > 0 || moduleRootManager.getOrderEntries().length > 2) {
-        Element newClassPathElement = new EclipseClasspathWriter().writeClasspath(oldClassPath, moduleRootManager);
-        if (oldClassPath == null || !JDOMUtil.areElementsEqual(newClassPathElement, oldClassPath)) {
-          update(newClassPathElement, EclipseXml.CLASSPATH_FILE);
-        }
-      }
-
-      if (fileSet.getFile(EclipseXml.PROJECT_FILE, true) == null) {
-        DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
-      }
-
-      Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
-      String emlFilename = moduleRootManager.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-      if (IdeaSpecificSettings.writeIdeaSpecificClasspath(ideaSpecific, moduleRootManager)) {
-        update(ideaSpecific, emlFilename);
-      }
-      else {
-        delete(emlFilename);
+    ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)component;
+    if (oldClassPath != null || moduleRootManager.getSourceRoots().length > 0 || moduleRootManager.getOrderEntries().length > 2) {
+      Element newClassPathElement = new EclipseClasspathWriter().writeClasspath(oldClassPath, moduleRootManager);
+      if (oldClassPath == null || !JDOMUtil.areElementsEqual(newClassPathElement, oldClassPath)) {
+        update(newClassPathElement, EclipseXml.CLASSPATH_FILE);
       }
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+
+    if (fileSet.getFile(EclipseXml.PROJECT_FILE, true) == null) {
+      DotProjectFileHelper.saveDotProjectFile(module, fileSet.getParent(EclipseXml.PROJECT_FILE));
+    }
+
+    Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
+    String emlFilename = moduleRootManager.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+    if (IdeaSpecificSettings.writeIdeaSpecificClasspath(ideaSpecific, moduleRootManager)) {
+      update(ideaSpecific, emlFilename);
+    }
+    else {
+      delete(emlFilename);
     }
   }
 

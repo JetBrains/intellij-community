@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
@@ -9,7 +10,12 @@ import com.intellij.openapi.vfs.SafeWriteRequestor
 import org.jdom.Element
 
 abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
-  override final fun setState(component: Any?, componentName: String, state: Any) {
+  override final fun setState(component: Any?, componentName: String, state: Any?) {
+    if (state == null) {
+      setSerializedState(componentName, null)
+      return
+    }
+
     val element: Element?
     try {
       element = serializeState(state)
@@ -31,15 +37,13 @@ abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.SaveSess
 
 internal fun serializeState(state: Any): Element? {
   @Suppress("DEPRECATION")
-  if (state is Element) {
-    return state
-  }
-  else if (state is JDOMExternalizable) {
-    val element = Element("temp_element")
-    state.writeExternal(element)
-    return element
-  }
-  else {
-    return state.serialize()
+  when (state) {
+    is Element -> return state
+    is JDOMExternalizable -> {
+      val element = Element(FileStorageCoreUtil.COMPONENT)
+      state.writeExternal(element)
+      return element
+    }
+    else -> return state.serialize()
   }
 }
