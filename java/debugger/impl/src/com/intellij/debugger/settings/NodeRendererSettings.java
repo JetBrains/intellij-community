@@ -121,9 +121,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     try {
-      element.addContent(writeRenderer(myToStringRenderer));
-      element.addContent(writeRenderer(myClassRenderer));
-      element.addContent(writeRenderer(myPrimitiveRenderer));
+      addRendererIfNotDefault(myToStringRenderer, element);
+      addRendererIfNotDefault(myClassRenderer, element);
+      addRendererIfNotDefault(myPrimitiveRenderer, element);
       if (myCustomRenderers.getRendererCount() > 0) {
         final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
         element.addContent(custom);
@@ -133,6 +133,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     catch (WriteExternalException ignore) {
     }
     return element;
+  }
+
+  private void addRendererIfNotDefault(@NotNull Renderer renderer, @NotNull Element to) {
+    Element element = writeRenderer(renderer);
+    if (element.getContentSize() == 0 && element.getAttributes().size() <= 1 /* ID attribute */) {
+      return;
+    }
+
+    to.addContent(element);
   }
 
   @Override

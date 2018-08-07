@@ -32,7 +32,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
 
   public ToStringRenderer() {
-    super("unnamed", true);
+    super(DEFAULT_NAME, true);
   }
 
   @Override

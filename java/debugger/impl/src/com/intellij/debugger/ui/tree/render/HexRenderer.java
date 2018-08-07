@@ -13,7 +13,7 @@ public class HexRenderer extends NodeRendererImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.HexRenderer");
 
   public HexRenderer() {
-    setEnabled(false);
+    super(DEFAULT_NAME, false);
   }
 
   public String getUniqueId() {
