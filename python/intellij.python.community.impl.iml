@@ -37,7 +37,9 @@
     </orderEntry>
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.console" />
     <orderEntry type="library" name="libthrift" level="project" />
+    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="netty-handler" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
 </module>
