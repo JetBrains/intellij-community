@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription
+import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
@@ -41,6 +43,8 @@ class IntelliJProjectConfiguration {
   private val projectLibraries: Map<String, LibraryRoots>
   private val moduleLibraries: Map<String, Map<String, LibraryRoots>>
 
+  private val remoteRepositoryDescriptions : List<JpsRemoteRepositoryDescription>
+
   init {
     val project = loadIntelliJProject(projectHome)
     fun extractLibrariesRoots(collection: JpsLibraryCollection) = collection.libraries.associateBy({ it.name }, {
@@ -51,10 +55,17 @@ class IntelliJProjectConfiguration {
       val libraries = extractLibrariesRoots(it.libraryCollection)
       if (libraries.isNotEmpty()) libraries else emptyMap()
     })
+
+    remoteRepositoryDescriptions = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(project)!!.repositories
   }
 
   companion object {
     private val instance by lazy { IntelliJProjectConfiguration() }
+
+    @JvmStatic
+    fun getRemoteRepositoryDescriptions() : List<JpsRemoteRepositoryDescription> {
+      return instance.remoteRepositoryDescriptions
+    }
 
     @JvmStatic
     fun getProjectLibraryClassesRootPaths(libraryName: String): List<String> {
