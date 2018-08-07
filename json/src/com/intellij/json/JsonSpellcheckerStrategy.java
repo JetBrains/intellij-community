@@ -20,13 +20,14 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     @Override
     public void tokenize(@NotNull JsonStringLiteral element, TokenConsumer consumer) {
       final PlainTextSplitter textSplitter = PlainTextSplitter.getInstance();
-      if (element.getText().contains("\\")) {
+      if (element.textContains('\\')) {
         final List<Pair<TextRange, String>> fragments = element.getTextFragments();
         for (Pair<TextRange, String> fragment : fragments) {
-          final String fragmentText = fragment.getSecond();
+          final String escaped = fragment.getSecond();
           final TextRange fragmentRange = fragment.getFirst();
-          if (!fragmentText.startsWith("\\")) {
-            consumer.consumeToken(element, fragmentText, false, fragmentRange.getStartOffset(), TextRange.allOf(fragmentText), textSplitter);
+          final String unescaped = fragmentRange.substring(element.getText());
+          if (!unescaped.startsWith("\\")) {
+            consumer.consumeToken(element, escaped, false, fragmentRange.getStartOffset(), TextRange.allOf(escaped), textSplitter);
           }
         }
       }

@@ -112,7 +112,7 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     }
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.SOURCE_NAVIGATION_LOCKED.is(dataId)) {
       return Boolean.TRUE;
     }

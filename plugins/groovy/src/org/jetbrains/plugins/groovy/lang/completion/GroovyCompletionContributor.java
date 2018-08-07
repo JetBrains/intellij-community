@@ -57,7 +57,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(GrLiteral.class), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final Set<String> usedWords = new THashSet<>();
         for (CompletionResult element : result.runRemainingContributors(parameters, true)) {

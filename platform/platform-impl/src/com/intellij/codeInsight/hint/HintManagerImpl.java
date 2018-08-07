@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -604,7 +604,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                        @NotNull VisualPosition pos2,
                                        @PositionFlags short constraint,
                                        boolean showByBalloon) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return new Point();
     Point p = _getHintPosition(hint, editor, pos1, pos2, constraint, showByBalloon);
     JComponent externalComponent = getExternalComponent(editor);
     Dimension hintSize = hint.getComponent().getPreferredSize();

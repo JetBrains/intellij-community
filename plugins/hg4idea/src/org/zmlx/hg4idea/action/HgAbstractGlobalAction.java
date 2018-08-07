@@ -54,7 +54,7 @@ public abstract class HgAbstractGlobalAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     boolean enabled = isEnabled(e);
     e.getPresentation().setEnabled(enabled);

@@ -273,7 +273,7 @@ public class StreamChainInliner implements CallInliner {
         builder.push(myResult)
                .push(presentOptional)
                .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
-                 .push(builder.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false))
+                 .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
                  .swap()
                  .invokeFunction(2, myFunction, Nullability.NOT_NULL)
                .end();
@@ -625,7 +625,7 @@ public class StreamChainInliner implements CallInliner {
       if (myMerger != null) {
         builder.pushUnknown()
                .ifConditionIs(true)
-               .push(builder.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false))
+               .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
                .invokeFunction(2, myMerger)
                .end();
       }
@@ -712,8 +712,10 @@ public class StreamChainInliner implements CallInliner {
     }
     if (single) {
       // exactly single element
+      PsiExpression arg = sourceCall.getArgumentList().getExpressions()[0];
       builder
-        .pushExpression(sourceCall.getArgumentList().getExpressions()[0])
+        .pushExpression(arg)
+        .boxUnbox(arg, inType)
         .chain(firstStep::before)
         .chain(firstStep::iteration);
       return;

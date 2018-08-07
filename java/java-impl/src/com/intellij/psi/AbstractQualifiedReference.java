@@ -91,7 +91,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
   @Override
-  public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     final PsiElement firstChildNode = ObjectUtils.assertNotNull(getFirstChild());
     final PsiElement firstInIdentifier = getClass().isInstance(firstChildNode) ? ObjectUtils.assertNotNull(firstChildNode.getNextSibling()).getNextSibling() : firstChildNode;
@@ -192,7 +192,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     final PsiManager manager = getManager();
     for (final ResolveResult result : multiResolve(false)) {
       if (manager.areElementsEquivalent(result.getElement(), element)) return true;

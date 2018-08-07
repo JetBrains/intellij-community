@@ -24,7 +24,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.Set;
 
-// persists ProjectUsagesCollector data between user sessions (project + IJ build)
+/** Persists ProjectUsagesCollector data between user sessions (project + IJ build) */
 public class FUStatisticsPersistence {
   private static final Logger
     LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence");
@@ -34,11 +34,13 @@ public class FUStatisticsPersistence {
   private static final String SENT_DATA_FILE = "fus-sent-data.json";
   public static final String FUS_CACHE_PATH = "fus-sessions";
 
-  // 1. this method is regularly  invoked by the statistics scheduler (see StatisticsJobsScheduler) to persist statistics data  for current project.
-  // 2. persisted data will be used by statistics service if this project isn't available at the statistics sending time
-  // 3.  method requests actual "approved" usages collectors (see FUStatisticsWhiteListGroupsService) to be invoked.
-  //     if FUStatisticsWhiteListGroupsService is OFFLINE the data will NOT collected.
-  // 4. collected data are persisted in system cache. one file for one project session. the session is pair: project + IJ build number
+  /**
+   * This method is regularly invoked by the statistics scheduler (see StatisticsJobsScheduler) to persist statistics data for current project.
+   * Persisted data will be used by statistics service if this project isn't available at the statistics sending time
+   * Method requests actual "approved" usages collectors (see FUStatisticsWhiteListGroupsService) to be invoked.
+   * if FUStatisticsWhiteListGroupsService is OFFLINE the data will NOT collected.
+   * Collected data are persisted in system cache. One file for one project session. The session is pair: project + IJ build number
+   */
   public static String persistProjectUsages(@NotNull Project project) {
     Set<String> groups = FUStatisticsSettingsService.getInstance().getApprovedGroups();
     if (groups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) return null;
@@ -60,8 +62,8 @@ public class FUStatisticsPersistence {
     return fileName;
   }
 
+  /** Iterates system cache persisted session files and converts json file content to FSSession format */
   @NotNull
-  // this method iterates system cache persisted session files and convert json file content to FSSession format
   public static Set<FSSession> getPersistedSessions() {
     Set<FSSession> persistedSessions = ContainerUtil.newHashSet();
     File statisticsCacheDir = getStatisticsSystemCacheDirectory();
@@ -85,10 +87,12 @@ public class FUStatisticsPersistence {
     return persistedSessions;
   }
 
-  // Statistics service (FUStatisticsService) collects and sends data.
-  // if this data is accepted by online JB statistics service (response status is "ok")
-  // persisted sessions cache must be cleaned to avoid  repeatable sending.
-  // This method cleans obsolete statistics persisted data (files)
+  /**
+   * Statistics service (FUStatisticsService) collects and sends data.
+   * If this data is accepted by online JB statistics service (response status is "ok")
+   * persisted sessions cache must be cleaned to avoid  repeatable sending.
+   * This method cleans obsolete statistics persisted data (files).
+   */
   public static void clearSessionPersistence(long dataTime) {
     File statisticsCacheDir = getStatisticsSystemCacheDirectory();
     if (statisticsCacheDir != null) {

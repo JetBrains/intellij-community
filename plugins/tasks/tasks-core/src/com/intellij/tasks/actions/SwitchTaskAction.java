@@ -73,7 +73,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault() || project.isDisposed()) {
@@ -111,7 +111,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
@@ -206,20 +206,20 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
       group.add(new DumbAwareAction("&Switch to") {
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           manager.activateTask(task, !shiftPressed.get());
         }
       });
       group.add(new DumbAwareAction("&Edit") {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           EditTaskDialog.editTask((LocalTaskImpl)task, project);
         }
       });
     }
     final AnAction remove = new DumbAwareAction("&Remove") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         for (TaskListItem item : tasks) {
           LocalTask itemTask = item.getTask();
           if (itemTask != null) {

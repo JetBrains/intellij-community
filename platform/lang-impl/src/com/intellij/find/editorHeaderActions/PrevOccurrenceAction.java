@@ -38,7 +38,7 @@ public final class PrevOccurrenceAction extends PrevNextOccurrenceAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     SearchSession session = e.getRequiredData(SearchSession.KEY);
     if (session.hasMatches()) session.searchBackward();
   }

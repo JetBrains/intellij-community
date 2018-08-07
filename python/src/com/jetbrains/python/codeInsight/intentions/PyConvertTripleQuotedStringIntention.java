@@ -132,6 +132,9 @@ public class PyConvertTripleQuotedStringIntention extends PyBaseIntentionAction 
            parent instanceof PyArgumentList && ArrayUtil.getFirstElement(((PyArgumentList)parent).getArguments()) == pyString)) {
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
       }
+      if (expression instanceof PyStringLiteralExpression && ((PyStringLiteralExpression)expression).isDocString()) {
+        expression = elementGenerator.createStringLiteralAlreadyEscaped(result.toString());
+      }
       if (expression != null) {
         pyString.replace(expression);
       }

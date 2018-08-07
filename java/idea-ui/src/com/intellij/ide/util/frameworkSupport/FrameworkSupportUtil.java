@@ -130,10 +130,13 @@ public class FrameworkSupportUtil {
       myFrameworkSupportProviders = new ArrayList<>(frameworkSupportProviders);
     }
 
+    @NotNull
     public Collection<FrameworkSupportInModuleProvider> getNodes() {
       return myFrameworkSupportProviders;
     }
 
+    @NotNull
+    @Override
     public Iterator<FrameworkSupportInModuleProvider> getIn(final FrameworkSupportInModuleProvider provider) {
       List<FrameworkSupportInModuleProvider> dependencies = new ArrayList<>();
       String underlyingId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();

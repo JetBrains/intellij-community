@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -51,7 +52,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
         final EditorWindow window = windows [i];
         final EditorComposite [] editors = window.getEditors ();
         for (final EditorComposite editor : editors) {
-          if (isFileToClose(editor, window)) {
+          if (isFileToClose(editor, window) || isFileToCloseInContext(event.getDataContext(), editor, window)) {
             res.add(Pair.create(editor, window));
           }
         }
@@ -62,7 +63,11 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
 
   protected abstract boolean isFileToClose(EditorComposite editor, EditorWindow window);
 
-  public void actionPerformed(final AnActionEvent e) {
+  protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite editor, EditorWindow window) {
+    return false;
+  }
+
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
@@ -76,7 +81,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     );
   }
 
-  public void update(final AnActionEvent event){
+  public void update(@NotNull final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);

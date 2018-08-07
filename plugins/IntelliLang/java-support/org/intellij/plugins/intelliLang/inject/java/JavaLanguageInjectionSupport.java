@@ -299,7 +299,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }
 
     final MethodParameterInjection injection = makeParameterInjection(psiMethod, parameterIndex, languageId);
-    doEditInjection(project, injection, psiMethod);
+    doEditInjection(project, injection, host.getContainingFile(), psiMethod);
     return true;
   }
 
@@ -372,7 +372,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return null;
   }
 
-  private static void doEditInjection(final Project project, final MethodParameterInjection template, final PsiMethod contextMethod) {
+  private static void doEditInjection(final Project project,
+                                      final MethodParameterInjection template,
+                                      PsiFile psiFile,
+                                      final PsiMethod contextMethod) {
     final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final BaseInjection baseTemplate = new BaseInjection(template.getSupportId()).copyFrom(template);
     final MethodParameterInjection allMethodParameterInjection = createFrom(project, baseTemplate, contextMethod, true);
@@ -389,8 +392,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       originalCopy.setPlaceEnabled(currentPlace.getText(), true);
       methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
     }
-    mergePlacesAndAddToConfiguration(project, contextMethod.getContainingFile(), configuration, methodParameterInjection,
-                                     originalInjection);
+    mergePlacesAndAddToConfiguration(project, psiFile, configuration, methodParameterInjection, originalInjection);
   }
 
   private static void mergePlacesAndAddToConfiguration(@NotNull Project project,
@@ -534,7 +536,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return new AnAction[] {
       new AnAction("Java Parameter", null, PlatformIcons.PARAMETER_ICON) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());
           if (injection != null) consumer.consume(injection);
         }
@@ -546,7 +548,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   public AnAction createEditAction(final Project project, final Factory<BaseInjection> producer) {
     return new AnAction() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final BaseInjection originalInjection = producer.create();
         final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
         if (injection != null) {
@@ -559,7 +561,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           }
         }
         else {
-          createDefaultEditAction(project, producer).actionPerformed(null);
+          perform(project, producer);
         }
       }
     };

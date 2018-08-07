@@ -64,6 +64,10 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     doTestMerge(System.currentTimeMillis(), RUNS, MAX_LENGTH)
   }
 
+  fun testThreeWayDiff() {
+    doTestThreeWayDiff(System.currentTimeMillis(), RUNS, MAX_LENGTH)
+  }
+
   private fun doTestLine(seed: Long, runs: Int, maxLength: Int) {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
@@ -165,7 +169,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     }
   }
 
-  private fun doTestMerge(seed: Long, runs: Int, maxLength: Int) {
+  private fun doTestThreeWayDiff(seed: Long, runs: Int, maxLength: Int) {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest3(seed, runs, maxLength, policies) { text1, text2, text3, policy, debugData ->
@@ -185,9 +189,34 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       }
       debugData.put("Fragments", fineFragments)
 
-      checkResultMerge(text1, text2, text3, fineFragments, policy)
+      checkResultMerge(text1, text2, text3, fineFragments, policy, false)
     }
   }
+
+  private fun doTestMerge(seed: Long, runs: Int, maxLength: Int) {
+    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+
+    doTest3(seed, runs, maxLength, policies) { text1, text2, text3, policy, debugData ->
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
+      val sequence3 = text3.charsSequence
+
+      val fragments = MANAGER.mergeLines(sequence1, sequence2, sequence3, policy, INDICATOR)
+
+      val fineFragments = fragments.map { f ->
+        val chunk1 = DiffUtil.getLinesContent(text1, f.startLine1, f.endLine1)
+        val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
+        val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
+
+        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, INDICATOR)
+        Pair(f, wordFragments)
+      }
+      debugData.put("Fragments", fineFragments)
+
+      checkResultMerge(text1, text2, text3, fineFragments, policy, policy != ComparisonPolicy.DEFAULT)
+    }
+  }
+
 
   private fun doTest(seed: Long, runs: Int, maxLength: Int, policies: List<ComparisonPolicy>,
                      test: (Document, Document, ComparisonPolicy, DiffTestCase.DebugData) -> Unit) {
@@ -264,12 +293,13 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
                                text2: Document,
                                text3: Document,
                                fragments: List<Pair<MergeLineFragment, List<MergeWordFragment>>>,
-                               policy: ComparisonPolicy) {
+                               policy: ComparisonPolicy,
+                               allowIgnoredBlocks: Boolean) {
     val lineFragments = fragments.map { it.first }
-    checkLineConsistency3(text1, text2, text3, lineFragments)
+    checkLineConsistency3(text1, text2, text3, lineFragments, allowIgnoredBlocks)
 
     checkValidRanges3(text1, text2, text3, lineFragments, policy)
-    checkCantTrimLines3(text1, text2, text3, lineFragments, policy)
+    if (!allowIgnoredBlocks) checkCantTrimLines3(text1, text2, text3, lineFragments, policy)
 
     for (pair in fragments) {
       val f = pair.first
@@ -324,7 +354,8 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     }
   }
 
-  private fun checkLineConsistency3(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>) {
+  private fun checkLineConsistency3(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>,
+                                    allowNonSquashed: Boolean) {
     var last1 = -1
     var last2 = -1
     var last3 = -1
@@ -349,7 +380,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       assertTrue(start3 <= end3)
       assertTrue(start1 != end1 || start2 != end2 || start3 != end3)
 
-      assertTrue(start1 != last1 || start2 != last2 || start3 != last3)
+      assertTrue(allowNonSquashed || start1 != last1 || start2 != last2 || start3 != last3)
 
       last1 = end1
       last2 = end2

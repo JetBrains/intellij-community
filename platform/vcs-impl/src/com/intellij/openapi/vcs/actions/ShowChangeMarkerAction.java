@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ShowChangeMarkerAction extends DumbAwareAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Data data = getDataFromContext(e);
     boolean isEnabled = data != null && data.tracker.isValid() && data.tracker.isAvailableAt(data.editor) &&
                         getTargetRange(data.tracker, data.editor) != null;
@@ -38,7 +38,7 @@ public abstract class ShowChangeMarkerAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Data data = getDataFromContext(e);
     if (data == null) return;
 
@@ -49,7 +49,7 @@ public abstract class ShowChangeMarkerAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static Data getDataFromContext(AnActionEvent e) {
+  private static Data getDataFromContext(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 

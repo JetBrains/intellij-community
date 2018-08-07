@@ -2274,10 +2274,6 @@
                      key="transient.field.not.initialized.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.serialization.TransientFieldNotInitializedInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SerializableCanHaveDefaultSerialUID" alternativeId="serial"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.serializable.can.have.default.serial.uid" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.serialization.SerializableCanHaveDefaultSerialUIDInspection"/>
 
     <!--group.names.code.style.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AssertMessageNotString" bundle="com.siyeh.InspectionGadgetsBundle"

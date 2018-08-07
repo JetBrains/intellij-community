@@ -24,10 +24,11 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseEditorAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
     FileEditorManagerEx editorManager = getEditorManager(project);
@@ -52,7 +53,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent event){
+  public void update(@NotNull final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

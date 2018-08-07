@@ -677,6 +677,10 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'false', 'factory'
   }
 
+  void testPreferBooleanKeywordsWhenExpectedBoolean2() {
+    checkPreferredItems 0, 'false', 'factory'
+  }
+
   void testPreferExplicitlyImportedStaticMembers() {
     myFixture.addClass("""
 class ContainerUtilRt {

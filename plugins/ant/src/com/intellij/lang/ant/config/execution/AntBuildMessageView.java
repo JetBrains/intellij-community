@@ -377,7 +377,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   public final class CloseAction extends CloseTabToolbarAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       close();
     }
   }
@@ -465,7 +465,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     Object data = myCurrentView.getData(dataId);
     if (data != null) {
       return data;

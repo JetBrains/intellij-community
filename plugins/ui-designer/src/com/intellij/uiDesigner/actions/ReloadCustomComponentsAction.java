@@ -30,9 +30,10 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.radComponents.RadErrorComponent;
+import org.jetbrains.annotations.NotNull;
 
 public class ReloadCustomComponentsAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     LoaderFactory.getInstance(project).clearClassLoaderCache();
@@ -45,7 +46,7 @@ public class ReloadCustomComponentsAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     e.getPresentation().setVisible(editor != null && haveCustomComponents(editor));
   }

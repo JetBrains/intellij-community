@@ -57,6 +57,11 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public class CppModelBuilder implements ModelBuilderService {
+  private static final boolean IS_48_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.8")) >= 0;
+  private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER ||
+                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.7")) >= 0;
+  private static final boolean IS_41_OR_BETTER = IS_47_OR_BETTER ||
+                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.1")) >= 0;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -66,6 +71,9 @@ public class CppModelBuilder implements ModelBuilderService {
   @Nullable
   @Override
   public Object buildAll(final String modelName, final Project project) {
+    if(!IS_41_OR_BETTER) {
+      return null;
+    }
     PluginContainer pluginContainer = project.getPlugins();
     if (!pluginContainer.hasPlugin(CppBasePlugin.class)) {
       if (pluginContainer.hasPlugin(CppPlugin.class)) {
@@ -87,7 +95,7 @@ public class CppModelBuilder implements ModelBuilderService {
           }
 
           List<String> compilerArgs = new ArrayList<String>();
-          Set<File> compileIncludePath = cppBinary.getCompileIncludePath().getFiles();
+          Set<File> compileIncludePath = new LinkedHashSet<File>(cppBinary.getCompileIncludePath().getFiles());
 
           Map<File, CppFileSettings> sources = new HashMap<File, CppFileSettings>();
           for (File file : cppBinary.getCppSource().getFiles()) {
@@ -103,7 +111,17 @@ public class CppModelBuilder implements ModelBuilderService {
             CppCompile cppCompile = compileTask.get();
             compileTaskName = cppCompile.getPath();
             compilerArgs.addAll(cppCompile.getCompilerArgs().getOrElse(Collections.<String>emptyList()));
-            systemIncludes.addAll(cppCompile.getIncludes().getFiles());
+
+            //Since Gradle 4.8, system header include directories should be accessed separately via the systemIncludes property
+            //see https://github.com/gradle/gradle-native/blob/master/docs/RELEASE-NOTES.md#better-control-over-system-include-path-for-native-compilation---583
+            if (IS_48_OR_BETTER) {
+              compileIncludePath.addAll(cppCompile.getIncludes().getFiles());
+              systemIncludes.addAll(cppCompile.getSystemIncludes().getFiles());
+            }
+            else {
+              systemIncludes.addAll(cppCompile.getIncludes().getFiles());
+            }
+
             appendFileSettings(sources, project, cppBinary, cppCompile);
           }
 
@@ -196,7 +214,7 @@ public class CppModelBuilder implements ModelBuilderService {
   private static File getExecutableFile(LinkExecutable linkExecutable) {
     File executableFile;
     RegularFileProperty binaryFile = null;
-    if (GradleVersion.current().compareTo(GradleVersion.version("4.7")) >= 0) {
+    if (IS_47_OR_BETTER) {
       binaryFile = linkExecutable.getLinkedFile();
     }
     else {
@@ -292,7 +310,7 @@ public class CppModelBuilder implements ModelBuilderService {
       }
     }
 
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) <= 0) {
+    if (!IS_47_OR_BETTER) {
       project.getLogger().error(
         "[sync error] Unable to resolve compiler executable. " +
         "The project uses '" + GradleVersion.current() + "' try to update the gradle version");

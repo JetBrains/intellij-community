@@ -398,7 +398,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return result;
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VcsFileRevision[] selectedRevisions = getSelectedRevisions();
       if (selectedRevisions.length != 1) return null;

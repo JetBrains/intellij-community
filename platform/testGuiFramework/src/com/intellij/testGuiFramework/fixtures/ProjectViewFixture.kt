@@ -28,6 +28,7 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
@@ -65,7 +66,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
   }
 
   private fun assertProjectViewIsInitialized(projectView: ProjectView) {
-    GuiTestUtilKt.waitUntil("Project view is initialized", 120) {
+    GuiTestUtilKt.waitUntil("Project view is initialized", Timeouts.defaultTimeout) {
       field("isInitialized").ofType(Boolean::class.javaPrimitiveType!!).`in`(projectView).get() ?: throw Exception(
         "Unable to get 'isInitialized' field from projectView")
     }
@@ -88,7 +89,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
   private fun getNodeFixture(pathTo: Array<out String>): NodeFixture? {
     return try {
-      withPauseWhenNull(30) {
+      withPauseWhenNull(timeout = Timeouts.seconds30) {
         try {
           getNodeFixtureByPath(pathTo as Array<String>)
         }
@@ -136,7 +137,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         if (childCount == 0) throw Exception("${pathItem} node has no more children")
         if (childCount == 1 && children[0] is LoadingNode) {
           runOnEdt { TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(children[0]!!)) }
-          waitUntil("children will be loaded", 30) {
+          waitUntil("children will be loaded", Timeouts.seconds30) {
             val updatedChildrenAndCount = getChildrenAndCountOnEdt(tree, pivotRoot)
             childCount = updatedChildrenAndCount.first
             children = updatedChildrenAndCount.second
@@ -146,8 +147,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         var childIsFound = false
         for (child in children) {
           child ?: throw Exception("Path element ($pathItem) is null")
-          val nodeText = getNodeText(child.userObject)
-          nodeText ?: throw AssertionError("Unable to get text of project view node for pathItem: $pathItem")
+          val nodeText = withPauseWhenNull("project view node for pathItem: $pathItem\"") { getNodeText(child.userObject) }
           if (nodeText == pathItem) {
             pivotRoot = child
             childIsFound = true
@@ -178,7 +178,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
       get() {
         val tree = myPane.tree
         val boundsRef = Ref<Rectangle>()
-        waitUntil("bounds of tree node with a tree path $myTreePath will be not null", 120) {
+        waitUntil("bounds of tree node with a tree path $myTreePath will be not null", Timeouts.defaultTimeout) {
           return@waitUntil computeOnEdt {
             val bounds = tree.getPathBounds(myTreePath)
             if (bounds != null) boundsRef.set(bounds)

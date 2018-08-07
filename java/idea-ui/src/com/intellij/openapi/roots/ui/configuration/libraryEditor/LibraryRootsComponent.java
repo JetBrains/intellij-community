@@ -54,7 +54,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,7 +175,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     toolbarDecorator.addExtraAction(myAddExcludedRootActionButton);
     toolbarDecorator.addExtraAction(new AnActionButton("Remove", IconUtil.getRemoveIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Object[] selectedElements = getSelectedElements();
         if (selectedElements.length == 0) {
           return;
@@ -203,7 +202,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
 
       @Override
-      public void updateButton(AnActionEvent e) {
+      public void updateButton(@NotNull AnActionEvent e) {
         super.updateButton(e);
         Object[] elements = getSelectedElements();
         Presentation presentation = e.getPresentation();
@@ -224,7 +223,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       @Override
       public void run(AnActionButton button) {
         if (popupItems.isEmpty()) {
-          new AttachFilesAction(myDescriptor.getAttachFilesActionName()).actionPerformed(null);
+          new AttachFilesAction(myDescriptor.getAttachFilesActionName()).perform();
           return;
         }
 
@@ -416,7 +415,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
 
     @Override
-    public void actionPerformed(@Nullable AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      perform();
+    }
+
+    void perform() {
       VirtualFile toSelect = getFileToSelect();
       List<OrderRoot> roots = selectRoots(toSelect);
       if (roots.isEmpty()) return;
@@ -542,7 +545,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle("Exclude from Library");
       descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");

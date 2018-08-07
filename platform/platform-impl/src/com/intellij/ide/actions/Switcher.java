@@ -212,7 +212,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         final List list = getSelectedList().getSelectedValuesList();
         if (!list.isEmpty()) {
@@ -436,7 +436,7 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               selectionIndex = filesData.size() - 1;
-              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !isPinnedMode()) {
+              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !isPinnedMode() || selectedFiles.isEmpty()) {
                 firstRecentMarked = true;
               }
             }
@@ -736,13 +736,15 @@ public class Switcher extends AnAction implements DumbAware {
 
     @Override
     public void keyTyped(@NotNull KeyEvent e) {
+      if (e.getKeyCode() == VK_ENTER) {
+        navigate(e);
+      }
     }
 
     @Override
     public void keyReleased(@NotNull KeyEvent e) {
       boolean ctrl = e.getKeyCode() == CTRL_KEY;
-      boolean enter = e.getKeyCode() == VK_ENTER;
-      if (ctrl && isAutoHide() || enter) {
+      if (ctrl && isAutoHide()) {
         navigate(e);
       }
     }
@@ -960,7 +962,7 @@ public class Switcher extends AnAction implements DumbAware {
           final DataContext dataContext = new DataContext() {
             @Nullable
             @Override
-            public Object getData(@NonNls String dataId) {
+            public Object getData(@NotNull @NonNls String dataId) {
               if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
                 return fileName;
               }

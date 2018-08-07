@@ -40,6 +40,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -599,7 +600,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       TreeUtil.installActions(this);
     }
 
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new TextCopyProvider() {
           @Nullable

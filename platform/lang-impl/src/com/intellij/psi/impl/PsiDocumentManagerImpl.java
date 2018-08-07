@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -57,7 +58,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                 @NonNls @NotNull final DocumentCommitProcessor documentCommitThread) {
     super(project, psiManager, bus, documentCommitThread);
     myDocumentCommitThread = documentCommitThread;
-    editorFactory.getEventMulticaster().addDocumentListener(this, project);
+    ((EditorEventMulticasterEx)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(this, project);
     MessageBusConnection connection = bus.connect();
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override

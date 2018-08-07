@@ -16,11 +16,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class ExportThreadsAction extends AnAction implements AnAction.TransparentUpdate {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -41,7 +42,7 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
     }
   }
 
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

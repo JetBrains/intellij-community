@@ -335,7 +335,7 @@ public class PyDocumentationBuilder {
         docStringExpression = addInheritedDocString(pyFunction, pyClass);
       }
       if (docStringExpression != null) {
-        formatParametersAndReturnValue(docStringExpression, pyFunction);
+        addFunctionSpecificSections(docStringExpression, pyFunction);
       }
     }
     else if (elementDefinition instanceof PyFile) {
@@ -356,7 +356,7 @@ public class PyDocumentationBuilder {
     }
   }
 
-  private void formatParametersAndReturnValue(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
+  private void addFunctionSpecificSections(@NotNull PyStringLiteralExpression docstring, @NotNull PyFunction function) {
     final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
 
     final List<PyCallableParameter> parameters = function.getParameters(myContext);
@@ -366,7 +366,7 @@ public class PyDocumentationBuilder {
                                      .filter(name -> structured.getParamDescription(name) != null)
                                      .map(name -> {
                                        final String description = structured.getParamDescription(name);
-                                       return "<p>" + name + " &ndash; " + description + "</p>";
+                                       return "<p><code>" + name + "</code> &ndash; " + description + "</p>";
                                      })
                                      .joining();
 
@@ -382,7 +382,7 @@ public class PyDocumentationBuilder {
     final String keywordArgsList = StreamEx.of(allKeywordArgs)
                                            .map(name -> {
                                              final String description = structured.getKeywordArgumentDescription(name);
-                                             return "<p>" + name + " &ndash; " + StringUtil.notNullize(description) + "</p>";
+                                             return "<p><code>" + name + "</code> &ndash; " + StringUtil.notNullize(description) + "</p>";
                                            })
                                            .joining();
     if (!keywordArgsList.isEmpty()) {
@@ -397,7 +397,7 @@ public class PyDocumentationBuilder {
     final String exceptionList = StreamEx.of(structured.getRaisedExceptions())
                                    .map(name -> {
                                      final String description = structured.getRaisedExceptionDescription(name);
-                                     return "<p>" + name + (StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
+                                     return "<p><code>" + name + "</code>" +(StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
                                    })
                                    .joining();
 
@@ -421,6 +421,13 @@ public class PyDocumentationBuilder {
           mySectionsMap.get(PyBundle.message("QDOC.assigned.to")).addWith(TagCode, $(((PyTargetExpression)myElement).getName()));
           return resolved;
         }
+      }
+    }
+    // Reference expression can be passed as the target element in Python console
+    if (myElement instanceof PyReferenceExpression) {
+      final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)myElement);
+      if (resolved != null) {
+        return resolved;
       }
     }
     return myElement;

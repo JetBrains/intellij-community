@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdePanePanel;
+import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -231,11 +232,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         // clear empty splitters
         for (EditorWindow window : getWindows()) {
-          if (window.getEditors().length == 0) {
-            for (EditorWindow sibling : window.findSiblings()) {
-              sibling.unsplit(false);
-            }
-          }
+          if (window.getTabCount() == 0) window.removeFromSplitter();
         }
       });
     }
@@ -400,7 +397,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
       VirtualFile file = getCurrentFile();
       if (file != null) {
-        ioFile = new File(file.getPresentableUrl());
+        ioFile = file instanceof LightVirtualFileBase ? null : new File(file.getPresentableUrl());
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
 

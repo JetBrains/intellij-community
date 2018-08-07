@@ -246,7 +246,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     group.add(new AnAction(CommonBundle.message("action.close"), null, AllIcons.Actions.Cancel) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
       }
     });
@@ -254,12 +254,12 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     final AnAction analyzeDepsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES);
     group.add(new AnAction(analyzeDepsAction.getTemplatePresentation().getText(), null, AllIcons.Toolwindows.ToolWindowInspection) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         analyzeDepsAction.actionPerformed(e);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         analyzeDepsAction.update(e);
       }
     });
@@ -410,7 +410,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }

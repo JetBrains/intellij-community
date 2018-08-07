@@ -104,6 +104,7 @@ public class DefaultActionGroup extends ActionGroup {
     addAction(action, Constraints.LAST);
   }
 
+  @NotNull
   public final ActionInGroup addAction(@NotNull AnAction action) {
     return addAction(action, Constraints.LAST);
   }
@@ -129,6 +130,7 @@ public class DefaultActionGroup extends ActionGroup {
     add(action, constraint, ActionManager.getInstance());
   }
 
+  @NotNull
   public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint) {
     return addAction(action, constraint, ActionManager.getInstance());
   }
@@ -137,6 +139,7 @@ public class DefaultActionGroup extends ActionGroup {
     addAction(action, constraint, actionManager);
   }
 
+  @NotNull
   public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
     if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
     // Check that action isn't already registered
@@ -167,7 +170,7 @@ public class DefaultActionGroup extends ActionGroup {
     return new ActionInGroup(this, action);
   }
 
-  private void actionAdded(AnAction addedAction, ActionManager actionManager) {
+  private void actionAdded(@NotNull AnAction addedAction, @NotNull ActionManager actionManager) {
     String addedActionId = addedAction instanceof ActionStub ? ((ActionStub)addedAction).getId() : actionManager.getId(addedAction);
     if (addedActionId == null) {
       return;
@@ -185,7 +188,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  private boolean addToSortedList(@NotNull AnAction action, Constraints constraint, ActionManager actionManager) {
+  private boolean addToSortedList(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
     int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
     if (index == -1) {
       return false;
@@ -199,7 +202,7 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private static int findIndex(String actionId, List<? extends AnAction> actions, ActionManager actionManager) {
+  private static int findIndex(String actionId, @NotNull List<? extends AnAction> actions, @NotNull ActionManager actionManager) {
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
       if (action instanceof ActionStub) {
@@ -222,7 +225,7 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @param action Action to be removed
    */
-  public final void remove(AnAction action) {
+  public final void remove(@NotNull AnAction action) {
     String id = ActionManager.getInstance().getId(action);
     if (!mySortedChildren.remove(action) &&
         !mySortedChildren.removeIf(oldAction ->
@@ -341,7 +344,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   @Nullable
-  private AnAction unStub(@Nullable AnActionEvent e, final ActionStub stub) {
+  private AnAction unStub(@Nullable AnActionEvent e, @NotNull ActionStub stub) {
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
     try {
       AnAction action = actionManager.getAction(stub.getId());
@@ -381,19 +384,19 @@ public class DefaultActionGroup extends ActionGroup {
     return children;
   }
 
-  public final void addAll(ActionGroup group) {
+  public final void addAll(@NotNull ActionGroup group) {
     for (AnAction each : group.getChildren(null)) {
       add(each);
     }
   }
 
-  public final void addAll(Collection<? extends AnAction> actionList) {
+  public final void addAll(@NotNull Collection<? extends AnAction> actionList) {
     for (AnAction each : actionList) {
       add(each);
     }
   }
 
-  public final void addAll(AnAction... actions) {
+  public final void addAll(@NotNull AnAction... actions) {
     for (AnAction each : actions) {
       add(each);
     }
@@ -404,7 +407,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   private static class ActionDuplicationException extends IllegalArgumentException {
-    public ActionDuplicationException(@NotNull AnAction action) {
+    ActionDuplicationException(@NotNull AnAction action) {
       super("cannot add an action twice: " + action);
     }
   }

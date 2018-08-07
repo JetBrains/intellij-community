@@ -21,12 +21,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public abstract class TreeCollapseAllActionBase extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     TreeExpander expander = getExpander(e.getDataContext());
     if (expander == null) {
       return;
@@ -39,7 +40,7 @@ public abstract class TreeCollapseAllActionBase extends AnAction implements Dumb
 
   protected abstract TreeExpander getExpander(DataContext dataContext);
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     TreeExpander expander = getExpander(event.getDataContext());
     presentation.setVisible(expander == null || expander.isVisible(event));

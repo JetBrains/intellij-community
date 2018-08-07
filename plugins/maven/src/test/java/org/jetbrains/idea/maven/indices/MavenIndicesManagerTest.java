@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.idea.maven.model.MavenArchetype;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     super.setUp();
     myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject);
     myIndicesFixture.setUp();
-    MavenServerManager.getInstance().setUseMaven2(true);
   }
 
   @Override

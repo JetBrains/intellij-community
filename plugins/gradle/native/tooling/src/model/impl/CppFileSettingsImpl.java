@@ -9,6 +9,13 @@ public class CppFileSettingsImpl implements CppFileSettings {
 
   private File myObjectFile;
 
+  public CppFileSettingsImpl() {
+  }
+
+  public CppFileSettingsImpl(CppFileSettings fileSettings) {
+    myObjectFile = fileSettings.getObjectFile();
+  }
+
   @Override
   public File getObjectFile() {
     return myObjectFile;

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class OpenTaskInBrowserAction extends BaseTaskAction {
   
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     String url = getIssueUrl(e);
     if (url != null) {
       BrowserUtil.browse(url);
@@ -36,7 +37,7 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     if (event.getPresentation().isEnabled()) {
       Presentation presentation = event.getPresentation();

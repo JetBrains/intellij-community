@@ -40,8 +40,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   /**
-   * @return a positive integer (+1), if file1 is located in the classpath before file2,
-   *         a negative integer (-1), if file1 is located in the classpath after file2
+   * @return a positive integer (e.g. +1), if file1 is located in the classpath before file2,
+   *         a negative integer (e.e -1), if file1 is located in the classpath after file2
    *         zero - otherwise or when the files are not comparable.
    */
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
@@ -75,6 +75,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Returns descriptions of unloaded modules content of whose might be included into this scope if they had been loaded. Actually search in
    * unloaded modules isn't performed, so this method is used to determine whether a warning about possible missing results should be shown.
    */
+  @NotNull
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return Collections.emptySet();
   }
@@ -149,6 +150,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         return GlobalSearchScope.this.isSearchInLibraries();
       }
 
+      @NotNull
       @Override
       public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
         return GlobalSearchScope.this.getUnloadedModulesBelongingToScope();
@@ -450,6 +452,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return myScope1.isSearchOutsideRootModel() && myScope2.isSearchOutsideRootModel();
     }
 
+    @NotNull
     @Override
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return ContainerUtil.intersection(myScope1.getUnloadedModulesBelongingToScope(), myScope2.getUnloadedModulesBelongingToScope());
@@ -499,7 +502,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       });
       myNestingLevel = 1 + nested[0];
       if (myNestingLevel > 1000) {
-        throw new IllegalStateException("Too many scopes combined: " + myNestingLevel + StringUtil.last(toString(), 500, true));
+        throw new IllegalStateException("Too many scopes combined (" + myNestingLevel + "): " +StringUtil.last(toString(), 500, true));
       }
     }
 
@@ -519,6 +522,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return ContainerUtil.find(myScopes, GlobalSearchScope::isSearchOutsideRootModel) != null;
     }
 
+    @NotNull
     @Override
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
@@ -686,11 +690,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
-    }
-
-    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
@@ -736,11 +735,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean contains(@NotNull VirtualFile file) {
       return Comparing.equal(myVirtualFile, file);
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
     }
 
     @Override

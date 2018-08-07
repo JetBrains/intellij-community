@@ -22,6 +22,7 @@ import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -148,12 +149,12 @@ class GitBranchPopupActions {
     DumbAwareAction repositoryAction = new DumbAwareAction() {
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabledAndVisible(repository.isRebaseInProgress());
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         rebaseAction.performInBackground(repository);
       }
     };
@@ -168,7 +169,7 @@ class GitBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       GitNewBranchOptions options = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch", null);
       if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
@@ -198,7 +199,7 @@ class GitBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       // TODO: on type check ref validity, on OK check ref existence.
 
       GitRefDialog dialog = new GitRefDialog(myProject, myRepositories, "Checkout",
@@ -212,7 +213,7 @@ class GitBranchPopupActions {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       boolean isFresh = and(myRepositories, repository -> repository.isFresh());
       if (isFresh) {
         e.getPresentation().setEnabled(false);
@@ -322,7 +323,7 @@ class GitBranchPopupActions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.checkout(myBranchName, false, myRepositories, null);
         reportUsage(myProject, "git.branch.checkout.local");
@@ -342,7 +343,7 @@ class GitBranchPopupActions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final String name = Messages
           .showInputDialog(myProject, "New branch name:", "Checkout New Branch From " + myBranchName,
                            null, "", GitNewBranchNameValidator.newInstance(myRepositories));
@@ -400,7 +401,7 @@ class GitBranchPopupActions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteBranch(myBranchName, myRepositories);
         reportUsage(myProject, "git.branch.delete.local");
@@ -483,7 +484,7 @@ class GitBranchPopupActions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final String name = Messages.showInputDialog(myProject, "New branch name:", "Checkout Remote Branch", null,
                                                      guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
         if (name != null) {
@@ -514,14 +515,14 @@ class GitBranchPopupActions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteRemoteBranch(myBranchName, myRepositories);
         reportUsage(myProject, "git.branch.delete.remote");
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!GitProtectedBranchesKt.isRemoteBranchProtected(myRepositories, myBranchName));
       }
     }
@@ -544,7 +545,9 @@ class GitBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
       reportUsage(myProject, "git.branch.compare");
@@ -569,7 +572,7 @@ class GitBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
       reportUsage(myProject, "git.branch.merge");
@@ -597,7 +600,7 @@ class GitBranchPopupActions {
 
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebase(myRepositories, myBranchName);
       reportUsage(myProject, "git.branch.rebase");
@@ -624,7 +627,7 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Checkout with Rebase",
+      super("Checkout and Rebase onto Current",
             String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
                           getBranchPresentation(branchName), getCurrentBranchPresentation(repositories), branchName),
             null);
@@ -634,7 +637,7 @@ class GitBranchPopupActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.rebaseOnCurrent(myRepositories, myBranchName);
       reportUsage(myProject, "git.branch.checkout.with.rebase");
@@ -678,7 +681,7 @@ class GitBranchPopupActions {
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteTag(myTagName, myRepositories);
         reportUsage(myProject, "git.tag.delete.local");

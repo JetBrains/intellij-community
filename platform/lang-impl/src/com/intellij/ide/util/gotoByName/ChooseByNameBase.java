@@ -259,7 +259,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
         return myTextField.getText();
       }
@@ -1690,12 +1690,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   private class MyCopyReferenceAction extends DumbAwareAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTextField.getSelectedText() == null && getChosenElement() instanceof PsiElement);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       CopyReferenceAction.doCopy((PsiElement)getChosenElement(), myProject);
     }
   }

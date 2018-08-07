@@ -1103,11 +1103,11 @@
     <group id="TouchBar">
       <group id="TouchBarDefault" text="Default">
         <reference ref="RunConfiguration"/>
-        <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
+        <group id="RunnerActionsTouchbar" text="Touchbar Run/Debug Actions"/> <!--filled from ExecutorRegistry-->
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <separator text="type.large"/>
-        <group id="TouchBarDefaultOptionalGroup">
+        <group id="TouchBarDefaultOptionalGroup" text="Optional Actions">
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
         </group>
@@ -1147,7 +1147,7 @@
         <separator text="type.small"/>
         <reference ref="XDebugger.MuteBreakpoints"/>
         <separator text="type.flexible"/>
-        <group id="TouchBarDebug.StepButtons" compact="true">
+        <group id="TouchBarDebug.StepButtons" compact="true" text="Debugger Step Actions">
           <reference ref="StepOver"/>
           <reference ref="StepInto"/>
           <reference ref="StepOut"/>
@@ -1156,7 +1156,7 @@
         <group id="TouchBarDebug_alt" text="Debugger with Alt key">
           <reference ref="ViewBreakpoints"/>
           <separator text="type.flexible"/>
-          <group id="TouchBarDebug.ForceStepButtons" compact="true">
+          <group id="TouchBarDebug.ForceStepButtons" compact="true" text="Debugger ForceStep Actions">
             <reference ref="RunToCursor"/>
             <reference ref="ForceStepOver"/>
             <reference ref="ForceStepInto"/>
@@ -1170,7 +1170,7 @@
     <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
-    <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.RetypeFileAction" internal="true">
+    <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>

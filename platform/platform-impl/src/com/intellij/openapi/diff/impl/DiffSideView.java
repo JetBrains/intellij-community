@@ -86,7 +86,7 @@ public class DiffSideView {
       insertComponent(fileEditor == null ? MOCK_COMPONENT : fileEditor.getComponent());
       DataManager.registerDataProvider(myPanel, new DataProvider() {
         @Override
-        public Object getData(@NonNls String dataId) {
+        public Object getData(@NotNull @NonNls String dataId) {
           if (CommonDataKeys.PROJECT.is(dataId)) {return project;}
           if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {return fileEditor;}
           return null;

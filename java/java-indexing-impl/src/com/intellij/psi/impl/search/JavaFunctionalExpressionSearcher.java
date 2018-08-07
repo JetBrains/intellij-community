@@ -54,8 +54,6 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     List<SamDescriptor> descriptors = calcDescriptors(p);
     Project project = PsiUtilCore.getProjectInReadAction(p.getElementToSearch());
-    if (project == null) return;
-
     SearchScope searchScope = ReadAction.compute(() -> p.getEffectiveSearchScope());
     if (searchScope instanceof GlobalSearchScope && !performSearchUsingCompilerIndices(descriptors,
                                                                                        (GlobalSearchScope)searchScope,
@@ -70,10 +68,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     PsiManager manager = ReadAction.compute(() -> p.getElementToSearch().getManager());
     manager.startBatchFilesProcessingMode();
     try {
-      processOffsets(descriptors, project, (file, offsets) -> {
+      processOffsets(descriptors, project, (file, occurrences) -> {
         fileCount.incrementAndGet();
-        exprCount.addAndGet(offsets.size());
-        return processFile(consumer, descriptors, file, offsets);
+        exprCount.addAndGet(occurrences.size());
+        return processFile(consumer, descriptors, file, occurrences);
       });
     }
     finally {
@@ -128,22 +126,26 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   @NotNull
   private static MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(List<SamDescriptor> descriptors) {
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
-    for (SamDescriptor descriptor : descriptors) {
-      descriptor.dumbService.runReadActionInSmartMode(() -> {
-        for (FunctionalExpressionKey key : descriptor.generateKeys()) {
-          FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
-            ProgressManager.checkCanceled();
-            result.putValues(file, infos);
-            return true;
-          }, new JavaSourceFilterScope(descriptor.effectiveUseScope));
-        }
-      });
-    }
+    descriptors.get(0).dumbService.runReadActionInSmartMode(() -> processIndexValues(descriptors, null, (file, infos) -> {
+      result.putValues(file, infos.values());
+      return true;
+    }));
     LOG.debug("Found " + result.values().size() + " fun-expressions in " + result.keySet().size() + " files");
     return result;
   }
 
-  private static void processOffsets(List<SamDescriptor> descriptors, Project project, PairProcessor<VirtualFile, List<Integer>> processor) {
+  private static void processIndexValues(List<SamDescriptor> descriptors,
+                                         VirtualFile inFile,
+                                         FileBasedIndex.ValueProcessor<Map<Integer, FunExprOccurrence>> processor) {
+    for (SamDescriptor descriptor : descriptors) {
+      GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope);
+      for (FunctionalExpressionKey key : descriptor.keys) {
+        FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, inFile, processor, scope);
+      }
+    }
+  }
+
+  private static void processOffsets(List<SamDescriptor> descriptors, Project project, PairProcessor<VirtualFile, Set<FunExprOccurrence>> processor) {
     if (descriptors.isEmpty()) return;
 
     List<PsiClass> samClasses = ContainerUtil.map(descriptors, d -> d.samClass);
@@ -151,10 +153,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     if (allCandidates.isEmpty()) return;
 
     for (VirtualFile vFile : putLikelyFilesFirst(descriptors, allCandidates.keySet(), project)) {
-      List<FunExprOccurrence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile), project);
+      Set<FunExprOccurrence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile), project);
       if (!toLoad.isEmpty()) {
         LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
-        if (!processor.process(vFile, ContainerUtil.map(toLoad, it -> it.funExprOffset))) {
+        if (!processor.process(vFile, toLoad)) {
           return;
         }
       }
@@ -170,23 +172,24 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static List<FunExprOccurrence> filterInapplicable(List<PsiClass> samClasses,
-                                                            VirtualFile vFile,
-                                                            Collection<FunExprOccurrence> occurrences, Project project) {
+  private static Set<FunExprOccurrence> filterInapplicable(List<PsiClass> samClasses,
+                                                           VirtualFile vFile,
+                                                           Collection<FunExprOccurrence> occurrences, Project project) {
     return DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> project.isDisposed() ? Collections.emptyList()
-                                 : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
+      () -> new HashSet<>(ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile))));
   }
 
   private static boolean processFile(@NotNull Processor<? super PsiFunctionalExpression> consumer,
                                      List<SamDescriptor> descriptors,
-                                     VirtualFile vFile, Collection<Integer> offsets) {
-    return ReadAction.compute(() -> {
+                                     VirtualFile vFile, Set<FunExprOccurrence> occurrences) {
+    return descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       PsiFile file = descriptors.get(0).samClass.getManager().findFile(vFile);
       if (!(file instanceof PsiJavaFile)) {
         LOG.error("Non-java file " + file + "; " + vFile);
         return true;
       }
+
+      List<Integer> offsets = getOccurrenceOffsets(descriptors, vFile, occurrences);
 
       for (Integer offset : offsets) {
         PsiFunctionalExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
@@ -202,6 +205,21 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
       return true;
     });
+  }
+
+  private static List<Integer> getOccurrenceOffsets(List<SamDescriptor> descriptors,
+                                                    VirtualFile vFile,
+                                                    Set<FunExprOccurrence> occurrences) {
+    List<Integer> offsets = new ArrayList<>();
+    processIndexValues(descriptors, vFile, (__, infos) -> {
+      for (Map.Entry<Integer, FunExprOccurrence> entry : infos.entrySet()) {
+        if (occurrences.contains(entry.getValue())) {
+          offsets.add(entry.getKey());
+        }
+      }
+      return true;
+    });
+    return offsets;
   }
 
   private static boolean hasType(List<SamDescriptor> descriptors, PsiFunctionalExpression expression) {
@@ -268,6 +286,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     final boolean booleanCompatible;
     final boolean isVoid;
     final DumbService dumbService;
+    final List<FunctionalExpressionKey> keys;
     GlobalSearchScope effectiveUseScope;
 
     SamDescriptor(PsiClass samClass, PsiMethod samMethod, PsiType samType, GlobalSearchScope useScope) {
@@ -277,9 +296,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       this.booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
       this.isVoid = PsiType.VOID.equals(samType);
       this.dumbService = DumbService.getInstance(samClass.getProject());
+      keys = generateKeys();
     }
 
-    List<FunctionalExpressionKey> generateKeys() {
+    private List<FunctionalExpressionKey> generateKeys() {
       String name = samClass.isValid() ? samClass.getName() : null;
       if (name == null) return Collections.emptyList();
 

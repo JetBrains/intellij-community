@@ -34,6 +34,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
@@ -292,7 +293,7 @@ public class EditorWindow {
     }, myOwner);
   }
 
-  private void removeFromSplitter() {
+  void removeFromSplitter() {
     if (!inSplitter()) return;
 
     if (myOwner.getCurrentWindow() == this) {
@@ -566,7 +567,7 @@ public class EditorWindow {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         final VirtualFile virtualFile = myEditor.getFile();
         return virtualFile.isValid() ? virtualFile : null;
@@ -584,7 +585,7 @@ public class EditorWindow {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       // this is essential for ability to close opened file
       if (DATA_KEY.is(dataId)){
         return myWindow;
@@ -616,7 +617,7 @@ public class EditorWindow {
   public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     final TComp comp;
     if (myTabbedPane != null) {
-      comp = (TComp)myTabbedPane.getSelectedComponent(ignorePopup);
+      comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
     }
     else if (myPanel.getComponentCount() != 0) {
       final Component component = myPanel.getComponent(0);

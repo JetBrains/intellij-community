@@ -9,7 +9,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -42,10 +41,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicable;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelType;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelTypeCached;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
 
@@ -102,7 +100,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   public PsiType getTopLevelQualifierType() {
     GrExpression expression = myRef.getQualifierExpression();
     if (expression instanceof GrMethodCallExpression) {
-      return getTopLevelType(expression);
+      return getTopLevelTypeCached(expression);
     }
     else {
       return PsiImplUtil.getQualifierType(myRef);
@@ -161,8 +159,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       GroovyInferenceSession session = new GroovyInferenceSessionBuilder(myRef, methodCandidate).build();
       PsiSubstitutor applicabilitySubst = session.inferSubst();
 
-      final boolean isApplicable =
-        isApplicable(eraseTypes(methodCandidate.getArgumentTypes()), methodCandidate.getMethod(), applicabilitySubst, myRef, true);
       candidate = new GroovyMethodResultImpl(
         method, resolveContext, spreadState,
         applicabilitySubst,
@@ -174,7 +170,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
         },
         methodCandidate,
         false,
-        isAccessible, isStaticsOK, isApplicable
+        isAccessible, isStaticsOK, methodCandidate.isApplicable(applicabilitySubst)
       );
     }
     else {
@@ -259,7 +255,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private PsiType[] buildArgumentTypes() {
     return buildArguments().stream().map(it -> {
       if (it.getExpression() != null) {
-        return getTopLevelType(it.getExpression());
+        return getTopLevelTypeCached(it.getExpression());
       } else {
         return it.getType();
       }
@@ -397,16 +393,5 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     final String name = ref.getReferenceName();
     assert name != null : "Reference name cannot be null";
     return name;
-  }
-
-  @Nullable
-  private static PsiType[] eraseTypes(@Nullable PsiType[] types) {
-    final PsiType[] erasedTypes = types == null ? null : Arrays.copyOf(types, types.length);
-    if (erasedTypes != null) {
-      for (int i = 0; i < types.length; i++) {
-        erasedTypes[i] = TypeConversionUtil.erasure(erasedTypes[i]);
-      }
-    }
-    return erasedTypes;
   }
 }

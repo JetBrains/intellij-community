@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -31,7 +32,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public class DeleteGroupAction extends AnAction {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     GroupItem groupToBeRemoved = e.getData(GroupItem.DATA_KEY);
     if (groupToBeRemoved == null || project == null) return;
@@ -51,7 +52,7 @@ public class DeleteGroupAction extends AnAction {
     palette.setGroups(groups);
   }
 
-  @Override public void update(AnActionEvent e) {
+  @Override public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
     ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);

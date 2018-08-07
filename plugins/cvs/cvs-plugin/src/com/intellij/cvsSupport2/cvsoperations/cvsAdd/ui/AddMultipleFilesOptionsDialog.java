@@ -36,6 +36,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
@@ -266,7 +267,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
       super(text, null, icon);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (AddedFileInfo addedFileInfo : getAllFileInfos()) {
         addedFileInfo.setIncluded(includedValue());
       }

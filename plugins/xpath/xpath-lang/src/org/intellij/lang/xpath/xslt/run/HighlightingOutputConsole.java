@@ -93,7 +93,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
     }
 
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
         if (LangDataKeys.EDITOR.is(dataId)) {
             return getEditor();
         }

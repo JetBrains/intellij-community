@@ -15,12 +15,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
-  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
+  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery.labs.intellij.net";
 
   @NotNull
   @Override
@@ -32,13 +33,13 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return MultiMap.emptyInstance();
     }
     String methodFqn = classFQName + "." + methodName;
-    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method?fqn=" + methodFqn;
-    LOG.debug(url);
-
-    RequestBuilder r = HttpRequests.request(url)
-                                   .productNameAsUserAgent()
-                                   .gzip(true);
     try {
+      String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method?fqn=" + URLEncoder.encode(methodFqn, "UTF-8");
+      LOG.debug(url);
+
+      RequestBuilder r = HttpRequests.request(url)
+                                     .productNameAsUserAgent()
+                                     .gzip(true);
       return r.connect(request -> {
         MultiMap<String, String> map = new MultiMap<>();
         TestsSearchResult result = new ObjectMapper().readValue(request.getInputStream(), TestsSearchResult.class);
@@ -47,7 +48,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       });
     }
     catch (HttpRequests.HttpStatusException http) {
-      LOG.debug("No tests found for " + methodFqn);
+      LOG.debug("No tests found for " + methodFqn, http);
     }
     catch (IOException e) {
       LOG.debug(e);

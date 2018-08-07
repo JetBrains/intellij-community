@@ -107,7 +107,7 @@
         <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
                 icon="AllIcons.General.Remove"/>
         <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
-                icon="AllIcons.Actions.Submit1"/>
+                icon="AllIcons.Actions.Selectall"/>
         <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"/>
       </group>
       <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
@@ -123,7 +123,7 @@
       <reference ref="Diff.ShowDiff"/>
       <reference ref="EditSource"/>
       <separator/>
-      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
+      <reference ref="$Delete"/>
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
@@ -145,17 +145,14 @@
       <reference ref="VersionControlsGroup"/>
     </group>
 
-    <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
-            icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
-
     <group id="Unversioned.Files.Dialog">
-      <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
-      <reference ref="ChangesView.DeleteUnversioned"/>
+      <reference ref="ChangesView.AddUnversioned"/>
+      <reference ref="$Delete"/>
     </group>
     <group id="Unversioned.Files.Dialog.Popup">
-      <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
+      <reference ref="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.Move"/>
-      <reference ref="ChangesView.DeleteUnversioned"/>
+      <reference ref="$Delete"/>
       <reference ref="ChangesView.Ignore"/>
     </group>
 
@@ -224,7 +221,7 @@
       <action id="CommittedChanges.Revert" class="com.intellij.openapi.vcs.changes.actions.RevertChangeListAction"
               icon="AllIcons.Actions.Rollback"/>
       <action id="CommittedChanges.Clear" class="com.intellij.openapi.vcs.changes.committed.ClearCommittedAction"
-              icon="AllIcons.Vcs.Remove"/>
+              icon="AllIcons.Actions.GC"/>
     </group>
 
     <action id="Vcs.EditSource" class="com.intellij.openapi.vcs.changes.committed.EditSourceFromChangesBrowserAction"
@@ -412,13 +409,12 @@
       <reference ref="ChangesView.SetDefault"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
-      <reference ref="ChangesView.DeleteUnversioned"/>
+      <reference ref="$Delete"/>
       <reference ref="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.Ignore"/>
       <reference ref="ChangesView.RemoveDeleted"/>
       <reference ref="ChangesView.Edit"/>
       <reference ref="ChangesView.Rename"/>
-      <reference ref="ChangesView.AddUnversioned.From.Dialog"/>
       <separator/>
       <reference ref="CommittedChanges.Refresh"/>
       <reference ref="CommittedChanges.Filter"/>

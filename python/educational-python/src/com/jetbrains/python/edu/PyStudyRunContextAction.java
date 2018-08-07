@@ -35,7 +35,7 @@ public class PyStudyRunContextAction extends RunContextAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
     final Location location = context.getLocation();
     if (location == null) return;

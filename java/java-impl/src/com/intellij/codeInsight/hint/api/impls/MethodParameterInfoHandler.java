@@ -8,7 +8,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
@@ -16,11 +15,11 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -47,8 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -102,7 +101,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     CandidateInfo[] candidates = getMethods(argumentList);
     if (candidates.length == 0) {
-      DaemonCodeAnalyzer.getInstance(context.getProject()).updateVisibleHighlighters(context.getEditor());
       return null;
     }
     context.setItemsToShow(candidates);
@@ -793,5 +791,39 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @Override
   public boolean supportsOverloadSwitching() {
     return CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+  }
+
+  @Override
+  public void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {
+    if (!Registry.is("editor.completion.hints.virtual.comma")) return;
+
+    Editor editor = context.getEditor();
+    Caret caret = editor.getCaretModel().getCurrentCaret();
+    int caretOffset = caret.getOffset();
+    List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(caretOffset, caretOffset);
+    if (inlays.isEmpty()) return;
+
+    VisualPosition caretPosition = caret.getVisualPosition();
+    ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
+    int inlaysBeforeCaretWithComma = ContainerUtil.count(inlays, inlay -> pm.isParameterHint(inlay) &&
+                                                                          StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
+                                                                          caretPosition.after(inlay.getVisualPosition()));
+    if (inlaysBeforeCaretWithComma == 0) return;
+
+    Project project = context.getProject();
+    String textToInsert = StringUtil.repeat(", ", inlaysBeforeCaretWithComma);
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      editor.getDocument().insertString(caretOffset, textToInsert);
+      caret.moveToOffset(caretOffset + textToInsert.length());
+    });
+
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    PsiElement exprList = context.getParameterOwner();
+    if (!(exprList instanceof PsiExpressionList) || !exprList.isValid()) return;
+    PsiElement call = exprList.getParent();
+    if (call == null || !call.isValid()) return;
+    ParameterHintsPass.syncUpdate(call, editor);
+    int index = ParameterInfoUtils.getCurrentParameterIndex(exprList.getNode(), editor.getCaretModel().getOffset(), JavaTokenType.COMMA);
+    highlightHints(editor, (PsiExpressionList)exprList, index, context.getCustomContext());
   }
 }

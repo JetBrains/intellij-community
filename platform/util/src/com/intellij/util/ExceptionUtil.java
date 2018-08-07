@@ -120,7 +120,7 @@ public class ExceptionUtil {
     String exceptionPattern = "Exception: ";
     String errorPattern = "Error: ";
 
-    while ((result == null || result.contains(exceptionPattern) || result.contains(errorPattern)) && e.getCause() != null) {
+    while (e.getCause() != null && (result == null || result.contains(exceptionPattern) || result.contains(errorPattern))) {
       e = e.getCause();
       result = e.getMessage();
     }

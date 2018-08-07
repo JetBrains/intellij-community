@@ -390,7 +390,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
     AnActionButtonUpdater moveUpDownUpdater = new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         for (RowSorter.SortKey key : myEntryTable.getRowSorter().getSortKeys()) {
           if (key.getSortOrder() != SortOrder.UNSORTED) {
             return false;
@@ -445,7 +445,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final int[] selectedRows = myEntryTable.getSelectedRows();
           for (final int selectedRow : selectedRows) {
             if (!getItemAt(selectedRow).isRemovable()) {

@@ -84,7 +84,7 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
   }
 
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return QuickActionProvider.KEY.is(dataId) && myProvideQuickActions ? this : null;
   }
 

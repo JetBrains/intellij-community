@@ -3,7 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
@@ -131,7 +131,7 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @Override
-  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator")) {
       @NotNull
       @Override

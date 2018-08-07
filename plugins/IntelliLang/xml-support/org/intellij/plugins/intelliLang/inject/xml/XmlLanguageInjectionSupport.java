@@ -347,14 +347,14 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return new AnAction[] {
       new AnAction("XML Tag Injection", null, PlatformIcons.XML_TAG_ICON) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection newInjection = showInjectionUI(project, new XmlTagInjection());
           if (newInjection != null) consumer.consume(newInjection);
         }
       },
       new AnAction("XML Attribute Injection", null, PlatformIcons.ANNOTATION_TYPE_ICON) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new XmlAttributeInjection());
           if (injection != null) consumer.consume(injection);
         }
@@ -366,7 +366,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   public AnAction createEditAction(final Project project, final Factory<BaseInjection> producer) {
     return new AnAction() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final BaseInjection originalInjection = producer.create();
         final BaseInjection injection = createFrom(originalInjection);
         if (injection != null) {
@@ -376,7 +376,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
           }
         }
         else {
-          createDefaultEditAction(project, producer).actionPerformed(null);
+          perform(project, producer);
         }
       }
     };

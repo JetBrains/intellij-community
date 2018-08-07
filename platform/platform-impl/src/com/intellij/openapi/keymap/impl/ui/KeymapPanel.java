@@ -297,7 +297,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
                                   KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       @Override
-      public void update(AnActionEvent event) {
+      public void update(@NotNull AnActionEvent event) {
         boolean enabled = null != myFilteringPanel.getShortcut();
         Presentation presentation = event.getPresentation();
         presentation.setEnabled(enabled);

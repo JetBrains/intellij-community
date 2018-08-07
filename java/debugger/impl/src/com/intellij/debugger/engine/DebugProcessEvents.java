@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -13,6 +14,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
 import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
@@ -27,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -76,7 +79,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private static void showStatusText(DebugProcessEvents debugProcess,  Event event) {
-    Requestor requestor = debugProcess.getRequestsManager().findRequestor(event.request());
+    Requestor requestor = RequestManagerImpl.findRequestor(event.request());
     Breakpoint breakpoint = null;
     if(requestor instanceof Breakpoint) {
       breakpoint = (Breakpoint)requestor;
@@ -353,6 +356,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
       createStackCapturingBreakpoints();
+      AsyncStacksUtils.setupAgent(this);
 
       // breakpoints should be initialized after all processAttached listeners work
       ApplicationManager.getApplication().runReadAction(() -> {
@@ -362,6 +366,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       });
 
+      if (Registry.is("debugger.track.instrumentation", true)) {
+        trackClassRedefinitions();
+      }
+
       final String addressDisplayName = DebuggerBundle.getAddressDisplayName(getConnection());
       final String transportName = DebuggerBundle.getTransportName(getConnection());
       showStatusText(DebuggerBundle.message("status.connected", addressDisplayName, transportName));
@@ -369,6 +377,19 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
   }
 
+  private void trackClassRedefinitions() {
+    getManagerThread().invoke(new DebuggerCommandImpl() {
+      @Override
+      public Priority getPriority() {
+        return Priority.HIGH;
+      }
+
+      @Override
+      protected void action() {
+        InstrumentationTracker.track(DebugProcessEvents.this);
+      }
+    });
+  }
   private void createStackCapturingBreakpoints() {
     getManagerThread().invoke(new DebuggerCommandImpl() {
       @Override
@@ -484,14 +505,15 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
 
-        if (evaluatingContext != null && !DebuggerSession.enableBreakpointsDuringEvaluation()) {
+        final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
+        if (evaluatingContext != null &&
+            !(requestor instanceof InstrumentationTracker.InstrumentationMethodBreakpoint) &&
+            !DebuggerSession.enableBreakpointsDuringEvaluation()) {
           notifySkippedBreakpoints(event);
           // is inside evaluation, so ignore any breakpoints
           suspendManager.voteResume(suspendContext);
           return;
         }
-
-        final LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit = false;

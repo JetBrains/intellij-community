@@ -4,13 +4,13 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
@@ -21,26 +21,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(
   name = "PathMacrosImpl",
-  storages = @Storage(value = "path.macros.xml", roamingType = RoamingType.PER_OS)
+  storages = @Storage(value = JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.PER_OS)
 )
-public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element> {
+public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element>, ModificationTracker {
+  public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
+  public static final String MAVEN_REPOSITORY = "MAVEN_REPOSITORY";
+
   private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);
+
+  private static final Set<String> SYSTEM_MACROS = new THashSet<>();
 
   private final Map<String, String> myLegacyMacros = new THashMap<>();
   private final Map<String, String> myMacros = new LinkedHashMap<>();
-  private int myModificationStamp = 0;
+  private long myModificationStamp = 0;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  private static final String MACRO_ELEMENT = JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG;
-  private static final String NAME_ATTR = JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE;
-  private static final String VALUE_ATTR = JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE;
-
-  @NonNls
-  public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
-
-  private static final Set<String> SYSTEM_MACROS = new THashSet<>();
-  @NonNls public static final String EXT_FILE_NAME = "path.macros";
 
   static {
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR);
@@ -86,8 +81,15 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
 
   @Override
   public void setIgnoredMacroNames(@NotNull final Collection<String> names) {
-    myIgnoredMacros.clear();
-    myIgnoredMacros.addAll(names);
+    try {
+      myLock.writeLock().lock();
+      myIgnoredMacros.clear();
+      myIgnoredMacros.addAll(names);
+    }
+    finally {
+      myModificationStamp++;
+      myLock.writeLock().unlock();
+    }
   }
 
   @Override
@@ -95,7 +97,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
   }
 
-  public int getModificationStamp() {
+  public long getModificationCount() {
     myLock.readLock().lock();
     try {
       return myModificationStamp;
@@ -110,13 +112,15 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     return myIgnoredMacros.contains(macro);
   }
 
+  @NotNull
   @Override
   public Set<String> getAllMacroNames() {
     return ContainerUtil.union(getUserMacroNames(), getSystemMacroNames());
   }
 
+  @Nullable
   @Override
-  public String getValue(String name) {
+  public String getValue(@NotNull String name) {
     try {
       myLock.readLock().lock();
       return myMacros.get(name);
@@ -151,17 +155,23 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   }
 
   @Override
-  public void setMacro(@NotNull String name, @NotNull String value) {
-    if (StringUtil.isEmptyOrSpaces(value)) {
-      return;
-    }
-
+  public void setMacro(@NotNull String name, @Nullable String value) {
     try {
       myLock.writeLock().lock();
-      myMacros.put(name, value);
+
+      if (StringUtil.isEmptyOrSpaces(value)) {
+        if (myMacros.remove(name) != null) {
+          myModificationStamp++;
+        }
+        return;
+      }
+
+      String prevValue = myMacros.put(name, value);
+      if (!value.equals(prevValue)) {
+        myModificationStamp++;
+      }
     }
     finally {
-      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -180,7 +190,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   }
 
   @Override
-  public void removeMacro(String name) {
+  public void removeMacro(@NotNull String name) {
     try {
       myLock.writeLock().lock();
       final String value = myMacros.remove(name);
@@ -197,27 +207,27 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   public Element getState() {
     try {
       Element element = new Element("state");
-      myLock.writeLock().lock();
+      myLock.readLock().lock();
 
       for (Map.Entry<String, String> entry : myMacros.entrySet()) {
         String value = entry.getValue();
         if (!StringUtil.isEmptyOrSpaces(value)) {
-          final Element macro = new Element(MACRO_ELEMENT);
-          macro.setAttribute(NAME_ATTR, entry.getKey());
-          macro.setAttribute(VALUE_ATTR, value);
+          final Element macro = new Element(JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG);
+          macro.setAttribute(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE, entry.getKey());
+          macro.setAttribute(JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE, value);
           element.addContent(macro);
         }
       }
 
       for (final String macro : myIgnoredMacros) {
         final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
-        macroElement.setAttribute(NAME_ATTR, macro);
+        macroElement.setAttribute(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE, macro);
         element.addContent(macroElement);
       }
       return element;
     }
     finally {
-      myLock.writeLock().unlock();
+      myLock.readLock().unlock();
     }
   }
 
@@ -226,9 +236,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     try {
       myLock.writeLock().lock();
 
-      for (Element macro : element.getChildren(MACRO_ELEMENT)) {
-        final String name = macro.getAttributeValue(NAME_ATTR);
-        String value = macro.getAttributeValue(VALUE_ATTR);
+      for (Element macro : element.getChildren(JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG)) {
+        final String name = macro.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE);
+        String value = macro.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE);
         if (name == null || value == null) {
           continue;
         }
@@ -245,7 +255,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
       }
 
       for (Element macroElement : element.getChildren(IGNORED_MACRO_ELEMENT)) {
-        String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
+        String ignoredName = macroElement.getAttributeValue(JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE);
         if (!StringUtil.isEmpty(ignoredName) && !myIgnoredMacros.contains(ignoredName)) {
           myIgnoredMacros.add(ignoredName);
         }
@@ -257,7 +267,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     }
   }
 
-  public void addMacroReplacements(ReplacePathToMacroMap result) {
+  public void addMacroReplacements(@NotNull ReplacePathToMacroMap result) {
     for (String name : getUserMacroNames()) {
       String value = getValue(name);
       if (!StringUtil.isEmptyOrSpaces(value)) {
@@ -266,7 +276,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     }
   }
 
-  public void addMacroExpands(ExpandMacroToPathMap result) {
+  public void addMacroExpands(@NotNull ExpandMacroToPathMap result) {
     for (String name : getUserMacroNames()) {
       String value = getValue(name);
       if (!StringUtil.isEmptyOrSpaces(value)) {

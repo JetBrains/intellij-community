@@ -297,6 +297,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       }
       final boolean nestedConditional = ParenthesesUtils.getParentSkipParentheses(expression) instanceof PsiConditionalExpression;
       quickFixOnly |= nestedConditional;
+      if (quickFixOnly && !isOnTheFly()) return;
       registerError(expression, quickFixOnly ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     !expressionContext, nestedConditional);
     }

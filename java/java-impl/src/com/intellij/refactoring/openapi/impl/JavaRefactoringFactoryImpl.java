@@ -124,22 +124,4 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                             boolean cookToWildcards) {
     return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays, exhaustive, cookObjects, cookToWildcards);
   }
-
-  public IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,
-                                                                           PsiMethod methodToSearchFor,
-                                                                           String parameterName, PsiExpression parameterInitializer,
-                                                                           PsiLocalVariable localVariable,
-                                                                           boolean removeLocalVariable, boolean declareFinal) {
-    return new IntroduceParameterRefactoringImpl(myProject, methodToReplaceIn, methodToSearchFor, parameterName, parameterInitializer,
-                                                 localVariable, removeLocalVariable, declareFinal);
-  }
-
-  public IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,
-                                                                           PsiMethod methodToSearchFor,
-                                                                           String parameterName, PsiExpression parameterInitializer,
-                                                                           PsiExpression expressionToSearchFor,
-                                                                           boolean declareFinal, final boolean replaceAllOccurrences) {
-    return new IntroduceParameterRefactoringImpl(myProject, methodToReplaceIn, methodToSearchFor, parameterName, parameterInitializer,
-                                                 expressionToSearchFor, declareFinal, replaceAllOccurrences);
-  }
 }

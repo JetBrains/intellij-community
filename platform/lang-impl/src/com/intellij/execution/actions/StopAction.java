@@ -36,14 +36,14 @@ import java.util.List;
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   private WeakReference<JBPopup> myActivePopupRef = null;
 
-  private static boolean isPlaceGlobal(AnActionEvent e) {
+  private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
   }
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
@@ -91,7 +91,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);

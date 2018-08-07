@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class HideToolWindowAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return;
@@ -49,7 +49,7 @@ public class HideToolWindowAction extends AnAction implements DumbAware {
     return window.isVisible() && window.getType() != ToolWindowType.WINDOWED && window.getType() != ToolWindowType.FLOATING;
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();
     if (project == null) {

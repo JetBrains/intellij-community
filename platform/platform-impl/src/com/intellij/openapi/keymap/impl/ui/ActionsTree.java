@@ -59,6 +59,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 public class ActionsTree {
   private static final Logger LOG = Logger.getInstance(ActionsTree.class);
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
@@ -569,7 +571,7 @@ public class ActionsTree {
         }
         else if (userObject instanceof QuickList) {
           QuickList list = (QuickList)userObject;
-          icon = AllIcons.Actions.QuickList;
+          icon = null; // AllIcons.Actions.QuickList;
           text = list.getName();
 
           changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
@@ -658,13 +660,8 @@ public class ActionsTree {
         super.doPaint(g);
       }
 
-      Graphics2D textGraphics = (Graphics2D)g.create(0, 0, myLinkOffset, g.getClipBounds().height);
-      try {
-        super.doPaint(textGraphics);
-      }
-      finally {
-        textGraphics.dispose();
-      }
+      useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height),
+                       textGraphics -> super.doPaint(textGraphics));
       g.translate(myLinkOffset, 0);
       myLink.setHeight(getHeight());
       myLink.doPaint(g);

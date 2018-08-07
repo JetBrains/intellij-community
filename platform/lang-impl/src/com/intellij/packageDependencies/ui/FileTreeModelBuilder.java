@@ -331,11 +331,11 @@ public class FileTreeModelBuilder {
 
   @Nullable
   public PackageDependenciesNode addFileNode(final PsiFile file){
-    boolean isMarked = myMarker != null && myMarker.isMarked(file.getVirtualFile());
-    if (!isMarked) return null;
-
     final VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
+    boolean isMarked = myMarker != null && myMarker.isMarked(vFile);
+    if (!isMarked) return null;
+
     VirtualFile dirToReload = vFile.getParent();
     PackageDependenciesNode rootToReload = myModuleDirNodes.get(dirToReload);
     if (rootToReload == null && myFlattenPackages) {
@@ -383,7 +383,7 @@ public class FileTreeModelBuilder {
     }
     myFileIndex.iterateContentUnderDirectory(vFile, new MyContentIterator() {
       @Override
-      public boolean processFile(VirtualFile fileOrDir) {
+      public boolean processFile(@NotNull VirtualFile fileOrDir) {
         isMarked[0] |= myMarker.isMarked(fileOrDir);
         return super.processFile(fileOrDir);
       }
@@ -588,7 +588,7 @@ public class FileTreeModelBuilder {
     VirtualFile dir;
 
     @Override
-    public boolean processFile(VirtualFile fileOrDir) {
+    public boolean processFile(@NotNull VirtualFile fileOrDir) {
       ReadAction.run(() -> {
         if (!fileOrDir.isDirectory()) {
           if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {

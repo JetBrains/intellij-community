@@ -111,7 +111,7 @@ public class FilterPanel implements FilterTable {
                                     })
                                     .setRemoveActionUpdater(new AnActionButtonUpdater() {
                                       @Override
-                                      public boolean isEnabled(AnActionEvent e) {
+                                      public boolean isEnabled(@NotNull AnActionEvent e) {
                                         return myFilterTable.getTable().getSelectedRow() != 0;
                                       }
                                     })

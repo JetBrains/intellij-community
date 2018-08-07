@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -36,7 +37,9 @@ public abstract class VcsPathPresenter {
    * @param file the file for which the path is requested.
    * @return the relative path.
    */
+  @NotNull
   public abstract String getPresentableRelativePathFor(VirtualFile file);
 
+  @NotNull
   public abstract String getPresentableRelativePath(ContentRevision fromRevision, ContentRevision toRevision);
 }

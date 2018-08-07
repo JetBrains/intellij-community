@@ -388,10 +388,10 @@ public abstract class ContractReturnValue {
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       if (defaultValue instanceof DfaVariableValue) {
-        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.CAN_BE_NULL, false);
+        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
         return defaultValue;
       }
-      return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
+      return factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     }
 
     @Override
@@ -409,10 +409,10 @@ public abstract class ContractReturnValue {
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       if (defaultValue instanceof DfaVariableValue) {
-        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.CAN_BE_NULL, false);
+        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
         return defaultValue;
       }
-      DfaValue value = factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
+      DfaValue value = factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
       if (callState.myCallArguments.myPure) {
         boolean unmodifiableView =
           value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE_VIEW;
@@ -462,7 +462,7 @@ public abstract class ContractReturnValue {
       if (qualifier != null && qualifier != DfaUnknownValue.getInstance()) {
         return merge(defaultValue, qualifier, callState.myMemoryState);
       }
-      return factory.withFact(defaultValue, DfaFactType.CAN_BE_NULL, false);
+      return factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     }
 
     @Override

@@ -25,10 +25,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
+import org.jetbrains.annotations.NotNull;
 
 public class ChooseRunConfigurationPopupAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
 
@@ -51,7 +52,7 @@ public class ChooseRunConfigurationPopupAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final Project project = e.getData(CommonDataKeys.PROJECT);
 

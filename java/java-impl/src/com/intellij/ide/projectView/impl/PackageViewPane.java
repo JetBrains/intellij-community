@@ -69,13 +69,15 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return ID;
   }
 
+  @NotNull
   @Override
-  protected PsiElement getPSIElement(@Nullable final Object element) {
-    if (element instanceof PackageElement) {
-      PsiPackage aPackage = ((PackageElement)element).getPackage();
-      return aPackage != null && aPackage.isValid() ? aPackage : null;
+  public List<PsiElement> getElementsFromNode(@Nullable Object node) {
+    Object o = getValueFromNode(node);
+    if (o instanceof PackageElement) {
+      PsiPackage aPackage = ((PackageElement)o).getPackage();
+      return ContainerUtil.createMaybeSingletonList(aPackage.isValid() ? aPackage : null);
     }
-    return super.getPSIElement(element);
+    return super.getElementsFromNode(node);
   }
 
   @Override
@@ -87,7 +89,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final PackageElement selectedPackageElement = getSelectedPackageElement();
       if (selectedPackageElement != null) {
@@ -170,7 +172,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);

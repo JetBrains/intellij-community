@@ -20,24 +20,24 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class OpenModuleSettingsAction extends EditSourceAction {
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     if (!isModuleInProjectViewPopup(event)) {
       event.getPresentation().setEnabledAndVisible(false);
     }
   }
 
-  protected static boolean isModuleInProjectViewPopup(AnActionEvent e) {
+  protected static boolean isModuleInProjectViewPopup(@NotNull AnActionEvent e) {
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace())) {
       final Project project = getEventProject(e);
       final Module module = LangDataKeys.MODULE.getData(e.getDataContext());

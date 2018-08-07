@@ -18,15 +18,16 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class PreviousProjectWindow extends AnAction implements DumbAware {
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     WindowDressing.getWindowActionGroup().activatePreviousWindow(e);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(WindowDressing.getWindowActionGroup().isEnabled());
   }
 }

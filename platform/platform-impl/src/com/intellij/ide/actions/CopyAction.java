@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class CopyAction extends AnAction implements DumbAware {
 
@@ -25,7 +26,7 @@ public class CopyAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     CopyProvider provider = PlatformDataKeys.COPY_PROVIDER.getData(dataContext);
     if (provider == null) {
@@ -34,7 +35,7 @@ public class CopyAction extends AnAction implements DumbAware {
     provider.performCopy(dataContext);
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     CopyProvider provider = PlatformDataKeys.COPY_PROVIDER.getData(dataContext);

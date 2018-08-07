@@ -395,7 +395,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (SHELVED_CHANGELIST_KEY.is(dataId)) {
         final Set<ShelvedChangeList> changeLists = getSelectedLists(false);
 
@@ -746,7 +746,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   public class MyShelfContent extends DnDActivateOnHoldTargetContent {
 
-    private MyShelfContent(JPanel panel, String displayName, boolean isLockable) {
+    private MyShelfContent(JPanel panel, @NotNull String displayName, boolean isLockable) {
       super(myProject, panel, displayName, isLockable);
     }
 

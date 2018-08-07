@@ -62,10 +62,10 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   @SuppressWarnings("Duplicates")
   public void testEnum() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"enum\": [1,2,3,\"18\"]}}}";
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [1, 2, 3, \\\"18\\\"]\">18</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3, \\\"18\\\"\">18</warning>}");
     doTest(schema, "{\"prop\": 2}");
     doTest(schema, "{\"prop\": \"18\"}");
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [1, 2, 3, \\\"18\\\"]\">\"2\"</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3, \\\"18\\\"\">\"2\"</warning>}");
   }
 
   @SuppressWarnings("Duplicates")
@@ -235,7 +235,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "{\"prop\": \"off\"}");
     doTest(schema, "{\"prop\": 12}");
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [\\\"off\\\", \\\"warn\\\", \\\"error\\\"]\">\"wrong\"</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: \\\"off\\\", \\\"warn\\\", \\\"error\\\"\">\"wrong\"</warning>}");
   }
 
   @SuppressWarnings("Duplicates")
@@ -247,6 +247,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "{\"prop\": \"b\"}");
     doTest(schema, "{\"prop\": \"c\"}");
     doTest(schema, "{\"prop\": \"a\"}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: \\\"a\\\", \\\"b\\\", \\\"c\\\"\">\"d\"</warning>}");
   }
 
   @SuppressWarnings("Duplicates")
@@ -256,7 +257,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     subSchemas.add("{\"enum\": [1,2,3]}");
     @Language("JSON") final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTest(schema, "{\"prop\": <warning descr=\"Is not multiple of 2\">1</warning>}");
-    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: [1, 2, 3]\">4</warning>}");
+    doTest(schema, "{\"prop\": <warning descr=\"Value should be one of: 1, 2, 3\">4</warning>}");
     doTest(schema, "{\"prop\": 2}");
   }
 
@@ -283,15 +284,15 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testInnerObjectPropValueInArray() throws Exception {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"type\": \"array\", \"items\": {\"enum\": [1,2,3]}}}}";
     doTest(schema, "{\"prop\": [1,3]}");
-    doTest(schema, "{\"prop\": [<warning descr=\"Value should be one of: [1, 2, 3]\">\"out\"</warning>]}");
+    doTest(schema, "{\"prop\": [<warning descr=\"Value should be one of: 1, 2, 3\">\"out\"</warning>]}");
   }
 
   public void testAllOfProperties() throws Exception {
     @Language("JSON") final String schema = "{\"allOf\": [{\"type\": \"object\", \"properties\": {\"first\": {}}}," +
                                                                                 " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
-    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: [33, 44]\">null</warning>}");
+    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">null</warning>}");
     doTest(schema, "{\"first\": {}, \"second\": 44, <warning descr=\"Property 'other' is not allowed\">\"other\": 15</warning>}");
-    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: [33, 44]\">12</warning>}");
+    doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">12</warning>}");
   }
 
   public void testWithWaySelection() throws Exception {
@@ -376,7 +377,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                    "  \"Auto\": <warning descr=\"Type is not allowed. Expected: number.\">\"no\"</warning>,\n" +
                    "  \"BAe\": <warning descr=\"Type is not allowed. Expected: boolean.\">22</warning>,\n" +
                    "  \"Boloto\": <warning descr=\"Type is not allowed. Expected: boolean.\">2</warning>,\n" +
-                   "  \"Cyan\": <warning descr=\"Value should be one of: [\\\"test\\\", \\\"em\\\"]\">\"me\"</warning>\n" +
+                   "  \"Cyan\": <warning descr=\"Value should be one of: \\\"test\\\", \\\"em\\\"\">\"me\"</warning>\n" +
                    "}");
   }
 
@@ -397,7 +398,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                    "  \"p1\": <warning descr=\"Type is not allowed. Expected: string.\">1</warning>,\n" +
                    "  \"p2\": \"3\",\n" +
                    "  \"a2\": \"auto!\",\n" +
-                   "  \"a1\": <warning descr=\"Value should be one of: [\\\"auto!\\\"]\">\"moto!\"</warning>\n" +
+                   "  \"a1\": <warning descr=\"Value should be one of: \\\"auto!\\\"\">\"moto!\"</warning>\n" +
                    "}");
   }
 
@@ -458,10 +459,17 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                             "  }\n" +
                                             "}";
     doTest(schema, "{\n" +
-                   "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
+                   "  \"size\": {\n" +
                    "    \"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">1</warning>," +
                    " \"b\":3, \"c\": 4, " +
                    "\"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">5</warning>\n" +
+                   "  }\n" +
+                   "}");
+    doTest(schema, "{\n" +
+                   "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
+                   "    \"a\": true," +
+                   " \"b\":3, \"c\": 4, " +
+                   "\"a\": false\n" +
                    "  }</warning>\n" +
                    "}");
   }
@@ -846,7 +854,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOfBestChoiceSchema.json"));
     doTest(schemaText, "{\n" +
                        "  \"results\": [\n" +
-                       "    <warning descr=\"Missing required properties 'name', 'dateOfBirth'\">{\n" +
+                       "    <warning descr=\"Missing required properties 'dateOfBirth', 'name'\">{\n" +
                        "      \"type\": \"person\"\n" +
                        "    }</warning>\n" +
                        "  ]\n" +
@@ -864,5 +872,78 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                        "    \"file\": <warning>\"\"</warning>\n" +
                        "  }\n" +
                        "] ");
+  }
+
+  public void testComplexOneOfSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complexOneOfSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": \"tab\"\n" +
+                       "  }");
+    doTest(schemaText, "{\n" +
+                       "    \"indentation\": <warning>\"ttab\"</warning>\n" +
+                       "  }");
+  }
+
+  public void testEnumCasing() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"type\": \"object\",\n" +
+                                      "\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"name\": { \"type\": \"string\", \"enum\": [\"aa\", \"bb\"] }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\n" +
+                   "  \"name\": \"aa\"\n" +
+                   "}");
+    doTest(schema, "{\n" +
+                   "  \"name\": <warning>\"aA\"</warning>\n" +
+                   "}");
+  }
+
+  public void testEnumArrayValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ [{\"x\": 5}, [true], \"q\"] ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>5</warning>}");
+    doTest(schema, "{\"foo\": <warning>[ ]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, true]</warning>}");
+    doTest(schema, "{\"foo\": <warning>[{\"x\": 5}, [true]]</warning>}");
+    doTest(schema, "{\"foo\": [  { \"x\"   :   5 }  ,  [ true ]  , \"q\"  ]}");
+  }
+
+  public void testEnumObjectValue() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"enum\": [ {\"x\": 5} ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+    doTest(schema, "{\"foo\": <warning>{}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": 4}</warning>}");
+    doTest(schema, "{\"foo\": <warning>{\"x\": true}</warning>}");
+    doTest(schema, "{\"foo\": { \r  \"x\"  : \t  5 \n  }}");
+  }
+
+  public void testIntersectingHighlightingRanges() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
+    doTest(schemaText, "<warning descr=\"Missing required property 'items'\">{\n" +
+                       "  \"type\": \"array\"\n" +
+                       "}</warning>");
+    doTest(schemaText, "{\n" +
+                       "  \"type\": <warning descr=\"Value should be one of: \\\"record\\\", \\\"enum\\\", \\\"array\\\", \\\"map\\\", \\\"fixed\\\"\">\"array2\"</warning>\n" +
+                       "}");
+  }
+
+  public void testMissingMultipleAltPropertySets() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
+    doTest(schemaText, "<warning descr=\"One of the following property sets is required: properties 'type' = record, 'fields', 'name', or properties 'type' = enum, 'name', 'symbols', or properties 'type' = array, 'items', or properties 'type' = map, 'values', or properties 'type' = fixed, 'name', 'size'\">{\n" +
+                       "  \n" +
+                       "}</warning>");
   }
 }

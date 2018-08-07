@@ -64,6 +64,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -583,8 +584,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
-    final String version = vm.version();
-    if ("1.4.0".equals(version)) {
+    final String versionString = vm.version();
+    if ("1.4.0".equals(versionString)) {
       DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(
         myProject,
         DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
@@ -592,13 +593,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     if (getSession().getAlternativeJre() == null) {
       Sdk runjre = getSession().getRunJre();
-      if ((runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
+      JavaVersion version = JavaVersion.tryParse(versionString);
+      if (version != null && (runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
             DebuggerBundle.message("message.remote.jre.version.mismatch",
-                                   version,
+                                   versionString,
                                    runjre != null ? runjre.getVersionString() : "unknown",
                                    sdk.getName())
             , MessageType.INFO).notify(myProject);
@@ -608,10 +610,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean versionMatch(@Nullable Sdk sdk, String version) {
+  private static boolean versionMatch(@Nullable Sdk sdk, @NotNull JavaVersion version) {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String versionString = sdk.getVersionString();
-      return versionString != null && versionString.contains(version);
+      return versionString != null && version.equals(JavaVersion.tryParse(versionString));
     }
     return false;
   }
@@ -1304,7 +1306,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public ReferenceType findClass(EvaluationContext evaluationContext, String className,
+  public ReferenceType findClass(@Nullable EvaluationContext evaluationContext, String className,
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -1315,9 +1317,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           break;
         }
       }
-      final EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
-      if (result == null && evalContext.isAutoLoadClasses()) {
-        return loadClass(evalContext, className, classLoader);
+      if (result == null && evaluationContext != null) {
+        EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
+        if (evalContext.isAutoLoadClasses()) {
+          return loadClass(evalContext, className, classLoader);
+        }
       }
       return result;
     }
@@ -1830,7 +1834,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySession.getSearchScope();
   }
 
-  public void reattach(final DebugEnvironment environment) throws ExecutionException {
+  public void reattach(final DebugEnvironment environment) {
     if (!myIsStopped.get()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override

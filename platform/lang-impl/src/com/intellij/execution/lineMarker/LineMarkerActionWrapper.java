@@ -55,7 +55,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
   }
 
   @Override
-  public boolean canBePerformed(DataContext context) {
+  public boolean canBePerformed(@NotNull DataContext context) {
     return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).canBePerformed(wrapContext(context));
   }
 
@@ -80,7 +80,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myOrigin.update(wrapEvent(e));
   }
 
@@ -104,7 +104,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myOrigin.actionPerformed(wrapEvent(e));
   }
 
@@ -117,7 +117,7 @@ public class LineMarkerActionWrapper extends ActionGroup {
 
     @Nullable
     @Override
-    public synchronized Object getData(@NonNls String dataId) {
+    public synchronized Object getData(@NotNull @NonNls String dataId) {
       if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<>(myElement) : null;
       return myDelegate.getData(dataId);
     }

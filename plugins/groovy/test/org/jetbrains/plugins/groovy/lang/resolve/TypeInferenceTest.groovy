@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
@@ -12,6 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 import static com.intellij.psi.CommonClassNames.*
 
@@ -87,6 +91,10 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   void testClosure2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
     assertTrue(ref.type.equalsToText("int"))
+  }
+
+  void 'test binding from inside closure'() {
+    doTest "list = ['a', 'b']; list.each { <caret>it }", JAVA_LANG_STRING
   }
 
   void testGrvy1209() {
@@ -784,6 +792,16 @@ def foo(List list) {
 ''', 'java.util.List')
   }
 
+  void 'test substitutor is not inferred while inferring initializer type'() {
+    def file = (GroovyFile)fixture.configureByText('_.groovy', '''\
+class A { Closure foo = { 42 } }
+''')
+    GrClosureType.forbidClosureInference {
+      def getter = file.typeDefinitions[0].findMethodsByName("getFoo", false)[0]
+      def type = (PsiClassType)PsiUtil.getSmartReturnType(getter)
+      assert type.resolve().qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE
+    }
+  }
 
   void testClassExpressions() {
     doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'

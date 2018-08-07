@@ -403,7 +403,7 @@ public class JavaKeywordCompletion {
             }
 
             @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
+            public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               super.handleInsert(context, item);
               TailType.insertChar(context.getEditor(), context.getTailOffset(), ';');
             }
@@ -492,7 +492,7 @@ public class JavaKeywordCompletion {
         createKeyword(PsiKeyword.INSTANCEOF),
         new InsertHandler<LookupElementDecorator<LookupElement>>() {
           @Override
-          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
             TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
             if (tailType.isApplicable(context)) {
               tailType.processTail(context.getEditor(), context.getTailOffset());

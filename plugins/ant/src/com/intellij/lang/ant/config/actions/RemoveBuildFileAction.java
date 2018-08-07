@@ -19,6 +19,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.explorer.AntExplorer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public final class RemoveBuildFileAction extends AnAction {
   private final AntExplorer myAntExplorer;
@@ -28,7 +29,7 @@ public final class RemoveBuildFileAction extends AnAction {
     myAntExplorer = antExplorer;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myAntExplorer.removeSelectedBuildFiles();
   }
 }

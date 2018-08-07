@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.util.Ref;
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
@@ -102,10 +102,10 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
   public static ActionButtonFixture findByActionId(@NotNull final String actionId,
                                                    @NotNull final Robot robot,
                                                    @NotNull final Container container) {
-    return findByActionId(actionId, robot, container, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    return findByActionId(actionId, robot, container, Timeouts.INSTANCE.getMinutes02());
   }
 
-  public void waitUntilEnabledAndShowing() {
+  public ActionButtonFixture waitEnabledAndShowing() {
     Pause.pause(new Condition("wait for action to be enabled and showing") {
       @Override
       public boolean test() {
@@ -113,19 +113,17 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
           @Override
           protected Boolean executeInEDT() {
             ActionButton target = target();
-            if (target.getAction().getTemplatePresentation().isEnabledAndVisible()) {
-              return target.isShowing() && target.isVisible() && target.isEnabled();
-            }
-            return false;
+            return target.isShowing() && target.isVisible() && target.isEnabled();
           }
         });
       }
-    }, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    }, Timeouts.INSTANCE.getSeconds30());
+    return this;
   }
 
   @NotNull
   public static ActionButtonFixture findByText(@NotNull final String text, @NotNull Robot robot, @NotNull Container container) {
-    return findByText(text, robot, container, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    return findByText(text, robot, container, Timeouts.INSTANCE.getMinutes02());
   }
 
   @NotNull

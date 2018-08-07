@@ -134,7 +134,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
    * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
    * binding of currently selected component (if any)
    */
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if(CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
       if (componentTree != null) {

@@ -130,7 +130,7 @@ public class PythonPathEditor extends SdkPathEditor {
   protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
     AnActionButton reloadButton = new AnActionButton(PyBundle.message("sdk.paths.dialog.reload.paths"), AllIcons.Actions.Refresh) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         onReloadButtonClicked();
       }
     };

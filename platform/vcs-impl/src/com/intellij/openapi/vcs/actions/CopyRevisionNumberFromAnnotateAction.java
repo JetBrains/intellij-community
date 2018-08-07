@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.ui.TextTransferable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,7 +37,7 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (myLineNumber < 0) return;
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
     if (revisionNumber != null) {
@@ -46,7 +47,7 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final boolean enabled = myLineNumber >= 0 && myAnnotation.getLineRevisionNumber(myLineNumber) != null;
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);

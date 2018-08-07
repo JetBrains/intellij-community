@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -167,7 +166,13 @@ public class StructuralSearchDialog extends DialogWrapper {
         }
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH, true);
+        editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
+      }
+
+      @Override
+      protected void updateBorder(@NotNull EditorEx editor) {
+        setupBorder(editor);
       }
     };
     textField.setPreferredSize(new Dimension(850, 150));
@@ -176,6 +181,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   void initiateValidation() {
+    if (myAlarm.isDisposed()) return;
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
       try {
@@ -431,7 +437,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(new AnAction(getShowHistoryIcon()) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Object source = e.getInputEvent().getSource();
         if (!(source instanceof Component)) return;
         JBPopupFactory.getInstance()
@@ -494,13 +500,13 @@ public class StructuralSearchDialog extends DialogWrapper {
       new AnAction(SSRBundle.message("save.template.text.button")) {
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
       },
       new AnAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           final SelectTemplateDialog dialog = new SelectTemplateDialog(mySearchContext.getProject(), false, isReplaceDialog());
           if (!dialog.showAndGet()) {
             return;
@@ -528,7 +534,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myFilterButtonEnabled);
       }
     };
@@ -729,7 +735,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
       balloon.showInCenterOf(component);
       Disposer.register(myDisposable, balloon);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
     });
   }
 

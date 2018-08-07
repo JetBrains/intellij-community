@@ -68,7 +68,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -80,7 +80,7 @@ public class ApplyPatchAction extends DumbAwareAction {
     }
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not apply patch now")) return;
     FileDocumentManager.getInstance().saveAllDocuments();

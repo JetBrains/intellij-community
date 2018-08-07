@@ -38,7 +38,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   @Nullable
   final Project myProject;
 
-  YAMLKeysSearchEverywhereContributor(@Nullable Project project) {
+  public YAMLKeysSearchEverywhereContributor(@Nullable Project project) {
     myProject = project;
   }
 
@@ -210,7 +210,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Language> createFilter() {
+    public SearchEverywhereContributorFilter<Language> createFilter(AnActionEvent initEvent) {
       return null;
     }
   }

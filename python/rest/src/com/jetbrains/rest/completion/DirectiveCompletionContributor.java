@@ -42,7 +42,7 @@ public class DirectiveCompletionContributor extends CompletionContributor {
        new CompletionProvider<CompletionParameters>() {
          @Override
          protected void addCompletions(@NotNull CompletionParameters parameters,
-                                       ProcessingContext context,
+                                       @NotNull ProcessingContext context,
                                        @NotNull CompletionResultSet result) {
            int offset = parameters.getOffset();
            final String prefix = getPrefix(offset, parameters.getOriginalFile());

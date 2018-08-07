@@ -614,7 +614,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private void fireMoveText(int start, int end, int newBase) {
     for (DocumentListener listener : getListeners()) {
       if (listener instanceof PrioritizedInternalDocumentListener) {
-        ((PrioritizedInternalDocumentListener)listener).moveTextHappened(start, end, newBase);
+        ((PrioritizedInternalDocumentListener)listener).moveTextHappened(this, start, end, newBase);
       }
     }
   }

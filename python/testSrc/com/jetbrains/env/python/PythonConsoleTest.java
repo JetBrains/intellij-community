@@ -2,7 +2,6 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -20,7 +19,6 @@ import static org.junit.Assert.assertTrue;
  */
 public class PythonConsoleTest extends PyEnvTestCase {
   @Test
-  @Staging
   public void testConsolePrint() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -55,7 +53,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testInterruptAsync() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -80,7 +77,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testLineByLineInput() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -96,7 +92,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
 
   @Test
-  @Staging
   public void testVariablesView() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -112,7 +107,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging //Thread leak
   public void testCompoundVariable() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -128,7 +122,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testChangeVariable() {
     runPythonTest(new PyConsoleTask() {

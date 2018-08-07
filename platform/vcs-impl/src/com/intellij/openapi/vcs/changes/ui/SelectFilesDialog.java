@@ -1,35 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.actions.DeleteAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.actionSystem.EmptyAction.setupAction;
 
 /**
  * @author yole
@@ -105,15 +94,15 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   protected DefaultActionGroup createToolbarActions() {
     DefaultActionGroup defaultGroup = super.createToolbarActions();
     if (myDeletableFiles) {
-      AnAction deleteAction = new DeleteUnversionedFilesAction() {
+      AnAction deleteAction = new DeleteAction(null, null, IconUtil.getRemoveIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           super.actionPerformed(e);
           myFileList.refresh();
         }
       };
+      setupAction(deleteAction, IdeActions.ACTION_DELETE, getFileList());
       defaultGroup.add(deleteAction);
-      deleteAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), this.getFileList());
     }
     return defaultGroup;
   }
@@ -128,7 +117,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
     @Nullable
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) && myDeleteProvider != null) {
         return myDeleteProvider;
       }

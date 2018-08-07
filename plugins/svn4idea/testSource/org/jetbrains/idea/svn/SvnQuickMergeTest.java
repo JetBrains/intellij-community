@@ -31,12 +31,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.api.Revision.WORKING;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class SvnQuickMergeTest extends SvnTestCase {
   private String myBranchUrl;
@@ -54,7 +56,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
     myBranchRoot = new File(myTempDirFixture.getTempDirPath(), "b1");
 
     runInAndVerifyIgnoreOutput("co", myBranchUrl, myBranchRoot.getPath());
-    assertTrue(myBranchRoot.exists());
+    assertExists(myBranchRoot);
     myBranchVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBranchRoot);
     assertNotNull(myBranchVf);
 
@@ -71,7 +73,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
     //((ApplicationImpl) ApplicationManager.getApplication()).setRunPooledInTest(true);
 
     runInAndVerifyIgnoreOutput(virtualToIoFile(myWorkingCopyDir), "up");
-    Thread.sleep(10);
   }
 
   @Test
@@ -120,7 +121,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     AtomicReference<String> selectionError = new AtomicReference<>();
@@ -170,7 +170,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     // before copy
@@ -233,7 +232,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists ->

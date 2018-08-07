@@ -149,7 +149,7 @@ public class RecentProjectPanel extends JPanel {
           if (cellBounds.contains(event.getPoint())) {
             Object selection = myList.getSelectedValue();
             if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
-              removeRecentProjectAction.actionPerformed(null);
+              removeRecentProject();
             } else if (selection != null) {
               AnAction selectedAction = (AnAction) selection;
               AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
@@ -185,22 +185,8 @@ public class RecentProjectPanel extends JPanel {
 
     removeRecentProjectAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        Object[] selection = myList.getSelectedValues();
-
-        if (selection != null && selection.length > 0) {
-          final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
-                                                     "Remove '" + StringUtil.join(selection, action -> ((AnAction)action).getTemplatePresentation().getText(), "'\n'") +
-                                                     "' from recent projects list?",
-                                                     "Remove Recent Project",
-                                                     Messages.getQuestionIcon());
-          if (rc == Messages.OK) {
-            for (Object projectAction : selection) {
-              removeRecentProjectElement(projectAction);
-            }
-            ListUtil.removeSelectedItems(myList);
-          }
-        }
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        removeRecentProject();
       }
 
       @Override
@@ -242,6 +228,25 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+  }
+
+  private void removeRecentProject() {
+    Object[] selection = myList.getSelectedValues();
+
+    if (selection != null && selection.length > 0) {
+      final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
+                                                 "Remove '" + StringUtil
+                                                   .join(selection, action -> ((AnAction)action).getTemplatePresentation().getText(), "'\n'") +
+                                                 "' from recent projects list?",
+                                                 "Remove Recent Project",
+                                                 Messages.getQuestionIcon());
+      if (rc == Messages.OK) {
+        for (Object projectAction : selection) {
+          removeRecentProjectElement(projectAction);
+        }
+        ListUtil.removeSelectedItems(myList);
+      }
+    }
   }
 
   protected boolean isPathValid(String path) {

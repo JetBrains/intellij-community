@@ -67,15 +67,6 @@ class MoverWrapper {
       String textToInsert2 = document.getCharsSequence().subSequence(start2, end2).toString();
       if (!StringUtil.endsWithChar(textToInsert2,'\n')) textToInsert2 += '\n';
 
-      TextRange range = new TextRange(start, end);
-      TextRange range2 = new TextRange(start2, end2);
-      if (range.intersectsStrict(range2) && !range.equals(range2)) {
-        LOGGER.error("Wrong move ranges requested by " + myMover + " " + start + ":" + end + " vs " + start2 + ":" + end2,
-                     new Attachment("ranges.txt",
-                                    start + ":" + end + "(" + textToInsert + ")\n" + start2 + ":" + end2 + "(" + textToInsert2 + ")"));
-        return;
-      }
-
       myInfo.range1 = document.createRangeMarker(start, end);
       myInfo.range2 = document.createRangeMarker(start2, end2);
       if (myInfo.range1.getStartOffset() < myInfo.range2.getStartOffset()) {
@@ -91,79 +82,90 @@ class MoverWrapper {
         myInfo.range2.setGreedyToRight(false);
       }
 
-      final CaretModel caretModel = editor.getCaretModel();
-      final int caretRelativePos = caretModel.getOffset() - start;
-      final SelectionModel selectionModel = editor.getSelectionModel();
-      final int selectionStart = selectionModel.getSelectionStart();
-      final int selectionEnd = selectionModel.getSelectionEnd();
-      final boolean hasSelection = selectionModel.hasSelection();
-
-      // to prevent flicker
-      caretModel.moveToOffset(0);
-
-      // There is a possible case that the user performs, say, method move. It's also possible that one (or both) of moved methods
-      // are folded. We want to preserve their states then. The problem is that folding processing is based on PSI element pointers
-      // and the pointers behave as following during move up/down:
-      //     method1() {}
-      //     method2() {}
-      // Pointer for the fold region from method1 points to 'method2()' now and vice versa (check range markers processing on
-      // document change for further information). I.e. information about fold regions statuses holds the data swapped for
-      // 'method1' and 'method2'. Hence, we want to apply correct 'collapsed' status.
-      final FoldRegion topRegion = findTopLevelRegionInRange(editor, myInfo.range1);
-      final FoldRegion bottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
-
-      if (document instanceof DocumentEx) {
-        int startFirst = Math.min(start, start2);
-        int endFirst = Math.min(end, end2);
-        int startSecond = Math.max(start, start2);
-        int endSecond = Math.max(end, end2);
-        ((DocumentEx)document).moveText(startFirst, endFirst, startSecond);
-        ((DocumentEx)document).moveText(startSecond, endSecond, startFirst);
-        myInfo.range1.dispose();
-        myInfo.range2.dispose();
-        // we could use existing range markers, but if some range is empty, they won't be moved as expected
-        myInfo.range1 = document.createRangeMarker(start < start2 ? start                 : start2 + end - end2,
-                                                   start < start2 ? start + end2 - start2 : end);
-        myInfo.range2 = document.createRangeMarker(start < start2 ? start + end2 - end    : start2,
-                                                   start < start2 ? end2                  : start2 + end - start);
-        insertLineBreakInTheEndIfMissing(myInfo.range1);
-        insertLineBreakInTheEndIfMissing(myInfo.range2);
-      }
-      else {
-        document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
-        document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
-
-        document.insertString(myInfo.range2.getStartOffset(), textToInsert);
-        int s = myInfo.range2.getStartOffset() + textToInsert.length();
-        int e = myInfo.range2.getEndOffset();
-        if (e > s) {
-          document.deleteString(s, e);
+      TextRange range = new TextRange(start, end);
+      TextRange range2 = new TextRange(start2, end2);
+      if (!range.equals(range2)) {
+        if (range.intersectsStrict(range2)) {
+          LOGGER.error("Wrong move ranges requested by " + myMover + " " + start + ":" + end + " vs " + start2 + ":" + end2,
+                       new Attachment("ranges.txt",
+                                      start + ":" + end + "(" + textToInsert + ")\n" + start2 + ":" + end2 + "(" + textToInsert2 + ")"));
+          return;
         }
-      }
 
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
+        final CaretModel caretModel = editor.getCaretModel();
+        final int caretRelativePos = caretModel.getOffset() - start;
+        final SelectionModel selectionModel = editor.getSelectionModel();
+        final int selectionStart = selectionModel.getSelectionStart();
+        final int selectionEnd = selectionModel.getSelectionEnd();
+        final boolean hasSelection = selectionModel.hasSelection();
 
-      // Swap fold regions status if necessary.
-      if (topRegion != null && bottomRegion != null) {
-        CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
-        editor.getFoldingModel().runBatchFoldingOperation(() -> {
-          FoldRegion newTopRegion = findTopLevelRegionInRange(editor, myInfo.range1);
-          if (newTopRegion != null) {
-            newTopRegion.setExpanded(bottomRegion.isExpanded());
+        // to prevent flicker
+        caretModel.moveToOffset(0);
+
+        // There is a possible case that the user performs, say, method move. It's also possible that one (or both) of moved methods
+        // are folded. We want to preserve their states then. The problem is that folding processing is based on PSI element pointers
+        // and the pointers behave as following during move up/down:
+        //     method1() {}
+        //     method2() {}
+        // Pointer for the fold region from method1 points to 'method2()' now and vice versa (check range markers processing on
+        // document change for further information). I.e. information about fold regions statuses holds the data swapped for
+        // 'method1' and 'method2'. Hence, we want to apply correct 'collapsed' status.
+        final FoldRegion topRegion = findTopLevelRegionInRange(editor, myInfo.range1);
+        final FoldRegion bottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
+
+        if (document instanceof DocumentEx) {
+          int startFirst = Math.min(start, start2);
+          int endFirst = Math.min(end, end2);
+          int startSecond = Math.max(start, start2);
+          int endSecond = Math.max(end, end2);
+          ((DocumentEx)document).moveText(startFirst, endFirst, startSecond);
+          ((DocumentEx)document).moveText(startSecond, endSecond, startFirst);
+          myInfo.range1.dispose();
+          myInfo.range2.dispose();
+          // we could use existing range markers, but if some range is empty, they won't be moved as expected
+          myInfo.range1 = document.createRangeMarker(start < start2 ? start                 : start2 + end - end2,
+                                                     start < start2 ? start + end2 - start2 : end);
+          myInfo.range2 = document.createRangeMarker(start < start2 ? start + end2 - end    : start2,
+                                                     start < start2 ? end2                  : start2 + end - start);
+          insertLineBreakInTheEndIfMissing(myInfo.range1);
+          insertLineBreakInTheEndIfMissing(myInfo.range2);
+        }
+        else {
+          document.insertString(myInfo.range1.getStartOffset(), textToInsert2);
+          document.deleteString(myInfo.range1.getStartOffset()+textToInsert2.length(), myInfo.range1.getEndOffset());
+
+          document.insertString(myInfo.range2.getStartOffset(), textToInsert);
+          int s = myInfo.range2.getStartOffset() + textToInsert.length();
+          int e = myInfo.range2.getEndOffset();
+          if (e > s) {
+            document.deleteString(s, e);
           }
+        }
 
-          FoldRegion newBottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
-          if (newBottomRegion != null) {
-            newBottomRegion.setExpanded(topRegion.isExpanded());
-          }
-        });
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+        // Swap fold regions status if necessary.
+        if (topRegion != null && bottomRegion != null) {
+          CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
+          editor.getFoldingModel().runBatchFoldingOperation(() -> {
+            FoldRegion newTopRegion = findTopLevelRegionInRange(editor, myInfo.range1);
+            if (newTopRegion != null) {
+              newTopRegion.setExpanded(bottomRegion.isExpanded());
+            }
+
+            FoldRegion newBottomRegion = findTopLevelRegionInRange(editor, myInfo.range2);
+            if (newBottomRegion != null) {
+              newBottomRegion.setExpanded(topRegion.isExpanded());
+            }
+          });
+        }
+
+        if (hasSelection) {
+          restoreSelection(editor, selectionStart, selectionEnd, start, end, myInfo.range2.getStartOffset());
+        }
+
+        caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
       }
-
-      if (hasSelection) {
-        restoreSelection(editor, selectionStart, selectionEnd, start, end, myInfo.range2.getStartOffset());
-      }
-
-      caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
     }
     myMover.afterMove(editor, file, myInfo, myIsDown);
     PsiDocumentManager.getInstance(project).commitDocument(document);

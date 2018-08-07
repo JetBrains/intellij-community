@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.integrate.AlienDirtyScope;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -15,6 +14,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author yole
@@ -28,24 +29,24 @@ public class SvnDeleteTest extends SvnTestCase {
     VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
 
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child/a.txt");
     checkin();
 
     deleteFileInCommand(dir);
-    runAndVerifyStatusSorted("D child", "D child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("D child", "D child/a.txt");
 
     refreshVfs();
 
     final AlienDirtyScope dirtyScope = new AlienDirtyScope();
     dirtyScope.addDir(VcsUtil.getFilePath(myWorkingCopyDir));
     final List<Change> changesManually = getChangesInScope(dirtyScope);
-    Assert.assertEquals(2, changesManually.size());
+    assertEquals(2, changesManually.size());
 
     refreshChanges();
     final List<LocalChangeList> lists = changeListManager.getChangeListsCopy();
-    Assert.assertEquals(1, lists.size());
+    assertEquals(1, lists.size());
     final Collection<Change> changes = lists.get(0).getChanges();
-    Assert.assertEquals(2, changes.size());
+    assertEquals(2, changes.size());
   }
 
   @Test
@@ -55,12 +56,12 @@ public class SvnDeleteTest extends SvnTestCase {
     VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
 
-    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child/a.txt");
     checkin();
 
     final File wasFile = virtualToIoFile(dir);
     deleteFileInCommand(dir);
-    runAndVerifyStatusSorted("! child", "! child" + File.separatorChar + "a.txt");
-    Assert.assertTrue(! wasFile.exists());
+    runAndVerifyStatusSorted("! child", "! child/a.txt");
+    assertDoesntExist(wasFile);
   }
 }

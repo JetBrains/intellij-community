@@ -41,7 +41,7 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && !getDependencies(e).isEmpty();
   }
 

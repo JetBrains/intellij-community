@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -46,7 +32,6 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final Module myModule;
   @ScopeConstant
   private final int myOptions;
-
   private final ProjectFileIndexImpl myProjectFileIndex;
 
   private volatile Set<Module> myModules;
@@ -56,11 +41,9 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     super(module.getProject());
     myModule = module;
     myOptions = options;
-
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
 
-    final LinkedHashSet<VirtualFile> roots = ContainerUtil.newLinkedHashSet();
-
+    Set<VirtualFile> roots = ContainerUtil.newLinkedHashSet();
     if (hasOption(CONTENT)) {
       Set<Module> modules = calcModules();
       myModules = ContainerUtil.newTroveSet(modules);
@@ -87,10 +70,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private OrderEnumerator getOrderEnumeratorForOptions() {
     OrderEnumerator en = ModuleRootManager.getInstance(myModule).orderEntries();
     en.recursively();
-
-    if (hasOption(COMPILE_ONLY)) {
-      en.exportedOnly().compileOnly();
-    }
+    if (hasOption(COMPILE_ONLY)) en.exportedOnly().compileOnly();
     if (!hasOption(LIBRARIES)) en.withoutLibraries().withoutSdk();
     if (!hasOption(MODULES)) en.withoutDepModules();
     if (!hasOption(TESTS)) en.productionOnly();
@@ -101,7 +81,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private Set<Module> calcModules() {
     // In the case that hasOption(CONTENT), the order of the modules set matters for
     // ordering the content roots, so use a LinkedHashSet
-    final Set<Module> modules = ContainerUtil.newLinkedHashSet();
+    Set<Module> modules = ContainerUtil.newLinkedHashSet();
     OrderEnumerator en = getOrderEnumeratorForOptions();
     en.forEach(each -> {
       if (each instanceof ModuleOrderEntry) {
@@ -187,8 +167,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @TestOnly
   public Collection<VirtualFile> getRoots() {
-    //noinspection unchecked
-    List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
+    @SuppressWarnings("unchecked") List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
     Collections.sort(result, Comparator.comparingInt(myRoots::get));
     return result;
   }
@@ -209,10 +188,10 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Override
   public String toString() {
-    return "Module with dependencies:" + myModule.getName() +
-           " compile only:" + hasOption(COMPILE_ONLY) +
-           " include libraries:" + hasOption(LIBRARIES) +
-           " include other modules:" + hasOption(MODULES) +
-           " include tests:" + hasOption(TESTS);
+    return "Module-with-dependencies:" + myModule.getName() +
+           " compile-only:" + hasOption(COMPILE_ONLY) +
+           " include-libraries:" + hasOption(LIBRARIES) +
+           " include-other-modules:" + hasOption(MODULES) +
+           " include-tests:" + hasOption(TESTS);
   }
 }

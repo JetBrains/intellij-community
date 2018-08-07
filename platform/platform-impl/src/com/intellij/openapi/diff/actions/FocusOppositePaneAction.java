@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -28,14 +29,14 @@ public class FocusOppositePaneAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DiffPanelImpl diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
     assert diffPanel != null;
     diffPanel.focusOppositeSide();
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final DiffPanelImpl diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
     e.getPresentation().setEnabled(diffPanel != null);
   }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.util.TextBuffer;
@@ -204,24 +202,26 @@ public class IfStatement extends Statement {
     tracer.incrementCurrentSourceLine();
 
     if (ifstat == null) {
-      buf.appendIndent(indent + 1);
-
+      boolean semicolon = false;
       if (ifedge.explicit) {
+        semicolon = true;
         if (ifedge.getType() == StatEdge.TYPE_BREAK) {
           // break
-          buf.append("break");
+          buf.appendIndent(indent + 1).append("break");
         }
         else {
           // continue
-          buf.append("continue");
+          buf.appendIndent(indent + 1).append("continue");
         }
 
         if (ifedge.labeled) {
           buf.append(" label").append(ifedge.closure.id.toString());
         }
       }
-      buf.append(";").appendLineSeparator();
-      tracer.incrementCurrentSourceLine();
+      if(semicolon) {
+        buf.append(";").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+      }
     }
     else {
       buf.append(ExprProcessor.jmpWrapper(ifstat, indent + 1, true, tracer));

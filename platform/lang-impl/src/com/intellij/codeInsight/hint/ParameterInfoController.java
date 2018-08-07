@@ -145,6 +145,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     myEditorCaretListener = new CaretListener(){
       @Override
       public void caretPositionChanged(CaretEvent e) {
+        syncUpdateOnCaretMove();
         rescheduleUpdate();
       }
     };
@@ -180,6 +181,14 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       showHint(requestFocus, mySingleParameterInfo);
     }
     updateComponent();
+  }
+
+  void setDescriptors(Object[] descriptors) {
+    myComponent.setDescriptors(descriptors);
+  }
+
+  private void syncUpdateOnCaretMove() {
+    myHandler.syncUpdateOnCaretMove(new MyLazyUpdateParameterInfoContext());
   }
 
   private LightweightHint createHint() {
@@ -660,6 +669,22 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     @Override
     public UserDataHolderEx getCustomContext() {
       return ParameterInfoController.this;
+    }
+  }
+
+  private class MyLazyUpdateParameterInfoContext extends MyUpdateParameterInfoContext {
+    private PsiFile myFile;
+
+    private MyLazyUpdateParameterInfoContext() {
+      super(myEditor.getCaretModel().getOffset(), null);
+    }
+
+    @Override
+    public PsiFile getFile() {
+      if (myFile == null) {
+        myFile = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
+      }
+      return myFile;
     }
   }
 

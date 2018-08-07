@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -8,6 +8,7 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
-
   @NonNls
   static final String CODE_STYLES_DIR_PATH = "codestyles";
 
@@ -38,6 +38,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   }
 
   @Override
+  @Transient
   public CodeStyleScheme getCurrentScheme() {
     return mySchemeManager.getActiveScheme();
   }
@@ -51,7 +52,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @Override
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {
     return new CodeStyleSchemeImpl(
-      SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> mySchemeManager.findSchemeByName(name) != null), 
+      SchemeNameGenerator.getUniqueName(preferredName, parentScheme, name -> mySchemeManager.findSchemeByName(name) != null),
       false,
       parentScheme);
   }

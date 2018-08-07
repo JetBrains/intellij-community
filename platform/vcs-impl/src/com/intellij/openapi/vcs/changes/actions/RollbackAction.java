@@ -52,7 +52,7 @@ import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.util.containers.UtilKt.notNullize;
 
 public class RollbackAction extends AnAction implements DumbAware {
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
     e.getPresentation().setEnabledAndVisible(visible);
@@ -87,7 +87,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     return list != null && !list.getChanges().isEmpty();
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -96,25 +96,26 @@ public class RollbackAction extends AnAction implements DumbAware {
                          ? null
                          : "Can not " + UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project)) + " now";
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
-    FileDocumentManager.getInstance().saveAllDocuments();
 
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
+    List<Change> changes = getChanges(project, e);
+    LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
+    if (modifiedWithoutEditing != null) {
+      changes = ContainerUtil.filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
+    }
+
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     boolean hasChanges = false;
     if (missingFiles != null && !missingFiles.isEmpty()) {
       hasChanges = true;
       new RollbackDeletionAction().actionPerformed(e);
     }
 
-    List<Change> changes = getChanges(project, e);
-
-    final LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
       hasChanges = true;
       rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
-    }
-
-    if (modifiedWithoutEditing != null) {
-      changes = ContainerUtil.filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
     }
 
     if (!changes.isEmpty()) {

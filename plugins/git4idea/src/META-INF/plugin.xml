@@ -79,7 +79,7 @@
     <group id="GitRepositoryActions">
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
-        <keyboard-shortcut first-keystroke="control B" keymap="Mac OS X 10.5+"/>
+        <keyboard-shortcut first-keystroke="control B" keymap="Mac OS X 10.5+" replace-all="true"/>
       </action>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Actions.ShowAsTree"/>
@@ -163,7 +163,7 @@
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
-    <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
+    <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <pushSupport implementation="git4idea.push.GitPushSupport"/>

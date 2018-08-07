@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
@@ -19,6 +18,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectNameProvider
+import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
@@ -155,6 +155,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
         invokeAndWaitIfNeed { VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByPath(configDir)) }
       }
     }
+
+    storageManager.addMacro(StoragePathMacros.CACHE_FILE, FileUtilRt.toSystemIndependentName(project.getProjectCachePath("workspace").toString()) + ".xml")
   }
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
@@ -190,7 +192,9 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
         // if we create project from default, component state written not to own storage file, but to project file,
         // we don't have time to fix it properly, so, ancient hack restored
-        result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
+        if (result.first().path != StoragePathMacros.CACHE_FILE) {
+          result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
+        }
         return result
       }
     }
@@ -200,7 +204,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       var hasOnlyDeprecatedStorages = true
       for (storage in storages) {
         @Suppress("DEPRECATION")
-        if (storage.path == PROJECT_FILE || storage.path == StoragePathMacros.WORKSPACE_FILE) {
+        if (storage.path == PROJECT_FILE || storage.path == StoragePathMacros.WORKSPACE_FILE || storage.path == StoragePathMacros.CACHE_FILE) {
           if (result == null) {
             result = SmartList()
           }
@@ -251,7 +255,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
+  override val storageManager = ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), project)
 
   override fun setPath(path: String) {
     setPath(path, true)
@@ -266,14 +270,14 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     val nameFile = nameFile
     if (nameFile.exists()) {
       LOG.runAndLogException {
-        nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+        nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }?.let {
           lastSavedProjectName = it
           return it
         }
       }
     }
 
-    return ProjectNameProvider.EP_NAME.extensions.computeIfAny {
+    return ProjectNameProvider.EP_NAME.extensionList.computeIfAny {
       LOG.runAndLogException { it.getDefaultName(project) }
     } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
@@ -302,7 +306,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
   }
 
-  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
+  override fun doSave(saveSession: SaveExecutor, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
     try {
       saveProjectName()
     }
@@ -312,7 +316,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
 
     beforeSave(readonlyFiles)
 
-    super.doSave(saveSessions, readonlyFiles, errors)
+    super.doSave(saveSession, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {

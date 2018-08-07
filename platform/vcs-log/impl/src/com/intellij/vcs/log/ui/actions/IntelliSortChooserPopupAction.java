@@ -40,7 +40,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
@@ -62,7 +62,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabled(properties != null);

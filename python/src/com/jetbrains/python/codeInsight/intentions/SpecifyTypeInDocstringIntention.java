@@ -15,13 +15,12 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -31,9 +30,10 @@ import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.toolbox.Substring;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,24 +57,18 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    final PyExpression problemElement = getProblemElement(elementAt);
-    final PsiReference reference = problemElement == null ? null : problemElement.getReference();
-
-    final PsiElement resolved = reference != null ? reference.resolve() : null;
-    final PyNamedParameter parameter = getParameter(problemElement, resolved);
-
+    final PyNamedParameter parameter = findOnlySuitableParameter(editor, file);
     if (parameter != null) {
       final PyFunction parentFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
       if (parentFunction != null) {
         generateDocstring(parameter, parentFunction);
       }
+      return;
     }
-    else {
-      StreamEx
-        .of(getMultiCallable(elementAt))
-        .select(PyFunction.class)
-        .forEach(function -> generateDocstring(null, function));
+
+    final PyFunction function = findOnlySuitableFunction(editor, file);
+    if (function != null) {
+      generateDocstring(null, function);
     }
   }
 
@@ -83,16 +77,10 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     return false;
   }
 
-  @Nullable
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return currentFile;
-  }
-
   private static void generateDocstring(@Nullable PyNamedParameter param, @NotNull PyFunction pyFunction) {
-    if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) {
-      return;
-    }
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(pyFunction)) return;
+
+    if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) return;
 
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
     String type = PyNames.OBJECT;
@@ -124,7 +112,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isParamTypeDefined(@NotNull PyParameter parameter) {
+  protected boolean isParamTypeDefined(@NotNull PyNamedParameter parameter) {
     final PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (pyFunction != null) {
       final StructuredDocString structuredDocString = pyFunction.getStructuredDocString();

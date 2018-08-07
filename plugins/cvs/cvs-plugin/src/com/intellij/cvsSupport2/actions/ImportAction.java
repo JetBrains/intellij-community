@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.CvsBundle;
@@ -33,6 +19,7 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ImportAction extends ActionOnSelectedElement {
   private ImportDetails myImportDetails;
@@ -41,7 +28,7 @@ public class ImportAction extends ActionOnSelectedElement {
     super(false);
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(true);
   }
@@ -111,7 +98,6 @@ public class ImportAction extends ActionOnSelectedElement {
         final String path = mapRoot.equals(projectBaseDir) ? "" : mapRoot.getPath();
         ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
         manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, CvsVcs2.getInstance(project).getName()));
-        manager.updateActiveVcss();
       }
     };
   }

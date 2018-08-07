@@ -34,7 +34,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
@@ -150,7 +149,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
-  private ChooseByNameBase myChooseByNamePopup;
+  private ChooseByNamePopup myChooseByNamePopup;
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
@@ -1078,13 +1077,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
-        CodeStyle.dropTemporarySettings(getProject());
-        AutoPopupController.getInstance(getProject()).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+        Project project = getProject();
+        if (project != null) {
+          CodeStyle.dropTemporarySettings(project);
+          AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+        }
         DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
         closeOpenFiles();
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
-        // clear order entry roots cache
-        WriteAction.run(()->ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+        if (project != null) {
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+          // clear order entry roots cache
+          WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+        }
       }))
       .append(() -> {
         clearFileAndEditor();
@@ -1103,10 +1107,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private void closeOpenFiles() {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    EditorHistoryManager.getInstance(getProject()).removeAllFiles();
+    Project project = getProject();
+    if (project == null) {
+      return;
+    }
+
+    LookupManager.getInstance(project).hideActiveLookup();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
+    EditorHistoryManager.getInstance(project).removeAllFiles();
   }
 
   @NotNull
@@ -1690,13 +1699,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    final ChooseByNameBase chooseByNamePopup = getMockChooseByNamePopup(contextForSorting);
+    final ChooseByNamePopup chooseByNamePopup = getMockChooseByNamePopup(contextForSorting);
     final ArrayList<Object> results = new ArrayList<>();
     chooseByNamePopup.getProvider().filterElements(chooseByNamePopup,
                                                    chooseByNamePopup.transformPattern(pattern),
                                                    searchEverywhere,
                                                    new MockProgressIndicator(),
                                                    new CommonProcessors.CollectProcessor<>(results));
+    chooseByNamePopup.close(true);
     return results;
   }
 
@@ -1707,7 +1717,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  private ChooseByNameBase getMockChooseByNamePopup(@Nullable PsiElement contextForSorting) {
+  private ChooseByNamePopup getMockChooseByNamePopup(@Nullable PsiElement contextForSorting) {
     final Project project = getProject();
     if (contextForSorting != null) {
       return ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), contextForSorting);

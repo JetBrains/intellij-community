@@ -68,6 +68,7 @@ import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
+  public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
   private final JTextArea myTextArea;
@@ -128,6 +129,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        if (e.getType() == DocumentEvent.EventType.INSERT) {
+          myTextArea.putClientProperty(JUST_CLEARED_KEY, null);
+        }
         updateIconsLayout();
       }
     });
@@ -182,7 +186,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     final KeyStroke oldHistoryKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, CTRL_DOWN_MASK);
     new DumbAwareAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
         while(keymap != null) {
           if ("Visual Studio".equals(keymap.getName())) {
@@ -194,7 +198,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         IdeTooltipManager.getInstance().show(
           new IdeTooltip(myTextArea, new Point(), new JLabel(
             "The shortcut was changed. Press " +
@@ -383,7 +387,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
@@ -414,7 +418,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myTextArea.putClientProperty(JUST_CLEARED_KEY, !myTextArea.getText().isEmpty());
       myTextArea.setText("");
     }
   }
@@ -426,7 +431,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       new DefaultEditorKit.InsertBreakAction().actionPerformed(new ActionEvent(myTextArea, 0, "action"));
     }
   }

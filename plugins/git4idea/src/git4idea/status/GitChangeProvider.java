@@ -21,10 +21,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -117,32 +116,27 @@ public class GitChangeProvider implements ChangeProvider {
       return;
     }
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final Set<VirtualFile> rootsUnderGit = new HashSet<>(Arrays.asList(vcsManager.getRootsUnderVcs(vcs)));
-    final Set<VirtualFile> inputColl = new HashSet<>(rootsUnderGit);
-    final Set<VirtualFile> existingInScope = new HashSet<>();
+    VirtualFile[] rootsUnderGit = vcsManager.getRootsUnderVcs(vcs);
+
+    Set<VirtualFile> dirtyDirs = new HashSet<>();
     for (FilePath dir : recursivelyDirtyDirectories) {
-      VirtualFile vf = dir.getVirtualFile();
-      if (vf == null) {
-        vf = lfs.findFileByIoFile(dir.getIOFile());
-      }
-      if (vf == null) {
-        vf = lfs.refreshAndFindFileByIoFile(dir.getIOFile());
-      }
+      VirtualFile vf = VcsUtil.getVirtualFileWithRefresh(dir.getIOFile());
       if (vf != null) {
-        existingInScope.add(vf);
+        dirtyDirs.add(vf);
       }
     }
-    inputColl.addAll(existingInScope);
-    if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
-    FileUtil.removeAncestors(inputColl, o -> o.getPath(), (parent, child) -> {
-                               if (!existingInScope.contains(child) && existingInScope.contains(parent)) {
-                                 LOG.debug("adding git root for check. child: " + child.getPath() + ", parent: " + parent.getPath());
-                                 ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
-                               }
-                               return true;
-                             }
-    );
+
+    for (VirtualFile root : rootsUnderGit) {
+      if (dirtyDirs.contains(root)) continue;
+
+      for (VirtualFile dirtyDir : dirtyDirs) {
+        if (VfsUtilCore.isAncestor(dirtyDir, root, false)) {
+          LOG.debug("adding git root for check. root: " + root.getPath() + ", dir: " + dirtyDir.getPath());
+          ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(root));
+          break;
+        }
+      }
+    }
   }
 
   private boolean isNewGitChangeProviderAvailable() {

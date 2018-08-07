@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -36,7 +23,8 @@ import static org.junit.Assume.assumeTrue;
 
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
-  protected PatchSpec myPatchSpec;
+  private PatchSpec myPatchSpec;
+  private boolean myDoBackup;
 
   @Before
   @Override
@@ -45,23 +33,22 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myFile = getTempFile("patch.zip");
     myPatchSpec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath());
+      .setNewFolder(myNewerDir.getAbsolutePath())
+      .setBinary(isBinary());
+    myDoBackup = isBackup();
+  }
+
+  protected boolean isBinary() {
+    return false;
+  }
+
+  protected boolean isBackup() {
+    return true;
   }
 
   @Test
   public void testCreatingAndApplying() throws Exception {
     assertAppliedAndReverted();
-  }
-
-  @Test
-  public void testCreatingAndApplyingWithoutBackup() throws Exception {
-    createPatch();
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    Map<String, Long> expected = digest(preparationResult.patch, myNewerDir);
-
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, Collections.emptyMap(), null, TEST_UI);
-    assertTrue(applicationResult.applied);
-    assertEquals(expected, digest(preparationResult.patch, myOlderDir));
   }
 
   @Test
@@ -427,11 +414,11 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myNewerDir, "move/to/this/directory/move.me"), "new_content");
     createPatch();
 
+    long hash = Digester.digestStream(new ByteArrayInputStream("new_content".getBytes(StandardCharsets.UTF_8)));
+
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me"))
-      .isInstanceOf(UpdateAction.class)
-      .hasFieldOrPropertyWithValue("move", true)
-      .hasFieldOrPropertyWithValue("sourcePath", "a/deleted/file/that/is/a/copy/move.me");
+      .isEqualTo(new UpdateAction(preparationResult.patch, "move/to/this/directory/move.me", "a/deleted/file/that/is/a/copy/move.me", hash, true));
 
     assertAppliedAndReverted(preparationResult);
   }
@@ -476,11 +463,11 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     FileUtil.writeToFile(new File(myNewerDir, "move/to/this/directory/move.me"), "different");
     createPatch();
 
+    long hash = Digester.digestStream(new ByteArrayInputStream("they".getBytes(StandardCharsets.UTF_8)));
+
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(findAction(preparationResult.patch, "move/to/this/directory/move.me"))
-      .isInstanceOf(UpdateAction.class)
-      .hasFieldOrPropertyWithValue("move", false)
-      .hasFieldOrPropertyWithValue("sourcePath", "move/from/this/directory/move.me");
+      .isEqualTo(new UpdateAction(preparationResult.patch, "move/to/this/directory/move.me", "move/from/this/directory/move.me", hash, false));
 
     assertAppliedAndReverted(preparationResult);
   }
@@ -613,14 +600,16 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private void assertNotApplied(PatchFileCreator.PreparationResult preparationResult,
                                 Map<String, ValidationResult.Option> options) throws Exception {
     Patch patch = preparationResult.patch;
-    File backup = getTempFile("backup");
+    File backupDir = myDoBackup ? getTempFile("backup") : null;
     Map<String, Long> original = digest(patch, myOlderDir);
 
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
+    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
     assertFalse(applicationResult.applied);
 
-    PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backup, TEST_UI);
-    assertEquals(original, digest(patch, myOlderDir));
+    if (myDoBackup) {
+      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
+      assertEquals(original, digest(patch, myOlderDir));
+    }
   }
 
   private void assertAppliedAndReverted() throws Exception {
@@ -641,7 +630,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     Map<String, Long> original = digest(patch, myOlderDir);
     Map<String, Long> target = digest(patch, myNewerDir);
     corrector.accept(target);
-    File backup = getTempFile("backup");
+    File backupDir = myDoBackup ? getTempFile("backup") : null;
 
     Map<String, ValidationResult.Option> options = new HashMap<>();
     for (ValidationResult each : preparationResult.validationResults) {
@@ -650,16 +639,21 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
         options.put(each.path, each.options.get(0));
       }
       else {
-        assertTrue(each.toString(), each.kind != ValidationResult.Kind.ERROR);
+        assertNotSame(each.toString(), ValidationResult.Kind.ERROR, each.kind);
       }
     }
 
-    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
+    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backupDir, TEST_UI);
+    if (applicationResult.error != null) {
+      throw new AssertionError("patch failed", applicationResult.error);
+    }
     assertTrue(applicationResult.applied);
     assertEquals(target, digest(patch, myOlderDir));
 
-    PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backup, TEST_UI);
-    assertEquals(original, digest(patch, myOlderDir));
+    if (myDoBackup) {
+      PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
+      assertEquals(original, digest(patch, myOlderDir));
+    }
   }
 
   private static class MyFailOnApplyPatchAction extends PatchAction {
@@ -686,11 +680,5 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
       throw new IOException("dummy exception");
     }
-
-    @Override
-    protected void doBackup(File toFile, File backupFile) { }
-
-    @Override
-    protected void doRevert(File toFile, File backupFile) { }
   }
 }

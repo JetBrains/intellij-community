@@ -68,7 +68,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     return "";
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return ElementManipulators.getManipulator(myElement).handleContentChange(
       myElement,
       getRangeInElement(),
@@ -80,7 +80,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     return null;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return myElement.getManager().areElementsEquivalent(element, resolve());
   }
 }

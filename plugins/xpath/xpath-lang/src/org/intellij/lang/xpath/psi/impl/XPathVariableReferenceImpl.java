@@ -22,7 +22,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
@@ -107,7 +106,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return getText();
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         renameTo(newElementName);
         return this;
     }
@@ -129,7 +128,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         getNode().replaceChild(oldName.getLocalNode(), localNode);
     }
 
-    public boolean isReferenceTo(PsiElement element) {
+    public boolean isReferenceTo(@NotNull PsiElement element) {
         if (element instanceof XPathVariable) {
             final XPathVariable resolved = resolve();
             if (getReferencedName().equals(((XPathVariable)element).getName())) {
@@ -143,11 +142,6 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
             return context.isReferenceTo(element, this);
         }
         return false;
-    }
-
-    @NotNull
-    public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     public boolean isSoft() {

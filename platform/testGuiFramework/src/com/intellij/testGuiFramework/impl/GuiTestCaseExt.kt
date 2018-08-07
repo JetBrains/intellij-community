@@ -2,10 +2,10 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.testGuiFramework.fixtures.GutterFixture
-import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.util.*
-import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
@@ -91,6 +91,7 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
   ideFrame {
     this.waitForBackgroundTasksToFinish()
   }
+  robot().waitForIdle()
   Pause.pause(extraTimeOut)
 }
 
@@ -151,7 +152,15 @@ fun GuiTestCase.mavenReimport() {
   ideFrame {
     toolwindow(id = "Maven") {
       content(tabName = "") {
-        actionButton("Reimport All Maven Projects").click()
+        val button = actionButton("Reimport All Maven Projects")
+        Pause.pause(object : Condition("Wait for button Reimport All Maven Projects to be enabled.") {
+          override fun test(): Boolean {
+            return button.isEnabled
+          }
+        }, Timeouts.minutes02)
+        robot().waitForIdle()
+        button.click()
+        robot().waitForIdle()
       }
     }
   }
@@ -162,11 +171,7 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   ideFrame {
     logTestStep("Going to check how the project compiles")
     invokeMainMenu("CompileProject")
-    shortcut(Modifier.CONTROL + Modifier.SHIFT + Key.A)
     waitAMoment()
-    typeText(textEventLog)
-    waitAMoment()
-    shortcut(Key.ENTER)
     toolwindow(id = textEventLog) {
       content(tabName = "") {
         editor{
@@ -177,39 +182,6 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
         }
       }
     }
-  }
-}
-
-fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
-  val cfgName = configuration.last()
-  val runDebugConfigurations = "Run/Debug Configurations"
-  ideFrame {
-    logTestStep("Going to check presence of Run/Debug configuration `$cfgName`")
-    navigationBar {
-      assert(exists { button(cfgName) }) { "Button `$cfgName` not found on Navigation bar" }
-      button(cfgName).click()
-      popupClick("Edit Configurations...")
-    }
-    dialog(runDebugConfigurations) {
-      assert(exists { jTree(*configuration) })
-      jTree(*configuration).clickPath()
-      for ((field, expectedValue) in expectedValues) {
-        logTestStep("Field `$field`has a value = `$expectedValue`")
-        checkOneValue(this@checkRunConfiguration, field, expectedValue)
-      }
-      button("Cancel").click()
-    }
-  }
-}
-
-fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String, expectedValue: String){
-  val actualValue = when {
-    guiTestCase.exists {textfield(expectedField)} -> textfield(expectedField).text()
-    guiTestCase.exists { combobox(expectedField) } -> combobox(expectedField).selectedItem()
-    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
-  }
-  assert(actualValue == expectedValue) {
-    "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
   }
 }
 
@@ -255,14 +227,4 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
       }
     }
   }
-}
-
-fun GuiTestCase.checkFileExists(filePath: Path) {
-  logTestStep("Going to check whether file `$filePath` created")
-  assert(filePath.toFile().exists()) { "Can't find a file `$filePath`" }
-}
-
-fun GuiTestCase.checkFileContainsLine(filePath: Path, line: String) {
-  logTestStep("Going to check whether ${filePath.fileName} contains line `$line`")
-  assert(Files.readAllLines(filePath).contains(line)) { "Line `$line` not found" }
 }

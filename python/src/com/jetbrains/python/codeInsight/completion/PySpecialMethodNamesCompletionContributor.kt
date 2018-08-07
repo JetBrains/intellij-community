@@ -20,7 +20,7 @@ class PySpecialMethodNamesCompletionContributor : CompletionContributor() {
   }
 
   private object MyCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
       val typeEvalContext = parameters.getTypeEvalContext()
 
       val pyClass = parameters.getPyClass()

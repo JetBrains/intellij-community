@@ -22,7 +22,10 @@ import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
@@ -134,7 +137,7 @@ public class GitUnstashDialog extends DialogWrapper {
             public void run(@NotNull ProgressIndicator indicator) {
               final GitLineHandler h = dropHandler(stash.getStash());
               try {
-                Git.getInstance().runCommand(h).getOutputOrThrow();
+                Git.getInstance().runCommand(h).throwOnError();
               }
               catch (final VcsException ex) {
                 ApplicationManager.getApplication().invokeLater(() -> GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine()), current);
@@ -360,16 +363,19 @@ public class GitUnstashDialog extends DialogWrapper {
       myStashInfo = stashInfo;
     }
 
+    @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "<html>Conflicts during unstashing <code>" + myStashInfo.getStash() + "\"" + myStashInfo.getMessage() + "\"</code></html>";
     }
 
+    @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return "Local changes";
     }
 
+    @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return "Changes from stash";

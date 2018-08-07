@@ -239,7 +239,7 @@ public class DiffUtil {
   public static boolean canNavigateToFile(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || project.isDefault()) return false;
     if (file == null || !file.isValid()) return false;
-    if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
+    if (OutsidersPsiFileSupport.isOutsiderFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
   }
@@ -1202,6 +1202,7 @@ public class DiffUtil {
   @NotNull
   public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
                                                @NotNull Equality<ThreeSide> equality,
+                                               @Nullable Equality<ThreeSide> trueEquality,
                                                @NotNull BooleanGetter conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
@@ -1232,7 +1233,14 @@ public class DiffUtil {
       else { // -==, ==-, ===
         boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
         boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
-        assert !unchangedLeft || !unchangedRight;
+
+        if (unchangedLeft && unchangedRight) {
+          assert trueEquality != null;
+          boolean trueUnchangedLeft = trueEquality.equals(ThreeSide.BASE, ThreeSide.LEFT);
+          boolean trueUnchangedRight = trueEquality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+          assert !trueUnchangedLeft || !trueUnchangedRight;
+          return new MergeConflictType(TextDiffType.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
+        }
 
         if (unchangedLeft) return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
         if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
@@ -1250,12 +1258,24 @@ public class DiffUtil {
   }
 
   @NotNull
+  public static MergeConflictType getLineThreeWayDiffType(@NotNull MergeLineFragment fragment,
+                                                          @NotNull List<? extends CharSequence> sequences,
+                                                          @NotNull List<LineOffsets> lineOffsets,
+                                                          @NotNull ComparisonPolicy policy) {
+    return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
+                        null,
+                        () -> canResolveLineConflict(fragment, sequences, lineOffsets));
+  }
+
+  @NotNull
   public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
                                                    @NotNull List<? extends CharSequence> sequences,
                                                    @NotNull List<LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT, side1, side2),
                         () -> canResolveLineConflict(fragment, sequences, lineOffsets));
   }
 
@@ -1308,6 +1328,7 @@ public class DiffUtil {
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2),
+                        null,
                         BooleanGetter.FALSE);
   }
 

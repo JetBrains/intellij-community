@@ -26,7 +26,7 @@ import javax.swing.*;
 
 public abstract class MavenTreeAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && MavenActionUtil.isMavenizedProject(e.getDataContext()) && getTree(e) != null;
   }
 

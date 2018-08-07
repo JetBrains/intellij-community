@@ -64,11 +64,14 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.JsonReaderEx;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.View;
@@ -88,6 +91,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UIUtil.uiChildren;
+import static java.lang.System.out;
 
 /**
  * @author Alexander Lobas
@@ -119,10 +123,14 @@ public class PluginManagerConfigurableNew
   private SearchResultInfo mySearchResultInfo;
   private boolean mySkipDocumentEvents;
   private final Alarm mySearchUpdateAlarm = new Alarm();
-  private JBPopup mySearchPopup;
-  private CollectionListModel<IdeaPluginDescriptor> mySearchPopupModel;
-  private JList<IdeaPluginDescriptor> mySearchPopupList;
-  private Pair<PluginsGroup, PluginsGroup> mySearchFlyResult;
+  private SearchPopup mySearchPopup;
+
+  private JBPopupListener mySearchPopupListener = new JBPopupAdapter() {
+    @Override
+    public void onClosed(LightweightWindowEvent event) {
+      mySearchPopup = null;
+    }
+  };
 
   private final MyPluginModel myPluginsModel = new MyPluginModel();
 
@@ -131,6 +139,7 @@ public class PluginManagerConfigurableNew
   private List<IdeaPluginDescriptor> myJBRepositoryList;
   private Map<String, IdeaPluginDescriptor> myJBRepositoryMap;
   private final Object myJBRepositoryLock = new Object();
+  private List<String> myAllTagSorted;
 
   public PluginManagerConfigurableNew() {
     myTagBuilder = new TagBuilder() {
@@ -171,8 +180,8 @@ public class PluginManagerConfigurableNew
 
         if (keyCode == KeyEvent.VK_ENTER || event.getKeyChar() == '\n') {
           if (id == KeyEvent.KEY_PRESSED) {
-            if (mySearchPopupList != null && mySearchPopupList.getSelectedIndex() != -1) {
-              mySearchPopupList.dispatchEvent(event);
+            if (mySearchPopup != null && mySearchPopup.list != null && mySearchPopup.list.getSelectedIndex() != -1) {
+              mySearchPopup.list.dispatchEvent(event);
             }
             else {
               showSearchResultPanel();
@@ -180,12 +189,13 @@ public class PluginManagerConfigurableNew
           }
           return true;
         }
-        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) && id == KeyEvent.KEY_PRESSED && mySearchPopupList != null) {
-          if (keyCode == KeyEvent.VK_DOWN && mySearchPopupList.getSelectedIndex() == -1) {
-            mySearchPopupList.setSelectedIndex(0);
+        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) && id == KeyEvent.KEY_PRESSED &&
+            mySearchPopup != null && mySearchPopup.list != null) {
+          if (keyCode == KeyEvent.VK_DOWN && mySearchPopup.list.getSelectedIndex() == -1) {
+            mySearchPopup.list.setSelectedIndex(0);
           }
           else {
-            mySearchPopupList.dispatchEvent(event);
+            mySearchPopup.list.dispatchEvent(event);
           }
           return true;
         }
@@ -204,7 +214,8 @@ public class PluginManagerConfigurableNew
     editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(8));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 25));
-    editor.getEmptyText().appendText("Search plugins");
+    editor.getEmptyText()
+      .appendText("Search plugins", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, CellPluginComponent.GRAY_COLOR));
     editor.setOpaque(true);
     editor.setBackground(MAIN_BG_COLOR);
   }
@@ -235,7 +246,7 @@ public class PluginManagerConfigurableNew
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(panel, new PluginHostsConfigurable())) {
           // TODO: Auto-generated method stub
         }
@@ -243,7 +254,7 @@ public class PluginManagerConfigurableNew
     });
     actions.add(new DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (HttpConfigurable.editConfigurable(panel)) {
           // TODO: Auto-generated method stub
         }
@@ -252,7 +263,7 @@ public class PluginManagerConfigurableNew
     actions.addSeparator();
     actions.add(new DumbAwareAction("Install Plugin from Disk...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, pair -> myPluginsModel.appendOrUpdateDescriptor(pair.second), panel);
       }
     });
@@ -304,100 +315,40 @@ public class PluginManagerConfigurableNew
 
     mySearchListener = (_0, query) -> showSearchResultPanel(query, true);
 
+    mySearchTextField.getTextEditor().addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
+          showSearchAttributesPopup(null);
+        }
+        else {
+          handleShowSearchPopup();
+        }
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        hideSearchPopup();
+      }
+    });
+
     mySearchTextField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        if (mySkipDocumentEvents) {
-          return;
+        if (!mySkipDocumentEvents) {
+          mySearchUpdateAlarm.cancelAllRequests();
+          mySearchUpdateAlarm.addRequest(this::searchOnTheFly, 100, ModalityState.stateForComponent(mySearchTextField));
         }
-
-        mySearchUpdateAlarm.cancelAllRequests();
-        mySearchUpdateAlarm.addRequest(this::searchOnTheFly, 100, ModalityState.stateForComponent(mySearchTextField));
       }
 
       private void searchOnTheFly() {
-        String query = mySearchTextField.getText();
-        boolean empty = StringUtil.isEmptyOrSpaces(query);
-        if (empty || query.length() < 3) {
+        if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
           hideSearchPopup();
-          if (empty) {
-            hideSearchResultPanel();
-          }
-          return;
-        }
-
-        mySearchFlyResult = localSearchPlugins(query);
-        if (mySearchFlyResult.first == null && mySearchFlyResult.second == null) {
-          hideSearchPopup();
-          return;
-        }
-
-        if (mySearchPopupModel == null) {
-          mySearchPopupModel = new CollectionListModel<>();
+          hideSearchResultPanel();
         }
         else {
-          mySearchPopupModel.removeAll();
+          handleShowSearchPopup();
         }
-
-        if (mySearchFlyResult.first != null) {
-          mySearchPopupModel.addAll(mySearchPopupModel.getSize(), mySearchFlyResult.first.descriptors);
-        }
-        if (mySearchFlyResult.second != null) {
-          mySearchPopupModel.addAll(mySearchPopupModel.getSize(), mySearchFlyResult.second.descriptors);
-        }
-
-        JBTextField editor = mySearchTextField.getTextEditor();
-        Point location = FileTextFieldImpl.getLocationForCaret(editor);
-
-        if (mySearchPopup != null) {
-          mySearchPopup.setLocation(location);
-          mySearchPopup.pack(false, true);
-          return;
-        }
-
-        Consumer<IdeaPluginDescriptor> callback = descriptor -> {
-          hideSearchPopup();
-          setSearchTextIgnoreEvents("");
-          myNameListener.linkSelected(null, descriptor);
-        };
-
-        ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
-          @Override
-          protected void customizeCellRenderer(@NotNull JList list,
-                                               Object value, int index, boolean selected, boolean hasFocus) {
-            IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)value;
-            append(descriptor.getName(), mySearchFlyResult.first != null && mySearchFlyResult.first.descriptors.contains(descriptor)
-                                         ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-                                         : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            if (isJBPlugin(descriptor)) {
-              append(" by JetBrains", SimpleTextAttributes.GRAY_ATTRIBUTES);
-            }
-            else {
-              String vendor = descriptor.getVendor();
-              if (!StringUtil.isEmptyOrSpaces(vendor)) {
-                append(" by " + vendor, SimpleTextAttributes.GRAY_ATTRIBUTES);
-              }
-            }
-          }
-        };
-
-        mySearchPopup = JBPopupFactory.getInstance().createListPopupBuilder(mySearchPopupList = new JBList<>(mySearchPopupModel))
-                                      .setMovable(false).setResizable(false).setRequestFocus(false)
-                                      .setItemChosenCallback(callback)
-                                      .setRenderer(renderer).createPopup();
-
-        mySearchPopup.addListener(new JBPopupAdapter() {
-          @Override
-          public void onClosed(LightweightWindowEvent event) {
-            mySearchPopup = null;
-            mySearchPopupModel = null;
-            mySearchPopupList = null;
-            PluginManagerConfigurableNew.this.mySearchFlyResult = null;
-          }
-        });
-
-        mySearchPopupList.clearSelection();
-        mySearchPopup.showInScreenCoordinates(editor, location);
       }
     });
 
@@ -636,7 +587,7 @@ public class PluginManagerConfigurableNew
       new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
                                             descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
     panel.getEmptyText().setText("Trending plugins are not loaded.")
-         .appendSecondaryText("Check the interner connection.", StatusText.DEFAULT_ATTRIBUTES, null);
+      .appendSecondaryText("Check the interner connection.", StatusText.DEFAULT_ATTRIBUTES, null);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<PluginsGroup> groups = new ArrayList<>();
@@ -644,10 +595,10 @@ public class PluginManagerConfigurableNew
       try {
         Map<String, IdeaPluginDescriptor> jbRepositoryMap = loadJBRepository();
         Set<String> excludeDescriptors = new HashSet<>();
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Featured", "is_featured_search=true", "sort by:featured");
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "New and Updated", "orderBy=update+date", "sort by:updates");
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Top Downloads", "orderBy=downloads", "sort by:downloads");
-        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Top Rated", "orderBy=rating", "sort by:rating");
+        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Featured", "is_featured_search=true", "sort_by:featured");
+        addGroup(groups, excludeDescriptors, jbRepositoryMap, "New and Updated", "orderBy=update+date", "sort_by:updates");
+        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Top Downloads", "orderBy=downloads", "sort_by:downloads");
+        addGroup(groups, excludeDescriptors, jbRepositoryMap, "Top Rated", "orderBy=rating", "sort_by:rating");
       }
       catch (IOException e) {
         PluginManagerMain.LOG.info(e);
@@ -861,21 +812,24 @@ public class PluginManagerConfigurableNew
 
   @Nullable
   private static String recognizeServerSearchQuery(@NotNull String query) {
-    if (query.equals("sort by:featured")) {
+    if (query.equals("sort_by:featured")) {
       return "is_featured_search=true";
     }
-    if (query.equals("sort by:updates")) {
+    if (query.equals("sort_by:updates")) {
       return "orderBy=update+date";
     }
-    if (query.equals("sort by:downloads")) {
+    if (query.equals("sort_by:downloads")) {
       return "orderBy=downloads";
     }
-    if (query.equals("sort by:rating")) {
+    if (query.equals("sort_by:rating")) {
       return "orderBy=rating";
+    }
+    if (query.equals("sort_by:name")) {
+      return "orderBy=name";
     }
 
     if (query.startsWith("tag:")) {
-      return "tags=" + URLUtil.encodeURIComponent(query.substring(4));
+      return "tags=" + StringUtil.join(StringUtil.split(query.substring(4), ","), tag -> URLUtil.encodeURIComponent(tag), "&tags=");
     }
 
     return null;
@@ -916,6 +870,7 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private static List<String> requestToPluginRepository(@NotNull Url url, boolean forceHttps) throws IOException {
+    out.println("url: " + url);
     List<String> ids = new ArrayList<>();
 
     HttpRequests.request(url).forceHttps(forceHttps).productNameAsUserAgent().connect(request -> {
@@ -966,7 +921,7 @@ public class PluginManagerConfigurableNew
       installedIds.add(descriptor.getPluginId().getIdString());
     }
 
-    PluginsGroup repository = new PluginsGroup("Search Result");
+    PluginsGroup repository = new PluginsGroup("Search Results");
     localSearchPlugins(getJBRepositoryList(), repository.descriptors,
                        descriptor -> !installedIds.contains(descriptor.getPluginId().getIdString()),
                        query, search);
@@ -1005,24 +960,24 @@ public class PluginManagerConfigurableNew
     return Collections.emptyList(); // XXX
   }
 
-  private static void localSearchPlugins(@NotNull Collection<IdeaPluginDescriptor> source,
+  private static void localSearchPlugins(@NotNull Object source,
                                          @NotNull List<IdeaPluginDescriptor> result,
                                          @NotNull BooleanFunction<IdeaPluginDescriptor> accept,
                                          @NotNull String query,
                                          @NotNull Set<String> search) {
-    for (IdeaPluginDescriptor descriptor : source) {
-      if (accept.fun(descriptor) && PluginManagerMain.isAccepted(query, search, descriptor)) {
-        result.add(descriptor);
-      }
-    }
-  }
+    Iterator<IdeaPluginDescriptor> I;
 
-  private static void localSearchPlugins(@NotNull IdeaPluginDescriptor[] source,
-                                         @NotNull List<IdeaPluginDescriptor> result,
-                                         @NotNull BooleanFunction<IdeaPluginDescriptor> accept,
-                                         @NotNull String query,
-                                         @NotNull Set<String> search) {
-    for (IdeaPluginDescriptor descriptor : source) {
+    if (source instanceof Collection) {
+      I = ((Collection<IdeaPluginDescriptor>)source).iterator();
+    }
+    else {
+      I = ContainerUtil.iterate((IdeaPluginDescriptor[])source);
+    }
+
+    // TODO: https://youtrack.jetbrains.com/issue/IDEA-125467
+
+    while (I.hasNext()) {
+      IdeaPluginDescriptor descriptor = I.next();
       if (accept.fun(descriptor) && PluginManagerMain.isAccepted(query, search, descriptor)) {
         result.add(descriptor);
       }
@@ -1173,7 +1128,7 @@ public class PluginManagerConfigurableNew
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new DumbAwareAction(null, null, AllIcons.General.Gear) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
           createActionGroupPopup(null, actions, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
@@ -1190,7 +1145,7 @@ public class PluginManagerConfigurableNew
     return toolbarComponent;
   }
 
-  private static class TabHeaderComponent extends JComponent {
+  public static class TabHeaderComponent extends JComponent {
     private final List<Computable<String>> myTabs = new ArrayList<>();
     private final JComponent myToolbarComponent;
     private final TabHeaderListener myListener;
@@ -1212,9 +1167,7 @@ public class PluginManagerConfigurableNew
           if (SwingUtilities.isLeftMouseButton(event)) {
             int tab = findTab(event);
             if (tab != -1 && tab != mySelectionTab) {
-              mySelectionTab = tab;
-              myListener.selectionChanged(tab);
-              repaint();
+              setSelectionWithEvents(tab);
             }
           }
         }
@@ -1238,6 +1191,35 @@ public class PluginManagerConfigurableNew
       };
       addMouseListener(mouseHandler);
       addMouseMotionListener(mouseHandler);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+
+      addTabSelectionAction(IdeActions.ACTION_NEXT_TAB,
+                            () -> setSelectionWithEvents(mySelectionTab == myTabs.size() - 1 ? 0 : mySelectionTab + 1));
+
+      addTabSelectionAction(IdeActions.ACTION_PREVIOUS_TAB,
+                            () -> setSelectionWithEvents(mySelectionTab == 0 ? myTabs.size() - 1 : mySelectionTab - 1));
+    }
+
+    private void addTabSelectionAction(@NotNull String actionId, @NotNull Runnable callback) {
+      AnAction action = ActionManager.getInstance().getAction(actionId);
+      if (action == null) {
+        return;
+      }
+
+      AnAction localAction = new AnAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          if (isShowing() && !myTabs.isEmpty()) {
+            callback.run();
+          }
+        }
+      };
+      localAction.copyShortcutFrom(action);
+      localAction.registerCustomShortcutSet(getRootPane(), null);
     }
 
     public void addTab(@NotNull String title) {
@@ -1274,6 +1256,25 @@ public class PluginManagerConfigurableNew
         mySelectionTab = index;
       }
       repaint();
+    }
+
+    private void setSelectionWithEvents(int index) {
+      mySelectionTab = index;
+      myListener.selectionChanged(index);
+      repaint();
+    }
+
+    @TestOnly
+    @NotNull
+    public Point getTabLocation(@NotNull final String tabTitle) {
+      calculateSize();
+      for (int i = 0; i < myTabs.size(); ++i) {
+        if (myTabs.get(i).compute().equals(tabTitle)) {
+          final Point point = mySizeInfo.tabs[i].getLocation();
+          return new Point(getStartX() + point.x, point.y);
+        }
+      }
+      throw new IllegalArgumentException("Tab " + tabTitle + " not found");
     }
 
     private int findTab(@NotNull MouseEvent event) {
@@ -1438,7 +1439,7 @@ public class PluginManagerConfigurableNew
     DataManager.registerDataProvider(component, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
           return copyProvider;
         }
@@ -1495,7 +1496,7 @@ public class PluginManagerConfigurableNew
       group.ui = uiGroup;
       myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
-      OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3D3F41));
+      OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3C3F41));
       panel.setBorder(JBUI.Borders.empty(4, 13));
 
       JLabel title = new JLabel(group.title);
@@ -2442,13 +2443,394 @@ public class PluginManagerConfigurableNew
     return width;
   }
 
+  private boolean noPrefixSearchValues(@NotNull CollectionListModel<Object> model, @Nullable String prefix) {
+    if (StringUtil.isEmptyOrSpaces(prefix)) {
+      return false;
+    }
+
+    int index = 0;
+    while (index < model.getSize()) {
+      String attribute = (String)model.getElementAt(index);
+      if (attribute.equals(prefix)) {
+        hideSearchPopup();
+        return true;
+      }
+      if (StringUtil.startsWithIgnoreCase(attribute, prefix)) {
+        index++;
+      }
+      else {
+        model.remove(index);
+      }
+    }
+
+    if (model.isEmpty()) {
+      showSearchPluginNamePopup();
+      return true;
+    }
+
+    return false;
+  }
+
+  private void showSearchAttributesPopup(@Nullable String namePrefix) {
+    CollectionListModel<Object> model = new CollectionListModel<>("sort_by:", "tag:", "status:", "bundled:", "repository:");
+
+    if (noPrefixSearchValues(model, namePrefix)) {
+      return;
+    }
+
+    boolean async = mySearchPopup != null;
+
+    if (mySearchPopup == null || mySearchPopup.type != SearchPopup.Type.AttributeName || !mySearchPopup.isValid()) {
+      hideSearchPopup();
+      mySearchPopup = new SearchPopup(mySearchTextField, mySearchPopupListener, SearchPopup.Type.AttributeName);
+      mySearchPopup.model = model;
+    }
+    else {
+      mySearchPopup.model.replaceAll(model.getItems());
+      mySearchPopup.callback.prefix = namePrefix;
+      mySearchPopup.update();
+      return;
+    }
+
+    SearchPopupCallback callback = new SearchPopupCallback() {
+      @Override
+      public void consume(String value) {
+        appendSearchText(value, prefix);
+        handleShowSearchAttributeValuesPopup(value, null);
+      }
+    };
+    callback.prefix = namePrefix;
+
+    ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        append((String)value, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+    };
+
+    mySearchPopup.createAndShow(callback, renderer, async);
+  }
+
+  private void handleShowSearchAttributeValuesPopup(@NotNull String name, @Nullable String valuePrefix) {
+    CollectionListModel<Object> model;
+
+    switch (name) {
+      case "sort_by:":
+        model = new CollectionListModel<>("downloads", "name", "rating", "featured", "updates");
+        break;
+      case "tag:":
+        if (ContainerUtil.isEmpty(myAllTagSorted)) {
+          Set<String> allTags = new HashSet<>();
+          for (IdeaPluginDescriptor descriptor : getJBRepositoryList()) {
+            if (descriptor instanceof PluginNode) {
+              List<String> tags = ((PluginNode)descriptor).getTags();
+              if (!ContainerUtil.isEmpty(tags)) {
+                allTags.addAll(tags);
+              }
+            }
+          }
+          myAllTagSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
+        }
+        model = new CollectionListModel<>(myAllTagSorted);
+        break;
+      case "status:":
+        model = new CollectionListModel<>("disabled", "enabled", "inactive", "installed", "invalid", "outdated", "uninstalled");
+        break;
+      case "bundled:":
+        model = new CollectionListModel<>("yes", "no");
+        break;
+      case "repository:":
+        model = new CollectionListModel<>("JetBrains");
+        model.add(UpdateSettings.getInstance().getPluginHosts());
+        break;
+      default:
+        showSearchPluginNamePopup();
+        return;
+    }
+
+    if (noPrefixSearchValues(model, valuePrefix)) {
+      return;
+    }
+
+    if (mySearchPopup == null || mySearchPopup.type != SearchPopup.Type.AttributeValue || !mySearchPopup.isValid()) {
+      hideSearchPopup();
+      mySearchPopup = new SearchPopup(mySearchTextField, mySearchPopupListener, SearchPopup.Type.AttributeValue);
+      mySearchPopup.model = model;
+    }
+    else {
+      mySearchPopup.model.replaceAll(model.getItems());
+      mySearchPopup.callback.prefix = valuePrefix;
+      mySearchPopup.update();
+      return;
+    }
+
+    SearchPopupCallback callback = new SearchPopupCallback() {
+      @Override
+      public void consume(String value) {
+        if (StringUtil.containsAnyChar(value, " ,:")) {
+          value = "\"" + value + "\"";
+        }
+        appendSearchText(value, prefix);
+      }
+    };
+    callback.prefix = valuePrefix;
+
+    ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        append((String)value);
+      }
+    };
+
+    mySearchPopup.createAndShow(callback, renderer, true);
+  }
+
+  private void handleShowSearchPopup() {
+    String query = mySearchTextField.getText();
+    int length = query.length();
+    int position = mySearchTextField.getTextEditor().getCaretPosition();
+
+    if (position < length) {
+      if (query.charAt(position) == ' ') {
+        if (position == 0 || query.charAt(position - 1) == ' ') {
+          showSearchAttributesPopup(null);
+          return;
+        }
+      }
+      else {
+        hideSearchPopup();
+        return;
+      }
+    }
+    else if (query.charAt(position - 1) == ' ') {
+      showSearchAttributesPopup(null);
+      return;
+    }
+
+    Pair<String, String> attribute = parseAttributeInQuery(query, position);
+    if (attribute.second == null) {
+      showSearchAttributesPopup(attribute.first);
+    }
+    else {
+      handleShowSearchAttributeValuesPopup(attribute.first, attribute.second);
+    }
+  }
+
+  @NotNull
+  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end) {
+    int index = end - 1;
+    String value = null;
+
+    while (index >= 0) {
+      char ch = query.charAt(index);
+      if (ch == ':') {
+        value = query.substring(index + 1, end);
+        end = index + 1;
+        index--;
+        while (index >= 0) {
+          if (query.charAt(index) == ' ') {
+            break;
+          }
+          index--;
+        }
+        break;
+      }
+      if (ch == ' ') {
+        break;
+      }
+      index--;
+    }
+
+    return Pair.create(StringUtil.trimStart(query.substring(index + 1, end), "-"), value);
+  }
+
+  private void showSearchPluginNamePopup() {
+    String query = mySearchTextField.getText();
+    if (mySearchTextField.getTextEditor().getCaretPosition() < query.length()) {
+      hideSearchPopup();
+      return;
+    }
+
+    Pair<PluginsGroup, PluginsGroup> result = localSearchPlugins(query);
+    if (result.first == null && result.second == null) {
+      hideSearchPopup();
+      return;
+    }
+
+    boolean async = mySearchPopup != null;
+    boolean update = mySearchPopup != null && mySearchPopup.type == SearchPopup.Type.PluginName && mySearchPopup.isValid();
+    if (update) {
+      mySearchPopup.model.removeAll();
+    }
+    else {
+      hideSearchPopup();
+      mySearchPopup = new SearchPopup(mySearchTextField, mySearchPopupListener, SearchPopup.Type.PluginName);
+      mySearchPopup.model = new CollectionListModel<>();
+    }
+    if (result.first != null) {
+      mySearchPopup.model.add(result.first.descriptors);
+    }
+    if (result.second != null) {
+      mySearchPopup.model.add(result.second.descriptors);
+    }
+
+    mySearchPopup.localPlugins = result.first == null ? null : result.first.descriptors;
+
+    if (update) {
+      mySearchPopup.update();
+      return;
+    }
+
+    Consumer<IdeaPluginDescriptor> callback = descriptor -> {
+      hideSearchPopup();
+      setSearchTextIgnoreEvents("");
+      myNameListener.linkSelected(null, descriptor);
+    };
+
+    ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)value;
+        append(descriptor.getName(), mySearchPopup.localPlugins != null && mySearchPopup.localPlugins.contains(descriptor)
+                                     ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                     : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        if (isJBPlugin(descriptor)) {
+          append(" by JetBrains", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        }
+        else {
+          String vendor = descriptor.getVendor();
+          if (!StringUtil.isEmptyOrSpaces(vendor)) {
+            append(" by " + StringUtil.shortenPathWithEllipsis(vendor, 50), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        }
+      }
+    };
+
+    mySearchPopup.createAndShow(callback, renderer, async);
+  }
+
   private void hideSearchPopup() {
     if (mySearchPopup != null) {
-      mySearchPopup.cancel();
+      mySearchPopup.hide();
       mySearchPopup = null;
-      mySearchPopupModel = null;
-      mySearchPopupList = null;
-      mySearchFlyResult = null;
+    }
+  }
+
+  private void appendSearchText(@NotNull String value, @Nullable String prefix) {
+    String text = mySearchTextField.getText();
+    String suffix = "";
+    JBTextField editor = mySearchTextField.getTextEditor();
+    int position = editor.getCaretPosition();
+
+    if (mySearchPopup != null) {
+      mySearchPopup.skipCaretEvent = true;
+    }
+
+    if (position < text.length()) {
+      suffix = text.substring(position);
+      text = text.substring(0, position);
+    }
+
+    if (prefix == null) {
+      setSearchTextIgnoreEvents(text + value + suffix);
+    }
+    else if (value.startsWith(prefix)) {
+      setSearchTextIgnoreEvents(text + value.substring(prefix.length()) + suffix);
+    }
+    else if (StringUtil.startsWithIgnoreCase(value, prefix)) {
+      setSearchTextIgnoreEvents(text.substring(0, text.length() - prefix.length()) + value + suffix);
+    }
+    else {
+      setSearchTextIgnoreEvents(text + value + suffix);
+    }
+
+    editor.setCaretPosition(mySearchTextField.getText().length() - suffix.length());
+  }
+
+  private static abstract class SearchPopupCallback implements Consumer<String> {
+    public String prefix;
+  }
+
+  private static class SearchPopup implements CaretListener {
+    public final Type type;
+
+    private final JBPopupListener myListener;
+    private final JBTextField myEditor;
+    private JBPopup myPopup;
+
+    public CollectionListModel<Object> model;
+    public JList<Object> list;
+
+    public List<IdeaPluginDescriptor> localPlugins;
+
+    public SearchPopupCallback callback;
+
+    public boolean skipCaretEvent;
+
+    enum Type {
+      AttributeName, AttributeValue, PluginName
+    }
+
+    public SearchPopup(@NotNull SearchTextField searchTextField, @NotNull JBPopupListener listener, @NotNull Type type) {
+      myEditor = searchTextField.getTextEditor();
+      myListener = listener;
+      this.type = type;
+    }
+
+    public boolean isValid() {
+      return myPopup.isVisible() && myPopup.getContent().getParent() != null;
+    }
+
+    public void update() {
+      skipCaretEvent = true;
+      myPopup.setLocation(FileTextFieldImpl.getLocationForCaret(myEditor));
+      myPopup.pack(true, true);
+    }
+
+    public void createAndShow(@NotNull Consumer callback, @NotNull ColoredListCellRenderer renderer, boolean async) {
+      if (callback instanceof SearchPopupCallback) {
+        this.callback = (SearchPopupCallback)callback;
+      }
+
+      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list = new JBList<>(model))
+        .setMovable(false).setResizable(false).setRequestFocus(false)
+        .setItemChosenCallback(callback)
+        .setRenderer(renderer).createPopup();
+
+      skipCaretEvent = true;
+      myPopup.addListener(myListener);
+      myEditor.addCaretListener(this);
+
+      if (async) {
+        SwingUtilities.invokeLater(this::show);
+      }
+      else {
+        show();
+      }
+    }
+
+    private void show() {
+      list.clearSelection();
+      myPopup.showInScreenCoordinates(myEditor, FileTextFieldImpl.getLocationForCaret(myEditor));
+    }
+
+    public void hide() {
+      myEditor.removeCaretListener(this);
+      if (myPopup != null) {
+        myPopup.cancel();
+        myPopup = null;
+      }
+    }
+
+    @Override
+    public void caretUpdate(CaretEvent e) {
+      if (skipCaretEvent) {
+        skipCaretEvent = false;
+      }
+      else {
+        hide();
+        myListener.onClosed(null);
+      }
     }
   }
 
@@ -2597,7 +2979,7 @@ public class PluginManagerConfigurableNew
         AtomicBoolean runQuery = myRunQuery = new AtomicBoolean(true);
 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          PluginsGroup group = new PluginsGroup("Search Result");
+          PluginsGroup group = new PluginsGroup("Search Results");
 
           try {
             Map<String, IdeaPluginDescriptor> jbRepositoryMap = loadJBRepository();
@@ -2736,9 +3118,9 @@ public class PluginManagerConfigurableNew
     return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
-  private static abstract class CellPluginComponent extends JPanel {
-    private static final Color HOVER_COLOR = new JBColor(0xE9EEF5, 0x464A4D);
-    private static final Color GRAY_COLOR = new JBColor(Gray._130, Gray._120);
+  public static abstract class CellPluginComponent extends JPanel {
+    private static final Color HOVER_COLOR = new JBColor(0xF5F9FF, 0x36393B);
+    private static final Color GRAY_COLOR = new JBColor(Gray._120, Gray._135);
 
     protected final IdeaPluginDescriptor myPlugin;
 
@@ -2751,6 +3133,12 @@ public class PluginManagerConfigurableNew
 
     protected CellPluginComponent(@NotNull IdeaPluginDescriptor plugin) {
       myPlugin = plugin;
+    }
+
+    @TestOnly
+    @NotNull
+    public IdeaPluginDescriptor getPluginDescriptor() {
+      return myPlugin;
     }
 
     protected void addIconComponent(@NotNull JPanel parent, @Nullable Object constraints) {
@@ -3238,29 +3626,30 @@ public class PluginManagerConfigurableNew
       }
       if (restart) {
         group.add(new ButtonAnAction(((ListPluginComponent)selection.get(0)).myRestartButton));
+        return;
       }
-      else {
-        int size = selection.size();
-        JButton[] buttons = new JButton[size];
 
-        for (int i = 0; i < size; i++) {
-          JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
-          if (button == null) {
-            buttons = null;
-            break;
-          }
-          buttons[i] = button;
-        }
+      int size = selection.size();
+      JButton[] updateButtons = new JButton[size];
 
-        if (buttons != null) {
-          group.add(new ButtonAnAction(buttons));
+      for (int i = 0; i < size; i++) {
+        JButton button = ((ListPluginComponent)selection.get(i)).myUpdateButton;
+        if (button == null) {
+          updateButtons = null;
+          break;
         }
+        updateButtons[i] = button;
+      }
+
+      if (updateButtons != null) {
+        group.add(new ButtonAnAction(updateButtons));
+        return;
       }
 
       Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
       group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           myPluginModel.changeEnableDisable(result.second, result.first);
         }
       });
@@ -3274,7 +3663,7 @@ public class PluginManagerConfigurableNew
       group.addSeparator();
       group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           for (CellPluginComponent component : selection) {
             myPluginModel.doUninstall(component, component.myPlugin, null);
           }
@@ -3290,45 +3679,51 @@ public class PluginManagerConfigurableNew
         }
       }
 
-      if (keyCode == KeyEvent.VK_SPACE) {
-        if (selection.size() == 1) {
-          myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
-        }
-        else {
-          Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-          myPluginModel.changeEnableDisable(result.second, result.first);
+      boolean restart = true;
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myRestartButton == null) {
+          restart = false;
+          break;
         }
       }
-      else if (keyCode == KeyEvent.VK_ENTER) {
-        boolean restart = true;
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myRestartButton == null) {
-            restart = false;
-            break;
-          }
+
+      boolean update = true;
+      for (CellPluginComponent component : selection) {
+        if (((ListPluginComponent)component).myUpdateButton == null) {
+          update = false;
+          break;
         }
+      }
+
+      if (keyCode == KeyEvent.VK_ENTER) {
         if (restart) {
           ((ListPluginComponent)selection.get(0)).myRestartButton.doClick();
-          return;
         }
-
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myUpdateButton == null) {
-            return;
+        else if (update) {
+          for (CellPluginComponent component : selection) {
+            ((ListPluginComponent)component).myUpdateButton.doClick();
           }
-        }
-        for (CellPluginComponent component : selection) {
-          ((ListPluginComponent)component).myUpdateButton.doClick();
         }
       }
-      else if (keyCode == KeyEvent.VK_BACK_SPACE) {
-        for (CellPluginComponent component : selection) {
-          if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
-            return;
+      else if (!restart && !update) {
+        if (keyCode == KeyEvent.VK_SPACE) {
+          if (selection.size() == 1) {
+            myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
+          }
+          else {
+            Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+            myPluginModel.changeEnableDisable(result.second, result.first);
           }
         }
-        for (CellPluginComponent component : selection) {
-          myPluginModel.doUninstall(this, component.myPlugin, null);
+        else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+          for (CellPluginComponent component : selection) {
+            if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
+              return;
+            }
+          }
+          for (CellPluginComponent component : selection) {
+            myPluginModel.doUninstall(this, component.myPlugin, null);
+          }
         }
       }
     }
@@ -3374,7 +3769,7 @@ public class PluginManagerConfigurableNew
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (JButton button : myButtons) {
         button.doClick();
       }
@@ -4623,13 +5018,13 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static final Color DisabledColor = new JBColor(0xC6C6C6, 0x575859);
+  private static final Color DisabledColor = new JBColor(0xB1B1B1, 0x696969);
 
   @SuppressWarnings("UseJBColor")
   private static final Color WhiteForeground = new JBColor(Color.white, new Color(0xBBBBBB));
   @SuppressWarnings("UseJBColor")
   private static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
-  private static final Color GreenColor = new JBColor(0x5D9B47, 0x457335);
+  private static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
   @SuppressWarnings("UseJBColor")
   private static final Color GreenFocusedBackground = new Color(0xE1F6DA);
 

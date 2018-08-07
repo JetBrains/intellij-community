@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.vcsUtil.RollbackUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -38,14 +39,14 @@ public class RollbackDialogAction extends AnAction implements DumbAware {
     ActionUtil.copyFrom(this, IdeActions.CHANGES_VIEW_ROLLBACK);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
     Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
     RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
     boolean enabled = changes != null && project != null;

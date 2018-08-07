@@ -40,14 +40,12 @@ import java.util.TreeSet;
 public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogUserFilter> {
   public static final String USER_FILER_NAME = "User";
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final List<String> myAllUsers;
 
   UserFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                            @NotNull VcsLogData logData,
                            @NotNull FilterModel<VcsLogUserFilter> filterModel) {
     super(USER_FILER_NAME, uiProperties, filterModel);
     myLogData = logData;
-    myAllUsers = collectUsers(logData);
   }
 
   @NotNull
@@ -79,7 +77,7 @@ public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SpeedsearchPredefinedValueAction(VcsLogUserFilterImpl.ME));
     group.add(Separator.getInstance());
-    for (String user : myAllUsers) {
+    for (String user : collectUsers(myLogData)) {
       group.add(new SpeedsearchPredefinedValueAction(user));
     }
     return group;
@@ -88,7 +86,7 @@ public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return myAllUsers;
+    return collectUsers(myLogData);
   }
 
   @NotNull

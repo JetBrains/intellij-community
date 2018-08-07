@@ -5,6 +5,7 @@ import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.BeforeRunTaskProvider
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator
@@ -30,7 +31,16 @@ class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
       consumeIfCast(cfg["projectPath"], String::class.java) { externalProjectPath = it }
     }
     task.isEnabled = true
-    beforeRunTasks.add(task)
+
+    val taskExists = beforeRunTasks.filterIsInstance<ExternalSystemBeforeRunTask>()
+      .any {
+        it.taskExecutionSettings.taskNames == task.taskExecutionSettings.taskNames &&
+        it.taskExecutionSettings.externalProjectPath == task.taskExecutionSettings.externalProjectPath
+      }
+
+    if (!taskExists) {
+      beforeRunTasks.add(task)
+    }
     return beforeRunTasks
   }
 

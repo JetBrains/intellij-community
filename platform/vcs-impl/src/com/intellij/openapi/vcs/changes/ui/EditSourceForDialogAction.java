@@ -41,7 +41,7 @@ public class EditSourceForDialogAction extends EditSourceAction {
     mySourceComponent = component;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
     if (navigatableArray != null && navigatableArray.length > 0) {
       ApplicationManager.getApplication().invokeLater(() -> OpenSourceUtil.navigate(navigatableArray));

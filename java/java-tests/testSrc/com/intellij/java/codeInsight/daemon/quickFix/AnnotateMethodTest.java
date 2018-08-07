@@ -33,11 +33,6 @@ public class AnnotateMethodTest extends LightQuickFixTestCase {
     return new LocalInspectionTool[]{new NullableStuffInspection()};
   }
 
-  @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return false;
-  }
-
   public void test() { doAllTests(); }
 
   @Override

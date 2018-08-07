@@ -523,7 +523,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
@@ -1105,13 +1105,13 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
    */
   private final class CancelCurrentOperationAction extends AnAction {
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       myProcessor.cancelOperation();
       myQuickFixManager.hideIntentionHint();
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       PropertyInspector inspector = DesignerToolWindowManager.getInstance(GuiEditor.this).getPropertyInspector();
       e.getPresentation().setEnabled(inspector != null && !inspector.isEditing());
     }

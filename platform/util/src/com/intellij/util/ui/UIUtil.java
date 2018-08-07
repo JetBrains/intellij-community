@@ -101,9 +101,14 @@ public class UIUtil {
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
   }
 
+  @Deprecated
   public static void decorateFrame(@NotNull JRootPane pane) {
-    if (Registry.is("ide.mac.allowDarkWindowDecorations")) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
+    decorateWindowHeader(pane);
+  }
+  
+  public static void decorateWindowHeader(JRootPane pane) {
+    if (pane != null && SystemInfo.isMac) {
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
     }
   }
 
@@ -399,15 +404,7 @@ public class UIUtil {
     }
   });
 
-  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new NotNullProducer<Color>() {
-    final JBColor myDefaultValue = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
-    @NotNull
-    @Override
-    public Color produce() {
-      Color color = UIManager.getColor("SidePanel.background");
-      return color == null ? myDefaultValue : color;
-    }
-  });
+  public static final Color SIDE_PANEL_BACKGROUND = JBColor.namedColor("SidePanel.background", new JBColor(0xE6EBF0, 0x3E434C));
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._223, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
@@ -2556,8 +2553,13 @@ public class UIUtil {
     drawCenteredString(g, rect, str, true, true);
   }
 
-  public static boolean isFocusAncestor(@NotNull final JComponent component) {
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+  /**
+   * @param component to check whether it has focus within its component hierarchy
+   * @return {@code true} if component or one of its children has focus
+   * @see Component#isFocusOwner()
+   */
+  public static boolean isFocusAncestor(@NotNull Component component) {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (owner == null) return false;
     if (owner == component) return true;
     return SwingUtilities.isDescendingFrom(owner, component);
@@ -2691,7 +2693,7 @@ public class UIUtil {
    * @return {@code true} if component is not {@code null} and can be focused
    * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
    */
-  public static boolean isFocusable(JComponent component) {
+  public static boolean isFocusable(@Nullable Component component) {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
   }
 
@@ -4579,5 +4581,20 @@ public class UIUtil {
 
   public static boolean isRetina(@NotNull GraphicsDevice device) {
     return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
+  }
+
+  /** Employs a common pattern to use {@code Graphics}. This is a non-distractive approach
+   * all modifications on {@code Graphics} are metter only inside the {@code Consumer} block
+   *
+   * @param originGraphics graphics to work with
+   * @param drawingConsumer you can use the Graphics2D object here safely
+   */
+  public static void useSafely(Graphics originGraphics, Consumer<? super Graphics2D> drawingConsumer) {
+    Graphics2D graphics = ((Graphics2D)originGraphics.create());
+    try {
+      drawingConsumer.consume(graphics);
+    } finally {
+      graphics.dispose();
+    }
   }
 }

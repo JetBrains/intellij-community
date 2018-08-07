@@ -103,7 +103,7 @@ public interface DfaMemoryState {
    * problems under assumption that the state is still valid.
    * <p>
    *   E.g. if it's proven that nullable variable is dereferenced, for the sake of subsequent analysis one might call
-   *   {@code forceVariableFact(var, CAN_BE_NULL, false)}
+   *   {@code forceVariableFact(var, NULLABILITY, NOT_NULL)}
    * </p>
    *
    * @param var the variable to modify

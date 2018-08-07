@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -50,7 +49,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, ProjectComponent {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements PrioritizedInternalDocumentListener, ProjectComponent {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
@@ -813,6 +812,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (myStopTrackingDocuments || myProject.isDisposed()) return;
 
     final Document document = event.getDocument();
+
+    UncommittedInfo info = myUncommittedInfos.get(document);
+    if (info != null) {
+      info.myEvents.add(event);
+    }
+
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     boolean isRelevant = virtualFile != null && isRelevant(virtualFile);
 
@@ -861,6 +866,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
+  @Override
+  public int getPriority() {
+    return EditorDocumentPriorities.RANGE_MARKER;
+  }
+
+  @Override
+  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
+    UncommittedInfo info = myUncommittedInfos.get(document);
+    if (info != null) {
+      info.myEvents.add(new RetargetRangeMarkers(document, start, end, base));
+    }
+  }
+
   void handleCommitWithoutPsi(@NotNull Document document) {
     final UncommittedInfo prevInfo = clearUncommittedInfo(document);
     if (prevInfo == null) {
@@ -895,7 +913,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     UncommittedInfo info = myUncommittedInfos.remove(document);
     if (info != null) {
       getSmartPointerManager().updatePointers(document, info.myFrozen, info.myEvents);
-      info.removeListener();
     }
     return info;
   }
@@ -974,9 +991,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @VisibleForTesting
   public void clearUncommittedDocuments() {
-    for (UncommittedInfo info : myUncommittedInfos.values()) {
-      info.removeListener();
-    }
     myUncommittedInfos.clear();
     myUncommittedDocuments.clear();
     mySynchronizer.cleanupForNextTest();
@@ -1027,35 +1041,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static class UncommittedInfo implements PrioritizedInternalDocumentListener, DocumentListener {
-    private final DocumentImpl myOriginal;
+  private static class UncommittedInfo {
     private final FrozenDocument myFrozen;
     private final List<DocumentEvent> myEvents = ContainerUtil.newArrayList();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = ContainerUtil.newConcurrentMap();
 
     private UncommittedInfo(@NotNull DocumentImpl original) {
-      myOriginal = original;
       myFrozen = original.freeze();
-      myOriginal.addDocumentListener(this);
-    }
-
-    @Override
-    public int getPriority() {
-      return EditorDocumentPriorities.RANGE_MARKER;
-    }
-
-    @Override
-    public void documentChanged(DocumentEvent e) {
-      myEvents.add(e);
-    }
-
-    @Override
-    public void moveTextHappened(int start, int end, int base) {
-      myEvents.add(new RetargetRangeMarkers(myOriginal, start, end, base));
-    }
-
-    public void removeListener() {
-      myOriginal.removeDocumentListener(this);
     }
   }
 

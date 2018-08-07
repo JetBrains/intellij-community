@@ -329,6 +329,9 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           newMember = (PsiMember)targetClass.add(member);
         }
       }
+      else if (member instanceof PsiClassInitializer) {
+        newMember = (PsiMember)targetClass.add(member);
+      }
 
       if (newMember != null) {
         decodeRefs(sourceClass, newMember, targetClass);
@@ -348,7 +351,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     for (MemberInfoBase<? extends PsiElement> memberInfo : pushDownData.getMembersToMove()) {
       final PsiElement member = memberInfo.getMember();
 
-      if (member instanceof PsiField) {
+      if (member instanceof PsiField || member instanceof PsiClassInitializer) {
         member.delete();
       }
       else if (member instanceof PsiMethod) {

@@ -179,6 +179,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testmapLiteral() throws Throwable { doTest() }
 
+  void testexpressionlabelWithoutExpression() { doTest() }
+
   void testnew$arr_decl() throws Throwable { doTest() }
 
   void testnew$emptyTypeArgs() { doTest() }
@@ -717,4 +719,16 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testindex$safeIndexNewLineAfterQ() { doTest() }
 
   void testindex$safeIndexNewLineBeforeQ() { doTest() }
+
+  void testnl$binary() { doTest() }
+
+  void testnl$cast() { doTest() }
+
+  void testnl$index() { doTest() }
+
+  void testnl$postfixDec() { doTest() }
+
+  void testnl$postfixInc() { doTest() }
+
+  void testnl$unary() { doTest() }
 }

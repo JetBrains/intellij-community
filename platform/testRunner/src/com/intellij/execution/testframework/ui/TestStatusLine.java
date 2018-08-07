@@ -124,7 +124,7 @@ public class TestStatusLine extends NonOpaquePanel {
   public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
     myProgressPanel.remove(myProgressBar);
     if (info != null) {
-      myState.setIcon(TestIconMapper.getIcon(info));
+      myState.setIcon(TestIconMapper.getToolbarIcon(info));
     }
   }
 

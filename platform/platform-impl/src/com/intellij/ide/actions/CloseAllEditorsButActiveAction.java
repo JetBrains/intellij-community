@@ -22,9 +22,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseAllEditorsButActiveAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     FileEditorManagerEx fileEditorManager=FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
@@ -42,7 +43,7 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
     }
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

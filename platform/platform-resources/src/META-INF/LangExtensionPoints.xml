@@ -972,7 +972,7 @@
  
     <extensionPoint name="languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
 
-    <extensionPoint name="retypeFileAssistant" interface="com.intellij.internal.RetypeFileAssistant"/>
+    <extensionPoint name="retypeFileAssistant" interface="com.intellij.internal.retype.RetypeFileAssistant"/>
   </extensionPoints>
 </idea-plugin>
 

@@ -56,7 +56,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Resume, Daemon_sign);
   private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(Socket, Daemon_sign);
   private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(Idle, Daemon_sign);
-  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EdtBusy, Daemon_sign);
+  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.ProfileCPU, Daemon_sign);
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Menu_saveall, Daemon_sign);
   private final JBList myThreadList;
   private final List<ThreadState> myThreadDump;
@@ -157,7 +157,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
       return myExporterToTextFile;
     }
@@ -224,7 +224,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       if ("idle".equals(threadState.getThreadStateDetail())) {
         return daemon ? IDLE_ICON_DAEMON : Idle;
       }
-      return daemon ? EDT_BUSY_ICON_DAEMON : EdtBusy;
+      return daemon ? EDT_BUSY_ICON_DAEMON : AllIcons.Actions.ProfileCPU;
     }
     return daemon ? RUNNING_ICON_DAEMON : AllIcons.Actions.Resume;
   }
@@ -313,7 +313,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Collections.sort(myThreadDump, COMPARATOR);
       Collections.sort(myMergedThreadDump, COMPARATOR);
       updateThreadList();
@@ -322,7 +322,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(COMPARATOR == BY_TYPE ? AllIcons.ObjectBrowser.SortByType : AllIcons.ObjectBrowser.Sorted);
       e.getPresentation().setText(COMPARATOR == BY_TYPE ? TYPE_LABEL : NAME_LABEL);
     }
@@ -339,7 +339,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final StringBuilder buf = new StringBuilder();
       buf.append("Full thread dump").append("\n\n");
       for (ThreadState state : myThreadDump) {

@@ -239,7 +239,7 @@ public class TerminalView {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTerminalRunner.openSession(myTerminal);
     }
   }
@@ -255,7 +255,7 @@ public class TerminalView {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTerminal.closeCurrentSession();
 
       hideIfNoActiveSessions(myToolWindow, myTerminal);

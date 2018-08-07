@@ -100,13 +100,15 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   }
 
   public static AnAction createDefaultEditAction(Project project, Factory<BaseInjection> producer) {
-    return DumbAwareAction.create(e -> {
-      BaseInjection originalInjection = producer.create();
-      BaseInjection newInjection = showDefaultInjectionUI(project, originalInjection.copy());
-      if (newInjection != null) {
-        originalInjection.copyFrom(newInjection);
-      }
-    });
+    return DumbAwareAction.create(e -> perform(project, producer));
+  }
+
+  protected static void perform(Project project, Factory<BaseInjection> producer) {
+    BaseInjection originalInjection = producer.create();
+    BaseInjection newInjection = showDefaultInjectionUI(project, originalInjection.copy());
+    if (newInjection != null) {
+      originalInjection.copyFrom(newInjection);
+    }
   }
 
   public static AnAction createDefaultAddAction(final Project project,

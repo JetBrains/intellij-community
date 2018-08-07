@@ -6,6 +6,7 @@ import java.util.Map;
 
 public interface UpdaterUI {
   void setDescription(String oldBuildDesc, String newBuildDesc);
+  void setDescription(String text);
 
   void startProcess(String title);
   void setProgress(int percentage);

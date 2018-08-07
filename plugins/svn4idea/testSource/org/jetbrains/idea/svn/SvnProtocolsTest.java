@@ -31,6 +31,8 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,10 +40,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
 
+@Ignore
 public class SvnProtocolsTest extends SvnTestCase {
   // todo correct URL
   private final static String ourSSH_URL = "svn+ssh://unit-069:222/home/irina/svnrepo";
@@ -173,15 +177,14 @@ public class SvnProtocolsTest extends SvnTestCase {
     assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
-    final List<VcsException> commit = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    assertTrue(commit.isEmpty());
+    commit(Collections.singletonList(change), "commit");
     return file;
   }
 
   private File testCheckoutImpl(Url url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
-    assertTrue(root.exists());
+    assertExists(root);
     SvnCheckoutProvider
       .checkout(myProject, root, url, Revision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
         @Override
@@ -201,7 +204,4 @@ public class SvnProtocolsTest extends SvnTestCase {
     assertTrue(cnt[0] > 1);
     return root;
   }
-
-  // disable tests for now
-  private @interface Test{}
 }

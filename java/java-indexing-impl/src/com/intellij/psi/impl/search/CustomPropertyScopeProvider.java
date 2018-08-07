@@ -11,7 +11,8 @@ public interface CustomPropertyScopeProvider {
 
   ExtensionPointName<CustomPropertyScopeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.customPropertyScopeProvider");
 
-  SearchScope getScope(final Project project);
+  @NotNull
+  SearchScope getScope(@NotNull Project project);
 
   @NotNull
   static SearchScope getPropertyScope(@NotNull Project project) {

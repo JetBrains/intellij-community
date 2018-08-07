@@ -35,6 +35,7 @@ import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,14 +72,14 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
       AnActionButton specifyUrlButton = new DumbAwareActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           onSpecifyUrlButtonClicked();
         }
       };
       specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
       specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myEnabled;
         }
       });

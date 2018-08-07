@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -31,7 +32,7 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myPanel.setLayout(layout);
     myLoadMoreBtn = new JButton(name);
     myLoadMoreBtn.setMargin(JBUI.insets(2));
-    myLoadMoreBtn.addActionListener(e -> this.actionPerformed(null));
+    myLoadMoreBtn.addActionListener(__ -> perform());
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel("Loading...");
     myLabel.setForeground(UIUtil.getInactiveTextColor());
@@ -51,12 +52,19 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myEnabled);
     e.getPresentation().setVisible(myVisible);
   }
 
   public void setVisible(boolean b) {
     myVisible = b;
+  }
+
+  public abstract void perform();
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    perform();
   }
 }

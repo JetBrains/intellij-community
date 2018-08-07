@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.java.psi.formatter.java.AbstractJavaFormatterTest;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PsiEnumConstantImpl;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -55,7 +43,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testRandomActivity() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    enableAlmostAllInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy()),
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
@@ -65,11 +53,17 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
+  private void enableAlmostAllInspections() {
+    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable(),
+                                        "BoundedWildcard" // IDEA-194460
+    );
+  }
+
   public void testPreserveComments() {
     boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
     try {
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
-      MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+      enableAlmostAllInspections();
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
                                       new InsertLineComment(file, "//simple end comment\n"));
@@ -82,7 +76,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testParenthesesDontChangeIntention() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    enableAlmostAllInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));
     PropertyChecker
@@ -108,4 +102,13 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
       .checkScenarios(actionsOnJavaFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));
   }
 
+  public void testPsiAccessors() {
+    PropertyChecker.checkScenarios(actionsOnJavaFiles(
+      MadTestingUtil.randomEditsWithPsiAccessorChecks(
+        method ->
+          method.getName().equals("getReferences") && method.getDeclaringClass().equals(PsiLiteralExpressionImpl.class) ||
+          method.getName().equals("getOrCreateInitializingClass") && method.getDeclaringClass().equals(PsiEnumConstantImpl.class)
+      )
+    ));
+  }
 }

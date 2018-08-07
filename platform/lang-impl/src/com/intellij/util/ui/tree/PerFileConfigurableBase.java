@@ -569,7 +569,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     AnActionEvent event = AnActionEvent.createFromAnAction(changeAction, null, ActionPlaces.UNKNOWN, dataContext);
     changeAction.update(event);
     panel.revalidate();
-    if (!editor) myResetRunnables.add(() -> changeAction.update(null));
+    if (!editor) myResetRunnables.add(() -> changeAction.update(event));
     return panel;
   }
 
@@ -661,7 +661,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         updateText();
       }
 
@@ -747,7 +747,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       String nullValue = StringUtil.notNullize(clearText);
       AnAction a = new DumbAwareAction(renderValue(t, nullValue), "", getActionListIcon(target, t)) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           onChosen.consume(t);
         }
       };

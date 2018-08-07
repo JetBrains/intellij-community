@@ -123,7 +123,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (ArrangementSectionRulesControl.KEY.is(dataId)) {
       return myControl;
     }

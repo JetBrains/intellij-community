@@ -269,6 +269,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     addTypeParametersFolding(list, document, parameterList, 3, quick);
   }
 
+  private static void addLocalVariableTypeFolding(@NotNull List<? super FoldingDescriptor> list,
+                                                  @NotNull PsiVariable expression,
+                                                  boolean quick) {
+    if (quick) return; // presentable text may require resolve
+    PsiTypeElement typeElement = expression.getTypeElement();
+    if (typeElement == null) return;
+    if (!typeElement.isInferredType()) return;
+    String presentableText = expression.getType().getPresentableText();
+    list.add(new NamedFoldingDescriptor(typeElement.getNode(), typeElement.getTextRange(), null, presentableText, true, Collections.emptySet()));
+  }
+
   private static boolean resolvesCorrectly(@NotNull PsiReferenceExpression expression) {
     for (final JavaResolveResult result : expression.multiResolve(true)) {
   if (!result.isValidResult()) {
@@ -550,7 +561,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
 
     PsiCodeBlock body = method.getBody();
-    if (body != null && !oneLiner) {
+    if (body != null) {
       addCodeBlockFolds(list, body, processedComments, document, quick);
     }
   }
@@ -676,6 +687,15 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
           addToFold(list, aClass, document, true, getCodeBlockPlaceholder(null), classRange(aClass), JavaCodeFoldingSettings.getInstance().isCollapseInnerClasses());
           addFoldsForClass(list, aClass, document, false, quick);
         }
+      }
+
+      @Override
+      public void visitVariable(PsiVariable variable) {
+        if (!dumb && JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType()) {
+          addLocalVariableTypeFolding(list, variable, quick);
+        }
+
+        super.visitVariable(variable);
       }
 
       @Override

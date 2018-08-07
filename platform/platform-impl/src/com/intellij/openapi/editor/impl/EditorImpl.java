@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
@@ -88,8 +89,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
@@ -116,8 +117,8 @@ import java.lang.reflect.Field;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -946,7 +947,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+    if (myProject == null || !myProject.isDisposed()) {
+      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+    }
 
     if (myBulkUpdateListener != null) {
       ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
@@ -4149,13 +4152,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Nullable
     @Override
     public Color getColor(ColorKey key) {
-      if (myOwnColors.containsKey(key)) return myOwnColors.get(key);
+      if (myOwnColors.containsKey(key)) {
+        return myOwnColors.get(key);
+      }
       return getDelegate().getColor(key);
     }
 
     @Override
     public void setColor(ColorKey key, Color color) {
-      myOwnColors.put(key, color);
+      if (color == AbstractColorsScheme.INHERITED_COLOR_MARKER) {
+        myOwnColors.remove(key);
+      }
+      else {
+        myOwnColors.put(key, color);
+      }
 
       // These two are here because those attributes are cached and I do not whant the clients to call editor's reinit
       // settings in this case.

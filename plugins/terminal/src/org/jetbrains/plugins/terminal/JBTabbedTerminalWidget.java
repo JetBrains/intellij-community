@@ -391,7 +391,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
       private DragSession mySession;
 
       @Override
-      public void dragOutStarted(MouseEvent mouseEvent, TabInfo info) {
+      public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
         final TabInfo previousSelection = info.getPreviousSelection();
         final Image img = JBTabsImpl.getComponentImage(info);
         info.setHidden(true);
@@ -412,12 +412,12 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
       }
 
       @Override
-      public void processDragOut(MouseEvent event, TabInfo source) {
+      public void processDragOut(@NotNull MouseEvent event, @NotNull TabInfo source) {
         mySession.process(event);
       }
 
       @Override
-      public void dragOutFinished(MouseEvent event, TabInfo source) {
+      public void dragOutFinished(@NotNull MouseEvent event, TabInfo source) {
         myFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
 
 

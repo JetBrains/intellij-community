@@ -61,10 +61,8 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
         }
       }
     }
-    if (!myPlainTextFileSets.isEmpty()) {
-      for (Collection<VirtualFile> projectSet : myPlainTextFileSets.values()) {
-        if (projectSet != null && projectSet.contains(file)) return true;
-      }
+    for (Collection<VirtualFile> projectSet : myPlainTextFileSets.values()) {
+      if (projectSet != null && projectSet.contains(file)) return true;
     }
     return false;
   }

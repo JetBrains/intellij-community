@@ -8,19 +8,20 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 
 public class  TogglePathShowingAction extends AnAction implements DumbAware {
   public TogglePathShowingAction() {
     setEnabledInModalContext(true);
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setText(IdeBundle.message("file.chooser.hide.path.tooltip.text"));
     DialogWrapper dialog = DialogWrapper.findInstance(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     e.getPresentation().setEnabled(dialog instanceof FileChooserDialogImpl);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     FileChooserDialogImpl dialog = (FileChooserDialogImpl)DialogWrapper.findInstance(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     if (dialog != null) {
       dialog.toggleShowTextField();

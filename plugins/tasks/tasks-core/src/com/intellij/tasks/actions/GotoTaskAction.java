@@ -41,7 +41,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   }
 
   @Override
-  protected void gotoActionPerformed(final AnActionEvent e) {
+  protected void gotoActionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     perform(project);

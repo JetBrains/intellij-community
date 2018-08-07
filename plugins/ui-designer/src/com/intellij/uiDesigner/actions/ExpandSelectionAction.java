@@ -26,6 +26,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Stack;
 
@@ -38,7 +39,7 @@ import java.util.Stack;
  * @author Vladimir Kondratyev
  */
 public final class ExpandSelectionAction extends AnAction{
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     assert editor != null;
     final SelectionState selectionState = editor.getSelectionState();
@@ -91,7 +92,7 @@ public final class ExpandSelectionAction extends AnAction{
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
 

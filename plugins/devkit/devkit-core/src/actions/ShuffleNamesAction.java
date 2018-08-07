@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -24,14 +25,14 @@ import java.util.*;
  */
 public class ShuffleNamesAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;

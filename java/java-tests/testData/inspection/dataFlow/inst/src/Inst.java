@@ -7,10 +7,21 @@ class B extends A {
 }
 
 public class Inst {
-    public void x() {
+    public void x(Object a) {
+
+
+
+        if (a instanceof B) {
+            A aa =(A) a;
+            if (a instanceof A) {
+                System.out.println("HeHe");
+            }
+            System.out.println(aa);
+        }
+    }
+
+    public void x1() {
         Object a = new Object();
-
-
         if (a instanceof B) {
             A aa =(A) a;
             if (a instanceof A) {

@@ -62,7 +62,7 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     return ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext()) != null;
   }

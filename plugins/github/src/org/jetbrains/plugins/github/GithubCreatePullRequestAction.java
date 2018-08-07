@@ -24,6 +24,8 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
@@ -53,7 +55,10 @@ public class GithubCreatePullRequestAction extends LegacySingleAccountActionGrou
   static void createPullRequest(@NotNull Project project,
                                 @NotNull GitRepository gitRepository,
                                 @NotNull GithubAccount account) {
-    GithubCreatePullRequestWorker worker = GithubCreatePullRequestWorker.create(project, gitRepository, account);
+    GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
+    if(executor == null) return;
+
+    GithubCreatePullRequestWorker worker = GithubCreatePullRequestWorker.create(project, gitRepository, executor, account.getServer());
     if (worker == null) {
       return;
     }

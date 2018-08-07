@@ -5,6 +5,8 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.junit.Test;
 
@@ -54,5 +56,29 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
     assertFalse(javacOpts.PREFER_TARGET_JDK_COMPILER);
     assertEquals("-Dkey=val", javacOpts.ADDITIONAL_OPTIONS_STRING);
     assertTrue(javacOpts.GENERATE_NO_WARNINGS);
+  }
+
+  @Test
+  public void testArtifactsSettingsImport() throws Exception {
+    createProjectConfig(
+        "plugins {\n" +
+        "  id 'org.jetbrains.gradle.plugin.idea-ext' version '0.4'\n" +
+        "}\n" +
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    ideArtifacts {\n" +
+        "      myArt {\n" +
+        "         file(\"build.gradle\")\n" +
+        "      }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}"
+    );
+    importProject();
+    final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
+
+    final Artifact artifact = artifactManager.getArtifacts()[0];
+    assertEquals("myArt", artifact.getName());
   }
 }

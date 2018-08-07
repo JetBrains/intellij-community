@@ -38,8 +38,8 @@ public class CommonDataflow {
       DfaFactMap existing = myFacts.get(expression);
       if(existing != DfaFactMap.EMPTY) {
         DfaFactMap newMap = memState.getFactMap(value);
-        if (!Boolean.FALSE.equals(newMap.get(DfaFactType.CAN_BE_NULL)) && memState.isNotNull(value)) {
-          newMap = newMap.with(DfaFactType.CAN_BE_NULL, false);
+        if (!DfaNullability.isNotNull(newMap) && memState.isNotNull(value)) {
+          newMap = newMap.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
         }
         myFacts.put(expression, existing == null ? newMap : existing.union(newMap));
       }

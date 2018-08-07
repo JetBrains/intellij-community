@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ class OpenPartialDiffAction extends AnAction implements DumbAware {
     myRightIndex = rightIndex;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     MergePanel2 mergePanel = MergePanel2.fromDataContext(dataContext);
     Project project = projectFromDataContext(dataContext);
@@ -56,7 +57,7 @@ class OpenPartialDiffAction extends AnAction implements DumbAware {
     DiffManagerImpl.INTERNAL_DIFF.show(diffData);
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     MergePanel2 mergePanel = MergePanel2.fromDataContext(dataContext);
     Project project = projectFromDataContext(dataContext);

@@ -390,7 +390,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
-    UIUtil.decorateFrame(rootPane);
+    UIUtil.decorateWindowHeader(rootPane);
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
@@ -456,7 +456,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private class AnCancelAction extends AnAction implements DumbAware {
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       e.getPresentation().setEnabled(false);
       if (focusOwner instanceof JComponent && SpeedSearchBase.hasActiveSpeedSearch((JComponent)focusOwner)) {
@@ -493,7 +493,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myWrapper.doCancelAction(e.getInputEvent());
     }
   }
@@ -574,7 +574,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       final DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper instanceof DataProvider) {
         return ((DataProvider)wrapper).getData(dataId);
@@ -966,7 +966,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         final DialogWrapper wrapper = myDialogWrapper.get();
         return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
       }

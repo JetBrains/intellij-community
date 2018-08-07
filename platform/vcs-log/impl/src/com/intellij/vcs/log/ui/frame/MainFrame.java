@@ -184,7 +184,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
     if (BekUtil.isBekEnabled()) {
-      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionPlaces.VCS_LOG_PRESENTATION_SETTINGS_ACTION);
+      Constraints constraint = new Constraints(Anchor.BEFORE, VcsLogActionPlaces.PRESENTATION_SETTINGS_ACTION_GROUP);
       if (BekUtil.isLinearBekEnabled()) {
         toolbarGroup.add(new IntelliSortChooserPopupAction(), constraint);
         // can not register both of the actions in xml file, choosing to register an action for the "outer world"
@@ -197,7 +197,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
 
     DefaultActionGroup mainGroup = new DefaultActionGroup();
-    mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_TEXT_FILTER_SETTINGS_ACTION));
+    mainGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.TEXT_FILTER_SETTINGS_ACTION_GROUP));
     mainGroup.add(new Separator());
     mainGroup.add(myFilterUi.createActionGroup());
     mainGroup.addSeparator();
@@ -235,7 +235,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       return ArrayUtil.toObjectArray(myChangesBrowser.getDirectChanges(), Change.class);
     }

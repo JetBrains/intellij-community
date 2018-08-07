@@ -185,7 +185,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Show Ignored Files", true);
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
     ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
     ignoreGroup.add(new ToggleShowIgnoredAction());
     ignoreGroup.add(new IgnoredSettingsAction());
@@ -354,23 +354,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void selectChanges(@NotNull List<Change> changes) {
     List<TreePath> paths = new ArrayList<>();
 
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
     for (Change change : changes) {
-      ContainerUtil.addIfNotNull(paths, findObjectInTree(root, change));
+      ContainerUtil.addIfNotNull(paths, myView.findNodePathInTree(change));
     }
 
     if (!paths.isEmpty()) {
       TreeUtil.selectPaths(myView, paths);
     }
-  }
-
-  @Nullable
-  private static TreePath findObjectInTree(@NotNull DefaultMutableTreeNode root, Object userObject) {
-    DefaultMutableTreeNode objectNode =
-      userObject instanceof ChangeListChange
-      ? TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject))
-      : TreeUtil.findNodeWithObject(root, userObject);
-    return objectNode != null ? TreeUtil.getPathFromRoot(objectNode) : null;
   }
 
 
@@ -503,9 +493,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @NotNull
     @Override
     protected List<Wrapper> getSelectedChanges() {
-      List<Wrapper> result = wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
-      if (result.isEmpty()) result = getAllChanges();
-      return result;
+      boolean hasSelection = myView.getSelectionCount() != 0;
+      if (hasSelection) {
+        return wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
+      }
+      else {
+        return getAllChanges();
+      }
     }
 
     @NotNull
@@ -516,8 +510,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     @Override
     protected void selectChange(@NotNull Wrapper change) {
-      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      TreePath path = findObjectInTree(root, change.getUserObject());
+      TreePath path = myView.findNodePathInTree(change.getUserObject());
       if (path != null) {
         TreeUtil.selectPath(myView, path, false);
       }
@@ -531,7 +524,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
   
-    private MyChangeViewContent(JComponent component, String displayName, boolean isLockable) {
+    private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
       super(myProject, component, displayName, isLockable);
     }
 

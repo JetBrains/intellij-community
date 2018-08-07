@@ -24,10 +24,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class LocalHistoryGroup extends NonTrivialActionGroup implements DumbAware {
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);

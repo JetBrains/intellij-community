@@ -117,7 +117,7 @@ public abstract class AbstractFieldPanel extends JPanel {
           this::notifyActionListener));
         new DumbAwareAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             notifyActionListener();
           }
         }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);

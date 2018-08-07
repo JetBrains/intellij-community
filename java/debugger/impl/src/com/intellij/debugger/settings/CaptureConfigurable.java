@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
+import com.intellij.codeInsight.AnnotationsPanel;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
@@ -22,7 +23,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +40,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.xmlb.XmlSerializer;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -51,8 +53,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -61,10 +65,18 @@ import java.util.function.BiConsumer;
  */
 public class CaptureConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
+  private final Project myProject;
 
   private JCheckBox myDebuggerAgent;
+  private JButton myConfigureAnnotationsButton;
+  private JPanel myCapturePanel;
   private MyTableModel myTableModel;
   private JCheckBox myCaptureVariables;
+  private JPanel myPanel;
+
+  public CaptureConfigurable(Project project) {
+    myProject = project;
+  }
 
   @NotNull
   @Override
@@ -246,19 +258,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     });
 
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel();
-    myDebuggerAgent = new JCheckBox(DebuggerBundle.message("label.capture.configurable.debugger.agent"));
-    panel.addToTop(myDebuggerAgent);
+    myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
 
-    BorderLayoutPanel debuggerPanel = JBUI.Panels.simplePanel();
-    debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
-    debuggerPanel.addToCenter(decorator.createPanel());
+    myCapturePanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
+    myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
-    myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
-    debuggerPanel.addToBottom(myCaptureVariables);
-
-    panel.addToCenter(debuggerPanel);
-    return panel;
+    return myPanel;
   }
 
   private StreamEx<CapturePoint> selectedCapturePoints(JBTable table) {
@@ -506,21 +511,27 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
   static void processCaptureAnnotations(BiConsumer<Boolean, PsiModifierListOwner> consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    scanPointsInt(true, consumer);
-    scanPointsInt(false, consumer);
+    Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+    DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
+    scanPointsInt(project, debuggerProjectSettings, true, consumer);
+    scanPointsInt(project, debuggerProjectSettings, false, consumer);
   }
 
-  private static void scanPointsInt(boolean capture, BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+  private static void scanPointsInt(Project project,
+                                    DebuggerProjectSettings debuggerProjectSettings,
+                                    boolean capture,
+                                    BiConsumer<Boolean, PsiModifierListOwner> consumer) {
     try {
-      String annotationName = getAnnotationName(capture);
-      Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
       GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-      PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationName, allScope);
-      if (annotationClass != null) {
-        AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
-          .forEach(e -> {
-            consumer.accept(capture, e);
-          });
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      for (String annotationName : getAsyncAnnotations(debuggerProjectSettings, capture)) {
+        PsiClass annotationClass = psiFacade.findClass(annotationName, allScope);
+        if (annotationClass != null) {
+          AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
+            .forEach(e -> {
+              consumer.accept(capture, e);
+            });
+        }
       }
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
@@ -532,5 +543,58 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
   static String getAnnotationName(boolean capture) {
     return (capture ? Async.Schedule.class : Async.Execute.class).getName().replace("$", ".");
+  }
+
+  private static List<String> getAsyncAnnotations(DebuggerProjectSettings debuggerProjectSettings, boolean capture) {
+    return StreamEx.of(capture ? debuggerProjectSettings.myAsyncScheduleAnnotations : debuggerProjectSettings.myAsyncExecuteAnnotations)
+      .prepend(getAnnotationName(capture))
+      .toList();
+  }
+
+  private class AsyncAnnotationsDialog extends DialogWrapper {
+    private final AnnotationsPanel myAsyncSchedulePanel;
+    private final AnnotationsPanel myAsyncExecutePanel;
+    private final DebuggerProjectSettings mySettings;
+
+    private AsyncAnnotationsDialog(@NotNull Project project) {
+      super(project, true);
+      mySettings = DebuggerProjectSettings.getInstance(myProject);
+      myAsyncSchedulePanel = new AnnotationsPanel(project,
+                                                  "Async Schedule",
+                                                  "",
+                                                  getAsyncAnnotations(mySettings, true),
+                                                  new String[]{getAnnotationName(true)},
+                                                  Collections.emptySet(), false, false);
+      myAsyncExecutePanel = new AnnotationsPanel(project,
+                                                 "Async Execute",
+                                                 "",
+                                                 getAsyncAnnotations(mySettings, false),
+                                                 new String[]{getAnnotationName(false)},
+                                                 Collections.emptySet(), false, false);
+      init();
+      setTitle("Async Annotations Configuration");
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      final Splitter splitter = new Splitter(true);
+      splitter.setFirstComponent(myAsyncSchedulePanel.getComponent());
+      splitter.setSecondComponent(myAsyncExecutePanel.getComponent());
+      splitter.setHonorComponentsMinimumSize(true);
+      splitter.setPreferredSize(JBUI.size(300, 400));
+      return splitter;
+    }
+
+    @SuppressWarnings("SSBasedInspection")
+    @Override
+    protected void doOKAction() {
+      mySettings.myAsyncScheduleAnnotations = StreamEx.of(myAsyncSchedulePanel.getAnnotations())
+        .filter(e -> !e.equals(getAnnotationName(true)))
+        .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      mySettings.myAsyncExecuteAnnotations = StreamEx.of(myAsyncExecutePanel.getAnnotations())
+        .filter(e -> !e.equals(getAnnotationName(false)))
+        .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      super.doOKAction();
+    }
   }
 }

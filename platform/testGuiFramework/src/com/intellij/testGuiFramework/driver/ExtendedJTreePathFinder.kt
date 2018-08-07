@@ -2,6 +2,8 @@
 package com.intellij.testGuiFramework.driver
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.LoadingNode
 import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.exception.LocationUnavailableException
@@ -11,49 +13,34 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
-typealias FinderPredicate = (String, String) -> Boolean
-
 class ExtendedJTreePathFinder(val jTree: JTree) {
 
   private val cellReader: JTreeCellReader = ExtendedJTreeCellReader()
 
   fun findMatchingPath(vararg pathStrings: String): TreePath =
-    findMatchingPathByPredicate(pathStrings = *pathStrings, predicate = predicateEquality)
+    findMatchingPathByPredicate(Predicate.equality, *pathStrings)
 
   fun findMatchingPathWithVersion(vararg pathStrings: String): TreePath =
-    findMatchingPathByPredicate(pathStrings = *pathStrings, predicate = predicateWithVersion)
+    findMatchingPathByPredicate(Predicate.withVersion, *pathStrings)
 
   // this is ex-XPath version
-  fun findMatchingPathByPredicate(vararg pathStrings: String, predicate: FinderPredicate): TreePath {
+  fun findMatchingPathByPredicate(predicate: FinderPredicate, vararg pathStrings: String): TreePath {
     val model = jTree.model
     if (jTree.isRootVisible) {
       val childValue = jTree.value(model.root) ?: ""
       if (!predicate(pathStrings[0], childValue)) pathNotFound(*pathStrings)
       if (pathStrings.size == 1) return TreePath(arrayOf<Any>(model.root))
-
-      val result: TreePath = jTree.traverseChildren(
-        node = model.root,
-        pathStrings = *pathStrings.toList().subList(1, pathStrings.size).toTypedArray(),
-        predicate = predicate
-      ) ?: throw pathNotFound(*pathStrings)
-      return TreePath(arrayOf<Any>(model.root, *result.path))
     }
-    else {
-      val resultPath = jTree.traverseChildren(
-        node = model.root,
-        pathStrings = *pathStrings,
-        predicate = predicate) ?: throw pathNotFound(*pathStrings)
-      return jTree.addRootIfInvisible(resultPath)
-    }
+    return traverseChildren(jTree, model.root, TreePath(model.root), predicate, *pathStrings) ?: throw pathNotFound(*pathStrings)
   }
 
   fun exists(vararg pathStrings: String) =
-    existsByPredicate(pathStrings = *pathStrings, predicate = predicateEquality)
+    existsByPredicate(Predicate.equality, *pathStrings)
 
   fun existsWithVersion(vararg pathStrings: String) =
-    existsByPredicate(pathStrings= *pathStrings, predicate = predicateWithVersion)
+    existsByPredicate(Predicate.withVersion, *pathStrings)
 
-  fun existsByPredicate(vararg pathStrings: String, predicate: FinderPredicate): Boolean{
+  fun existsByPredicate(predicate: FinderPredicate, vararg pathStrings: String): Boolean {
     return try{
       findMatchingPathByPredicate(
         pathStrings = *pathStrings,
@@ -66,58 +53,30 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
     }
   }
 
-  /* TODO: remove after check
-  fun findMatchingPathByPredicate(
-    isUniquePath: Boolean = true,
-    predicate: FinderPredicate): TreePath {
-    if (isUniquePath) return jTree.findUniqueMatchingPath(predicate)
-
-    //remove node order if path is a not unique
-    val pathStringsWithoutOrder = if (isUniquePath) pathStrings else pathStrings.map { it.getWithoutOrder() }
-
-    val model = jTree.model
-    if (jTree.isRootVisible) {
-      if (pathStringsWithoutOrder[0] != jTree.value(model.root)) throw pathNotFound(pathStringsWithoutOrder)
-      if (pathStringsWithoutOrder.size == 1) return TreePath(arrayOf<Any>(model.root))
-      val result: TreePath = jTree.traverseChildren(model.root,
-                                                    pathStringsWithoutOrder.subList(1, pathStringsWithoutOrder.size), predicate)
-                             ?: throw pathNotFound(pathStringsWithoutOrder)
-      return TreePath(arrayOf<Any>(model.root, *result.path))
-    }
-    else {
-      return jTree.traverseChildren(model.root, pathStringsWithoutOrder, predicate) ?: throw pathNotFound(pathStringsWithoutOrder)
-    }
-  }
-*/
-  // JTree extensions
-  // this is ex-xPath version
-  private fun JTree.traverseChildren(node: Any,
-                                     vararg pathStrings: String,
-                                     predicate: FinderPredicate): TreePath? {
-    val model = model
-    val childCount = model.getChildCount(node)
+  fun traverseChildren(jTree: JTree,
+                               node: Any,
+                               pathTree: TreePath,
+                               predicate: FinderPredicate,
+                               vararg pathStrings: String): TreePath? {
+    val childCount = jTree.model.getChildCount(node)
 
     val order = pathStrings[0].getOrder() ?: 0
     val original = pathStrings[0].getWithoutOrder()
     var currentOrder = 0
 
     for (childIndex in 0 until childCount) {
-      val child = model.getChild(node, childIndex)
+      val child = jTree.model.getChild(node, childIndex)
       if (child is LoadingNode)
-        throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = this.getPathToNode(node))
-      val childValue = value(child) ?: continue
+        throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = jTree.getPathToNode(node))
+      val childValue = jTree.value(child) ?: continue
       if (predicate(original, childValue)) {
         if (currentOrder == order) {
-          if (pathStrings.size == 1) {
-            return TreePath(arrayOf<Any>(child))
+          val newPath = TreePath(arrayOf<Any>(*pathTree.path, child))
+          return if (pathStrings.size == 1) {
+            newPath
           }
           else {
-            val childResult = this.traverseChildren(
-              node = child,
-              pathStrings = *pathStrings.toList().subList(1, pathStrings.size).toTypedArray(),
-              predicate = predicate
-            )
-            if (childResult != null) return TreePath(arrayOf<Any>(child, *childResult.path))
+            traverseChildren(jTree, child, newPath, predicate, *pathStrings.toList().subList(1, pathStrings.size).toTypedArray())
           }
         }
         else {
@@ -128,84 +87,6 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
     return null
   }
 
-  /* TODO: remove after check
-  private fun JTree.findUniqueMatchingPath(predicate: FinderPredicate): TreePath {
-
-
-    val model = model
-    val newPathValues = mutableListOf<Any>()
-    var node: Any = model.root
-    val pathElementCount = pathStrings.size
-
-    for (stringIndex in 0 until pathElementCount) {
-      val pathString = pathStrings[stringIndex]
-      if (stringIndex == 0 && isRootVisible) {
-        if (!predicate(pathString, value(node))) throw pathNotFound(pathStrings)
-        newPathValues.add(node)
-      }
-      else {
-        try {
-          node = traverseUniqueChildren(node, pathString, predicate) ?: throw pathNotFound(
-            pathStrings)
-        }
-        catch (e: ExtJTreeDriver.LoadingNodeException) {
-          //if we met loading node let's tell it to caller and probably expand path to clarify this node
-          e.treePath = TreePath(newPathValues.toTypedArray())
-          throw e
-        }
-        newPathValues.add(node)
-      }
-    }
-    return TreePath(newPathValues.toTypedArray())
-  }
-
-  private fun JTree.traverseUniqueChildren(node: Any,
-                                           pathString: String,
-                                           predicate: FinderPredicate): Any? {
-    var match: Any? = null
-    val model = model
-    val childCount = model.getChildCount(node)
-
-    for (childIndex in 0 until childCount) {
-      val child = model.getChild(node, childIndex)
-      if (child is LoadingNode)
-        throw ExtJTreeDriver.LoadingNodeException(child, null)
-      if (predicate(pathString, value(child))) {
-        if (match != null) throw multipleMatchingNodes(pathString, value(node))
-        match = child
-      }
-    }
-
-    return match
-  }
-
-  /**
-   * this method tries to find any path. If tree contains multiple of searchable path it still accepts.
-   */
-  private fun JTree.traverseChildren(node: Any,
-                                     pathStrings: List<String>,
-                                     predicate: FinderPredicate): TreePath? {
-    val model = this.model
-    val childCount = model.getChildCount(node)
-
-    for (childIndex in 0 until childCount) {
-      val child = model.getChild(node, childIndex)
-      if (child is LoadingNode) throw ExtJTreeDriver.LoadingNodeException(node = child,
-                                                                               treePath = this.getPathToNode(node))
-      if (pathStrings.size == 1 && predicate(pathStrings[0], this.value(child))) {
-
-        return TreePath(arrayOf<Any>(child))
-      }
-      else {
-        if (predicate(pathStrings[0], this.value(child))) {
-          val childResult = this.traverseChildren(child, pathStrings.subList(1, pathStrings.size), predicate)
-          if (childResult != null) return TreePath(arrayOf<Any>(child, *childResult.path))
-        }
-      }
-    }
-    return null
-  }
-*/
   private fun JTree.getPathToNode(node: Any): TreePath {
     val treeModel = model as DefaultTreeModel
     var path = treeModel.getPathToRoot(node as TreeNode)
@@ -246,42 +127,9 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       "There is more than one node with value '$pathString' under \"$parentText\"")
   }
 
-  companion object {
-    val predicateEquality: FinderPredicate = { left: String, right: String -> left == right }
-    val predicateWithVersion = { left: String, right: String ->
-      val pattern = Regex(",\\s+\\(.*\\)$")
-      if (right.contains(pattern))
-        left == right.dropLast(right.length - right.indexOfLast { it == ',' })
-      else left == right
-    }
-  }
+  fun findPathToNode(node: String) = findPathToNodeByPredicate(node, Predicate.equality)
 
-  private fun JTree.addRootIfInvisible(path: TreePath): TreePath {
-    val root = model.root
-    if (!isRootVisible && root != null) {
-      return if (path.pathCount > 0 && root === path.getPathComponent(0)) {
-        path
-      }
-      else {
-        val pathAsArray = path.path
-        if (pathAsArray == null) {
-          TreePath(listOf(root))
-        }
-        else {
-          val newPath = mutableListOf(*pathAsArray)
-          newPath.add(0, root)
-          TreePath(newPath.toTypedArray())
-        }
-      }
-    }
-    else {
-      return path
-    }
-  }
-
-  fun findPathToNode(node: String) = findPathToNodeByPredicate(node, predicateEquality)
-
-  fun findPathToNodeWithVersion(node: String) = findPathToNodeByPredicate(node, predicateWithVersion)
+  fun findPathToNodeWithVersion(node: String) = findPathToNodeByPredicate(node, Predicate.withVersion)
 
   fun findPathToNodeByPredicate(node: String, predicate: FinderPredicate): TreePath{
 //    expandNodes()
@@ -300,6 +148,6 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       currentNode = currentNode.parent as DefaultMutableTreeNode
       result.add(0, currentNode.toString())
     }
-  return findMatchingPathByPredicate(pathStrings = *result.toTypedArray(), predicate = predicate)
+    return findMatchingPathByPredicate(predicate, *result.toTypedArray())
   }
 }

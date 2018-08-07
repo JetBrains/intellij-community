@@ -4,8 +4,10 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoClassAction;
+import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
+import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
 import com.intellij.lang.DependentLanguage;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -39,7 +41,8 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
   @NotNull
   @Override
   public String getGroupName() {
-    return "Classes";
+    String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
+    return StringUtil.pluralize(split[0]) + (split.length > 1 ? " +" : "");
   }
 
   @Override
@@ -157,13 +160,19 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Language> createFilter() {
+    public SearchEverywhereContributorFilter<Language> createFilter(AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      if (project == null) {
+        return null;
+      }
+
       List<Language> items = Language.getRegisteredLanguages()
                                      .stream()
                                      .filter(lang -> lang != Language.ANY && !(lang instanceof DependentLanguage))
                                      .sorted(LanguageUtil.LANGUAGE_COMPARATOR)
                                      .collect(Collectors.toList());
-      return new SearchEverywhereContributorFilterImpl<>(items, LANGUAGE_NAME_EXTRACTOR, LANGUAGE_ICON_EXTRACTOR);
+      GotoClassSymbolConfiguration persistentConfig = GotoClassSymbolConfiguration.getInstance(project);
+      return new PersistentSearchEverywhereContributorFilter<>(items, persistentConfig, LANGUAGE_NAME_EXTRACTOR, LANGUAGE_ICON_EXTRACTOR);
     }
   }
 }

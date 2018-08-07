@@ -12,12 +12,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
-import com.intellij.ui.JBCardLayout;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -34,13 +35,17 @@ import java.util.List;
  */
 public class ScopePanel extends JPanel {
 
+  private static final Condition<ScopeDescriptor> SCOPE_FILTER =
+    (ScopeDescriptor descriptor) -> IdeBundle.message("scope.class.hierarchy").equals(descriptor.getDisplay()) ||
+                                    !(descriptor.getScope() instanceof ModuleWithDependenciesScope); // don't show module scope
+
   private final Project myProject;
   private SearchScope myScope;
   private Runnable myCallback;
   Scopes.Type myScopeType;
 
   final ActionToolbarImpl myToolbar;
-  final JPanel myScopeDetailsPanel = new JPanel(new JBCardLayout());
+  final JPanel myScopeDetailsPanel = new JPanel(new CardLayout());
   private final ModulesComboBox myModulesComboBox = new ModulesComboBox();
   private final DirectoryComboBoxWithButtons myDirectoryComboBox;
   private final ScopeChooserCombo myScopesComboBox = new ScopeChooserCombo();
@@ -53,9 +58,7 @@ public class ScopePanel extends JPanel {
     myModulesComboBox.setModules(Arrays.asList(allModules));
     if (allModules.length > 0) myModulesComboBox.setSelectedModule(allModules[0]);
     myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE));
-    myScopesComboBox.init(project, true, false, "",
-                          (ScopeDescriptor descriptor) -> IdeBundle.message("scope.class.hierarchy").equals(descriptor.getDisplay()) ||
-                                                          !(descriptor.getScope() instanceof ModuleWithDependenciesScope));
+    myScopesComboBox.init(project, true, false, "", SCOPE_FILTER);
     myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED));
     myDirectoryComboBox = new DirectoryComboBoxWithButtons(myProject);
     myDirectoryComboBox.setCallback(() -> setScopeFromUI(Scopes.Type.DIRECTORY));
@@ -75,7 +78,7 @@ public class ScopePanel extends JPanel {
     myToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ScopePanel", scopeActionGroup, true);
     myToolbar.setForceMinimumSize(true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    setScope(GlobalSearchScope.projectScope(myProject));
+    setScope(null);
 
     final GroupLayout layout = new GroupLayout(this);
     setLayout(layout);
@@ -103,7 +106,11 @@ public class ScopePanel extends JPanel {
     myDirectoryComboBox.setRecentDirectories(recentDirectories);
   }
 
-  public void setScope(SearchScope selectedScope) {
+  public void setScope(@Nullable SearchScope selectedScope) {
+    if (selectedScope instanceof LocalSearchScope && selectedScope.getDisplayName().startsWith("Hierarchy of ")) {
+      // don't restore Class Hierarchy scope
+      selectedScope = null;
+    }
     myScope = (selectedScope == null) ? GlobalSearchScope.projectScope(myProject) : selectedScope;
     myScopeType = Scopes.getType(myScope);
 
@@ -118,21 +125,22 @@ public class ScopePanel extends JPanel {
       myDirectoryComboBox.setRecursive(directoryScope.isWithSubdirectories());
     }
     else if (selectedScope != null) {
-      myScopesComboBox.init(myProject, true, false, selectedScope.getDisplayName());
+      myScopesComboBox.init(myProject, true, false, selectedScope.getDisplayName(), SCOPE_FILTER);
     }
     myToolbar.updateActionsImmediately();
-    ((JBCardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
+    ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
-  public void setScopeCallback(Runnable callback) {
+  public void setScopeCallback(@Nullable Runnable callback) {
     myCallback = callback;
   }
 
+  @Nullable
   public SearchScope getScope() {
     return myScope;
   }
 
-  void setScopeFromUI(Scopes.Type type) {
+  void setScopeFromUI(@NotNull Scopes.Type type) {
     switch (type) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);
@@ -141,13 +149,16 @@ public class ScopePanel extends JPanel {
         final Module module = myModulesComboBox.getSelectedModule();
         if (module == null) return;
         myScope = GlobalSearchScope.moduleScope(module);
+        myModulesComboBox.requestFocus();
         break;
       case DIRECTORY:
         final VirtualFile directory = myDirectoryComboBox.getDirectory();
         myScope = (directory == null) ? null : GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
+        myDirectoryComboBox.getComboBox().requestFocus();
         break;
       case NAMED:
         myScope = myScopesComboBox.getSelectedScope();
+        myScopesComboBox.requestFocus();
         break;
     }
     if (myCallback != null) myCallback.run();
@@ -157,7 +168,7 @@ public class ScopePanel extends JPanel {
 
     private final Scopes.Type myScopeType;
 
-    public ScopeToggleAction(@Nullable String text, Scopes.Type scopeType) {
+    ScopeToggleAction(@NotNull String text, @NotNull Scopes.Type scopeType) {
       super(text, null, EmptyIcon.ICON_0);
       myScopeType = scopeType;
       getTemplatePresentation().setDisabledIcon(EmptyIcon.ICON_0);
@@ -171,10 +182,7 @@ public class ScopePanel extends JPanel {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
-        ((JBCardLayout)myScopeDetailsPanel.getLayout()).swipe(myScopeDetailsPanel, myScopeType.toString(),
-                                                              ScopePanel.this.myScopeType.compareTo(myScopeType) > 0
-                                                              ? JBCardLayout.SwipeDirection.BACKWARD
-                                                              : JBCardLayout.SwipeDirection.FORWARD);
+        ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
         ScopePanel.this.myScopeType = myScopeType;
         setScopeFromUI(myScopeType);
         myToolbar.updateActionsImmediately();

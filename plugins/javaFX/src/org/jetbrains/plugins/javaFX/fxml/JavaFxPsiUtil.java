@@ -38,6 +38,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import gnu.trove.THashMap;
@@ -1258,24 +1259,14 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isJavaFxPackageImported(@NotNull PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
-
-    return CachedValuesManager.getCachedValue(
-      javaFile, () -> {
-        final PsiImportList importList = javaFile.getImportList();
-        if (importList != null) {
-          for (PsiImportStatementBase statementBase : importList.getAllImportStatements()) {
-            final PsiJavaCodeReferenceElement importReference = statementBase.getImportReference();
-            if (importReference != null) {
-              final String qualifiedName = importReference.getQualifiedName();
-              if (qualifiedName != null && qualifiedName.startsWith("javafx.")) {
-                return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-              }
-            }
-          }
-        }
-        return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    return file instanceof PsiJavaFile && CachedValuesManager.getCachedValue(file, () -> {
+      PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      boolean javafx = importList != null && ContainerUtil.exists(importList.getAllImportStatements(), s -> {
+        PsiJavaCodeReferenceElement ref = s.getImportReference();
+        String qualifiedName = ref != null ? ref.getQualifiedName() : null;
+        return qualifiedName != null && qualifiedName.startsWith("javafx.") && ref.resolve() != null;
       });
+      return CachedValueProvider.Result.create(javafx, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
   }
 }

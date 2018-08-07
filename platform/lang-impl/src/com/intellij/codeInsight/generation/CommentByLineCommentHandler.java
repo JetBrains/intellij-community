@@ -119,7 +119,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
                                  startOffset == document.getLineStartOffset(document.getLineNumber(startOffset)) &&
                                  endOffset == document.getLineEndOffset(document.getLineNumber(endOffset - 1)) + 1;
     boolean startingNewLineComment = !hasSelection
-                                     && isLineEmpty(document, document.getLineNumber(startOffset))
+                                     && DocumentUtil.isLineEmpty(document, document.getLineNumber(startOffset))
                                      && !Comparing.equal(IdeActions.ACTION_COMMENT_LINE,
                                                          ActionManagerEx.getInstanceEx().getPrevPreformedActionId());
     currentBlock.caretUpdate = startingNewLineComment ? CaretUpdate.PUT_AT_COMMENT_START :
@@ -172,7 +172,7 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
         }
 
         block.commenters[line - startLine] = commenter;
-        if (!isLineCommented(block, line, commenter) && (singleline || !isLineEmpty(document, line))) {
+        if (!isLineCommented(block, line, commenter) && (singleline || !DocumentUtil.isLineEmpty(document, line))) {
           allLinesCommented = false;
           if (commenter instanceof IndentedCommenter) {
             final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
@@ -304,16 +304,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     }
 
     return blockSuitableCommenter;
-  }
-
-  private static boolean isLineEmpty(Document document, final int line) {
-    final CharSequence chars = document.getCharsSequence();
-    int start = document.getLineStartOffset(line);
-    int end = Math.min(document.getLineEndOffset(line), document.getTextLength() - 1);
-    for (int i = start; i <= end; i++) {
-      if (!Character.isWhitespace(chars.charAt(i))) return false;
-    }
-    return true;
   }
 
   private static boolean isLineCommented(Block block, final int line, final Commenter commenter) {

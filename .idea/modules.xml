@@ -69,6 +69,7 @@
     <module old-name="coverage_rt" new-name="intellij.java.coverage.rt" />
     <module old-name="credential-store" new-name="intellij.platform.credentialStore" />
     <module old-name="cucumber-jvm-formatter" new-name="intellij.cucumber.jvmFormatter" />
+    <module old-name="cucumber-jvm-formatter3" new-name="intellij.cucumber.jvmFormatter3" />
     <module old-name="cucumber-test-runner" new-name="intellij.cucumber.testRunner" />
     <module old-name="cvs-core" new-name="intellij.vcs.cvs.core" />
     <module old-name="cvs-plugin" new-name="intellij.vcs.cvs" />
@@ -426,6 +427,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/intellij.commander.iml" filepath="$PROJECT_DIR$/plugins/commander/intellij.commander.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/copyright/intellij.copyright.iml" filepath="$PROJECT_DIR$/plugins/copyright/intellij.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cucumber-jvm-formatter/intellij.cucumber.jvmFormatter.iml" filepath="$PROJECT_DIR$/plugins/cucumber-jvm-formatter/intellij.cucumber.jvmFormatter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/cucumber-jvm-formatter3/intellij.cucumber.jvmFormatter3.iml" filepath="$PROJECT_DIR$/plugins/cucumber-jvm-formatter3/intellij.cucumber.jvmFormatter3.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/cucumber-test-runner/intellij.cucumber.testRunner.iml" filepath="$PROJECT_DIR$/build/cucumber-test-runner/intellij.cucumber.testRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-core/intellij.devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-core/intellij.devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-java-tests/intellij.devkit.java.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-java-tests/intellij.devkit.java.tests.iml" />

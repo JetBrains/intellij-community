@@ -206,7 +206,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
     AnAction action = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         onClick.run();
         releaseMouseListener();
       }
@@ -365,7 +365,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (SELECTED_CLASS_KEY.is(dataId)) {
       return getSelectedClass();
     }
@@ -607,7 +607,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     void appendText(@NotNull Object value, int row) {
       TrackingType trackingType = getTrackingType(row);
       if (trackingType != null) {
-        setIcon(AllIcons.Debugger.MemoryView.ClassTracked);
+        setIcon(AllIcons.Debugger.Db_watch);
         setTransparentIconBackground(true);
       }
 

@@ -346,7 +346,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
 
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         if (KEY.getName().equals(dataId)) {
           return ServersToolWindowContent.this;
         }

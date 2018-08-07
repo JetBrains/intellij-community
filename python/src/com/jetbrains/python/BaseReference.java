@@ -55,7 +55,7 @@ public abstract class BaseReference implements PsiReference, PyUserInitiatedReso
     return null;
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return resolve() == element;
   }
 

@@ -169,10 +169,34 @@ public final class HttpRequests {
   }
 
   @NotNull
+  public static RequestBuilder delete(@NotNull String url) {
+    return new RequestBuilderImpl(url, connection -> ((HttpURLConnection)connection).setRequestMethod("DELETE"));
+  }
+
+  @NotNull
   public static RequestBuilder post(@NotNull String url, @Nullable String contentType) {
     return new RequestBuilderImpl(url, rawConnection -> {
       HttpURLConnection connection = (HttpURLConnection)rawConnection;
       connection.setRequestMethod("POST");
+      connection.setDoOutput(true);
+      if (contentType != null) {
+        connection.setRequestProperty("Content-Type", contentType);
+      }
+    });
+  }
+
+  /**
+   * Java does not support "newer" HTTP methods so we have to rely on server-side support of `X-HTTP-Method-Override` header to invoke PATCH
+   * For reasoning see {@link HttpURLConnection#setRequestMethod(String)}
+   * <p>
+   * TODO: either fiddle with reflection or patch JDK to avoid server reliance
+   */
+  @NotNull
+  public static RequestBuilder patch(@NotNull String url, @Nullable String contentType) {
+    return new RequestBuilderImpl(url, rawConnection -> {
+      HttpURLConnection connection = (HttpURLConnection)rawConnection;
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("X-HTTP-Method-Override", "PATCH");
       connection.setDoOutput(true);
       if (contentType != null) {
         connection.setRequestProperty("Content-Type", contentType);
@@ -216,6 +240,7 @@ public final class HttpRequests {
     private ConnectionTuner myTuner;
     private final ConnectionTuner myInternalTuner;
     private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
+    public boolean myThrowStatusCodeException = true;
 
     private RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
@@ -305,6 +330,13 @@ public final class HttpRequests {
     @Override
     public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
       myUntrustedCertificateStrategy = strategy;
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public RequestBuilder throwStatusCodeException(boolean shouldThrow) {
+      myThrowStatusCodeException = shouldThrow;
       return this;
     }
 
@@ -485,13 +517,15 @@ public final class HttpRequests {
         result = processor.process(request);
       }
 
-      URLConnection connection = request.myConnection;
-      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
-        // getResponseCode is not checked on connect for POST, because write must be performed before read
-        HttpURLConnection urlConnection = (HttpURLConnection)connection;
-        int responseCode = urlConnection.getResponseCode();
-        if (responseCode >= 400) {
-          throwHttpStatusError(urlConnection, request, builder, responseCode);
+      if (builder.myThrowStatusCodeException) {
+        URLConnection connection = request.myConnection;
+        if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
+          // getResponseCode is not checked on connect for POST, because write must be performed before read
+          HttpURLConnection urlConnection = (HttpURLConnection)connection;
+          int responseCode = urlConnection.getResponseCode();
+          if (responseCode >= 400) {
+            throwHttpStatusError(urlConnection, request, builder, responseCode);
+          }
         }
       }
       return result;
@@ -562,7 +596,8 @@ public final class HttpRequests {
         return connection;
       }
 
-      LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET, HEAD or POST");
+      LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
+                     "'" + method + "' not supported; please use GET, HEAD, DELETE or POST");
 
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
       int responseCode = httpURLConnection.getResponseCode();
@@ -579,7 +614,9 @@ public final class HttpRequests {
           }
         }
 
-        return throwHttpStatusError(httpURLConnection, request, builder, responseCode);
+        if(builder.myThrowStatusCodeException) {
+          throwHttpStatusError(httpURLConnection, request, builder, responseCode);
+        }
       }
 
       return connection;
@@ -588,7 +625,7 @@ public final class HttpRequests {
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 
-  private static URLConnection throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
+  private static void throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
       message = HttpUrlConnectionUtil.readString(connection.getErrorStream(), connection);

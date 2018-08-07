@@ -745,7 +745,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return myActionPanel.getData(dataId);
   }
 
@@ -1102,12 +1102,12 @@ public abstract class DesignerEditorPanel extends JPanel
           final AnAction[] defaultAction = new AnAction[1];
           DefaultActionGroup popupGroup = new DefaultActionGroup() {
             @Override
-            public boolean canBePerformed(DataContext context) {
+            public boolean canBePerformed(@NotNull DataContext context) {
               return true;
             }
 
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               defaultAction[0].actionPerformed(e);
             }
           };
@@ -1117,7 +1117,7 @@ public abstract class DesignerEditorPanel extends JPanel
           if (message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) {
             AnAction popupAction = new AnAction() {
               @Override
-              public void actionPerformed(AnActionEvent e) {
+              public void actionPerformed(@NotNull AnActionEvent e) {
                 message.myQuickFix.run();
               }
             };
@@ -1129,7 +1129,7 @@ public abstract class DesignerEditorPanel extends JPanel
             for (final Pair<String, Runnable> pair : message.myAdditionalFixes) {
               AnAction popupAction = new AnAction() {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   pair.second.run();
                 }
               };
