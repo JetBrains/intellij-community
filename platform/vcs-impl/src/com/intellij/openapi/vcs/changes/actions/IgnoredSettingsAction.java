@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -32,7 +33,7 @@ public class IgnoredSettingsAction extends AnAction implements DumbAware {
     super("Configure Ignored Files...", "Specify file paths and masks which are ignored", null);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     IgnoredSettingsDialog.configure(project);

@@ -291,7 +291,7 @@ public class GitLogUtil {
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
     GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
-    Git.getInstance().runCommandWithoutCollectingOutput(handler).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
     handlerListener.reportErrors();
 
     sw.report();

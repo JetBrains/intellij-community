@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.event;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import java.util.*;
 
 public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private final EventDispatcher<DocumentListener> myDocumentMulticaster = EventDispatcher.create(DocumentListener.class);
+  private final EventDispatcher<PrioritizedInternalDocumentListener> myPrioritizedDocumentMulticaster = EventDispatcher.create(PrioritizedInternalDocumentListener.class, Collections.singletonMap("getPriority", EditorDocumentPriorities.RANGE_MARKER));
   private final EventDispatcher<EditReadOnlyListener> myEditReadOnlyMulticaster = EventDispatcher.create(EditReadOnlyListener.class);
 
   private final EventDispatcher<EditorMouseListener> myEditorMouseMulticaster = EventDispatcher.create(EditorMouseListener.class);
@@ -41,6 +43,7 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   public void registerDocument(@NotNull DocumentEx document) {
     document.addDocumentListener(myDocumentMulticaster.getMulticaster());
+    document.addDocumentListener(myPrioritizedDocumentMulticaster.getMulticaster());
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
   }
 
@@ -63,6 +66,11 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
     myDocumentMulticaster.addListener(listener, parentDisposable);
+  }
+
+  @Override
+  public void addPrioritizedDocumentListener(@NotNull PrioritizedInternalDocumentListener listener, @NotNull Disposable parent) {
+    myPrioritizedDocumentMulticaster.addListener(listener, parent);
   }
 
   @Override

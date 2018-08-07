@@ -45,7 +45,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
     if (reference instanceof XmlAttributeReference) {

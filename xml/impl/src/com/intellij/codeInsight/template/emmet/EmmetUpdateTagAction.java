@@ -206,7 +206,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
 
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     event.getPresentation().setVisible(event.getPresentation().isEnabled());
   }

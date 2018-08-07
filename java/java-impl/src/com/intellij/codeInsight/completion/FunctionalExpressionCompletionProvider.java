@@ -69,7 +69,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     addFunctionalVariants(parameters, true, true, result.getPrefixMatcher(), result);
   }

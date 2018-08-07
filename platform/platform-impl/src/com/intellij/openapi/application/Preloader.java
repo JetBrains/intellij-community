@@ -70,12 +70,14 @@ public class Preloader implements Disposable, ApplicationComponent {
         if (myIndicator.isCanceled()) return;
 
         progressManager.runProcess(() -> {
+          long startTime = System.nanoTime();
           try {
             activity.preload(myWrappingIndicator);
           }
           catch (ProcessCanceledException ignore) {
           }
-          LOG.info("Finished preloading " + activity);
+          long ms = (System.nanoTime() - startTime) / 1000000;
+          LOG.info(activity.getClass().getName() + " took " + ms + " ms");
         }, myIndicator);
       });
     }

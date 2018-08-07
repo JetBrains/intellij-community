@@ -300,7 +300,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       super("Merge", "", AllIcons.Modules.Merge); // todo
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() > 1) {
         final String newName = Messages.showInputDialog(
@@ -333,7 +333,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() > 1);
     }
@@ -345,7 +345,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       super("Split", "", AllIcons.Modules.Split); // todo
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
 
       if (elements.size() == 1) {
@@ -369,7 +369,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         }
       }
     }
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       e.getPresentation().setEnabled(elements.size() == 1 && getContent(elements.get(0)).size() > 1);
     }
@@ -380,7 +380,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       super("Rename", "", IconUtil.getEditIcon()); // todo
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       if (elements.size() == 1) {
         final T element = elements.get(0);
@@ -410,7 +410,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
     }
 
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
     }

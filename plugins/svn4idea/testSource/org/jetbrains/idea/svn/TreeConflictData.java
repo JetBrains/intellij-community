@@ -8,21 +8,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public interface TreeConflictData {
-  Data[] ourAll = new Data[] {
-    FileToFile.MINE_DELETE_THEIRS_EDIT, FileToFile.MINE_EDIT_THEIRS_DELETE, FileToFile.MINE_EDIT_THEIRS_MOVE,
-    FileToFile.MINE_UNV_THEIRS_ADD, FileToFile.MINE_UNV_THEIRS_MOVE, FileToFile.MINE_MOVE_THEIRS_EDIT,
-    FileToFile.MINE_MOVE_THEIRS_ADD,
-    /*removed: DirToDir.MINE_EDIT_THEIRS_DELETE - no more a conflict since 1.7.7*/
-    DirToDir.MINE_DELETE_THEIRS_EDIT, DirToDir.MINE_EDIT_THEIRS_MOVE,
-    DirToDir.MINE_UNV_THEIRS_ADD, DirToDir.MINE_UNV_THEIRS_MOVE, DirToDir.MINE_MOVE_THEIRS_EDIT,
-    DirToDir.MINE_MOVE_THEIRS_ADD,
-
-    DirToFile.MINE_ADD_THEIRS_ADD, DirToFile.MINE_ADD_THEIRS_MOVE, DirToFile.MINE_UNV_THEIRS_ADD,
-    DirToFile.MINE_UNV_THEIRS_MOVE, DirToFile.MINE_MOVE_THEIRS_ADD,
-
-    FileToDir.MINE_ADD_THEIRS_ADD, FileToDir.MINE_ADD_THEIRS_MOVE, FileToDir.MINE_UNV_THEIRS_ADD,
-    FileToDir.MINE_UNV_THEIRS_MOVE, FileToDir.MINE_MOVE_THEIRS_ADD};
-
   interface FileToFile {
     Data MINE_UNV_THEIRS_ADD = new Data("Index: added.txt\n" +
                                         "===================================================================\n" +
@@ -42,8 +27,10 @@ public interface TreeConflictData {
                                             "@@ -1,1 +0,0 @@\n" +
                                             "-123\n" +
                                             "\\ No newline at end of file\n", "root/source/s1.txt",
+                                            // Status after resolve mine-full - added + copied from previous revision
                                             new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
-                                                         StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false));
+                                                         StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false,
+                                                         "root/source/s1.txt"));
     Data MINE_DELETE_THEIRS_EDIT = new Data("Index: root/source/s1.txt\n" +
                                             "===================================================================\n" +
                                             "--- root/source/s1.txt\t(revision 358)\n" +
@@ -61,9 +48,9 @@ public interface TreeConflictData {
                                           "--- root/source/s1.txt\t(revision 358)\n" +
                                           "+++ root/source/s1renamed.txt\t(revision )\n" +
                                           "@@ -1,0 +1,0 @@\n", "root/source/s1.txt",
+                                          // Status after resolve mine-full - added + copied from previous revision
                                           new FileData("root/source/s1.txt", "1*2*3", StatusType.STATUS_NORMAL,
-                                                       StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false));
-
+                                                       StatusType.STATUS_MODIFIED, StatusType.STATUS_NORMAL, false, "root/source/s1.txt"));
     Data MINE_UNV_THEIRS_MOVE = new Data("Index: root/source/s1.txt\n" +
                                           "===================================================================\n" +
                                           "--- root/source/s1.txt\t(revision 358)\n" +

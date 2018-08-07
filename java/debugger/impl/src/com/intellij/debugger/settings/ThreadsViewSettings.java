@@ -8,11 +8,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(
-  name="ThreadsViewSettings",
-  storages= {
-    @Storage("debugger.threadsview.xml")}
-)
+@State(name = "ThreadsViewSettings", storages = {
+  @Storage("debugger.xml"),
+  @Storage(value = "debugger.threadsview.xml", deprecated = true),
+})
 public class ThreadsViewSettings implements PersistentStateComponent<ThreadsViewSettings> {
   public boolean SHOW_THREAD_GROUPS = false;
   public boolean SHOW_LINE_NUMBER = true;

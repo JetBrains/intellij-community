@@ -40,7 +40,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     root = new ProjectNode(project);
     updater = new ProjectFileNodeUpdater(project, invoker) {
       @Override
-      protected void update(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
+      protected void updateStructure(boolean fromRoot, @NotNull Set<VirtualFile> updatedFiles) {
         boolean filtered = root.filter != null;
         SmartHashSet<Node> nodes = fromRoot || filtered ? null : new SmartHashSet<>();
         root.children.forEach(child -> child.invalidateChildren(node -> {
@@ -80,7 +80,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
   public void onValidThread(@NotNull Runnable task) {
-    invoker.invokeLaterIfNeeded(task);
+    invoker.runOrInvokeLater(task);
   }
 
   @Override

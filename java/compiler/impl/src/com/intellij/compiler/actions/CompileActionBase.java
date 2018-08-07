@@ -26,9 +26,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CompileActionBase extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
@@ -44,7 +45,7 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
 
   protected abstract void doAction(final DataContext dataContext, final Project project);
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {

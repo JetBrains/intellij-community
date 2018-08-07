@@ -45,15 +45,16 @@ import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubBranch;
 import org.jetbrains.plugins.github.api.data.GithubPullRequest;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
+import org.jetbrains.plugins.github.exceptions.GithubConfusingException;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
 import org.jetbrains.plugins.github.util.*;
@@ -74,8 +75,8 @@ public class GithubCreatePullRequestWorker {
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitRepository myGitRepository;
-  @NotNull private final GithubAccount myAccount;
-  @NotNull private final GithubApiTaskExecutor myTaskExecutor;
+  @NotNull private final GithubApiRequestExecutor myExecutor;
+  @NotNull private final GithubServerPath myServer;
   @NotNull private final GithubGitHelper myGitHelper;
   @NotNull private final ProgressManager myProgressManager;
 
@@ -93,9 +94,10 @@ public class GithubCreatePullRequestWorker {
   private GithubCreatePullRequestWorker(@NotNull Project project,
                                         @NotNull Git git,
                                         @NotNull GitRepository gitRepository,
-                                        @NotNull GithubAccount account,
-                                        @NotNull GithubApiTaskExecutor executor,
-                                        @NotNull GithubGitHelper helper, @NotNull ProgressManager progressManager,
+                                        @NotNull GithubApiRequestExecutor executor,
+                                        @NotNull GithubServerPath server,
+                                        @NotNull GithubGitHelper helper,
+                                        @NotNull ProgressManager progressManager,
                                         @NotNull GithubFullPath path,
                                         @NotNull String remoteName,
                                         @NotNull String remoteUrl,
@@ -103,8 +105,8 @@ public class GithubCreatePullRequestWorker {
     myProject = project;
     myGit = git;
     myGitRepository = gitRepository;
-    myAccount = account;
-    myTaskExecutor = executor;
+    myExecutor = executor;
+    myServer = server;
     myGitHelper = helper;
     myProgressManager = progressManager;
     myPath = path;
@@ -128,13 +130,14 @@ public class GithubCreatePullRequestWorker {
   @Nullable
   public static GithubCreatePullRequestWorker create(@NotNull final Project project,
                                                      @NotNull GitRepository gitRepository,
-                                                     @NotNull GithubAccount account) {
+                                                     @NotNull GithubApiRequestExecutor executor,
+                                                     @NotNull GithubServerPath server) {
     ProgressManager progressManager = ProgressManager.getInstance();
     return progressManager.runProcessWithProgressSynchronously(() -> {
       Git git = ServiceManager.getService(Git.class);
 
       gitRepository.update();
-      Pair<GitRemote, String> remote = findGithubRemote(account.getServer(), gitRepository);
+      Pair<GitRemote, String> remote = findGithubRemote(server, gitRepository);
       if (remote == null) {
         GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find GitHub remote");
         return null;
@@ -155,7 +158,7 @@ public class GithubCreatePullRequestWorker {
       }
 
       GithubCreatePullRequestWorker worker =
-        new GithubCreatePullRequestWorker(project, git, gitRepository, account, GithubApiTaskExecutor.getInstance(),
+        new GithubCreatePullRequestWorker(project, git, gitRepository, executor, server,
                                           GithubGitHelper.getInstance(), progressManager, path, remoteName, remoteUrl,
                                           currentBranch.getName());
 
@@ -257,7 +260,7 @@ public class GithubCreatePullRequestWorker {
   private void doLoadForksFromGit(@NotNull ProgressIndicator indicator) {
     for (GitRemote remote : myGitRepository.getRemotes()) {
       for (String url : remote.getUrls()) {
-        if (myAccount.getServer().matches(url)) {
+        if (myServer.matches(url)) {
           GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
           if (path != null) {
             doAddFork(path, remote.getName(), indicator);
@@ -269,8 +272,9 @@ public class GithubCreatePullRequestWorker {
   }
 
   private void doLoadForksFromGithub(@NotNull ProgressIndicator indicator) throws IOException {
-    GithubRepoDetailed repo = myTaskExecutor.execute(indicator, myAccount, connection ->
-      GithubApiUtil.getDetailedRepoInfo(connection, myPath.getUser(), myPath.getRepository()));
+    GithubRepoDetailed repo = myExecutor.execute(indicator,
+                                                 GithubApiRequests.Repos.get(myServer, myPath.getUser(), myPath.getRepository()));
+    if (repo == null) throw new GithubConfusingException("Can't find github repo " + myPath.toString());
 
     doAddFork(repo, indicator);
     if (repo.getParent() != null) {
@@ -285,15 +289,16 @@ public class GithubCreatePullRequestWorker {
 
   @NotNull
   private List<String> loadBranches(@NotNull final GithubFullPath fork, @NotNull ProgressIndicator indicator) throws IOException {
-    List<GithubBranch> branches = myTaskExecutor.execute(indicator, myAccount, connection ->
-      GithubApiUtil.getRepoBranches(connection, fork.getUser(), fork.getRepository()));
+    List<GithubBranch> branches = GithubApiPagesLoader
+      .loadAll(myExecutor, indicator, GithubApiRequests.Repos.Branches.pages(myServer, fork.getUser(), fork.getRepository()));
     return ContainerUtil.map(branches, GithubBranch::getName);
   }
 
   @Nullable
   private String doLoadDefaultBranch(@NotNull final GithubFullPath fork, @NotNull ProgressIndicator indicator) throws IOException {
-    GithubRepo repo = myTaskExecutor.execute(indicator, myAccount, connection ->
-      GithubApiUtil.getDetailedRepoInfo(connection, fork.getUser(), fork.getRepository()));
+    GithubRepo repo = myExecutor.execute(indicator,
+                                         GithubApiRequests.Repos.get(myServer, fork.getUser(), fork.getRepository()));
+    if (repo == null) throw new GithubConfusingException("Can't find github repo " + fork.toString());
     return repo.getDefaultBranch();
   }
 
@@ -382,10 +387,10 @@ public class GithubCreatePullRequestWorker {
     if (fork.getRemoteName() != null) return;
 
     GithubFullPath path = fork.getPath();
-    String url = myGitHelper.getRemoteUrl(myAccount.getServer(), path);
+    String url = myGitHelper.getRemoteUrl(myServer, path);
 
     try {
-      myGit.addRemote(myGitRepository, path.getUser(), url).getOutputOrThrow();
+      myGit.addRemote(myGitRepository, path.getUser(), url).throwOnError();
       myGitRepository.update();
       fork.setRemoteName(path.getUser());
     }
@@ -519,8 +524,9 @@ public class GithubCreatePullRequestWorker {
     final String base = branch.getRemoteName();
 
     try {
-      return myTaskExecutor.execute(indicator, myAccount, connection ->
-        GithubApiUtil.createPullRequest(connection, forkPath.getUser(), forkPath.getRepository(), title, description, head, base));
+      return myExecutor.execute(indicator,
+                                GithubApiRequests.Repos.PullRequests
+                                  .create(myServer, forkPath.getUser(), forkPath.getRepository(), title, description, head, base));
     }
     catch (IOException e) {
       GithubNotifications.showError(myProject, CANNOT_CREATE_PULL_REQUEST, e);
@@ -580,9 +586,8 @@ public class GithubCreatePullRequestWorker {
   @Nullable
   private List<GithubFullPath> getAvailableForks(@NotNull ProgressIndicator indicator) {
     try {
-      List<GithubRepo> forks = myTaskExecutor.execute(indicator, myAccount, connection ->
-        GithubApiUtil.getForks(connection, mySource.getUser(), mySource.getRepository())
-      );
+      List<GithubRepo> forks = GithubApiPagesLoader
+        .loadAll(myExecutor, indicator, GithubApiRequests.Repos.Forks.pages(myServer, mySource.getUser(), mySource.getRepository()));
       List<GithubFullPath> forkPaths = ContainerUtil.map(forks, GithubRepo::getFullPath);
       if (!forkPaths.contains(mySource)) return ContainerUtil.append(forkPaths, mySource);
       return forkPaths;
@@ -602,19 +607,17 @@ public class GithubCreatePullRequestWorker {
     }
 
     try {
-      GithubRepo repo = myTaskExecutor.execute(indicator, myAccount, connection -> {
-        try {
-          GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(connection, user, mySource.getRepository());
-          if (target.getSource() != null && StringUtil.equals(target.getSource().getUserName(), mySource.getUser())) {
-            return target;
-          }
-        }
-        catch (IOException ignore) {
-          // such repo may not exist
-        }
+      GithubRepo repo;
+      GithubRepoDetailed target = myExecutor.execute(indicator, GithubApiRequests.Repos.get(myServer, user, mySource.getRepository()));
 
-        return GithubApiUtil.findForkByUser(connection, mySource.getUser(), mySource.getRepository(), user);
-      });
+      if (target != null && target.getSource() != null && StringUtil.equals(target.getSource().getUserName(), mySource.getUser())) {
+        repo = target;
+      }
+      else {
+        repo = GithubApiPagesLoader
+          .find(myExecutor, indicator, GithubApiRequests.Repos.Forks.pages(myServer, mySource.getUser(), mySource.getRepository()),
+                (fork) -> StringUtil.equalsIgnoreCase(fork.getUserName(), user));
+      }
 
       if (repo == null) return null;
       return doAddFork(repo, indicator);

@@ -5,7 +5,10 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.*;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -16,7 +19,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -54,17 +60,11 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-@State(
-  name = "LafManager",
-  storages = {
-    @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS),
-    @Storage(value = "options.xml", deprecated = true)
-  }
-)
+@State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
@@ -134,7 +134,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     lafList.add(new DarculaLookAndFeelInfo());
 
 
-    lafList.addAll(Arrays.stream(UIThemeProvider.EP_NAME.getExtensions())
+    lafList.addAll(UIThemeProvider.EP_NAME.getExtensionList().stream()
                          .map(UIThemeProvider::createTheme)
                          .filter(x -> x != null)
                          .map(UIThemeBasedLookAndFeelInfo::new)

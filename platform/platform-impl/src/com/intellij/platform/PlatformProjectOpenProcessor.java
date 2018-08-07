@@ -158,8 +158,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
+      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK && !isReopen) {
+        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, false, "Open Project");
         if (!dialog.showAndGet()) {
           return null;
         }

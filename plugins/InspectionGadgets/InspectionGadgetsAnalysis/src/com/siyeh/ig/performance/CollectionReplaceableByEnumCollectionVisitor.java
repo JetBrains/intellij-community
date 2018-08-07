@@ -85,7 +85,7 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
     if (!expectedType.isAssignableFrom(replacementCollectionType) && !isReplaceableType((PsiClassType)expectedType)) {
       return;
     }
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     PsiLocalVariable localVariable = tryCast(parent, PsiLocalVariable.class);
     if (localVariable != null) {
       PsiClass localVariableClass = PsiUtil.resolveClassInClassTypeOnly(localVariable.getType());

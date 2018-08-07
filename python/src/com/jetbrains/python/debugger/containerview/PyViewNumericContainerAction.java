@@ -53,7 +53,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);
     TreePath[] paths = getSelectedPaths(e.getDataContext());
     if (paths != null) {

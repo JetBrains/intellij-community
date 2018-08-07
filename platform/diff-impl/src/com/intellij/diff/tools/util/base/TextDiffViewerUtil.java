@@ -168,7 +168,7 @@ public class TextDiffViewerUtil {
     private DefaultActionGroup myActions;
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(getText(getValue()));
     }
@@ -225,7 +225,7 @@ public class TextDiffViewerUtil {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabledAndVisible(myPolicies.length > 1);
     }

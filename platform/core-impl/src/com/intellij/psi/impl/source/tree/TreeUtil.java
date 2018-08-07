@@ -59,7 +59,7 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode skipElements(ASTNode element, TokenSet types) {
+  public static ASTNode skipElements(@Nullable ASTNode element, @NotNull TokenSet types) {
     while (true) {
       if (element == null) return null;
       if (!types.contains(element.getElementType())) break;
@@ -69,7 +69,7 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode skipElementsBack(@Nullable ASTNode element, TokenSet types) {
+  public static ASTNode skipElementsBack(@Nullable ASTNode element, @NotNull TokenSet types) {
     if (element == null) return null;
     if (!types.contains(element.getElementType())) return element;
 

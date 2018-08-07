@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -16,6 +15,7 @@ import java.util.Random;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_IGNORE;
+import static org.junit.Assert.assertTrue;
 
 public class SvnIgnoreTest extends SvnTestCase {
   @Override
@@ -43,7 +43,7 @@ public class SvnIgnoreTest extends SvnTestCase {
       current = createDirInCommand(current, "dir" + i);
       ignored.add(current);
       refreshChanges();
-      Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+      assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
     }
     testOneFile(current, "file.txt");
 
@@ -100,13 +100,13 @@ public class SvnIgnoreTest extends SvnTestCase {
 
   private void testImpl(VirtualFile file) {
     refreshChanges();
-    Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+    assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
 
     dirtyScopeManager.fileDirty(file);
     changeListManager.ensureUpToDate(false);
 
-    Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+    assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
     final FileStatus status = changeListManager.getStatus(file);
-    Assert.assertTrue(status.getText(), FileStatus.IGNORED.equals(status));
+    assertTrue(status.getText(), FileStatus.IGNORED.equals(status));
   }
 }

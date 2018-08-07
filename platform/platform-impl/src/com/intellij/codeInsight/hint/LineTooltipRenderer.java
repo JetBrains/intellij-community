@@ -170,7 +170,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       }
 
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
         hintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
         ActionsCollector.getInstance().record("tooltip.actions.show.description.shortcut", getClass());

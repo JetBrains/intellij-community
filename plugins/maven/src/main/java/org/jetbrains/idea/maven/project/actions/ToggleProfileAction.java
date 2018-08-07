@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ToggleProfileAction extends MavenAction {
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!isAvailable(e)) return;
 
@@ -53,7 +53,7 @@ public class ToggleProfileAction extends MavenAction {
   }
 
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
     return getTargetState(e) != null;

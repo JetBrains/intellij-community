@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +39,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     myComponents = components;
   }
 
-  @NotNull
-  public String getProductCode() {
+  public @NotNull String getProductCode() {
     return myProductCode;
   }
 
@@ -47,13 +47,17 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return myComponents[0];
   }
 
-  @NotNull
-  public int[] getComponents() {
+  public @NotNull int[] getComponents() {
     return myComponents.clone();
   }
 
   public boolean isSnapshot() {
     return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) >= 0;
+  }
+
+  @Contract(pure = true)
+  public @NotNull BuildNumber withoutProductCode() {
+    return myProductCode.isEmpty() ? this : new BuildNumber("", myComponents);
   }
 
   public String asString() {

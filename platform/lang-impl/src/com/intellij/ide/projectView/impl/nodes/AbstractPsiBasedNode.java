@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @Override
   @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
+    return AstLoadingFilter.disableTreeLoading(this::doGetChildren);
+  }
+
+  @NotNull
+  private Collection<AbstractTreeNode> doGetChildren() {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null) {
       return new ArrayList<>();
@@ -123,6 +129,10 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public void update(final PresentationData data) {
+    AstLoadingFilter.disableTreeLoading(() -> doUpdate(data));
+  }
+
+  private void doUpdate(PresentationData data) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (!validate()) {
         return;

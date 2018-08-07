@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This group hides itself when there's no registered children.
@@ -31,7 +32,7 @@ public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware
     super();
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setVisible(getChildrenCount() > 0);
   }

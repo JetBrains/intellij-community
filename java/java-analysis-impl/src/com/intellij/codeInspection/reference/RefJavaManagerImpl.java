@@ -511,8 +511,34 @@ public class RefJavaManagerImpl extends RefJavaManager {
             buf.append(",").append(nameValuePair.getText().replaceAll("[{}\"\"]", ""));
           }
           if (buf.length() > 0) {
-            element.addSuppression(buf.substring(1));
+            String suppressId = buf.substring(1);
+            element.addSuppression(suppressId);
+
+            if (listOwner instanceof PsiField) {
+              addSuppressionsForSiblings((PsiField)listOwner, suppressId);
+            }
           }
+        }
+      }
+    }
+
+    private void addSuppressionsForSiblings(PsiField listOwner, String suppressId) {
+      PsiField field = listOwner;
+      while (true) {
+        PsiElement psiElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(field);
+        if (psiElement == null || !JavaTokenType.COMMA.equals(psiElement.getNode().getElementType())) {
+          break;
+        }
+        psiElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(psiElement);
+        if (psiElement instanceof PsiField) {
+          field = (PsiField)psiElement;
+          RefElement refElement = myRefManager.getReference(field);
+          if (refElement != null) {
+            ((RefElementImpl)refElement).addSuppression(suppressId);
+          }
+        }
+        else {
+          break;
         }
       }
     }

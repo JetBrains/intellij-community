@@ -47,7 +47,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return true;
   }
 
-  private Set<VirtualFile> getRootsToIterate(final Module module) {
+  @NotNull
+  private Set<VirtualFile> getRootsToIterate(@NotNull Module module) {
     return ReadAction.compute(() -> {
       if (module.isDisposed()) return Collections.emptySet();
 
@@ -110,7 +111,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Nullable
-  public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, DirectoryInfo info) {
+  public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return info.isInProject(file) ? info.getLibraryClassRoot() : null;
   }
 
@@ -120,7 +121,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Nullable
-  public static VirtualFile getSourceRootForFile(@NotNull VirtualFile file, DirectoryInfo info) {
+  public static VirtualFile getSourceRootForFile(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return info.isInProject(file) ? info.getSourceRoot() : null;
   }
 
@@ -135,7 +136,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Nullable
-  public static VirtualFile getContentRootForFile(DirectoryInfo info, @NotNull VirtualFile file, boolean honorExclusion) {
+  public static VirtualFile getContentRootForFile(@NotNull DirectoryInfo info, @NotNull VirtualFile file, boolean honorExclusion) {
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getContentRoot();
     }
@@ -174,6 +175,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   // a slightly faster implementation then the default one
+  @Override
   public boolean isInLibrary(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     return info.isInProject(fileOrDir) && (info.hasLibraryClassRoot() || info.isInLibrarySource(fileOrDir));

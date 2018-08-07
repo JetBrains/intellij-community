@@ -105,7 +105,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (e != null) {
       if (e.getPresentation().isVisible() && findActions(e).length == 0) {
@@ -123,7 +123,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
       this.intention = intention;
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
       final Project project = e.getData(LangDataKeys.PROJECT);
       final Editor editor = e.getData(LangDataKeys.EDITOR);

@@ -356,7 +356,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return;
 

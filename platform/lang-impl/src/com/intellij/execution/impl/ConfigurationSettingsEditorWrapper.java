@@ -140,7 +140,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private class MyDataProvider implements DataProvider {
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return ConfigurationSettingsEditorWrapper.this;
       }

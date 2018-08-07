@@ -590,7 +590,7 @@ public class SearchTextField extends JPanel {
 
   public static final class FindAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       SearchTextField search = event.getData(KEY);
       if (search != null) {
         search.selectText();
@@ -599,7 +599,7 @@ public class SearchTextField extends JPanel {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getData(KEY) != null);
     }
   }

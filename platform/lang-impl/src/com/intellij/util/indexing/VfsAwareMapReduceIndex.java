@@ -92,7 +92,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       final SnapshotInputMappings.Snapshot<Key, Value> snapshot = mySnapshotInputMappings.readPersistentDataOrMap(content);
       data = snapshot.getData();
       hashId = snapshot.getHashId();
-    } else {
+    }
+    else {
       data = mapInput(content);
       hashId = 0;
     }

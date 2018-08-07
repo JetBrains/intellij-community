@@ -25,6 +25,8 @@ import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 /**
  * Tools that help user to work with magic literals.
  *
@@ -34,7 +36,7 @@ public final class PyMagicLiteralTools {
   /**
    * Cache: ref (value may be null or extension point) by by string literal
    */
-  private final static PsiCacheKey<Ref<PyMagicLiteralExtensionPoint>, StringLiteralExpression> MAGIC_LITERAL_POINT =
+  private static final PsiCacheKey<Ref<PyMagicLiteralExtensionPoint>, StringLiteralExpression> MAGIC_LITERAL_POINT =
     PsiCacheKey
       .create(PyMagicLiteralTools.class.getName(), new MagicLiteralChecker(), PsiModificationTracker.MODIFICATION_COUNT);
 
@@ -48,8 +50,9 @@ public final class PyMagicLiteralTools {
    * @param element element to check
    * @return true if magic
    */
-  public static boolean isMagicLiteral(@NotNull final PsiElement element) {
-    return (element instanceof StringLiteralExpression) && (getPoint((StringLiteralExpression)element) != null);
+  public static boolean couldBeMagicLiteral(@NotNull final PsiElement element) {
+    return (element instanceof StringLiteralExpression) &&
+           Arrays.stream(PyMagicLiteralExtensionPoint.EP_NAME.getExtensions()).anyMatch(o-> o.isEnabled(element));
   }
 
   /**

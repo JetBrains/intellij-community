@@ -21,6 +21,7 @@ import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -31,15 +32,32 @@ import java.util.List;
 
 public class ComparisonMergeUtil {
   @NotNull
-  public static List<MergeRange> buildFair(@NotNull FairDiffIterable fragments1,
-                                           @NotNull FairDiffIterable fragments2,
-                                           @NotNull ProgressIndicator indicator) {
+  public static List<MergeRange> buildSimple(@NotNull FairDiffIterable fragments1,
+                                             @NotNull FairDiffIterable fragments2,
+                                             @NotNull ProgressIndicator indicator) {
     assert fragments1.getLength1() == fragments2.getLength1();
     return new FairMergeBuilder().execute(fragments1, fragments2);
   }
 
+  @NotNull
+  public static List<MergeRange> buildMerge(@NotNull FairDiffIterable fragments1,
+                                            @NotNull FairDiffIterable fragments2,
+                                            @NotNull SideEquality trueEquality,
+                                            @NotNull ProgressIndicator indicator) {
+    assert fragments1.getLength1() == fragments2.getLength1();
+    return new FairMergeBuilder(trueEquality).execute(fragments1, fragments2);
+  }
+
   private static class FairMergeBuilder {
-    @NotNull private final ChangeBuilder myChangesBuilder = new ChangeBuilder();
+    @NotNull private final ChangeBuilder myChangesBuilder;
+
+    private FairMergeBuilder() {
+      myChangesBuilder = new ChangeBuilder();
+    }
+
+    private FairMergeBuilder(@NotNull SideEquality trueEquality) {
+      myChangesBuilder = new IgnoringChangeBuilder(trueEquality);
+    }
 
     @NotNull
     public List<MergeRange> execute(@NotNull FairDiffIterable fragments1,
@@ -51,7 +69,8 @@ public class ComparisonMergeUtil {
         Side side = add(unchanged1.peek(), unchanged2.peek());
         side.select(unchanged1, unchanged2).next();
       }
-      return finish(fragments1, fragments2);
+
+      return myChangesBuilder.finish(fragments1.getLength2(), fragments1.getLength1(), fragments2.getLength2());
     }
 
     @NotNull
@@ -67,40 +86,30 @@ public class ComparisonMergeUtil {
 
       int startBase = Math.max(start1, start2);
       int endBase = Math.min(end1, end2);
+      int count = endBase - startBase;
 
       int startShift1 = startBase - start1;
-      int endCut1 = end1 - endBase;
       int startShift2 = startBase - start2;
-      int endCut2 = end2 - endBase;
 
       int startLeft = range1.start2 + startShift1;
-      int endLeft = range1.end2 - endCut1;
+      int endLeft = startLeft + count;
       int startRight = range2.start2 + startShift2;
-      int endRight = range2.end2 - endCut2;
+      int endRight = startRight + count;
 
       myChangesBuilder.markEqual(startLeft, startBase, startRight, endLeft, endBase, endRight);
 
       return Side.fromLeft(end1 <= end2);
     }
-
-    @NotNull
-    private List<MergeRange> finish(@NotNull FairDiffIterable fragments1, @NotNull FairDiffIterable fragments2) {
-      int length1 = fragments1.getLength2();
-      int length2 = fragments1.getLength1();
-      int length3 = fragments2.getLength2();
-
-      return myChangesBuilder.finish(length1, length2, length3);
-    }
   }
 
   private static class ChangeBuilder {
-    @NotNull private final List<MergeRange> myChanges = new ArrayList<>();
+    @NotNull protected final List<MergeRange> myChanges = new ArrayList<>();
 
     private int myIndex1 = 0;
     private int myIndex2 = 0;
     private int myIndex3 = 0;
 
-    private void addChange(int start1, int start2, int start3, int end1, int end2, int end3) {
+    protected void addChange(int start1, int start2, int start3, int end1, int end2, int end3) {
       if (start1 == end1 && start2 == end2 && start3 == end3) return;
       myChanges.add(new MergeRange(start1, end1, start2, end2, start3, end3));
     }
@@ -113,7 +122,7 @@ public class ComparisonMergeUtil {
       assert start2 <= end2;
       assert start3 <= end3;
 
-      addChange(myIndex1, myIndex2, myIndex3, start1, start2, start3);
+      processChange(myIndex1, myIndex2, myIndex3, start1, start2, start3);
 
       myIndex1 = end1;
       myIndex2 = end2;
@@ -126,9 +135,58 @@ public class ComparisonMergeUtil {
       assert myIndex2 <= length2;
       assert myIndex3 <= length3;
 
-      addChange(myIndex1, myIndex2, myIndex3, length1, length2, length3);
+      processChange(myIndex1, myIndex2, myIndex3, length1, length2, length3);
 
       return myChanges;
+    }
+
+    protected void processChange(int start1, int start2, int start3, int end1, int end2, int end3) {
+      addChange(start1, start2, start3, end1, end2, end3);
+    }
+  }
+
+  private static class IgnoringChangeBuilder extends ChangeBuilder {
+    @NotNull private final SideEquality myTrueEquality;
+
+    private IgnoringChangeBuilder(@NotNull SideEquality trueEquality) {
+      myTrueEquality = trueEquality;
+    }
+
+    @Override
+    protected void processChange(int start1, int start2, int start3, int end1, int end2, int end3) {
+      MergeRange lastChange = ContainerUtil.getLastItem(myChanges);
+      int unchangedStart1 = lastChange != null ? lastChange.end1 : 0;
+      int unchangedStart2 = lastChange != null ? lastChange.end2 : 0;
+      int unchangedStart3 = lastChange != null ? lastChange.end3 : 0;
+      addIgnoredChanges(unchangedStart1, unchangedStart2, unchangedStart3, start1, start2, start3);
+
+      addChange(start1, start2, start3, end1, end2, end3);
+    }
+
+    private void addIgnoredChanges(int start1, int start2, int start3, int end1, int end2, int end3) {
+      int count = end2 - start2;
+      assert end1 - start1 == count;
+      assert end3 - start3 == count;
+
+      int firstIgnoredCount = -1;
+      for (int i = 0; i < count; i++) {
+        boolean isIgnored = !myTrueEquality.equals(start1 + i, start2 + i, start3 + i);
+        boolean previousAreIgnored = firstIgnoredCount != -1;
+
+        if (isIgnored && !previousAreIgnored) {
+          firstIgnoredCount = i;
+        }
+        if (!isIgnored && previousAreIgnored) {
+          addChange(start1 + firstIgnoredCount, start2 + firstIgnoredCount, start3 + firstIgnoredCount,
+                    start1 + i, start2 + i, start3 + i);
+          firstIgnoredCount = -1;
+        }
+      }
+
+      if (firstIgnoredCount != -1) {
+        addChange(start1 + firstIgnoredCount, start2 + firstIgnoredCount, start3 + firstIgnoredCount,
+                  start1 + count, start2 + count, start3 + count);
+      }
     }
   }
 
@@ -142,5 +200,9 @@ public class ComparisonMergeUtil {
     else {
       return MergeResolveUtil.tryResolve(leftText, baseText, rightText);
     }
+  }
+
+  interface SideEquality {
+    boolean equals(int leftIndex, int baseIndex, int rightIndex);
   }
 }

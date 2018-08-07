@@ -33,7 +33,7 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
   }
 
   @Override
-  protected String getPopupTitle(AnActionEvent e) {
+  protected String getPopupTitle(@NotNull AnActionEvent e) {
     return "Switch...";
   }
 

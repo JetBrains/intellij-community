@@ -108,7 +108,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       AnAction updateBranchInfoWithAuthenticationAction =
         new DumbAwareAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
             myPopup.cancel();
           }

@@ -31,7 +31,7 @@ public abstract class RunAnythingHelpGroup<P extends RunAnythingProvider> extend
 
   @NotNull
   @Override
-  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext) {
+  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     return getProviders()
       .stream()
       .map(provider -> provider.getHelpItem(dataContext))

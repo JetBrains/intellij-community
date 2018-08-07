@@ -44,7 +44,7 @@ final class ProgressMonitorInputStream extends InputStream {
     indicator.checkCanceled();
     if (increment > 0) {
       count += increment;
-      indicator.setFraction((double)count / available);
+      if(!indicator.isIndeterminate()) indicator.setFraction((double)count / available);
     }
   }
 

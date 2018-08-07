@@ -879,7 +879,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       TreeUtil.expandAll(myTree);
     }
   }
@@ -891,7 +891,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       TreeUtil.collapseAll(myTree, 1);
     }
   }

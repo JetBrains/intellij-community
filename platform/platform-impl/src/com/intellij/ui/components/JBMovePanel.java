@@ -330,7 +330,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doLeft(); 
     }
   }
@@ -342,7 +342,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doRight();
     }
   }
@@ -354,7 +354,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doAllLeft();
     }
   }
@@ -366,7 +366,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doAllRight();
     }
   }
@@ -378,7 +378,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListUtil.moveSelectedItemsUp(myRightList); 
     }
   }
@@ -390,7 +390,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListUtil.moveSelectedItemsDown(myRightList);
     }
   }

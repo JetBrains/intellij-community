@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -33,7 +34,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.CollapsingKt.collapseRef
 public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
 
   public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
-
 
   @Override
   public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
@@ -116,5 +116,14 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
       }
     }
     return super.getTargetCandidates(reference);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
+    if (targetElement instanceof GrPropertyForCompletion) {
+      return ((GrPropertyForCompletion)targetElement).getOriginalAccessor();
+    }
+    return super.adjustTargetElement(editor, offset, flags, targetElement);
   }
 }

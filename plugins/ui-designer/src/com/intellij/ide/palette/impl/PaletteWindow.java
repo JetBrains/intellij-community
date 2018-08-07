@@ -31,6 +31,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.ArrayUtil;
 import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -237,7 +238,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
@@ -344,7 +345,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   private class ClearActiveItemAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       clearActiveItem();
     }
   }

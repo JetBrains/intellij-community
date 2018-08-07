@@ -31,9 +31,12 @@ public class ColorIconCache {
   }
 
   public Icon getIcon(@NotNull final Color color, final int size) {
-    return ourCache.get(color).computeIfAbsent(size, s -> new ColorIcon(s, color));
+    return ourCache.get(color).computeIfAbsent(size, s -> new com.intellij.util.ui.ColorIcon(s, color, true));
   }
 
+  /**
+   * @deprecated use com.intellij.util.ui.ColorIcon instead
+   */
   public static class ColorIcon extends EmptyIcon {
     private Color myColor;
     private Color[] myColours;

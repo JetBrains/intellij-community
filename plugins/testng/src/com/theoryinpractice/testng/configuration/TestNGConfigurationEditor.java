@@ -462,7 +462,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
           }
         }).setAddActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !project.isDefault();
         }
       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);

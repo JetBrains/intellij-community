@@ -68,8 +68,7 @@ class IndexConfiguration {
 
       if (associatedFileTypes != null && !associatedFileTypes.isEmpty()) {
         for(FileType fileType:associatedFileTypes) {
-          List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
-          if (ids == null) myFileType2IndicesWithFileTypeInfoMap.put(fileType, ids = new ArrayList<>(5));
+          List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.computeIfAbsent(fileType, __ -> new ArrayList<>(5));
           ids.add(name);
         }
       } else {
@@ -83,7 +82,8 @@ class IndexConfiguration {
     }
   }
 
-  List<ID<?, ?>> getFileTypesForIndex(FileType fileType) {
+  @NotNull
+  List<ID<?, ?>> getFileTypesForIndex(@NotNull FileType fileType) {
     assert myFreezed;
     List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
     if (ids == null) ids = myIndicesWithoutFileTypeInfo;

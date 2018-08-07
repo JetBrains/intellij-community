@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.AnimatedIcon.Recording;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
@@ -144,12 +145,9 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
 
     private final AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
-                                                         new Icon[]{
-                                                     AllIcons.Ide.Macro.Recording_1,
-                                                     AllIcons.Ide.Macro.Recording_2,
-                                                     AllIcons.Ide.Macro.Recording_3,
-                                                     AllIcons.Ide.Macro.Recording_4},
-                                                         AllIcons.Ide.Macro.Recording_1, 1000);
+                                                         Recording.ICONS.toArray(new Icon[0]),
+                                                         AllIcons.Ide.Macro.Recording_1,
+                                                         Recording.DELAY * Recording.ICONS.size());
     private final StatusBar myStatusBar;
     private final WidgetPresentation myPresentation;
 
@@ -481,12 +479,12 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       IdeEventQueue.getInstance().doWhenReady(() -> getInstance().playMacro(myMacro));
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!getInstance().isPlaying());
     }

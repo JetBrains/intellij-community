@@ -15,16 +15,47 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToMethodParameterInspection extends AssignmentToMethodParameterInspectionBase {
+public class AssignmentToMethodParameterInspection extends BaseAssignmentToParameterInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new ExtractParameterAsLocalVariableFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("assignment.to.method.parameter.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("assignment.to.method.parameter.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "assignment.to.method.parameter.ignore.transformation.option"), this, "ignoreTransformationOfOriginalParameter");
+  }
+
+  protected boolean isApplicable(PsiParameter parameter) {
+    return parameter.getDeclarationScope() instanceof PsiMethod;
   }
 }

@@ -149,7 +149,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
     myProject = myHelper.getProject();
 
     setTitle(myHelper.getTitle());
-    setOKButtonText(FindBundle.message("find.button"));
     init();
   }
 
@@ -175,6 +174,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   @Override
   public void saveSettings() {
     FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
+    myHelper.updateFindSettings();
     applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
     rememberResultsPreviewWasOpen();
   }
@@ -351,7 +351,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
       AnAction action = new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (isResultsPreviewTabActive()) {
             navigateToSelectedUsage(myResultsPreviewTable);
           }
@@ -360,7 +360,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
       action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox, myDisposable);
       new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (!isResultsPreviewTabActive() || myResultsPreviewTable.getSelectedRowCount() == 0) doOKAction();
           else action.actionPerformed(e);
         }
@@ -1270,6 +1270,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private static void setStringsToComboBox(@NotNull String[] strings, @NotNull ComboBox<? super String> combo, String selected) {
     if (combo.getItemCount() > 0){
       combo.removeAllItems();
+      combo.setSelectedItem(null);
     }
     if (selected != null && selected.indexOf('\n') < 0) {
       strings = ArrayUtil.remove(strings, selected);
@@ -1488,6 +1489,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
     myCbPreserveCase.setVisible(isReplaceState);
     setTitle(myHelper.getTitle());
+    setOKButtonText(FindBundle.message(myHelper.isReplaceState() ? "find.replace.command" : "find.button"));
     validateFindButton();
   }
 
@@ -1643,7 +1645,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private void registerNavigateToSourceShortcutOnComponent(@NotNull final JBTable c, JComponent component) {
     AnAction anAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigateToSelectedUsage(c);
       }
     };

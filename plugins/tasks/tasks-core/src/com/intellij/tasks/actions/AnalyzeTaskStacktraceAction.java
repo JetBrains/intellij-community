@@ -22,13 +22,14 @@ import com.intellij.tasks.Comment;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LocalTask activeTask = getActiveTask(e);
     final Project project = getProject(e);
     assert activeTask != null;
@@ -37,7 +38,7 @@ public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     if (event.getPresentation().isEnabled()) {
       Task activeTask = getActiveTask(event);

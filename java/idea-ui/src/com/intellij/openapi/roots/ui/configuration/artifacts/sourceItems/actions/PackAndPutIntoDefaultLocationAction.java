@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class PackAndPutIntoDefaultLocationAction extends PutIntoDefaultLocationA
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final String jarName = suggestJarName();
     final String pathForJars = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.JAR_FILES);
     final Presentation presentation = e.getPresentation();
@@ -60,7 +61,7 @@ public class PackAndPutIntoDefaultLocationAction extends PutIntoDefaultLocationA
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final String pathForJars = myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(PackagingElementOutputKind.JAR_FILES);
     final String jarName = suggestJarName();
     if (pathForJars != null) {

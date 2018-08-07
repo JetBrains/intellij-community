@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.messages.SheetController;
 import com.intellij.util.JdomKt;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -61,7 +62,7 @@ public class MessagesFixture {
 
   @NotNull
   public static MessagesFixture findAny(@NotNull Robot robot, @NotNull Container root) {
-    return findAny(robot, root, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    return findAny(robot, root, Timeouts.INSTANCE.getMinutes05());
   }
 
   @NotNull
@@ -124,7 +125,7 @@ public class MessagesFixture {
 
   @NotNull
   static JPanelFixture findMacSheetByTitle(@NotNull Robot robot, @NotNull Container root, @NotNull String title) {
-    return findMacSheetByTitle(robot, root, title, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    return findMacSheetByTitle(robot, root, title, Timeouts.INSTANCE.getMinutes05());
   }
 
   @NotNull
@@ -139,7 +140,7 @@ public class MessagesFixture {
 
 
   private static JPanelFixture findMacSheetAny(@NotNull Robot robot, @NotNull Container root) {
-    return findMacSheetAny(robot, root, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    return findMacSheetAny(robot, root, Timeouts.INSTANCE.getMinutes05());
   }
 
   private static JPanelFixture findMacSheetAny(@NotNull Robot robot, @NotNull Container root, @NotNull Timeout timeout) {
@@ -149,7 +150,7 @@ public class MessagesFixture {
 
   @NotNull
   private static JPanel getSheetPanel(@NotNull Robot robot, @NotNull Container root) {
-    return getSheetPanel(robot, root, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    return getSheetPanel(robot, root, Timeouts.INSTANCE.getMinutes05());
   }
 
   @NotNull

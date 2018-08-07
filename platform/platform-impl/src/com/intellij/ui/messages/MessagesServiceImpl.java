@@ -44,6 +44,10 @@ public class MessagesServiceImpl implements MessagesService {
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
                                boolean alwaysUseIdeaUI) {
 
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestImplementation().show(message);
+    }
+
     try {
       if (canShowMacSheetPanel() && !alwaysUseIdeaUI) {
         WindowManager windowManager = WindowManager.getInstance();
@@ -73,6 +77,10 @@ public class MessagesServiceImpl implements MessagesService {
                                        int defaultOptionIndex,
                                        int focusedOptionIndex,
                                        Icon icon) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestImplementation().show(message);
+    }
+
     try {
       if (canShowMacSheetPanel() && moreInfo == null) {
         return MacMessages.getInstance()
@@ -101,6 +109,10 @@ public class MessagesServiceImpl implements MessagesService {
                                            int focusedOptionIndex,
                                            Icon icon,
                                            PairFunction<Integer, JCheckBox, Integer> exitFunc) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestImplementation().show(message);
+    }
+
     TwoStepConfirmationDialog dialog =
       new TwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon, exitFunc);
     dialog.show();
@@ -109,6 +121,10 @@ public class MessagesServiceImpl implements MessagesService {
 
   @Override
   public String showPasswordDialog(Project project, String message, String title, Icon icon, InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestInputImplementation().show(message, validator);
+    }
+
     final InputDialog dialog = project != null
                                ? new PasswordInputDialog(project, message, title, icon, validator)
                                : new PasswordInputDialog(message, title, icon, validator);
@@ -125,6 +141,10 @@ public class MessagesServiceImpl implements MessagesService {
                                 @Nullable InputValidator validator,
                                 @Nullable TextRange selection,
                                 @Nullable String comment) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestInputImplementation().show(message, validator);
+    }
+
     InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
                                          new String[]{OK_BUTTON, CANCEL_BUTTON},
                                          0, comment);
@@ -147,6 +167,10 @@ public class MessagesServiceImpl implements MessagesService {
                                          String initialValue,
                                          Icon icon,
                                          InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestInputImplementation().show(message, validator);
+    }
+
     Messages.InputDialog dialog = new Messages.MultilineInputDialog(project, message, title, icon, initialValue, validator,
                                                            new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     dialog.show();
@@ -162,6 +186,10 @@ public class MessagesServiceImpl implements MessagesService {
                                                            Icon icon,
                                                            String initialValue,
                                                            InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return new Pair<>(getTestInputImplementation().show(message), checked);
+    }
+
     InputDialogWithCheckbox dialog =
       new InputDialogWithCheckbox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
     dialog.show();
@@ -175,6 +203,10 @@ public class MessagesServiceImpl implements MessagesService {
                                          String[] values,
                                          String initialValue,
                                          InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestInputImplementation().show(message, validator);
+    }
+
     ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
     dialog.setValidator(validator);
     dialog.getComboBox().setEditable(true);
@@ -192,6 +224,10 @@ public class MessagesServiceImpl implements MessagesService {
                               String[] values,
                               String initialValue,
                               @Nullable Icon icon) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return getTestImplementation().show(message);
+    }
+
     ChooseDialog dialog = new ChooseDialog(project, parentComponent, message, title, icon, values, initialValue);
     dialog.show();
     return dialog.getSelectedIndex();
@@ -201,8 +237,13 @@ public class MessagesServiceImpl implements MessagesService {
   public void showTextAreaDialog(final JTextField textField,
                                  String title,
                                  String dimensionServiceKey,
-                                 Function<String, java.util.List<String>> parser,
-                                 final Function<java.util.List<String>, String> lineJoiner) {
+                                 Function<String, List<String>> parser,
+                                 final Function<List<String>, String> lineJoiner) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      getTestImplementation().show(title);
+      return;
+    }
+
     final JTextArea textArea = new JTextArea(10, 50);
     UIUtil.addUndoRedoActions(textArea);
     textArea.setWrapStyleWord(true);

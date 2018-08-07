@@ -508,7 +508,7 @@ public final class AsyncTreeModelTest {
     private void runOnModelThread(@NotNull Runnable task) {
       if (model instanceof InvokerSupplier) {
         InvokerSupplier supplier = (InvokerSupplier)model;
-        supplier.getInvoker().invokeLaterIfNeeded(wrap(task));
+        supplier.getInvoker().runOrInvokeLater(wrap(task));
       }
       else {
         runOnSwingThread(task);
@@ -802,7 +802,7 @@ public final class AsyncTreeModelTest {
     private volatile Object myGroup;
 
     public void setGroup(Object group, @NotNull Runnable task) {
-      getInvoker().invokeLaterIfNeeded(() -> {
+      getInvoker().runOrInvokeLater(() -> {
         myGroup = group;
         treeStructureChanged(null, null, null);
         task.run();

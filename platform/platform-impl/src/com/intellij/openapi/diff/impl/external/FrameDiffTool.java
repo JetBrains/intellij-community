@@ -65,7 +65,7 @@ public class FrameDiffTool implements DiffTool {
       builder.setDimensionServiceKey(request.getGroupKey());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           builder.getDialogWrapper().close(0);
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
@@ -82,7 +82,7 @@ public class FrameDiffTool implements DiffTool {
       DiffUtil.initDiffFrame(diffPanel.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           frameWrapper.getFrame().dispose();
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());

@@ -17,7 +17,9 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -33,11 +35,11 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention.*;
-import static com.jetbrains.python.codeInsight.intentions.TypeIntention.getMultiCallable;
 
 /**
  * @author traff
@@ -52,10 +54,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    if (elementAt == null) return false;
-
-    final PyFunction function = TypeIntention.findSuitableFunction(elementAt, input -> true);
+    final PyFunction function = findSuitableFunction(editor, file);
     if (function != null) {
       setText(PyBundle.message("INTN.add.type.hints.for.function", function.getName()));
       return true;
@@ -65,19 +64,33 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    getMultiCallable(elementAt).forEach(callable -> annotateTypes(editor, callable));
+    final PyFunction function = findSuitableFunction(editor, file);
+    if (function != null) {
+      annotateTypes(editor, function);
+    }
   }
 
-  public static void annotateTypes(Editor editor, PyCallable callable) {
-    if (isPy3k(callable.getContainingFile())) {
-      generatePy3kTypeAnnotations(callable.getProject(), editor, callable);
-    }
-    else {
-      if (callable instanceof PyFunction) {
-        generateTypeCommentAnnotations(callable.getProject(), (PyFunction)callable);
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Nullable
+  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+    return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
+  }
+
+  public static void annotateTypes(Editor editor, PyFunction function) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(function)) return;
+
+    WriteAction.run(() -> {
+      if (isPy3k(function.getContainingFile())) {
+        generatePy3kTypeAnnotations(function.getProject(), editor, function);
       }
-    }
+      else {
+        generateTypeCommentAnnotations(function.getProject(), function);
+      }
+    });
   }
 
   private static void generateTypeCommentAnnotations(Project project, PyFunction function) {
@@ -174,45 +187,38 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return !LanguageLevel.forElement(file).isPython2();
   }
 
-  private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, PyCallable callable) {
-    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(callable);
+  private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, @NotNull PyFunction function) {
+    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
 
-    if (callable instanceof PyFunction) {
-      PyExpression returnType = annotateReturnType(project, (PyFunction) callable, false);
+    PyExpression returnType = annotateReturnType(project, function, false);
 
-      if (returnType != null) {
-        builder.replaceElement(returnType, returnType.getText());
+    if (returnType != null) {
+      builder.replaceElement(returnType, returnType.getText());
+    }
+
+    PyParameter[] params = function.getParameterList().getParameters();
+
+    for (int i = params.length - 1; i >= 0; i--) {
+      if (params[i] instanceof PyNamedParameter && !params[i].isSelf()) {
+        params[i] = annotateParameter(project, editor, (PyNamedParameter)params[i], false);
       }
     }
 
-    if (callable instanceof PyFunction) {
-      PyFunction function = (PyFunction)callable;
-      PyParameter[] params = function.getParameterList().getParameters();
 
-      for (int i = params.length - 1; i >= 0; i--) {
-        if (params[i] instanceof PyNamedParameter && !params[i].isSelf()) {
-          params[i] = annotateParameter(project, editor, (PyNamedParameter)params[i], false);
-        }
-      }
-
-
-      for (int i = params.length - 1; i >= 0; i--) {
-        if (params[i] instanceof PyNamedParameter) {
-          if (!params[i].isSelf()) {
-            params[i] = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(params[i]);
-            PyAnnotation annotation = ((PyNamedParameter)params[i]).getAnnotation();
-            if (annotation != null) {
-              PyExpression annotationValue = annotation.getValue();
-              if (annotationValue != null) {
-                builder.replaceElement(annotationValue, annotationValue.getText());
-              }
+    for (int i = params.length - 1; i >= 0; i--) {
+      if (params[i] instanceof PyNamedParameter) {
+        if (!params[i].isSelf()) {
+          params[i] = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(params[i]);
+          PyAnnotation annotation = ((PyNamedParameter)params[i]).getAnnotation();
+          if (annotation != null) {
+            PyExpression annotationValue = annotation.getValue();
+            if (annotationValue != null) {
+              builder.replaceElement(annotationValue, annotationValue.getText());
             }
           }
         }
       }
     }
-    if (callable != null) {
-      startTemplate(project, callable, builder);
-    }
+    startTemplate(project, function, builder);
   }
 }

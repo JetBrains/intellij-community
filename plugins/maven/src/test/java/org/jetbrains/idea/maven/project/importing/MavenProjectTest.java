@@ -28,10 +28,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenProjectTest extends MavenImportingTestCase {
   public void testCollectingPlugins() {
@@ -607,7 +604,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                   "  </profile>" +
                   "</profiles>");
 
-    assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one");
+    assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one", "default");
   }
 
   public void testCollectingRepositories() {
@@ -911,7 +908,19 @@ public class MavenProjectTest extends MavenImportingTestCase {
   }
 
   private void assertDeclaredPlugins(PluginInfo... expected) {
-    assertUnorderedElementsAreEqual(p(getMavenProject().getDeclaredPlugins()), expected);
+    List<PluginInfo> defaultPlugins = Arrays.asList(
+      p("org.apache.maven.plugins", "maven-site-plugin"),
+      p("org.apache.maven.plugins", "maven-deploy-plugin"),
+      p("org.apache.maven.plugins", "maven-compiler-plugin"),
+      p("org.apache.maven.plugins", "maven-install-plugin"),
+      p("org.apache.maven.plugins", "maven-jar-plugin"),
+      p("org.apache.maven.plugins", "maven-clean-plugin"),
+      p("org.apache.maven.plugins", "maven-resources-plugin"),
+      p("org.apache.maven.plugins", "maven-surefire-plugin"));
+    List<PluginInfo> expectedList = new ArrayList<>();
+    expectedList.addAll(defaultPlugins);
+    expectedList.addAll(Arrays.asList(expected));
+    assertUnorderedElementsAreEqual(p(getMavenProject().getDeclaredPlugins()), expectedList);
   }
 
   private MavenPlugin findPlugin(String groupId, String artifactId) {

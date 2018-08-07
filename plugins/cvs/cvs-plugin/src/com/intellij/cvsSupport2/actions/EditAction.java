@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -34,7 +35,7 @@ public class EditAction extends AbstractActionFromEditGroup {
   public EditAction() {
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isVisible()) {
       return;

@@ -43,7 +43,7 @@ import java.util.function.BiConsumer;
 public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction, DumbAware {
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     if (!e.getPresentation().isVisible()) {
       return;
     }
@@ -92,7 +92,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     return providers;
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     if (e.getProject() == null) {
       presentation.setEnabledAndVisible(false);

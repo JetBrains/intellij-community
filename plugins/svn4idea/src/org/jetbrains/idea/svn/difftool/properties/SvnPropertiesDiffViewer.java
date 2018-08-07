@@ -309,7 +309,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return "topicId758145";
     }

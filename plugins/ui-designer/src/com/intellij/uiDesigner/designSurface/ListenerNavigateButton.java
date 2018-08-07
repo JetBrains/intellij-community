@@ -38,6 +38,7 @@ import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.Processor;
 import icons.UIDesignerIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -196,13 +197,13 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       myElement = element;
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myElement instanceof Navigatable) {
         ((Navigatable) myElement).navigate(true);
       }
     }
 
-    @Override public void update(AnActionEvent e) {
+    @Override public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myElement != null &&
                                      (!(myElement instanceof PsiClass) || !isAbstractOrInterface((PsiClass)myElement)));
     }

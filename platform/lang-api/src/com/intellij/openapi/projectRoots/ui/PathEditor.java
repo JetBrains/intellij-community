@@ -100,13 +100,13 @@ public class PathEditor {
       .disableUpDownActions()
       .setAddActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myEnabled;
         }
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return isRemoveActionEnabled(PathEditor.this.getSelectedRoots());
         }
       })

@@ -130,7 +130,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
             }
 
             @Override
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
               PsiElement element = resolve();
               PsiElement resultForFile = handleFile(element, lastRef -> lastRef.handleElementRename(newElementName));
               if (resultForFile != null) {
@@ -197,12 +197,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor
               parent.setValue(fqn.substring(pckg.length()) + "." + newName);
               return parent.getValueElement();
             }
-
-            @NotNull
-            @Override
-            public Object[] getVariants() {
-              return EMPTY_ARRAY;
-            }
           }
         };
       }
@@ -267,7 +261,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           }
 
           @Override
-          public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+          public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
             PsiElement field = resolve();
             PsiElement result = handleElement(field, newElementName);
             if (result != null) {
@@ -301,12 +295,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           private PsiElement replace(String newElementName, String fqn, String packageName) {
             String newValue = fqn.substring(packageName.length()) + "." + newElementName;
             return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
-          }
-
-          @NotNull
-          @Override
-          public Object[] getVariants() {
-            return EMPTY_ARRAY;
           }
         }
       }), PsiReferenceRegistrar.HIGHER_PRIORITY);

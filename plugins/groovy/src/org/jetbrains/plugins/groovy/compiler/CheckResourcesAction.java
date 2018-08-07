@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovyResourceChecker;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -38,7 +39,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
  */
 public abstract class CheckResourcesAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     checkResources(e.getProject(), null, this instanceof Rebuild);
   }
 
@@ -51,7 +52,7 @@ public abstract class CheckResourcesAction extends AnAction {
 
   public static class Group extends DefaultActionGroup {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       e.getPresentation().setEnabledAndVisible(project != null && containsGroovyResources(project));
     }

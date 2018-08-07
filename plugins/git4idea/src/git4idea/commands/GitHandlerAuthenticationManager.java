@@ -66,7 +66,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
-    myHandler.addLineListener(new GitLineHandlerAdapter() {
+    myHandler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
         String lowerCaseLine = line.toLowerCase();

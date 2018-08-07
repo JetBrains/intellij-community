@@ -22,12 +22,13 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.actions.BaseTaskAction;
 import com.intellij.tasks.context.WorkingContextManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class ClearContextAction extends BaseTaskAction {
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = getProject(e);
     GlobalUndoableAction action = new GlobalUndoableAction() {
       public void undo() throws UnexpectedUndoException {

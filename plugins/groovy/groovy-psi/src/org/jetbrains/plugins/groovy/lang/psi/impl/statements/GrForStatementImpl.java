@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -19,7 +20,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
-public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForStatement {
+public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForStatement, GrParametersOwner {
+
   public GrForStatementImpl(@NotNull ASTNode node) {
     super(node);
   }

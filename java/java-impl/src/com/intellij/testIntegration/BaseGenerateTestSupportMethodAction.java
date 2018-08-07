@@ -69,7 +69,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       if (!frameworks.isEmpty()) {
         return new AnAction("Edit Template") {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             chooseAndPerform(editor, frameworks, framework -> {
               final FileTemplateDescriptor descriptor = methodKind.getFileTemplateDescriptor(framework);
               if (descriptor != null) {

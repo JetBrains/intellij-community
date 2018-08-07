@@ -78,7 +78,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   public final void invalidate(Runnable onDone) {
-    invoker.invokeLaterIfNeeded(() -> {
+    invoker.runOrInvokeLater(() -> {
       if (disposed) return;
       root.invalidate();
       Node node = root.get();
@@ -92,7 +92,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   public final void invalidate(@NotNull TreePath path, boolean structure) {
     Object component = path.getLastPathComponent();
     if (component instanceof Node) {
-      invoker.invokeLaterIfNeeded(() -> {
+      invoker.runOrInvokeLater(() -> {
         Node node = (Node)component;
         if (disposed) return;
         if (isNodeRemoved(node)) return;

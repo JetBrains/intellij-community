@@ -19,12 +19,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
  */
 public final class UnsplitAllAction extends SplitterActionBase {
-  public void actionPerformed(final AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     //VirtualFile file = fileEditorManager.getSelectedFiles()[0];

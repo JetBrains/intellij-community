@@ -288,12 +288,12 @@ public class PushLog extends JPanel implements DataProvider {
 
   private class MyShowCommitInfoAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myBalloon.showCommitDetails();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedCommitNodes().size() == 1);
     }
   }
@@ -417,7 +417,7 @@ public class PushLog extends JPanel implements DataProvider {
   // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
   @Nullable
   @Override
-  public Object getData(String id) {
+  public Object getData(@NotNull String id) {
     if (VcsDataKeys.CHANGES.is(id)) {
       List<CommitNode> commitNodes = getSelectedCommitNodes();
       return ArrayUtil.toObjectArray(collectAllChanges(commitNodes), Change.class);

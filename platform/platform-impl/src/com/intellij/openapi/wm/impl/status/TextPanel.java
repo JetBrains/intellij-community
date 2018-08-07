@@ -244,6 +244,8 @@ public class TextPanel extends JComponent implements Accessible {
     public void setIcon(@Nullable Icon icon) {
       myIcon = icon;
     }
+
+    public boolean hasIcon() { return myIcon != null; }
   }
 
   public static class ExtraSize extends TextPanel {

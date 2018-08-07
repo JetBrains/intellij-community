@@ -24,7 +24,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   @Override
-  public void moveTextHappened(int start, int end, int newBase) {
+  public void moveTextHappened(@NotNull Document document, int start, int end, int newBase) {
     reTarget(start, end, newBase);
   }
 

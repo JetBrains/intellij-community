@@ -111,7 +111,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInContentExceptLibraryClassesWithoutSources(@NotNull VirtualFile file) {
+  public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
     if (file instanceof VirtualFileWindow) return true;
     DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);

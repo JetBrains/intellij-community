@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
@@ -73,7 +74,10 @@ open class FileBasedStorage(file: Path,
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
 
     override fun save() {
-      if (!storage.blockSavingTheContent) {
+      if (storage.blockSavingTheContent) {
+        LOG.info("Save blocked for ${storage.fileSpec}")
+      }
+      else {
         super.save()
       }
     }
@@ -97,7 +101,7 @@ open class FileBasedStorage(file: Path,
       }
       else if (!isUseVfs) {
         val file = storage.file
-        LOG.debug { "Save $file" }
+        LOG.debugOrInfoIfTestMode { "Save $file" }
         dataWriter.writeTo(file, lineSeparator.separatorString)
       }
       else {
@@ -111,6 +115,8 @@ open class FileBasedStorage(file: Path,
       var result = cachedVirtualFile
       if (result == null) {
         result = LocalFileSystem.getInstance().findFileByPath(file.systemIndependentPath)
+        // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
+        result?.charset = StandardCharsets.UTF_8
         cachedVirtualFile = result
       }
       return cachedVirtualFile
@@ -183,7 +189,8 @@ open class FileBasedStorage(file: Path,
       LOG.warn(e)
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
+    val app = ApplicationManager.getApplication()
+    if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
       val reason = if (contentTruncated) "content truncated" else e!!.message
       val action = if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
@@ -247,7 +254,7 @@ private fun isEqualContent(result: VirtualFile,
 }
 
 private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
-  LOG.debug { "Save ${file.presentableUrl}" }
+  LOG.debugOrInfoIfTestMode { "Save ${file.presentableUrl}" }
 
   if (!file.isWritable) {
     // may be element is not long-lived, so, we must write it to byte array
@@ -255,7 +262,11 @@ private fun doWrite(requestor: Any, file: VirtualFile, dataWriterOrByteArray: An
       is DataWriter -> dataWriterOrByteArray.toBufferExposingByteArray(lineSeparator)
       else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
     }
-    throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
+    throw ReadOnlyModificationException(file, object : StateStorage.SaveSession {
+      override fun save() {
+        doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
+      }
+    })
   }
 
   runUndoTransparentWriteAction {
@@ -300,7 +311,11 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
       deleteFile(requestor, virtualFile)
     }
     else {
-      throw ReadOnlyModificationException(virtualFile, StateStorage.SaveSession { deleteFile(requestor, virtualFile) })
+      throw ReadOnlyModificationException(virtualFile, object : StateStorage.SaveSession {
+        override fun save() {
+          deleteFile(requestor, virtualFile)
+        }
+      })
     }
   }
 }

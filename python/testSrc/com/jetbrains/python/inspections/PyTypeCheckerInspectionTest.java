@@ -670,4 +670,16 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "        pass\n")
     );
   }
+
+  // PY-30357
+  public void testClassWithNestedAgainstStructural() {
+    doTestByText("def f(cls):\n" +
+                 "    print(cls.Meta)\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    class Meta:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "f(A)");
+  }
 }

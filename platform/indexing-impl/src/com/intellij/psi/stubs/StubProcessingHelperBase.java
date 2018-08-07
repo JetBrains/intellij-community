@@ -53,6 +53,11 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
 
+    if (value.size() == 1 && value.get(0) == 0) {
+      //noinspection unchecked
+      return !checkType(requiredClass, psiFile, psiFile) || processor.process((Psi)psiFile);
+    }
+
     List<StubbedSpine> spines = getAllSpines(psiFile);
     if (spines.isEmpty()) {
       return handleNonPsiStubs(file, processor, requiredClass, psiFile);

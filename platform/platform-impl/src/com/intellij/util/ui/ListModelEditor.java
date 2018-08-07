@@ -55,7 +55,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
       })
     .setRemoveActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return areSelectedItemsRemovable(list.getSelectionModel());
       }
     });

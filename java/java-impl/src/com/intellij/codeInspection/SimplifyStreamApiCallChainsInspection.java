@@ -81,7 +81,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   private static final CallMatcher STREAM_MATCH = anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
 
   private static final CallMatcher COLLECTORS_TO_LIST = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList").parameterCount(0);
-
+  private static final CallMatcher MAP_ENTRY_SET = instanceCall(JAVA_UTIL_MAP, "entrySet").parameterCount(0);
 
   private static final CallMapper<CallChainSimplification> CALL_TO_FIX_MAPPER = new CallMapper<>(
     ReplaceCollectionStreamFix.handler(),
@@ -99,7 +99,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     AllMatchContainsFix.handler(),
     AnyMatchContainsFix.handler(),
     JoiningStringsFix.handler(),
-    ReplaceWithCollectorsJoiningFix.handler()
+    ReplaceWithCollectorsJoiningFix.handler(),
+    EntrySetMapFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -1921,7 +1922,53 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         return new Context(maybeJoinCall, delimiter, argument);
       }
     }
+  }
 
+  static class EntrySetMapFix implements CallChainSimplification {
+    private final String myMapMethod;
 
+    EntrySetMapFix(String mapMethod) {
+      myMapMethod = mapMethod;
+    }
+
+    @Override
+    public String getName() {
+      return "Replace with '." + myMapMethod + "().stream()'";
+    }
+
+    @Override
+    public String getMessage() {
+      return "Can be replaced with '." + myMapMethod + "().stream()'";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+      if (qualifierCall == null) return null;
+      PsiMethodCallExpression qualifierQualifierCall = getQualifierMethodCall(qualifierCall);
+      if (qualifierQualifierCall == null) return null;
+      CommentTracker ct = new CommentTracker();
+      PsiMethodCallExpression result = (PsiMethodCallExpression)ct.replaceAndRestoreComments(call, qualifierCall);
+      PsiMethodCallExpression newQualifier = Objects.requireNonNull(getQualifierMethodCall(result));
+      ExpressionUtils.bindCallTo(newQualifier, myMapMethod);
+      return result;
+    }
+
+    public static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(STREAM_MAP, call -> {
+        PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        if (!COLLECTION_STREAM.test(qualifierCall)) return null;
+        PsiMethodCallExpression qualifierQualifierCall = getQualifierMethodCall(qualifierCall);
+        if (!MAP_ENTRY_SET.test(qualifierQualifierCall)) return null;
+        PsiExpression arg = call.getArgumentList().getExpressions()[0];
+        if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, "getKey")) {
+          return new EntrySetMapFix("keySet");
+        }
+        if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, "getValue")) {
+          return new EntrySetMapFix("values");
+        }
+        return null;
+      });
+    }
   }
 }

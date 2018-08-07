@@ -78,7 +78,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
@@ -86,7 +86,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public abstract VirtualFile getFile(@NotNull Project project);
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     LOG.assertTrue(project != null);
     final VirtualFile file = getFile(project);

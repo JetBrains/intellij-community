@@ -484,13 +484,13 @@ class EventLogConsole {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       LogModel model = myConsole.myProjectModel;
       for (Notification notification : model.getNotifications()) {
         notification.expire();

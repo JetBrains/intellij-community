@@ -28,8 +28,11 @@ deprecated: multicaret.svg; to be removed in IDEA 2020
 deprecated: nextfile.png -> /actions/forward.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Forward
 deprecated: prevfile.png -> /actions/back.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Back
 deprecated: quickList.png; to be removed in IDEA 2020
+deprecated: realIntentionOffBulb.png; to be removed in IDEA 2020
 deprecated: reset.png -> /actions/rollback.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Rollback
 deprecated: reset-to-default.png -> /actions/rollback.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Rollback
+deprecated: Reset_to_empty.png -> /actions/uninstall.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Uninstall
+deprecated: right.png; to be removed in IDEA 2020 - use AllIcons.General.SplitRight
 deprecated: showChangesOnly.png -> /actions/preview.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Preview
 deprecated: showViewer.png
 deprecated: sortAsc.png -> /actions/moveUp.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp

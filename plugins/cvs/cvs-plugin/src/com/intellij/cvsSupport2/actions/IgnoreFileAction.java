@@ -62,11 +62,11 @@ public class IgnoreFileAction extends AnAction implements DumbAware {
     myVisibility.addCondition(ActionOnSelectedElement.FILES_ARE_NOT_IGNORED);
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MultiMap<VirtualFile, VirtualFile> parentToSelectedChildren = MultiMap.createSmart();
     final CvsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();

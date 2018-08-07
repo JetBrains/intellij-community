@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.util;
 
+import org.gradle.api.artifacts.ModuleIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,11 +30,14 @@ public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier 
   private final String module;
   @NotNull
   private final String version;
+  @NotNull
+  private final ModuleIdentifier moduleIdentifier;
 
   public ModuleComponentIdentifierImpl(@NotNull String group, @NotNull String module, @NotNull String version) {
     this.group = group;
     this.module = module;
     this.version = version;
+    this.moduleIdentifier = new ModuleIdentifierImpl(group, module);
   }
 
   public String getDisplayName() {
@@ -53,6 +57,11 @@ public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier 
   @NotNull
   public String getVersion() {
     return version;
+  }
+
+  @NotNull
+  public ModuleIdentifier getModuleIdentifier() {
+    return moduleIdentifier;
   }
 
   @Override
@@ -80,5 +89,25 @@ public class ModuleComponentIdentifierImpl implements ModuleComponentIdentifier 
   @Override
   public String toString() {
     return getDisplayName();
+  }
+}
+
+class ModuleIdentifierImpl implements ModuleIdentifier {
+  @NotNull private final String myGroup;
+  @NotNull private final String myModule;
+
+  public ModuleIdentifierImpl(@NotNull String group, @NotNull String module) {
+    myGroup = group;
+    myModule = module;
+  }
+
+  @Override
+  public String getGroup() {
+    return myGroup;
+  }
+
+  @Override
+  public String getName() {
+    return myModule;
   }
 }

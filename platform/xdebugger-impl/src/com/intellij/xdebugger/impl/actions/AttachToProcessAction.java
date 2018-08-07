@@ -56,7 +56,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     Project project = getEventProject(e);
@@ -67,7 +67,7 @@ public class AttachToProcessAction extends AnAction {
 
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) return;
 

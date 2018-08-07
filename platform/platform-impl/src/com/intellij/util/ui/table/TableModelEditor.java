@@ -127,7 +127,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
       }
     }).setEditActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         T item = table.getSelectedObject();
         return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
       }
@@ -364,7 +364,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
 
     @Override
-    public boolean isEnabled(AnActionEvent e) {
+    public boolean isEnabled(@NotNull AnActionEvent e) {
       return areSelectedItemsRemovable(table.getSelectionModel());
     }
   }

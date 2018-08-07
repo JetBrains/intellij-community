@@ -81,7 +81,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     PsiElement mapOrArgumentList = findMapOrArgumentList(parameters);
     if (mapOrArgumentList == null) {

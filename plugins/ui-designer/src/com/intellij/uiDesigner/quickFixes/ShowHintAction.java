@@ -38,7 +38,7 @@ final class ShowHintAction extends AnAction {
     );
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final GuiEditor editor = myManager.getEditor();
     if (editor == null) return;
 
@@ -53,7 +53,7 @@ final class ShowHintAction extends AnAction {
     myManager.showIntentionPopup();
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     // Alt-Enter hotkey for editor takes precedence over this action
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
   }

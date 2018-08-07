@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.NotNull;
 
 public class TemplateProjectStructureAction extends ShowStructureSettingsAction {
   public TemplateProjectStructureAction() {
@@ -29,7 +30,7 @@ public class TemplateProjectStructureAction extends ShowStructureSettingsAction 
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     showDialog(ProjectManager.getInstance().getDefaultProject());
   }
 }

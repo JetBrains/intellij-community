@@ -48,7 +48,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     final boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null &&  editor != null && getSingleLineSelection(editor) != null;
@@ -57,7 +57,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert editor != null;
     final String selection = getSingleLineSelection(editor);

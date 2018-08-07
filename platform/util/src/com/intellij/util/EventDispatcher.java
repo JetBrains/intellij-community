@@ -17,17 +17,21 @@ package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
@@ -39,12 +43,46 @@ public class EventDispatcher<T extends EventListener> {
 
   private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  @NotNull
   public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
-    return new EventDispatcher<T>(listenerClass);
+    return new EventDispatcher<T>(listenerClass, null);
   }
 
-  private EventDispatcher(@NotNull Class<T> listenerClass) {
-    myMulticaster = createMulticaster(listenerClass, new Getter<Iterable<T>>() {
+  @NotNull
+  public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
+    assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
+    return new EventDispatcher<T>(listenerClass, methodReturnValues);
+  }
+
+  private static void assertNonVoidMethodReturnValuesAreDeclared(@NotNull Map<String, Object> methodReturnValues,
+                                                                 @NotNull Class<?> listenerClass) {
+    List<Method> declared = new ArrayList<Method>(ReflectionUtil.getClassPublicMethods(listenerClass));
+    for (final Map.Entry<String, Object> entry : methodReturnValues.entrySet()) {
+      final String methodName = entry.getKey();
+      Method found = ContainerUtil.find(declared, new Condition<Method>() {
+        @Override
+        public boolean value(Method m) {
+          return methodName.equals(m.getName());
+        }
+      });
+      assert found != null : "Method " + methodName + " must be declared in " + listenerClass;
+      assert !found.getReturnType().equals(void.class) :
+        "Method " + methodName + " must be non-void if you want to specify what its proxy should return";
+      Object returnValue = entry.getValue();
+      assert ReflectionUtil.boxType(found.getReturnType()).isAssignableFrom(returnValue.getClass()) :
+        "You specified that method " +
+        methodName + " proxy will return " + returnValue +
+        " but its return type is " + found.getReturnType() + " which is incompatible with " + returnValue.getClass();
+      declared.remove(found);
+    }
+    for (Method method : declared) {
+      assert method.getReturnType().equals(void.class) :
+        "Method "+method+" returns "+method.getReturnType()+" and yet you didn't specify what its proxy should return";
+    }
+  }
+
+  private EventDispatcher(@NotNull Class<T> listenerClass, @Nullable Map<String, Object> methodReturnValues) {
+    myMulticaster = createMulticaster(listenerClass, methodReturnValues, new Getter<Iterable<T>>() {
       @Override
       public Iterable<T> get() {
         return myListeners;
@@ -53,19 +91,21 @@ public class EventDispatcher<T extends EventListener> {
   }
 
   @NotNull
-  static <T> T createMulticaster(@NotNull Class<T> listenerClass, final Getter<Iterable<T>> listeners) {
+  static <T> T createMulticaster(@NotNull Class<T> listenerClass,
+                                 @Nullable final Map<String, Object> methodReturnValues,
+                                 final Getter<? extends Iterable<T>> listeners) {
     LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
     InvocationHandler handler = new InvocationHandler() {
       @Override
       @NonNls
-      public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+      public Object invoke(Object proxy, final Method method, final Object[] args) {
+        @NonNls String methodName = method.getName();
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
-          @NonNls String methodName = method.getName();
           if (methodName.equals("toString")) {
             return "Multicaster";
           }
           else if (methodName.equals("hashCode")) {
-            return Integer.valueOf(System.identityHashCode(proxy));
+            return System.identityHashCode(proxy);
           }
           else if (methodName.equals("equals")) {
             return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
@@ -75,8 +115,11 @@ public class EventDispatcher<T extends EventListener> {
             return null;
           }
         }
+        else if (methodReturnValues != null && methodReturnValues.containsKey(methodName)) {
+          return methodReturnValues.get(methodName);
+        }
         else {
-          dispatch(listeners.get(), method, args);
+          dispatchVoidMethod(listeners.get(), method, args);
           return null;
         }
       }
@@ -91,7 +134,7 @@ public class EventDispatcher<T extends EventListener> {
     return myMulticaster;
   }
 
-  private static <T> void dispatch(Iterable<T> listeners, @NotNull Method method, Object[] args) {
+  private static <T> void dispatchVoidMethod(@NotNull Iterable<T> listeners, @NotNull Method method, Object[] args) {
     method.setAccessible(true);
 
     for (T listener : listeners) {

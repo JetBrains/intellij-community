@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
 
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    // the quickfixes below probably require some thought and shouldn't be applied blindly on many classes at once
+    // the quick fixes below probably require some thought and shouldn't be applied blindly on many classes at once
     return true;
   }
 
@@ -125,7 +125,18 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
           JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");
       }
-      methodText.append("protected ").append(aClass.getName());
+      methodText.append("protected ");
+      final String name = aClass.getName();
+      if (name != null) {
+        methodText.append(name);
+      }
+      else if (aClass instanceof PsiAnonymousClass) {
+        final PsiClassType baseClassType = ((PsiAnonymousClass)aClass).getBaseClassType();
+        methodText.append(baseClassType.getCanonicalText());
+      }
+      else {
+        methodText.append(CommonClassNames.JAVA_LANG_OBJECT);
+      }
       final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
       if (typeParameterList != null) {
         methodText.append(typeParameterList.getText());

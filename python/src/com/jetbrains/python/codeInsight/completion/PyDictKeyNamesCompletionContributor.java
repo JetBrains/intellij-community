@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -37,7 +37,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
       new CompletionProvider<CompletionParameters>() {
         @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
           final PsiElement original = parameters.getOriginalPosition();
           final int offset = parameters.getOffset();
           if (original == null) return;
@@ -191,7 +191,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
     if (addHandler) {
       item = item.withInsertHandler(new InsertHandler<LookupElement>() {
         @Override
-        public void handleInsert(final InsertionContext context, final LookupElement item) {
+        public void handleInsert(@NotNull final InsertionContext context, @NotNull final LookupElement item) {
           final PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
                                                                                        PyStringLiteralExpression.class, false);
           if (str != null) {

@@ -255,5 +255,10 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ObjectsEqualsCanBeSimplified"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="INFORMATION"
+                     key="inspection.objects.equals.can.be.simplified.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.style.ObjectsEqualsCanBeSimplifiedInspection"/>
   </extensions>
 </idea-plugin>

@@ -18,6 +18,7 @@ package org.intellij.images.thumbnail.actionSystem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.intellij.images.thumbnail.ThumbnailView;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Thumbnail view actions utility.
@@ -34,7 +35,7 @@ public final class ThumbnailViewActionUtil {
      * @param e Action event
      * @return Current {@link org.intellij.images.thumbnail.ThumbnailView} or {@code null}
      */
-    public static ThumbnailView getVisibleThumbnailView(AnActionEvent e) {
+    public static ThumbnailView getVisibleThumbnailView(@NotNull AnActionEvent e) {
         ThumbnailView thumbnailView = getThumbnailView(e);
         if (thumbnailView != null && thumbnailView.isVisible()) {
             return thumbnailView;
@@ -42,7 +43,7 @@ public final class ThumbnailViewActionUtil {
         return null;
     }
 
-    public static ThumbnailView getThumbnailView(AnActionEvent e) {
+    public static ThumbnailView getThumbnailView(@NotNull AnActionEvent e) {
       return ThumbnailView.DATA_KEY.getData(e.getDataContext());
     }
 
@@ -52,7 +53,7 @@ public final class ThumbnailViewActionUtil {
      * @param e Action event
      * @return Enabled value
      */
-    public static boolean setEnabled(AnActionEvent e) {
+    public static boolean setEnabled(@NotNull AnActionEvent e) {
         ThumbnailView thumbnailView = getVisibleThumbnailView(e);
         Presentation presentation = e.getPresentation();
         presentation.setEnabled(thumbnailView != null);

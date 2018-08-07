@@ -130,6 +130,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         new ParameterInfoController(project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
       }
       else {
+        controller.setDescriptors(descriptors);
         controller.showHint(requestFocus, singleParameterInfo);
       }
     });

@@ -149,7 +149,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   private boolean manageComments() {
     if (mySettings.KEEP_FIRST_COLUMN_COMMENT && TokenSets.COMMENT_SET.contains(myType2)) {
       if (!isAfterElementOrSemi(GroovyElementTypes.IMPORT_STATEMENT)) {
-        myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
+        myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
         return true;
       }
       return false;

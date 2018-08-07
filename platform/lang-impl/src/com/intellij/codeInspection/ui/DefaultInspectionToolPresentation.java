@@ -13,28 +13,24 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
-
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
@@ -264,7 +260,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
     @NonNls final String ext = ".xml";
     final String fileName = myContext.getOutputPath() + File.separator + myToolWrapper.getShortName() + ext;
-    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getContext().getProject());
     try {
       FileUtil.createDirectory(new File(myContext.getOutputPath()));
       final File file = new File(fileName);
@@ -274,8 +269,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
           .append(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper)).append("\">\n");
       }
       for (Element element : list) {
-        pathMacroManager.collapsePaths(element);
-        JDOMUtil.writeElement(element, writer, "\n");
+        JbXmlOutputter.collapseMacrosAndWrite(element, getContext().getProject(), writer);
       }
 
       try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), CharsetToolkit.UTF8_CHARSET)))) {

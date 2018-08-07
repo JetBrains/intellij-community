@@ -19,6 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
+import com.intellij.java.codeInspection.DataFlowInspectionTest;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -89,6 +90,16 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
     manager.setNotNulls("foo.TestNotNull");
     Disposer.register(myFixture.getTestRootDisposable(), manager::setNotNulls);
+    doTest();
+  }
+
+  public void testParametersForFieldsNotNullByDefaultShouldNotGetExplicitAnnotation() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    myFixture.addClass("package foo;" +
+                       "import static java.lang.annotation.ElementType.*;" +
+                       "@javax.annotation.meta.TypeQualifierDefault({PARAMETER, FIELD, METHOD, LOCAL_VARIABLE}) " +
+                       "@javax.annotation.Nonnull " +
+                       "public @interface NonnullByDefault {}");
     doTest();
   }
 

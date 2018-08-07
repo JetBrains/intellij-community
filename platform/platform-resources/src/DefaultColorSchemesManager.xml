@@ -75,7 +75,7 @@
       </option>
       <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
         <value>
-          <option name="FOREGROUND" value="ff56" deuteranopia="cccccc" protanopia="cccccc"/>
+          <option name="FOREGROUND" value="a9b7d6" deuteranopia="cccccc" protanopia="cccccc"/>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
@@ -1417,14 +1417,14 @@
       </option>
       <option name="DEBUGGER_INLINED_VALUES">
         <value>
-          <option name="FOREGROUND" value="3d8065" deuteranopia="737373" protanopia="737373"/>
+          <option name="FOREGROUND" value="666d75" deuteranopia="737373" protanopia="737373"/>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
         <value>
-          <option name="FOREGROUND" value="ffeb09" />
+          <option name="FOREGROUND" value="7b94b3" />
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>

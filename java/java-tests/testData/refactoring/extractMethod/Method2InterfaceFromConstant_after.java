@@ -4,7 +4,7 @@ interface I {
     String FOO = newMethod();
 
     @NotNull
-    private static String newMethod() {
+    static String newMethod() {
         return "hello";
     }
 }

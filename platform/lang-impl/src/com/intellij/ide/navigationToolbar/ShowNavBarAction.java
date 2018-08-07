@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -31,7 +32,7 @@ import java.awt.*;
  */
 public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction {
   @Override
-  public void actionPerformed(AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e){
     final DataContext context = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project != null) {
@@ -57,7 +58,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
 
 
   @Override
-  public void update(final AnActionEvent e){
+  public void update(@NotNull final AnActionEvent e){
     final boolean enabled = e.getData(CommonDataKeys.PROJECT) != null;
     e.getPresentation().setEnabled(enabled);
 

@@ -464,7 +464,7 @@ public abstract class EditorComposite implements Disposable {
     }
 
     @Override
-    public final Object getData(String dataId){
+    public final Object getData(@NotNull String dataId){
       if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }

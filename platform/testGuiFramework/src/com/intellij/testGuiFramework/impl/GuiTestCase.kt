@@ -23,8 +23,9 @@ import com.intellij.testGuiFramework.fixtures.extended.RowFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
+import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toSec
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
@@ -39,6 +40,7 @@ import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.image.ScreenshotTaker
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
+import org.fest.swing.timing.Timeout
 import org.junit.Rule
 import org.junit.runner.RunWith
 import java.awt.Component
@@ -114,7 +116,7 @@ open class GuiTestCase {
    */
   fun dialog(title: String? = null,
              ignoreCaseTitle: Boolean = false,
-             timeout: Long = defaultTimeout,
+             timeout: Timeout = Timeouts.defaultTimeout,
              needToKeepDialog: Boolean = false,
              func: JDialogFixture.() -> Unit) {
     val dialog = dialog(title, ignoreCaseTitle, timeout)
@@ -122,7 +124,7 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
-  fun pluginDialog(timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
+  fun pluginDialog(timeout: Timeout = Timeouts.defaultTimeout, needToKeepDialog: Boolean = false, func: PluginDialogFixture.() -> Unit) {
     val pluginDialog = PluginDialogFixture(robot(), findDialog("Plugins", false, timeout))
     func(pluginDialog)
     if (!needToKeepDialog) pluginDialog.waitTillGone()
@@ -132,7 +134,7 @@ open class GuiTestCase {
    * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
    * is a Mac native.
    */
-  fun chooseFileInFileChooser(path: String, timeout: Long = defaultTimeout) {
+  fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout) {
     val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
     if (macNativeFileChooser) {
       MacFileChooserDialogFixture(robot()).selectByPath(path)
@@ -140,7 +142,7 @@ open class GuiTestCase {
     else {
       val fileChooserDialog: JDialog
       try {
-        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeout.toInt()) {
+        fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
           robot().finder()
             .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
             .firstOrNull {
@@ -151,11 +153,11 @@ open class GuiTestCase {
         }
       }
       catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toInt()} seconds")
+        throw ComponentLookupException("Unable to find file chooser dialog in ${timeout.toSec()} seconds")
       }
       val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
       with(dialogFixture) {
-        asyncProcessIcon().waitUntilStop(20)
+        asyncProcessIcon().waitUntilStop(Timeouts.seconds30)
         textfield("")
         invokeAction("\$SelectAll")
         typeText(path)
@@ -313,14 +315,14 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, timeoutInSeconds: Long): JDialogFixture {
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
-      val jDialog = waitUntilFound(null, JDialog::class.java, timeoutInSeconds) { true }
+      val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)
     }
     else {
       try {
-        val dialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = timeoutInSeconds.toInt()) {
+        val dialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
             if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
@@ -331,7 +333,7 @@ open class GuiTestCase {
         return JDialogFixture(robot(), dialog)
       }
       catch (timeoutError: WaitTimedOutError) {
-        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for $timeoutInSeconds seconds")
+        throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for ${timeout.toSec()} seconds")
       }
     }
   }
@@ -339,8 +341,8 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one)
    */
-  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeoutInSeconds: Long): JDialog =
-    waitUntilFound(null, JDialog::class.java, timeoutInSeconds) {
+  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout): JDialog =
+    waitUntilFound(null, JDialog::class.java, timeout) {
       title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
     }
 

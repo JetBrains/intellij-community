@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -46,11 +47,11 @@ class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setText(myShowMerged ? ourHideMerged : ourShowMerged);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myShowMerged = !myShowMerged;
     final AnnotationSource newSource = AnnotationSource.getInstance(myShowMerged);
     mySwitcher.switchTo(newSource);

@@ -352,7 +352,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Object o = getSelectedObject();
       if (o instanceof LibraryEx) {
         final LibraryEx selected = (LibraryEx)o;
@@ -371,7 +371,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
         e.getPresentation().setEnabled(false);
       } else {

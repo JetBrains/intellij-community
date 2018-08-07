@@ -25,13 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-@State(
-  name = "DiffManager",
-  storages = {
-    @Storage("diff.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "DiffManager", storages = @Storage("diff.xml"))
 @Deprecated
 public class DiffManagerImpl extends DiffManager implements PersistentStateComponent<Element> {
   public static final int FULL_DIFF_DIVIDER_POLYGONS_OFFSET = 3;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -35,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -64,6 +51,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -172,15 +160,24 @@ public class MadTestingUtil {
                                });
   }
 
-  public static void enableAllInspections(Project project, Disposable disposable) {
+  /**
+   * Enables all inspections in the test project profile except for "HighlightVisitorInternal" and other passed inspections.<p>
+   *
+   * "HighlightVisitorInternal" inspection has error-level by default and highlights the first token from erroneous range,
+   * which is not very stable and also masks other warning-level inspections available on the same token.
+   *
+   * @param disposable when this is disposed, reverts to the previous project inspection profile
+   * @param except short names of inspections to disable
+   */
+  public static void enableAllInspections(Project project, Disposable disposable, String... except) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
-    ToolsImpl goodCodeIsRed = profile.getToolsOrNull("HighlightVisitorInternal", project);
-    if (goodCodeIsRed != null) {
-      // This inspection has error-level by default and highlights the first token from erroneous range
-      // which is not very stable and also masks other warning-level inspections available on the same token.
-      goodCodeIsRed.setEnabled(false);
+
+    disableInspection(project, profile, "HighlightVisitorInternal");
+
+    for (String shortId : except) {
+      disableInspection(project, profile, shortId);
     }
 
     ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
@@ -192,6 +189,13 @@ public class MadTestingUtil {
       manager.setCurrentProfile(prev);
       manager.deleteProfile(profile);
     });
+  }
+
+  private static void disableInspection(Project project, InspectionProfileImpl profile, String shortId) {
+    ToolsImpl tools = profile.getToolsOrNull(shortId, project);
+    if (tools != null) {
+      tools.setEnabled(false);
+    }
   }
 
   private static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {
@@ -305,6 +309,20 @@ public class MadTestingUtil {
     return Generator.sampledFrom(new DeleteRange(file),
                                  new CheckPsiTextConsistency(file),
                                  new InsertString(file));
+  }
+
+  /**
+   * @param skipCondition should return {@code true} if particular accessor method should be ignored
+   * @return function returning generator of actions checking that
+   * read accessors on all PSI elements in the file don't throw exceptions when invoked.
+   */
+  @NotNull
+  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(Condition<? super Method> skipCondition) {
+    return file -> Generator.sampledFrom(
+      new InsertString(file),
+      new DeleteRange(file),
+      new CheckPsiReadAccessors(file, skipCondition)
+    );
   }
 
   public static boolean isAfterError(PsiFile file, int offset) {

@@ -135,7 +135,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       Navigatable[] navigatables = getSelectedNavigatables().toArray(Navigatable.class);
       if (navigatables.length > 0) {

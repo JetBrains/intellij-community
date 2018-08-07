@@ -118,7 +118,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   @Override
   @Nullable
   @NonNls
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return "ideaInterface.find";
     }

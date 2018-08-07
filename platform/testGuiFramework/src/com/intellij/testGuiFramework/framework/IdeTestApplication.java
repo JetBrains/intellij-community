@@ -59,6 +59,13 @@ public class IdeTestApplication {
   }
 
   @NotNull
+  public static File getFailedTestVideoDirPath() throws IOException {
+    final File dirPath = new File(getFailedTestScreenshotDirPath(), "video");
+    ensureExists(dirPath);
+    return dirPath;
+  }
+
+  @NotNull
   public static File getTestScreenshotDirPath() throws IOException {
     File dirPath = new File(getGuiTestRootDirPath(), "screenshots");
     ensureExists(dirPath);

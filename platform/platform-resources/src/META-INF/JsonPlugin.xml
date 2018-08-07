@@ -32,6 +32,11 @@
     <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
     <enterBetweenBracesDelegate language="JSON"  implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
     <enterHandlerDelegate implementation="com.intellij.json.editor.JsonEnterHandler" id="JsonEnterHandler"/>
+    <typedHandler implementation="com.intellij.json.editor.JsonTypedHandler" id="JsonTypedHandler"/>
+    <copyPastePreProcessor implementation="com.intellij.json.editor.JsonCopyPasteProcessor"/>
+    <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable"/>
+    <applicationService serviceInterface="com.intellij.json.editor.JsonEditorOptions"
+                        serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>

@@ -197,8 +197,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return project;
     }
     catch (Throwable t) {
-      LOG.info(t);
-      Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+      LOG.warn(t);
+      try {
+        Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+      }
+      catch (NoClassDefFoundError e) {
+        // error icon not loaded
+        LOG.info(e);
+      }
       return null;
     }
   }
@@ -435,7 +441,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         return false;
       }
     }
-    
+
     return myProgressManager.runProcessWithProgressSynchronously(performLoading, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
   }
 

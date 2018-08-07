@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -54,7 +55,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
   }
 
   @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+  protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
     addCastVariants(parameters, result.getPrefixMatcher(), result, false);
   }
 
@@ -166,7 +167,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
       PsiTypeLookupItem.createLookupItem(type, parameters.getPosition())) {
 
       @Override
-      public void handleInsert(InsertionContext context) {
+      public void handleInsert(@NotNull InsertionContext context) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.casting");
 
         final Editor editor = context.getEditor();

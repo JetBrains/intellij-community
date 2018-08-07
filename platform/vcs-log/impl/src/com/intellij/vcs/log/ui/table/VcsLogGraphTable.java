@@ -435,7 +435,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }

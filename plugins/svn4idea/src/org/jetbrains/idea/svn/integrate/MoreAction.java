@@ -52,7 +52,7 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myEnabled);
     e.getPresentation().setVisible(myVisible);
   }

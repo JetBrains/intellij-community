@@ -49,13 +49,7 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-@State(
-  name = "XPathView.XPathViewPlugin",
-  storages = {
-    @Storage("xpath.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"))
 public class XPathAppComponent implements PersistentStateComponent<Config>, DefaultLiveTemplatesProvider, ApplicationComponent {
   private static final String ACTION_FIND_NEXT = "FindNext";
   private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
@@ -133,7 +127,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
       if (editor != null) {
         if (HighlighterUtil.hasHighlighters(editor)) {
@@ -185,7 +179,7 @@ public class XPathAppComponent implements PersistentStateComponent<Config>, Defa
     }
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       origAction.update(event);
     }

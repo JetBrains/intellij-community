@@ -23,13 +23,14 @@ import com.intellij.debugger.ui.HotSwapUIImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lex
  */
 public class HotSwapAction extends AnAction{
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
@@ -39,7 +40,7 @@ public class HotSwapAction extends AnAction{
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabled(false);

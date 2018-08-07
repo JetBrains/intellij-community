@@ -95,7 +95,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             return getRangeInElement().substring(getElement().getText());
         }
 
-        public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+        public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
             throw new IncorrectOperationException();
         }
 
@@ -103,7 +103,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             throw new IncorrectOperationException();
         }
 
-        public boolean isReferenceTo(PsiElement element) {
+        public boolean isReferenceTo(@NotNull PsiElement element) {
             return false;
         }
 

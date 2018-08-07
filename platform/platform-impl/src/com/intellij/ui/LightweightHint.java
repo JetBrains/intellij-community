@@ -456,12 +456,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
     else {
       if (myCurrentIdeTooltip != null) {
-        Point screenPoint = point.getScreenPoint();
-        if (!screenPoint.equals(new RelativePoint(myCurrentIdeTooltip.getComponent(), myCurrentIdeTooltip.getPoint()).getScreenPoint())) {
-          myCurrentIdeTooltip.setPoint(point.getPoint());
-          myCurrentIdeTooltip.setComponent(point.getComponent());
-          IdeTooltipManager.getInstance().show(myCurrentIdeTooltip, true, false);
-        }
+        myCurrentIdeTooltip.setPoint(point.getPoint());
+        myCurrentIdeTooltip.setComponent(point.getComponent());
+        IdeTooltipManager.getInstance().show(myCurrentIdeTooltip, true, false);
       }
       else {
         Point targetPoint = point.getPoint(myComponent.getParent());

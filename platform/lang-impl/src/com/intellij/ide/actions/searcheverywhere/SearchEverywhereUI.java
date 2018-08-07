@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
@@ -282,7 +283,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     IntStream indicesStream = Arrays.stream(myResultsList.getSelectedIndices())
                                     .filter(i -> !myListModel.isMoreElement(i));
 
@@ -843,8 +844,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
-      Component component = contributor.getElementsRenderer(myResultsList)
-                                       .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (component == null) {
+        component = contributor.getElementsRenderer(myResultsList)
+          .getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
 
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
         component = groupTitleRenderer.withDisplayedData(contributor.getGroupName(), component);
@@ -1042,7 +1046,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       stopSearching();
 
       Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? getUsedContributors() : Collections.singleton(mySelectedTab.getContributor().get());
@@ -1141,7 +1145,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Boolean enabled = mySelectedTab.getContributor().map(contributor -> contributor.showInFindResults()).orElse(true);
       e.getPresentation().setEnabled(enabled);
     }

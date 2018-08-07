@@ -7,6 +7,7 @@ import com.intellij.reference.SoftReference
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import com.intellij.util.text.CharSequenceReader
+import com.intellij.util.xmlb.Constants
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -70,10 +71,10 @@ fun loadElement(chars: CharSequence): Element = loadElement(CharSequenceReader(c
 fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).detachRootElement()
+fun loadElement(stream: InputStream): Element = loadDocument(stream.bufferedReader()).detachRootElement()
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedReader()).detachRootElement()
+fun loadElement(path: Path): Element = loadElement(path.inputStream())
 
 fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
@@ -109,23 +110,22 @@ fun <T> Element.remove(name: String, transform: (child: Element) -> T): List<T> 
   return result
 }
 
-fun Element.toByteArray(): ByteArray {
-  val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.write(this, out, "\n")
-  return out.toByteArray()
-}
-
-fun Element.addOptionTag(name: String, value: String) {
-  val element = Element("option")
-  element.setAttribute("name", name)
-  element.setAttribute("value", value)
-  addContent(element)
-}
-
-fun Parent.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
-  val out = BufferExposingByteArrayOutputStream(512)
+fun Element.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
+  val out = BufferExposingByteArrayOutputStream(1024)
   JDOMUtil.write(this, out, lineSeparator.separatorString)
   return out
+}
+
+fun Element.toByteArray(): ByteArray {
+  return toBufferExposingByteArray().toByteArray()
+}
+
+@JvmOverloads
+fun Element.addOptionTag(name: String, value: String, elementName: String = Constants.OPTION) {
+  val element = Element(elementName)
+  element.setAttribute(Constants.NAME, name)
+  element.setAttribute(Constants.VALUE, value)
+  addContent(element)
 }
 
 fun Element.getAttributeBooleanValue(name: String): Boolean = java.lang.Boolean.parseBoolean(getAttributeValue(name))

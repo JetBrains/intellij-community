@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -127,12 +126,6 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   @Override
   protected StatusBarWidget createInstance(Project project) {
     return new CodeStyleStatusBarWidget(project);
-  }
-
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    //myIndentOptions = null;
-    update();
   }
 
 

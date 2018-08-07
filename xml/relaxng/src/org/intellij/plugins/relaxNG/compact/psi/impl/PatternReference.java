@@ -118,7 +118,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final ASTNode newNode = RenameUtil.createIdentifierNode(getElement().getManager(), newElementName);
 
     final ASTNode nameNode = findNameNode();

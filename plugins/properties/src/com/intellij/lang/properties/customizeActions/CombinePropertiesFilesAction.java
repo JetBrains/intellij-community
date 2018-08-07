@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -47,7 +48,7 @@ public class CombinePropertiesFilesAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final List<PropertiesFile> initialPropertiesFiles = getPropertiesFiles(e);
     final List<PropertiesFile> propertiesFiles = initialPropertiesFiles == null ? new ArrayList<>()
                                                                                 : new ArrayList<>(initialPropertiesFiles);
@@ -86,7 +87,7 @@ public class CombinePropertiesFilesAction extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Collection<PropertiesFile> propertiesFiles = getPropertiesFiles(e);
     final List<ResourceBundle> resourceBundles = getResourceBundles(e);
     int elementCount = 0;
@@ -100,13 +101,13 @@ public class CombinePropertiesFilesAction extends AnAction {
   }
 
   @Nullable
-  private static List<ResourceBundle> getResourceBundles(AnActionEvent e) {
+  private static List<ResourceBundle> getResourceBundles(@NotNull AnActionEvent e) {
     final ResourceBundle[] resourceBundles = e.getData(ResourceBundle.ARRAY_DATA_KEY);
     return resourceBundles == null ? null : ContainerUtil.newArrayList(resourceBundles);
   }
 
   @Nullable
-  private static List<PropertiesFile> getPropertiesFiles(AnActionEvent e) {
+  private static List<PropertiesFile> getPropertiesFiles(@NotNull AnActionEvent e) {
     final PsiElement[] psiElements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (psiElements == null || psiElements.length == 0) {
       return null;

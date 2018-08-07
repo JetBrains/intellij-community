@@ -648,7 +648,7 @@ public class GitRebaseProcess {
     return find(skippedCommits.keySet(),  repository-> exists(skippedCommits.get(repository),  info-> info.revision.asString().equals(hash)));
   }
 
-  private static class GitRebaseProgressListener extends GitLineHandlerAdapter {
+  private static class GitRebaseProgressListener implements GitLineHandlerListener {
     private static final Pattern PROGRESS = Pattern.compile("^Rebasing \\((\\d+)/(\\d+)\\)$"); // `Rebasing (2/3)` means 2nd commit from 3
 
     private int currentCommit;

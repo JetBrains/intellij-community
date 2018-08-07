@@ -333,7 +333,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     assertEquals(StdFileTypes.JAVA.getLanguage(), file.getLanguage());
 
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < 30; i++) {
       assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
       WriteCommandAction.runWriteCommandAction(null, () -> {
         document.insertString(0, "/**/");
@@ -903,7 +903,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getDocument(psiFile);
     Random random = new Random();
 
-    for (int i=0; i<1000;i++) {
+    for (int i=0; i<100;i++) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         @Language(value = "JAVA", prefix = "class c {", suffix = "}")
         String body = "@NotNull\n" +

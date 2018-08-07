@@ -439,7 +439,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return getEditor();
       }

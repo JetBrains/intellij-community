@@ -4,6 +4,8 @@ package com.siyeh.ig.psiutils;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import one.util.streamex.StreamEx;
@@ -315,15 +317,26 @@ public final class CommentTracker {
   private void grabCommentsOnDelete(PsiElement element) {
     if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement ||
         (element.getParent() instanceof PsiDeclarationStatement &&
-         ((PsiDeclarationStatement)element.getParent()).getDeclaredElements().length == 1) ||
-        element.getParent() instanceof PsiJavaCodeReferenceElement) {
+         ((PsiDeclarationStatement)element.getParent()).getDeclaredElements().length == 1)) {
       element = element.getParent();
     }
-    grabComments(element);
-    if (element instanceof PsiAnnotatedJavaCodeReferenceElement) {
-      // PsiJavaCodeReferenceElementImpl tries to keep comment after dot which may result in duplicating comments.
-      PsiTreeUtil.getChildrenOfTypeAsList(element, PsiComment.class).forEach(PsiElement::delete);
+    else if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
+      PsiElement parent = element.getParent();
+      if (element instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)parent).getQualifier() == element) {
+        ASTNode dot = ((CompositeElement)parent).findChildByRole(ChildRole.DOT);
+        if (dot != null) {
+          PsiElement nextSibling = dot.getPsi().getNextSibling();
+          if (nextSibling != null && nextSibling.getTextLength() == 0) {
+            nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(nextSibling);
+          }
+          while (nextSibling != null) {
+            nextSibling = markUnchanged(nextSibling).getNextSibling();
+          }
+        }
+      }
+      element = parent;
     }
+    grabComments(element);
   }
 
   private void grabComments(PsiElement element) {

@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +65,7 @@ public abstract class AbstractAction extends AnAction implements DumbAware {
 
   protected void beforeActionPerformed(VcsContext context) {}
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     actionPerformed(CvsContextWrapper.createCachedInstance(e));
   }
 

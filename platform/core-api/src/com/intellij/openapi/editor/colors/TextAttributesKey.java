@@ -29,13 +29,14 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
   private static final Map<String, TextAttributesKey> ourRegistry = ConcurrentFactoryMap.createMap(TextAttributesKey::new);
 
-  private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider = new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
-    @Nullable
-    @Override
-    protected TextAttributeKeyDefaultsProvider compute() {
-      return ServiceManager.getService(TextAttributeKeyDefaultsProvider.class);
-    }
-  };
+  private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider =
+    new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
+      @Nullable
+      @Override
+      protected TextAttributeKeyDefaultsProvider compute() {
+        return ServiceManager.getService(TextAttributeKeyDefaultsProvider.class);
+      }
+    };
 
   private final String myExternalName;
   private TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
@@ -59,6 +60,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return ourRegistry.get(externalName);
   }
 
+  @Override
   public String toString() {
     return myExternalName;
   }
@@ -75,11 +77,12 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   /**
    * Registers a text attribute key with the specified identifier.
    *
-   * @param externalName      the unique identifier of the key.
+   * @param externalName the unique identifier of the key.
    * @return the new key instance, or an existing instance if the key with the same
-   *         identifier was already registered.
+   * identifier was already registered.
    */
-  @NotNull public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName) {
+  @NotNull
+  public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName) {
     return find(externalName);
   }
 
@@ -92,6 +95,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     }
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -103,6 +107,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myExternalName.hashCode();
   }
@@ -132,7 +137,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @param externalName      the unique identifier of the key.
    * @param defaultAttributes the default text attributes associated with the key.
    * @return the new key instance, or an existing instance if the key with the same
-   *         identifier was already registered.
+   * identifier was already registered.
    * @deprecated Use {@link #createTextAttributesKey(String, TextAttributesKey)} to guarantee compatibility with generic color schemes.
    */
   @NotNull
@@ -153,7 +158,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @param externalName      the unique identifier of the key.
    * @param defaultAttributes the default text attributes associated with the key.
    * @return the new key instance, or an existing instance if the key with the same
-   *         identifier was already registered.
+   * identifier was already registered.
    */
   @NotNull
   public static TextAttributesKey createTempTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
@@ -174,7 +179,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @param externalName         the unique identifier of the key.
    * @param fallbackAttributeKey the fallback key to use if text attributes for this key are not defined.
    * @return the new key instance, or an existing instance if the key with the same
-   *         identifier was already registered.
+   * identifier was already registered.
    */
   @NotNull
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
@@ -209,7 +214,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   }
 
   public interface TextAttributeKeyDefaultsProvider {
-    TextAttributes getDefaultAttributes(TextAttributesKey key);
+    TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key);
   }
 
   /**

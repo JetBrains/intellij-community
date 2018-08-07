@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +48,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
     }
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     perform();
   }
 
@@ -64,7 +65,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myFocusDrawer == null) {
       presentation.setText("Start Focus Debugger");

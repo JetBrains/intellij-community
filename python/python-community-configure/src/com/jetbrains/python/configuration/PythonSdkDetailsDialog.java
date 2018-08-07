@@ -439,7 +439,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Sdk sdk = getSelectedSdk();
       final PythonPathEditor pathEditor = createPathEditor(sdk);
       final SdkModificator sdkModificator = myModificators.get(sdk);

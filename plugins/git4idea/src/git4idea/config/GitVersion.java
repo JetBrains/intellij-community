@@ -65,7 +65,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * The minimal supported version
    */
-  public static final GitVersion MIN = new GitVersion(1, 7, 1, 1);
+  public static final GitVersion MIN = new GitVersion(1, 8, 0, 0);
 
   /**
    * Special version with a special Type which indicates, that Git version information is unavailable.

@@ -32,7 +32,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.commands.GitLineHandlerListener;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -283,7 +283,7 @@ public class GitFetcher {
     return true;
   }
 
-  private static class GitFetchPruneDetector extends GitLineHandlerAdapter {
+  private static class GitFetchPruneDetector implements GitLineHandlerListener {
 
     private static final Pattern PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)");
 

@@ -168,7 +168,7 @@ public class TreeModelBuilder {
       myFileIndex.iterateContent(new ContentIterator() {
         PackageDependenciesNode lastParent;
         VirtualFile dir;
-        public boolean processFile(VirtualFile fileOrDir) {
+        public boolean processFile(@NotNull VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
             if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
               lastParent = null;
@@ -244,7 +244,10 @@ public class TreeModelBuilder {
     Runnable buildingRunnable = () -> {
       for (final PsiFile file : files) {
         if (file != null) {
-          buildFileNode(file.getVirtualFile(), null);
+          VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            buildFileNode(virtualFile, null);
+          }
         }
       }
     };
@@ -262,7 +265,7 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  private PackageDependenciesNode buildFileNode(final VirtualFile file, @Nullable PackageDependenciesNode parent) {
+  private PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, false, ((double)myScannedFileCount++) / myTotalFileCount);

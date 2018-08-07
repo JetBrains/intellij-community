@@ -43,7 +43,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String methodName = getValue();
     String className = StringUtil.getPackageName(methodName, '#');
     boolean selfClassReference = className.isEmpty() ||

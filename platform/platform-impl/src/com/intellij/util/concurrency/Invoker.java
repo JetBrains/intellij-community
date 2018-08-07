@@ -2,22 +2,22 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Obsolescent;
 
+import java.awt.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.swing.Timer;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.util.Disposer.register;
-import static java.awt.EventQueue.isDispatchThread;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * @author Sergey.Malenkov
@@ -28,11 +28,11 @@ public abstract class Invoker implements Disposable {
   private static final AtomicInteger UID = new AtomicInteger();
   private final AtomicInteger count = new AtomicInteger();
   private final String description;
-  volatile boolean disposed;
+  private volatile boolean disposed;
 
-  private Invoker(String prefix, Disposable parent) {
+  private Invoker(@NotNull String prefix, @NotNull Disposable parent) {
     description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
-    register(parent, this);
+    Disposer.register(parent, this);
   }
 
   @Override
@@ -60,8 +60,9 @@ public abstract class Invoker implements Disposable {
    *
    * @param task a task to execute asynchronously on the valid thread
    */
-  public final void invokeLater(@NotNull Runnable task) {
-    invokeLater(task, 0);
+  @NotNull
+  public final Future<?> invokeLater(@NotNull Runnable task) {
+    return invokeLater(task, 0);
   }
 
   /**
@@ -70,12 +71,16 @@ public abstract class Invoker implements Disposable {
    * @param task  a task to execute asynchronously on the valid thread
    * @param delay milliseconds for the initial delay
    */
-  public final void invokeLater(@NotNull Runnable task, int delay) {
-    if (delay < 0) throw new IllegalArgumentException("delay");
+  @NotNull
+  public final Future<?> invokeLater(@NotNull Runnable task, int delay) {
+    if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: "+delay);
     if (canInvoke(task)) {
       count.incrementAndGet();
-      offer(() -> invokeSafely(task, 0), delay);
+      CompletableFuture<?> future = new CompletableFuture<>();
+      offer(() -> invokeSafely(task, 0, future), delay);
+      return future;
     }
+    return CompletableFuture.completedFuture(null);
   }
 
   /**
@@ -84,14 +89,23 @@ public abstract class Invoker implements Disposable {
    *
    * @param task a task to execute on the valid thread
    */
-  public final void invokeLaterIfNeeded(@NotNull Runnable task) {
+  @NotNull
+  public final Future<?> runOrInvokeLater(@NotNull Runnable task) {
     if (isValidThread()) {
       count.incrementAndGet();
-      invokeSafely(task, 0);
+      CompletableFuture<?> future = new CompletableFuture<>();
+      invokeSafely(task, 0, future);
+      return future;
     }
-    else {
-      invokeLater(task);
-    }
+    return invokeLater(task);
+  }
+
+  /**
+   * @deprecated use {@link #runOrInvokeLater(Runnable)}
+   */
+  @Deprecated
+  public final void invokeLaterIfNeeded(@NotNull Runnable task) {
+    runOrInvokeLater(task);
   }
 
   /**
@@ -103,17 +117,17 @@ public abstract class Invoker implements Disposable {
     return disposed ? 0 : count.get();
   }
 
-  abstract void offer(Runnable runnable, int delay);
+  abstract void offer(@NotNull Runnable runnable, int delay);
 
-  final void invokeSafely(Runnable task, int attempt) {
+  private void invokeSafely(@NotNull Runnable task, int attempt, @NotNull CompletableFuture<?> futureToComplete) {
     try {
       if (canInvoke(task)) {
-        if (isDispatchThread() || getApplication() == null) {
+        if (EventQueue.isDispatchThread() || ApplicationManager.getApplication() == null) {
           // do not care about ReadAction in EDT and in tests without application
           task.run();
         }
-        else if (getApplication().isReadAccessAllowed()) {
-          if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
+        else if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+          if (((ApplicationEx)ApplicationManager.getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
           task.run();
         }
         else {
@@ -127,19 +141,22 @@ public abstract class Invoker implements Disposable {
           }
         }
       }
+      futureToComplete.complete(null);
     }
     catch (ProcessCanceledException exception) {
       if (canRestart(task, attempt)) {
         count.incrementAndGet();
         int nextAttempt = attempt + 1;
-        offer(() -> invokeSafely(task, nextAttempt), 10);
+        offer(() -> invokeSafely(task, nextAttempt, futureToComplete), 10);
         LOG.debug("Task is restarted");
       }
     }
     catch (Exception exception) {
+      futureToComplete.completeExceptionally(exception);
       LOG.warn(exception);
     }
     catch (Throwable throwable) {
+      futureToComplete.completeExceptionally(throwable);
       LOG.warn(throwable);
       throw throwable;
     }
@@ -148,14 +165,14 @@ public abstract class Invoker implements Disposable {
     }
   }
 
-  private boolean canRestart(Runnable task, int attempt) {
+  private boolean canRestart(@NotNull Runnable task, int attempt) {
     LOG.debug("Task is canceled");
     if (attempt < THRESHOLD) return canInvoke(task);
     LOG.warn("Task is always canceled: " + task);
     return false;
   }
 
-  final boolean canInvoke(Runnable task) {
+  private boolean canInvoke(@NotNull Runnable task) {
     if (disposed) {
       LOG.debug("Invoker is disposed");
       return false;
@@ -190,15 +207,13 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public boolean isValidThread() {
-      return isDispatchThread();
+      return EventQueue.isDispatchThread();
     }
 
     @Override
-    void offer(Runnable runnable, int delay) {
+    void offer(@NotNull Runnable runnable, int delay) {
       if (delay > 0) {
-        Timer timer = new Timer(delay, event -> runnable.run());
-        timer.setRepeats(false);
-        timer.start();
+        EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay, TimeUnit.MILLISECONDS);
       }
       else {
         queue.offer(runnable);
@@ -219,11 +234,11 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public boolean isValidThread() {
-      return !isDispatchThread();
+      return !EventQueue.isDispatchThread();
     }
 
     @Override
-    void offer(Runnable runnable, int delay) {
+    void offer(@NotNull Runnable runnable, int delay) {
       schedule(AppExecutorUtil.getAppScheduledExecutorService(), runnable, delay);
     }
   }
@@ -253,7 +268,7 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(Runnable runnable, int delay) {
+    void offer(@NotNull Runnable runnable, int delay) {
       schedule(executor, () -> {
         if (thread != null) LOG.warn("unexpected thread: " + thread);
         thread = Thread.currentThread();
@@ -265,7 +280,7 @@ public abstract class Invoker implements Disposable {
 
   private static void schedule(ScheduledExecutorService executor, Runnable runnable, int delay) {
     if (delay > 0) {
-      executor.schedule(runnable, delay, MILLISECONDS);
+      executor.schedule(runnable, delay, TimeUnit.MILLISECONDS);
     }
     else {
       executor.execute(runnable);

@@ -90,7 +90,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       protected AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs) {
         return new DumbAwareAction(name) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             consumer.consume(name);
           }
         };

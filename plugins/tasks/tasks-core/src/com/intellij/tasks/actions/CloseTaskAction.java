@@ -25,13 +25,14 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class CloseTaskAction extends BaseTaskAction {
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(project);
@@ -54,7 +55,7 @@ public class CloseTaskAction extends BaseTaskAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = getProject(event);
     boolean enabled = project != null && !TaskManager.getManager(project).getActiveTask().isDefault();

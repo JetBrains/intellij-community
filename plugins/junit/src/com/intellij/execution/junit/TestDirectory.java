@@ -19,7 +19,6 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.TestClassCollector;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -32,6 +31,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,7 +42,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -129,28 +132,50 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected JavaParameters createJavaParameters() throws ExecutionException {
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
-      JavaParameters javaParameters = createDefaultJavaParameters();
-      createTempFiles(javaParameters);
-      String packageName = super.getPackageName(getConfiguration().getPersistentData());
-      try {
-        Path rootPath = getRootPath();
-        LOG.assertTrue(rootPath != null);
-        JUnitStarter
-          .printClassesList(Collections.singletonList("\u002B" + rootPath.toFile().getAbsolutePath()), packageName, "", packageName + ".*", myTempFile);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      return javaParameters;
-    }
-    return super.createJavaParameters();
-  }
-
-  @Override
   public SearchForTestsTask createSearchingForTestsTask() {
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) return null;
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+      return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
+        private final THashSet<PsiClass> classes = new THashSet<>();
+        @Override
+        protected void search() throws ExecutionException {
+          PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+          PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
+          if (aPackage != null) {
+            final Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), getProject());
+            if (module != null) {
+              ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+              PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope(true));
+              boolean foundTestSources = false;
+              for (PsiDirectory dir : directories) {
+                if (fileIndex.isInTestSourceContent(dir.getVirtualFile())) {
+                  if (foundTestSources) {
+                    collectClassesRecursively(directory, Condition.TRUE, classes);
+                    break;
+                  }
+                  foundTestSources = true;
+                }
+              }
+            }
+          }
+        }
+
+        @Override
+        protected void onFound() throws ExecutionException {
+          String packageName = TestDirectory.super.getPackageName(getConfiguration().getPersistentData());
+          try {
+            Path rootPath = getRootPath();
+            LOG.assertTrue(rootPath != null);
+            JUnitStarter
+              .printClassesList(Collections.singletonList("\u002B" + rootPath.toFile().getAbsolutePath()), packageName, "",
+                                classes.isEmpty() ? packageName + ".*" : StringUtil.join(classes, aClass -> ClassUtil.getJVMClassName(aClass), "||"), 
+                                myTempFile);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      };
+    }
 
     return super.createSearchingForTestsTask();
   }
@@ -209,7 +234,7 @@ class TestDirectory extends TestPackage {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String dirName = data.getDirName();
     return dirName.isEmpty() ? ExecutionBundle.message("all.tests.scope.presentable.text") 
-                             : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(dirName, '/'));
+                             : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(FileUtil.toSystemIndependentName(dirName), '/'));
   }
 
   @Override

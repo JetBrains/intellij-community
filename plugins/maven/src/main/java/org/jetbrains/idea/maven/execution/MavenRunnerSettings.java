@@ -47,7 +47,7 @@ public class MavenRunnerSettings implements Cloneable {
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public boolean isDelegateToMaven() {
+  public boolean isDelegateBuildToMaven() {
     return delegateBuildToMaven;
   }
 

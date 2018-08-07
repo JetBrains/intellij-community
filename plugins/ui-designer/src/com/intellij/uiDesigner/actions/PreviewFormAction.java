@@ -102,14 +102,14 @@ public final class PreviewFormAction extends AnAction{
     return new InstrumentationClassFinder(urls.toArray(new URL[0]));
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
       showPreviewFrame(editor.getModule(), editor.getFile(), editor.getStringDescriptorLocale());
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
     if(editor == null){

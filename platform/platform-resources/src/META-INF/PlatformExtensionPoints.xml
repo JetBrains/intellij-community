@@ -161,6 +161,7 @@
     <extensionPoint name="frameEditorComponentProvider" interface="com.intellij.openapi.wm.ex.FrameEditorComponentProvider"/>
 
     <extensionPoint name="statistic.eventLog.fusEventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.FeatureUsageEventLoggerProvider"/>
+    <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.FeatureUsageStateEventTracker"/>
 
     <extensionPoint name="uiDropperActions" interface="com.intellij.internal.inspector.UiDropperActionExtension"/>
 
@@ -310,6 +311,11 @@
 
     <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.editor.injectedFileChangesHandlerProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.injected.editor.InjectedFileChangesHandlerProvider"/>
     </extensionPoint>
   </extensionPoints>
 </idea-plugin>

@@ -18,6 +18,7 @@ package org.intellij.images.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Show/hide background action.
@@ -38,7 +39,7 @@ public final class ToggleTransparencyChessboardAction extends ToggleAction {
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));

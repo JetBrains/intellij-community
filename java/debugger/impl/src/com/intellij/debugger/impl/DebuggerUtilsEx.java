@@ -98,12 +98,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static PsiMethod findPsiMethod(PsiFile file, int offset) {
     PsiElement element = null;
 
-    while(offset >= 0) {
+    while (offset >= 0) {
       element = file.findElementAt(offset);
-      if(element != null) {
+      if (element != null) {
         break;
       }
-      offset --;
+      offset--;
     }
 
     for (; element != null; element = element.getParent()) {
@@ -232,7 +232,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
     return isFiltered(qName, Arrays.asList(classFilters));
   }
-  
+
   public static boolean isFiltered(@NotNull String qName, List<ClassFilter> classFilters) {
     if (qName.indexOf('[') != -1) {
       return false; //is array
@@ -240,19 +240,24 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     return classFilters.stream().anyMatch(filter -> isFiltered(filter, qName));
   }
-  
+
   public static int getEnabledNumber(ClassFilter[] classFilters) {
     return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
   }
 
-  public static ClassFilter[] readFilters(List<Element> children) throws InvalidDataException {
+  public static ClassFilter[] readFilters(List<Element> children) {
     if (ContainerUtil.isEmpty(children)) {
       return ClassFilter.EMPTY_ARRAY;
     }
 
     ClassFilter[] filters = new ClassFilter[children.size()];
     for (int i = 0, size = children.size(); i < size; i++) {
-      filters[i] = create(children.get(i));
+      try {
+        filters[i] = create(children.get(i));
+      }
+      catch (InvalidDataException e) {
+        LOG.error(e);
+      }
     }
     return filters;
   }
@@ -277,10 +282,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   private static boolean elementListsEqual(List<Element> l1, List<Element> l2) {
-    if(l1 == null) return l2 == null;
-    if(l2 == null) return false;
+    if (l1 == null) return l2 == null;
+    if (l2 == null) return false;
 
-    if(l1.size() != l2.size()) return false;
+    if (l1.size() != l2.size()) return false;
 
     Iterator<Element> i1 = l1.iterator();
 
@@ -293,10 +298,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   private static boolean attributeListsEqual(List<Attribute> l1, List<Attribute> l2) {
-    if(l1 == null) return l2 == null;
-    if(l2 == null) return false;
+    if (l1 == null) return l2 == null;
+    if (l2 == null) return false;
 
-    if(l1.size() != l2.size()) return false;
+    if (l1.size() != l2.size()) return false;
 
     Iterator<Attribute> i1 = l1.iterator();
 
@@ -311,13 +316,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static boolean elementsEqual(Element e1, Element e2) {
-    if(e1 == null) {
+    if (e1 == null) {
       return e2 == null;
     }
     if (!Comparing.equal(e1.getName(), e2.getName())) {
       return false;
     }
-    if (!elementListsEqual  (e1.getChildren(), e2.getChildren())) {
+    if (!elementListsEqual(e1.getChildren(), e2.getChildren())) {
       return false;
     }
     if (!attributeListsEqual(e1.getAttributes(), e2.getAttributes())) {
@@ -327,7 +332,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean externalizableEqual(JDOMExternalizable  e1, JDOMExternalizable e2) {
+  public static boolean externalizableEqual(JDOMExternalizable e1, JDOMExternalizable e2) {
     Element root1 = new Element("root");
     Element root2 = new Element("root");
     try {
@@ -449,9 +454,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
-  public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
+  public abstract DebuggerTreeNode getSelectedNode(DataContext context);
 
-  public abstract EvaluatorBuilder  getEvaluatorBuilder();
+  public abstract EvaluatorBuilder getEvaluatorBuilder();
 
   @NotNull
   public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
@@ -499,7 +504,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return buffer.length() <= pos;
     }
 
-    @NonNls String getSignature() {
+    @NonNls
+    String getSignature() {
       if (eof()) return "";
 
       switch (get()) {
@@ -540,7 +546,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           result.append(")");
           return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
         default:
-//          LOG.assertTrue(false, "unknown signature " + buffer);
+          //          LOG.assertTrue(false, "unknown signature " + buffer);
           return null;
       }
     }
@@ -944,7 +950,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
       element = parent;
     }
-    while(true);
+    while (true);
 
     final List<PsiLambdaExpression> lambdas = new SmartList<>();
     final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
@@ -1100,7 +1106,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   /**
    * Provides mapping from decompiled file line number to the original source code line numbers
-   * @param psiFile decompiled file
+   *
+   * @param psiFile      decompiled file
    * @param originalLine zero-based decompiled file line number
    * @return zero-based source code line number
    */

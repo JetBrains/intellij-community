@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.task.ProjectTaskManager;
+import org.jetbrains.annotations.NotNull;
 
 public class MakeModuleAction extends CompileActionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.actions.MakeModuleAction");
@@ -43,7 +44,7 @@ public class MakeModuleAction extends CompileActionBase {
     }
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     super.update(event);
     Presentation presentation = event.getPresentation();
     if (!presentation.isEnabled()) {

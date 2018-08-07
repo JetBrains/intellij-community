@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
@@ -55,8 +54,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (Experiments.isFeatureEnabled("new.search.everywhere") && e.getProject() != null) {
-      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e);
+    if (Registry.is("new.search.everywhere") && e.getProject() != null) {
+      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e, false);
     } else {
       super.actionPerformed(e);
     }

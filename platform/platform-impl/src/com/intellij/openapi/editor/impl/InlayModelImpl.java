@@ -4,10 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayModel;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
@@ -118,7 +115,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
 
       @Override
-      public void moveTextHappened(int start, int end, int base) {
+      public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
         for (InlayImpl inlay : myInlaysInvalidatedOnMove) {
           notifyRemoved(inlay);
         }

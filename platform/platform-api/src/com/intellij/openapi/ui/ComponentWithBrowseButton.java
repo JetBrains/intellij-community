@@ -58,7 +58,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
         this::notifyActionListeners));
       new DumbAwareAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           notifyActionListeners();
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
@@ -186,12 +186,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myBrowseButton.isVisible() && myBrowseButton.isEnabled());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e){
+    public void actionPerformed(@NotNull AnActionEvent e){
       myBrowseButton.doClick();
     }
 

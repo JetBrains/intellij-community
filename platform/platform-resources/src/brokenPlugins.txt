@@ -101,3 +101,4 @@ com.intellij.stats.completion 0.0.41 0.0.42 0.0.49 0.0.519 0.0.536 0.0.537 0.0.5
 com.huawei.ide 1.0
 Retrotranslator 0.2.5
 phplint 1.0
+jenv-idea-plugin 0.0.1 0.0.2 0.0.3

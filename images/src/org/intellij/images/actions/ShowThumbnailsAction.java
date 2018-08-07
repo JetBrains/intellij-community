@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Show thumbnail for directory.
@@ -30,7 +31,7 @@ import org.intellij.images.thumbnail.ThumbnailView;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ShowThumbnailsAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
         Project project = e.getData(CommonDataKeys.PROJECT);
         VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
         if (project != null && file != null && file.isDirectory()) {
@@ -42,7 +43,7 @@ public final class ShowThumbnailsAction extends AnAction {
         }
     }
 
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
         VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
         boolean enabled = file != null && file.isDirectory();
         if (ActionPlaces.isPopupPlace(e.getPlace())) {

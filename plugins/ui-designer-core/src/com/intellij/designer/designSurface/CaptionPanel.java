@@ -193,7 +193,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return this;
     }

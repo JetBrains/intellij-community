@@ -24,6 +24,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 public class InvalidSdkException extends ExternalSystemJdkException {
 
   public InvalidSdkException(String invalidPath) {
-    super(ExternalSystemBundle.message("external.system.platform.sdk.invalid", invalidPath), null, null);
+    super(ExternalSystemBundle.message("external.system.platform.sdk.invalid", invalidPath), null);
   }
 }

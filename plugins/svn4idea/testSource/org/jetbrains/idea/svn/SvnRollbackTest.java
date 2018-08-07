@@ -29,6 +29,8 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
@@ -95,11 +97,11 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change s2Change = assertMove(tree.myS2File);
     assertTrue(unv.isValid());
     assertTrue(!filesEqual(virtualToIoFile(unv), wasUnversioned));
-    assertTrue(!wasUnversioned.exists());
+    assertDoesntExist(wasUnversioned);
 
     assertRollback(asList(change, s2Change), emptyList());
 
-    assertTrue(wasUnversioned.exists());
+    assertExists(wasUnversioned);
   }
 
   //IDEA-39943
@@ -117,7 +119,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File was = virtualToIoFile(deepUnverioned);
 
     checkin();
-    runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" + File.separator + deepUnverioned.getName());
+    runAndVerifyStatus("? root/source/inner/" + deepUnverioned.getName());
     update();
 
     renameFileInCommand(tree.mySourceDir, "newName");
@@ -130,11 +132,11 @@ public class SvnRollbackTest extends SvnTestCase {
     assertMove(innerFile);
 
     assertTrue(!filesEqual(virtualToIoFile(deepUnverioned), was));
-    assertTrue(!was.exists());
+    assertDoesntExist(was);
 
     assertRollback(singletonList(change), emptyList());
 
-    assertTrue(was.exists());
+    assertExists(was);
   }
 
   @Test
@@ -183,9 +185,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasInnerFile1 = virtualToIoFile(innerFile1);
     final File wasInnerFile = virtualToIoFile(innerFile);
     checkin();
-    runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" +
-                      File.separator + "inner1" + File.separator + "inner2" + File.separator +
-                      "inner3" + File.separator + "deep.txt");
+    runAndVerifyStatus("? root/source/inner/inner1/inner2/inner3/deep.txt");
     update();
 
     editFileInCommand(innerFile, "some content");
@@ -198,8 +198,8 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasLowestDirAfter = virtualToIoFile(inner3);
 
     renameFileInCommand(tree.mySourceDir, "newNameSource");
-    assertTrue(!wasU.exists());
-    assertTrue(!wasU2.exists());
+    assertDoesntExist(wasU);
+    assertDoesntExist(wasU2);
     refreshChanges();
 
     final Change change = assertRename(tree.mySourceDir);
@@ -222,7 +222,7 @@ public class SvnRollbackTest extends SvnTestCase {
                         new SimpleContentRevision("1", getFilePath(inner2After, true), WORKING.toString())), fantomDelete1, fantomDelete2)
     );
 
-    assertTrue(wasU2.exists());
+    assertExists(wasU2);
   }
 
   @Test
@@ -331,15 +331,15 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change dirChange = assertRename(tree.mySourceDir);
     final Change s1Change = assertMove(tree.myS1File);
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unverionedDir));
-    assertTrue(!wasUnvDir.exists());
+    assertDoesntExist(wasUnvDir);
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unvFile));
-    assertTrue(!wasUnvFile.exists());
+    assertDoesntExist(wasUnvFile);
 
     assertRollback(singletonList(dirChange),
                    singletonList(new Change(s1Change.getBeforeRevision(), s1Change.getBeforeRevision(), FileStatus.MODIFIED)));
 
-    assertTrue(wasUnvDir.exists());
-    assertTrue(wasUnvFile.exists());
+    assertExists(wasUnvDir);
+    assertExists(wasUnvFile);
   }
 
   @Test
@@ -364,7 +364,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change dirChange = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
     assertMove(tree.myS2File);
-    assertTrue(!wasIgnored.exists());
+    assertDoesntExist(wasIgnored);
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
 
     assertRollback(singletonList(dirChange), emptyList());
@@ -372,7 +372,7 @@ public class SvnRollbackTest extends SvnTestCase {
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was not committed
     assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(ignored));
-    assertTrue(wasIgnored.exists());
+    assertExists(wasIgnored);
   }
 
   @Test
@@ -399,7 +399,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change dirChange = assertRename(tree.mySourceDir);
     assertMove(tree.myS1File);
     assertMove(tree.myS2File);
-    assertTrue(!wasIgnored.exists());
+    assertDoesntExist(wasIgnored);
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
 
     assertRollback(singletonList(dirChange), emptyList());
@@ -407,7 +407,7 @@ public class SvnRollbackTest extends SvnTestCase {
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was committed
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
-    assertTrue(wasIgnored.exists());
+    assertExists(wasIgnored);
   }
 
   @Test
@@ -532,9 +532,9 @@ public class SvnRollbackTest extends SvnTestCase {
     checkin();
 
     final File wasInitially = virtualToIoFile(tree.mySourceDir);
-    assertTrue(wasInitially.exists());
+    assertExists(wasInitially);
     moveFileInCommand(tree.mySourceDir, tree.myTargetDir);
-    assertTrue(!wasInitially.exists());
+    assertDoesntExist(wasInitially);
     refreshChanges();
 
     assertMove(tree.mySourceDir);
@@ -545,27 +545,22 @@ public class SvnRollbackTest extends SvnTestCase {
 
     deleteFileInCommand(tree.mySourceDir);
     runAndVerifyStatus(
-      "D root" + File.separator + "source",
-      "> moved to root" + File.separator + "target" + File.separator + "source",
-      "D root" + File.separator + "source" + File.separator + "s1.txt",
-      "D root" + File.separator + "source" + File.separator + "s2.txt",
-      "! root" + File.separator + "target" + File.separator + "source",
-      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s1.txt",
-      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s2.txt"
+      "D root/source",
+      "> moved to root/target/source",
+      "D root/source/s1.txt",
+      "D root/source/s2.txt",
+      "! root/target/source",
+      "! root/target/source/s1.txt",
+      "! root/target/source/s2.txt"
     );
 
     assertRollbackLocallyDeleted(singletonList(getFilePath(was, true)), emptyList());
 
-    runAndVerifyStatusSorted("D root" + File.separator + "source",
-               "D root" + File.separator + "source" + File.separator + "s1.txt",
-               "D root" + File.separator + "source" + File.separator + "s2.txt");
+    runAndVerifyStatusSorted("D root/source", "D root/source/s1.txt", "D root/source/s2.txt");
   }
 
   private void assertRollback(List<Change> changes, final List<Change> allowedAfter) throws VcsException {
-    final List<VcsException> exceptions = new ArrayList<>();
-    vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-    //noinspection unchecked
-    throwIfNotEmpty((List)exceptions);
+    rollback(changes);
     refreshChanges();
 
     List<LocalChangeList> lists = changeListManager.getChangeLists();

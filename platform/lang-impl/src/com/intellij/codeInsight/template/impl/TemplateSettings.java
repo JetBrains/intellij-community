@@ -36,10 +36,7 @@ import java.util.*;
 
 @State(
   name = "TemplateSettings",
-  storages = {
-    @Storage("templates.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  },
+  storages = @Storage("templates.xml"),
   additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {

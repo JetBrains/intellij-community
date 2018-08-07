@@ -58,7 +58,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     if (!(element instanceof PropertiesFile)) return false;
     String baseName = ResourceBundleManager.getInstance(element.getProject()).getFullName((PropertiesFile)element);
     if (baseName == null) return false;
@@ -67,7 +67,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     return rangeText.equals(baseName);
   }
 
-  public PsiElement handleElementRename(final String newElementName) {
+  public PsiElement handleElementRename(@NotNull final String newElementName) {
     return handleFileRename(newElementName, PropertiesFileType.DOT_DEFAULT_EXTENSION, false);
   }
 

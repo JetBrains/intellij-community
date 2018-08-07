@@ -775,7 +775,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
@@ -787,7 +787,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
     }
   }
@@ -919,7 +919,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       DataContext dataContext = e.getDataContext();
       ListPopupStep step = popupFactory.createActionsStep(

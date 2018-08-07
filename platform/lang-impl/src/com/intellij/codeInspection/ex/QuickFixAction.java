@@ -54,7 +54,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
   protected final InspectionToolWrapper myToolWrapper;
 
-  protected static InspectionResultsView getInvoker(AnActionEvent e) {
+  protected static InspectionResultsView getInvoker(@NotNull AnActionEvent e) {
     return InspectionResultsView.DATA_KEY.getData(e.getDataContext());
   }
 
@@ -71,7 +71,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     if (view == null) {
       e.getPresentation().setEnabled(false);
@@ -104,7 +104,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   @Override
   @ReviseWhenPortedToJDK("9")
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {

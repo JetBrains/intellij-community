@@ -179,7 +179,7 @@ class MergeBuilderTest : DiffTestCase() {
     fun check() {
       val left = fair(DiffIterableUtil.createUnchanged(leftUnchanged, baseCount, leftCount))
       val right = fair(DiffIterableUtil.createUnchanged(rightUnchanged, baseCount, rightCount))
-      val actual = ComparisonMergeUtil.buildFair(left, right, INDICATOR)
+      val actual = ComparisonMergeUtil.buildSimple(left, right, INDICATOR)
 
       assertEquals(expected, actual)
     }

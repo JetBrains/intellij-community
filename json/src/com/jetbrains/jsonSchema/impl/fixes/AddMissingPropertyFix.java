@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.EmptyNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInspection.*;
@@ -74,11 +75,13 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     TemplateManager templateManager = TemplateManager.getInstance(project);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(newElement);
     String text = value.getText();
-    boolean quoted = StringUtil.isQuotedString(text);
-    TextRange range = quoted ? TextRange.create(1, text.length() - 1) : TextRange.create(0, text.length());
-    builder.replaceElement(value, range, myData.myMissingPropertyIssues.iterator().next().hasEnumItems
+    boolean isEmptyArray = StringUtil.equalsIgnoreWhitespaces(text, "[]");
+    boolean isEmptyObject = StringUtil.equalsIgnoreWhitespaces(text, "{}");
+    boolean goInside = isEmptyArray || isEmptyObject || StringUtil.isQuotedString(text);
+    TextRange range = goInside ? TextRange.create(1, text.length() - 1) : TextRange.create(0, text.length());
+    builder.replaceElement(value, range, myData.myMissingPropertyIssues.iterator().next().enumItemsCount > 1 || isEmptyObject
                                           ? new MacroCallNode(new CompleteMacro())
-                                          : new ConstantNode(quoted ? StringUtil.unquoteString(text) : text));
+                                          : isEmptyArray ? new EmptyNode() : new ConstantNode(goInside ? StringUtil.unquoteString(text) : text));
     editor.getCaretModel().moveToOffset(newElement.getTextRange().getStartOffset());
     builder.setEndVariableAfter(newElement);
     WriteAction.run(() -> {

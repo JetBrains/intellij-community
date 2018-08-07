@@ -25,10 +25,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -64,7 +61,7 @@ public class NavigationGutterIconBuilder<T> {
   private final NotNullFunction<T, Collection<? extends PsiElement>> myConverter;
 
   protected NotNullLazyValue<Collection<T>> myTargets;
-  protected boolean myLazy;
+  private boolean myLazy;
   private String myTooltipText;
   private String myPopupTitle;
   private String myEmptyText;
@@ -72,7 +69,7 @@ public class NavigationGutterIconBuilder<T> {
   private GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private Computable<PsiElementListCellRenderer> myCellRenderer;
   private NullableFunction<T, String> myNamer = ElementPresentationManager.namer();
-  protected final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
+  private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
   public static final NotNullFunction<DomElement, Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
     o -> ContainerUtil.createMaybeSingletonList(o.getXmlElement());
   public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = dom -> {
@@ -81,7 +78,7 @@ public class NavigationGutterIconBuilder<T> {
     }
     return Collections.emptyList();
   };
-  public static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
+  protected static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
     dom -> Collections.singletonList(new GotoRelatedItem(dom, "XML"));
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
@@ -202,12 +199,13 @@ public class NavigationGutterIconBuilder<T> {
 
   @NotNull
   protected NotNullLazyValue<Collection<? extends GotoRelatedItem>> getGotoTargets() {
+    if (myTargets == null) return NotNullLazyValue.createConstantValue(Collections.emptyList());
     return createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider, evaluateAndForget(myTargets));
   }
 
   private static <T> NotNullLazyValue<Collection<? extends GotoRelatedItem>> createGotoTargetsThunk(boolean lazy,
-                                                                                                    final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider,
-                                                                                                    final Factory<Collection<T>> factory) {
+                                                                                                    final NotNullFunction<? super T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider,
+                                                                                                    final Factory<? extends Collection<T>> factory) {
     if (gotoRelatedItemProvider == null) {
       return NotNullLazyValue.createConstantValue(Collections.emptyList());
     }
@@ -229,16 +227,18 @@ public class NavigationGutterIconBuilder<T> {
     assert myTargets != null : "Must have called .setTargets() before calling create()";
   }
 
-  protected static <T> Factory<T> evaluateAndForget(NotNullLazyValue<T> lazyValue) {
-
+  @NotNull
+  private static <T> NotNullFactory<T> evaluateAndForget(@NotNull NotNullLazyValue<T> lazyValue) {
     final Ref<NotNullLazyValue<T>> ref = Ref.create(lazyValue);
-    return new Factory<T>() {
-      volatile T result;
+    return new NotNullFactory<T>() {
+      volatile T value;
 
+      @NotNull
       @Override
       public T create() {
+        T result = value;
         if (result == null) {
-          result = ref.get().getValue();
+          value = result = ref.get().getValue();
           ref.set(null);
         }
         return result;
@@ -281,8 +281,8 @@ public class NavigationGutterIconBuilder<T> {
   @NotNull
   private static <T> NotNullLazyValue<List<SmartPsiElementPointer>> createPointersThunk(boolean lazy,
                                                                                         final Project project,
-                                                                                        final Factory<Collection<T>> targets,
-                                                                                        final NotNullFunction<T, Collection<? extends PsiElement>> converter) {
+                                                                                        final NotNullFactory<? extends Collection<T>> targets,
+                                                                                        final NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     if (!lazy) {
       return NotNullLazyValue.createConstantValue(calcPsiTargets(project, targets.create(), converter));
     }
@@ -296,8 +296,9 @@ public class NavigationGutterIconBuilder<T> {
     };
   }
 
-  private static <T> List<SmartPsiElementPointer> calcPsiTargets(Project project, Collection<? extends T> targets,
-                                                                 NotNullFunction<T, Collection<? extends PsiElement>> converter) {
+  private static <T> List<SmartPsiElementPointer> calcPsiTargets(@NotNull Project project,
+                                                                 @NotNull Collection<? extends T> targets,
+                                                                 @NotNull NotNullFunction<T, ? extends Collection<? extends PsiElement>> converter) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
     Set<PsiElement> elements = new THashSet<>();
     final List<SmartPsiElementPointer> list = new ArrayList<>(targets.size());
@@ -371,6 +372,7 @@ public class NavigationGutterIconBuilder<T> {
       return myAlignment;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (!super.equals(o)) return false;
@@ -384,6 +386,7 @@ public class NavigationGutterIconBuilder<T> {
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + (myAlignment != null ? myAlignment.hashCode() : 0);

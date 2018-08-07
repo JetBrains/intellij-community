@@ -13,12 +13,14 @@ import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 
 public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   private boolean myStoredSettingValue;
@@ -1401,6 +1403,63 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.getProperty(new String(<Hint text=\"bytes:\"/>null, <HINT text=\"charsetName:\"/><caret>)) } }");
   }
 
+  public void testFieldAccessInsideMethodInvocation() throws Exception {
+    enableVirtualComma();
+
+    configureJava("class C {\n" +
+                  "  int x;\n" +
+                  "  void some(int a, int b) {}\n" +
+                  "  void other() { som<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/><caret><Hint text=\",b:\"/>); }\n" +
+                          "}");
+    type("this.");
+    complete("x");
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/>this.x<caret><Hint text=\",b:\"/>); }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "  int x;\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<Hint text=\"a:\"/>this.x, <HINT text=\"b:\"/><caret>); }\n" +
+                          "}");
+  }
+
+  public void testParameterPopupAfterManuallyRenamingOneOverload() throws Exception {
+    configureJava("class C {\n" +
+                  "  void some(int a) {}\n" +
+                  "  void some(int a, int b) {}\n" +
+                  "  void other() { som<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "  void some(int a) {}\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/><caret>); }\n" +
+                          "}");
+
+    mouse().clickAt(2, 11);
+    type('2');
+    mouse().clickAt(3, 23);
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "  void some(int a) {}\n" +
+                          "  void some2(int a, int b) {}\n" +
+                          "  void other() { some(<HINT text=\"a:\"/><caret>); }\n" +
+                          "}");
+
+    showParameterInfo();
+    checkHintContents("<html><b>int a</b></html>");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
@@ -1447,6 +1506,10 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void escape() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+  }
+
+  private EditorMouseFixture mouse() {
+    return new EditorMouseFixture((EditorImpl)getEditor());
   }
 
   private void setParameterHintsLimit(int limit) {

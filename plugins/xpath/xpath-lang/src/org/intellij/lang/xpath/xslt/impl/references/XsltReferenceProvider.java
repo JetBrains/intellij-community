@@ -172,7 +172,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
 
 
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         if (!newElementName.equals(myParam.getName())) {
           myParam.setName(newElementName);
         }
@@ -182,7 +182,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         return attribute.getValueElement();
       }
 
-      public boolean isReferenceTo(PsiElement element) {
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         // self-reference is only a trick to enable rename/find usages etc. but it shouldn't actually
         // refer to itself because this would list the element to be renamed/searched for twice
         assert !super.isReferenceTo(element);

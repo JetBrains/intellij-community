@@ -35,6 +35,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -49,7 +50,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase i
     super(text, description, icon);
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Presentation presentation = e.getPresentation();

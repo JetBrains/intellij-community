@@ -98,7 +98,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(e.getProject() != null);
   }

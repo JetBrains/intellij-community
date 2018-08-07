@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -224,7 +225,7 @@ public class EditorSearchSession implements SearchSession,
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (SearchSession.KEY.is(dataId)) {
       return this;
     }
@@ -426,7 +427,8 @@ public class EditorSearchSession implements SearchSession,
     if (mySearchResults != null) {
       mySearchResults.clear();
     }
-    if (allowedToChangedEditorSelection) {
+    if (allowedToChangedEditorSelection
+        && !UIUtil.isClientPropertyTrue(myComponent.getSearchTextComponent(), SearchTextArea.JUST_CLEARED_KEY)) {
       restoreInitialCaretPositionAndSelection();
     }
   }
@@ -493,7 +495,7 @@ public class EditorSearchSession implements SearchSession,
     }
 
     @Override
-    public final void update(AnActionEvent e) {
+    public final void update(@NotNull AnActionEvent e) {
       JButton button = (JButton)e.getPresentation().getClientProperty(COMPONENT_KEY);
       if (button != null) {
         update(button);
@@ -501,7 +503,7 @@ public class EditorSearchSession implements SearchSession,
     }
 
     @Override
-    public final void actionPerformed(AnActionEvent e) {
+    public final void actionPerformed(@NotNull AnActionEvent e) {
       onClick();
     }
 

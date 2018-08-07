@@ -22,9 +22,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseActiveTabAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);
     boolean processed = false;
     if (contentManager != null && contentManager.canCloseContents()) {
@@ -44,7 +45,7 @@ public class CloseActiveTabAction extends AnAction implements DumbAware {
     }
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     ContentManager contentManager=ContentManagerUtil.getContentManagerFromContext(event.getDataContext(), true);
     presentation.setEnabled(contentManager != null && contentManager.canCloseContents());

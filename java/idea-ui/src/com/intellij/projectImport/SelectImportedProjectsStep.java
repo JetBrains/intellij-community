@@ -59,13 +59,13 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
     final AnAction selectAllAction = new AnAction(RefactoringBundle.message("select.all.button")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         fileChooser.setAllElementsMarked(true);
       }
     };
     final AnAction unselectAllAction = new AnAction(RefactoringBundle.message("unselect.all.button")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         fileChooser.setAllElementsMarked(false);
       }
     };

@@ -18,8 +18,10 @@ package com.intellij.application.options;
 
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.application.options.codeStyle.CodeStyleSchemesPanel;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModelListener;
+import com.intellij.application.options.codeStyle.CodeStyleSchemesPanel;
+import com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider;
+import com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -28,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +42,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   private CodeStyleSchemesPanel myRootSchemesPanel;
   private CodeStyleSchemesModel myModel;
-  private List<CodeStyleConfigurableWrapper> myPanels;
+  private List<Configurable> myPanels;
   private boolean myResetCompleted = false;
   private boolean myInitResetInvoked = false;
   private boolean myRevertCompleted = false;
@@ -67,7 +70,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     if (myPanels != null) {
       try {
         super.disposeUIResources();
-        for (CodeStyleConfigurableWrapper panel : myPanels) {
+        for (Configurable panel : myPanels) {
           panel.disposeUIResources();
         }
       }
@@ -110,8 +113,13 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     }
 
     if (myPanels != null) {
-      for (CodeStyleConfigurableWrapper panel : myPanels) {
-        panel.resetPanel();
+      for (Configurable panel : myPanels) {
+        if (panel instanceof CodeStyleConfigurableWrapper) {
+          ((CodeStyleConfigurableWrapper)panel).resetPanel();
+        }
+        else {
+          panel.reset();
+        }
       }
     }
   }
@@ -143,8 +151,10 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   private boolean isSomeSchemeModified() {
     if (myPanels != null) {
-      for (CodeStyleConfigurableWrapper panel : myPanels) {
-        if (panel.isPanelModified()) return true;
+      for (Configurable panel : myPanels) {
+        if (panel instanceof CodeStyleConfigurableWrapper) {
+          if (((CodeStyleConfigurableWrapper)panel).isPanelModified()) return true;
+        }
       }
     }
 
@@ -156,8 +166,13 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     super.apply();
     myModel.apply();
 
-    for (CodeStyleConfigurableWrapper panel : myPanels) {
-      panel.applyPanel();
+    for (Configurable panel : myPanels) {
+      if (panel instanceof CodeStyleConfigurableWrapper) {
+        ((CodeStyleConfigurableWrapper)panel).applyPanel();
+      }
+      else {
+        panel.apply();
+      }
     }
 
     //noinspection deprecation
@@ -166,7 +181,9 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   protected Configurable[] buildConfigurables() {
+    CodeStyleGroupProviderFactory groupProviderFactory = new CodeStyleGroupProviderFactory(ensureModel(), this);
     myPanels = new ArrayList<>();
+    Set<CodeStyleGroupProvider> addedGroupProviders = ContainerUtil.newHashSet();
 
     final List<CodeStyleSettingsProvider> providers =
       Arrays.asList(Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME));
@@ -182,9 +199,20 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     });
 
     for (final CodeStyleSettingsProvider provider : providers) {
-      if (provider.hasSettingsPage()) {
-        CodeStyleConfigurableWrapper e = ConfigurableFactory.Companion.getInstance().createCodeStyleConfigurable(provider, ensureModel(), this);
-        myPanels.add(e);
+      if (provider.getGroup() != null) {
+        CodeStyleGroupProvider groupProvider = groupProviderFactory.getGroupProvider(provider.getGroup());
+        if (!addedGroupProviders.contains(groupProvider)) {
+          myPanels.add(groupProvider.createConfigurable());
+          addedGroupProviders.add(groupProvider);
+        }
+        groupProvider.addChildProvider(provider);
+      }
+      else {
+        if (provider.hasSettingsPage()) {
+          CodeStyleConfigurableWrapper e =
+            ConfigurableFactory.Companion.getInstance().createCodeStyleConfigurable(provider, ensureModel(), this);
+          myPanels.add(e);
+        }
       }
     }
 
@@ -263,8 +291,10 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public Set<String> processListOptions() {
     HashSet<String> result = new HashSet<>();
-    for (CodeStyleConfigurableWrapper panel : myPanels) {
-      result.addAll(panel.processListOptions());
+    for (Configurable panel : myPanels) {
+      if (panel instanceof CodeStyleConfigurableWrapper) {
+        result.addAll(((CodeStyleConfigurableWrapper)panel).processListOptions());
+      }
     }
     return result;
   }
@@ -279,6 +309,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     if (myPanels == null) {
       buildConfigurables();
     }
-    return myPanels.stream().filter(panel -> panel.getDisplayName().equals(name)).findFirst().orElse(null);
+    Configurable found = myPanels.stream().filter(panel -> panel.getDisplayName().equals(name)).findFirst().orElse(null);
+    return found instanceof SearchableConfigurable ? (SearchableConfigurable)found : null;
   }
 }

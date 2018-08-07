@@ -65,13 +65,13 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null && e.getData(CommonDataKeys.PSI_FILE) != null
                                    && e.getData(CommonDataKeys.EDITOR) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final PsiClass psiClass = getPsiClass(e);
     if (psiClass == null) return;
 

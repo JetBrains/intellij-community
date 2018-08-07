@@ -26,22 +26,9 @@ interface StateStorageManager {
    */
   fun rename(path: String, newName: String)
 
-  fun startExternalization(): ExternalizationSession?
-
   fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage?
 
   fun expandMacros(path: String): String
-
-  interface ExternalizationSession {
-    fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any)
-
-    fun setStateInOldStorage(component: Any, componentName: String, state: Any)
-
-    /**
-     * return empty list if nothing to save
-     */
-    fun createSaveSessions(): List<StateStorage.SaveSession>
-  }
 }
 
 interface StorageCreator {

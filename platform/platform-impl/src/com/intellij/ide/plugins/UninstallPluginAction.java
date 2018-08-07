@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +42,7 @@ public class UninstallPluginAction extends AnAction implements DumbAware {
     host = mgr;
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     if (!pluginTable.isShowing()) {
       presentation.setEnabled(false);
@@ -68,7 +69,7 @@ public class UninstallPluginAction extends AnAction implements DumbAware {
     presentation.setEnabled(enabled);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     uninstall(host, false, pluginTable.getSelectedObjects());
     pluginTable.updateUI();
   }

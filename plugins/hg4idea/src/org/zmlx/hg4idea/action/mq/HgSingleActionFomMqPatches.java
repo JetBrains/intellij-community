@@ -30,7 +30,7 @@ public abstract class HgSingleActionFomMqPatches extends HgActionFromMqPatches {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     HgMqUnAppliedPatchesPanel patchInfo = e.getData(HgMqUnAppliedPatchesPanel.MQ_PATCHES);
     e.getPresentation().setEnabled(patchInfo != null && patchInfo.getSelectedRowsCount() == 1);
   }

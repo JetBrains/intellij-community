@@ -69,7 +69,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext);
     if (this instanceof LatencyAwareEditorAction && editor != null) {
@@ -121,7 +121,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext);
@@ -151,7 +151,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
 
     return new DataContext() {
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PROJECT.is(dataId)) {
           final Project project = editor.getProject();
           if (project != null) {

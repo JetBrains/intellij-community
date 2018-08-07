@@ -430,7 +430,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     // performance: a qualified reference can never resolve to a local variable or parameter
     if (isLocalScope(element)) {
       return false;

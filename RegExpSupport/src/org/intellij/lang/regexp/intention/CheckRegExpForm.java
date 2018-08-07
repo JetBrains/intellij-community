@@ -125,7 +125,7 @@ public class CheckRegExpForm {
 
         final AnAction sampleTextFocusAction = new AnAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget(), true);
           }
         };
@@ -134,7 +134,7 @@ public class CheckRegExpForm {
 
         final AnAction regExpFocusAction = new AnAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             IdeFocusManager.findInstance().requestFocus(mySampleText.getFocusTarget(), true);
           }
         };

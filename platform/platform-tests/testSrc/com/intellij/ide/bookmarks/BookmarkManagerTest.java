@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 
 import java.io.IOException;
@@ -209,7 +210,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
       return myEditor;
     }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
@@ -48,7 +49,13 @@ public class AddSourceFolderListener implements VirtualFileListener {
         ExternalSystemApiUtil.executeProjectChangeAction(false, new DisposeAwareProjectChange(myProject) {
           @Override
           public void execute() {
-            LOG.info("Detected file [" + event.getFile().getPath() + "] appeared for content root [" + myRoot.getPath() + "], attaching new source folder");
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              LOG.info("Detected file [" +
+                       event.getFile().getPath() +
+                       "] appeared for content root [" +
+                       myRoot.getPath() +
+                       "], attaching new source folder in project [hashCode=" + myModule.getProject().hashCode() + "]");
+            }
             final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
             final ContentEntry entry = MarkRootActionBase.findContentEntry(rootModel, event.getFile());
             if (entry != null) {
@@ -58,6 +65,7 @@ public class AddSourceFolderListener implements VirtualFileListener {
               }
             }
             rootModel.commit();
+            VirtualFileManager.getInstance().removeVirtualFileListener(AddSourceFolderListener.this);
           }
         });
       }

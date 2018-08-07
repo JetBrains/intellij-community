@@ -282,7 +282,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!FileDocumentManager.getInstance().requestWriting(myEditor.getDocument(), myProject)) {
         return;
       }
@@ -297,7 +297,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(CommonDataKeys.PROJECT), "Live Templates");
     }
   }

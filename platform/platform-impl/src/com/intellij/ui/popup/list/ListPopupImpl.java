@@ -553,7 +553,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
        if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }

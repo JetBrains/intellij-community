@@ -30,7 +30,8 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @interface ScopeConstant {}
 
   private final Module myModule;
-  private final @ScopeConstant int myOptions;
+  @ScopeConstant
+  private final int myOptions;
   private final ProjectFileIndexImpl myProjectFileIndex;
 
   private volatile Set<Module> myModules;

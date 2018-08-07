@@ -4,7 +4,7 @@ package com.intellij.execution.testDiscovery.actions;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -77,7 +77,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   private static final String RUN_ALL_ACTION_TEXT = "Run All Affected Tests";
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(
       isEnabled(e.getProject()) &&
       (findMethodAtCaret(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
@@ -85,7 +85,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     assert project != null;
 
@@ -109,7 +109,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     showDiscoveredTests(project, dataContext, presentableName, method);
   }
 
-  private static void showDiscoveredTestsByChanges(AnActionEvent e) {
+  private static void showDiscoveredTestsByChanges(@NotNull AnActionEvent e) {
     Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     Project project = e.getProject();
     assert project != null;
@@ -154,7 +154,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     return methods
       .stream()
-      .map(m -> ObjectUtils.tryCast(Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi(), PsiMethod.class))
+      .map(m -> UastContextKt.toUElement(m))
+      .filter(Objects::nonNull)
+      .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
       .filter(Objects::nonNull)
       .toArray(PsiMethod.ARRAY_FACTORY::create);
   }
@@ -283,7 +285,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
       for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
         byte frameworkId =
-          ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
+          ((JavaTestConfigurationWithDiscoverySupport)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
         TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
           PsiClass[] testClassPsi = {null};
           PsiMethod[] testMethodPsi = {null};
@@ -328,7 +330,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
         return new ActionButton(new AnAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             listener.run();
           }
         }, presentation, "ShowDiscoveredTestsToolbar", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
@@ -384,9 +386,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
   @NotNull
   private static String methodSignature(@NotNull PsiMethod method) {
-    return method.getName() +
-           TestDiscoveryInstrumentationUtils.SEPARATOR +
-           ClassUtil.getAsmMethodSignature(method);
+    String tail = TestDiscoveryInstrumentationUtils.SEPARATOR + ClassUtil.getAsmMethodSignature(method);
+    return (method.isConstructor() ? "<init>" : method.getName()) + tail;
   }
 
   private static String getName(PsiClass c) {

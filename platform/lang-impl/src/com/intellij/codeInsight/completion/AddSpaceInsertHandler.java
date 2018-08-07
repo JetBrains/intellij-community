@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -8,6 +9,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author zolotov
@@ -28,7 +30,7 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
     myTriggerAutoPopup = triggerAutoPopup;
   }
 
-  public void handleInsert(InsertionContext context, LookupElement item) {
+  public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Editor editor = context.getEditor();
     char completionChar = context.getCompletionChar();
     if (completionChar == ' ' || StringUtil.containsChar(myIgnoreOnChars, completionChar)) return;

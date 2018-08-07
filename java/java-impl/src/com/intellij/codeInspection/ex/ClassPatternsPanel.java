@@ -34,6 +34,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -76,7 +77,7 @@ class ClassPatternsPanel extends JPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myTable.getSelectedRow() >= 0;
         }
       });

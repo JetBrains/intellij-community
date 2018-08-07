@@ -272,7 +272,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
       return VcsTreeModelData.selected(myViewer).userObjectsStream(VirtualFile.class);
     }
@@ -478,7 +478,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     }
 
     @Nullable
-    private Object getUserObject(AnActionEvent e) {
+    private Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;

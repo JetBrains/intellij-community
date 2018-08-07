@@ -288,6 +288,19 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
                  "B().c = 1");
   }
 
+  // PY-31066
+  public void testWriteToSlotAndAnnotatedClassVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    __slots__ = ['a']\n" +
+                         "    a: int\n" +
+                         "\n" +
+                         "    def __init__(self, a: int) -> None:\n" +
+                         "        self.a = a")
+    );
+  }
+
   private void doTestPy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
   }

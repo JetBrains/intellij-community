@@ -237,7 +237,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.getName().equals(dataId)) {
       final PsiElement[] elements = getSelectedPSIElements();
       return elements.length == 1 ? elements[0] : null;
@@ -459,7 +459,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       scrollFromSource();
     }
   }

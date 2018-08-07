@@ -119,7 +119,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.CONTENT_MANAGER.is(dataId) || PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && getContentCount() > 1) {
         return ContentManagerImpl.this;
       }

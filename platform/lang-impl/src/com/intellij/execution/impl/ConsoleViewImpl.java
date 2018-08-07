@@ -810,7 +810,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (myEditor == null) {
       return null;
     }
@@ -1110,7 +1110,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       boolean enabled = myConsoleView != null && myConsoleView.getContentSize() > 0;
       if (!enabled) {
         enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
@@ -1123,7 +1123,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final ConsoleView consoleView = myConsoleView != null ? myConsoleView : e.getData(LangDataKeys.CONSOLE_VIEW);
       if (consoleView != null) {
         consoleView.clear();
@@ -1197,7 +1197,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private abstract static class ConsoleAction extends AnAction implements DumbAware {
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       DataContext context = e.getDataContext();
       ConsoleViewImpl console = getRunningConsole(context);
@@ -1209,7 +1209,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     protected abstract void execute(@NotNull ConsoleViewImpl console, @NotNull DataContext context);
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final ConsoleViewImpl console = getRunningConsole(e.getDataContext());
       e.getPresentation().setEnabled(console != null);
     }
@@ -1396,7 +1396,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       @Override
-      protected Editor getEditor(AnActionEvent e) {
+      protected Editor getEditor(@NotNull AnActionEvent e) {
         return myEditor;
       }
     };
@@ -1601,14 +1601,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private class HyperlinkNavigationAction extends DumbAwareAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Runnable runnable = myHyperlinks.getLinkNavigationRunnable(myEditor.getCaretModel().getLogicalPosition());
       assert runnable != null;
       runnable.run();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHyperlinks.getLinkNavigationRunnable(myEditor.getCaretModel().getLogicalPosition()) != null);
     }
   }

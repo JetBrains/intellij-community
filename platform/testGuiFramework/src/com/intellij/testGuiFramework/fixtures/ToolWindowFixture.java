@@ -22,7 +22,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.StripeButton;
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import com.intellij.ui.content.Content;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -62,7 +62,7 @@ public abstract class ToolWindowFixture {
         toolWindowRef.set(toolWindow);
         return toolWindow != null;
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
     myRobot = robot;
     myToolWindow = toolWindowRef.get();
   }
@@ -84,7 +84,7 @@ public abstract class ToolWindowFixture {
           }
           return false;
         }
-      }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+      }, Timeouts.INSTANCE.getMinutes02());
     } catch (WaitTimedOutError e) {
       throw new ComponentLookupException("Cannot find content with " + displayName);
     }
@@ -123,7 +123,7 @@ public abstract class ToolWindowFixture {
 
   @Nullable
   protected Content getContent(@NotNull final TextMatcher displayNameMatcher) {
-    return getContent(displayNameMatcher, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    return getContent(displayNameMatcher, Timeouts.INSTANCE.getMinutes02());
   }
 
   @Nullable
@@ -152,7 +152,7 @@ public abstract class ToolWindowFixture {
   }
 
   private void activateAndWaitUntilIsVisible() {
-    activateAndWaitUntilIsVisible(GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    activateAndWaitUntilIsVisible(Timeouts.INSTANCE.getMinutes02());
   }
 
   private void activateAndWaitUntilIsVisible(@NotNull Timeout timeout) {
@@ -196,11 +196,11 @@ public abstract class ToolWindowFixture {
       public boolean test() {
         return callback.finished;
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
   }
 
   protected void waitUntilIsVisible() {
-    waitUntilIsVisible(GuiTestUtil.INSTANCE.getTHIRTY_SEC_TIMEOUT());
+    waitUntilIsVisible(Timeouts.INSTANCE.getSeconds30());
   }
 
   protected void waitUntilIsVisible(@NotNull Timeout timeout) {

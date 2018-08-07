@@ -30,7 +30,6 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -154,7 +153,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getCurrentSide().select(myRequest.getContents());
     }
@@ -197,52 +196,45 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     @NotNull protected final ThreeSide mySide1;
     @NotNull protected final ThreeSide mySide2;
 
-    public ShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
+    public ShowPartialDiffAction(@NotNull PartialDiffMode mode) {
       String id;
-      Icon icon = null;
       switch (mode) {
         case LEFT_MIDDLE:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Left";
-          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
           break;
         case RIGHT_MIDDLE:
           mySide1 = ThreeSide.RIGHT;
           mySide2 = ThreeSide.BASE;
           id = "Diff.ComparePartial.Base.Right";
-          if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
           break;
         case MIDDLE_LEFT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.LEFT;
           id = "Diff.ComparePartial.Base.Left";
-          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftMiddle;
           break;
         case MIDDLE_RIGHT:
           mySide1 = ThreeSide.BASE;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Base.Right";
-          if (!hasFourSides) icon = AllIcons.Diff.Compare3MiddleRight;
           break;
         case LEFT_RIGHT:
           mySide1 = ThreeSide.LEFT;
           mySide2 = ThreeSide.RIGHT;
           id = "Diff.ComparePartial.Left.Right";
-          if (!hasFourSides) icon = AllIcons.Diff.Compare3LeftRight;
           break;
         default:
           throw new IllegalArgumentException();
       }
       String text = ActionsBundle.message("action.Diff.ComparePartial.Generic", mySide1.getIndex(), mySide2.getIndex());
       getTemplatePresentation().setText(text);
-      getTemplatePresentation().setIcon(icon);
 
       ActionUtil.mergeFrom(this, id);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       DiffRequest request = createRequest();
       DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
     }

@@ -23,10 +23,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.rmi.RemoteException;
@@ -113,6 +113,9 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         myCallsInProgressNumber.incrementAndGet();
         try {
           return method.invoke(impl, args);
+        }
+        catch (InvocationTargetException e) {
+          throw e.getCause();
         }
         finally {
           myCallsInProgressNumber.decrementAndGet();

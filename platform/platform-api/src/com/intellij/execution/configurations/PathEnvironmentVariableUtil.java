@@ -46,7 +46,7 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
-    return findInPath(fileBaseName, EnvironmentUtil.getValue(PATH), filter);
+    return findInPath(fileBaseName, getPathVariableValue(), filter);
   }
 
   /**
@@ -78,7 +78,7 @@ public class PathEnvironmentVariableUtil {
 
   @NotNull
   public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
-    return findExeFilesInPath(false, filter, EnvironmentUtil.getValue(PATH), fileBaseName);
+    return findExeFilesInPath(false, filter, getPathVariableValue(), fileBaseName);
   }
 
   @NotNull
@@ -134,7 +134,7 @@ public class PathEnvironmentVariableUtil {
         List<String> executableFileExtensions = getWindowsExecutableFileExtensions();
 
         String[] baseNames = ContainerUtil.map2Array(executableFileExtensions, String.class, s -> exePath+s);
-        List<File> exeFiles = findExeFilesInPath(true, null, EnvironmentUtil.getValue(PATH), baseNames);
+        List<File> exeFiles = findExeFilesInPath(true, null, getPathVariableValue(), baseNames);
         File foundFile = ContainerUtil.getFirstItem(exeFiles);
         if(foundFile != null){
           return foundFile.getAbsolutePath();
@@ -142,5 +142,13 @@ public class PathEnvironmentVariableUtil {
       }
     }
     return exePath;
+  }
+
+  /**
+   * Retrieves the value of PATH environment variable
+   */
+  @Nullable
+  public static String getPathVariableValue() {
+    return EnvironmentUtil.getValue(PATH);
   }
 }

@@ -108,16 +108,24 @@ class SmartPointerTracker {
     references[index].index = -1;
     references[index] = null;
     if (--size == 0) {
-      reference.file.replace(reference.key, this, null);
+      disconnectTracker(reference.file, reference.key);
+    }
+  }
+
+  private void disconnectTracker(VirtualFile file, Key<SmartPointerTracker> key) {
+    if (!file.replace(key, this, null)) {
+      throw new IllegalStateException("Couldn't clear smart pointer tracker " + this + ", current " + file.getUserData(key));
     }
   }
 
   private void assertActual(@NotNull Key<SmartPointerTracker> expectedKey, @NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> refKey) {
     if (!isActual(file, refKey)) {
-      throw new AssertionError("Smart pointer list mismatch mismatch:" +
-                               " ref.key=" + expectedKey +
+      SmartPointerTracker another = file.getUserData(refKey);
+      throw new AssertionError("Smart pointer list mismatch:" +
+                               " size=" + size +
+                               ", ref.key=" + expectedKey +
                                ", manager.key=" + refKey +
-                               (file.getUserData(refKey) != null ? "; has another pointer list" : ""));
+                               (another != null ? "; has another pointer list with size " + another.size : ""));
     }
   }
 
@@ -265,6 +273,10 @@ class SmartPointerTracker {
     while (true) {
       PointerReference reference = (PointerReference)ourQueue.poll();
       if (reference == null) break;
+
+      if (reference.get() != null) {
+        throw new IllegalStateException("Queued reference has referent!");
+      }
 
       SmartPointerTracker pointers = reference.file.getUserData(reference.key);
       if (pointers != null) {

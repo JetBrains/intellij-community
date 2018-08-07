@@ -61,7 +61,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement)) {
       return null;
     }
-    if (PsiTreeUtil.getParentOfType(element, PsiErrorElement.class) != null) return null;
+    if (PsiTreeUtil.getParentOfType(element, PsiErrorElement.class, PsiImportStatementBase.class) != null) return null;
     PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     if (refExpr instanceof  PsiMethodReferenceExpression) return null;
     final PsiElement gParent = refExpr.getParent();

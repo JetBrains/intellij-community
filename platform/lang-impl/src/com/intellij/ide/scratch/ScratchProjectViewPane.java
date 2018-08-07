@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -149,12 +150,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  @Override
-  protected PsiElement getPSIElement(@Nullable Object element) {
-    return element instanceof RootType ? getDirectory(myProject, (RootType)element) : super.getPSIElement(element);
-  }
-
-  @Nullable
   static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
     VirtualFile virtualFile = getVirtualFile(rootId);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
@@ -184,7 +179,10 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
       if (project != null && isScratchesMergedIntoProjectTab()) {
-        children.add(createRootNode(project, settings));
+        ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
+        list.addAll(children);
+        list.add(createRootNode(project, settings));
+        return list;
       }
       return children;
     }

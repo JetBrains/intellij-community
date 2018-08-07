@@ -23,7 +23,6 @@ import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -46,7 +45,6 @@ public abstract class AbstractVcsTestCase {
   protected VirtualFile myWorkingCopyDir;
   protected File myClientBinaryPath;
   protected IdeaProjectTestFixture myProjectFixture;
-  protected boolean myInitChangeListManager = true;
 
   protected TestClientRunner createClientRunner() {
     return createClientRunner(null);
@@ -107,30 +105,6 @@ public abstract class AbstractVcsTestCase {
 
   public VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
     return VcsTestUtil.findOrCreateDir(myProject, parent, name);
-  }
-
-  protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) throws Exception {
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      int numOfRuns = 5;
-      for (int i = 0; i < numOfRuns; i++) {
-        try {
-          final VirtualFile[] children = dir.getChildren();
-          for (VirtualFile child : children) {
-            if (filter != null && filter.process(child)) {
-              child.delete(AbstractVcsTestCase.this);
-            }
-          }
-          return;
-        }
-        catch (IOException e) {
-          if (i == numOfRuns - 1) {
-            // last run
-            throw e;
-          }
-          Thread.sleep(50);
-        }
-      }
-    });
   }
 
   protected void tearDownProject() throws Exception {

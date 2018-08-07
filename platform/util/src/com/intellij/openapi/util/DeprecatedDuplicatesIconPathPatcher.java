@@ -249,9 +249,6 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/ide/error.png", "AllIcons.Ide.FatalError");
     ourDeprecatedIconsReplacements.put("/ide/error.svg", "AllIcons.Ide.FatalError");
 
-    ourDeprecatedIconsReplacements.put("/ide/notification/closeHover.png", "AllIcons.Ide.Notification.Close");
-    ourDeprecatedIconsReplacements.put("/ide/notification/closeHover.svg", "AllIcons.Ide.Notification.Close");
-
 
     ourDeprecatedIconsReplacements.put("/general/packagesTab.png", "AllIcons.Nodes.CopyOfFolder");
     ourDeprecatedIconsReplacements.put("/general/packagesTab.svg", "AllIcons.Nodes.CopyOfFolder");

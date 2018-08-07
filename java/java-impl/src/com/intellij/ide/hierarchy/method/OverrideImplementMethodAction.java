@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,7 @@ import java.util.List;
 abstract class OverrideImplementMethodAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
 
-  public final void actionPerformed(final AnActionEvent event) {
+  public final void actionPerformed(@NotNull final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)MethodHierarchyBrowserBase.DATA_KEY.getData(dataContext);
     if (methodHierarchyBrowser == null) return;
@@ -84,7 +85,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
     }, commandName, null));
   }
 
-  public final void update(final AnActionEvent e) {
+  public final void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
 

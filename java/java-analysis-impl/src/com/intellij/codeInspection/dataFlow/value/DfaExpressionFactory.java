@@ -322,7 +322,7 @@ public class DfaExpressionFactory {
                 .orElse(DfaUnknownValue.getInstance());
   }
 
-  private DfaValue boxUnbox(DfaValue value, PsiType type) {
+  DfaValue boxUnbox(DfaValue value, PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
       if (value instanceof DfaConstValue || value instanceof DfaUnboxedValue ||
           (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(((DfaVariableValue)value).getVariableType()))) {

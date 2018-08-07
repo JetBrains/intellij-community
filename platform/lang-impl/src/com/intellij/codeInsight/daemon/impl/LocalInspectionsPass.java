@@ -499,7 +499,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
     if (!inspectionProfile.isToolEnabled(key, getFile())) return;
 
-    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
+    HighlightInfoType type = new InspectionHighlightInfoType(level, element);
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
     @NonNls String link = "";
     if (showToolDescription(toolWrapper)) {
@@ -787,5 +787,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     private final int problemsSize;
     @NotNull private final PsiElementVisitor visitor;
     @Nullable private final Set<String> dialectIdsSpecifiedForTool;
+  }
+
+  public static class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {
+    InspectionHighlightInfoType(@NotNull HighlightInfoType level, @NotNull PsiElement element) {
+      super(level.getSeverity(element), level.getAttributesKey());
+    }
   }
 }

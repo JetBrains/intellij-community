@@ -16,10 +16,13 @@
 package com.intellij.testGuiFramework.testCases
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.transport.MessageType
+import com.intellij.testGuiFramework.remote.transport.RestartIdeAndResumeContainer
+import com.intellij.testGuiFramework.remote.transport.RestartIdeCause
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.fest.swing.exception.WaitTimedOutError
 import java.io.File
@@ -39,7 +42,6 @@ open class PluginTestCase : GuiTestCase() {
   }
 
   fun installPluginAndRestart(installPluginsFunction: () -> Unit) {
-    val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
     if (guiTestRule.getTestName() == GuiTestOptions.getResumeTestName() &&
         GuiTestOptions.getResumeInfo() == PLUGINS_INSTALLED) {
     }
@@ -47,17 +49,17 @@ open class PluginTestCase : GuiTestCase() {
       //if plugins are not installed yet
       installPluginsFunction()
       //send restart message and resume this test to the server
-      GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, PLUGINS_INSTALLED)) ?: throw Exception(
+      GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AND_RESUME, RestartIdeAndResumeContainer(RestartIdeCause.PLUGIN_INSTALLED))) ?: throw Exception(
         "Unable to get the client instance to send message.")
       //wait until IDE is going to restart
-      GuiTestUtilKt.waitUntil("IDE will be closed", timeoutInSeconds = 120) { false }
+      GuiTestUtilKt.waitUntil("IDE will be closed", timeout = Timeouts.defaultTimeout) { false }
     }
   }
 
   fun installPlugins(vararg pluginNames: String) {
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Plugins")
+      popupMenu("Plugins").clickSearchedItem()
       dialog("Plugins") {
         button("Install JetBrains plugin...").click()
         dialog("Browse JetBrains Plugins ") browsePlugins@ {
@@ -76,11 +78,11 @@ open class PluginTestCase : GuiTestCase() {
   fun installPluginFromDisk(pluginPath: String, pluginName: String) {
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Plugins")
+      popupMenu("Plugins").clickSearchedItem()
       dialog("Plugins") {
         //Check if plugin has already been installed
         try {
-          table(pluginName, timeout = 1L).cell(pluginName).click()
+          table(pluginName, timeout = Timeouts.seconds05).cell(pluginName).click()
           button("OK").click()
           ensureButtonOkHasPressed(this@PluginTestCase)
         }
@@ -92,7 +94,7 @@ open class PluginTestCase : GuiTestCase() {
         }
       }
       try {
-        message("IDE and Plugin Updates", timeout = 5L) {
+        message("IDE and Plugin Updates", timeout = Timeouts.seconds05) {
           button("Postpone").click()
         }
       }
@@ -105,7 +107,7 @@ open class PluginTestCase : GuiTestCase() {
     val dialogTitle = "Plugins"
     try {
       GuiTestUtilKt.waitUntilGone(robot = guiTestCase.robot(),
-                                  timeoutInSeconds = 2,
+                                  timeout = Timeouts.seconds05,
                                   matcher = GuiTestUtilKt.typeMatcher(
                                     JDialog::class.java) { it.isShowing && it.title == dialogTitle })
     }
@@ -126,4 +128,7 @@ open class PluginTestCase : GuiTestCase() {
     println("$pluginName plugin has been installed")
   }
 
+  companion object {
+    const val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
+  }
 }

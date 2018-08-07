@@ -11,8 +11,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -229,7 +229,7 @@ public class GitMergeProvider implements MergeProvider2 {
       h.endOptions();
     }
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;

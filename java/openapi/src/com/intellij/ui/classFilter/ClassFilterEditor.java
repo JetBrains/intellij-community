@@ -80,12 +80,12 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .addExtraAction(new AnActionButton(getAddButtonText(), getAddButtonIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           addClassFilter();
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
         }
@@ -93,12 +93,12 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     if (addPatternButtonVisible()) {
       decorator.addExtraAction(new AnActionButton(getAddPatternButtonText(), getAddPatternButtonIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           addPatternFilter();
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           super.updateButton(e);
           setEnabled(!myProject.isDefault());
         }

@@ -35,7 +35,7 @@ import java.io.File;
 public class RefCardAction extends AnAction implements DumbAware {
   private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     File file = getRefCardFile();
     if (file.isFile()) {
       BrowserUtil.browse(file);
@@ -48,7 +48,7 @@ public class RefCardAction extends AnAction implements DumbAware {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isRefCardAvailable());
     boolean atWelcome = ActionPlaces.WELCOME_SCREEN.equals(e.getPlace());
     e.getPresentation().setIcon(atWelcome ? AllIcons.General.DefaultKeymap : null);

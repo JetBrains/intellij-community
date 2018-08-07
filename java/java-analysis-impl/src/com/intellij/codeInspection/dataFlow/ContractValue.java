@@ -243,7 +243,7 @@ public abstract class ContractValue {
       if (index >= 0 && index < arguments.myArguments.length) {
         DfaValue arg = arguments.myArguments[index];
         if (arg instanceof DfaFactMapValue) {
-          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.CAN_BE_NULL, false);
+          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
           if (newArg != arg) {
             DfaValue[] newArguments = arguments.myArguments.clone();
             newArguments[index] = newArg;

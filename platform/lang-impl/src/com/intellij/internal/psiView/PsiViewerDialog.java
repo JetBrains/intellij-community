@@ -739,7 +739,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       String fqn = null;
       if (myPsiTree.hasFocus()) {

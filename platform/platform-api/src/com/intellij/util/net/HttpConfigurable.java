@@ -54,14 +54,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-@State(
-  name = "HttpConfigurable",
-  storages = {
-    @Storage("proxy.settings.xml"),
-    // we use two storages due to backward compatibility, see http://crucible.labs.intellij.net/cru/CR-IC-5142
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");

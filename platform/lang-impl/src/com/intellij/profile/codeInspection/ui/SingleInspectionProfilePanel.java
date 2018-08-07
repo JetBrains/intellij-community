@@ -850,7 +850,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
           new AnActionButtonUpdater() {
             @Override
-            public boolean isEnabled(AnActionEvent e) {
+            public boolean isEnabled(@NotNull AnActionEvent e) {
               final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
               final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
               return rowCount - 1 != selectedRow;

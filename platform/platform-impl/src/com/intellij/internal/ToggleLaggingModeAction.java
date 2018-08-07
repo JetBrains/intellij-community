@@ -34,7 +34,7 @@ public class ToggleLaggingModeAction extends AnAction implements DumbAware {
   private volatile boolean myLagging = false;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD); 
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     if (myLagging) {
       myLagging = false;
       myAlarm.cancelAllRequests();
@@ -62,7 +62,7 @@ public class ToggleLaggingModeAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myLagging) {
       presentation.setText("Exit Lagging Mode");

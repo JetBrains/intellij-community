@@ -571,7 +571,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
 
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return editor != null ? editor.getProject() : null;
     }
