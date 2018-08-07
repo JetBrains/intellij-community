@@ -133,9 +133,9 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     beforeSaveComponents(errors)
 
-    val externalizationSession = if (components.isEmpty()) null else StateStorageManagerExternalizationSession()
+    val externalizationSession = if (components.isEmpty()) null else SaveSessionProducerManager()
     if (externalizationSession != null) {
-      doSaveComponents(isForce, externalizationSession, errors)
+      saveComponents(isForce, externalizationSession, errors)
     }
 
     afterSaveComponents(errors)
@@ -163,7 +163,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   protected open fun afterSaveComponents(errors: MutableList<Throwable>) {
   }
 
-  private fun doSaveComponents(isForce: Boolean, externalizationSession: StateStorageManagerExternalizationSession, errors: MutableList<Throwable>): MutableList<Throwable>? {
+  private fun saveComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>): MutableList<Throwable>? {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     val names = ArrayUtilRt.toStringArray(components.keys)
@@ -200,7 +200,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        commitComponent(externalizationSession, info, name)
+        commitComponent(session, info, name)
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -226,7 +226,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun saveApplicationComponent(component: PersistentStateComponent<*>) {
     val stateSpec = StoreUtil.getStateSpec(component)
     LOG.info("saveApplicationComponent is called for ${stateSpec.name}")
-    val externalizationSession = StateStorageManagerExternalizationSession()
+    val externalizationSession = SaveSessionProducerManager()
     commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
@@ -245,13 +245,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun commitComponent(session: StateStorageManagerExternalizationSession, info: ComponentInfo, componentName: String?) {
+  private fun commitComponent(session: SaveSessionProducerManager, info: ComponentInfo, componentName: String?) {
     val component = info.component
     @Suppress("DEPRECATION")
     if (component is JDOMExternalizable) {
       val effectiveComponentName = componentName ?: ComponentManagerImpl.getComponentName(component)
       storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
-        session.getExternalizationSession(it)?.setState(component, effectiveComponentName, component)
+        session.getProducer(it)?.setState(component, effectiveComponentName, component)
       }
       return
     }
@@ -277,7 +277,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
       }
 
-      session.getExternalizationSession(storage)?.setState(component, effectiveComponentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) null else state)
+      session.getProducer(storage)?.setState(component, effectiveComponentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) null else state)
     }
   }
 
@@ -607,34 +607,31 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
 }
 
 interface SaveExecutor {
+  /**
+   * @return was something really saved
+   */
   fun save(readonlyFiles: MutableList<SaveSessionAndFile> = SmartList(), errors: MutableList<Throwable>): Boolean
 }
 
-private class StateStorageManagerExternalizationSession : SaveExecutor {
+private class SaveSessionProducerManager : SaveExecutor {
   private val sessions = LinkedHashMap<StateStorage, StateStorage.SaveSessionProducer>()
 
-  fun getExternalizationSession(storage: StateStorage): StateStorage.SaveSessionProducer? {
+  fun getProducer(storage: StateStorage): StateStorage.SaveSessionProducer? {
     var session = sessions.get(storage)
     if (session == null) {
-      session = storage.createSaveSessionProducer()
-      if (session != null) {
-        sessions.put(storage, session)
-      }
+      session = storage.createSaveSessionProducer() ?: return null
+      sessions.put(storage, session)
     }
     return session
   }
 
-  /**
-   * @return was something really saved
-   */
   override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>): Boolean {
     if (sessions.isEmpty()) {
       return false
     }
 
     var changed = false
-    val externalizationSessions = sessions.values
-    for (session in externalizationSessions) {
+    for (session in sessions.values) {
       val saveSession = session.createSaveSession() ?: continue
       executeSave(saveSession, readonlyFiles, errors)
       changed = true

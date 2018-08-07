@@ -189,7 +189,8 @@ open class FileBasedStorage(file: Path,
       LOG.warn(e)
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
+    val app = ApplicationManager.getApplication()
+    if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
       val reason = if (contentTruncated) "content truncated" else e!!.message
       val action = if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
