@@ -200,7 +200,7 @@ public class JsonPsiImplUtils {
       }
       final int contentEnd = text.charAt(0) == text.charAt(length - 1) ? length - 1 : length;
       if (unescapedSequenceStart < contentEnd) {
-        result.add(Pair.create(new TextRange(unescapedSequenceStart, length), text.substring(unescapedSequenceStart, contentEnd)));
+        result.add(Pair.create(new TextRange(unescapedSequenceStart, contentEnd), text.substring(unescapedSequenceStart, contentEnd)));
       }
       result = Collections.unmodifiableList(result);
       literal.putUserData(STRING_FRAGMENTS, result);
