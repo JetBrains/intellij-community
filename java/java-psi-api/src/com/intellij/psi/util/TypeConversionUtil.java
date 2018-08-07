@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public class TypeConversionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.TypeConversionUtil");
@@ -1192,45 +1191,49 @@ public class TypeConversionUtil {
   }
 
   public static PsiType typeParameterErasure(@NotNull PsiTypeParameter typeParameter) {
-    return typeParameterErasure(typeParameter, new THashSet<>(), PsiSubstitutor.EMPTY, false);
+    return typeParameterErasure(typeParameter, PsiSubstitutor.EMPTY);
   }
 
-  private static PsiType typeParameterErasure(PsiTypeParameter typeParameter,
-                                              Set<? super PsiClass> visited,
-                                              PsiSubstitutor beforeSubstitutor, boolean preserveIntersection) {
+  private static PsiType typeParameterErasure(@NotNull PsiTypeParameter typeParameter, @NotNull PsiSubstitutor beforeSubstitutor) {
     final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();
     if (extendsList.length > 0) {
-      if (preserveIntersection) {
-        PsiType[] types = Stream.of(extendsList).map(PsiClassType::resolve).filter(Objects::nonNull)
-          .map(psiClass -> getClassErasedType(psiClass, visited, beforeSubstitutor, typeParameter, true))
-          .toArray(PsiType[]::new);
-        return types.length == 0 ?
-               PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope()) :
-               PsiIntersectionType.createIntersection(true, types);
+      final PsiClass psiClass = extendsList[0].resolve();
+      if (psiClass instanceof PsiTypeParameter) {
+        Set<PsiClass> visited = new THashSet<>();
+        visited.add(psiClass);
+        final PsiTypeParameter boundTypeParameter = (PsiTypeParameter)psiClass;
+        if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
+          return erasure(beforeSubstitutor.substitute(boundTypeParameter));
+        }
+        return typeParameterErasureInner(boundTypeParameter, visited, beforeSubstitutor);
       }
-      return getClassErasedType(extendsList[0].resolve(), visited, beforeSubstitutor, typeParameter, false);
+      else if (psiClass != null) {
+        return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
+      }
     }
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  @NotNull
-  private static PsiType getClassErasedType(PsiClass psiClass,
-                                            Set<? super PsiClass> visited,
-                                            PsiSubstitutor beforeSubstitutor,
-                                            PsiElement context, boolean preserveIntersection) {
-    if (psiClass instanceof PsiTypeParameter) {
-      if (visited.add(psiClass)) {
-        PsiTypeParameter boundTypeParameter = (PsiTypeParameter)psiClass;
-        if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
-          return erasure(Objects.requireNonNull(beforeSubstitutor.substitute(boundTypeParameter)));
+  private static PsiClassType typeParameterErasureInner(PsiTypeParameter typeParameter,
+                                                        Set<? super PsiClass> visited,
+                                                        PsiSubstitutor beforeSubstitutor) {
+    final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();
+    if (extendsList.length > 0) {
+      final PsiClass psiClass = extendsList[0].resolve();
+      if (psiClass instanceof PsiTypeParameter) {
+        if (!visited.contains(psiClass)) {
+          visited.add(psiClass);
+          if (beforeSubstitutor.getSubstitutionMap().containsKey(psiClass)) {
+            return (PsiClassType)erasure(beforeSubstitutor.substitute((PsiTypeParameter)psiClass));
+          }
+          return typeParameterErasureInner((PsiTypeParameter)psiClass, visited, beforeSubstitutor);
         }
-        return typeParameterErasure(boundTypeParameter, visited, beforeSubstitutor, preserveIntersection);
+      }
+      else if (psiClass != null) {
+        return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
       }
     }
-    else if (psiClass != null) {
-      return JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createType(psiClass);
-    }
-    return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
+    return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
   @Contract("null -> null")
@@ -1238,25 +1241,8 @@ public class TypeConversionUtil {
     return erasure(type, PsiSubstitutor.EMPTY);
   }
 
-  /**
-   * Erase type, but preserve intersections
-   *
-   * @param type type to erase
-   * @return erased type (probably a {@link PsiIntersectionType})
-   */
-  public static PsiType erasurePreservingIntersection(@Nullable PsiType type) {
-    return erasure(type, PsiSubstitutor.EMPTY, true);
-  }
-
   @Contract("null, _ -> null")
   public static PsiType erasure(@Nullable final PsiType type, @NotNull final PsiSubstitutor beforeSubstitutor) {
-    return erasure(type, beforeSubstitutor, false);
-  }
-
-  @Contract("null, _, _ -> null")
-  private static PsiType erasure(@Nullable final PsiType type,
-                                 @NotNull final PsiSubstitutor beforeSubstitutor,
-                                 boolean preserveIntersection) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {
       @Nullable
@@ -1269,7 +1255,7 @@ public class TypeConversionUtil {
       public PsiType visitClassType(PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (aClass instanceof PsiTypeParameter && !isFreshVariable((PsiTypeParameter)aClass)) {
-          return typeParameterErasure((PsiTypeParameter)aClass, new THashSet<>(), beforeSubstitutor, preserveIntersection);
+          return typeParameterErasure((PsiTypeParameter)aClass, beforeSubstitutor);
         }
         return classType.rawType();
       }
