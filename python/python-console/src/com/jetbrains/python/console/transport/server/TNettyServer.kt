@@ -1,4 +1,4 @@
-package com.jetbrains.python.console.thrift.server
+package com.jetbrains.python.console.transport.server
 
 import org.apache.thrift.TProcessor
 import org.apache.thrift.protocol.TBinaryProtocol

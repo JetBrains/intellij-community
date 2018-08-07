@@ -1,7 +1,7 @@
-package com.jetbrains.python.console.thrift
+package com.jetbrains.python.console.transport
 
-import com.jetbrains.python.console.thrift.DirectedMessage.MessageDirection.REQUEST
-import com.jetbrains.python.console.thrift.DirectedMessage.MessageDirection.RESPONSE
+import com.jetbrains.python.console.transport.DirectedMessage.MessageDirection.REQUEST
+import com.jetbrains.python.console.transport.DirectedMessage.MessageDirection.RESPONSE
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext

@@ -1,9 +1,9 @@
-package com.jetbrains.python.console.thrift.client
+package com.jetbrains.python.console.transport.client
 
-import com.jetbrains.python.console.thrift.DirectedMessage
-import com.jetbrains.python.console.thrift.DirectedMessageCodec
-import com.jetbrains.python.console.thrift.DirectedMessageHandler
-import com.jetbrains.python.console.thrift.TCumulativeTransport
+import com.jetbrains.python.console.transport.DirectedMessage
+import com.jetbrains.python.console.transport.DirectedMessageCodec
+import com.jetbrains.python.console.transport.DirectedMessageHandler
+import com.jetbrains.python.console.transport.TCumulativeTransport
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled

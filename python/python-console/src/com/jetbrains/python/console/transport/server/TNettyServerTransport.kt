@@ -1,11 +1,11 @@
-package com.jetbrains.python.console.thrift.server
+package com.jetbrains.python.console.transport.server
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ConcurrencyUtil
-import com.jetbrains.python.console.thrift.DirectedMessage
-import com.jetbrains.python.console.thrift.DirectedMessageCodec
-import com.jetbrains.python.console.thrift.DirectedMessageHandler
-import com.jetbrains.python.console.thrift.TCumulativeTransport
+import com.jetbrains.python.console.transport.DirectedMessage
+import com.jetbrains.python.console.transport.DirectedMessageCodec
+import com.jetbrains.python.console.transport.DirectedMessageHandler
+import com.jetbrains.python.console.transport.TCumulativeTransport
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
