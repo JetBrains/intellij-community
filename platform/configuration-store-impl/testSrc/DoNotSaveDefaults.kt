@@ -5,7 +5,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
@@ -13,7 +12,6 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -23,12 +21,7 @@ import com.intellij.util.io.delete
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Path
 import java.nio.file.Paths
-
-private val testData: Path
-  get() = Paths.get(PathManagerEx.getHomePath(DoNotSaveDefaultsTest::class.java),
-                    FileUtil.toSystemDependentName("platform/configuration-store-impl/testSrc"))
 
 class DoNotSaveDefaultsTest {
   companion object {
@@ -111,7 +104,6 @@ class DoNotSaveDefaultsTest {
       "tomee.extensions.xml", "jboss.extensions.xml",
       "glassfish.extensions.xml" /* javaee non-roamable stuff, it will be better to fix it */,
       "dimensions.xml" /* non-roamable sizes of window, dialogs, etc. */,
-      "debugger.renderers.xml", "debugger.xml" /* todo */,
       "databaseSettings.xml"
     ))
     println(directoryTree)

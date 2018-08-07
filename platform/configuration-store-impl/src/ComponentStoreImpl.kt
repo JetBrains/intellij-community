@@ -110,7 +110,8 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override fun initPersistencePlainComponent(component: Any, key: String) {
     initPersistenceStateComponent(PersistenceStateAdapter(component),
-                                  StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false)), false)
+                                  StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false)),
+                                  isService = false)
   }
 
   private fun initPersistenceStateComponent(component: PersistentStateComponent<*>, stateSpec: State, isService: Boolean): String {
