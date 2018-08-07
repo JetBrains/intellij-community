@@ -17,6 +17,9 @@ public interface ExtensionPoint<T> {
 
   void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
 
+  /**
+   * Prefer to use {@link #getExtensionList()}.
+   */
   @NotNull
   T[] getExtensions();
 
