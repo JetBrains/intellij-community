@@ -326,12 +326,7 @@ public class ChangeContextUtil {
       PsiThisExpression thisExpr = (PsiThisExpression)scope;
       if (thisExpr.getQualifier() == null){
         if (thisClass instanceof PsiAnonymousClass) return null;
-        PsiThisExpression qualifiedThis = RefactoringChangeUtil.createThisExpression(thisClass.getManager(), thisClass);
-        if (thisExpr.getParent() != null) {
-          return thisExpr.replace(qualifiedThis);
-        } else {
-          return qualifiedThis;
-        }
+        return RefactoringChangeUtil.createThisExpression(thisClass.getManager(), thisClass);
       }
     }
     else if (!(scope instanceof PsiClass)){

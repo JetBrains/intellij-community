@@ -80,6 +80,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testOneAndKeepReferencesInAnotherInheritor() {
     doTest(false, true);
   }
+  public void testThisQualificationInsideAnonymous() { doTest(); }
 
   private void doTest() {
     doTest(false, false);
