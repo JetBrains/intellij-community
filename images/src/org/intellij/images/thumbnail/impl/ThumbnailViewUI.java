@@ -539,7 +539,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     @Nullable
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
         if (CommonDataKeys.PROJECT.is(dataId)) {
             return thumbnailView.getProject();
         } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
@@ -734,7 +734,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
           String tag = tags.get(i);
           actions[i] = new AnAction(tag) {
               @Override
-              public void actionPerformed(AnActionEvent e) {
+              public void actionPerformed(@NotNull AnActionEvent e) {
                   for (VirtualFile file : thumbnailView.getSelection()) {
                       tagManager.addTag(tag, file);
                   }
@@ -743,14 +743,14 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
               }
     
             @Override
-            public void update(AnActionEvent e) {
+            public void update(@NotNull AnActionEvent e) {
               e.getPresentation().setEnabledAndVisible(Arrays.stream(thumbnailView.getSelection()).noneMatch(file -> tagManager.hasTag(tag, file)));
             }
           };
         }
         actions[tagsNumber] = new AnAction("New Tag") {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
             if (view != null) {
               VirtualFile[] selection = view.getSelection();

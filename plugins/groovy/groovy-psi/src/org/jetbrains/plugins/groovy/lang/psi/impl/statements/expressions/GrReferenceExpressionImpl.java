@@ -162,7 +162,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean isFullyQualified() {
-    if (!ResolveUtil.canResolveToMethod(this) && resolve() instanceof PsiPackage) return true;
+    if (!hasMemberPointer() && !ResolveUtil.canResolveToMethod(this) && resolve() instanceof PsiPackage) return true;
 
     final GrExpression qualifier = getQualifier();
     if (!(qualifier instanceof GrReferenceExpressionImpl)) return false;

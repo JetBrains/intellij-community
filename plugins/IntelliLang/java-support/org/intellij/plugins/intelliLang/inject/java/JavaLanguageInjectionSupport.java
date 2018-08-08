@@ -536,7 +536,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return new AnAction[] {
       new AnAction("Java Parameter", null, PlatformIcons.PARAMETER_ICON) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());
           if (injection != null) consumer.consume(injection);
         }
@@ -548,7 +548,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   public AnAction createEditAction(final Project project, final Factory<BaseInjection> producer) {
     return new AnAction() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final BaseInjection originalInjection = producer.create();
         final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
         if (injection != null) {

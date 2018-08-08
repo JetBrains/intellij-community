@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.NotNull;
 
 public class TemplateProjectPropertiesAction extends AnAction implements DumbAware {
   public TemplateProjectPropertiesAction() {
@@ -33,7 +34,7 @@ public class TemplateProjectPropertiesAction extends AnAction implements DumbAwa
     getTemplatePresentation().setDescription(ActionsBundle.message("action.TemplateProjectProperties.description.template", projectConceptName));
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject, ShowSettingsUtilImpl.getConfigurableGroups(defaultProject, false));
   }

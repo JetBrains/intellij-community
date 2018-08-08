@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
+import org.jetbrains.annotations.NotNull;
 
 public class FileDeleteAction extends DeleteAction {
   public FileDeleteAction() {
@@ -33,7 +34,7 @@ public class FileDeleteAction extends DeleteAction {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     FileSystemTree tree = event.getData(FileSystemTree.DATA_KEY);
     if (tree == null) {

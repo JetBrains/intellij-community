@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -34,12 +35,12 @@ public class GroovyDocReducePackageAction extends AnAction implements DumbAware 
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myDataModel.remove(myPackagesList.getSelectedIndex());
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myPackagesList.getSelectedIndex() == -1) {
       presentation.setEnabled(false);

@@ -27,6 +27,7 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -129,7 +130,7 @@ public class DesignerToolWindow implements LightToolWindowContent {
     }
 
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (GuiEditor.DATA_KEY.is(dataId) && myComponentTree != null) {
         return myComponentTree.getData(dataId);
       }

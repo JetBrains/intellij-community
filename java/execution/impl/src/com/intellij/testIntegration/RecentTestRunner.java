@@ -99,7 +99,7 @@ class RecentTestRunnerImpl implements RecentTestRunner {
     DataContext data = new DataContext() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         if (Location.DATA_KEY.is(dataId)) {
           return location;
         }

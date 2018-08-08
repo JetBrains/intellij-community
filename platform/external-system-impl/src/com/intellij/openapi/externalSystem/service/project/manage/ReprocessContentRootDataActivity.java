@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -34,37 +33,42 @@ public class ReprocessContentRootDataActivity implements StartupActivity, DumbAw
     final ContentRootDataService service = new ContentRootDataService();
     final IdeModifiableModelsProviderImpl modifiableModelsProvider = new IdeModifiableModelsProviderImpl(project);
 
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      LOG.info("Adding 'reprocess content root data' activity to 'runWhenSmart' queue in project [hash=" + project.hashCode() + "]");
-    }
-    application.invokeLater(
-        () -> {
-          if (application.isUnitTestMode()) {
-            LOG.info("Reprocessing content root data for project [hash=" + project.hashCode() + "]" );
-          }
-          final boolean haveModulesToProcess = ModuleManager.getInstance(project).getModules().length > 0;
-          if (!haveModulesToProcess) {
-            return;
-          }
+    logUnitTest("Adding 'reprocess content root data' activity to 'runWhenSmart' queue in project [hash=" + project.hashCode() + "]");
+    ApplicationManager.getApplication().invokeLater(() -> {
+      logUnitTest("Reprocessing content root data for project [hash=" + project.hashCode() + "]");
 
-          try {
-            for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
-              ProjectSystemId id = manager.getSystemId();
-              for (ExternalProjectInfo info : dataManager.getExternalProjectsData(project, id)) {
-                DataNode<ProjectData> projectStructure = info.getExternalProjectStructure();
-                if (projectStructure != null) {
-                  Collection<DataNode<ContentRootData>> roots = ExternalSystemApiUtil.findAllRecursively(projectStructure, CONTENT_ROOT);
-                  service.importData(roots, null, project, modifiableModelsProvider);
-                }
-              }
+      final boolean haveModulesToProcess = ModuleManager.getInstance(project).getModules().length > 0;
+      if (!haveModulesToProcess) {
+        logUnitTest("Have zero modules to process, returning");
+        return;
+      }
+      try {
+        final Collection<ExternalSystemManager<?, ?, ?, ?, ?>> managers = ExternalSystemApiUtil.getAllManagers();
+        logUnitTest("Found [" + managers.size() + "] external system managers");
+        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : managers) {
+          ProjectSystemId id = manager.getSystemId();
+          final Collection<ExternalProjectInfo> data = dataManager.getExternalProjectsData(project, id);
+          logUnitTest("Found [" + data.size() + "] external project infos using manager class=[" + dataManager.getClass().getCanonicalName() + "]");
+          for (ExternalProjectInfo info : data) {
+            DataNode<ProjectData> projectStructure = info.getExternalProjectStructure();
+            logUnitTest("External data graph root is "
+                        + (projectStructure == null ? "" : "not")
+                        + " null for external project path=[" + info.getExternalProjectPath() + "]");
+            if (projectStructure != null) {
+              Collection<DataNode<ContentRootData>> roots = ExternalSystemApiUtil.findAllRecursively(projectStructure, CONTENT_ROOT);
+              service.importData(roots, null, project, modifiableModelsProvider);
             }
-          } finally {
-            ExternalSystemApiUtil.doWriteAction(() -> modifiableModelsProvider.commit());
           }
         }
-    );
+      } finally {
+        ExternalSystemApiUtil.doWriteAction(() -> modifiableModelsProvider.commit());
+      }
+    }, project.getDisposed());
+  }
 
-
+  protected void logUnitTest(String message) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info(message);
+    }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2;
 
 
@@ -20,7 +6,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
-import com.intellij.cvsSupport2.application.CvsStorageComponent;
+import com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
@@ -43,6 +29,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -75,11 +62,11 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;
 
-  private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
+  private final CvsStorageSupportingDeletionComponent myStorageComponent;
   private final CvsHistoryProvider myCvsHistoryProvider;
   private final CvsCheckinEnvironment myCvsCheckinEnvironment;
   private final CvsCheckoutProvider myCvsCheckoutProvider;
-  
+
   private RollbackEnvironment myCvsRollbackEnvironment;
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
@@ -99,7 +86,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
-  public CvsVcs2(@NotNull Project project, CvsStorageComponent cvsStorageComponent) {
+  public CvsVcs2(@NotNull Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
     super(project, NAME);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
     myCvsCheckinEnvironment = new CvsCheckinEnvironment(getProject());
@@ -174,7 +161,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   public void rollbackTransaction(Object parameters) {
     myCvsStandardOperationsProvider.rollback();
   }
-  
+
   public CvsStandardOperationsProvider getStandardOperationsProvider() {
     return myCvsStandardOperationsProvider;
   }
@@ -246,12 +233,12 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   }
 
   protected void activate() {
-    myStorageComponent.init(getProject(), false);
+    myStorageComponent.init(getProject());
     CvsEntriesManager.getInstance().addCvsEntriesListener(myCvsEntriesListener);
   }
 
   protected void deactivate() {
-    myStorageComponent.dispose();
+    Disposer.dispose(myStorageComponent);
     CvsEntriesManager.getInstance().removeCvsEntriesListener(myCvsEntriesListener);
   }
 

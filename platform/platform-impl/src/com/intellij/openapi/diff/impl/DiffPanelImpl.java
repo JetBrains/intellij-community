@@ -772,7 +772,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     };
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.DIFF_VIEWER.is(dataId)) {
         return myDiffPanel;
       }

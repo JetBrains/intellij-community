@@ -259,7 +259,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if(getClass().getName().equals(dataId)){
       return this;
     }

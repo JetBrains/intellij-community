@@ -411,7 +411,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myWiseSelection.setAll();
       myRevisionsList.repaint();
     }
@@ -423,7 +423,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myWiseSelection.clearAll();
       myRevisionsList.repaint();
     }

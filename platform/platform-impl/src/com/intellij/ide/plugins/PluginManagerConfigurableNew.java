@@ -246,7 +246,7 @@ public class PluginManagerConfigurableNew
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(panel, new PluginHostsConfigurable())) {
           // TODO: Auto-generated method stub
         }
@@ -254,7 +254,7 @@ public class PluginManagerConfigurableNew
     });
     actions.add(new DumbAwareAction(IdeBundle.message("button.http.proxy.settings")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (HttpConfigurable.editConfigurable(panel)) {
           // TODO: Auto-generated method stub
         }
@@ -263,7 +263,7 @@ public class PluginManagerConfigurableNew
     actions.addSeparator();
     actions.add(new DumbAwareAction("Install Plugin from Disk...") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, pair -> myPluginsModel.appendOrUpdateDescriptor(pair.second), panel);
       }
     });
@@ -1128,7 +1128,7 @@ public class PluginManagerConfigurableNew
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new DumbAwareAction(null, null, AllIcons.General.Gear) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
           createActionGroupPopup(null, actions, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
@@ -1439,7 +1439,7 @@ public class PluginManagerConfigurableNew
     DataManager.registerDataProvider(component, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
           return copyProvider;
         }
@@ -3649,7 +3649,7 @@ public class PluginManagerConfigurableNew
       Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
       group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           myPluginModel.changeEnableDisable(result.second, result.first);
         }
       });
@@ -3663,7 +3663,7 @@ public class PluginManagerConfigurableNew
       group.addSeparator();
       group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           for (CellPluginComponent component : selection) {
             myPluginModel.doUninstall(component, component.myPlugin, null);
           }
@@ -3769,7 +3769,7 @@ public class PluginManagerConfigurableNew
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (JButton button : myButtons) {
         button.doClick();
       }

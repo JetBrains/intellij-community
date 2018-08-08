@@ -44,7 +44,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(true);

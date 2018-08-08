@@ -407,7 +407,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
       return null;
     }

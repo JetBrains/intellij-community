@@ -185,7 +185,7 @@ public class RecentProjectPanel extends JPanel {
 
     removeRecentProjectAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         removeRecentProject();
       }
 

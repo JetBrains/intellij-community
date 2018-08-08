@@ -33,7 +33,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
   override public fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
 
-  override fun startExternalization(): StateStorage.ExternalizationSession? = null
+  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = null
 
   override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
     // todo reload only changed file, compute diff
@@ -95,7 +95,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     cachedVirtualFile = dir
   }
 
-  override fun startExternalization(): StateStorage.ExternalizationSession? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
+  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
 
   private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionBase() {
     private var copiedStorageData: MutableMap<String, Any>? = null

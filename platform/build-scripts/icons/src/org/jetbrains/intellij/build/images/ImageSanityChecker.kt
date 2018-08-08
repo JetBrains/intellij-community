@@ -37,6 +37,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     checkHaveValidSize(images, module)
     checkAreNotAmbiguous(images, module)
     checkNoStubIcons(images, module)
+    checkNoDeprecatedIcons(images, module)
     checkNoSvgFallbackVersions(images, module)
     checkNoOverridingFallbackVersions(images, module)
   }
@@ -99,6 +100,12 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   private fun checkNoStubIcons(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "copies of the stub.png image must be removed", module) { image ->
       return@process image.files.none { STUB_PNG_MD5 == md5(it) }
+    }
+  }
+
+  private fun checkNoDeprecatedIcons(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "deprecated icons must be moved to /compatibilityResources", module) { image ->
+      return@process image.deprecation == null || image.files.isEmpty()
     }
   }
 

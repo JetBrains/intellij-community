@@ -303,7 +303,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     }
 
     @Override
-    protected boolean isEnabled(AnActionEvent e) {
+    protected boolean isEnabled(@NotNull AnActionEvent e) {
       return hasProject(e);
     }
 
@@ -380,7 +380,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     }
 
     @Override
-    protected boolean isEnabled(AnActionEvent e) {
+    protected boolean isEnabled(@NotNull AnActionEvent e) {
       return hasProject(e);
     }
 

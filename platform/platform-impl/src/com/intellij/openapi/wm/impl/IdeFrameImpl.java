@@ -378,7 +378,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       if (myProject != null) {
         return myProject.isInitialized() ? myProject : null;

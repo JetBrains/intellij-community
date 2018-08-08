@@ -128,19 +128,19 @@ public class KeyboardGestureProcessor {
       final boolean isGestureAction = action instanceof KeyboardGestureAction;
       actionEvent.accept(new AnActionEventVisitor() {
         @Override
-        public void visitGestureInitEvent(final AnActionEvent anActionEvent) {
+        public void visitGestureInitEvent(@NotNull final AnActionEvent anActionEvent) {
           if (isGestureAction) {
             execute(anActionEvent, action, e);
           }
         }
 
         @Override
-        public void visitGesturePerformedEvent(final AnActionEvent anActionEvent) {
+        public void visitGesturePerformedEvent(@NotNull final AnActionEvent anActionEvent) {
           execute(anActionEvent, action, e);
         }
 
         @Override
-        public void visitGestureFinishEvent(final AnActionEvent anActionEvent) {
+        public void visitGestureFinishEvent(@NotNull final AnActionEvent anActionEvent) {
           if (isGestureAction) {
             execute(anActionEvent, action, e);
           }

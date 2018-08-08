@@ -31,6 +31,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -127,7 +128,7 @@ public class CardActionsPanel extends JPanel {
       if (parentId != null) {
         AnAction back = new AnAction("Back", null, AllIcons.Actions.Back) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             myLayout.swipe(myContent, parentId, JBCardLayout.SwipeDirection.BACKWARD);
           }
         };
@@ -242,7 +243,7 @@ public class CardActionsPanel extends JPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myLayout.swipe(myContent, myId, JBCardLayout.SwipeDirection.FORWARD);
     }
   }

@@ -17,13 +17,14 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class MinimizeCurrentWindowAction extends MacWindowActionBase {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
       final Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);

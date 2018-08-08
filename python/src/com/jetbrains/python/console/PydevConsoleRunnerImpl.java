@@ -668,12 +668,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     AnAction generalStopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
     final AnAction stopAction = new DumbAwareAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         generalStopAction.update(e);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         e = stopConsole(e);
 
         generalStopAction.actionPerformed(e);
@@ -715,12 +715,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     final AnAction stopAction = new DumbAwareAction() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         generalCloseAction.update(e);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         e = stopConsole(e);
 
         clearContent(descriptor);
@@ -741,7 +741,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
-  private AnActionEvent stopConsole(AnActionEvent e) {
+  private AnActionEvent stopConsole(@NotNull AnActionEvent e) {
     if (myPydevConsoleCommunication != null) {
       e = new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
                             e.getPresentation(), e.getActionManager(), e.getModifiers());
@@ -848,7 +848,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myConsoleRunner.rerun();
     }
   }
@@ -923,12 +923,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(true);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         PydevConsoleRunner runner =

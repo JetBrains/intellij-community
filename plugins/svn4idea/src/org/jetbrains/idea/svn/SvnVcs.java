@@ -43,6 +43,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
@@ -225,6 +226,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myCopiesRefreshManager != null) {
       myCopiesRefreshManager.asynchRequest();
     }
+  }
+
+  @TestOnly
+  SvnCopiesRefreshManager getCopiesRefreshManager() {
+    return myCopiesRefreshManager;
   }
 
   private void upgradeIfNeeded(final MessageBus bus) {

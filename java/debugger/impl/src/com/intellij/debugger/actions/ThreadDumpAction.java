@@ -22,6 +22,7 @@ import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +31,7 @@ import java.util.Map;
 
 public class ThreadDumpAction extends AnAction implements AnAction.TransparentUpdate {
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -281,7 +282,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
   }
 
 
-  public void update(AnActionEvent e){
+  public void update(@NotNull AnActionEvent e){
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

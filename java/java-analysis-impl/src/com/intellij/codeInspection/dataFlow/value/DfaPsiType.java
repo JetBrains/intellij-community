@@ -17,11 +17,14 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCapturedWildcardType;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -76,20 +79,52 @@ public class DfaPsiType {
 
   @NotNull
   public static PsiType normalizeType(@NotNull PsiType psiType) {
-    int dimensions = psiType.getArrayDimensions();
-    psiType = psiType.getDeepComponentType();
-    if (psiType instanceof PsiCapturedWildcardType) {
-      psiType = ((PsiCapturedWildcardType)psiType).getUpperBound();
+    if (psiType instanceof PsiArrayType) {
+      int dimensions = psiType.getArrayDimensions();
+      psiType = psiType.getDeepComponentType();
+      psiType = normalizeType(psiType);
+      while (dimensions-- > 0) {
+        psiType = psiType.createArrayType();
+      }
+      return psiType;
     }
     if (psiType instanceof PsiWildcardType) {
-      psiType = ((PsiWildcardType)psiType).getExtendsBound();
+      return normalizeType(((PsiWildcardType)psiType).getExtendsBound());
+    }
+    if (psiType instanceof PsiCapturedWildcardType) {
+      return normalizeType(((PsiCapturedWildcardType)psiType).getUpperBound());
+    }
+    if (psiType instanceof PsiIntersectionType) {
+      PsiType[] types =
+        StreamEx.of(((PsiIntersectionType)psiType).getConjuncts()).map(DfaPsiType::normalizeType).toArray(PsiType.EMPTY_ARRAY);
+      if (types.length > 0) {
+        return PsiIntersectionType.createIntersection(true, types);
+      }
     }
     if (psiType instanceof PsiClassType) {
-      psiType = ((PsiClassType)psiType).rawType();
-    }
-    while (dimensions-- > 0) {
-      psiType = psiType.createArrayType();
+      return normalizeClassType((PsiClassType)psiType, new HashSet<>());
     }
     return psiType;
+  }
+
+  @NotNull
+  private static PsiType normalizeClassType(@NotNull PsiClassType psiType, Set<PsiClass> processed) {
+    PsiClass aClass = psiType.resolve();
+    if (aClass instanceof PsiTypeParameter) {
+      PsiClassType[] types = aClass.getExtendsListTypes();
+      List<PsiType> result = new ArrayList<>();
+      for (PsiClassType type : types) {
+        PsiClass resolved = type.resolve();
+        if (resolved != null && processed.add(resolved)) {
+          PsiClassType classType = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(resolved);
+          result.add(normalizeClassType(classType, processed));
+        }
+      }
+      if (!result.isEmpty()) {
+        return PsiIntersectionType.createIntersection(true, result.toArray(PsiType.EMPTY_ARRAY));
+      }
+      return PsiType.getJavaLangObject(aClass.getManager(), aClass.getResolveScope());
+    }
+    return psiType.rawType();
   }
 }

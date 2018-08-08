@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -53,7 +54,7 @@ public class MergeAction extends AnAction {
     });
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     try {
 
       final VcsContext context = CvsContextWrapper.createCachedInstance(e);
@@ -72,7 +73,7 @@ public class MergeAction extends AnAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }
 

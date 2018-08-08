@@ -30,17 +30,20 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
@@ -55,14 +58,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfaVariableState> myVariableStates;
   private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
-  private final LinkedHashSet<DfaVariableValue> myUnknownVariables;
   private boolean myEphemeral;
 
   protected DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
     myDefaultVariableStates = ContainerUtil.newTroveMap();
     myEqClasses = ContainerUtil.newArrayList();
-    myUnknownVariables = ContainerUtil.newLinkedHashSet();
     myVariableStates = ContainerUtil.newLinkedHashMap();
     myDistinctClasses = new DistinctPairSet(this);
     myStack = new Stack<>();
@@ -76,7 +77,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     
     myStack = new Stack<>(toCopy.myStack);
     myDistinctClasses = new DistinctPairSet(this, toCopy.myDistinctClasses);
-    myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
     myIdToEqClassesIndices = new MyIdMap(toCopy.myIdToEqClassesIndices.size());
@@ -118,11 +118,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!(obj instanceof DfaMemoryStateImpl)) return false;
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
     if (myCachedHash != null && that.myCachedHash != null && !myCachedHash.equals(that.myCachedHash)) return false;
-    return equalsSuperficially(that) && equalsByUnknownVariables(that) && equalsByRelations(that) && equalsByVariableStates(that);
-  }
-
-  private boolean equalsByUnknownVariables(DfaMemoryStateImpl that) {
-    return myUnknownVariables.equals(that.myUnknownVariables);
+    return equalsSuperficially(that) && equalsByRelations(that) && equalsByVariableStates(that);
   }
 
   Object getSuperficialKey() {
@@ -162,22 +158,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public int hashCode() {
     if (myCachedHash != null) return myCachedHash;
 
-    int hash = getPartialHashCode(true, true);
-    myCachedHash = hash;
-    return hash;
-  }
-
-  int getPartialHashCode(boolean unknowns, boolean varStates) {
-    int hash = (getNonTrivialEqClasses().hashCode() * 31 +
-              getDistinctClassPairs().hashCode()) * 31 +
-             myStack.hashCode();
-    if (varStates) {
-      hash = hash * 31 + myVariableStates.hashCode();
-    }
-    if (unknowns && !myUnknownVariables.isEmpty()) {
-      hash = hash * 31 + myUnknownVariables.hashCode();
-    }
-    return hash;
+    int hash = ((getNonTrivialEqClasses().hashCode() * 31 +
+                 getDistinctClassPairs().hashCode()) * 31 +
+                 myStack.hashCode()) * 31 + myVariableStates.hashCode();
+    return myCachedHash = hash;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -204,9 +188,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myVariableStates.isEmpty()) {
       result.append("\n  vars: ");
       myVariableStates.forEach((key, value) -> result.append("[").append(key).append("->").append(value).append("] "));
-    }
-    if (!myUnknownVariables.isEmpty()) {
-      result.append("\n  unknowns: ").append(new HashSet<>(myUnknownVariables));
     }
     result.append('>');
     return result.toString();
@@ -257,7 +238,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       setVariableState(var, state.withFacts(((DfaFactMapValue)value).getFacts()));
     }
     else {
-      setVariableState(var, isNull(value) ? state.withFact(DfaFactType.CAN_BE_NULL, true) : state);
+      setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULLABLE) : state);
       DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, RelationType.EQ, value);
       if (dfaEqual == null) return;
       applyCondition(dfaEqual);
@@ -272,9 +253,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
     if (value instanceof DfaVariableValue && (value == flushed || flushed.getDependentVariables().contains(value))) {
-      Nullability nullability = isNotNull(value) ? Nullability.NOT_NULL :
-                                isUnknownState(value) ? Nullability.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
-      return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
+      DfaNullability dfaNullability = isNotNull(value) ? DfaNullability.NOT_NULL : getValueFact(value, DfaFactType.NULLABILITY);
+      if (dfaNullability == null) {
+        dfaNullability = DfaNullability.fromNullability(((DfaVariableValue)value).getInherentNullability());
+      }
+      return myFactory.withFact(myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), Nullability.UNKNOWN),
+                                DfaFactType.NULLABILITY, dfaNullability);
     }
     return value;
   }
@@ -383,10 +367,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (int i = 0; i < myStack.size(); i++) {
       if (!isSuperValue(myStack.get(i), that.myStack.get(i))) return false;
     }
-    if (!equalsByUnknownVariables(that) ||
-        !that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) {
-      return false;
-    }
+    if (!that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) return false;
     Set<EqClass> thisClasses = this.getNonTrivialEqClasses();
     Set<EqClass> thatClasses = that.getNonTrivialEqClasses();
     if(!thisClasses.equals(thatClasses)) {
@@ -597,11 +578,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean isNotNull(DfaValue dfaVar) {
     if (dfaVar instanceof DfaConstValue) return ((DfaConstValue)dfaVar).getValue() != null;
     if (dfaVar instanceof DfaBoxedValue) return true;
-    if (dfaVar instanceof DfaFactMapValue) return Boolean.FALSE.equals(((DfaFactMapValue)dfaVar).get(DfaFactType.CAN_BE_NULL));
+    if (dfaVar instanceof DfaFactMapValue) return DfaNullability.isNotNull(((DfaFactMapValue)dfaVar).getFacts());
     if (dfaVar instanceof DfaVariableValue) {
       if (getVariableState((DfaVariableValue)dfaVar).isNotNull()) return true;
 
-      DfaConstValue constantValue = getConstantValue((DfaVariableValue)dfaVar);
+      DfaConstValue constantValue = getConstantValue(dfaVar);
       if (constantValue != null && constantValue.getValue() != null) return true;
     }
 
@@ -617,10 +598,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   @Nullable
-  public DfaConstValue getConstantValue(@NotNull DfaVariableValue value) {
-    int index = getEqClassIndex(value);
-    EqClass ec = index == -1 ? null : myEqClasses.get(index);
-    return ec == null ? null : (DfaConstValue)unwrap(ec.findConstant(true));
+  @Contract("null -> null")
+  public DfaConstValue getConstantValue(@Nullable DfaValue value) {
+    if (value instanceof DfaConstValue) {
+      return (DfaConstValue)value;
+    }
+    if (value instanceof DfaUnboxedValue || value instanceof DfaVariableValue) {
+      int index = getEqClassIndex(value);
+      EqClass ec = index == -1 ? null : myEqClasses.get(index);
+      return ec == null ? null : (DfaConstValue)unwrap(ec.findConstant(true));
+    }
+    return null;
   }
 
   @Override
@@ -659,13 +647,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue dfaVar = (DfaVariableValue)value;
 
       if (isNull(dfaVar)) return true;
-      if (isUnknownState(dfaVar)) {
-        facts = getVariableState(dfaVar).myFactMap;
-      } else {
-        DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(type);
-        if (newState == null) return false;
-        setVariableState(dfaVar, newState);
-      }
+      DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(type);
+      if (newState == null) return false;
+      setVariableState(dfaVar, newState);
     } else if (value instanceof DfaFactMapValue) {
       facts = ((DfaFactMapValue)value).getFacts();
     }
@@ -679,12 +663,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyFacts(DfaValue value, DfaFactMap facts) {
-    if (value instanceof DfaVariableValue && !isUnknownState(value)) {
+    if (value instanceof DfaVariableValue) {
       DfaVariableState oldState = getVariableState((DfaVariableValue)value);
       DfaVariableState newState = oldState.intersectMap(facts);
       if (newState == null) {
         newState = oldState.withoutFact(DfaFactType.TYPE_CONSTRAINT);
-        if (newState.intersectMap(facts) != null && !Boolean.FALSE.equals(facts.get(DfaFactType.CAN_BE_NULL))) {
+        if (newState.intersectMap(facts) != null && DfaNullability.isNotNull(facts)) {
           setVariableState((DfaVariableValue)value, newState);
           return applyRelation(value, getFactory().getConstFactory().getNull(), false);
         }
@@ -698,7 +682,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean updateEqClassesByState(DfaVariableValue value) {
-    if (Boolean.FALSE.equals(getVariableState(value).getFact(DfaFactType.CAN_BE_NULL))) {
+    if (DfaNullability.isNotNull(getVariableState(value).myFactMap)) {
       return applyRelation(value, getFactory().getConstFactory().getNull(), true);
     }
     return true;
@@ -708,12 +692,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void dropFact(@NotNull DfaValue value, @NotNull DfaFactType<?> factType) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
-      if (!isUnknownState(var)) {
-        DfaVariableState state = findVariableState(var);
-        if (state != null) {
-          state = state.withoutFact(factType);
-          setVariableState(var, state);
-        }
+      DfaVariableState state = findVariableState(var);
+      if (state != null) {
+        state = state.withoutFact(factType);
+        setVariableState(var, state);
       }
     }
   }
@@ -725,7 +707,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
-      if (!isUnknownState(var) && factValue != null) {
+      if (factValue != null) {
         DfaVariableState state = getVariableState(var);
         DfaVariableState newState = state.intersectFact(factType, factValue);
         if (newState == null) return false;
@@ -816,22 +798,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaRight instanceof DfaFactMapValue) {
       DfaFactMapValue factValue = (DfaFactMapValue)dfaRight;
       if ((relationType == RelationType.IS || relationType == RelationType.EQ) &&
-          Boolean.FALSE.equals(factValue.get(DfaFactType.CAN_BE_NULL)) &&
+          DfaNullability.isNotNull(factValue.getFacts()) &&
           !applyRelation(dfaLeft, getFactory().getConstFactory().getNull(), true)) {
         return false;
       }
       if (dfaLeft instanceof DfaVariableValue) {
         DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
-        if (isUnknownState(dfaVar)) {
-          if (relationType == RelationType.IS_NOT) {
-            DfaPsiType dfaType = dfaVar.getDfaType();
-            TypeConstraint constraint = factValue.get(DfaFactType.TYPE_CONSTRAINT);
-            if (dfaType != null && constraint != null) {
-              return constraint.getInstanceofValues().stream().noneMatch(type -> type.isAssignableFrom(dfaType));
-            }
-          }
-          return true;
-        }
 
         switch (relationType) {
           case IS:
@@ -841,15 +813,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             if(optionalPresence != null) {
               return applyFact(dfaVar, DfaFactType.OPTIONAL_PRESENCE, !optionalPresence);
             }
-            Boolean canBeNull = factValue.get(DfaFactType.CAN_BE_NULL);
+            boolean isNotNull = DfaNullability.isNotNull(factValue.getFacts());
             TypeConstraint constraint = factValue.get(DfaFactType.TYPE_CONSTRAINT);
             if (constraint != null && constraint.getNotInstanceofValues().isEmpty()) {
               DfaVariableState state = getVariableState(dfaVar);
               for (DfaPsiType type : constraint.getInstanceofValues()) {
                 state = state.withNotInstanceofValue(type);
                 if (state == null) {
-                  return Boolean.FALSE.equals(canBeNull) &&
-                         !getVariableState(dfaVar).isNotNull() &&
+                  return isNotNull && !getVariableState(dfaVar).isNotNull() &&
                          applyRelation(dfaVar, myFactory.getConstFactory().getNull(), false);
                 }
                 setVariableState(dfaVar, state);
@@ -886,11 +857,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
-    if (!isUnknownState(dfaVar) && !(dfaVar.getVariableType() instanceof PsiPrimitiveType)) {
+    if (!(dfaVar.getVariableType() instanceof PsiPrimitiveType)) {
       if (value instanceof DfaConstValue) {
         Object constValue = ((DfaConstValue)value).getValue();
         if (constValue == null) {
-          setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.CAN_BE_NULL, true));
+          setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.NULLABILITY, DfaNullability.NULLABLE));
           return;
         }
         DfaPsiType dfaType = myFactory.createDfaType(((DfaConstValue)value).getType());
@@ -900,7 +871,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
       if (isNotNull(value) && !isNotNull(dfaVar)) {
-        setVariableState(dfaVar, getVariableState(dfaVar).withoutFact(DfaFactType.CAN_BE_NULL));
+        setVariableState(dfaVar, getVariableState(dfaVar).withoutFact(DfaFactType.NULLABILITY));
         applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true);
       }
     }
@@ -990,10 +961,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyRelation(@NotNull final DfaValue dfaLeft, @NotNull final DfaValue dfaRight, boolean isNegated) {
-    if (isUnknownState(dfaLeft) || isUnknownState(dfaRight)) {
-      return true;
-    }
-
     // DfaConstValue || DfaVariableValue
     Integer c1Index = getOrCreateEqClassIndex(dfaLeft);
     Integer c2Index = getOrCreateEqClassIndex(dfaRight);
@@ -1001,8 +968,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
+    ThreeState equalByConstants = equalByConstant(c1Index, c2Index);
+    if (equalByConstants != ThreeState.UNSURE) return equalByConstants.toBoolean() != isNegated;
     if (!isNegated) { //Equals
-      if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return true;
       if (isUnstableValue(dfaLeft) || isUnstableValue(dfaRight)) return true;
       if (!uniteClasses(c1Index, c2Index)) return false;
 
@@ -1017,8 +985,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myCachedNonTrivialEqClasses = null;
     }
     else { // Not Equals
-      if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
+      if (applyBooleanInequality(dfaLeft, dfaRight) ||
+          applyBooleanInequality(dfaRight, dfaLeft)) {
+        return true;
+      }
       myDistinctClasses.addUnordered(c1Index, c2Index);
     }
     myCachedHash = null;
@@ -1026,11 +997,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private boolean applyLessThanRelation(@NotNull final DfaValue dfaLeft, @NotNull final DfaValue dfaRight) {
-    if (isUnknownState(dfaLeft) || isUnknownState(dfaRight)) {
-      return true;
-    }
+  private boolean applyBooleanInequality(DfaValue var, DfaValue value) {
+    if (!(var instanceof DfaVariableValue) || !PsiType.BOOLEAN.equals(((DfaVariableValue)var).getVariableType())) return false;
+    if (!(value instanceof DfaConstValue)) return false;
+    Object constValue = ((DfaConstValue)value).getValue();
+    if (!(constValue instanceof Boolean)) return false;
+    return applyRelation(var, myFactory.getBoolean(!((Boolean)constValue)), false);
+  }
 
+  private boolean applyLessThanRelation(@NotNull final DfaValue dfaLeft, @NotNull final DfaValue dfaRight) {
     // DfaConstValue || DfaVariableValue
     Integer c1Index = getOrCreateEqClassIndex(dfaLeft);
     Integer c2Index = getOrCreateEqClassIndex(dfaRight);
@@ -1038,7 +1013,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
+    ThreeState equalByConstants = equalByConstant(c1Index, c2Index);
+    if (equalByConstants != ThreeState.UNSURE) return !equalByConstants.toBoolean();
     if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
     myCachedHash = null;
     return myDistinctClasses.addOrdered(c1Index, c2Index);
@@ -1071,33 +1047,41 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
            c2 == null && c1 instanceof PsiVariable;
   }
 
-  private boolean areCompatibleConstants(int i1, int i2) {
-    Double dv1 = getDoubleValue(i1);
-    return dv1 != null && dv1.equals(getDoubleValue(i2));
-  }
-
-  @Nullable
-  private Double getDoubleValue(int eqClassIndex) {
-    EqClass ec = myEqClasses.get(eqClassIndex);
-    DfaValue dfaConst = ec == null ? null : ec.findConstant(false);
-    Object constValue = dfaConst instanceof DfaConstValue ? ((DfaConstValue)dfaConst).getValue() : null;
-    return constValue instanceof Number ? ((Number)constValue).doubleValue() : null;
-  }
-
-  boolean isUnknownState(DfaValue val) {
-    val = unwrap(val);
-    if (val instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue)val;
-      return myUnknownVariables.contains(val) || myUnknownVariables.contains(var.getNegatedValue()) ||
-             equivalentVariables(var).anyMatch(v -> myUnknownVariables.contains(v) || myUnknownVariables.contains(v.getNegatedValue()));
+  @NotNull
+  private ThreeState equalByConstant(int i1, int i2) {
+    if (i1 == i2) return ThreeState.YES;
+    EqClass ec1 = myEqClasses.get(i1);
+    EqClass ec2 = myEqClasses.get(i2);
+    if (ec1 == null || ec2 == null) return ThreeState.UNSURE;
+    DfaValue constOrBox1 = ec1.findConstant(true);
+    DfaValue constOrBox2 = ec2.findConstant(true);
+    if (constOrBox1 == null || constOrBox2 == null) return ThreeState.UNSURE;
+    if (constOrBox1 instanceof DfaConstValue && constOrBox2 instanceof DfaConstValue) {
+      return areConstantsEqual((DfaConstValue)constOrBox1, (DfaConstValue)constOrBox2);
     }
-    return false;
+    if (constOrBox1 instanceof DfaBoxedValue && constOrBox2 instanceof DfaBoxedValue) {
+      DfaValue wrapped1 = ((DfaBoxedValue)constOrBox1).getWrappedValue();
+      DfaValue wrapped2 = ((DfaBoxedValue)constOrBox2).getWrappedValue();
+      if (wrapped1 instanceof DfaConstValue && wrapped2 instanceof DfaConstValue &&
+          areConstantsEqual((DfaConstValue)wrapped1, (DfaConstValue)wrapped2) == ThreeState.NO) {
+        return ThreeState.NO;
+      }
+    }
+    return ThreeState.UNSURE;
+  }
+
+  private static ThreeState areConstantsEqual(DfaConstValue const1, DfaConstValue const2) {
+    Number value1 = ObjectUtils.tryCast(const1.getValue(), Number.class);
+    Number value2 = ObjectUtils.tryCast(const2.getValue(), Number.class);
+    if (value1 == null || value2 == null) return ThreeState.UNSURE;
+    if (value1 instanceof Long && value2 instanceof Long) return ThreeState.fromBoolean(value1.equals(value2));
+    return ThreeState.fromBoolean(value1.doubleValue() == value2.doubleValue());
   }
 
   @Override
   public boolean checkNotNullable(DfaValue value) {
     if (value == myFactory.getConstFactory().getNull()) return false;
-    if (value instanceof DfaFactMapValue && Boolean.TRUE.equals(((DfaFactMapValue)value).get(DfaFactType.CAN_BE_NULL))) return false;
+    if (value instanceof DfaFactMapValue && DfaNullability.isNullable(((DfaFactMapValue)value).getFacts())) return false;
 
     if (value instanceof DfaVariableValue) {
       DfaVariableValue varValue = (DfaVariableValue)value;
@@ -1127,7 +1111,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value) {
-    if (isUnknownState(var)) return;
     DfaVariableState state = getVariableState(var);
     removeEquivalenceRelations(var);
     setVariableState(var, state.withFact(factType, value));
@@ -1155,7 +1138,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
-    assert !myUnknownVariables.contains(dfaVar);
     if (state.equals(myDefaultVariableStates.get(dfaVar))) {
       myVariableStates.remove(dfaVar);
     } else {
@@ -1209,21 +1191,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
         myDefaultVariableStates.put(dfaVar, state);
       }
-      
-      if (isUnknownState(dfaVar)) {
-        return state.withNotNull();
-      }
     }
 
     return state;
   }
 
   void forVariableStates(BiConsumer<? super DfaVariableValue, ? super DfaVariableState> consumer) {
-    myVariableStates.forEach((value, state) -> {
-      if (!isUnknownState(value)) {
-        consumer.accept(value, state);
-      }
-    });
+    myVariableStates.forEach(consumer);
   }
 
   @NotNull
@@ -1240,7 +1214,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     for (DfaVariableValue value : vars) {
-      if (!value.isFlushableByCalls()) continue;
+      if (value.isNegated() || !value.isFlushableByCalls()) continue;
       DfaVariableValue qualifier = value.getQualifier();
       if (qualifier != null) {
         if (getValueFact(qualifier, DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE ||
@@ -1248,26 +1222,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           continue;
         }
       }
-      doFlush(value, shouldMarkUnknown(value));
+      doFlush(value, shouldMarkFlushed(value));
     }
   }
 
-  private boolean shouldMarkUnknown(@NotNull DfaVariableValue value) {
-    int eqClassIndex = getEqClassIndex(value);
-    if (eqClassIndex < 0) return false;
-
-    EqClass eqClass = myEqClasses.get(eqClassIndex);
-    if (eqClass == null) return false;
-    DfaConstValue nullConst = myFactory.getConstFactory().getNull();
-    if (eqClass.findConstant(true) == nullConst) return true;
-
-    for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
-      EqClass otherClass = pair.getOtherClass(eqClassIndex);
-      if (otherClass != null && otherClass.findConstant(true) == nullConst) {
-        return true;
-      }
-    }
-    return false;
+  private boolean shouldMarkFlushed(@NotNull DfaVariableValue value) {
+    if (value.getInherentNullability() != Nullability.NULLABLE) return false;
+    return getVariableState(value).getFact(DfaFactType.NULLABILITY) == DfaNullability.FLUSHED || isNull(value) || isNotNull(value);
   }
 
   @NotNull
@@ -1285,8 +1246,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     doFlush(variable, false);
     flushDependencies(variable);
-    myUnknownVariables.remove(variable);
-    myUnknownVariables.removeAll(variable.getDependentVariables());
     myCachedHash = null;
   }
 
@@ -1301,17 +1260,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableValue qualifier = variable.getQualifier();
     if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write
-      qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls)
-               .forEach(val -> doFlush(val, shouldMarkUnknown(val)));
+      List<DfaVariableValue> toFlush =
+        qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls)
+          .filter(var -> !var.isNegated()).collect(Collectors.toList());
+      toFlush.forEach(val -> doFlush(val, shouldMarkFlushed(val)));
     }
   }
 
-  @NotNull
-  Set<DfaVariableValue> getUnknownVariables() {
-    return myUnknownVariables;
-  }
-
-  void doFlush(@NotNull DfaVariableValue varPlain, boolean markUnknown) {
+  void doFlush(@NotNull DfaVariableValue varPlain, boolean markFlushed) {
     if(isNull(varPlain)) {
       myStack.replaceAll(val -> val == varPlain ? myFactory.getConstFactory().getNull() : val);
     }
@@ -1322,8 +1278,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (varNegated != null) {
       myVariableStates.remove(varNegated);
     }
-    if (markUnknown) {
-      myUnknownVariables.add(varPlain);
+    if (markFlushed) {
+      setVariableState(varPlain, getVariableState(varPlain).withFact(DfaFactType.NULLABILITY, DfaNullability.FLUSHED));
     }
     myCachedHash = null;
   }

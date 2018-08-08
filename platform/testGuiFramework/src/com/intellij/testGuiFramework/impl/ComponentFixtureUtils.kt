@@ -5,13 +5,13 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
+import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
@@ -137,7 +137,7 @@ fun <S, C : Component> ComponentFixture<S, C>.spinner(boundedLabelText: String, 
  */
 fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String, timeout: Timeout = defaultTimeout): ComboBoxFixture =
   if (target() is Container) {
-    val comboBox = GuiTestUtilKt.findBoundedComponentByText(robot(), target() as Container, labelText, JComboBox::class.java)
+    val comboBox = GuiTestUtilKt.findBoundedComponentByText(robot(), target() as Container, labelText, JComboBox::class.java, timeout)
     val comboboxFixture = ComboBoxFixture(robot(), comboBox)
     comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
     comboboxFixture

@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class SwitchToTheNextContextAction extends DebuggerAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     DebugProcessImpl process = debuggerContext.getDebugProcess();
     if (process == null) {

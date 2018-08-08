@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -34,7 +35,7 @@ import java.io.File;
  * @author yole
  */
 public class OpenDirectoryProjectAction extends AnAction implements DumbAware {
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(false);
     final Project project = e.getData(CommonDataKeys.PROJECT);
 

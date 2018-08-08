@@ -18,6 +18,9 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
     checkBox("Insert missing comma after matching braces and quotes",
              () -> settings.COMMA_ON_MATCHING_BRACES,
              v -> settings.COMMA_ON_MATCHING_BRACES = v);
+    checkBox("Escape text on paste in string literals",
+             () -> settings.ESCAPE_PASTED_TEXT,
+             v -> settings.ESCAPE_PASTED_TEXT = v);
   }
 
   @Override

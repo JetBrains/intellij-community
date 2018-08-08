@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -94,7 +95,7 @@ public class CheckoutAction extends AbstractAction {
         myCheckoutDirectory, myUseAlternativeCheckoutPath);
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(true);
     presentation.setEnabled(true);

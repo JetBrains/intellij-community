@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.ui.components.labels.LinkLabel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -33,7 +34,7 @@ public class HideCoverageInfoAction extends IconWithTextAction {
     super("Hide coverage", "Hide coverage data", null);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     CoverageDataManager.getInstance(e.getData(CommonDataKeys.PROJECT)).chooseSuitesBundle(null);
   }
 
@@ -51,7 +52,7 @@ public class HideCoverageInfoAction extends IconWithTextAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(e.isFromActionToolbar());

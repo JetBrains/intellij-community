@@ -48,7 +48,7 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -59,7 +59,7 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
     if (!resourceBundles.isEmpty()) {
       final String actionText = resourceBundles.size() == 1 ?

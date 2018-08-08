@@ -206,15 +206,15 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       return connection != null && connection.getStatus() == ConnectionStatus.CONNECTED;
     }
 
-    public void deploy(AnActionEvent e) {
+    public void deploy(@NotNull AnActionEvent e) {
       doDeploy(e, DefaultRunExecutor.getRunExecutorInstance(), "Deploy Configuration", true);
     }
 
-    public void deployWithDebug(AnActionEvent e) {
+    public void deployWithDebug(@NotNull AnActionEvent e) {
       doDeploy(e, DefaultDebugExecutor.getDebugExecutorInstance(), "Deploy and Debug Configuration", false);
     }
 
-    public void doDeploy(AnActionEvent e, final Executor executor, String popupTitle, boolean canCreate) {
+    public void doDeploy(@NotNull AnActionEvent e, final Executor executor, String popupTitle, boolean canCreate) {
       final RemoteServer<?> server = getServer();
       final ServerType<? extends ServerConfiguration> serverType = server.getType();
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());

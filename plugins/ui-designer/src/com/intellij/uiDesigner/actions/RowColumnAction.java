@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public abstract class RowColumnAction extends AnAction {
     myRowIcon = rowIcon;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if (editor == null || selection == null || !editor.ensureEditable()) {
@@ -58,7 +59,7 @@ public abstract class RowColumnAction extends AnAction {
 
   protected abstract void actionPerformed(CaptionSelection selection);
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if (selection == null) {

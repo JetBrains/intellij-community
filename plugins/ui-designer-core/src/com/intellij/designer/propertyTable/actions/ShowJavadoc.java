@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -53,7 +54,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     setEnabled(myTable, e, e.getPresentation());
   }
 
@@ -71,7 +72,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;

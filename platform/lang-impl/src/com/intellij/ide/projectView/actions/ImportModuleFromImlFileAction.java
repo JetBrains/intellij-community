@@ -29,6 +29,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +42,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final Project project = getEventProject(e);
     if (files == null || project == null) return;
@@ -61,7 +62,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final List<VirtualFile> modules = getModuleNames(e);
     final Presentation presentation = e.getPresentation();
     final boolean visible = !modules.isEmpty();
@@ -80,7 +81,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
     presentation.setText(text);
   }
 
-  private static List<VirtualFile> getModuleNames(AnActionEvent e) {
+  private static List<VirtualFile> getModuleNames(@NotNull AnActionEvent e) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final Project project = getEventProject(e);
     if (project == null || files == null || files.length == 0) {

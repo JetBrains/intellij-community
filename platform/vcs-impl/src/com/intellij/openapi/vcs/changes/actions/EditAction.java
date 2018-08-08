@@ -25,12 +25,13 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EditAction extends DumbAwareAction {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     List<VirtualFile> files = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     editFilesAndShowErrors(project, files);
@@ -62,7 +63,7 @@ public class EditAction extends DumbAwareAction {
     });
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     List<VirtualFile> files = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     boolean enabled = files != null && !files.isEmpty();
     e.getPresentation().setEnabled(enabled);

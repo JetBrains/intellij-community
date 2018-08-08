@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -45,7 +46,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     JComponent button = presentation.getClientProperty(COMPONENT_KEY);
     DefaultActionGroup group = createPopupActionGroup(myProject, myToDoSettings, myTodoFilterConsumer);
@@ -79,7 +80,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
       new AnAction(IdeBundle.message("action.todo.edit.filters"),
                    IdeBundle.message("action.todo.edit.filters"), AllIcons.General.Settings) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project));
         }
@@ -113,7 +114,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (myFilter != null) {
         e.getPresentation().setEnabled(!myFilter.isEmpty());

@@ -50,11 +50,11 @@ public class Utils{
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(false);
       super.update(e);
     }

@@ -132,7 +132,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addAction(new AnAction("Rename Setters Prefix") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         applyNewSetterPrefix();
       }
     }).setAsSecondary(true);

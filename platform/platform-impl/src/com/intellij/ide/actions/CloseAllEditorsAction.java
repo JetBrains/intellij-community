@@ -28,9 +28,10 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseAllEditorsAction extends AnAction implements DumbAware {
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
@@ -53,7 +54,7 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
     );
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     final EditorWindow editorWindow = event.getData(EditorWindow.DATA_KEY);
     if (editorWindow != null && editorWindow.inSplitter()) {

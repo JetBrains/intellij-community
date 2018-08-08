@@ -27,7 +27,7 @@ import java.util.List;
 
 public abstract class MavenProjectsAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
   }
 

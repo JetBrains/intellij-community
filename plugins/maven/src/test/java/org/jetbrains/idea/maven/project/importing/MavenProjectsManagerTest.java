@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.io.File;
@@ -573,7 +574,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "  </properties>" +
                               "</profile>");
 
-    importProjectWithErrors(true); // structure warning, new style of profiles.xml expected
+    MavenServerManager.getInstance().setUseMaven2();
+    importProjectWithErrors(); // structure warning, new style of profiles.xml expected
 
     List<MavenProject> roots = myProjectsTree.getRootProjects();
 
@@ -852,7 +854,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
     assertModules("project");
     assertFalse(called[0]); // on import
 

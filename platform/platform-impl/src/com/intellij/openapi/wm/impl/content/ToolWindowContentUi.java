@@ -503,7 +503,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private static AnAction createSplitTabsAction(final TabbedContent content) {
     return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
       }
     };
@@ -512,7 +512,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private static AnAction createMergeTabsAction(final ContentManager manager, final String tabPrefix) {
     return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Content selectedContent = manager.getSelectedContent();
         final List<Pair<String, JComponent>> tabs = new ArrayList<>();
         int selectedTab = -1;
@@ -573,7 +573,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) return myWindow;
 
     if (CloseAction.CloseTarget.KEY.is(dataId)) {

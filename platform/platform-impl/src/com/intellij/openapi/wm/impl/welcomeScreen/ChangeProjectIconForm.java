@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.ActionLink;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -100,7 +101,7 @@ public class ChangeProjectIconForm {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       VirtualFile[] files = FileChooserFactory.getInstance()
         .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(
           file -> "png".equalsIgnoreCase(file.getExtension())), null, null).choose(null);
@@ -131,7 +132,7 @@ public class ChangeProjectIconForm {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myDarcula) {
         myDarculaIcon.setIcon(AllIcons.Nodes.IdeaProject);
         resetDarkIcon = true;

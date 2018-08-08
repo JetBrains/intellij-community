@@ -488,7 +488,7 @@ public class ExternalSystemUtil {
               }
 
               @Override
-              public void actionPerformed(AnActionEvent e) {
+              public void actionPerformed(@NotNull AnActionEvent e) {
                 Presentation p = e.getPresentation();
                 p.setEnabled(false);
                 refreshProject(externalProjectPath, importSpec);

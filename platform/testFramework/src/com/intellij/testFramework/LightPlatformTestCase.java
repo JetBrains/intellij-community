@@ -572,7 +572,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return ourProject == null || ourProject.isDisposed() ? null : new TestDataProvider(ourProject).getData(dataId);
   }
 

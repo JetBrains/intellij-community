@@ -320,7 +320,7 @@ public class ContentEntryTreeEditor {
 
     @Override
     @Nullable
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (FileSystemTree.DATA_KEY.is(dataId)) {
         return myFileSystemTree;
       }

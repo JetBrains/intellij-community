@@ -51,7 +51,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -116,8 +115,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1083,11 +1082,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
 
     final int[] creation = {0};
-    class Fac extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-      private Fac(Project project) {
-        super(project);
-      }
-
+    class Fac implements TextEditorHighlightingPassFactory {
       @Override
       public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
         TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
@@ -1111,7 +1106,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
     TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
-    registrar.registerTextEditorHighlightingPass(new Fac(getProject()), null, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
     highlightErrors();
     assertEquals(1, creation[0]);
 
@@ -1132,18 +1127,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testDefensivelyDirtyFlagDoesNotClearPrematurely() {
-    class Fac extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-      private Fac(Project project) {
-        super(project);
-      }
-
+    class Fac implements TextEditorHighlightingPassFactory {
       @Override
       public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
         return null;
       }
     }
     TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
-    registrar.registerTextEditorHighlightingPass(new Fac(getProject()), null, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
 
     configureByText(StdFileTypes.JAVA, "@Deprecated<caret> class S { } ");
 
@@ -1982,11 +1973,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private void registerFakePass(@NotNull final Set<Editor> applied, @NotNull final Set<Editor> collected) {
-    class Fac extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-      private Fac(Project project) {
-        super(project);
-      }
-
+    class Fac implements TextEditorHighlightingPassFactory {
       @Override
       public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
         return new EditorBoundHighlightingPass(editor, file, false) {
@@ -2003,7 +1990,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
     TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
-    registrar.registerTextEditorHighlightingPass(new Fac(getProject()), null, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
   }
 
   private volatile boolean runHeavyProcessing;

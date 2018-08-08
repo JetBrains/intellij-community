@@ -32,7 +32,7 @@ import org.jetbrains.idea.maven.utils.MavenDataKeys;
 public class MavenRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     for (AnAction action : getChildActionsOrStubs()) {
       if (action instanceof ExecuteMavenRunConfigurationAction) {
         remove(action);

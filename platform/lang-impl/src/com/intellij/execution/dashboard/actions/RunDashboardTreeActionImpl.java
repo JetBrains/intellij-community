@@ -32,7 +32,7 @@ public abstract class RunDashboardTreeActionImpl<T extends RunDashboardNode> ext
   }
 
   @Override
-  protected final RunDashboardContent getTreeContent(AnActionEvent e) {
+  protected final RunDashboardContent getTreeContent(@NotNull AnActionEvent e) {
     return e.getData(RunDashboardContent.KEY);
   }
 

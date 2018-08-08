@@ -92,6 +92,11 @@ public class MockUpdateParameterInfoContext implements UpdateParameterInfoContex
   }
 
   @Override
+  public boolean isSingleParameterInfo() {
+    return false;
+  }
+
+  @Override
   public UserDataHolderEx getCustomContext() {
     throw new UnsupportedOperationException();
   }

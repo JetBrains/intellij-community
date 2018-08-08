@@ -1476,7 +1476,7 @@ public class AbstractPopup implements JBPopup {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       return myDataProvider != null ? myDataProvider.getData(dataId) : null;
     }
 

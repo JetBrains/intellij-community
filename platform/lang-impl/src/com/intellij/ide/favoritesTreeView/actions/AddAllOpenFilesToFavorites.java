@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -37,7 +38,7 @@ public class AddAllOpenFilesToFavorites extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -66,7 +67,7 @@ public class AddAllOpenFilesToFavorites extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabled(false);

@@ -106,7 +106,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myPackageChooseButton.doClick();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myPackageTextField);

@@ -164,7 +164,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myType.addBreakpoint(getEventProject(e), null);
     }
   }

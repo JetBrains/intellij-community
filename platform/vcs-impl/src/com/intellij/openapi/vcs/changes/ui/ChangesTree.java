@@ -539,7 +539,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     @Override
-    public boolean isVisible(AnActionEvent event) {
+    public boolean isVisible(@NotNull AnActionEvent event) {
       return !myGroupingSupport.isNone() || !myIsModelFlat;
     }
   }
@@ -635,7 +635,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       List<Object> changes = getSelectedUserObjects();
       if (changes.isEmpty()) changes = getAllUserObjects();
       toggleChanges(changes);
@@ -663,7 +663,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myTreeCopyProvider;
     }

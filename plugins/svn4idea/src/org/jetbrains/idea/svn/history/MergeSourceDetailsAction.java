@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.SvnIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -37,7 +38,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(enabled(e));
   }
 
@@ -56,7 +57,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
     return ! ((SvnFileRevision) revision).getMergeSources().isEmpty();
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (! enabled(e)) return;
 
     final Project project = e.getData(CommonDataKeys.PROJECT);

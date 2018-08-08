@@ -230,7 +230,7 @@ public class ScratchFileActions {
 
   public static class LanguageAction extends DumbAwareAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
       if (project == null || files.isEmpty()) {
@@ -256,7 +256,7 @@ public class ScratchFileActions {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
         filter(fileFilter(project));

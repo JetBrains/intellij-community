@@ -97,7 +97,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (myDesigner != null) {
       if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return myDesigner.getEditor();

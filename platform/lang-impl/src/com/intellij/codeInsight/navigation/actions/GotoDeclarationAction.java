@@ -328,7 +328,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (event.getProject() == null ||
         event.getData(EditorGutter.KEY) != null ||
         Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {

@@ -24,13 +24,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class GotoLineAction extends AnAction implements DumbAware {
   public GotoLineAction() {
     setEnabledInModalContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
@@ -51,7 +52,7 @@ public class GotoLineAction extends AnAction implements DumbAware {
     }
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

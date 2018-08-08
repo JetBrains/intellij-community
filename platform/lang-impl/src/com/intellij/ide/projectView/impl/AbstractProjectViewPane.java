@@ -301,7 +301,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     Object data =
       myTreeStructure instanceof AbstractTreeStructureBase ?
       ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId) : null;

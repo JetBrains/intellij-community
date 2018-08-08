@@ -59,7 +59,7 @@ public abstract class DiffPanelComboBoxAction<T> extends ComboBoxAction implemen
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     DiffPanelEx diffPanel = getDiffPanel(e.getDataContext());
@@ -82,7 +82,7 @@ public abstract class DiffPanelComboBoxAction<T> extends ComboBoxAction implemen
       super(text);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DiffPanelEx diffPanel = getDiffPanel(e.getDataContext());
       if (diffPanel != null) {
         perform(diffPanel);

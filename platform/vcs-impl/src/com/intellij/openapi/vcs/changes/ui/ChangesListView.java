@@ -120,7 +120,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }

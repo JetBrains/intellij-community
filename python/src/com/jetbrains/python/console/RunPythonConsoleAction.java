@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.actions.PyExecuteSelectionAction;
 import icons.PythonIcons;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
@@ -38,7 +39,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(false);
     final Project project = e.getData(CommonDataKeys.PROJECT);
@@ -50,7 +51,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     }
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     PyExecuteSelectionAction.showConsoleAndExecuteCode(e, null);
   }
 }

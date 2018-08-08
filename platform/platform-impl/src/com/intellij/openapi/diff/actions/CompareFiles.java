@@ -24,6 +24,7 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.ex.DiffContentFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class CompareFiles extends BaseDiffAction {
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFiles.DiffRequest");
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     boolean canShow = isAvailable(e);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -45,7 +46,7 @@ public class CompareFiles extends BaseDiffAction {
     }
   }
   
-  private static boolean isAvailable(AnActionEvent e) {
+  private static boolean isAvailable(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     DiffRequest diffRequest = e.getData(DIFF_REQUEST);
     if (diffRequest == null) {

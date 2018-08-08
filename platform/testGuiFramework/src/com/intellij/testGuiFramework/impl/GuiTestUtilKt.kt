@@ -154,7 +154,8 @@ object GuiTestUtilKt {
   fun <BoundedComponent> findBoundedComponentByText(robot: Robot,
                                                     container: Container,
                                                     text: String,
-                                                    componentType: Class<BoundedComponent>): BoundedComponent {
+                                                    componentType: Class<BoundedComponent>,
+                                                    timeout: Timeout = Timeouts.seconds30): BoundedComponent {
     val componentWithText = findComponentByText(robot, container, text)
     if (componentWithText is JLabel && componentWithText.labelFor != null) {
       val labeledComponent = componentWithText.labelFor
@@ -162,7 +163,7 @@ object GuiTestUtilKt {
       return robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
     }
     try {
-      return withPauseWhenNull {
+      return withPauseWhenNull(timeout = timeout) {
         val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
         componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
           .sortedBy { it.bounds.x }

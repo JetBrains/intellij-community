@@ -16,13 +16,25 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ChainedMethodCallInspection extends ChainedMethodCallInspectionBase {
+public class ChainedMethodCallInspection extends BaseInspection {
+  @SuppressWarnings("PublicField")
+  public boolean m_ignoreFieldInitializations = true;
+  @SuppressWarnings("PublicField")
+  public boolean m_ignoreThisSuperCalls = true;
+
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
@@ -34,5 +46,64 @@ public class ChainedMethodCallInspection extends ChainedMethodCallInspectionBase
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new IntroduceVariableFix(true);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("chained.method.call.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("chained.method.call.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ChainedMethodCallVisitor();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  private class ChainedMethodCallVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression reference = expression.getMethodExpression();
+      final PsiExpression qualifier = reference.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      if (!isCallExpression(qualifier)) {
+        return;
+      }
+      if (m_ignoreFieldInitializations) {
+        final PsiElement field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        if (field != null) {
+          return;
+        }
+      }
+      if (m_ignoreThisSuperCalls) {
+        final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class);
+        if (expressionList != null) {
+          final PsiElement parent = expressionList.getParent();
+          if (JavaPsiConstructorUtil.isConstructorCall(parent)) {
+            return;
+          }
+        }
+      }
+      registerMethodCallError(expression);
+    }
+
+    private boolean isCallExpression(PsiExpression expression) {
+      expression = ParenthesesUtils.stripParentheses(expression);
+      return expression instanceof PsiMethodCallExpression || expression instanceof PsiNewExpression;
+    }
   }
 }

@@ -109,7 +109,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     showDiscoveredTests(project, dataContext, presentableName, method);
   }
 
-  private static void showDiscoveredTestsByChanges(AnActionEvent e) {
+  private static void showDiscoveredTestsByChanges(@NotNull AnActionEvent e) {
     Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     Project project = e.getProject();
     assert project != null;
@@ -154,7 +154,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     return methods
       .stream()
-      .map(m -> ObjectUtils.tryCast(Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi(), PsiMethod.class))
+      .map(m -> UastContextKt.toUElement(m))
+      .filter(Objects::nonNull)
+      .map(m -> ObjectUtils.tryCast(m.getJavaPsi(), PsiMethod.class))
       .filter(Objects::nonNull)
       .toArray(PsiMethod.ARRAY_FACTORY::create);
   }

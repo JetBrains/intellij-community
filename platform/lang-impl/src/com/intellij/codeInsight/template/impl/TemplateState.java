@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -61,7 +60,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public class TemplateState implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateState");
+  private static final Logger LOG = Logger.getInstance(TemplateState.class);
   private Project myProject;
   private Editor myEditor;
 
@@ -79,7 +78,6 @@ public class TemplateState implements Disposable {
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged = false;
 
-  @Nullable private CommandListener myCommandListener;
   @Nullable private LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -130,7 +128,12 @@ public class TemplateState implements Disposable {
         }
       }
     }, this);
-    myCommandListener = new CommandListener() {
+
+    if (myEditor != null) {
+      installCaretListener(myEditor);
+    }
+    myDocument.addDocumentListener(myEditorDocumentListener, this);
+    myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
       boolean started = false;
 
       @Override
@@ -152,13 +155,7 @@ public class TemplateState implements Disposable {
           }
         }
       }
-    };
-
-    if (myEditor != null) {
-      installCaretListener(myEditor);
-    }
-    myDocument.addDocumentListener(myEditorDocumentListener, this);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+    });
   }
 
   private void installCaretListener(@NotNull Editor editor) {
@@ -221,7 +218,6 @@ public class TemplateState implements Disposable {
     }
 
     myEditorDocumentListener = null;
-    myCommandListener = null;
 
     myProcessor = null;
 
@@ -695,7 +691,7 @@ public class TemplateState implements Disposable {
     if (mySegments.isInvalid()) {
       gotoEnd(true);
     }
-    
+
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
       final TextResult value = getVariableValue(variableName);

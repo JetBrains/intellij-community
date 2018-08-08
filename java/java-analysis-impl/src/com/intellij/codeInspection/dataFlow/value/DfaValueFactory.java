@@ -81,7 +81,7 @@ public class DfaValueFactory {
       }
     }
     DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, createDfaType(type).asConstraint())
-      .with(DfaFactType.CAN_BE_NULL, NullabilityUtil.toBoolean(nullability));
+      .with(DfaFactType.NULLABILITY, DfaNullability.fromNullability(nullability));
     return getFactFactory().createValue(facts);
   }
 
@@ -89,7 +89,7 @@ public class DfaValueFactory {
   public DfaValue createExactTypeValue(@Nullable PsiType type) {
     if (type == null) return DfaUnknownValue.getInstance();
     DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(createDfaType(type)))
-      .with(DfaFactType.CAN_BE_NULL, false);
+      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     return getFactFactory().createValue(facts);
   }
 
@@ -168,7 +168,7 @@ public class DfaValueFactory {
     }
     if (dfaLeft instanceof DfaFactMapValue &&
         dfaRight == getConstFactory().getNull() &&
-        Boolean.FALSE.equals(((DfaFactMapValue)dfaLeft).get(DfaFactType.CAN_BE_NULL))) {
+        DfaNullability.isNotNull(((DfaFactMapValue)dfaLeft).getFacts())) {
       if (relationType == RelationType.EQ) {
         return getConstFactory().getFalse();
       }

@@ -105,6 +105,11 @@ private class UastPatternAdapter(
   override fun getCondition(): ElementPatternCondition<PsiElement> = condition
 }
 
+fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
+  this::accepts,
+  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java)
+)
+
 private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val uElement = getOrCreateCachedElement(element, context, provider.supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY

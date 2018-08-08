@@ -225,7 +225,7 @@ public class EditorSearchSession implements SearchSession,
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (SearchSession.KEY.is(dataId)) {
       return this;
     }
@@ -495,7 +495,7 @@ public class EditorSearchSession implements SearchSession,
     }
 
     @Override
-    public final void update(AnActionEvent e) {
+    public final void update(@NotNull AnActionEvent e) {
       JButton button = (JButton)e.getPresentation().getClientProperty(COMPONENT_KEY);
       if (button != null) {
         update(button);
@@ -503,7 +503,7 @@ public class EditorSearchSession implements SearchSession,
     }
 
     @Override
-    public final void actionPerformed(AnActionEvent e) {
+    public final void actionPerformed(@NotNull AnActionEvent e) {
       onClick();
     }
 

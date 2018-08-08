@@ -140,12 +140,12 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
       new DumbAwareActionButton(CvsBundle.message("action.name.copy"), PlatformIcons.COPY_ICON) {
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(getSelectedConfiguration() != null);
         }
 
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           copySelectedConfiguration();
         }
       };
@@ -280,7 +280,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   @Override
   @NonNls
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)){
       return "reference.versioncontrol.cvs.roots";
     }

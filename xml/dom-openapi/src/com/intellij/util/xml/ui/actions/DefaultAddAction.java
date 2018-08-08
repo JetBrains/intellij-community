@@ -62,7 +62,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final T result = performElementAddition();
     if (result != null) {
       afterAddition(result);

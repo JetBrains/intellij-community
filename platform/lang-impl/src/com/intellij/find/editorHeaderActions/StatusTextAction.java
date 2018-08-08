@@ -22,13 +22,14 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class StatusTextAction extends DumbAwareAction implements CustomComponentAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     SearchSession search = e.getData(SearchSession.KEY);
     String statusText = search == null ? "" : search.getComponent().getStatusText();
     JLabel label = (JLabel)e.getPresentation().getClientProperty(COMPONENT_KEY);
@@ -39,7 +40,7 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
   }
 
   @Override

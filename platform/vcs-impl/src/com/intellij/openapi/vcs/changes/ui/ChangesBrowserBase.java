@@ -182,7 +182,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }
@@ -219,12 +219,12 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(canShowDiff() || e.getInputEvent() instanceof KeyEvent);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (canShowDiff()) showDiff();
     }
   }

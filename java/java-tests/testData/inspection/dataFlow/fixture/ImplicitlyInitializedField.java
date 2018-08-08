@@ -1,7 +1,7 @@
 class Foo {
   String field;
   String field2;
-  int hash = field.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>();
+  int hash = field.<warning descr="Method invocation 'hashCode' will produce 'java.lang.NullPointerException'">hashCode</warning>();
 
   Foo(String f2) {
     field2 = f2;
@@ -23,7 +23,7 @@ class Foo {
 
     Instrumented() {
       System.out.println(s1.length()
-                         +s2.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>());
+                         +s2.<warning descr="Method invocation 'length' will produce 'java.lang.NullPointerException'">length</warning>());
     }
   }
 
@@ -32,8 +32,8 @@ class Foo {
     String s2 = null;
 
     NotInstrumented() {
-      System.out.println(s1.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>()
-                         +s2.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>());
+      System.out.println(s1.<warning descr="Method invocation 'length' will produce 'java.lang.NullPointerException'">length</warning>()
+                         +s2.<warning descr="Method invocation 'length' will produce 'java.lang.NullPointerException'">length</warning>());
     }
   }
 }

@@ -1345,7 +1345,7 @@ public abstract class DialogWrapper {
   private static void installEnterHook(JComponent root, Disposable disposable) {
     new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner instanceof JButton && owner.isEnabled()) {
           ((JButton)owner).doClick();
@@ -1353,7 +1353,7 @@ public abstract class DialogWrapper {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }

@@ -98,8 +98,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       myProject = project;
       myConfiguration = configuration;
       addConsoleFilters(
-        new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"),
-        new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"),
+        new RegexpFilter(project, "$FILE_PATH$:$LINE$:"),
         myArgFileFilter);
     }
 

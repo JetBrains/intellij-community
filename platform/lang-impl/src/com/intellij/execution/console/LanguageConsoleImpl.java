@@ -455,7 +455,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return super.getData(dataId);
   }
 

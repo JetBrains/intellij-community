@@ -150,6 +150,9 @@ public class DfaExpressionFactory {
       PsiType type = refExpr.getType();
       return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
     }
+    if (psiElement instanceof PsiVariable && ((PsiVariable)psiElement).getType().equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
+      return myFactory.getConstFactory().getNull();
+    }
     if (psiElement instanceof PsiVariable && psiElement.hasModifierProperty(PsiModifier.FINAL) && !PsiUtil.isAccessedForWriting(refExpr)) {
       DfaValue constValue = myFactory.getConstFactory().create((PsiVariable)psiElement);
       if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, psiElement)) return constValue;

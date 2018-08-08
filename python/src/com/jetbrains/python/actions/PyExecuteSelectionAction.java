@@ -54,7 +54,7 @@ public class PyExecuteSelectionAction extends AnAction {
     super(EXECUTE_SELECTION_IN_CONSOLE);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor != null) {
       final String selectionText = getSelectionText(editor);
@@ -154,7 +154,7 @@ public class PyExecuteSelectionAction extends AnAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     Presentation presentation = e.getPresentation();
 

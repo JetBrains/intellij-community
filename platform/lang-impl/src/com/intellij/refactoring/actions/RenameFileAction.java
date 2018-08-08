@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class RenameFileAction extends AnAction {
   public static final String RENAME_FILE = "Rename File...";
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     assert file != null;
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -44,7 +44,7 @@ public class RenameFileAction extends AnAction {
     return true;
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
     String place = e.getPlace();

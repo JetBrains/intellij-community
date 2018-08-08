@@ -187,7 +187,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       walkTree(node -> node.setChecked(true));
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
@@ -199,7 +199,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       walkTree(node -> node.setChecked(false));
       ((DefaultTreeModel)myTree.getModel()).reload();
     }

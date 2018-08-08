@@ -86,9 +86,9 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     storageDataRef.set(loadState(element))
   }
 
-  override fun startExternalization(): StateStorage.ExternalizationSession? = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
+  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
 
-  protected abstract fun createSaveSession(states: StateMap): StateStorage.ExternalizationSession
+  protected abstract fun createSaveSession(states: StateMap): StateStorage.SaveSessionProducer
 
   override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
     val oldData = storageDataRef.get()
@@ -312,7 +312,7 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>? = null):
 
 internal fun Element.normalizeRootName(): Element {
   if (org.jdom.JDOMInterner.isInterned(this)) {
-    if (FileStorageCoreUtil.COMPONENT == name) {
+    if (name == FileStorageCoreUtil.COMPONENT) {
       return this
     }
     else {
@@ -323,7 +323,7 @@ internal fun Element.normalizeRootName(): Element {
   }
   else {
     if (parent != null) {
-      LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
+      LOG.warn("State element must not have parent: ${JDOMUtil.writeElement(this)}")
       detach()
     }
     name = FileStorageCoreUtil.COMPONENT

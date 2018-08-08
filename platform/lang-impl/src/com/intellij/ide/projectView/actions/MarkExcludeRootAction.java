@@ -37,7 +37,7 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
     if (Registry.is("ide.hide.excluded.files")) {

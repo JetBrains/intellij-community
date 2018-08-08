@@ -126,7 +126,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
                                   @NotNull VirtualFile defaultRoot);
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     boolean enabled = isEnabled(e);
     e.getPresentation().setEnabled(enabled);

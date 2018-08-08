@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Pair;
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,12 +21,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HotSwapManager extends AbstractProjectComponent {
+public class HotSwapManager {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<>();
   private static final String CLASS_EXTENSION = ".class";
+  private final Project myProject;
 
   public HotSwapManager(Project project, DebuggerManagerEx manager) {
-    super(project);
+    myProject = project;
     manager.addDebuggerManagerListener(new DebuggerManagerListener() {
       public void sessionCreated(DebuggerSession session) {
         myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));
@@ -38,11 +37,6 @@ public class HotSwapManager extends AbstractProjectComponent {
         myTimeStamps.remove(session);
       }
     });
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "HotSwapManager";
   }
 
   private long getTimeStamp(DebuggerSession session) {

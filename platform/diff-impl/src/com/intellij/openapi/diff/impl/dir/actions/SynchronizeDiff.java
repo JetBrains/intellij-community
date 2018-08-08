@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.diff.DirDiffOperation.*;
 
@@ -36,7 +37,7 @@ public class SynchronizeDiff extends DirDiffAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.getPresentation().isEnabled()) {
       return;

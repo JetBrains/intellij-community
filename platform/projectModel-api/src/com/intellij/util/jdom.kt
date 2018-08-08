@@ -7,6 +7,7 @@ import com.intellij.reference.SoftReference
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import com.intellij.util.text.CharSequenceReader
+import com.intellij.util.xmlb.Constants
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -119,10 +120,11 @@ fun Element.toByteArray(): ByteArray {
   return toBufferExposingByteArray().toByteArray()
 }
 
-fun Element.addOptionTag(name: String, value: String) {
-  val element = Element("option")
-  element.setAttribute("name", name)
-  element.setAttribute("value", value)
+@JvmOverloads
+fun Element.addOptionTag(name: String, value: String, elementName: String = Constants.OPTION) {
+  val element = Element(elementName)
+  element.setAttribute(Constants.NAME, name)
+  element.setAttribute(Constants.VALUE, value)
   addContent(element)
 }
 
