@@ -46,7 +46,7 @@ class ContractChecker {
                                     @NotNull PsiExpression expression,
                                     @NotNull PsiParameterListOwner context,
                                     @NotNull DfaMemoryState state) {
-      if (context != myMethod) return;
+      if (context != myMethod || state.isEphemeral()) return;
       if (!myContract.getReturnValue().isValueCompatible(state, value)) {
         myViolations.add(expression);
       } else {
@@ -79,13 +79,11 @@ class ContractChecker {
     public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
                                                       @NotNull DataFlowRunner runner,
                                                       @NotNull DfaMemoryState state) {
-      if (!state.isEphemeral()) {
-        if (instruction instanceof ReturnInstruction && ((ReturnInstruction)instruction).isViaException()) {
-          ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
-        }
-        else {
-          myMayReturnNormally = true;
-        }
+      if (instruction instanceof ReturnInstruction && ((ReturnInstruction)instruction).isViaException()) {
+        ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
+      }
+      else {
+        myMayReturnNormally = true;
       }
       return super.visitControlTransfer(instruction, runner, state);
     }

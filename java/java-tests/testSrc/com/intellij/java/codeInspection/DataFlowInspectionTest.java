@@ -632,7 +632,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
-  public void testAndAndWithOr() { doTest(); }
   public void testBoxUnboxArrayElement() { doTest(); }
   public void testExactInstanceOf() { doTest(); }
   public void testNullFlushed() { doTest(); }

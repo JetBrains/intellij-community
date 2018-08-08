@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -119,8 +120,7 @@ public abstract class ContractValue {
       if (arguments.myArguments.length <= myIndex) {
         return DfaUnknownValue.getInstance();
       }
-      DfaValue arg = arguments.myArguments[myIndex];
-      return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
+      return arguments.myArguments[myIndex];
     }
 
     @Override
@@ -283,7 +283,15 @@ public abstract class ContractValue {
 
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
-      return factory.createCondition(myLeft.makeDfaValue(factory, arguments), myRelationType, myRight.makeDfaValue(factory, arguments));
+      DfaValue left = myLeft.makeDfaValue(factory, arguments);
+      DfaValue right = myRight.makeDfaValue(factory, arguments);
+      if (left instanceof DfaConstValue && ((DfaConstValue)left).getType() instanceof PsiPrimitiveType && right instanceof DfaBoxedValue) {
+        right = ((DfaBoxedValue)right).getWrappedValue();
+      }
+      if (right instanceof DfaConstValue && ((DfaConstValue)right).getType() instanceof PsiPrimitiveType && left instanceof DfaBoxedValue) {
+        left = ((DfaBoxedValue)left).getWrappedValue();
+      }
+      return factory.createCondition(left, myRelationType, right);
     }
 
     @Override

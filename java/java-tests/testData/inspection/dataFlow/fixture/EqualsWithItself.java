@@ -15,4 +15,10 @@ class Test {
       System.out.println("always");
     }
   }
+
+  void test(Boolean x) {
+    if(x.equals(true)) {
+      System.out.println("oops");
+    }
+  }
 }
