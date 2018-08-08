@@ -554,7 +554,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private static class MyEditorMouseListener extends EditorMouseAdapter {
+  private static class MyEditorMouseListener implements EditorMouseListener {
     @NotNull
     private final TooltipController myTooltipController;
 

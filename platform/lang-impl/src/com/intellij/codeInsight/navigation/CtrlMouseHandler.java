@@ -156,7 +156,7 @@ public class CtrlMouseHandler {
     }
   };
 
-  private final EditorMouseAdapter myEditorMouseAdapter = new EditorMouseAdapter() {
+  private final EditorMouseListener myEditorMouseAdapter = new EditorMouseListener() {
     @Override
     public void mouseReleased(EditorMouseEvent e) {
       disposeHighlighter();
@@ -164,7 +164,7 @@ public class CtrlMouseHandler {
     }
   };
 
-  private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionAdapter() {
+  private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionListener() {
     @Override
     public void mouseMoved(final EditorMouseEvent e) {
       if (e.isConsumed() || !myProject.isInitialized() || myProject.isDisposed()) {

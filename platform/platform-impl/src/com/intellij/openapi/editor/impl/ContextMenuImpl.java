@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
+import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +47,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
     final ActionManager actionManager = ActionManager.getInstance();
 
-    editor.addEditorMouseListener(new EditorMouseAdapter() {
+    editor.addEditorMouseListener(new EditorMouseListener() {
       @Override
       public void mouseExited(final EditorMouseEvent e) {
         if (!isInsideActivationArea(container, e.getMouseEvent().getPoint())) {
@@ -56,7 +56,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
       }
     });
 
-    editor.addEditorMouseMotionListener(new EditorMouseMotionAdapter() {
+    editor.addEditorMouseMotionListener(new EditorMouseMotionListener() {
       @Override
       public void mouseMoved(final EditorMouseEvent e) {
         toggleContextToolbar(isInsideActivationArea(container, e.getMouseEvent().getPoint()));

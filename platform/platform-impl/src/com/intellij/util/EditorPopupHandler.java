@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 
-public abstract class EditorPopupHandler extends EditorMouseAdapter {
+public abstract class EditorPopupHandler implements EditorMouseListener {
   public abstract void invokePopup(EditorMouseEvent event);
 
   private void handle(EditorMouseEvent e) {
@@ -29,14 +15,17 @@ public abstract class EditorPopupHandler extends EditorMouseAdapter {
     }
   }
 
+  @Override
   public void mouseClicked(EditorMouseEvent e) {
     handle(e);
   }
 
+  @Override
   public void mousePressed(EditorMouseEvent e) {
     handle(e);
   }
 
+  @Override
   public void mouseReleased(EditorMouseEvent e) {
     handle(e);
   }

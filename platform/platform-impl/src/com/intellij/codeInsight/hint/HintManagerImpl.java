@@ -46,7 +46,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private final AnActionListener myAnActionListener;
   private final MyEditorManagerListener myEditorManagerListener;
-  private final EditorMouseAdapter myEditorMouseListener;
+  private final EditorMouseListener myEditorMouseListener;
 
   private final DocumentListener myEditorDocumentListener;
   private final VisibleAreaListener myVisibleAreaListener;
@@ -116,7 +116,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, projectManagerListener);
 
-    myEditorMouseListener = new EditorMouseAdapter() {
+    myEditorMouseListener = new EditorMouseListener() {
       @Override
       public void mousePressed(EditorMouseEvent event) {
         hideAllHints();
