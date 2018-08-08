@@ -2,7 +2,7 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.remoteServer.ServerType;
@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class DeployToServerConfigurationTypesRegistrar implements ApplicationComponent {
+public class DeployToServerConfigurationTypesRegistrar implements ApplicationInitializedListener {
   @Override
-  public void initComponent() {
+  public void componentsInitialized() {
     //todo[nik] improve this: configuration types should be loaded lazily
     ExtensionPoint<ConfigurationType> point = Extensions.getRootArea().getExtensionPoint(ConfigurationType.CONFIGURATION_TYPE_EP);
     for (ServerType serverType : ServerType.EP_NAME.getExtensionList()) {
