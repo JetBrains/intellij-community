@@ -5,7 +5,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -29,8 +28,7 @@ import java.util.Map;
   name = "NotificationConfiguration",
   storages = @Storage("notifications.xml")
 )
-public class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>,
-                                                                                          Disposable, ApplicationComponent {
+public class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
 
   private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
@@ -41,13 +39,12 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new THashMap<>();
   private final Map<String, String> myToolWindowCapable = new THashMap<>();
-  private final MessageBus myMessageBus;
 
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
 
   public NotificationsConfigurationImpl(@NotNull MessageBus bus) {
-    myMessageBus = bus;
+    bus.connect(this).subscribe(TOPIC, this);
   }
 
   public static NotificationsConfigurationImpl getInstanceImpl() {
@@ -104,11 +101,6 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       return new NotificationSettings(groupId, group.getDisplayType(), group.isLogByDefault(), false);
     }
     return new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true, false);
-  }
-
-  @Override
-  public void initComponent() {
-    myMessageBus.connect(this).subscribe(TOPIC, this);
   }
 
   @Override

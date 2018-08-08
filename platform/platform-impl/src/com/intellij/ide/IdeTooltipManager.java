@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -43,7 +43,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
-public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
+public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComponent {
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
   public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", (Color)null);
 
