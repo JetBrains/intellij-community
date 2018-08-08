@@ -15,11 +15,18 @@
  */
 package org.jetbrains.idea.devkit.testAssistant;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
+import java.util.Arrays;
+
 @TestDataPath("$CONTENT_ROOT/testData/completeTestDataPath")
 public class TestDataPathCompletionTest extends TestDataPathTestCase {
+  private static final Logger LOG = Logger.getInstance(TestDataPathCompletionTest.class);
+
   public void testProjectRoot() {
     doTest();
   }
@@ -37,9 +44,17 @@ public class TestDataPathCompletionTest extends TestDataPathTestCase {
   }
 
   private void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    String testName = getTestName(false);
+    LOG.debug("Executing test: " + testName);
+
+    PsiFile file = myFixture.configureByFile(testName + ".java");
+    LOG.debug("PsiFile: " + file);
+    LOG.debug("PsiFile#getVirtualFile: " + file.getVirtualFile());
+
+    LookupElement[] elements = myFixture.completeBasic();
+    LOG.debug("Lookup elements: " + Arrays.toString(elements));
+
+    myFixture.checkResultByFile(testName + "_after.java");
   }
 
   @Override
