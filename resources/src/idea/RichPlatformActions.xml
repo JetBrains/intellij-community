@@ -143,6 +143,14 @@
       </group>
 
       <separator/>
+      <group internal="true" text="Cached value profiler" popup="true">
+        <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
+                text="Turn on cached value profiler" internal="true"/>
+        <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
+                text="Dump results" internal="true"/>
+      </group>
+
+      <separator/>
       <group id="Internal.VFS" text="VFS" popup="true">
         <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
         <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction" text="Mark File Dirty"/>
