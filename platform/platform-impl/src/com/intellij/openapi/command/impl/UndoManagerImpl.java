@@ -39,11 +39,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class UndoManagerImpl extends UndoManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
+  private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
   @TestOnly
   public static boolean ourNeverAskUser;
@@ -53,7 +53,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final int FREE_QUEUES_LIMIT = 30;
 
   @Nullable private final ProjectEx myProject;
-  private final CommandProcessor myCommandProcessor;
 
   private UndoProvider[] myUndoProviders;
   private CurrentEditorProvider myEditorProvider;
@@ -90,12 +89,11 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     this(null, commandProcessor);
   }
 
-  public UndoManagerImpl(@Nullable ProjectEx project, CommandProcessor commandProcessor) {
+  public UndoManagerImpl(@Nullable ProjectEx project, @NotNull CommandProcessor commandProcessor) {
     myProject = project;
-    myCommandProcessor = commandProcessor;
 
     if (myProject == null || !myProject.isDefault()) {
-      runStartupActivity();
+      runStartupActivity(commandProcessor);
     }
 
     myMerger = new CommandMerger(this);
@@ -110,7 +108,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public void dispose() {
   }
 
-  private void runStartupActivity() {
+  private void runStartupActivity(@NotNull CommandProcessor commandProcessor) {
     myUndoProviders = myProject == null
                       ? Extensions.getExtensions(UndoProvider.EP_NAME)
                       : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
@@ -121,7 +119,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     }
 
     myEditorProvider = new FocusBasedCurrentEditorProvider();
-    myCommandProcessor.addCommandListener(new CommandListener() {
+    commandProcessor.addCommandListener(new CommandListener() {
       private boolean myStarted;
 
       @Override
