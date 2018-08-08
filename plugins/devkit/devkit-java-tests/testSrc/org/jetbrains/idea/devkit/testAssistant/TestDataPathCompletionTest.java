@@ -45,14 +45,14 @@ public class TestDataPathCompletionTest extends TestDataPathTestCase {
 
   private void doTest() {
     String testName = getTestName(false);
-    LOG.debug("Executing test: " + testName);
+    LOG.error("Executing test: " + testName, (Throwable)null, (String)null);
 
     PsiFile file = myFixture.configureByFile(testName + ".java");
-    LOG.debug("PsiFile: " + file);
-    LOG.debug("PsiFile#getVirtualFile: " + file.getVirtualFile());
+    LOG.error("PsiFile: " + file, (Throwable)null, (String)null);
+    LOG.error("PsiFile#getVirtualFile: " + file.getVirtualFile(), (Throwable)null, (String)null);
 
     LookupElement[] elements = myFixture.completeBasic();
-    LOG.debug("Lookup elements: " + Arrays.toString(elements));
+    LOG.error("Lookup elements: " + Arrays.toString(elements), (Throwable)null, (String)null);
 
     myFixture.checkResultByFile(testName + "_after.java");
   }

@@ -392,11 +392,11 @@ public class FileManagerImpl implements FileManager {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
-      LOG.debug("File name:" + vFile.getName());
-      LOG.debug("File path:" + vFile.getPath());
-      LOG.debug("File isDirectory:" + vFile.isDirectory());
-      LOG.debug("File isInLocalFileSystem:" + vFile.isInLocalFileSystem());
-      LOG.debug("File parent:" + vFile.getParent());
+      LOG.error("File name:" + vFile.getName(), (Throwable)null, (String)null);
+      LOG.error("File path:" + vFile.getPath(), (Throwable)null, (String)null);
+      LOG.error("File isDirectory:" + vFile.isDirectory(), (Throwable)null, (String)null);
+      LOG.error("File isInLocalFileSystem:" + vFile.isInLocalFileSystem(), (Throwable)null, (String)null);
+      LOG.error("File parent:" + vFile.getParent(), (Throwable)null, (String)null);
       LOG.error("File is not valid:" + vFile);
       return null;
     }
