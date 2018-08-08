@@ -62,12 +62,6 @@ public class InjectedLanguageUtil {
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
-  // meaning: injected file text is probably incorrect
-  public static void forceInjectionOnElement(@NotNull PsiElement host) {
-    enumerate(host, (injectedPsi, places) -> {
-    });
-  }
-
   @NotNull
   static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
     if (containingFile instanceof DummyHolder) {
