@@ -104,7 +104,6 @@ import org.jetbrains.io.mandatory.RestModel;
 @SuppressWarnings("UnusedDeclaration")
 public class GithubSearchedIssue extends GithubIssueBase {
   private PullRequestLinks pullRequest;
-  private Long score;
 
   @Nullable
   public PullRequestLinks getPullRequestLinks() {

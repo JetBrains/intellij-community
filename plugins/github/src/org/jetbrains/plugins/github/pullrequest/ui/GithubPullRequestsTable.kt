@@ -8,6 +8,7 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
@@ -51,7 +52,7 @@ class GithubPullRequestsTable(model: GithubPullRequestsTableModel)
     private abstract class PullRequestsTableCellRenderer(private val strikeOutOnClosed: Boolean = false) : ColoredTableCellRenderer() {
       override fun customizeCellRenderer(table: JTable?, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
         value as GithubSearchedIssue
-        val textAttributes = if (value.state == "closed") {
+        val textAttributes = if (value.state == GithubIssueState.closed) {
           SimpleTextAttributes(if (strikeOutOnClosed) SimpleTextAttributes.STYLE_STRIKEOUT else SimpleTextAttributes.STYLE_PLAIN,
                                UIUtil.getInactiveTextColor())
         }

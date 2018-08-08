@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
 import org.jetbrains.plugins.github.api.data.GithubIssueBase;
 import org.jetbrains.plugins.github.api.data.GithubIssueComment;
+import org.jetbrains.plugins.github.api.data.GithubIssueState;
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
@@ -223,7 +224,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
       @Override
       public boolean isClosed() {
-        return !"open".equals(issue.getState());
+        return issue.getState() == GithubIssueState.closed;
       }
 
       @Override

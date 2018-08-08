@@ -110,7 +110,7 @@ public abstract class GithubIssueBase {
   @Mandatory private Long number;
   @Mandatory private String title;
   @Mandatory private GithubUser user;
-  @Mandatory private String state;
+  @Mandatory private GithubIssueState state;
   @Mandatory private Boolean locked;
   private GithubUser assignee;
   private List<GithubUser> assignees;
@@ -132,7 +132,7 @@ public abstract class GithubIssueBase {
   }
 
   @NotNull
-  public String getState() {
+  public GithubIssueState getState() {
     return state;
   }
 
