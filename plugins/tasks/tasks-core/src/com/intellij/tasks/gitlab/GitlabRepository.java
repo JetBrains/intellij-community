@@ -315,7 +315,11 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | TIME_MANAGEMENT;
+    final int features = super.getFeatures();
+    if (myApiVersion == ApiVersion.V4) {
+      return features | TIME_MANAGEMENT;
+    }
+    return features;
   }
 
   /**
