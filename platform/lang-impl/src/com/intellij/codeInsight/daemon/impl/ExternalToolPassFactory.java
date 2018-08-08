@@ -13,7 +13,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,13 +28,6 @@ public class ExternalToolPassFactory implements TextEditorHighlightingPassFactor
     myExternalActivitiesQueue = new MergingUpdateQueue("ExternalActivitiesQueue", 300, true, MergingUpdateQueue.ANY_COMPONENT, project,
                                                        null, false);
     myExternalActivitiesQueue.setPassThrough(ApplicationManager.getApplication().isUnitTestMode());
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ExternalToolPassFactory";
   }
 
   @Override

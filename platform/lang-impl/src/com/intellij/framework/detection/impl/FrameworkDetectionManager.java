@@ -16,6 +16,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class FrameworkDetectionManager implements FrameworkDetectionIndexListener, TextEditorHighlightingPassFactory, Disposable {
+public class FrameworkDetectionManager implements FrameworkDetectionIndexListener, TextEditorHighlightingPassFactory, Disposable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectionManager.class);
   private static final NotificationGroup FRAMEWORK_DETECTION_NOTIFICATION = NotificationGroup.balloonGroup("Framework Detection");
   private final Update myDetectionUpdate = new Update("detection") {
