@@ -19,7 +19,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileTextField;
@@ -56,6 +55,8 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
 
 public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileTextField {
 
@@ -831,9 +832,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     }
     else {
       final Keymap active = KeymapManager.getInstance().getActiveKeymap();
-      final String[] ids = active.getActionIds(stroke);
-      if (ids.length > 0 && IdeActions.ACTION_CODE_COMPLETION.equals(ids[0])) {
-        suggestCompletion(true, true);
+      for (String id : active.getActionIds(stroke)) {
+        if (ACTION_CODE_COMPLETION.equals(id)) {
+          suggestCompletion(true, true);
+        }
       }
     }
 

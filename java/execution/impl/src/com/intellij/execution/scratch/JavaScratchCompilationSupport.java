@@ -160,7 +160,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
       options.add("-proc:none"); // disable annotation processing
 
       final Collection<ClassObject> result = CompilerManager.getInstance(project).compileJavaCode(
-        options, platformCp, cp, Collections.emptyList(), Collections.emptyList(), files, outputDir
+        options, platformCp, cp, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), files, outputDir
       );
       for (ClassObject classObject : result) {
         final byte[] bytes = classObject.getContent();

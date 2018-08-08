@@ -13,7 +13,7 @@ enum class TargetPlatform(private val stringValue: String) {
 }
 
 enum class LanguageVersion(private val stringValue: String) {
-  Latest("Latest stable (%)"), L10("1.0"), L11("1.1"), L12("1.2")
+  Latest("Latest stable (%)"), L10("1.0"), L11("1.1"), L12("1.2"), L13("1.3")
   ;
 
   companion object {

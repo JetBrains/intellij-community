@@ -476,7 +476,8 @@ public class GitMergeProvider implements MergeProvider2 {
     return new GitDefaultMergeDialogCustomizer(this);
   }
 
-  private static String calcName(boolean isTheirs, @Nullable String branchName) {
+  @NotNull
+  public static String calcColumnName(boolean isTheirs, @Nullable String branchName) {
     String title = isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status");
     return branchName != null
            ? title + " (" + StringUtil.shortenTextWithEllipsis(branchName, 15, 7, true) + ")"
@@ -710,7 +711,7 @@ public class GitMergeProvider implements MergeProvider2 {
       private final boolean myIsTheirs;
 
       public StatusColumn(boolean isTheirs, @Nullable String branchName) {
-        super(calcName(isTheirs, branchName));
+        super(calcColumnName(isTheirs, branchName));
         myIsTheirs = isTheirs;
       }
 

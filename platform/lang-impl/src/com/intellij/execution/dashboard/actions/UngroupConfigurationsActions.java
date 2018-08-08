@@ -16,15 +16,20 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Konstantin Aleev
@@ -64,16 +69,18 @@ public class UngroupConfigurationsActions extends RunDashboardTreeActionImpl<Gro
     Project project = e.getProject();
     if (project == null) return;
 
+    String groupName = node.getGroup().getName();
+    List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> dashboardConfigurations =
+      RunDashboardManager.getInstance(project).getRunConfigurations();
+
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     runManager.fireBeginUpdate();
     try {
-      runManager.getAllSettings().forEach(settings -> {
-        if (!RunDashboardManager.getInstance(project).isShowInDashboard(settings.getConfiguration())) return;
-
-        if (node.getGroup().getName().equals(settings.getFolderName())) {
-          settings.setFolderName(null);
+      for (Pair<RunnerAndConfigurationSettings, RunContentDescriptor> configuration : dashboardConfigurations) {
+        if (groupName.equals(configuration.first.getFolderName())) {
+          configuration.first.setFolderName(null);
         }
-      });
+      }
     }
     finally {
       runManager.fireEndUpdate();

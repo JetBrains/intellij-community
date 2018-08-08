@@ -34,6 +34,7 @@ import com.intellij.util.ui.JBUI.ScaleContext;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
+import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,15 +115,25 @@ public final class IfsUtil {
           }
 
           file.putUserData(FORMAT_KEY, SVG_FORMAT);
-          file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>((zoom, ancestor) -> {
-            try {
-              final ScaleContext ctx = ScaleContext.create(ancestor);
-              ctx.update(OBJ_SCALE.of(zoom));
-              return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
+          file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(new ImageDocument.CachedScaledImageProvider() {
+            ScaleContext.Cache<BufferedImage> cache = new ScaleContext.Cache<>((ctx) -> {
+              try {
+                return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
+              }
+              catch (Throwable t) {
+                LOG.warn(url.get() + " " + t.getMessage());
+                return null;
+              }
+            });
+            @Override
+            public void clearCache() {
+              cache.clear();
             }
-            catch (Throwable t) {
-              LOG.warn(url.get() + " " + t.getMessage());
-              return null;
+            @Override
+            public BufferedImage apply(Double zoom, Component ancestor) {
+              ScaleContext ctx = ScaleContext.create(ancestor);
+              ctx.update(OBJ_SCALE.of(zoom));
+              return cache.getOrProvide(ctx);
             }
           }));
           return true;

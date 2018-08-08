@@ -38,7 +38,7 @@ public class MessagePool {
     if (myErrors.size() < MAX_POOL_SIZE) {
       Object data = event.getData();
       if (data instanceof GroupedLogMessage) {
-        myGrouper.addToGroup(new LogMessage(new Throwable(), "illegal reuse a grouped message", Collections.emptyList()));
+        myGrouper.addToGroup(new LogMessage(new Throwable(), "illegal reuse of a grouped message", Collections.emptyList()));
       }
       else if (data instanceof AbstractMessage) {
         myGrouper.addToGroup((AbstractMessage)data);

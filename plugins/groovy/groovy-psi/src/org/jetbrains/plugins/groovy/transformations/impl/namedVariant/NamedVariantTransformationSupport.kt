@@ -16,9 +16,8 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext
 class NamedVariantTransformationSupport : AstTransformationSupport {
   override fun applyTransformation(context: TransformationContext) {
     context.codeClass.codeMethods.forEach {
-      val annotation = getAnnotation(it, GROOVY_TRANSFORM_NAMED_VARIANT) ?: return@forEach
+      if (!it.hasAnnotation(GROOVY_TRANSFORM_NAMED_VARIANT)) return@forEach
       val method = constructNamedMethod(it) ?: return@forEach
-      method.navigationElement = annotation
       context.addMethod(method)
     }
   }

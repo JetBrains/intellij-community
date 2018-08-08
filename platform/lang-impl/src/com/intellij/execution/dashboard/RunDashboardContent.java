@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
@@ -449,6 +450,10 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
         revalidate();
         repaint();
+
+        if (showConfigurations) {
+          IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+        }
       }
 
       myBuilder.queueUpdate(withStructure).doWhenDone(() -> {

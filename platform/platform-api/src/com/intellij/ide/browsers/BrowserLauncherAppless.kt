@@ -220,14 +220,16 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun doLaunch(url: String?, command: List<String>, browser: WebBrowser?, project: Project?, additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY, launchTask: (() -> Unit)? = null): Boolean {
-    val commandLine = GeneralCommandLine(command)
-
-    if (url != null) {
-      if (url.startsWith("jar:")) {
-        return false
-      }
-      commandLine.addParameter(url)
+    if (url != null && url.startsWith("jar:")) {
+      return false
     }
+
+    val commandWithUrl = command.toMutableList()
+    if (url != null) {
+      if (browser != null) browser.addOpenUrlParameter(commandWithUrl, url)
+      else commandWithUrl.add(url)
+    }
+    val commandLine = GeneralCommandLine(commandWithUrl)
 
     val browserSpecificSettings = browser?.specificSettings
     if (browserSpecificSettings != null) {

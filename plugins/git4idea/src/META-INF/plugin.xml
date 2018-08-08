@@ -167,6 +167,7 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
     <statistics.projectUsagesCollector implementation="git4idea.GitUsagesTriggerCollector"/>
+    <statistics.projectUsagesCollector implementation="git4idea.GitProjectMigrationStatisticsCollector"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>

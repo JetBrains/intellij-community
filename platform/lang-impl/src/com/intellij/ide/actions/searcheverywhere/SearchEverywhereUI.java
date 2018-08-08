@@ -585,6 +585,23 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                       .getMessageBus()
                       .connect(this)
                       .subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw,() -> myResultsList.repaint()));
+
+    mySearchField.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        if (!isHintComponent(e.getOppositeComponent())) {
+          stopSearching();
+          searchFinishedHandler.run();
+        }
+      }
+    });
+  }
+
+  private boolean isHintComponent(Component component) {
+    if (myHint != null && !myHint.isDisposed()) {
+      return SwingUtilities.isDescendingFrom(component, myHint.getContent());
+    }
+    return false;
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {
@@ -1092,6 +1109,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       UsageTarget[] targetsArray = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY : PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
       Usage[] usagesArray = usages.toArray(Usage.EMPTY_ARRAY);
       UsageViewManager.getInstance(myProject).showUsages(targetsArray, usagesArray, presentation);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Boolean enabled = mySelectedTab.getContributor().map(contributor -> contributor.showInFindResults()).orElse(true);
+      e.getPresentation().setEnabled(enabled);
     }
   }
 

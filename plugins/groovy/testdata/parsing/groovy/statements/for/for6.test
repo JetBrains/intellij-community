@@ -6,16 +6,17 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     Traditional FOR clause
-      Parameter
+      Variable definitions
         Modifiers
           <empty list>
         Built in type
           PsiElement(int)('int')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('i')
-        PsiElement(=)('=')
-        Literal
-          PsiElement(Integer)('1')
+        Variable
+          PsiElement(identifier)('i')
+          PsiElement(=)('=')
+          Literal
+            PsiElement(Integer)('1')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')
       Relational expression
@@ -26,10 +27,11 @@ Groovy script
           PsiElement(Integer)('5')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')
-      Unary expression
-        Reference expression
-          PsiElement(identifier)('i')
-        PsiElement(++)('++')
+      Expression list
+        Unary expression
+          Reference expression
+            PsiElement(identifier)('i')
+          PsiElement(++)('++')
     PsiElement())(')')
     Block statement
       Open block

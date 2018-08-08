@@ -1,0 +1,3 @@
+top:
+  someKey1: start<caret> end
+  someKey2: value2

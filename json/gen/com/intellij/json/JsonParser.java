@@ -87,11 +87,10 @@ public class JsonParser implements PsiParser, LightPsiParser {
   // array_element*
   private static boolean array_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!array_element(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "array_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -150,11 +149,10 @@ public class JsonParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = value(b, l + 1);
-    int c = current_position_(b);
     while (r) {
+      int c = current_position_(b);
       if (!value(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "json", c)) break;
-      c = current_position_(b);
     }
     exit_section_(b, m, null, r);
     return r;
@@ -260,11 +258,10 @@ public class JsonParser implements PsiParser, LightPsiParser {
   // object_element*
   private static boolean object_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "object_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!object_element(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "object_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -333,10 +330,8 @@ public class JsonParser implements PsiParser, LightPsiParser {
   static boolean property_name(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "property_name")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = literal(b, l + 1);
     if (!r) r = reference_expression(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 

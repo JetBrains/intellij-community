@@ -50,7 +50,7 @@ public class ReportProblemAction extends AnAction implements DumbAware {
   }
 
   private static boolean isEvaluationLicense() {
-    final LicensingFacade provider = LicensingFacade.getInstance();
-    return provider != null && provider.isEvaluationLicense();
+    final LicensingFacade la = LicensingFacade.getInstance();
+    return la != null && la.isEvaluationLicense();
   }
 }

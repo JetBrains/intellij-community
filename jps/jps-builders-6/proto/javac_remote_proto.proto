@@ -42,6 +42,7 @@ message Message {
     repeated string sourcepath = 6;
     repeated OutputGroup output = 7;
     repeated string module_path = 8;
+    repeated string upgrade_module_path = 9;
   }
 
   message Response {

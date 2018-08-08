@@ -1,9 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * @author ilyas
- */
 public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInClause, GrParametersOwner {
 
   public GrForInClauseImpl(@NotNull ASTNode node) {
@@ -70,5 +69,16 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
 
     PsiElement colon = findChildByType(GroovyTokenTypes.mCOLON);
     return ObjectUtils.assertNotNull(colon);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (lastParent != null) return true;
+    GrParameter variable = getDeclaredVariable();
+    if (variable == null) return true;
+    return ResolveUtil.processElement(processor, variable, state);
   }
 }

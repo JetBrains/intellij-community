@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
@@ -28,11 +27,11 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
@@ -247,8 +246,11 @@ public class GroovyBlockGenerator {
       return blocks;
     }
 
-    if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile || classLevel) {
-      return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode), myContext.getGroovySettings().INDENT_LABEL_BLOCKS);
+    if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile) {
+      return generateCodeSubBlocks(visibleChildren(myNode));
+    }
+    if (classLevel) {
+      return generateSubBlocks(visibleChildren(myNode), true);
     }
 
     if (blockPsi instanceof GrMethod) {
@@ -374,54 +376,46 @@ public class GroovyBlockGenerator {
   }
 
   @NotNull
-  public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children, boolean indentLabelBlocks) {
-
+  List<Block> generateCodeSubBlocks(final List<ASTNode> children) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
 
-    if (indentLabelBlocks && isCodeBlock()) {
-      List<ASTNode> flattenChildren = flattenChildren(children);
-      calculateAlignments(flattenChildren, classLevel);
-      for (int i = 0; i < flattenChildren.size(); i++) {
-        ASTNode childNode = flattenChildren.get(i);
-        if (childNode.getElementType() == GroovyElementTypes.LABELED_STATEMENT) {
-          int start = i;
-          do {
-            i++;
-          }
-          while (i < flattenChildren.size() &&
-                 flattenChildren.get(i).getElementType() != GroovyElementTypes.LABELED_STATEMENT &&
-                 flattenChildren.get(i).getElementType() != GroovyTokenTypes.mRCURLY);
-          subBlocks.add(
-            new GrLabelBlock(
-              childNode,
-              flattenChildren.subList(start + 1, i),
-              classLevel, getIndent(childNode),
-              getChildWrap(childNode),
-             myContext)
-          );
-          i--;
+    List<ASTNode> flattenChildren = flattenChildren(children);
+    calculateAlignments(flattenChildren, false);
+    for (int i = 0; i < flattenChildren.size(); i++) {
+      ASTNode childNode = flattenChildren.get(i);
+      if (childNode.getElementType() == GroovyElementTypes.LABELED_STATEMENT) {
+        int start = i;
+        do {
+          i++;
         }
-        else {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
-        }
+        while (i < flattenChildren.size() &&
+               flattenChildren.get(i).getElementType() != GroovyElementTypes.LABELED_STATEMENT &&
+               flattenChildren.get(i).getElementType() != GroovyTokenTypes.mRCURLY);
+        subBlocks.add(
+          new GrLabelBlock(
+            childNode,
+            flattenChildren.subList(start + 1, i),
+            getIndent(childNode),
+            getChildWrap(childNode),
+            myContext)
+        );
+        i--;
       }
-    }
-    else {
-      calculateAlignments(children, classLevel);
-
-      for (ASTNode childNode : children) {
+      else {
         subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
       }
     }
+
     return subBlocks;
   }
 
-  private boolean isCodeBlock() {
-    IElementType type = myNode.getElementType();
-    return type == GroovyElementTypes.OPEN_BLOCK ||
-           type == GroovyElementTypes.CLOSABLE_BLOCK ||
-           type == GroovyElementTypes.CONSTRUCTOR_BODY ||
-           type == GroovyParserDefinition.GROOVY_FILE;
+  List<Block> generateSubBlocks(List<ASTNode> children, boolean classLevel) {
+    final List<Block> subBlocks = new ArrayList<>();
+    calculateAlignments(children, classLevel);
+    for (ASTNode childNode : children) {
+      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
+    }
+    return subBlocks;
   }
 
   private static List<ASTNode> flattenChildren(List<ASTNode> children) {
@@ -620,7 +614,8 @@ public class GroovyBlockGenerator {
            blockPsi instanceof GrExtendsClause && myContext.getSettings().ALIGN_MULTILINE_EXTENDS_LIST ||
            blockPsi instanceof GrThrowsClause && myContext.getSettings().ALIGN_MULTILINE_THROWS_LIST ||
            blockPsi instanceof GrListOrMap && myContext.getGroovySettings().ALIGN_MULTILINE_LIST_OR_MAP ||
-           blockPsi instanceof GrTryResourceList && myContext.getSettings().ALIGN_MULTILINE_RESOURCES;
+           blockPsi instanceof GrTryResourceList && myContext.getSettings().ALIGN_MULTILINE_RESOURCES ||
+           blockPsi instanceof GrArrayInitializer && myContext.getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION;
   }
 
   private static boolean isListLikeClause(PsiElement blockPsi) {
@@ -630,7 +625,8 @@ public class GroovyBlockGenerator {
            blockPsi instanceof GrExtendsClause ||
            blockPsi instanceof GrThrowsClause ||
            blockPsi instanceof GrListOrMap ||
-           blockPsi instanceof GrTryResourceList;
+           blockPsi instanceof GrTryResourceList ||
+           blockPsi instanceof GrArrayInitializer;
   }
 
   private static boolean isKeyword(ASTNode node) {

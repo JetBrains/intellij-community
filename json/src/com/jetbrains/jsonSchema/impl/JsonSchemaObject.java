@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Irina.Chernushina on 8/28/2015.
@@ -774,6 +775,39 @@ public class JsonSchemaObject {
       Logger.getInstance(JsonSchemaObject.class).info(e);
       return false;
     }
+  }
+
+  @Nullable
+  public String getTypeDescription(boolean shortDesc) {
+    JsonSchemaType type = getType();
+    if (type != null) return type.getDescription();
+
+    List<JsonSchemaType> possibleTypes = getTypeVariants();
+
+    String description = getTypesDescription(shortDesc, possibleTypes);
+    if (description != null) return description;
+
+    List<Object> anEnum = getEnum();
+    if (anEnum != null) {
+      return shortDesc ? "enum" : anEnum.stream().map(o -> o.toString()).collect(Collectors.joining(" | "));
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static String getTypesDescription(boolean shortDesc, @Nullable List<JsonSchemaType> possibleTypes) {
+    if (possibleTypes == null || possibleTypes.size() == 0) return null;
+    if (possibleTypes.size() == 1) return possibleTypes.get(0).getDescription();
+    if (possibleTypes.contains(JsonSchemaType._any)) return JsonSchemaType._any.getDescription();
+
+    Stream<String> typeDescriptions = possibleTypes.stream().map(t -> t.getDescription()).distinct().sorted();
+    boolean isShort = false;
+    if (shortDesc) {
+      typeDescriptions = typeDescriptions.limit(3);
+      if (possibleTypes.size() > 3) isShort = true;
+    }
+    return typeDescriptions.collect(Collectors.joining(" | ", "", isShort ? "| ..." : ""));
   }
 
   private static class PropertyNamePattern {

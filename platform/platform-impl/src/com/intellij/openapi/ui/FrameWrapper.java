@@ -124,7 +124,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
 
-    UIUtil.decorateFrame(((RootPaneContainer)frame).getRootPane());
+    UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
 
     final WindowAdapter focusListener = new WindowAdapter() {
       @Override

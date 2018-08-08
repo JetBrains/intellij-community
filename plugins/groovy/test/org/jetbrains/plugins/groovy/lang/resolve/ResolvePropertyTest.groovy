@@ -58,11 +58,6 @@ class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("field2/A.groovy")
   }
 
-  void testForVariable1() throws Exception {
-    disableTransformations testRootDisposable
-    resolve "ForVariable.groovy", GrParameter
-  }
-
   void testArrayLength() throws Exception {
     doTest("arrayLength/A.groovy")
   }
@@ -85,10 +80,6 @@ class ResolvePropertyTest extends GroovyResolveTestCase {
   void testFromSetter() throws Exception {
     PsiReference ref = configureByFile("fromSetter/A.groovy")
     assertTrue(ref.resolve() instanceof GrAccessorMethod)
-  }
-
-  void _testForVariable2() throws Exception {
-    doTest("forVariable2/ForVariable.groovy")
   }
 
   void testCatchParameter() throws Exception {

@@ -511,7 +511,7 @@ public class PyUtil {
       return ((PsiDirectory)element).getName();
     }
     // Magic literals are always represented by their string values
-    if ((element instanceof PyStringLiteralExpression) && PyMagicLiteralTools.isMagicLiteral(element)) {
+    if ((element instanceof PyStringLiteralExpression) && PyMagicLiteralTools.couldBeMagicLiteral(element)) {
       return ((StringLiteralExpression)element).getStringValue();
     }
     if (element instanceof PyElement) {

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.UUID;
 
 final class ConfigurableWebBrowser extends WebBrowser {
@@ -72,6 +73,12 @@ final class ConfigurableWebBrowser extends WebBrowser {
         return AllIcons.Xml.Browsers.Nwjs16;
       }
     }
+    else if (family == BrowserFamily.EXPLORER) {
+      if (WebBrowserManager.isEdge(this)) {
+        return AllIcons.Xml.Browsers.Edge16;
+      }
+    }
+
     return family.getIcon();
   }
 
@@ -152,6 +159,16 @@ final class ConfigurableWebBrowser extends WebBrowser {
   @NotNull
   public String getBrowserNotFoundMessage() {
     return IdeBundle.message("error.0.browser.path.not.specified", getName());
+  }
+
+  @Override
+  public void addOpenUrlParameter(@NotNull List<String> command, @NotNull String url) {
+    if (WebBrowserManager.isEdge(this) && !command.isEmpty()) {
+      command.set(command.size() - 1, command.get(command.size() - 1) + ":" + url);
+    }
+    else {
+      super.addOpenUrlParameter(command, url);
+    }
   }
 
   @Override

@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nls;
@@ -34,6 +35,9 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
     }
     final PsiElement child = tag.getLastChild();
     if (child instanceof PsiErrorElement) {
+      return;
+    }
+    if (child != null && child.getNode().getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
       return;
     }
     final XmlToken tagNameElement = XmlTagUtil.getStartTagNameElement(tag);

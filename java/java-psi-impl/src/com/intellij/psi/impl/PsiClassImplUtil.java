@@ -1171,7 +1171,10 @@ public class PsiClassImplUtil {
   @NotNull
   private static PsiFile getOriginalFile(@NotNull PsiClass aClass) {
     PsiFile file = aClass.getContainingFile();
-    if (file == null) throw new IllegalStateException("No containing file for " + aClass.getLanguage() + " " + aClass.getClass());
+    if (file == null) {
+      PsiUtilCore.ensureValid(aClass);
+      throw new IllegalStateException("No containing file for " + aClass.getLanguage() + " " + aClass.getClass());
+    }
     return file.getOriginalFile();
   }
 

@@ -131,7 +131,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     updateDarkWindowHeaderVisibility();
     myComponent.myLafComboBox.addItemListener(x -> updateDarkWindowHeaderVisibility());
-    myComponent.myDarkWindowHeaders.addItemListener(x -> {Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected()); LafManager.getInstance().updateUI();});
 
     return myComponent.myPanel;
   }
@@ -237,6 +236,12 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     update |= settings.getShowIconInQuickNavigation() != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.setShowIconInQuickNavigation(myComponent.myHideIconsInQuickNavigation.isSelected());
+
+    if (isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"))) {
+      Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected());
+      update = true;
+      shouldUpdateUI = true;
+    }
 
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
@@ -347,6 +352,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
     myComponent.myShowFlagsForLanguagesCheckBox.setSelected(settings.getLanguageFlags());
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
+    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
     myComponent.myUseSmallLabelsOnTabs.setSelected(settings.getUseSmallLabelsOnTabs());
@@ -432,6 +438,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
     isModified |= myComponent.myShowFlagsForLanguagesCheckBox.isSelected() != settings.getLanguageFlags();
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
+    isModified |= isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"));
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode();
       int delay = -1;

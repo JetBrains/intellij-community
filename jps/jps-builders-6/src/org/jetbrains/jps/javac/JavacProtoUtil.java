@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
@@ -41,7 +27,14 @@ public class JavacProtoUtil {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.SHUTDOWN).build();
   }
 
-  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options, Collection<File> files, Collection<File> classpath, Collection<File> platformCp, Collection<File> modulePath, Collection<File> sourcePath, Map<File, Set<File>> outs) {
+  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options,
+                                                                          Collection<File> files,
+                                                                          Collection<File> classpath,
+                                                                          Collection<File> platformCp,
+                                                                          Collection<File> modulePath,
+                                                                          Collection<File> upgradeModulePath,
+                                                                          Collection<File> sourcePath,
+                                                                          Map<File, Set<File>> outs) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
     builder.addAllOption(options);
@@ -56,6 +49,9 @@ public class JavacProtoUtil {
     }
     for (File file : modulePath) {
       builder.addModulePath(FileUtilRt.toSystemIndependentName(file.getPath()));
+    }
+    for (File file : upgradeModulePath) {
+      builder.addUpgradeModulePath(FileUtilRt.toSystemIndependentName(file.getPath()));
     }
     for (File file : sourcePath) {
       builder.addSourcepath(FileUtilRt.toSystemIndependentName(file.getPath()));
@@ -118,7 +114,6 @@ public class JavacProtoUtil {
   }
 
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {
-
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
       .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
 
@@ -216,6 +211,7 @@ public class JavacProtoUtil {
   public static JavacRemoteProto.Message.UUID toProtoUUID(UUID requestId) {
     return JavacRemoteProto.Message.UUID.newBuilder().setMostSigBits(requestId.getMostSignificantBits()).setLeastSigBits(requestId.getLeastSignificantBits()).build();
   }
+
   public static UUID fromProtoUUID(JavacRemoteProto.Message.UUID requestId) {
     return new UUID(requestId.getMostSigBits(), requestId.getLeastSigBits());
   }
@@ -232,6 +228,7 @@ public class JavacProtoUtil {
         return JavacRemoteProto.Message.Response.OutputObject.Kind.OTHER;
     }
   }
+
   private static JavacRemoteProto.Message.Response.CompileMessage.Kind convertKind(Diagnostic.Kind kind) {
     switch (kind) {
       case ERROR: return JavacRemoteProto.Message.Response.CompileMessage.Kind.ERROR;
@@ -242,5 +239,4 @@ public class JavacProtoUtil {
         return JavacRemoteProto.Message.Response.CompileMessage.Kind.OTHER;
     }
   }
-
 }

@@ -17,6 +17,7 @@ package org.intellij.images.editor.actions;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -38,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -67,7 +69,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
-public class SetBackgroundImageDialog extends DialogWrapper {
+public class BackgroundImageDialog extends DialogWrapper {
   private static final String EDITOR = "editor";
   private static final String FRAME = "ide";
   
@@ -85,9 +87,13 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private JPanel myPreviewPanel;
   private ComboboxWithBrowseButton myPathField;
   private JBCheckBox myThisProjectOnlyCb;
+  private JPanel myFlipPanel;
   private JPanel myAnchorPanel;
   private JPanel myFillPanel;
   private JPanel myTargetPanel;
+
+  private final JBCheckBox myFlipHorCb = new JBCheckBox();
+  private final JBCheckBox myFlipVerCb = new JBCheckBox();
 
   boolean myAdjusting;
   private final Map<String, String> myResults = ContainerUtil.newHashMap();
@@ -95,7 +101,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private final SimpleEditorPreview myEditorPreview;
   private final JComponent myIdePreview;
 
-  public SetBackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
+  public BackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
     super(project, true);
     myProject = project;
     setTitle("Background Image");
@@ -128,7 +134,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    ComboBox<String> comboBox = new ComboBox<>(new CollectionComboBoxModel<String>(), 100);
+    ComboBox<String> comboBox = new ComboBox<>(new CollectionComboBoxModel<>(), 100);
     myPathField = new ComboboxWithBrowseButton(comboBox);
   }
 
@@ -217,8 +223,9 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     toolbarComponent.setBorder(JBUI.Borders.empty());
     myTargetPanel.add(toolbarComponent);
 
-    myAnchorPanel.add(createAnchorPanel(myAnchorGroup), BorderLayout.CENTER);
-    myFillPanel.add(createFillPanel(myFillGroup, getDisposable()), BorderLayout.CENTER);
+    initFlipPanel(myFlipPanel, myFlipHorCb, myFlipVerCb);
+    initAnchorPanel(myAnchorPanel, myAnchorGroup);
+    initFillPanel(myFillPanel, myFillGroup, getDisposable());
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, EDITOR);
     myPathField.getComboBox().setEditable(true);
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
@@ -242,6 +249,8 @@ public class SetBackgroundImageDialog extends DialogWrapper {
       button.setActionCommand(button.getText());
       button.addItemListener(this::fillOrAnchorChanged);
     }
+    myFlipHorCb.addItemListener(this::fillOrAnchorChanged);
+    myFlipVerCb.addItemListener(this::fillOrAnchorChanged);
     ChangeListener opacitySync = new ChangeListener() {
 
       @Override
@@ -296,7 +305,6 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     updatePreview();
   }
 
-  /** @noinspection unused*/
   private void fillOrAnchorChanged(ItemEvent event) {
     updatePreview();
   }
@@ -337,11 +345,14 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     int opacity = split.length > 1 ? StringUtil.parseInt(split[1], 15) : 15;
     String fill = split.length > 2 ? split[2] : "scale";
     String anchor = split.length > 3 ? split[3] : "center";
+    String flip = split.length > 4 ? split[4] : "none";
     setSelectedPath(split[0]);
     myOpacitySlider.setValue(opacity);
     myOpacitySpinner.setValue(opacity);
     setSelected(getFillRbGroup(), fill);
     setSelected(getAnchorRbGroup(), anchor);
+    myFlipHorCb.setSelected("flipHV".equals(flip) || "flipH".equals(flip));
+    myFlipVerCb.setSelected("flipHV".equals(flip) || "flipV".equals(flip));
     myAdjusting = false;
   }
 
@@ -432,7 +443,9 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     String path = (String)myPathField.getComboBox().getEditor().getItem();
     String type = getFillRbGroup().getSelection().getActionCommand().replace('-', '_');
     String anchor = getAnchorRbGroup().getSelection().getActionCommand().replace('-', '_');
-    return path.trim() + "," + myOpacitySpinner.getValue() + "," + (type + "," + anchor).toLowerCase(Locale.ENGLISH);
+    int flip = (myFlipHorCb.isSelected() ? 1 : 0) << 1 | (myFlipVerCb.isSelected() ? 1 : 0);
+    return path.trim() + "," + myOpacitySpinner.getValue() + "," + StringUtil.toLowerCase(type + "," + anchor) +
+           (flip == 0 ? "" : "," + (flip == 3 ? "flipHV" : flip == 2 ? "flipH" : "flipV"));
   }
 
   private static void setSelected(ButtonGroup group, String fill) {
@@ -459,24 +472,36 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     return ColorUtil.mix(UIUtil.getListSelectionBackground(), UIUtil.getLabelBackground(), UIUtil.isUnderDarcula() ? .5 : .75);
   }
 
-  @NotNull
-  private static JPanel createAnchorPanel(@NotNull ButtonGroup buttonGroup) {
+  private static void initFlipPanel(@NotNull JPanel p, @NotNull JBCheckBox flipHorCb, @NotNull JBCheckBox flipVerCb) {
+    flipHorCb.setToolTipText("Flip vertically");
+    flipVerCb.setToolTipText("Flip horizontally");
+    p.setLayout(new GridLayout(1, 2, 1, 1));
+    Color color = getSelectionBackground();
+    JBPanelWithEmptyText h = addClickablePanel(p, flipHorCb, color);
+    JBPanelWithEmptyText v = addClickablePanel(p, flipVerCb, color);
+    h.setLayout(new BorderLayout());
+    h.add(new JBLabel(AllIcons.Actions.SplitVertically), BorderLayout.CENTER);
+    v.setLayout(new BorderLayout());
+    v.add(new JBLabel(AllIcons.Actions.SplitHorizontally), BorderLayout.CENTER);
+  }
+
+  private static void initAnchorPanel(@NotNull JPanel p, @NotNull ButtonGroup buttonGroup) {
     IdeBackgroundUtil.Anchor[] values = IdeBackgroundUtil.Anchor.values();
     String[] names = new String[values.length];
     for (int i = 0; i < names.length; i++) {
       names[i] = values[i].name().replace('_', '-').toLowerCase(Locale.ENGLISH);
     }
     Color color = getSelectionBackground();
-    JPanel buttonPanel = new JPanel(new GridLayout(3, 3, 1, 1));
+    p.setLayout(new GridLayout(3, 3, 1, 1));
     for (int i = 0; i < names.length; i ++) {
       JRadioButton button = new JRadioButton(names[i], values[i] == IdeBackgroundUtil.Anchor.CENTER);
-      addClickablePanel(buttonPanel, buttonGroup, button, color);
+      button.setToolTipText(StringUtil.capitalize(button.getText().replace('-', ' ')));
+      buttonGroup.add(button);
+      addClickablePanel(p, button, color);
     }
-    return buttonPanel;
   }
 
-  @NotNull
-  private static JPanel createFillPanel(@NotNull ButtonGroup buttonGroup, @NotNull Disposable disposable) {
+  private static void initFillPanel(@NotNull JPanel p, @NotNull ButtonGroup buttonGroup, @NotNull Disposable disposable) {
     Fill[] values = Fill.values();
     String[] names = new String[values.length];
     BufferedImage image = sampleImage();
@@ -484,14 +509,15 @@ public class SetBackgroundImageDialog extends DialogWrapper {
       names[i] = values[i].name().replace('_', '-').toLowerCase(Locale.ENGLISH);
     }
     Color color = getSelectionBackground();
-    JPanel buttonPanel = new JPanel(new GridLayout(1, values.length, 1, 1));
+    p.setLayout(new GridLayout(1, values.length, 1, 1));
     for (int i = 0; i < values.length; i ++) {
-      JRadioButton radioButton = new JRadioButton(names[i], values[i] == Fill.SCALE);
-      JBPanelWithEmptyText clickablePanel = addClickablePanel(buttonPanel, buttonGroup, radioButton, color);
+      JRadioButton button = new JRadioButton(names[i], values[i] == Fill.SCALE);
+      buttonGroup.add(button);
+      button.setToolTipText(StringUtil.capitalize(button.getText().replace('-', ' ')));
+      JBPanelWithEmptyText clickablePanel = addClickablePanel(p, button, color);
       createTemporaryBackgroundTransform(
         clickablePanel, image, values[i], IdeBackgroundUtil.Anchor.CENTER, 1f, JBUI.insets(2), disposable);
     }
-    return buttonPanel;
   }
 
   @NotNull
@@ -509,9 +535,9 @@ public class SetBackgroundImageDialog extends DialogWrapper {
     return image;
   }
 
+  @NotNull
   private static JBPanelWithEmptyText addClickablePanel(@NotNull JPanel buttonPanel,
-                                                        @NotNull ButtonGroup buttonGroup,
-                                                        @NotNull JRadioButton button,
+                                                        @NotNull JToggleButton button,
                                                         @NotNull Color color) {
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
 
@@ -543,18 +569,18 @@ public class SetBackgroundImageDialog extends DialogWrapper {
         return true;
       }
     };
+    //panel.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, button.getToolTipText());
     panel.getEmptyText().clear();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        button.setSelected(true);
+        button.setSelected(button instanceof JRadioButton || !button.isSelected());
         buttonPanel.invalidate();
         buttonPanel.repaint();
         return true;
       }
     }.installOn(panel);
     panel.setBorder(BorderFactory.createLineBorder(color));
-    buttonGroup.add(button);
     buttonPanel.add(panel);
     return panel;
   }

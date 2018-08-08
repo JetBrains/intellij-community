@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
@@ -84,13 +83,6 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
            : appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription);
   }
 
-  @Nullable
-  private static String concatTypeInfo(@NotNull List<JsonSchemaType> possibleTypes) {
-    if (possibleTypes.size() == 0) return null;
-    if (possibleTypes.size() == 1) return possibleTypes.get(0).getDescription();
-
-    return StringUtil.join(possibleTypes.stream().map(t -> t.getDescription()).distinct().sorted().collect(Collectors.toList()), " | ");
-  }
   @NotNull
   private static String appendNameTypeAndApi(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> position,
                                              @NotNull String apiInfo,
@@ -103,7 +95,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (name == null) return htmlDescription;
 
     String type = "";
-    String schemaType = concatTypeInfo(possibleTypes);
+    String schemaType = JsonSchemaObject.getTypesDescription(false, possibleTypes);
     if (schemaType != null) {
       type = ": " + schemaType;
     }

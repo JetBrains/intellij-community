@@ -4,11 +4,14 @@ package com.intellij.diagnostic;
 import com.android.tools.analytics.AnalyticsSettings;
 import com.android.utils.NullLogger;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.ExceptionRegistry;
-import com.intellij.ide.StackTrace;
-import com.intellij.ide.SystemHealthMonitor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.StackTrace;
+import com.intellij.ide.SystemHealthMonitor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -26,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author kir
@@ -52,11 +57,27 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
+      boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
+      boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
+      String key = "ide.error";
+      if(isOOM){
+        key+=".oom";
+      }
+      if(isMappingFailed){
+        key+=".mappingFailed";
+      }
+
+      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, key);
+      Map<String, Object> values = new HashMap<>();
+      values.put("oom",isOOM);
+      values.put("mappingFailed",isMappingFailed);
+      FeatureUsageLogger.INSTANCE.log("lifecycle",  "ide.error", values);
+
       return notificationEnabled ||
              showPluginError ||
              ApplicationManagerEx.getApplicationEx().isInternal() ||
-             getOOMErrorKind(event.getThrowable()) != null ||
-             event.getThrowable() instanceof MappingFailedException;
+             isOOM ||
+             isMappingFailed;
     }
     catch (LinkageError e) {
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {

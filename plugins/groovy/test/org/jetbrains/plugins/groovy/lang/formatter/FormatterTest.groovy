@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -202,12 +201,6 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void _testLabelIndent() throws Throwable {
     groovySettings.indentOptions.LABEL_INDENT_SIZE = -2
-    doTest()
-  }
-
-  void _testLabelIndentAbsolute() throws Throwable {
-    groovySettings.indentOptions.LABEL_INDENT_ABSOLUTE = true
-    groovySettings.indentOptions.LABEL_INDENT_SIZE = 1
     doTest()
   }
 
@@ -831,41 +824,6 @@ print abc ? cde
           : xyz''')
   }
 
-  void testLabelsInBasicMode() {
-    groovySettings.indentOptions.INDENT_SIZE = 4
-    groovySettings.indentOptions.LABEL_INDENT_SIZE = 2
-    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
-
-    checkFormatting('''\
-def bar() {
-  abc:
-  foo()
-  bar()
-}
-''', '''\
-def bar() {
-      abc:
-    foo()
-    bar()
-}
-''')
-  }
-
-  void testLabels() {
-    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
-    checkFormatting('''\
-def foo() {
-abc:foo()
-bar()
-}
-''', '''\
-def foo() {
-  abc: foo()
-  bar()
-}
-''')
-  }
-
   void testGdocAsterisks() {
     checkFormatting('''\
 /*****
@@ -890,23 +848,6 @@ def foo() {
   void testSpreadArg() { doTest() }
 
   void testExtraLines() { doTest() }
-
-  void testLabelWithDescription() {
-    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
-    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE)
-
-    boolean indentLabelBlocks = customSettings.INDENT_LABEL_BLOCKS
-    int labelIndentSize = commonSettings.indentOptions.LABEL_INDENT_SIZE
-    try {
-      customSettings.INDENT_LABEL_BLOCKS = true
-      commonSettings.indentOptions.LABEL_INDENT_SIZE = 2
-      doTest()
-    }
-    finally {
-      customSettings.INDENT_LABEL_BLOCKS = indentLabelBlocks
-      commonSettings.indentOptions.LABEL_INDENT_SIZE = labelIndentSize
-    }
-  }
 
   void testNoLineFeedsInGString() { doTest() }
 

@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -56,6 +55,8 @@ import java.util.List;
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
+  private static final int REFRESH_TIME = 100; // time to check if a context file selection is changed or not
+  private static final int REBUILD_TIME = 100; // time to wait and merge requests to rebuild a tree model
 
   private final Project myProject;
   private final ToolWindowEx myToolWindow;
@@ -79,14 +80,15 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
+    JComponent component = myToolWindow.getComponent();
 
-    myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
+    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component, true);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     final TimerListener timerListener = new TimerListener() {
       @Override
       public ModalityState getModalityState() {
-        return ModalityState.stateForComponent(myToolWindow.getComponent());
+        return ModalityState.stateForComponent(component);
       }
 
       @Override
@@ -94,7 +96,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         checkUpdate();
       }
     };
-    ActionManager.getInstance().addTimerListener(500, timerListener);
+    ActionManager.getInstance().addTimerListener(REFRESH_TIME, timerListener);
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
@@ -102,7 +104,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
     });
 
-    myToolWindow.getComponent().addHierarchyListener(new HierarchyListener() {
+    component.addHierarchyListener(new HierarchyListener() {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if (BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {

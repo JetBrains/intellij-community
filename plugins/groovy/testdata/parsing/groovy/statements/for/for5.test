@@ -6,7 +6,7 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     Traditional FOR clause
-      Parameter
+      Variable definitions
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
@@ -14,8 +14,9 @@ Groovy script
           Reference element
             PsiElement(identifier)('MyClass')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('c')
-      PsiErrorElement:';' expected, got '['
+        Variable
+          PsiElement(identifier)('c')
+      PsiErrorElement:',' or ';' expected, got '['
         <empty list>
       PsiWhiteSpace('  ')
       Generalized list

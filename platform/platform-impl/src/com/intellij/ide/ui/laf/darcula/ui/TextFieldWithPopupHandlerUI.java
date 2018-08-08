@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -234,6 +235,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   public enum SearchAction {
     POPUP, CLEAR, NEWLINE
+  }
+
+  @TestOnly
+  @NotNull
+  public Point getExtensionIconLocation(@NotNull final String extensionName) {
+    final IconHolder iconHolder = icons.get(extensionName);
+    if (iconHolder == null) {
+      throw new IllegalArgumentException("The " + extensionName + " extension does not exist in this text field");
+    }
+    return iconHolder.bounds.getLocation();
   }
 
   /**

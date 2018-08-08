@@ -884,6 +884,10 @@ public class AbstractPopup implements JBPopup {
           if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
             glass.setCursor(cursor, this);
             myCursor = cursor;
+
+            if (content instanceof JComponent) {
+              IdeGlassPaneImpl.savePreProcessedCursor((JComponent)content, content.getCursor());
+            }
             super.setCursor(content, cursor);
           }
         }

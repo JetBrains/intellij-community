@@ -34,9 +34,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,7 @@ public class GroovyPsiManager {
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<GrExpression, PsiType> topLevelTypes = ContainerUtil.createConcurrentWeakMap();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.createConcurrentWeakMap();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
@@ -72,6 +75,7 @@ public class GroovyPsiManager {
 
   public void dropTypesCache() {
     myCalculatedTypes.clear();
+    topLevelTypes.clear();
     myCompileStatic.clear();
   }
 
@@ -128,24 +132,34 @@ public class GroovyPsiManager {
 
   @Nullable
   public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
-    PsiType type = myCalculatedTypes.get(element);
+    return getTypeWithCaching(element, myCalculatedTypes, calculator);
+  }
+
+  @Nullable
+  public PsiType getTopLevelType(@NotNull GrExpression expression) {
+    return getTypeWithCaching(expression, topLevelTypes, InferenceKt::getTopLevelType);
+  }
+
+  @Nullable
+  private static <K extends GroovyPsiElement> PsiType getTypeWithCaching(@NotNull K key, @NotNull ConcurrentMap<? super K, PsiType> map, @NotNull Function<K, PsiType> calculator) {
+    PsiType type = map.get(key);
     if (type == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      type = calculator.fun(element);
+      type = calculator.fun(key);
       if (type == null) {
         type = UNKNOWN_TYPE;
       }
       if (stamp.mayCacheNow()) {
-        type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, element, type);
+        type = ConcurrencyUtil.cacheOrGet(map, key, type);
       } else {
-        final PsiType alreadyInferred = myCalculatedTypes.get(element);
+        final PsiType alreadyInferred = map.get(key);
         if (alreadyInferred != null) {
           type = alreadyInferred;
         }
       }
     }
     if (!type.isValid()) {
-      error(element, type);
+      error(key, type);
     }
     return UNKNOWN_TYPE == type ? null : type;
   }

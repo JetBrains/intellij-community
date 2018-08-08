@@ -272,12 +272,14 @@ public class TypeInferenceHelper {
   private static class InferenceCache {
     final GrControlFlowOwner scope;
     final Instruction[] flow;
+    final Map<PsiElement, List<Instruction>> flowByElements;
     final AtomicReference<List<TypeDfaState>> varTypes;
     final Set<Instruction> tooComplex = ContainerUtil.newConcurrentSet();
 
     InferenceCache(final GrControlFlowOwner scope) {
       this.scope = scope;
       this.flow = scope.getControlFlow();
+      this.flowByElements = Arrays.stream(flow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
       List<TypeDfaState> noTypes = new ArrayList<>();
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < flow.length; i++) {
@@ -373,8 +375,9 @@ public class TypeInferenceHelper {
         public void visitElement(PsiElement element) {
           if (element instanceof GrReferenceExpression && !((GrReferenceExpression)element).isQualified()) {
             String varName = ((GrReferenceExpression)element).getReferenceName();
-            if (varName != null) {
-              for (Instruction dependency : ControlFlowUtils.findAllInstructions(element, flow)) {
+            List<Instruction> instructionList = flowByElements.get(element);
+            if (varName != null && instructionList != null) {
+              for (Instruction dependency : instructionList) {
                 result.add(Pair.create(dependency, varName));
               }
             }

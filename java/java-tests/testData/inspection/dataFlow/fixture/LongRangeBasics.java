@@ -202,4 +202,16 @@ public class LongRangeBasics {
       System.out.println(s2.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
     }
   }
+
+  void testLoopInitializer(List l) {
+    int count = l != null ? l.size() : 0;
+    for (int i = count - 1; i >= 0; i--) {
+      try {
+        Object o = l.get(i);
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
 }

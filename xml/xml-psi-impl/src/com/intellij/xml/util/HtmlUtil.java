@@ -137,7 +137,7 @@ public class HtmlUtil {
     final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
     boolean result = EMPTY_TAGS_MAP.contains(lowerCase ? name.toLowerCase(Locale.US) : name);
-    return result && (extension == null || !extension.isSingleTagException(name));
+    return result && (extension == null || !extension.isSingleTagException(tag));
   }
 
   public static boolean isSingleHtmlTag(String tagName) {

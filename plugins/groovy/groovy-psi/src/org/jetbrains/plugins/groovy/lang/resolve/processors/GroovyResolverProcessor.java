@@ -45,7 +45,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isProper
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicable;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelType;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelTypeCached;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
 
@@ -102,7 +102,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   public PsiType getTopLevelQualifierType() {
     GrExpression expression = myRef.getQualifierExpression();
     if (expression instanceof GrMethodCallExpression) {
-      return getTopLevelType(expression);
+      return getTopLevelTypeCached(expression);
     }
     else {
       return PsiImplUtil.getQualifierType(myRef);
@@ -259,7 +259,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private PsiType[] buildArgumentTypes() {
     return buildArguments().stream().map(it -> {
       if (it.getExpression() != null) {
-        return getTopLevelType(it.getExpression());
+        return getTopLevelTypeCached(it.getExpression());
       } else {
         return it.getType();
       }

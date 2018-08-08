@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -290,11 +288,46 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }}
         """.trimIndent()
     if (moduleFileInTests != checkFileInTests) {
-      checkFileText = Regex("(<error [^>]+>)([^<]+)(</error>)").replace(checkFileText, {
+      checkFileText = Regex("(<error [^>]+>)([^<]+)(</error>)").replace(checkFileText) {
         if (it.value.contains("unreachable")) it.value else it.groups[2]!!.value
-      })
+      }
     }
     highlight("test.java", checkFileText, checkFileInTests)
+  }
+
+  fun testPrivateJdkPackage() {
+    addFile("module-info.java", "module M { }")
+    highlight("test.java", """
+        import <error descr="Package 'jdk.internal' is declared in module 'java.base', which does not export it to module 'M'">jdk.internal</error>.*;
+        """.trimIndent())
+  }
+
+  fun testPrivateJdkPackageFromUnnamed() {
+    highlight("test.java", """
+        import <error descr="Package 'jdk.internal' is declared in module 'java.base', which does not export it to the unnamed module">jdk.internal</error>.*;
+        """.trimIndent())
+  }
+
+  fun testNonRootJdkModule() {
+    highlight("test.java", """
+        import <error descr="Package 'javax.doomed' is declared in module 'javax.doomed', which is not in the module graph">javax.doomed</error>.*;
+        """.trimIndent())
+  }
+
+  fun testUpgradeableModuleOnClasspath() {
+    highlight("test.java", """
+        import java.xml.bind.*;
+        import java.xml.bind.C;
+        """.trimIndent())
+  }
+
+  fun testUpgradeableModuleOnModulePath() {
+    myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
+    highlight("""
+        module M {
+          requires <error descr="'java.xml.bind' is deprecated and marked for removal">java.xml.bind</error>;
+          requires java.xml.ws;
+        }""".trimIndent())
   }
 
   fun testLinearModuleGraphBug() {

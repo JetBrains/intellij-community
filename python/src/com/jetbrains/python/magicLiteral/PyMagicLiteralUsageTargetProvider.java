@@ -40,7 +40,7 @@ class PyMagicLiteralUsageTargetProvider implements UsageTargetProvider {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element != null) {
       final PyStringLiteralExpression literal = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
-      if ((literal != null) && PyMagicLiteralTools.isMagicLiteral(literal)) {
+      if ((literal != null)) {
         return new UsageTarget[]{new PsiElement2UsageTargetAdapter(literal)};
       }
     }

@@ -335,7 +335,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         }
 
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-          if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
+          if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
               event.getPresentation().getText(), (ActionGroup)action, context, false, callback, -1);
             Window window = SwingUtilities.getWindowAncestor(component);
