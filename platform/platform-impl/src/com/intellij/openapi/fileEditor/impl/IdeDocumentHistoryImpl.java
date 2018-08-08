@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,18 +67,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
   private boolean myCurrentCommandHasMoves;
 
-  private final CommandListener myCommandListener = new CommandListener() {
-    @Override
-    public void commandStarted(CommandEvent event) {
-      onCommandStarted();
-    }
-
-    @Override
-    public void commandFinished(CommandEvent event) {
-      onCommandFinished(event.getCommandGroupId());
-    }
-  };
-
   private RecentlyChangedFilesState myRecentlyChangedFiles = new RecentlyChangedFilesState();
 
   public IdeDocumentHistoryImpl(@NotNull Project project,
@@ -113,21 +102,32 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       }
     }, myProject);
 
-    myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+    busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         onSelectionChanged();
       }
     });
 
-    VirtualFileListener fileListener = new VirtualFileListener() {
+    myVfManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         onFileDeleted();
       }
-    };
-    myVfManager.addVirtualFileListener(fileListener,myProject);
-    myCmdProcessor.addCommandListener(myCommandListener,myProject);
+    }, myProject);
+
+    busConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
+      @Override
+      public void commandStarted(CommandEvent event) {
+        onCommandStarted();
+      }
+
+      @Override
+      public void commandFinished(CommandEvent event) {
+        onCommandFinished(event.getCommandGroupId());
+      }
+    });
   }
 
   public static class RecentlyChangedFilesState {

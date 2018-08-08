@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     myProject = project;
 
     if (myProject == null || !myProject.isDefault()) {
-      runStartupActivity(commandProcessor);
+      runStartupActivity(myProject, commandProcessor);
     }
 
     myMerger = new CommandMerger(this);
@@ -108,8 +109,8 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public void dispose() {
   }
 
-  private void runStartupActivity(@NotNull CommandProcessor commandProcessor) {
-    myUndoProviders = myProject == null
+  private void runStartupActivity(@Nullable Project project, @NotNull CommandProcessor commandProcessor) {
+    myUndoProviders = project == null
                       ? Extensions.getExtensions(UndoProvider.EP_NAME)
                       : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
     for (UndoProvider undoProvider : myUndoProviders) {
@@ -119,39 +120,42 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     }
 
     myEditorProvider = new FocusBasedCurrentEditorProvider();
-    commandProcessor.addCommandListener(new CommandListener() {
+
+    MessageBus messageBus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+
+    messageBus.connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
       private boolean myStarted;
 
       @Override
       public void commandStarted(CommandEvent event) {
-        if (myProject != null && myProject.isDisposed() || myStarted) return;
+        if (project != null && project.isDisposed() || myStarted) return;
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
       }
 
       @Override
       public void commandFinished(CommandEvent event) {
-        if (myProject != null && myProject.isDisposed() || myStarted) return;
+        if (project != null && project.isDisposed() || myStarted) return;
         onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
       }
 
       @Override
       public void undoTransparentActionStarted() {
-        if (myProject != null && myProject.isDisposed()) return;
+        if (project != null && project.isDisposed()) return;
         if (!isInsideCommand()) {
           myStarted = true;
-          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT, true);
+          onCommandStarted(project, UndoConfirmationPolicy.DEFAULT, true);
         }
       }
 
       @Override
       public void undoTransparentActionFinished() {
-        if (myProject != null && myProject.isDisposed()) return;
+        if (project != null && project.isDisposed()) return;
         if (myStarted) {
           myStarted = false;
-          onCommandFinished(myProject, "", null);
+          onCommandFinished(project, "", null);
         }
       }
-    }, this);
+    });
 
     Disposer.register(this, new DocumentUndoProvider(myProject));
   }
