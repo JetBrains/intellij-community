@@ -76,6 +76,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testTypeParameterBound() { doTest();}
   public void testInlineInterfaceDoNotChangeConstructor() { doTest(); }
   public void testArrayTypeElements() { doTest(); }
+  public void testConflictOnMemberNotAccessibleThroughInheritor() { doTest(true, false); }
   public void testOneAndKeepReferencesInAnotherInheritor() {
     doTest(false, true);
   }
