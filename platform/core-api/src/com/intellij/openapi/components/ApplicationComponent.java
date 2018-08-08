@@ -6,7 +6,7 @@ package com.intellij.openapi.components;
  */
 public interface ApplicationComponent extends BaseComponent {
   /**
-   * @deprecated Use {@link ApplicationComponent} directly
+   * @deprecated Not used anymore.
    */
   @Deprecated
   class Adapter implements ApplicationComponent {

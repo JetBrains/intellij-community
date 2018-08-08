@@ -4,7 +4,6 @@ package com.intellij.openapi.components;
 /**
  * The base interface class for all components.
  *
- * @see ApplicationComponent
  * @see ProjectComponent
  */
 public interface BaseComponent extends NamedComponent {

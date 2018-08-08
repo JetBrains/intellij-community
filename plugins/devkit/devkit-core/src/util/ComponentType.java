@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.ModuleComponent;
@@ -24,15 +9,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-/**
- * @author swr
- */
 public enum ComponentType {
-  APPLICATION(ApplicationComponent.class, "application-components", "new.menu.application.component.text"),
   PROJECT(ProjectComponent.class, "project-components", "new.menu.project.component.text"),
   MODULE(ModuleComponent.class, "module-components", "new.menu.module.component.text");
 
