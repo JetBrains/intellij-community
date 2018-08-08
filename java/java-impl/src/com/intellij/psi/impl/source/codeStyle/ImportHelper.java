@@ -935,20 +935,21 @@ public class ImportHelper{
         }
 
         PsiElement refElement = resolveResult.getElement();
-        if (refElement == null && referenceElement != null) {
-          refElement = ResolveClassUtil.resolveClass(referenceElement, referenceElement.getContainingFile()); // might be uncomplete code
-        }
-        if (refElement == null) continue;
 
         PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
-        if (!(currentFileResolveScope instanceof PsiImportStatementBase) && currentFileResolveScope != null) continue;
+        if (!(currentFileResolveScope instanceof PsiImportStatementBase) && refElement != null) continue;
         if (context != null &&
-            currentFileResolveScope != null &&
+            refElement != null &&
             (!currentFileResolveScope.isValid() ||
              currentFileResolveScope instanceof JspxImportStatement &&
              context != ((JspxImportStatement)currentFileResolveScope).getDeclarationFile())) {
           continue;
         }
+
+        if (refElement == null && referenceElement != null) {
+          refElement = ResolveClassUtil.resolveClass(referenceElement, referenceElement.getContainingFile()); // might be uncomplete code
+        }
+        if (refElement == null) continue;
 
         if (referenceElement != null) {
           if (currentFileResolveScope instanceof PsiImportStaticStatement) {
