@@ -624,4 +624,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testExactInstanceOf() { doTest(); }
   public void testNullFlushed() { doTest(); }
   public void testBooleanMergeInLoop() { doTest(); }
+  public void testVoidIsAlwaysNull() { doTest(); }
 }
