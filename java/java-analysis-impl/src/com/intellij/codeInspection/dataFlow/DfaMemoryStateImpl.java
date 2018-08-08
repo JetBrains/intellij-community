@@ -252,6 +252,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
     if (value instanceof DfaVariableValue && (value == flushed || flushed.getDependentVariables().contains(value))) {
       DfaNullability dfaNullability = isNotNull(value) ? DfaNullability.NOT_NULL : getValueFact(value, DfaFactType.NULLABILITY);
+      if (dfaNullability == null) {
+        dfaNullability = DfaNullability.fromNullability(((DfaVariableValue)value).getInherentNullability());
+      }
       return myFactory.withFact(myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), Nullability.UNKNOWN),
                                 DfaFactType.NULLABILITY, dfaNullability);
     }
