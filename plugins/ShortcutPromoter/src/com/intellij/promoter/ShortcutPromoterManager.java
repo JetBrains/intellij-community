@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.promoter;
 
 import com.intellij.openapi.Disposable;
@@ -25,7 +26,7 @@ import java.util.Map;
   name = "ShortcutPromoterManager",
   storages = @Storage(value = "promoter.xml", roamingType = RoamingType.PER_OS)
 )
-public class ShortcutPromoterManager implements Disposable, AnActionListener, PersistentStateComponent<Element>, ApplicationComponent {
+public class ShortcutPromoterManager implements Disposable, AnActionListener, PersistentStateComponent<Element>, BaseComponent {
   private final Map<String, PromoterState> myState = new LinkedHashMap<>();
   private final Map<String, ShortcutPromoterEP> myExtensions = new THashMap<>();
 
@@ -34,7 +35,7 @@ public class ShortcutPromoterManager implements Disposable, AnActionListener, Pe
     myExtensions.clear();
     myState.clear();
 
-    for (ShortcutPromoterEP ep : ShortcutPromoterEP.EP_NAME.getExtensions()) {
+    for (ShortcutPromoterEP ep : ShortcutPromoterEP.EP_NAME.getExtensionList()) {
       myExtensions.put(ep.actionId, ep);
     }
     ActionManager.getInstance().addAnActionListener(this);
