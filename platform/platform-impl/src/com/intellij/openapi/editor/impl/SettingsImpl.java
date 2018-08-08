@@ -34,7 +34,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsCamelWords;
 
   // This group of settings does not have UI
-  private SoftWrapAppliancePlaces mySoftWrapAppliancePlace        = SoftWrapAppliancePlaces.MAIN_EDITOR;
+  private final SoftWrapAppliancePlaces mySoftWrapAppliancePlace;
   private int                     myAdditionalLinesCount          = Registry.intValue("editor.virtual.lines", 5);
   private int                     myAdditionalColumnsCount        = 3;
   private int                     myLineCursorWidth               = EditorUtil.getDefaultCaretWidth();
@@ -83,16 +83,19 @@ public class SettingsImpl implements EditorSettings {
   private List<Integer> mySoftMargins = null;
   
   public SettingsImpl() {
-    this(null, null, null);
+    this(null, null);
   }
 
-  SettingsImpl(@Nullable EditorEx editor, @Nullable Project project, @Nullable EditorKind kind) {
+  SettingsImpl(@Nullable EditorEx editor, @Nullable EditorKind kind) {
     myEditor = editor;
     if (EditorKind.CONSOLE.equals(kind)) {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.CONSOLE;
     }
     else if (EditorKind.PREVIEW.equals(kind)) {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.PREVIEW;
+    }
+    else {
+      mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.MAIN_EDITOR;
     }
   }
   
