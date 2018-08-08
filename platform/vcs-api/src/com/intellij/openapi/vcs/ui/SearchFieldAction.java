@@ -101,6 +101,6 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
   }
 
   public void setTextFieldFg(boolean inactive) {
-    myField.getTextEditor().setForeground(inactive ? UIUtil.getInactiveTextColor() : UIUtil.getActiveTextColor());
+    myField.getTextEditor().setForeground(UIUtil.getActiveTextColor(!inactive));
   }
 }

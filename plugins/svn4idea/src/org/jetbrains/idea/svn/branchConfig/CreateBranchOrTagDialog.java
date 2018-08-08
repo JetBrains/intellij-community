@@ -67,6 +67,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private JButton myProjectButton;
   private JLabel myUseThisVariantToLabel;
   private JBCheckBox mySwitchOnCreate;
+  private JTextField myLocationToSwitchTextField;
+  private JLabel myTheFollowingLocationWillLabel;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
@@ -83,6 +85,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     setResizable(true);
     setTitle(message("dialog.title.branch"));
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
+    mySwitchOnCreate.setBorder(JBUI.Borders.emptyBottom(10));
     myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));
@@ -146,7 +149,21 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myRepositoryRadioButton.addActionListener(listener);
     myBranchOrTagRadioButton.addActionListener(listener);
     myAnyLocationRadioButton.addActionListener(listener);
+    mySwitchOnCreate.addActionListener(listener);
     updateControls();
+    ActionListener locationToSwitchListener = e -> updateLocationToSwitch();
+    myWorkingCopyRadioButton.addActionListener(locationToSwitchListener);
+    myRepositoryRadioButton.addActionListener(locationToSwitchListener);
+    myWorkingCopyField.getTextField().getDocument().addDocumentListener(
+      new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          updateLocationToSwitch();
+        }
+      }
+    );
+    updateLocationToSwitch();
+
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         updateToURL();
@@ -194,9 +211,17 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  private void updateLocationToSwitch() {
+    if (myWorkingCopyRadioButton.isSelected()) {
+      myLocationToSwitchTextField.setText(myWorkingCopyField.getText());
+    }
+    else {
+      myLocationToSwitchTextField.setText(mySrcFile.toString());
+    }
+  }
+
   private void updateControls() {
     myWorkingCopyField.setEnabled(myWorkingCopyRadioButton.isSelected());
-    mySwitchOnCreate.setEnabled(myWorkingCopyRadioButton.isSelected());
     myRepositoryField.setEnabled(myRepositoryRadioButton.isSelected());
     myRevisionPanel.setEnabled(myRepositoryRadioButton.isSelected());
     myProjectButton.setEnabled(myRepositoryRadioButton.isSelected());
@@ -204,7 +229,10 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myBranchTagBaseComboBox.setEnabled(myBranchOrTagRadioButton.isSelected());
     myBranchTextField.setEnabled(myBranchOrTagRadioButton.isSelected());
     myToURLText.setEnabled(myAnyLocationRadioButton.isSelected());
-    myUseThisVariantToLabel.setForeground(myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
+    myUseThisVariantToLabel.setForeground(UIUtil.getActiveTextColor(myWorkingCopyRadioButton.isSelected()));
+
+    myTheFollowingLocationWillLabel.setForeground(UIUtil.getActiveTextColor(mySwitchOnCreate.isSelected()));
+    myLocationToSwitchTextField.setEnabled(mySwitchOnCreate.isSelected());
   }
 
   @Nullable
@@ -219,6 +247,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myRepositoryField.setText(mySrcURL.toDecodedString());
     myToURLText.setText(mySrcURL.toDecodedString());
     updateControls();
+    updateLocationToSwitch();
 
     myWorkingCopyRadioButton.setSelected(true);
   }
@@ -344,6 +373,11 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   @NotNull
   public File getSourceFile() {
     return new File(myWorkingCopyField.getText());
+  }
+
+  @NotNull
+  public File getLocationToSwitch() {
+    return new File(myLocationToSwitchTextField.getText());
   }
 
   @Nullable

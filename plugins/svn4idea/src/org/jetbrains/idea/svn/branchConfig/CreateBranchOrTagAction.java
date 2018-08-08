@@ -53,7 +53,7 @@ public class CreateBranchOrTagAction extends BasicAction {
     CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs, virtualToIoFile(file));
     if (dialog.showAndGet()) {
       Target source = notNull(dialog.getSource());
-      File sourceFile = dialog.getSourceFile();
+      File locationToSwitch = dialog.getLocationToSwitch();
       Url destination = notNull(dialog.getDestination());
       Revision revision = dialog.getRevision();
       String comment = dialog.getComment();
@@ -93,9 +93,9 @@ public class CreateBranchOrTagAction extends BasicAction {
         throw new VcsException(exception.get());
       }
 
-      if (dialog.isCopyFromWorkingCopy() && dialog.isSwitchOnCreate()) {
+      if (dialog.isSwitchOnCreate()) {
         SingleRootSwitcher switcher =
-          new SingleRootSwitcher(vcs.getProject(), VcsUtil.getFilePath(sourceFile, sourceFile.isDirectory()), destination);
+          new SingleRootSwitcher(vcs.getProject(), VcsUtil.getFilePath(locationToSwitch, locationToSwitch.isDirectory()), destination);
         AutoSvnUpdater.run(switcher, SvnBundle.message("action.name.switch"));
       }
     }
