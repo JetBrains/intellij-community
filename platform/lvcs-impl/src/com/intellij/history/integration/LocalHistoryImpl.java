@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
 
 public class LocalHistoryImpl extends LocalHistory implements BaseComponent, Disposable {
+  private final MessageBus myBus;
+  private MessageBusConnection myConnection;
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
@@ -42,6 +45,10 @@ public class LocalHistoryImpl extends LocalHistory implements BaseComponent, Dis
 
   public static LocalHistoryImpl getInstanceImpl() {
     return (LocalHistoryImpl)getInstance();
+  }
+
+  public LocalHistoryImpl(@NotNull MessageBus bus) {
+    myBus = bus;
   }
 
   @Override
@@ -71,11 +78,12 @@ public class LocalHistoryImpl extends LocalHistory implements BaseComponent, Dis
 
     myEventDispatcher = new LocalHistoryEventDispatcher(myVcs, myGateway);
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, myEventDispatcher);
-    connection.subscribe(CommandListener.TOPIC, myEventDispatcher);
+    myConnection = myBus.connect(this);
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, myEventDispatcher);
+    myConnection.subscribe(CommandListener.TOPIC, myEventDispatcher);
 
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(myEventDispatcher, this);
+    VirtualFileManager fm = VirtualFileManager.getInstance();
+    fm.addVirtualFileManagerListener(myEventDispatcher, this);
   }
 
   public File getStorageDir() {
@@ -95,6 +103,9 @@ public class LocalHistoryImpl extends LocalHistory implements BaseComponent, Dis
     if (!isInitialized.getAndSet(false)) return;
 
     long period = Registry.intValue("localHistory.daysToKeep") * 1000L * 60L * 60L * 24L;
+
+    myConnection.disconnect();
+    myConnection = null;
 
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
