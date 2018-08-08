@@ -572,8 +572,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
           if (toolWindow != null && toolWindow.isInitialized() && toolWindow.getToolWindow() != null) {
             return Lists.newArrayList(toolWindow.getToolWindow().getContentManager().getContents()).stream().map(c -> c.getDisplayName())
-              .collect(
-                Collectors.toList());
+              .filter(s -> s.startsWith(myTitle)).collect(Collectors.toList());
           }
           else {
             return super.getActiveConsoles(consoleTitle);
