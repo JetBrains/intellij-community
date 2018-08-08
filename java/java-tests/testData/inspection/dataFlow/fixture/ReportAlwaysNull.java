@@ -29,4 +29,8 @@ class Test {
   native Object process(@Nullable Object obj);
 
   native void doSmth(@Nullable Object obj);
+
+  void bar(Void p) {
+    System.out.println(p);
+  }
 }

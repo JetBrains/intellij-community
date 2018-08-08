@@ -751,6 +751,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (parent instanceof PsiBinaryExpression && ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)parent) != null) return true;
     // Dereference of null will be covered by other warning
     if (ExpressionUtils.isVoidContext(expression) || isDereferenceContext(expression)) return true;
+    // We assume all Void variables as null because you cannot instantiate it without dirty hacks
+    // However reporting them as "always null" looks redundant (dereferences or comparisons will be reported though).
+    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, expression.getType())) return true;
     if (isFlagCheck(anchor)) return true;
     boolean condition = isCondition(expression);
     if (!condition && expression instanceof PsiReferenceExpression) {
