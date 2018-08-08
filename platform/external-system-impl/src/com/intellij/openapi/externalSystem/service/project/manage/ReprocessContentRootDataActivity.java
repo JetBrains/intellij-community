@@ -36,7 +36,7 @@ public class ReprocessContentRootDataActivity implements StartupActivity, DumbAw
     logUnitTest("Adding 'reprocess content root data' activity to 'runWhenSmart' queue in project [hash=" + project.hashCode() + "]");
     ApplicationManager.getApplication().invokeLater(() -> {
       logUnitTest("Reprocessing content root data for project [hash=" + project.hashCode() + "]");
-
+      ExternalProjectsManagerImpl.getInstance(project).init();
       final boolean haveModulesToProcess = ModuleManager.getInstance(project).getModules().length > 0;
       if (!haveModulesToProcess) {
         logUnitTest("Have zero modules to process, returning");
