@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.refResolve;
 
 import com.intellij.ide.PowerSaveMode;
@@ -75,6 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class RefResolveServiceImpl extends RefResolveService implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance(RefResolveServiceImpl.class);
+
   private final AtomicInteger fileCount = new AtomicInteger();
   private final AtomicLong bytesSize = new AtomicLong();
   private final AtomicLong refCount = new AtomicLong();
@@ -83,12 +70,12 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private final ConcurrentBitSet fileIsInQueue = new ConcurrentBitSet();
   private final ConcurrentBitSet fileIsResolved;
   private final ApplicationEx myApplication;
+  private final Project myProject;
   private volatile boolean myDisposed;
   private volatile boolean upToDate;
   private final AtomicInteger enableVetoes = new AtomicInteger();  // number of disable() calls. To enable the service, there should be at least corresponding number of enable() calls.
   private final FileWriter log;
   private final ProjectFileIndex myProjectFileIndex;
-
 
   public RefResolveServiceImpl(final Project project,
                                final MessageBus messageBus,
@@ -96,7 +83,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
                                StartupManager startupManager,
                                ApplicationEx application,
                                ProjectFileIndex projectFileIndex) throws IOException {
-    super(project);
+    myProject = project;
     ((FutureTask)resolveProcess).run();
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
