@@ -377,10 +377,4 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
       }
     }
   }
-
-  @TestOnly
-  @NotNull
-  public Gson getGson() {
-    return GSON;
-  }
 }

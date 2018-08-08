@@ -1,8 +1,6 @@
 package com.intellij.tasks.integration;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.util.Couple;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.gitlab.GitlabRepository;
@@ -12,12 +10,7 @@ import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
-import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -95,66 +88,6 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     assertEquals("#1: First issue with iid = 1", task.toString());
     myRepository.setShouldFormatCommitMessage(true);
     assertEquals("#1 First issue with iid = 1", myRepository.getTaskComment(task));
-  }
-
-  private static class GitLabTimeStats {
-    @SerializedName("time_estimate")
-    private int timeEstimate;
-    @SerializedName("total_time_spent")
-    private int totalTimeSpent;
-    @SerializedName("human_time_estimate")
-    private String humanTimeEstimate;
-    @SerializedName("human_total_time_spent")
-    private String humanTotalTimeSpent;
-  }
-
-  // IDEA-190710
-  public void testTimeTracking() throws Exception {
-    final GitlabIssue issue = myRepository.fetchIssue(5, 10);
-    assertNotNull(issue);
-    assertEquals(1, issue.getLocalId());
-    assertEquals(6153700, issue.getProjectId());
-
-    final GitlabTask task = new GitlabTask(myRepository, issue);
-    assertEquals("1", task.getNumber());
-
-    final LocalTaskImpl localTask = new LocalTaskImpl(task);
-    assertEquals("1", localTask.getNumber());
-
-    // First unset any current time spent
-    final HttpPost resetTimeRequest =
-      new HttpPost(myRepository.getRestApiUrl("projects", issue.getProjectId(), "issues", issue.getLocalId(), "reset_spent_time"));
-    final ResponseHandler<GitLabTimeStats> handler =
-      new TaskResponseUtil.GsonSingleObjectDeserializer<>(myRepository.getGson(), GitLabTimeStats.class);
-    final GitLabTimeStats resetTimeResponse = myRepository.getHttpClient().execute(resetTimeRequest, handler);
-    assertEquals(0, resetTimeResponse.totalTimeSpent);
-
-    // Then add time to ticket
-    final Couple<Integer> duration = generateWorkItemDuration();
-    myRepository.updateTimeSpent(localTask, formatDuration(duration.getFirst(), duration.getSecond()), ""); // Test without comment
-
-    // And check that the time was added properly
-    final HttpGet checkTimeRequest =
-      new HttpGet(myRepository.getRestApiUrl("projects", issue.getProjectId(), "issues", issue.getLocalId(), "time_stats"));
-    final GitLabTimeStats checkTimeResponse = myRepository.getHttpClient().execute(checkTimeRequest, handler);
-
-    final int expectedTime = duration.getFirst() * 3600 + duration.getSecond() * 60;
-    assertEquals(expectedTime, checkTimeResponse.totalTimeSpent);
-  }
-
-  @NotNull
-  private static String formatDuration(int hours, int minutes) {
-    final String spentTime;
-    if (hours == 0) {
-      spentTime = minutes + "m";
-    }
-    else if (minutes == 0) {
-      spentTime = hours + "h";
-    }
-    else {
-      spentTime = String.format("%dh%dm", hours, minutes);
-    }
-    return spentTime;
   }
 
   @Override
