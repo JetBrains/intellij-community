@@ -4,7 +4,7 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.project.Project;
 
 /**
- * @deprecated Use {@link ProjectComponent} directly if need.
+ * @deprecated Use {@link ProjectComponent} directly if needed.
  */
 @Deprecated
 public abstract class AbstractProjectComponent implements ProjectComponent {
