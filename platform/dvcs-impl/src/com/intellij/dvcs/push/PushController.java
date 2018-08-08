@@ -159,6 +159,7 @@ public class PushController implements Disposable {
   private void loadCommitsFromMap(@NotNull Map<RepositoryNode, MyRepoModel> items) {
     for (Map.Entry<RepositoryNode, MyRepoModel> entry : items.entrySet()) {
       RepositoryNode node = entry.getKey();
+      //noinspection unchecked // the model can store entries of different types (if push supports are different)
       loadCommits(entry.getValue(), node, true);
     }
   }
@@ -294,7 +295,7 @@ public class PushController implements Disposable {
         .getOutgoingCommits(repository, new PushSpec<>(model.getSource(), model.getTarget()), initial);
       result.compareAndSet(null, outgoing);
       try {
-        EdtInvocationManager.getInstance().invokeAndWait((Runnable)() -> {
+        EdtInvocationManager.getInstance().invokeAndWait(() -> {
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;
@@ -469,7 +470,7 @@ public class PushController implements Disposable {
   }
 
   public void push(boolean force) {
-    for (PushSupport support : myPushSupports) {
+    for (PushSupport<?, ?, ?> support : myPushSupports) {
       doPushSynchronously(support, force);
     }
   }
@@ -541,6 +542,7 @@ public class PushController implements Disposable {
   private <R extends Repository, S extends PushSource, T extends PushTarget> Map<R, PushSpec<S, T>> collectPushSpecsForVcs(@NotNull PushSupport<R, S, T> pushSupport) {
     Map<PushSupport, Collection<PushInfo>> allSpecs = getSelectedPushSpecs();
     Collection<PushInfo> pushInfos = allSpecs.get(pushSupport);
+    //noinspection unchecked // the model can store entries of different types (if push supports are different)
     return pushInfos != null ?
            map2Map(pushInfos, pushInfo -> {
              //noinspection unchecked // the model can store entries of different types (if push supports are different)
