@@ -965,7 +965,7 @@ public class ImportHelper{
 
         if (refElement instanceof PsiClass) {
           String qName = ((PsiClass)refElement).getQualifiedName();
-          if (hasPackage(qName, thisPackageName)) continue;
+          if (qName == null || hasPackage(qName, thisPackageName)) continue;
           names.add(Pair.create(qName, Boolean.FALSE));
         }
       }
