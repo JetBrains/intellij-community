@@ -727,7 +727,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @NotNull
   public List<DocumentEvent> getEventsSinceCommit(@NotNull Document document) {
-    assert document instanceof DocumentImpl;
+    assert document instanceof DocumentImpl : document;
     UncommittedInfo info = myUncommittedInfos.get(document);
     if (info != null) {
       return info.myEvents;

@@ -1127,21 +1127,23 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         final VFilePropertyChangeEvent propertyChangeEvent = (VFilePropertyChangeEvent)event;
         VirtualFile file = propertyChangeEvent.getFile();
         Object newValue = propertyChangeEvent.getNewValue();
-        if (VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName())) {
-          executeRename(file, (String)newValue);
-        }
-        else if (VirtualFile.PROP_WRITABLE.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetWritable(file, ((Boolean)newValue).booleanValue());
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
-          }
-        }
-        else if (VirtualFile.PROP_HIDDEN.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetHidden(file, ((Boolean)newValue).booleanValue());
-        }
-        else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetTarget(file, (String)newValue);
-          markForContentReloadRecursively(getFileId(file));
+        switch (propertyChangeEvent.getPropertyName()) {
+          case VirtualFile.PROP_NAME:
+            executeRename(file, (String)newValue);
+            break;
+          case VirtualFile.PROP_WRITABLE:
+            executeSetWritable(file, ((Boolean)newValue).booleanValue());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
+            }
+            break;
+          case VirtualFile.PROP_HIDDEN:
+            executeSetHidden(file, ((Boolean)newValue).booleanValue());
+            break;
+          case VirtualFile.PROP_SYMLINK_TARGET:
+            executeSetTarget(file, (String)newValue);
+            markForContentReloadRecursively(getFileId(file));
+            break;
         }
       }
     }
