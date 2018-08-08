@@ -140,8 +140,8 @@ public class Restarter {
     if (elevate) {
       File launcher = PathManager.findBinFile("launcher.exe");
       if (launcher != null) {
-        args.add(launcher.getPath());
         args.add(String.valueOf(argv.length + 1));
+        args.add(launcher.getPath());
       }
       else {
         args.add(String.valueOf(argv.length));
