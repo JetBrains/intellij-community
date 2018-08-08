@@ -179,22 +179,24 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         }
         addListSelectionListener {
           selectedPanel = selectedValue
-          cardLayout.show(cardPanel, selectedValue.panelName)
+          if (selectedValue != null) {
+            cardLayout.show(cardPanel, selectedValue.panelName)
 
-          southPanel?.let {
-            if (selectedValue.actions.containsKey(NEXT)) {
-              navigationPanelCardLayout?.show(it, WIZARD_CARD_PANE)
-              rootPane.defaultButton = nextButton.value
+            southPanel?.let {
+              if (selectedValue.actions.containsKey(NEXT)) {
+                navigationPanelCardLayout?.show(it, WIZARD_CARD_PANE)
+                rootPane.defaultButton = nextButton.value
 
-              updateWizardActionButtons(selectedValue)
+                updateWizardActionButtons(selectedValue)
+              }
+              else {
+                navigationPanelCardLayout?.show(it, REGULAR_CARD_PANE)
+                rootPane.defaultButton = getButton(okAction)
+              }
             }
-            else {
-              navigationPanelCardLayout?.show(it, REGULAR_CARD_PANE)
-              rootPane.defaultButton = getButton(okAction)
-            }
+
+            selectedValue.onSelected()
           }
-
-          selectedValue.onSelected()
         }
         selectedPanel = panels.getOrNull(0)
         selectedIndex = 0

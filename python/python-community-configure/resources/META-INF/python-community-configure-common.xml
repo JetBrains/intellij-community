@@ -6,4 +6,12 @@
     <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"
                     serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
   </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <!--Profession sdk types -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.add.PyAddDockerSdkInfoProvider"/>
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.add.PyAddDockerComposeSdkInfoProvider"/>
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.add.PyAddSshSdkInfoProvider"/>
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.add.PyAddVagrantSdkInfoProvider"/>
+  </extensions>
 </idea-plugin>
