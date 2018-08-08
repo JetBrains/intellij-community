@@ -76,7 +76,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerExImpl.addTestResource(url, location, myFixture.getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, myFixture.getTestRootDisposable());
   }
 
   public void testCompleteWithAnyInSchema() {

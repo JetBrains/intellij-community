@@ -247,17 +247,15 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  /**
+   * @see #registerResourceTemporarily(String, String, Disposable)
+   */
+  @Deprecated()
   @TestOnly
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
-    final ExternalResourceManagerExImpl instance = (ExternalResourceManagerExImpl)getInstance();
-    ApplicationManager.getApplication().runWriteAction(() -> instance.addResource(url, location));
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(() -> instance.removeResource(url));
-      }
-    });
+    registerResourceTemporarily(url, location, parentDisposable);
   }
+
   @Override
   public void addResource(@NotNull String url, String location) {
     addResource(url, DEFAULT_VERSION, location);
