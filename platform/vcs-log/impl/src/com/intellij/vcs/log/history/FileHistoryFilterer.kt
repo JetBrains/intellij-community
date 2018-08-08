@@ -218,14 +218,21 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
   }
 
+  private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
+
   private fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
-    val filter = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter ?: return null
+    val filter = getStructureFilter(filters) ?: return null
     return filter.files.singleOrNull()
   }
 
   private fun getHash(filters: VcsLogFilterCollection): Hash? {
-    val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER) ?: return null
-    return revisionFilter.heads.singleOrNull()?.hash
+    val fileHistoryFilter = getStructureFilter(filters) as? VcsLogFileHistoryFilter
+    if (fileHistoryFilter != null) {
+      return fileHistoryFilter.hash
+    }
+
+    val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
+    return revisionFilter?.heads?.singleOrNull()?.hash
   }
 
   companion object {
@@ -236,7 +243,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       revision: Hash?,
                       root: VirtualFile,
                       showAllBranches: Boolean): VcsLogFilterCollection {
-      val fileFilter = VcsLogStructureFilterImpl(setOf(path))
+      val fileFilter = VcsLogFileHistoryFilter(path, revision)
 
       if (revision != null) {
         val revisionFilter = VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
