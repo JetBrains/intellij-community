@@ -146,8 +146,15 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   public void setSettings(boolean showExcludedFiles, boolean showModules) {
     onValidThread(() -> {
-      root.showExcludedFiles = showExcludedFiles;
-      root.showModules = showModules;
+      if (root.showExcludedFiles != showExcludedFiles) {
+        if (root.filter != null) root.resetVisibility();
+        root.showExcludedFiles = showExcludedFiles;
+        root.valid = false; // need to reload from root
+      }
+      if (root.showModules != showModules) {
+        root.showModules = showModules;
+        root.valid = false; // need to reload from root
+      }
     });
   }
 
