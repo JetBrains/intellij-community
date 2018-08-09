@@ -56,9 +56,6 @@ public class BlockTreeNode extends SimpleNode {
     if (myBlock.getIndent() != null) {
       presentation.addText(" " + String.valueOf(myBlock.getIndent()).replaceAll("[<>]", " "), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
-    else {
-      presentation.addText(" Indent: null", SimpleTextAttributes.GRAY_ATTRIBUTES);
-    }
     if (myBlock.getAlignment() != null) {
       float d = 1.f * System.identityHashCode(myBlock.getAlignment()) / Integer.MAX_VALUE;
       Color color = new JBColor(Color.HSBtoRGB(1.0f * d, .3f, .7f),
