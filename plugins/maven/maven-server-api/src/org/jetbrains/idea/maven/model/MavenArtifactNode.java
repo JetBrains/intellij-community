@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -104,7 +104,7 @@ public class MavenArtifactNode implements Serializable {
   }
 
   public static String formatNodesList(List<MavenArtifactNode> nodes) {
-    return StringUtil.join(nodes, StringUtil.createToStringFunction(MavenArtifactNode.class), ",");
+    return StringUtilRt.join(nodes, StringUtilRt.createToStringFunction(), ",");
   }
 
   @Override

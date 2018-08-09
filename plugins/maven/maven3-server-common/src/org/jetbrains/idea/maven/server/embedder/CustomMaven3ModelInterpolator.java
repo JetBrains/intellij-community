@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.ProjectBuilderConfiguration;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -43,7 +43,7 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
   @Override
   public Model interpolate(Model model, File projectDir, ProjectBuilderConfiguration config, boolean debugEnabled)
       throws ModelInterpolationException {
-    this.interpolateObject(ContainerUtil.ar(model.getParent(), model), model, projectDir, config, debugEnabled);
+    this.interpolateObject(ContainerUtilRt.ar(model.getParent(), model), model, projectDir, config, debugEnabled);
     return model;
   }
 
@@ -51,7 +51,7 @@ public class CustomMaven3ModelInterpolator extends StringSearchModelInterpolator
   protected List<ValueSource> createValueSources(Model model, File projectDir, ProjectBuilderConfiguration config) {
     List<ValueSource> sources = super.createValueSources(model, projectDir, config);
 
-    int firstMapIndex = ContainerUtil.indexOf(sources, new Condition<ValueSource>() {
+    int firstMapIndex = ContainerUtilRt.indexOf(sources, new Condition<ValueSource>() {
       @Override
       public boolean value(ValueSource source) {
         return source instanceof MapBasedValueSource;

@@ -16,11 +16,10 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.execution.ParametersListUtil;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -122,12 +121,12 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
           artifact,
           getLocalRepository(),
           convertRepositories(remoteRepositories));
-      return ContainerUtil.map(versions, new Function<ArtifactVersion, String>() {
-        @Override
-        public String fun(ArtifactVersion version) {
-          return version.toString();
-        }
-      });
+      return ContainerUtilRt.map2List(versions, new Function<ArtifactVersion, String>() {
+          @Override
+          public String fun(ArtifactVersion version) {
+            return version.toString();
+          }
+        });
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
@@ -297,10 +296,10 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       try {
         InputStream in = new FileInputStream(configFile);
         try {
-          for (String parameter : ParametersListUtil.parse(StreamUtil.readText(in, CharsetToolkit.UTF8))) {
+          for (String parameter : ParametersListUtil.parse(StreamUtil.readText(in, "UTF-8"))) {
             Matcher matcher = PROPERTY_PATTERN.matcher(parameter);
             if (matcher.matches()) {
-              result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), ""));
+              result.put(matcher.group(1), StringUtilRt.notNullize(matcher.group(2), ""));
             }
           }
         }

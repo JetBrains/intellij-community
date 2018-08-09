@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -119,7 +119,7 @@ public class CustomMaven3Artifact implements Artifact {
         return;
       }
 
-      f = FileUtil.createTempFile("idea.maven.stub", ".pom");
+      f = FileUtilRt.createTempFile("idea.maven.stub", ".pom");
       f.deleteOnExit();
 
       FileOutputStream s = new FileOutputStream(f);
