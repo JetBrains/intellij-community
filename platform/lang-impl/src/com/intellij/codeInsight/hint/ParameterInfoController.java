@@ -383,11 +383,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
 
     offset = adjustOffsetToInlay(offset);
-    VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
-    if (myEditor.getInlayModel().hasInlineElementAt(visualPosition)) {
-      visualPosition = new VisualPosition(visualPosition.line, visualPosition.column + 1);
-    }
-    myEditor.getCaretModel().moveToVisualPosition(visualPosition);
+    myEditor.getCaretModel().moveToOffset(offset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
     if (argsList != null) {
@@ -397,11 +393,24 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
   private int adjustOffsetToInlay(int offset) {
     CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-    int whitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
-    int whitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
-    List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(whitespaceStart, whitespaceEnd);
+    int hostWhitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
+    int hostWhitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
+    Editor hostEditor = myEditor;
+    if (myEditor instanceof EditorWindow) {
+      hostEditor = ((EditorWindow)myEditor).getDelegate();
+      hostWhitespaceStart = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceStart);
+      hostWhitespaceEnd = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceEnd);
+    }
+    List<Inlay> inlays = hostEditor.getInlayModel().getInlineElementsInRange(hostWhitespaceStart, hostWhitespaceEnd);
     for (Inlay inlay : inlays) {
-      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) return inlay.getOffset();
+      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) {
+        int inlayOffset = inlay.getOffset();
+        if (myEditor instanceof EditorWindow) {
+          if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
+          inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
+        }
+        return inlayOffset;
+      }
     }
     return offset;
   }
