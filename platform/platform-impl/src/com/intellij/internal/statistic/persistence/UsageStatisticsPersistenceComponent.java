@@ -51,7 +51,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   @NonNls private static final String IS_ALLOWED_ATTR = "allowed";
   @NonNls private static final String PERIOD_ATTR = "period";
   @NonNls private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
-  private static ILogger androidLogger;
+  private ILogger androidLogger;
 
   public static UsageStatisticsPersistenceComponent getInstance() {
     return ApplicationManager.getApplication().getComponent(UsageStatisticsPersistenceComponent.class);
@@ -161,13 +161,15 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
   public void setAllowed(boolean allowed) {
     ConsentOptions.getInstance().setSendingUsageStatsAllowed(allowed);
+    // Android Studio: we need to tell our Android Studio specific logging system whether the user opted-in or not.
+    updateAndroidStudioMetrics(allowed);
   }
 
-  public static void updateAndroidStudioMetrics() {
+  public void updateAndroidStudioMetrics() {
     updateAndroidStudioMetrics(ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES);
   }
 
-  private static void updateAndroidStudioMetrics(boolean allowed) {
+  private void updateAndroidStudioMetrics(boolean allowed) {
 
     // Update the settings & tracker based on allowed state, will initialize on first call.
     boolean updated = false;
@@ -187,18 +189,13 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     }
   }
 
-  public static void initializeAndroidStudioUsageTrackerAndPublisher() {
+  public void initializeAndroidStudioUsageTrackerAndPublisher() {
     ILogger logger = getAndroidLogger();
 
     ScheduledExecutorService scheduler = JobScheduler.getScheduler();
     AnalyticsSettings.initialize(logger, scheduler);
 
-
     try {
-      if (!AnalyticsSettings.getOptedIn() && ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES) {
-        AnalyticsSettings.setOptedIn(true);
-        AnalyticsSettings.saveSettings();
-      }
       UsageTracker.initialize(scheduler);
     } catch (Exception e) {
       logger.error(e, "Unable to initialize analytics tracker");
@@ -242,7 +239,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     return "SentUsagesPersistenceComponent";
   }
 
-  private static ILogger getAndroidLogger() {
+  private ILogger getAndroidLogger() {
     if (androidLogger == null) {
       Logger intelliJLogger = Logger.getInstance("#com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent");
       // Create logger & scheduler based on IntelliJ/ADT helpers.
