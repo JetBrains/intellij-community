@@ -15,12 +15,10 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -113,20 +111,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     List<Element> result = new SmartList<>();
     for (Element extensionsRoot : elements) {
       result.addAll(extensionsRoot.getChildren());
-    }
-    return result;
-  }
-
-  @Nullable
-  private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements) {
-    if (elements == null || elements.length == 0) {
-      return null;
-    }
-
-    List<Pair<String, Element>> result = new SmartList<>();
-    for (Element extensionsRoot : elements) {
-      String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
-      result.addAll(ContainerUtil.map(extensionsRoot.getChildren(), e->Pair.create(ns, e)));
     }
     return result;
   }
@@ -271,13 +255,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    List<Pair<String, Element>> extensions = copyChildrenAndNs(pluginBean.extensions);
-    if (extensions != null) {
+    if (!ArrayUtil.isEmpty(pluginBean.extensions)) {
       myExtensions = MultiMap.createSmart();
-      for (Pair<String, Element> pair : extensions) {
-        String ns = pair.first;
-        Element extension = pair.second;
-        myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+      for (Element extensionsRoot : pluginBean.extensions) {
+        String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
+        for (Element extension : extensionsRoot.getChildren()) {
+          myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), extension);
+        }
       }
     }
 
