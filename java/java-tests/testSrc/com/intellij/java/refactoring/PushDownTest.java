@@ -67,7 +67,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testFunctionalExpression() { doTest(true);}
   public void testFunctionalInterface() { doTest(true);}
   public void testFunctionalExpressionDefaultMethod() { doTest();}
-  public void testInlineSuperMethodCall() { BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true));}
+  public void testInlineSuperMethodCall() { BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());}
   public void testRenameTypeParametersToAvoidHiding() { doTest();}
   public void testNoRenameTypeParametersToAvoidHidingForStatic() { doTest();}
 
