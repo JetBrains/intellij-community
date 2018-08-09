@@ -152,8 +152,8 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @Override
-  protected void presentationPropertyChanded(PropertyChangeEvent e) {
-    super.presentationPropertyChanded(e);
+  protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
+    super.presentationPropertyChanged(e);
     if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
     }

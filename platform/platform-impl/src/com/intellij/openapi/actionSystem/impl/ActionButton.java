@@ -225,7 +225,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public void addNotify() {
     super.addNotify();
     if (myPresentationListener == null) {
-      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
+      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
@@ -241,19 +241,22 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  @Override public Insets getInsets() {
+  @Override
+  public Insets getInsets() {
     ActionToolbarImpl owner = UIUtil.getParentOfType(ActionToolbarImpl.class, this);
     return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
   }
 
-  @Override public void updateUI() {
+  @Override
+  public void updateUI() {
     if (myLook != null) {
       myLook.updateUI();
     }
     updateToolTipText();
   }
 
-  @Override public Dimension getPreferredSize() {
+  @Override
+  public Dimension getPreferredSize() {
     if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     Icon icon = getIcon();
     if (icon.getIconWidth() < myMinimumButtonSize.width &&
@@ -438,7 +441,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return myAction;
   }
 
-  protected void presentationPropertyChanded(PropertyChangeEvent e) {
+  protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
     String propertyName = e.getPropertyName();
     if (Presentation.PROP_TEXT.equals(propertyName)) {
       updateToolTipText();
