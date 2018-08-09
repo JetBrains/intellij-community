@@ -132,8 +132,10 @@ public class Restarter {
     List<String> args = new ArrayList<>();
     args.add(String.valueOf(pid));
 
-    args.add(String.valueOf(beforeRestart.length));
-    Collections.addAll(args, beforeRestart);
+    if (beforeRestart.length > 0) {
+      args.add(String.valueOf(beforeRestart.length));
+      Collections.addAll(args, beforeRestart);
+    }
 
     File launcher;
     if (elevate && (launcher = PathManager.findBinFile("launcher.exe")) != null) {
