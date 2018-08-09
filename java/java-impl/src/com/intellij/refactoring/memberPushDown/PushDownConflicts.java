@@ -18,6 +18,7 @@ package com.intellij.refactoring.memberPushDown;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -150,6 +151,7 @@ public class PushDownConflicts {
           if (myConflicts.containsKey(element)) continue;
           final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
           final PsiExpression qualifier = referenceExpression.getQualifierExpression();
+          if (qualifier instanceof PsiSuperExpression) continue;
           if (qualifier != null) {
             final PsiType qualifierType = qualifier.getType();
             PsiClass aClass = null;
@@ -192,7 +194,7 @@ public class PushDownConflicts {
       if (!modifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
         PsiMethod method = (PsiMethod)movedMember;
         final PsiMethod overrider = MethodSignatureUtil.findMethodBySuperMethod(targetClass, method, false);
-        if (overrider != null) {
+        if (overrider != null && ReferencesSearch.search(method, new LocalSearchScope(overrider)).findAll().size() != 1) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
                                                      RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
           myConflicts.putValue(overrider, CommonRefactoringUtil.capitalize(message));
