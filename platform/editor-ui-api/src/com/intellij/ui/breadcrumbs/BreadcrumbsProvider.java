@@ -7,8 +7,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.Icon;
+import javax.swing.*;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -54,6 +53,13 @@ public interface BreadcrumbsProvider {
   @Nullable
   default String getElementTooltip(@NotNull PsiElement element) {
     return null;
+  }
+
+  /**
+   * @return should return true in case when tooltip evaluation is slow
+   */
+  default boolean isDeferredTooltipEvaluation() {
+    return false;
   }
 
   /**

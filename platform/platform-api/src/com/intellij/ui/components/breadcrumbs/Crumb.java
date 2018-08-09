@@ -5,8 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Action;
-import javax.swing.Icon;
+import javax.swing.*;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -40,7 +39,7 @@ public interface Crumb {
     public Impl(@NotNull BreadcrumbsProvider provider, @NotNull PsiElement element) {
       this(provider.getElementIcon(element),
            provider.getElementInfo(element),
-           provider.getElementTooltip(element),
+           provider.isDeferredTooltipEvaluation() ? null : provider.getElementTooltip(element),
            provider.getContextActions(element));
     }
 

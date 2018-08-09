@@ -7,16 +7,31 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * @author Sergey.Malenkov
  */
 final class PsiCrumb extends Crumb.Impl {
   private final PsiAnchor anchor;
+  private final Function<PsiElement, String> tooltipEvaluator;
   CrumbPresentation presentation;
 
   PsiCrumb(PsiElement element, BreadcrumbsProvider provider) {
     super(provider, element);
     anchor = PsiAnchor.create(element);
+    tooltipEvaluator = provider.isDeferredTooltipEvaluation() ? e -> provider.getElementTooltip(e) : null;
+  }
+
+  @Override
+  public String getTooltip() {
+    if (tooltipEvaluator != null) {
+      PsiElement element = getElement(this);
+      if (element != null) {
+        return tooltipEvaluator.apply(element);
+      }
+    }
+    return super.getTooltip();
   }
 
   @Nullable

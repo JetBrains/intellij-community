@@ -11,6 +11,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +52,12 @@ public class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
   @Nullable
   @Override
   public String getElementTooltip(@NotNull PsiElement e) {
-    return null; // todo fix this for 2018.3 - should be evaluated lazily
-    //return JsonSchemaDocumentationProvider.findSchemaAndGenerateDoc(e, null, true);
+    return JsonSchemaDocumentationProvider.findSchemaAndGenerateDoc(e, null, true);
+  }
+
+  @Override
+  public boolean isDeferredTooltipEvaluation() {
+    return true;
   }
 
   @NotNull
