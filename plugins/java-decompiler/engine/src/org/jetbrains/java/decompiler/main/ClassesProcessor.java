@@ -246,30 +246,33 @@ public class ClassesProcessor implements CodeConstants {
         mt.expandData();
         InstructionSequence seq = mt.getInstructionSequence();
   
-        int len = seq.length();
-        for (int i = 0; i < len; i++) {
-          Instruction instr = seq.getInstr(i);
-
-          switch(instr.opcode) {
-          case opc_checkcast:
-          case opc_instanceof:
-            if(cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
-              ref_counter++;
-              ref_not_new = true;
-            }
-            break;
-          case opc_new:
-          case opc_anewarray:
-          case opc_multianewarray:
-            if(cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
-              ref_counter++;
-            }
-            break;
-          case opc_getstatic:
-          case opc_putstatic:
-            if(cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
-              ref_counter++;
-              ref_not_new = true;
+        if(seq != null) {
+          
+          int len = seq.length();
+          for (int i = 0; i < len; i++) {
+            Instruction instr = seq.getInstr(i);
+  
+            switch(instr.opcode) {
+            case opc_checkcast:
+            case opc_instanceof:
+              if(cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
+                ref_counter++;
+                ref_not_new = true;
+              }
+              break;
+            case opc_new:
+            case opc_anewarray:
+            case opc_multianewarray:
+              if(cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
+                ref_counter++;
+              }
+              break;
+            case opc_getstatic:
+            case opc_putstatic:
+              if(cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
+                ref_counter++;
+                ref_not_new = true;
+              }
             }
           }
         }
