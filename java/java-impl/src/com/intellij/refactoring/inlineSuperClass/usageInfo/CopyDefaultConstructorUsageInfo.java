@@ -28,7 +28,7 @@ public class CopyDefaultConstructorUsageInfo extends FixableUsageInfo{
 
 
   public CopyDefaultConstructorUsageInfo(PsiClass targetClass, PsiMethod constructor) {
-    super(targetClass);
+    super(constructor);
     myTargetClass = targetClass;
     myConstructor = constructor;
   }

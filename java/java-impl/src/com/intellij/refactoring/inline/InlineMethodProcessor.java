@@ -408,7 +408,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void doRefactoring(UsageInfo[] usages) {
     try {
       if (myInlineThisOnly) {
-        if (myMethod.isConstructor() && InlineMethodHandler.isChainingConstructor(myMethod)) {
+        if (myMethod.isConstructor() && InlineUtil.isChainingConstructor(myMethod)) {
           if (myReference instanceof PsiMethodReferenceExpression) {
             inlineMethodReference((PsiMethodReferenceExpression)myReference);
           }

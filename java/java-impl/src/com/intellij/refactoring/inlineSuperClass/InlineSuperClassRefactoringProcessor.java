@@ -166,6 +166,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
       if (!mySuperClass.isInterface()) {
         final PsiMethod[] superConstructors = mySuperClass.getConstructors();
+        Set<PsiMethod> addedSuperConstructors = new HashSet<>();
         for (PsiMethod constructor : targetClass.getConstructors()) {
           final PsiCodeBlock constrBody = constructor.getBody();
           PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
@@ -173,6 +174,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             final PsiMethod superConstructor = call.resolveMethod();
             if (superConstructor != null && superConstructor.getBody() != null) {
               usages.add(new InlineSuperCallUsageInfo(call));
+              processChainedCallsInSuper(superConstructor, targetClass, usages, addedSuperConstructors);
               continue;
             }
           }
@@ -182,6 +184,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             if (superConstructor.getParameterList().isEmpty()) {
               final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
               usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
+              processChainedCallsInSuper(superConstructor, targetClass, usages, addedSuperConstructors);
             }
           }
         }
@@ -196,6 +199,18 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           }
         }
       }
+    }
+  }
+
+  private static void processChainedCallsInSuper(PsiMethod superConstructorWithChain,
+                                                 PsiClass targetClass,
+                                                 List<FixableUsageInfo> usages,
+                                                 Set<PsiMethod> addedSuperConstructors) {
+    addedSuperConstructors.add(superConstructorWithChain);
+    PsiMethod chainedConstructor = InlineUtil.getChainedConstructor(superConstructorWithChain);
+    while (chainedConstructor != null && addedSuperConstructors.add(chainedConstructor)) {
+      usages.add(new CopyDefaultConstructorUsageInfo(targetClass, chainedConstructor));
+      chainedConstructor = InlineUtil.getChainedConstructor(chainedConstructor);
     }
   }
 

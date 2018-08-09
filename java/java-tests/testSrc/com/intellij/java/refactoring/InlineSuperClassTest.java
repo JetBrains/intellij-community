@@ -61,6 +61,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testNewArrayInitializerExpr() { doTest(); }
   public void testNewArrayDimensionsExpr() { doTest(); }
   public void testNewArrayComplexDimensionsExpr() { doTest(); }
+  public void testChainedConstructors() { doTest(); }
   public void testSuperConstructorWithReturnInside() { doTest(true, false); }
   public void testSuperConstructorWithFieldInitialization() { doTest(); }
   public void testSuperConstructorWithParam() { doTest(); }
