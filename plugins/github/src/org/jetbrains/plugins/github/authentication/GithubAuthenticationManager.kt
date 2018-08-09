@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
@@ -31,19 +29,16 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAny
   internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.getTokenForAccount(account)
 
+  @CalledInAwt
   @JvmOverloads
-  @CalledInAny
   internal fun getOrRequestTokenForAccount(account: GithubAccount,
-                                           project: Project? = null,
-                                           parentComponent: Component? = null,
-                                           modalityStateSupplier: () -> ModalityState = { ModalityState.any() }): String? {
-    return getTokenForAccount(account) ?: invokeAndWaitIfNeed(modalityStateSupplier()) {
-      requestNewToken(account, project, parentComponent)
-    }
+                                           project: Project?,
+                                           parentComponent: Component? = null): String? {
+    return getTokenForAccount(account) ?: requestNewToken(account, project, parentComponent)
   }
 
   @CalledInAwt
-  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component?): String? {
+  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
     val dialog = GithubLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
@@ -58,14 +53,13 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     return token
   }
 
-  fun hasTokenForAccount(account: GithubAccount): Boolean = getTokenForAccount(account) != null
-
   @CalledInAwt
-  fun requestNewAccount(project: Project): GithubAccount? {
+  @JvmOverloads
+  fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? {
     fun isAccountUnique(name: String, server: GithubServerPath) =
       accountManager.accounts.none { it.name == name && it.server == server }
 
-    val dialog = GithubLoginDialog(executorFactory, project, null, ::isAccountUnique)
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
@@ -98,9 +92,11 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     project.service<GithubProjectDefaultAccountHolder>().account = account
   }
 
-  fun ensureHasAccounts(project: Project): Boolean {
+  @CalledInAwt
+  @JvmOverloads
+  fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean {
     if (!hasAccounts()) {
-      if (requestNewAccount(project) == null) {
+      if (requestNewAccount(project, parentComponent) == null) {
         return false
       }
     }
