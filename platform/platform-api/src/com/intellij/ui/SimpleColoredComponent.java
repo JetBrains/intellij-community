@@ -497,6 +497,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private float computeStringWidth(int fragmentIndex, Font font) {
+    if (ApplicationManager.getApplication().isOnAir()) return 0;
     String text = myFragments.get(fragmentIndex);
     if (StringUtil.isEmpty(text)) return 0;
     FontRenderContext fontRenderContext = getFontMetrics(font).getFontRenderContext();
