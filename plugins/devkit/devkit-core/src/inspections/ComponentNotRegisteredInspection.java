@@ -132,21 +132,24 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     }
 
     for (ComponentType componentType : ComponentType.values()) {
-      if (!InheritanceUtil.isInheritor(checkedClass, componentType.myClassName)) {
-        continue;
-      }
-
-      if (findRegistrationType(checkedClass, COMPONENT_TYPE_TO_REGISTRATION_TYPE.get(componentType)) != null) {
+      if (InheritanceUtil.isInheritor(checkedClass, componentType.myClassName) && checkComponentRegistration(checkedClass, sink, componentType)) {
         return;
       }
-      if (!canFix(checkedClass)) {
-        return;
-      }
-
-      LocalQuickFix fix = new RegisterComponentFix(componentType, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
-      sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
-                                          DevKitBundle.message(componentType.myPropertyKey)), fix);
     }
+  }
+
+  private static boolean checkComponentRegistration(@NotNull PsiClass checkedClass, @NotNull HighlightSink sink, @NotNull ComponentType componentType) {
+    if (findRegistrationType(checkedClass, COMPONENT_TYPE_TO_REGISTRATION_TYPE.get(componentType)) != null) {
+      return true;
+    }
+    if (!canFix(checkedClass)) {
+      return true;
+    }
+
+    LocalQuickFix fix = new RegisterComponentFix(componentType, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+    sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
+                                        DevKitBundle.message(componentType.myPropertyKey)), fix);
+    return false;
   }
 
   private static PsiClass findRegistrationType(@NotNull PsiClass checkedClass, @NotNull RegistrationCheckerUtil.RegistrationType type) {
