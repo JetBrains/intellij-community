@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 public enum ComponentType {
+  APPLICATION(BaseComponent.class, "application-components", "new.menu.application.component.text"),
   PROJECT(ProjectComponent.class, "project-components", "new.menu.project.component.text"),
   MODULE(ModuleComponent.class, "module-components", "new.menu.module.component.text");
 
