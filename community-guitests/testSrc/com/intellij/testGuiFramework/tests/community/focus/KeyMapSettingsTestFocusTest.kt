@@ -3,12 +3,14 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
+import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JTextComponentFixture
 import org.fest.swing.timing.Pause
 import org.junit.Assert
@@ -34,16 +36,21 @@ class KeyMapSettingsTestFocusTest : GuiTestCase() {
     val settingsTitle = if (SystemInfo.isMac()) "Preferences" else "Settings"
     dialog(settingsTitle){
       jTree("Keymap").clickPath("Keymap")
-      actionButton("Find Actions by Shortcut").waitEnabledAndShowing().click()
-      val keyboardShortcutPanel = checkbox("Second stroke").target().parent
-      val keyMapTextField = shortcutTextField(keyboardShortcutPanel)
-      keyMapTextField.click()
-      shortcut(CONTROL + N)
-      Pause.pause(500)
-      shortcut(B)
-      Assert.assertEquals("B", keyMapTextField.target().text)
-      shortcut(ESCAPE)
-      shortcut(ESCAPE) //close keymap popup
+      val actionButton = actionButton("Find Actions by Shortcut")
+      try {
+        actionButton.waitEnabledAndShowing(Timeouts.seconds10).click()
+      } catch (e: WaitTimedOutError) {
+        actionButton("Find Actions by Shortcut").click() // in case of ActionToolBar was reinitialised
+      }
+        val keyboardShortcutPanel = checkbox("Second stroke").target().parent
+        val keyMapTextField = shortcutTextField(keyboardShortcutPanel)
+        keyMapTextField.click()
+        shortcut(CONTROL + N)
+        Pause.pause(500)
+        shortcut(B)
+        Assert.assertEquals("B", keyMapTextField.target().text)
+        shortcut(ESCAPE)
+        shortcut(ESCAPE) //close keymap popup
       Pause.pause(500)
       button("Cancel").click()
     }

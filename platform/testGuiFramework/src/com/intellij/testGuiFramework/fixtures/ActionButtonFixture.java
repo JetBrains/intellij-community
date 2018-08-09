@@ -105,7 +105,7 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
     return findByActionId(actionId, robot, container, Timeouts.INSTANCE.getMinutes02());
   }
 
-  public ActionButtonFixture waitEnabledAndShowing() {
+  public ActionButtonFixture waitEnabledAndShowing(Timeout timeout) {
     Pause.pause(new Condition("wait for action to be enabled and showing") {
       @Override
       public boolean test() {
@@ -117,7 +117,7 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
           }
         });
       }
-    }, Timeouts.INSTANCE.getSeconds30());
+    }, timeout);
     return this;
   }
 
