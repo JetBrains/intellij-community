@@ -169,6 +169,7 @@ class RegistrationCheckerUtil {
 
       if (allComponents || myRegistrationType == RegistrationType.APPLICATION_COMPONENT) {
         if (IdeaPluginRegistrationIndex.isRegisteredApplicationComponent(myPsiClass, scope)) {
+          addType(ComponentType.APPLICATION.myClassName);
           return false;
         }
       }

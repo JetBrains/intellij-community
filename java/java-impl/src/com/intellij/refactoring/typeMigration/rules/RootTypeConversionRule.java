@@ -28,6 +28,7 @@ import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author anna
@@ -174,7 +175,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
     private final @NotNull String myTargetClassQName;
 
     private MyStaticMethodConversionDescriptor(PsiClass replacer) {
-      myTargetClassQName = replacer.getQualifiedName();
+      myTargetClassQName = Objects.requireNonNull(replacer.getQualifiedName());
     }
 
     @Override
@@ -193,7 +194,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
           elementFactory.createExpressionFromText(myTargetClassQName + "." + expression.getText(), expression));
       }
       if (UnnecessarilyQualifiedStaticUsageInspection.isUnnecessarilyQualifiedAccess(newMethodCall.getMethodExpression(), false, false, false)) {
-        newMethodCall.getMethodExpression().getQualifierExpression().delete();
+        Objects.requireNonNull(newMethodCall.getMethodExpression().getQualifierExpression()).delete();
       }
       return newMethodCall;
     }
