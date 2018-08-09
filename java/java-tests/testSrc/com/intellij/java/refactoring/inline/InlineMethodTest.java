@@ -95,6 +95,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testStaticFieldInitializer() { doTest(); }
   public void testSCR22644() { doTest(); }
+  public void testChangeContextForThisInNestedClasses() { doTest(); }
 
   public void testCallUnderIf() { doTest(); }
 

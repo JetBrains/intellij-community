@@ -3,8 +3,8 @@ class Test {
     protected final Object myBizz;
 
     public Test() {
-        this.myBar = new Object() {
+        Test.this.myBar = new Object() {
         };
-        this.myBizz = null;
+        Test.this.myBizz = null;
     }
 }

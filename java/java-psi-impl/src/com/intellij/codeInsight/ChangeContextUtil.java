@@ -167,6 +167,13 @@ public class ChangeContextUtil {
     if (qualifier == null){
       if (encodedQualifierClass != null && encodedQualifierClass.isValid()){
         if (encodedQualifierClass.equals(thisClass) && thisAccessExpr != null && thisAccessExpr.isValid()){
+          if (thisAccessExpr instanceof PsiThisExpression) {
+            PsiJavaCodeReferenceElement thisAccessQualifier = ((PsiThisExpression)thisAccessExpr).getQualifier();
+            PsiElement resolve = thisAccessQualifier != null ? thisAccessQualifier.resolve() : null;
+            if (PsiTreeUtil.getParentOfType(thisExpr, PsiClass.class) == resolve) {
+              return thisExpr;
+            }
+          }
           return thisExpr.replace(thisAccessExpr);
         }
       }
