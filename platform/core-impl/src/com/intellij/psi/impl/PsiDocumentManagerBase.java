@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -11,7 +8,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
@@ -49,7 +45,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements PrioritizedInternalDocumentListener, ProjectComponent {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements PrioritizedInternalDocumentListener, Disposable {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
@@ -77,14 +73,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myDocumentCommitProcessor = documentCommitProcessor;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
-    bus.connect().subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
+    bus.connect(this).subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
       public void transactionStarted(@NotNull Document document, @NotNull PsiFile file) {
         myUncommittedDocuments.remove(document);
-      }
-
-      @Override
-      public void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
       }
     });
   }
@@ -837,7 +829,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       handleCommitWithoutPsi(document);
       return;
     }
-    
+
     boolean commitNecessary = files.stream().noneMatch(file -> PsiToDocumentSynchronizer.isInsideAtomicChange(file) || !(file instanceof PsiFileImpl));
 
     boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&
@@ -888,7 +880,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!myProject.isInitialized() || myProject.isDisposed() || myProject.isDefault()) {
       return;
     }
-    
+
     myUncommittedDocuments.remove(document);
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -1004,14 +996,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     clearUncommittedDocuments();
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return getClass().getSimpleName();
   }
 
   @NotNull
@@ -1023,7 +1009,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public void reparseFileFromText(@NotNull PsiFileImpl file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
-    
+
     FileElement node = file.calcTreeElement();
     CharSequence text = node.getChars();
     ourIsFullReparseInProgress = true;

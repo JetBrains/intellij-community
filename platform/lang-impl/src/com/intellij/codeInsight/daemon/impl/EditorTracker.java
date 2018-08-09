@@ -20,7 +20,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -66,13 +65,6 @@ public class EditorTracker implements ProjectComponent {
     final MyEditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
     myEditorFactory.addEditorFactoryListener(myEditorFactoryListener, myProject);
     Disposer.register(myProject, () -> myEditorFactoryListener.executeOnRelease(null));
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "EditorTracker";
   }
 
   private void editorFocused(Editor editor) {

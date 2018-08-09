@@ -97,13 +97,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "app.component.PersistentFS";
-  }
-
-  @Override
   public boolean areChildrenLoaded(@NotNull final VirtualFile dir) {
     return areChildrenLoaded(getFileId(dir));
   }
