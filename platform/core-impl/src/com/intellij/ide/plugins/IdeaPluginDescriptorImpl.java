@@ -16,6 +16,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -265,11 +266,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    List<Element> extensionPoints = copyChildren(pluginBean.extensionPoints);
-    if (extensionPoints != null) {
+    if (!ArrayUtil.isEmpty(pluginBean.extensionPoints)) {
       myExtensionsPoints = MultiMap.createSmart();
-      for (Element extensionPoint : extensionPoints) {
-        myExtensionsPoints.putValue(StringUtil.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+      for (Element extensionsRoot : pluginBean.extensionPoints) {
+        for (Element extensionPoint : extensionsRoot.getChildren()) {
+          myExtensionsPoints.putValue(StringUtilRt.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
+        }
       }
     }
 
