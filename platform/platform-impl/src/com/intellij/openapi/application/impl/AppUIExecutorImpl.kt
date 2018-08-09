@@ -11,7 +11,9 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.Runnable
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * @author peter
@@ -19,30 +21,33 @@ import kotlinx.coroutines.experimental.Runnable
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      override val disposables: Set<Disposable>,
-                                                     override vararg val constraints: ContextConstraint) : AsyncExecutionSupport(),
-                                                                                                           AppUIExecutorEx {
+                                                     override val dispatcher: CoroutineDispatcher) : AsyncExecutionSupport(),
+                                                                                                     AppUIExecutorEx {
+  constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), /* fallback */ object : CoroutineDispatcher() {
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+      !ApplicationManager.getApplication().isDispatchThread || ModalityState.current().dominates(modality)
 
-  constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), /* fallback */ object : SimpleContextConstraint() {
-    override val isCorrectContext: Boolean
-      get() = ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
-
-    override fun schedule(runnable: Runnable) {
-      ApplicationManager.getApplication().invokeLater(runnable, modality)
-    }
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
+      ApplicationManager.getApplication().invokeLater(block, modality)
 
     override fun toString() = "onUiThread($modality)"
   })
 
-  private fun withConstraint(element: ContextConstraint): AppUIExecutor {
-    val disposables = (element as? ExpirableContextConstraint)?.expirable?.let { disposable ->
+  private fun withConstraint(constraint: ContextConstraint): AppUIExecutor {
+    val disposables = (constraint as? ExpirableContextConstraint)?.expirable?.let { disposable ->
       disposables + disposable
     } ?: disposables
-    return AppUIExecutorImpl(myModality, disposables, *constraints, element)
+    return AppUIExecutorImpl(myModality, disposables, constraint.toCoroutineDispatcher(dispatcher))
+  }
+
+  override fun expireWith(parentDisposable: Disposable): AppUIExecutor {
+    val disposables = disposables + parentDisposable
+    return if (disposables === this.disposables) this else AppUIExecutorImpl(myModality, disposables, dispatcher)
   }
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null
-    return withConstraint(object : SimpleContextConstraint() {
+    return withConstraint(object : SimpleContextConstraint {
       @Volatile
       var usedOnce: Boolean = false
 
@@ -64,7 +69,9 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun withDocumentsCommitted(project: Project): AppUIExecutor {
-    return withConstraint(object : ExpirableContextConstraint(project, fallbackConstraint) {
+    return withConstraint(object : ExpirableContextConstraint {
+      override val expirable = project
+
       override val isCorrectContext: Boolean
         get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
@@ -77,7 +84,9 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
-    return withConstraint(object : ExpirableContextConstraint(project, fallbackConstraint) {
+    return withConstraint(object : ExpirableContextConstraint {
+      override val expirable = project
+
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
@@ -91,7 +100,9 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
     val id = TransactionGuard.getInstance().contextTransaction
-    return withConstraint(object : ExpirableContextConstraint(parentDisposable, fallbackConstraint) {
+    return withConstraint(object : ExpirableContextConstraint {
+      override val expirable = parentDisposable
+
       override val isCorrectContext: Boolean
         get() = TransactionGuard.getInstance().contextTransaction != null
 
@@ -104,7 +115,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun inUndoTransparentAction(): AppUIExecutor {
-    return withConstraint(object : SimpleContextConstraint() {
+    return withConstraint(object : SimpleContextConstraint {
       override val isCorrectContext: Boolean
         get() = CommandProcessor.getInstance().isUndoTransparentActionInProgress
 
@@ -117,7 +128,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   }
 
   override fun inWriteAction(): AppUIExecutor {
-    return withConstraint(object : SimpleContextConstraint() {
+    return withConstraint(object : SimpleContextConstraint {
       override val isCorrectContext: Boolean
         get() = ApplicationManager.getApplication().isWriteAccessAllowed
 
@@ -127,10 +138,5 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
 
       override fun toString() = "inWriteAction"
     })
-  }
-
-  override fun expireWith(parentDisposable: Disposable): AppUIExecutor {
-    val disposables = disposables + parentDisposable
-    return if (disposables === this.disposables) this else AppUIExecutorImpl(myModality, disposables, *constraints)
   }
 }
