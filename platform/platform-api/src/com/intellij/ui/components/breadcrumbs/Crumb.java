@@ -39,7 +39,7 @@ public interface Crumb {
     public Impl(@NotNull BreadcrumbsProvider provider, @NotNull PsiElement element) {
       this(provider.getElementIcon(element),
            provider.getElementInfo(element),
-           provider.isDeferredTooltipEvaluation() ? null : provider.getElementTooltip(element),
+           provider.getElementTooltip(element),
            provider.getContextActions(element));
     }
 

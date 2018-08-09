@@ -55,11 +55,6 @@ public class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
     return JsonSchemaDocumentationProvider.findSchemaAndGenerateDoc(e, null, true);
   }
 
-  @Override
-  public boolean isDeferredTooltipEvaluation() {
-    return true;
-  }
-
   @NotNull
   @Override
   public List<? extends Action> getContextActions(@NotNull PsiElement element) {

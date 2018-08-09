@@ -56,13 +56,6 @@ public interface BreadcrumbsProvider {
   }
 
   /**
-   * @return should return true in case when tooltip evaluation is slow
-   */
-  default boolean isDeferredTooltipEvaluation() {
-    return false;
-  }
-
-  /**
    * @param element that represents a single crumb
    * @return an element that represents a parent crumb, or {@code null}
    */
