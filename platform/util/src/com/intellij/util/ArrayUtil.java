@@ -721,36 +721,20 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static int indexOf(@NotNull long[] ints, long value) {
-    for (int i = 0; i < ints.length; i++) {
-      if (ints[i] == value) return i;
-    }
-
-    return -1;
+    return ArrayUtilRt.indexOf(ints, value);
   }
   @Contract(pure=true)
   public static int indexOf(@NotNull int[] ints, int value) {
-    for (int i = 0; i < ints.length; i++) {
-      if (ints[i] == value) return i;
-    }
-
-    return -1;
+    return ArrayUtilRt.indexOf(ints, value);
   }
   @Contract(pure=true)
   public static int indexOf(@NotNull short[] ints, short value) {
-    for (int i = 0; i < ints.length; i++) {
-      if (ints[i] == value) return i;
-    }
-
-    return -1;
+    return ArrayUtilRt.indexOf(ints, value);
   }
 
   @Contract(pure=true)
   public static int indexOf(@NotNull byte[] ints, byte value, int start, int end) {
-    for (int i = start; i < end; i++) {
-      if (ints[i] == value) return i;
-    }
-
-    return -1;
+    return ArrayUtilRt.indexOf(ints, value, start, end);
   }
 
   @Contract(pure=true)
@@ -820,20 +804,9 @@ public class ArrayUtil extends ArrayUtilRt {
     return indexOf(objects, o) >= 0;
   }
 
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static boolean contains(@Nullable final String s, @NotNull String... strings) {
-    if (s == null) {
-      for (String str : strings) {
-        if (str == null) return true;
-      }
-    }
-    else {
-      for (String str : strings) {
-        if (s.equals(str)) return true;
-      }
-    }
-
-    return false;
+    return ArrayUtilRt.contains(s, strings);
   }
 
   @NotNull
