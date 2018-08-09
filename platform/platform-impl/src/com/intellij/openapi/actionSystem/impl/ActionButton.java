@@ -443,7 +443,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
     String propertyName = e.getPropertyName();
-    if (Presentation.PROP_TEXT.equals(propertyName)) {
+    if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
       updateToolTipText();
     }
     else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)) {
