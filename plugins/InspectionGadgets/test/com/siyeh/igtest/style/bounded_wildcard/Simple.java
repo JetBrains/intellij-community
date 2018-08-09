@@ -282,6 +282,44 @@ class Simple<T> {
     to.loadState((S)from);
   }
 
+  //////////// anonymous
+  class bou<T> {
+    void fff() {
+      class Local {
+        boolean doit(List<<warning descr="Can generalize to '? extends T'">T</warning>> l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
 
+        boolean doit(T[] l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
+      }
+      new Runnable(){
+        @Override
+        public void run() {
+        }
+
+        boolean doit(List<<warning descr="Can generalize to '? extends T'">T</warning>> l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
+
+        boolean doit(T[] l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
+      }.run();
+    }
+  }
 
 }
