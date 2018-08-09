@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution;
 
+import com.intellij.execution.Executor;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getChildren;
 
@@ -101,8 +103,9 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
   public void execute(@NotNull DataContext dataContext, @NotNull String value) {
     Project project = fetchProject(dataContext);
     String commandLine = StringUtil.trimStart(value, getHelpCommand());
+    Executor executor = EXECUTOR_KEY.getData(dataContext);
     for (GradleProjectSettings setting : GradleSettings.getInstance(project).getLinkedProjectsSettings()) {
-      GradleExecuteTaskAction.runGradle(project, setting.getExternalProjectPath(), commandLine);
+      GradleExecuteTaskAction.runGradle(project, executor, setting.getExternalProjectPath(), commandLine);
     }
   }
 
