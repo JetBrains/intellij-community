@@ -10,7 +10,6 @@ import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
-import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.JTextComponentFixture
 import org.fest.swing.timing.Pause
 import org.junit.Assert
@@ -39,7 +38,7 @@ class KeyMapSettingsTestFocusTest : GuiTestCase() {
       val actionButton = actionButton("Find Actions by Shortcut", Timeouts.seconds10)
       try {
         actionButton.click()
-      } catch (e: ComponentLookupException) {
+      } catch (e: IllegalStateException) {
         actionButton("Find Actions by Shortcut").click() // in case of ActionToolBar was reinitialised
       }
         val keyboardShortcutPanel = checkbox("Second stroke").target().parent
