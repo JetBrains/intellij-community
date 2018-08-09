@@ -18,7 +18,6 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +38,6 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 4/20/2017.
  */
 public class JsonSchemaVariantsTreeBuilder {
-  private static final Logger LOG = Logger.getInstance(JsonSchemaVariantsTreeBuilder.class);
 
   public static JsonSchemaTreeNode buildTree(@NotNull final JsonSchemaObject schema,
                                       @Nullable final List<Step> position,
@@ -210,7 +208,7 @@ public class JsonSchemaVariantsTreeBuilder {
     public void map(@NotNull final Set<JsonContainer> visited) {
       JsonSchemaObject current = mySourceNode;
       while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
-        final JsonSchemaObject definition = getSchemaFromDefinition(current, myService);
+        final JsonSchemaObject definition = current.resolveRefSchema(myService);
         if (definition == null) {
           myState = SchemaResolveState.brokenDefinition;
           return;
@@ -370,46 +368,6 @@ public class JsonSchemaVariantsTreeBuilder {
         }
       }
     }
-  }
-
-  @Nullable
-  private static JsonSchemaObject getSchemaFromDefinition(@NotNull final JsonSchemaObject schema,
-                                                          @NotNull JsonSchemaService service) {
-    final String ref = schema.getRef();
-    assert !StringUtil.isEmptyOrSpaces(ref);
-
-    final VirtualFile schemaFile = schema.getSchemaFile();
-    final SchemaUrlSplitter splitter = new SchemaUrlSplitter(ref);
-    if (splitter.getSchemaId() != null) {
-      final VirtualFile refFile = service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
-      if (refFile == null) {
-        LOG.debug(String.format("Schema file not found by reference: '%s' from %s", splitter.getSchemaId(), schemaFile.getPath()));
-        return null;
-      }
-      final JsonSchemaObject refSchema = service.getSchemaObjectForSchemaFile(refFile);
-      if (refSchema == null) {
-        LOG.debug(String.format("Schema object not found by reference: '%s' from %s", splitter.getSchemaId(), schemaFile.getPath()));
-        return null;
-      }
-      return findRelativeDefinition(refSchema, splitter);
-    }
-    final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
-    if (rootSchema == null) {
-      LOG.debug(String.format("Schema object not found for %s", schemaFile.getPath()));
-      return null;
-    }
-    return findRelativeDefinition(rootSchema, splitter);
-  }
-
-  private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
-                                                         @NotNull final SchemaUrlSplitter splitter) {
-    final String path = splitter.getRelativePath();
-    if (StringUtil.isEmptyOrSpaces(path)) return schema;
-    final JsonSchemaObject definition = schema.findRelativeDefinition(path);
-    if (definition == null) {
-      LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schema.getSchemaFile().getPath()));
-    }
-    return definition;
   }
 
   public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
