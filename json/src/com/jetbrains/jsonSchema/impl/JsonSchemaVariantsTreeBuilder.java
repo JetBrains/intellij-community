@@ -245,9 +245,9 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void map(@NotNull final Set<JsonContainer> visited) {
-      assert mySourceNode.getAllOf() != null;
-      myChildOperations.addAll(mySourceNode.getAllOf().stream()
-                                           .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
+      List<JsonSchemaObject> allOf = mySourceNode.getAllOf();
+      assert allOf != null;
+      myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
     private static <T> int maxSize(List<List<T>> items) {
@@ -324,9 +324,9 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void map(@NotNull final Set<JsonContainer> visited) {
-      assert mySourceNode.getOneOf() != null;
-      myChildOperations.addAll(mySourceNode.getOneOf().stream()
-                                           .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
+      List<JsonSchemaObject> oneOf = mySourceNode.getOneOf();
+      assert oneOf != null;
+      myChildOperations.addAll(ContainerUtil.map(oneOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
     @SuppressWarnings("Duplicates")
@@ -353,9 +353,9 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void map(@NotNull final Set<JsonContainer> visited) {
-      assert mySourceNode.getAnyOf() != null;
-      myChildOperations.addAll(mySourceNode.getAnyOf().stream()
-                                           .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
+      List<JsonSchemaObject> anyOf = mySourceNode.getAnyOf();
+      assert anyOf != null;
+      myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
     @SuppressWarnings("Duplicates")
