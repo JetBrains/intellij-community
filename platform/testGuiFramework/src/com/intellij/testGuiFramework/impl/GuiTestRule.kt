@@ -201,7 +201,7 @@ class GuiTestRule : TestRule {
       fun isFirstStep(): Boolean {
         return try {
           val actionLinkFixture = with(welcomeFrameFixture) {
-            actionLink("CREATE_NEW_PROJECT_ACTION_NAME", Timeouts.defaultTimeout)
+            actionLink(CREATE_NEW_PROJECT_ACTION_NAME, Timeouts.defaultTimeout)
           }
           actionLinkFixture.target().isShowing
         }
