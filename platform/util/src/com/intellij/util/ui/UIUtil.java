@@ -29,8 +29,8 @@ import sun.java2d.SunGraphicsEnvironment;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -47,8 +47,8 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.*;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.*;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -69,9 +69,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
-import java.util.*;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -3298,7 +3298,7 @@ public class UIUtil {
         }
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
         if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE));
+          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
         }
       } else {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
