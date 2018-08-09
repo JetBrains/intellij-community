@@ -833,7 +833,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       public void windowActivated(final WindowEvent e) {
-        SwingUtilities.invokeLater(() -> {
           final DialogWrapper wrapper = getActiveWrapper();
           if (wrapper == null && !myFocusedCallback.isProcessed()) {
             myFocusedCallback.setRejected();
@@ -856,7 +855,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           setupSelectionOnPreferredComponent(toFocus);
 
           if (toFocus != null) {
-            if (isShowing() && isActive()) {
+            if (isShowing()) {
              toFocus.requestFocus();
               notifyFocused(wrapper);
             }
@@ -868,7 +867,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           if (myTypeAheadCallback != null) {
             myTypeAheadCallback.setDone();
           }
-        });
       }
 
       private void notifyFocused(DialogWrapper wrapper) {
