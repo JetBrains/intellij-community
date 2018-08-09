@@ -21,7 +21,6 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,8 @@ public class BlockTreeNode extends SimpleNode {
 
   @Override
   protected void update(PresentationData presentation) {
-    String name = myBlock.getClass().getSimpleName();
+    String name = myBlock.getDebugName();
+    if (name == null) name = myBlock.getClass().getSimpleName();
     if (myBlock instanceof DataLanguageBlockWrapper) {
       name += " (" + ((DataLanguageBlockWrapper)myBlock).getOriginal().getClass().getSimpleName() + ")";
     }
