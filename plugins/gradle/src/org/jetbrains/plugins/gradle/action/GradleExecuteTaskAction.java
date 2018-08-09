@@ -111,6 +111,10 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
 
     historyService.addCommand(fullCommandLine, workDirectory);
 
+    runGradle(project, workDirectory, fullCommandLine);
+  }
+
+  public static void runGradle(@NotNull Project project, @NotNull String workDirectory, @NotNull String fullCommandLine) {
     final ExternalTaskExecutionInfo taskExecutionInfo;
     try {
       taskExecutionInfo = buildTaskInfo(workDirectory, fullCommandLine);
