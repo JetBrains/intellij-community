@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.impl;
 
@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -74,20 +75,16 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private JPanel[] myPanels = new JPanel[0];
   private final MergingUpdateQueue myUpdateQueue;
 
-  // -------------------------------------------------------------------------
-  // Constructor
-  // -------------------------------------------------------------------------
-
   private Runnable myPendingSelection;
   private boolean myFirstRun = true;
   private int myActivityCount;
 
-  public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
+  public StructureViewWrapperImpl(@NotNull Project project, @NotNull ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
-    JComponent component = myToolWindow.getComponent();
+    JComponent component = toolWindow.getComponent();
 
-    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component, true);
+    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component, Alarm.ThreadToUse.POOLED_THREAD);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     Timer timer = UIUtil.createNamedTimer("StructureView", REFRESH_TIME, event -> {
@@ -380,17 +377,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private StructureViewBuilder createStructureViewBuilder(@NotNull VirtualFile file) {
     if (file.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return null;
 
-    FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
+    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(myProject, file);
     FileEditorProvider provider = providers.length == 0 ? null : providers[0];
     if (provider == null) return null;
     if (provider instanceof TextEditorProvider) {
       return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, myProject);
     }
+
     FileEditor editor = provider.createEditor(myProject, file);
-    StructureViewBuilder builder = editor.getStructureViewBuilder();
-    Disposer.dispose(editor);
-    return builder;
+    try {
+      return editor.getStructureViewBuilder();
+    }
+    finally {
+      Disposer.dispose(editor);
+    }
   }
 
 
