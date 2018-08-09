@@ -20,6 +20,8 @@ import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
+import java.awt.*;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -61,9 +63,9 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
       }
 
       @Override
-      public boolean enable() {
-        if (!GithubAccountsMigrationHelper.getInstance().migrate(project)) return false;
-        return myAuthenticationManager.ensureHasAccountsWithTokens(project);
+      public boolean enable(@Nullable Component parentComponent) {
+        if (!GithubAccountsMigrationHelper.getInstance().migrate(project, parentComponent)) return false;
+        return myAuthenticationManager.ensureHasAccountsWithTokens(project, parentComponent);
       }
 
       @NotNull

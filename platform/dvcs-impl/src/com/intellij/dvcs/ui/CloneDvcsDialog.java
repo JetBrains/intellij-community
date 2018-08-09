@@ -72,8 +72,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.file.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UI.PanelFactory;
@@ -275,7 +275,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         loginActions.add(new AbstractAction(DvcsBundle.message("clone.repository.url.autocomplete.login.text", serviceDisplayName)) {
           @Override
           public void actionPerformed(ActionEvent e) {
-            if (loader.enable()) {
+            if (loader.enable(myLoginButtonComponent.getPanel())) {
               myLoginButtonComponent.removeAction(this);
               schedule(serviceDisplayName, loader);
             }

@@ -7,7 +7,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,7 +29,15 @@ public interface RepositoryListLoader {
   /**
    * Prompt user for additional configuration (e.g. provide credentials)
    */
-  boolean enable();
+  default boolean enable(@Nullable Component parentComponent) {
+    return enable();
+  }
+
+  /**
+   * @deprecated parent component is required for dialogs to not fall through on welcome screen
+   */
+  @Deprecated
+  default boolean enable() { return false; }
 
   /**
    * Load repository urls in a single requests

@@ -41,7 +41,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   }
 
   @CalledInAwt
-  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component?): String? {
+  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
     val dialog = GithubLoginDialog(project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
@@ -59,11 +59,12 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   fun hasTokenForAccount(account: GithubAccount): Boolean = getTokenForAccount(account) != null
 
   @CalledInAwt
-  fun requestNewAccount(project: Project): GithubAccount? {
+  @JvmOverloads
+  fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? {
     fun isAccountUnique(name: String, server: GithubServerPath) =
       accountManager.accounts.none { it.name == name && it.server == server }
 
-    val dialog = GithubLoginDialog(project, null, ::isAccountUnique)
+    val dialog = GithubLoginDialog(project, parentComponent, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 
@@ -96,9 +97,11 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     project.service<GithubProjectDefaultAccountHolder>().account = account
   }
 
-  fun ensureHasAccounts(project: Project): Boolean {
+  @CalledInAwt
+  @JvmOverloads
+  fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean {
     if (!hasAccounts()) {
-      if (requestNewAccount(project) == null) {
+      if (requestNewAccount(project, parentComponent) == null) {
         return false
       }
     }
@@ -106,8 +109,8 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   }
 
   @CalledInAwt
-  fun ensureHasAccountsWithTokens(project: Project): Boolean {
-    if (!ensureHasAccounts(project)) return false
+  fun ensureHasAccountsWithTokens(project: Project?, parentComponent: Component?): Boolean {
+    if (!ensureHasAccounts(project, parentComponent)) return false
     var atLeastOneHasToken = false
     for (account in getAccounts()) {
       atLeastOneHasToken = getOrRequestTokenForAccount(account, project) != null
