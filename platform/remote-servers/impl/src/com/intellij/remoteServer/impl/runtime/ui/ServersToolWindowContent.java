@@ -378,7 +378,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   }
 
   private String getDimensionServiceKey() {
-    return myContribution.getClass().getName();
+    return getClass().getName() + ":" + myContribution.getClass().getName();
   }
 
   public JPanel getMainPanel() {
