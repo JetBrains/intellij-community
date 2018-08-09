@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
@@ -584,7 +583,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
         try {
           result.set(executor.execute());
         }
-        catch (ProcessCanceledException e) {
+        catch (MavenProcessCanceledRuntimeException e) {
           cancelled[0] = true;
         }
         catch (Throwable e) {

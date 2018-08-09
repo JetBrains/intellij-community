@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.jetbrains.idea.maven.server.Maven2ServerGlobals;
+import org.jetbrains.idea.maven.server.MavenProcessCanceledRuntimeException;
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 
@@ -42,7 +42,7 @@ public class TransferListenerAdapter implements TransferListener {
 
   private void checkCanceled() {
     try {
-      if (myIndicator.isCanceled()) throw new ProcessCanceledException();
+      if (myIndicator.isCanceled()) throw new MavenProcessCanceledRuntimeException();
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
