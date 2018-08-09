@@ -2,22 +2,31 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.AppUIExecutor
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.Unconfined
+import kotlinx.coroutines.experimental.Runnable
 import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.withContext
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
-import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * @author eldar
  */
-interface AppUIExecutorEx : AppUIExecutor {
+interface AppUIExecutorEx : AppUIExecutor, AsyncExecution {
 
   override fun execute(command: Runnable) {
-    submit(command)
+    // Note, that launch() is different from async() used by submit():
+    //
+    //   - processing of async() errors thrown by the command are deferred
+    //     until the Deferred.await() is called on the result,
+    //
+    //   - errors thrown within launch() are not caught, and usually result in an error
+    //     message with a stack trace to be logged on the corresponding thread.
+    //
+    launch(this) {
+      command.run()
+    }
   }
 
   override fun submit(task: Runnable): CancellablePromise<*> {
@@ -28,7 +37,9 @@ interface AppUIExecutorEx : AppUIExecutor {
   }
 
   override fun <T> submit(task: Callable<T>): CancellablePromise<T> {
-    val deferred = runAsync { task.call() }
+    val deferred = async(this) {
+      task.call()
+    }
     return AsyncPromise<T>().apply {
       onError { cause -> deferred.cancel(cause) }
       deferred.invokeOnCompletion {
@@ -43,8 +54,6 @@ interface AppUIExecutorEx : AppUIExecutor {
     }
   }
 
-  suspend fun <T> runCoroutine(block: suspend () -> T): T
-
   fun inUndoTransparentAction(): AppUIExecutor
   fun inWriteAction(): AppUIExecutor
 }
@@ -54,12 +63,8 @@ fun AppUIExecutor.inUndoTransparentAction() =
 fun AppUIExecutor.inWriteAction() =
   (this as AppUIExecutorEx).inWriteAction()
 
-suspend fun <T> AppUIExecutor.runCoroutine(block: suspend () -> T): T =
-  (this as AppUIExecutorEx).runCoroutine(block)
 
-fun <T> AppUIExecutor.runAsync(context: CoroutineContext = Unconfined,
-                               parent: Job? = null,
-                               block: suspend () -> T): Deferred<T> =
-  async(context, parent = parent) {
-    runCoroutine(block)
+suspend fun <T> AppUIExecutor.runCoroutine(block: suspend () -> T): T =
+  withContext(this as AsyncExecution) {
+    block()
   }
