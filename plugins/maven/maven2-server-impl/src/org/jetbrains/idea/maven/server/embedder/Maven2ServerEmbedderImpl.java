@@ -17,10 +17,10 @@ package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
@@ -100,7 +100,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     List<String> commandLineOptions = new ArrayList<String>();
     String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
     if (mavenEmbedderCliOptions != null) {
-      commandLineOptions.addAll(StringUtil.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
+      commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
     }
 
     settings.setConfigurator(new PlexusComponentConfigurator() {
@@ -295,7 +295,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                                    @NotNull final Collection<String> inactiveProfiles)
     throws MavenServerProcessCanceledException, RemoteException {
 
-    return ContainerUtil.mapNotNull(files, new Function<File, MavenServerExecutionResult>() {
+    return ContainerUtilRt.mapNotNull(files, new Function<File, MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult fun(final File file) {
         try {
@@ -311,10 +311,10 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
           });
         }
         catch (MavenServerProcessCanceledException e) {
-          ExceptionUtil.rethrowAllAsUnchecked(e);
+          ExceptionUtilRt.rethrowAllAsUnchecked(e);
         }
         catch (RemoteException e) {
-          ExceptionUtil.rethrowAllAsUnchecked(e);
+          ExceptionUtilRt.rethrowAllAsUnchecked(e);
         }
         return null;
       }
