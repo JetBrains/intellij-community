@@ -61,6 +61,14 @@ public abstract class PyPsiFacade {
   @Nullable
   public abstract PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);
 
+  /**
+   * Retrieve a top-level class by its qualified name. The name provided is supposed to be <em>fully qualified absolute name</em>
+   * of the class, neither relative to the containing file of the anchor element, nor dependent on its imports.
+   * The anchor element is needed only to detect the corresponding module and its SDK.
+   *
+   * @param qName  qualified name of the required class
+   * @param anchor arbitrary element located in the same module/SDK as the required class
+   */
   @Nullable
   public abstract PyClass createClassByQName(@NotNull String qName, @NotNull PsiElement anchor);
 

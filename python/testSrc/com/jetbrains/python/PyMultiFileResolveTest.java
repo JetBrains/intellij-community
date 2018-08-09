@@ -588,4 +588,13 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testIncompleteFromImport() {
     assertUnresolved();
   }
+
+  public void testCreateClassByQNameDoesntDependOnExistingImports() {
+    prepareTestDirectory();
+    runWithSourceRoots(Collections.singletonList(myFixture.findFileInTempDir("src")), () -> {
+      myFixture.configureByFile("src/" + getTestName(false) + ".py");
+      final PyPsiFacade facade = PyPsiFacade.getInstance(myFixture.getProject());
+      assertNotNull(facade.createClassByQName("foo.bar.MyClass", myFixture.getFile()));
+    });
+  }
 }
