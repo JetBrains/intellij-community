@@ -31,28 +31,28 @@ public class TestDataPathCompletionTest extends TestDataPathTestCase {
     doTest();
   }
 
-  public void testReferencesAfterProjectRoot() {
-    doTest();
-  }
+  //public void testReferencesAfterProjectRoot() {
+  //  doTest();
+  //}
 
   public void testContentRoot() {
     doTest();
   }
 
-  public void testReferencesAfterContentRoot() {
-    doTest();
-  }
+  //public void testReferencesAfterContentRoot() {
+  //  doTest();
+  //}
 
   private void doTest() {
     String testName = getTestName(false);
-    LOG.error("Executing test: " + testName, (Throwable)null, (String)null);
+    System.out.println("Executing test: " + testName);
 
     PsiFile file = myFixture.configureByFile(testName + ".java");
-    LOG.error("PsiFile: " + file, (Throwable)null, (String)null);
-    LOG.error("PsiFile#getVirtualFile: " + file.getVirtualFile(), (Throwable)null, (String)null);
+    System.out.println("PsiFile: " + file);
+    System.out.println("PsiFile#getVirtualFile: " + file.getVirtualFile());
 
     LookupElement[] elements = myFixture.completeBasic();
-    LOG.error("Lookup elements: " + Arrays.toString(elements), (Throwable)null, (String)null);
+    System.out.println("Lookup elements: " + Arrays.toString(elements));
 
     myFixture.checkResultByFile(testName + "_after.java");
   }
