@@ -226,7 +226,7 @@ class ContentTabLabel extends BaseLabel {
   }
 
   public final boolean canBeClosed() {
-    return myContent.isCloseable() && contentManager().canCloseContents();
+    return myContent.isCloseable() && myUi.myWindow.canCloseContents();
   }
 
   protected void selectContent() {
