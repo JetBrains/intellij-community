@@ -9,6 +9,7 @@ import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -339,6 +340,17 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
         popupMenu.add(rename);
 
+        JMenuItem moveToEditor = new JMenuItem("Move to Editor");
+
+        moveToEditor.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            moveToEditor(myTabs.getTabAt(getSelectedIndex()));
+          }
+        });
+
+        popupMenu.add(moveToEditor);
+
         return popupMenu;
       }
 
@@ -443,5 +455,15 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
         mySession = null;
       }
     }
+
+    private void moveToEditor(TabInfo tabInfo) {
+      TerminalSessionVirtualFileImpl file = (TerminalSessionVirtualFileImpl)tabInfo.getObject();
+      file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
+      FileEditorManager.getInstance(myProject).openFile(file, true);
+      myTabs.removeTab(tabInfo);
+      file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+    }
   }
+
+
 }
