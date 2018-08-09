@@ -42,8 +42,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -210,12 +208,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
     restoreSplitterProportion();
-    myPropertiesPanel.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        saveSplitterProportion();
-      }
-    });
   }
 
   private void onSelectionChanged() {
@@ -395,6 +387,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
 
   @Override
   public void dispose() {
+    saveSplitterProportion();
   }
 
   @Override
