@@ -28,6 +28,7 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -413,10 +414,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       })).
       append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
       append(() -> {
-        EncodingManager encodingManager = EncodingManager.getInstance();
-        if (encodingManager instanceof EncodingManagerImpl) {
-          ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
-        }
+        clearEncodingManagerDocumentQueue();
 
         if (!ourAssertionsInTestDetected) {
           if (IdeaLogger.ourErrorsOccurred != null) {
@@ -443,6 +441,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }).
       run();
+  }
+
+  public static void clearEncodingManagerDocumentQueue() {
+    EncodingManager encodingManager = ServiceManager.getServiceIfCreated(EncodingManager.class);
+    if (encodingManager instanceof EncodingManagerImpl) {
+      ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
+    }
   }
 
   private static int ourTestCount;

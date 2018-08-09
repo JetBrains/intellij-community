@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -64,9 +65,9 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -175,6 +176,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
+  @Override
   @NotNull
   @SuppressWarnings("WeakerAccess")
   public OffsetMap getOffsetMap() {
@@ -340,6 +342,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myParameters = parameters;
   }
 
+  @Override
   public LookupImpl getLookup() {
     return myLookup;
   }
@@ -523,7 +526,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @TestOnly
   public static void cleanupForNextTest() {
-    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    CompletionService completionService = ServiceManager.getServiceIfCreated(CompletionService.class);
+    if (!(completionService instanceof CompletionServiceImpl)) {
+      return;
+    }
+
+    CompletionProgressIndicator currentCompletion = ((CompletionServiceImpl)completionService).getCurrentCompletion();
     if (currentCompletion != null) {
       currentCompletion.finishCompletionProcess(true);
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
@@ -635,6 +643,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return reused ? Math.max(myInvocationCount + 1, 2) : invocation;
   }
 
+  @Override
   @NotNull
   public Editor getEditor() {
     return myEditor;
@@ -663,6 +672,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myInvocationCount == 0;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return ObjectUtils.assertNotNull(myEditor.getProject());
