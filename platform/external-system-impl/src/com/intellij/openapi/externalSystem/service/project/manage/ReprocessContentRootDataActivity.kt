@@ -33,7 +33,6 @@ class ReprocessContentRootDataActivity : StartupActivity, DumbAware {
           .forEach {
             service.importData(it, null, project, modifiableModelsProvider)
           }
-        println("hello!")
       }
       finally {
         ExternalSystemApiUtil.doWriteAction { modifiableModelsProvider?.commit() }
