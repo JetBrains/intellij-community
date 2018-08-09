@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -149,8 +150,8 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @Override
-  protected void presentationPropertyChanded(PropertyChangeEvent e) {
-    super.presentationPropertyChanded(e);
+  protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
+    super.presentationPropertyChanged(e);
     if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
     }
