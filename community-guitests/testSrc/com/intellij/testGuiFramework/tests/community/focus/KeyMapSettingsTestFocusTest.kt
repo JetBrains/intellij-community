@@ -10,7 +10,7 @@ import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
-import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.fixture.JTextComponentFixture
 import org.fest.swing.timing.Pause
 import org.junit.Assert
@@ -36,10 +36,10 @@ class KeyMapSettingsTestFocusTest : GuiTestCase() {
     val settingsTitle = if (SystemInfo.isMac()) "Preferences" else "Settings"
     dialog(settingsTitle){
       jTree("Keymap").clickPath("Keymap")
-      val actionButton = actionButton("Find Actions by Shortcut")
+      val actionButton = actionButton("Find Actions by Shortcut", Timeouts.seconds10)
       try {
-        actionButton.waitEnabledAndShowing(Timeouts.seconds10).click()
-      } catch (e: WaitTimedOutError) {
+        actionButton.click()
+      } catch (e: ComponentLookupException) {
         actionButton("Find Actions by Shortcut").click() // in case of ActionToolBar was reinitialised
       }
         val keyboardShortcutPanel = checkbox("Second stroke").target().parent

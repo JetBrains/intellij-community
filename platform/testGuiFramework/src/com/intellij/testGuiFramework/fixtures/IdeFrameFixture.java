@@ -64,8 +64,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
@@ -469,7 +469,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     }, Timeouts.INSTANCE.getMinutes02());
 
     waitForBackgroundTasksToFinish();
-    findGradleSyncAction().waitEnabledAndShowing(Timeouts.INSTANCE.getMinutes01());
+    findGradleSyncAction();
     // TODO figure out why in IDEA 15 even though an action is enabled, visible and showing, clicking it (via UI testing infrastructure)
     // does not work consistently
 
@@ -591,7 +591,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   private ActionButtonFixture findActionButtonByActionId(String actionId) {
-    return ActionButtonFixture.findByActionId(actionId, robot(), target());
+    return ActionButtonFixture.Companion.fixtureByActionId(target(), robot(), actionId);
   }
 
   @NotNull
@@ -821,7 +821,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     });
     assertNotNull(actionToolbarContainer);
 
-    ComboBoxActionFixture comboBoxActionFixture = ComboBoxActionFixture.findComboBox(robot(), actionToolbarContainer);
+    ComboBoxActionFixture comboBoxActionFixture = ComboBoxActionFixture.Companion.findComboBox(robot(), actionToolbarContainer);
     comboBoxActionFixture.selectItem(appName);
     robot().pressAndReleaseKey(KeyEvent.VK_ENTER);
     robot().waitForIdle();
