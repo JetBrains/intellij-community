@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import javax.swing.*;
@@ -91,6 +77,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
 
     BiConsumer<I, EditorTextField> defaultOnSetHandler = (anObject, component) -> component.setText((anObject == null) ? "" : anObject.toString());
 
+    @Override
     public void setItem(F component, I anObject) {
       if (myOnSetItemHandler == null) {
         defaultOnSetHandler.accept(anObject, (EditorTextField)component);
@@ -99,6 +86,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
       }
     }
 
+    @Override
     public I getItem(F component, I anObject) {
       if (myOnGetItemHandler == null) {
         return anObject;
@@ -107,14 +95,17 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
       }
     }
 
+    @Override
     public void selectAll(JComponent component) {
       ((EditorTextField)component).selectAll();
     }
 
+    @Override
     public void addActionListener(JComponent component, ActionListener l) {
       //((EditorTextField)component).addActionListener(l);
     }
 
+    @Override
     public void removeActionListener(JComponent component, ActionListener l) {
       //((EditorTextField)component).removeActionListener(l);
     }
@@ -124,6 +115,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
 
     BiConsumer<I, JTextField> defaultOnSetHandler = (anObject, component) ->  component.setText((anObject ==null) ? "" : anObject.toString());
 
+    @Override
     public void setItem(F component, I anObject) {
       if (myOnSetItemHandler == null) {
         defaultOnSetHandler.accept(anObject, (JTextField)component);
@@ -132,6 +124,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
       }
     }
 
+    @Override
     public I getItem(F component, I anObject) {
       if (myOnGetItemHandler == null) {
         return anObject;
@@ -140,14 +133,17 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
       }
     }
 
+    @Override
     public void selectAll(JComponent component) {
       ((JTextField)component).selectAll();
     }
 
+    @Override
     public void addActionListener(JComponent component, ActionListener l) {
       ((JTextField)component).addActionListener(l);
     }
 
+    @Override
     public void removeActionListener(JComponent component, ActionListener l) {
       ((JTextField)component).removeActionListener(l);
     }
@@ -184,11 +180,13 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
 
       I myItem;
 
+      @Override
       public void setItem(I anObject) {
         myItem = anObject;
         strategy.setItem(editableComponent, anObject);
       }
 
+      @Override
       public I getItem() {
         return strategy.getItem(editableComponent, myItem);
       }

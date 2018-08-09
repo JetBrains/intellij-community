@@ -27,6 +27,7 @@ public class ActionCommand extends TypeCommand {
     super(text, line, true);
   }
 
+  @Override
   protected Promise<Object> _execute(final PlaybackContext context) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 

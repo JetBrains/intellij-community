@@ -121,6 +121,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     }
   }
 
+  @Override
   protected int getMinimumHeight() {
     return MINIMUM_HEIGHT.get();
   }

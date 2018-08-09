@@ -78,6 +78,7 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public Dimension getPreferredSize() {
     Dimension basicSize = super.getPreferredSize();
 
@@ -120,6 +121,7 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
     FontMetrics fm = getFontMetrics(getFont());

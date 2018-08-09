@@ -108,6 +108,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
         myPersistStatisticsSessionsMap.put(project, future);
       }
 
+      @Override
       public void projectClosed(Project project) {
         Future future = myPersistStatisticsSessionsMap.remove(project);
         if (future != null) {

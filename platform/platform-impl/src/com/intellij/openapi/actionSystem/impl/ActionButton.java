@@ -98,8 +98,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myMinimumButtonSize = JBDimension.create(size);
   }
 
+  @Override
   public void paintChildren(Graphics g) {}
 
+  @Override
   public int getPopState() {
     if (myAction instanceof Toggleable) {
       Boolean selected = (Boolean)myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
@@ -205,6 +207,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Override
   public void removeNotify() {
     if (myRollover) {
       onMousePresenceChanged(false);
@@ -218,6 +221,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     super.removeNotify();
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     if (myPresentationListener == null) {
@@ -229,6 +233,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     updateIcon();
   }
 
+  @Override
   public void setToolTipText(String s) {
     if (!Registry.is("ide.helptooltip.enabled")) {
       String tooltipText = KeymapUtil.createTooltipText(s, myAction);
@@ -272,6 +277,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myInsets = insets != null ? JBUI.insets(insets) : JBUI.emptyInsets();
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
@@ -327,6 +333,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return HelpTooltip.Alignment.BOTTOM;
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
 
@@ -367,6 +374,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     repaint();
   }
 
+  @Override
   protected void processMouseEvent(MouseEvent e) {
     requestFocusInNonFocusedWindow(e);
     super.processMouseEvent(e);
@@ -425,6 +433,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Override
   public AnAction getAction() {
     return myAction;
   }

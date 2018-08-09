@@ -9,7 +9,10 @@ import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
@@ -46,13 +49,9 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.*;
+import java.awt.event.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Sergey.Malenkov
@@ -161,6 +160,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     });
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent event) {
         MyNode node = extractNode(event.getNewLeadSelectionPath());
         select(node == null ? null : node.myConfigurable);
@@ -349,6 +349,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     final ActionCallback callback = new ActionCallback();
     myQueuedConfigurable = configurable;
     myQueue.queue(new Update(this) {
+      @Override
       public void run() {
         if (configurable == myQueuedConfigurable) {
           if (configurable == null) {
@@ -473,6 +474,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       return result;
     }
 
+    @Override
     protected void update(PresentationData presentation) {
       super.update(presentation);
       presentation.addText(myDisplayName, getPlainAttributes());
@@ -516,6 +518,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       }
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -792,10 +795,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     MyBuilder(SimpleTreeStructure structure) {
       super(myTree, myFilter, structure, null);
       myTree.addTreeExpansionListener(new TreeExpansionListener() {
+        @Override
         public void treeExpanded(TreeExpansionEvent event) {
           invalidateExpansions();
         }
 
+        @Override
         public void treeCollapsed(TreeExpansionEvent event) {
           invalidateExpansions();
         }

@@ -104,6 +104,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     };
   }
 
+  @Override
   protected JButton createArrowButton() {
     Color bg = comboBox.getBackground();
     Color fg = comboBox.getForeground();
@@ -238,6 +239,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return Boolean.TRUE.equals(c.getClientProperty("JComboBox.isTableCellEditor")) || c.getParent() instanceof JTable;
   }
 
+  @Override
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     ListCellRenderer renderer = comboBox.getRenderer();
     @SuppressWarnings("unchecked") Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
@@ -532,6 +534,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
   }
 
+  @Override
   protected Rectangle rectangleForCurrentValue() {
     Rectangle rect = super.rectangleForCurrentValue();
     JBInsets.removeFrom(rect, padding);

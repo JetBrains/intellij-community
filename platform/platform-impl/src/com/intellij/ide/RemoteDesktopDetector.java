@@ -9,14 +9,14 @@ public class RemoteDesktopDetector extends RemoteDesktopService {
   private static final Logger LOG = Logger.getInstance(RemoteDesktopDetector.class);
   private volatile boolean myFailureDetected;
   private volatile boolean myRemoteDesktopConnected;
-  
+
   private RemoteDesktopDetector() {
     if (SystemInfo.isWindows) {
       DisplayChangeDetector.getInstance().addListener(this::updateState);
       updateState();
     }
   }
-  
+
   private void updateState() {
     if (!myFailureDetected) {
       try {
@@ -32,7 +32,8 @@ public class RemoteDesktopDetector extends RemoteDesktopService {
       }
     }
   }
-  
+
+  @Override
   public boolean isRemoteDesktopConnected() {
     return myRemoteDesktopConnected;
   }

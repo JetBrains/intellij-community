@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.icons.AllIcons;
@@ -17,14 +15,17 @@ import javax.swing.*;
  * @author max
  */
 public class CommonActionsManagerImpl extends CommonActionsManager {
+  @Override
   public AnAction createPrevOccurenceAction(OccurenceNavigator navigator) {
     return new PreviousOccurenceToolbarAction(navigator);
   }
 
+  @Override
   public AnAction createNextOccurenceAction(OccurenceNavigator navigator) {
     return new NextOccurenceToolbarAction(navigator);
   }
 
+  @Override
   public AnAction createExpandAllAction(TreeExpander expander, JComponent component) {
     final ExpandAllToolbarAction expandAllToolbarAction = new ExpandAllToolbarAction(expander);
     expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), component);
@@ -44,6 +45,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return createExpandAllHeaderAction(new DefaultTreeExpander(tree), tree);
   }
 
+  @Override
   public AnAction createCollapseAllAction(TreeExpander expander, JComponent component) {
     final CollapseAllToolbarAction collapseAllToolbarAction = new CollapseAllToolbarAction(expander);
     collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), component);
@@ -63,16 +65,20 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return createCollapseAllHeaderAction(new DefaultTreeExpander(tree), tree);
   }
 
+  @Override
   public AnAction createHelpAction(String helpId) {
     return new ContextHelpAction(helpId);
   }
 
+  @Override
   public AnAction installAutoscrollToSourceHandler(Project project, JTree tree, final AutoScrollToSourceOptionProvider optionProvider) {
     AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler() {
+      @Override
       public boolean isAutoScrollMode() {
         return optionProvider.isAutoScrollMode();
       }
 
+      @Override
       public void setAutoScrollMode(boolean state) {
         optionProvider.setAutoScrollMode(state);
       }
@@ -81,6 +87,7 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return handler.createToggleAction();
   }
 
+  @Override
   public AnAction createExportToTextFileAction(@NotNull ExporterToTextFile exporter) {
     return new ExportToTextFileToolbarAction(exporter);
   }

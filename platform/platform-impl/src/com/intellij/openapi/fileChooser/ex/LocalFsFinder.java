@@ -24,6 +24,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
   private File myBaseDir = new File(SystemProperties.getUserHome());
 
+  @Override
   public LookupFile find(@NotNull final String path) {
     final VirtualFile byUrl = VirtualFileManager.getInstance().findFileByUrl(path);
     if (byUrl != null) {
@@ -48,6 +49,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     return null;
   }
 
+  @Override
   public String normalize(@NotNull String path) {
     path = FileUtil.expandUserHome(path);
     final File file = new File(path);
@@ -58,6 +60,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     return path;
   }
 
+  @Override
   public String getSeparator() {
     return File.separator;
   }
@@ -80,6 +83,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       myShowHidden = () -> tree.areHiddensShown();
     }
 
+    @Override
     public boolean isAccepted(final LookupFile file) {
       VirtualFile vFile = ((VfsFile)file).getFile();
       if (vFile == null) return false;
@@ -98,32 +102,39 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       myFile = file;
     }
 
+    @Override
     public String getName() {
       if (myFile.getParent() == null && myFile.getName().length() == 0) return "/";
       return myFile.getName();
     }
 
+    @Override
     public boolean isDirectory() {
       return myFile != null && myFile.isDirectory();
     }
 
+    @Override
     public void setMacro(final String macro) {
       myMacro = macro;
     }
 
+    @Override
     public String getMacro() {
       return myMacro;
     }
 
+    @Override
     public LookupFile getParent() {
       return myFile != null && myFile.getParent() != null ? new VfsFile(myFinder, myFile.getParent()) : null;
     }
 
+    @Override
     public String getAbsolutePath() {
       if (myFile.getParent() == null && myFile.getName().length() == 0) return "/";
       return myFile.getPresentableUrl();
     }
 
+    @Override
     public List<LookupFile> getChildren(final LookupFilter filter) {
       List<LookupFile> result = new ArrayList<>();
       if (myFile == null) return result;
@@ -144,15 +155,18 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       return myFile;
     }
 
+    @Override
     public boolean exists() {
       return myFile.exists();
     }
 
+    @Override
     @Nullable
     public Icon getIcon() {
       return myFile != null ? (myFile.isDirectory() ? PlatformIcons.FOLDER_ICON : VirtualFilePresentation.getIcon(myFile)) : null;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -164,6 +178,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return (myFile != null ? myFile.hashCode() : 0);
     }
@@ -177,22 +192,27 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       myIoFile = ioFile;
     }
 
+    @Override
     public String getName() {
       return myIoFile.getName();
     }
 
+    @Override
     public boolean isDirectory() {
       return myIoFile != null && myIoFile.isDirectory();
     }
 
+    @Override
     public LookupFile getParent() {
       return myIoFile != null && myIoFile.getParentFile() != null ? new IoFile(myIoFile.getParentFile()) : null;
     }
 
+    @Override
     public String getAbsolutePath() {
       return myIoFile.getAbsolutePath();
     }
 
+    @Override
     public List<LookupFile> getChildren(final LookupFilter filter) {
       List<LookupFile> result = new ArrayList<>();
       File[] files = myIoFile.listFiles(pathname -> filter.isAccepted(new IoFile(pathname)));
@@ -206,10 +226,12 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       return result;
     }
 
+    @Override
     public boolean exists() {
       return myIoFile.exists();
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -221,6 +243,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return (myIoFile != null ? myIoFile.hashCode() : 0);
     }

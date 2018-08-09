@@ -286,6 +286,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return id;
     }
 
+    @Override
     @NotNull
     public VirtualFile getVirtualFile() {
       return file;
