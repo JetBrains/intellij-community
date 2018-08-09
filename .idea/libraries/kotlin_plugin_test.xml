@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="kotlin-plugin-test">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/lint-psi/kotlin-compiler/kotlin-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/android-kotlin/android-extensions-compiler-1.2.60-tests.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/android-kotlin/idea-test-framework-1.2.60-tests.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/android-kotlin/tests-common-1.2.60-tests.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/android-kotlin/idea-1.2.60-tests.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/android-kotlin/idea-gradle-1.2.60-tests.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
