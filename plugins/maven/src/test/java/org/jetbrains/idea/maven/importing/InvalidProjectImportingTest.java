@@ -17,8 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -27,7 +25,6 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -109,9 +106,6 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
   }
 
   public void testMissingModules() throws IOException {
-    System.out.println(toString(getMavenGeneralSettings())); // log for flaking test
-    File settings = new File(FileUtil.toSystemDependentName(VfsUtil.urlToPath(getMavenGeneralSettings().getUserSettingsFile())));
-    System.out.println(FileUtil.loadFile(settings, false));
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -120,6 +114,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "<modules>" +
                             "  <module>foo</module>" +
                             "</modules>");
+    resolvePlugins();
 
     assertModules("project");
 
@@ -186,6 +181,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                            "<version>1"); //  invalid tag
 
     importProjectWithErrors();
+    resolvePlugins();
     assertModules("project", "foo");
 
     MavenProject root = getRootProjects().get(0);
@@ -302,6 +298,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "   <layout/>" +
                             " </pluginRepository>" +
                             "</pluginRepositories>");
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root);
@@ -319,6 +316,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "   <layout/>" +
                             "  </repository>" +
                             "</distributionManagement>");
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root);
@@ -366,6 +364,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     importProjectWithErrors();
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
 
@@ -393,6 +392,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                      "</dependencies>");
 
     importProjectWithErrors();
+    resolvePlugins();
 
     assertModuleLibDeps("project");
 
@@ -428,6 +428,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                           "<version>1</version>");
 
     importProjectWithErrors();
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root);
@@ -553,6 +554,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </extension>" +
                             "  </extensions>" +
                             "</build>");
+    resolvePlugins();
 
     assertProblems(getRootProjects().get(0));
 
@@ -576,6 +578,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </extension>" +
                             "  </extensions>" +
                             "</build>");
+    resolvePlugins();
 
     assertProblems(getRootProjects().get(0));
 
@@ -658,6 +661,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </plugin>" +
                             "  </plugins>" +
                             "</build>");
+    resolvePlugins();
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'");
@@ -701,6 +705,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                             "    </plugin>" +
                             "  </plugins>" +
                             "</build>");
+    resolvePlugins();
 
     assertModules("project");
 
