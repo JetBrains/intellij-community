@@ -236,7 +236,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
     };
-    myActionManager.addAnActionListener(actionListener, project);
+    ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(AnActionListener.TOPIC, actionListener);
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
     myTargetElementUtil = targetElementUtil;
   }

@@ -1168,17 +1168,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void addAnActionListener(final AnActionListener listener, final Disposable parentDisposable) {
-    addAnActionListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeAnActionListener(listener);
-      }
-    });
-  }
-
-  @Override
   public void removeAnActionListener(AnActionListener listener) {
     myActionListeners.remove(listener);
   }

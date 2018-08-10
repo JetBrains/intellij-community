@@ -2,8 +2,12 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -37,7 +41,7 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       }
     });
-    ActionManager.getInstance().addAnActionListener(new AnActionListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         if (action instanceof EditorAction && ((EditorAction)action).getHandler() instanceof EditorWriteActionHandler) {
@@ -60,6 +64,6 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
       public void beforeEditorTyping(char c, DataContext dataContext) {
         onChange(dataContext);
       }
-    }, project);
+    });
   }
 }

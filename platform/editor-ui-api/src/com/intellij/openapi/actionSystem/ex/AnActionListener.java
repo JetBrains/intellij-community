@@ -26,6 +26,10 @@ public interface AnActionListener {
   default void beforeEditorTyping(char c, DataContext dataContext) {
   }
 
+  /**
+   * @deprecated Use {@link AnActionListener} directly.
+   */
+  @Deprecated
   abstract class Adapter implements AnActionListener {
   }
 }

@@ -3,11 +3,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,7 +31,7 @@ class ActionTracker {
   ActionTracker(Editor editor, Disposable parentDisposable) {
     myEditor = editor;
     myProject = editor.getProject();
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeEditorTyping(char c, DataContext dataContext) {
         myActionsHappened = true;
@@ -41,7 +41,7 @@ class ActionTracker {
       public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         myActionsHappened = true;
       }
-    }, parentDisposable);
+    });
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -42,7 +43,7 @@ public class HighlightManagerImpl extends HighlightManager {
 
   public HighlightManagerImpl(Project project, ActionManagerEx actionManagerEx, final EditorFactory editorFactory) {
     myProject = project;
-    actionManagerEx.addAnActionListener(new MyAnActionListener(), myProject);
+    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(AnActionListener.TOPIC, new MyAnActionListener());
 
     DocumentListener documentListener = new DocumentListener() {
       @Override

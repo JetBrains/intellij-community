@@ -5,6 +5,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -45,7 +46,7 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
 
   @Override
   public void initComponent() {
-    myActionManager.addAnActionListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
     myEditorEventMulticaster.addEditorMouseListener(this, this);
   }
 

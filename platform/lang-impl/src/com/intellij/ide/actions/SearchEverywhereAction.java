@@ -2091,7 +2091,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             updatePopupBounds();
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
 
-            ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+            ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
               public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
@@ -2101,7 +2101,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   myPopup.cancel();
                 }
               }
-            }, myPopup);
+            });
           }
           else {
             myList.revalidate();

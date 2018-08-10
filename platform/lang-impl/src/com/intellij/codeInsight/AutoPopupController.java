@@ -14,7 +14,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,7 +72,7 @@ public class AutoPopupController implements Disposable {
   }
 
   private void setupListeners() {
-    ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         cancelAllRequests();
@@ -83,7 +82,7 @@ public class AutoPopupController implements Disposable {
       public void beforeEditorTyping(char c, DataContext dataContext) {
         cancelAllRequests();
       }
-    }, this);
+    });
 
     IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, this);
   }

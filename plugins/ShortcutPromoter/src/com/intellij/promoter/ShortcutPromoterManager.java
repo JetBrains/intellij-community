@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.promoter;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
@@ -26,7 +26,7 @@ import java.util.Map;
   name = "ShortcutPromoterManager",
   storages = @Storage(value = "promoter.xml", roamingType = RoamingType.PER_OS)
 )
-public class ShortcutPromoterManager implements Disposable, AnActionListener, PersistentStateComponent<Element>, BaseComponent {
+public class ShortcutPromoterManager implements AnActionListener, PersistentStateComponent<Element>, BaseComponent {
   private final Map<String, PromoterState> myState = new LinkedHashMap<>();
   private final Map<String, ShortcutPromoterEP> myExtensions = new THashMap<>();
 
@@ -38,12 +38,8 @@ public class ShortcutPromoterManager implements Disposable, AnActionListener, Pe
     for (ShortcutPromoterEP ep : ShortcutPromoterEP.EP_NAME.getExtensionList()) {
       myExtensions.put(ep.actionId, ep);
     }
-    ActionManager.getInstance().addAnActionListener(this);
-  }
 
-  @Override
-  public void dispose() {
-    ActionManager.getInstance().removeAnActionListener(this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, this);
   }
 
   @Override

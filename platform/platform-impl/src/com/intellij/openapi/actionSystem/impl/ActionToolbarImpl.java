@@ -1281,7 +1281,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     });
     myPopup = builder.createPopup();
-    final AnActionListener.Adapter listener = new AnActionListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         final JBPopup popup = myPopup;
@@ -1289,15 +1289,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           popup.cancel();
         }
       }
-    };
-    ActionManager.getInstance().addAnActionListener(listener);
-    Disposer.register(myPopup, popupToolbar);
-    Disposer.register(popupToolbar, new Disposable() {
-      @Override
-      public void dispose() {
-        ActionManager.getInstance().removeAnActionListener(listener);
-      }
     });
+    Disposer.register(myPopup, popupToolbar);
 
     myPopup.showInScreenCoordinates(this, location);
 
@@ -1371,7 +1364,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                         final KeymapManagerEx keymapManager,
                         JComponent parent) {
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
-      myActionManager.addAnActionListener(this);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       if (myParent != null) {
         setBorder(myParent.getBorder());
@@ -1386,7 +1379,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public void dispose() {
-      myActionManager.removeAnActionListener(this);
     }
 
     @Override
@@ -1402,7 +1394,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     protected abstract void onOtherActionPerformed();
   }
-
 
   @Override
   public void setReservePlaceAutoPopupIcon(final boolean reserve) {

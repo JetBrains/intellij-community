@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 
-class LookupActionsListener : AnActionListener.Adapter() {
+class LookupActionsListener : AnActionListener {
   private companion object {
     val LOG = Logger.getInstance(LookupActionsListener::class.java)
   }

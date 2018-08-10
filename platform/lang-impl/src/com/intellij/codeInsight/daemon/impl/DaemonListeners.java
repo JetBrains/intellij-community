@@ -264,7 +264,7 @@ public class DaemonListeners implements Disposable {
     inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
-    actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyAnActionListener());
     virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {

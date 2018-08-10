@@ -4,7 +4,6 @@ package com.intellij.ide;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -94,12 +93,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         hideCurrent(null, action, event);
       }
-    }, ApplicationManager.getApplication());
+    });
 
     processEnabled();
   }

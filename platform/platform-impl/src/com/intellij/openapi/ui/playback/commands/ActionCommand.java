@@ -1,13 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TimedOutCallback;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -66,27 +67,24 @@ public class ActionCommand extends TypeCommand {
         final KeyStroke finalStroke = stroke;
 
         inWriteSafeContext(() -> {
-          final Ref<AnActionListener> listener = new Ref<>();
-          listener.set(new AnActionListener.Adapter() {
-
+          Disposable disposable = Disposer.newDisposable();
+          ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
             @Override
             public void beforeActionPerformed(@NotNull final AnAction action, DataContext dataContext, AnActionEvent event) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (context.isDisposed()) {
-                  am.removeAnActionListener(listener.get());
+                  Disposer.dispose(disposable);
                   return;
                 }
 
                 if (targetAction.equals(action)) {
                   context.message("Performed action: " + actionName, context.getCurrentLine());
-                  am.removeAnActionListener(listener.get());
+                  Disposer.dispose(disposable);
                   result.setDone();
                 }
               }, ModalityState.any());
             }
           });
-          am.addAnActionListener(listener.get());
-
           context.runPooledThread(() -> type(context.getRobot(), finalStroke));
         });
 

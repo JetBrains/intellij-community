@@ -97,7 +97,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     final MyDispatcher dispatcher = new MyDispatcher(actionId, modifierKeyCode, actionKeyCode, skipIfActionHasShortcut);
     MyDispatcher oldDispatcher = myDispatchers.put(actionId, dispatcher);
     IdeEventQueue.getInstance().addDispatcher(dispatcher, dispatcher);
-    myActionManagerEx.addAnActionListener(dispatcher, dispatcher);
+    ApplicationManager.getApplication().getMessageBus().connect(dispatcher).subscribe(AnActionListener.TOPIC, dispatcher);
     if (oldDispatcher != null) {
       Disposer.dispose(oldDispatcher);
     }
@@ -125,7 +125,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     return myIsRunningAction;
   }
 
-  private class MyDispatcher extends AnActionListener.Adapter implements IdeEventQueue.EventDispatcher, Disposable {
+  private class MyDispatcher implements IdeEventQueue.EventDispatcher, Disposable, AnActionListener {
     private final String myActionId;
     private final int myModifierKeyCode;
     private final int myActionKeyCode;

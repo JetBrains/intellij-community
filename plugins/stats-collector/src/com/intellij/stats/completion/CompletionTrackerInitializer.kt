@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.project.Project
@@ -84,8 +84,9 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
   override fun initComponent() {
     if (!shouldInitialize()) return
 
-    ActionManager.getInstance().addAnActionListener(actionListener)
-    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    busConnection.subscribe(AnActionListener.TOPIC, actionListener)
+    busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectOpened(project: Project) {
         val lookupManager = LookupManager.getInstance(project)
         lookupManager.addPropertyChangeListener(lookupTrackerInitializer)
@@ -99,8 +100,5 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
   }
 
   override fun dispose() {
-    if (!shouldInitialize()) return
-
-    ActionManager.getInstance().removeAnActionListener(actionListener)
   }
 }
