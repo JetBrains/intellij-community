@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="commons-compress" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-compress:1.16.1" />
+    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-compress:1.17" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.16.1/commons-compress-1.16.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.17/commons-compress-1.17.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.16.1/commons-compress-1.16.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.17/commons-compress-1.17-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
