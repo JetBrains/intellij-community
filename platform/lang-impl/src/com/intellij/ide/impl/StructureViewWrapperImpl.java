@@ -426,7 +426,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         LOG.debug(new IllegalStateException("called from unexpected place"));
         application.runReadAction(task);
       }
-      task.run();
       return true;
     }
     catch (ProcessCanceledException exception) {
