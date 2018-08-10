@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+
 public class ExceptionRangeCFG {
   private final List<BasicBlock> protectedRange; // FIXME: replace with set
   private BasicBlock handler;
@@ -21,6 +23,28 @@ public class ExceptionRangeCFG {
 
   public boolean isCircular() {
     return protectedRange.contains(handler);
+  }
+
+  public String toString() {
+
+    String new_line_separator = DecompilerContext.getNewLineSeparator();
+
+    StringBuilder buf = new StringBuilder();
+
+    buf.append("exceptionType:");
+    for (String exception_type : exceptionTypes) {
+      buf.append(" ").append(exception_type);
+    }
+    buf.append(new_line_separator);
+
+    buf.append("handler: ").append(handler.id).append(new_line_separator);
+    buf.append("range: ");
+    for (int i = 0; i < protectedRange.size(); i++) {
+      buf.append(protectedRange.get(i).id).append(" ");
+    }
+    buf.append(new_line_separator);
+
+    return buf.toString();
   }
 
   public BasicBlock getHandler() {
