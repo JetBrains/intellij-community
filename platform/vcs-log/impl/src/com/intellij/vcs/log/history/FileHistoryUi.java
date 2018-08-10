@@ -18,6 +18,7 @@ package com.intellij.vcs.log.history;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +50,7 @@ import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +65,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
-  @NotNull private static final List<String> HIGHLIGHTERS = Arrays.asList(MyCommitsHighlighter.Factory.ID,
-                                                                          CurrentBranchHighlighter.Factory.ID);
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FilePath myPath;
@@ -71,6 +72,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
   @NotNull private final IndexDataGetter myIndexDataGetter;
+  @NotNull private final Set<String> myHighlighterIds;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
@@ -90,9 +92,16 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
-    for (VcsLogHighlighterFactory factory: ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
-                                                                f -> HIGHLIGHTERS.contains(f.getId()))) {
+    myHighlighterIds = myRevision == null
+                       ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
+                                                  CurrentBranchHighlighter.Factory.ID)
+                       : Collections.singleton(MyCommitsHighlighter.Factory.ID);
+    for (VcsLogHighlighterFactory factory : ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
+                                                                 f -> isHighlighterEnabled(f.getId()))) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
+    }
+    if (myRevision != null) {
+      getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
     }
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
@@ -272,7 +281,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Override
   public boolean isHighlighterEnabled(@NotNull String id) {
-    return HIGHLIGHTERS.contains(id);
+    return myHighlighterIds.contains(id);
   }
 
   @Override
@@ -327,6 +336,57 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
         getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      }
+    }
+  }
+
+  private static class RevisionHistoryHighlighter implements VcsLogHighlighter {
+    @NotNull private final JBColor myBgColor = new JBColor(new Color(0xfffee4), new Color(0x49493f));
+    @NotNull private final VcsLogStorage myStorage;
+    @NotNull private final Hash myRevision;
+    @NotNull private final VirtualFile myRoot;
+
+    @Nullable private Condition<Integer> myCondition;
+    @NotNull private VcsLogDataPack myVisiblePack = VisiblePack.EMPTY;
+
+    public RevisionHistoryHighlighter(@NotNull VcsLogStorage storage, @NotNull Hash revision, @NotNull VirtualFile root) {
+      myStorage = storage;
+      myRevision = revision;
+      myRoot = root;
+    }
+
+    @NotNull
+    @Override
+    public VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
+      if (isSelected) return VcsCommitStyle.DEFAULT;
+
+      if (myCondition == null) {
+        myCondition = getCondition();
+      }
+
+      if (myCondition.value(myStorage.getCommitIndex(commitDetails.getId(), commitDetails.getRoot()))) {
+        return VcsCommitStyleFactory.background(myBgColor);
+      }
+      return VcsCommitStyle.DEFAULT;
+    }
+
+    @NotNull
+    private Condition<Integer> getCondition() {
+      if (!(myVisiblePack instanceof VisiblePack)) return Conditions.alwaysFalse();
+      DataPackBase dataPack = ((VisiblePack)myVisiblePack).getDataPack();
+      if (!(dataPack instanceof DataPack)) return Conditions.alwaysFalse();
+      Set<Integer> heads = Collections.singleton(myStorage.getCommitIndex(myRevision, myRoot));
+      return ((DataPack)dataPack).getPermanentGraph().getContainedInBranchCondition(heads);
+    }
+
+    @Override
+    public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
+      myVisiblePack = dataPack;
+      if (myVisiblePack.getFilters().get(VcsLogFilterCollection.REVISION_FILTER) != null) {
+        myCondition = Conditions.alwaysFalse();
+      }
+      else {
+        myCondition = null;
       }
     }
   }
