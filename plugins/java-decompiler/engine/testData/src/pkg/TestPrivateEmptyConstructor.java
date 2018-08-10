@@ -1,3 +1,4 @@
+package pkg;
 
 public final class PrivateEmptyConstructor {
 
