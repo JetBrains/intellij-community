@@ -76,8 +76,8 @@ import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -208,7 +208,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myActionManager = manager;
     AnActionListener actionListener = new AnActionListener() {
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null) {
           if (action instanceof ShowQuickDocInfoAction) {
@@ -567,7 +567,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (myEditor == null) {
-      // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked, 
+      // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked,
       // so reevaluate the editor for proper popup placement
       Lookup lookup = LookupManager.getInstance(myProject).getActiveLookup();
       myEditor = lookup != null ? lookup.getEditor() : null;

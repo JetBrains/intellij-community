@@ -68,7 +68,7 @@ public class BraceHighlighter implements StartupActivity {
       }
 
       @Override
-      public void selectionChanged(SelectionEvent e) {
+      public void selectionChanged(@NotNull SelectionEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
         if (editor.getProject() != project) {

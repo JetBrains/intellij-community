@@ -43,6 +43,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -54,12 +55,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @NonNls public static final String ACTION_ELEMENT_NAME = "action";
@@ -124,12 +125,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
+  private final AnActionListener messageBusPublisher;
 
-  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager) {
+  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
     myDataManager = dataManager;
 
     registerPluginActions();
+    messageBusPublisher = messageBus.syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
@@ -1195,6 +1198,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
+    messageBusPublisher.beforeActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1211,6 +1215,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       catch(AbstractMethodError ignored) { }
     }
+    messageBusPublisher.afterActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1238,6 +1243,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeEditorTyping(c, dataContext);
     }
+    messageBusPublisher.beforeEditorTyping(c, dataContext);
   }
 
   @Override

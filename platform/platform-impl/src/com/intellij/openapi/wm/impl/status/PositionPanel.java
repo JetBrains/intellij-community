@@ -121,7 +121,7 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void selectionChanged(final SelectionEvent e) {
+  public void selectionChanged(@NotNull final SelectionEvent e) {
     Editor editor = e.getEditor();
     if (isFocusedEditor(editor)) updatePosition(editor);
   }

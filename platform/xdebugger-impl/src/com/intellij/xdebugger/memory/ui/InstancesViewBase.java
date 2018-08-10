@@ -85,7 +85,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     }
 
     @Override
-    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
       if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == getInstancesTree() &&
         (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
         XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);

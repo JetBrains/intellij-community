@@ -104,7 +104,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     mySelectionListener = new SelectionListener() {
       @Override
-      public void selectionChanged(SelectionEvent e) {
+      public void selectionChanged(@NotNull SelectionEvent e) {
         hideHints(HIDE_BY_CARET_MOVE, false, false);
       }
     };
@@ -872,7 +872,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
       if (action instanceof ActionToIgnore) return;
 
       AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);

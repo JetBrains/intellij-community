@@ -10,6 +10,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TimedOutCallback;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -69,7 +70,7 @@ public class ActionCommand extends TypeCommand {
           listener.set(new AnActionListener.Adapter() {
 
             @Override
-            public void beforeActionPerformed(final AnAction action, DataContext dataContext, AnActionEvent event) {
+            public void beforeActionPerformed(@NotNull final AnAction action, DataContext dataContext, AnActionEvent event) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (context.isDisposed()) {
                   am.removeAnActionListener(listener.get());

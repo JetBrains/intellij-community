@@ -39,7 +39,7 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
     });
     ActionManager.getInstance().addAnActionListener(new AnActionListener() {
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         if (action instanceof EditorAction && ((EditorAction)action).getHandler() instanceof EditorWriteActionHandler) {
           onChange(dataContext);
         }

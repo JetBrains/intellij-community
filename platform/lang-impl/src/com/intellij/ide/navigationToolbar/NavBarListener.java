@@ -377,7 +377,7 @@ public class NavBarListener
   public void keyReleased(KeyEvent e) {}
 
   @Override
-  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
+  public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {}
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {}

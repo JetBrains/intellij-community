@@ -1282,7 +1282,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
             ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
               @Override
-              public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }

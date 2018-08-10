@@ -738,7 +738,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     };
     final SelectionListener selectionListener = new SelectionListener() {
       @Override
-      public void selectionChanged(final SelectionEvent e) {
+      public void selectionChanged(@NotNull final SelectionEvent e) {
         if (!myChangeGuard && !myFinishing) {
           hideLookup(false);
         }

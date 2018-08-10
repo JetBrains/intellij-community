@@ -1390,7 +1390,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     @Override
-    public void beforeActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
     @Override

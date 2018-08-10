@@ -80,7 +80,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     myActionManager = actionManagerEx;
     myActionManager.addAnActionListener(new AnActionListener() {
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, final AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, final AnActionEvent event) {
         String id = myActionManager.getId(action);
         if (id == null) return;
         //noinspection HardCodedStringLiteral

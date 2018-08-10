@@ -2,20 +2,25 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+
+private val LOG = logger<LogActionsDuringTest>()
 
 /**
  * Rule that logs all actions during the test.
  */
-class LogActionsDuringTest: TestWatcher() {
-
-  private val LOG = Logger.getInstance(LogActionsDuringTest::class.java)
-  private val actionListener = AnActionListener({ action, dataContext, event ->
-    LOG.info("Action: $action (actionId: ${ActionManager.getInstance().getId(action)}); DataContext: $dataContext; Event: $event" )
-                                                })
+class LogActionsDuringTest : TestWatcher() {
+  private val actionListener = object : AnActionListener {
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext?, event: AnActionEvent?) {
+      LOG.info("Action: $action (actionId: ${ActionManager.getInstance().getId(action)}); DataContext: $dataContext; Event: $event")
+    }
+  }
 
   override fun starting(description: Description) {
     ActionManager.getInstance().addAnActionListener(actionListener)
@@ -24,5 +29,4 @@ class LogActionsDuringTest: TestWatcher() {
   override fun finished(description: Description) {
     ActionManager.getInstance().removeAnActionListener(actionListener)
   }
-
 }

@@ -529,7 +529,7 @@ public class DaemonListeners implements Disposable {
     private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
     @Override
-    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
       myEscPressed = action == escapeAction;
     }
 

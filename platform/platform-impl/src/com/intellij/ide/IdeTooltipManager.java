@@ -30,6 +30,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -95,7 +96,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
 
     ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         hideCurrent(null, action, event);
       }
     }, ApplicationManager.getApplication());

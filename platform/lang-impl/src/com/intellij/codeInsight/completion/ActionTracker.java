@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -37,7 +38,7 @@ class ActionTracker {
       }
 
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
         myActionsHappened = true;
       }
     }, parentDisposable);
