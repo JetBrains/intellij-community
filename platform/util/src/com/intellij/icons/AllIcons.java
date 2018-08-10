@@ -764,7 +764,7 @@ public class AllIcons {
     public static final Icon JavaOutsideSource = IconLoader.getIcon("/fileTypes/javaOutsideSource.svg"); // 16x16
     public static final Icon JavaScript = IconLoader.getIcon("/fileTypes/javaScript.svg"); // 16x16
     public static final Icon Json = IconLoader.getIcon("/fileTypes/json.svg"); // 16x16
-    public static final Icon JsonSchema = IconLoader.getIcon("/fileTypes/jsonSchema.png"); // 16x16
+    public static final Icon JsonSchema = IconLoader.getIcon("/fileTypes/jsonSchema.svg"); // 16x16
     public static final Icon Jsp = IconLoader.getIcon("/fileTypes/jsp.svg"); // 16x16
     public static final Icon Jspx = IconLoader.getIcon("/fileTypes/jspx.svg"); // 16x16
     public static final Icon Manifest = IconLoader.getIcon("/fileTypes/manifest.svg"); // 16x16
