@@ -16,13 +16,24 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class InnerClassOnInterfaceInspection extends InnerClassOnInterfaceInspectionBase {
+public class InnerClassOnInterfaceInspection extends BaseInspection {
+
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreInnerInterfaces = false;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -34,5 +45,68 @@ public class InnerClassOnInterfaceInspection extends InnerClassOnInterfaceInspec
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MoveClassFix();
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "InnerClassOfInterface";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "inner.class.on.interface.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass parentInterface = (PsiClass)infos[0];
+    final String interfaceName = parentInterface.getName();
+    return InspectionGadgetsBundle.message(
+      "inner.class.on.interface.problem.descriptor", interfaceName);
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new InnerClassOnInterfaceVisitor();
+  }
+
+  private class InnerClassOnInterfaceVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      final PsiClass[] innerClasses = aClass.getInnerClasses();
+      for (final PsiClass innerClass : innerClasses) {
+        if (isInnerClass(innerClass)) {
+          registerClassError(innerClass, aClass);
+        }
+      }
+    }
+
+    private boolean isInnerClass(PsiClass innerClass) {
+      if (innerClass.isEnum()) {
+        return false;
+      }
+      if (innerClass.isAnnotationType()) {
+        return false;
+      }
+      if (innerClass instanceof PsiTypeParameter ||
+          innerClass instanceof PsiAnonymousClass) {
+        return false;
+      }
+      return !(innerClass.isInterface() && m_ignoreInnerInterfaces);
+    }
   }
 }

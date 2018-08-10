@@ -734,7 +734,7 @@ private catch_parameter_start ::= modifier_list catch_parameter_type_element?
 private catch_parameter_type_element ::= type_element_followed_by_identifier
                                        | type_element disjunction_type_element
 catch_parameter ::= IDENTIFIER { elementType = parameter }
-finally_clause ::= 'finally' lazy_block
+finally_clause ::= 'finally' (mb_nl lazy_block)
 {
   pin = 1
 }
@@ -1217,6 +1217,10 @@ private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { cons
 type_code_reference ::= code_reference { elementType = '' name = 'type' }
 
 private qualified_name ::= <<qualifiedName code_reference>>
+
+//noinspection BnfUnusedRule
+doc_reference ::= short_code_reference doc_reference_tail* { elementType = code_reference }
+left doc_reference_tail ::= '.' code_reference_part { elementType = code_reference }
 // endregion
 
 

@@ -34,7 +34,7 @@ public class SliceBackwardAction extends CodeInsightAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (LanguageSlicing.hasAnyProviders()) super.update(e);
     else e.getPresentation().setEnabledAndVisible(false);
   }

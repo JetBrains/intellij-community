@@ -29,6 +29,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -385,7 +386,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (ViewContext.CONTEXT_KEY.is(dataId)) {
       return myViewContext;
     }

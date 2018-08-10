@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -99,28 +100,28 @@ public class MultilineEditor extends JPanel {
     private void addHistoryPagers() {
         final DefaultActionGroup pagerGroup = new DefaultActionGroup(null, false);
         pagerGroup.add(new ItemAction("PreviousOccurence", this) {
-            public void update(AnActionEvent e) {
+            public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() < myModel.getSize() - 1);
                 presentation.setText("Previous history element");
                 presentation.setDescription("Navigate to the previous history element");
             }
 
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
                 myModel.setSelectedIndex(myModel.getSelectedIndex() + 1);
                 refocus();
 
             }
         });
         pagerGroup.add(new ItemAction("NextOccurence", this) {
-            public void update(AnActionEvent e) {
+            public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() > 0);
                 presentation.setText("Next history element");
                 presentation.setDescription("Navigate to the next history element");
             }
 
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
                 myModel.setSelectedIndex(myModel.getSelectedIndex() - 1);
                 refocus();
             }

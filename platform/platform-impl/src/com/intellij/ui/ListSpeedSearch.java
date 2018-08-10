@@ -134,13 +134,13 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
                                      myList.getSelectionModel().getSelectionMode() == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListSelectionModel sm = myList.getSelectionModel();
 
       String query = mySearch.getEnteredPrefix();

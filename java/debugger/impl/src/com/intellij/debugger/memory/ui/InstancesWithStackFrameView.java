@@ -59,7 +59,7 @@ class InstancesWithStackFrameView {
                                              AllIcons.Debugger.Watch,
                                              new AnAction() {
                                                @Override
-                                               public void actionPerformed(AnActionEvent e) {
+                                               public void actionPerformed(@NotNull AnActionEvent e) {
                                                  final Project project = e.getProject();
                                                  if (project != null && !project.isDisposed()) {
                                                    InstancesTracker.getInstance(project).add(className, TrackingType.CREATION);

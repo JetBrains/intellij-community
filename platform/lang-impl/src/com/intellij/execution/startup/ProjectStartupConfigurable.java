@@ -136,7 +136,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       })
       .setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myTable.getSelectedRow() >= 0;
         }
       })

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.diff.impl.settings;
 
@@ -35,7 +21,10 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -166,7 +155,7 @@ class DiffPreviewPanel implements PreviewPanel {
     myDispatcher.addListener(listener);
   }
 
-  private class EditorMouseListener extends EditorMouseMotionAdapter {
+  private class EditorMouseListener implements EditorMouseMotionListener {
     @NotNull private final ThreeSide mySide;
 
     private EditorMouseListener(@NotNull ThreeSide side) {
@@ -182,7 +171,7 @@ class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  private class EditorClickListener extends EditorMouseAdapter implements CaretListener {
+  private class EditorClickListener implements CaretListener, com.intellij.openapi.editor.event.EditorMouseListener {
     @NotNull private final ThreeSide mySide;
 
     private EditorClickListener(@NotNull ThreeSide side) {
@@ -213,7 +202,6 @@ class DiffPreviewPanel implements PreviewPanel {
     FoldRegion region = getFoldRegion(side, line);
     if (region != null) {
       myDispatcher.getMulticaster().selectionInPreviewChanged(DiffLineSeparatorRenderer.BACKGROUND.getExternalName());
-      return;
     }
   }
 

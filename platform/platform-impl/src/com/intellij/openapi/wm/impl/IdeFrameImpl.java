@@ -86,7 +86,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
 
-    myRootPane = createRootPane(actionManager, dataManager, application);
+    myRootPane = createRootPane(actionManager, dataManager);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
@@ -217,8 +217,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     PowerSupplyKit.checkPowerSupply();
   }
 
-  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application) {
-    return new IdeRootPane(actionManager, dataManager, application, this);
+  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
+    return new IdeRootPane(actionManager, dataManager, this);
   }
 
   @NotNull
@@ -378,7 +378,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       if (myProject != null) {
         return myProject.isInitialized() ? myProject : null;

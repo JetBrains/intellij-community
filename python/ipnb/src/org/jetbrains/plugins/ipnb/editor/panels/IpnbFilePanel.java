@@ -728,7 +728,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     final IpnbEditablePanel selectedCellPanel = getSelectedCellPanel();
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       if (selectedCellPanel instanceof IpnbCodePanel) {  // Go to declaration

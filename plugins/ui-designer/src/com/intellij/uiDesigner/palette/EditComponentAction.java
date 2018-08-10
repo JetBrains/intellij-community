@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -32,7 +33,7 @@ import java.awt.*;
 public class EditComponentAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.EditComponentAction");
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
     if (project == null || selectedItem == null || selectedItem.isAnyComponent() || selectedItem.isSpacer()) {
@@ -64,7 +65,7 @@ public class EditComponentAction extends AnAction {
     palette.fireGroupsChanged();
   }
 
-  @Override public void update(AnActionEvent e) {
+  @Override public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);

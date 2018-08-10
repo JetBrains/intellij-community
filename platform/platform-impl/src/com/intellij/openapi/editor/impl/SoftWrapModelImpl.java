@@ -423,7 +423,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void moveTextHappened(int start, int end, int base) {
+  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
     if (myBulkUpdateInProgress) {
       return;
     }

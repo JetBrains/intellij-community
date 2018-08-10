@@ -164,7 +164,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final TextRange textRangeInElement = getRangeInElement();
     final PsiElement elementToChange = myElement.findElementAt(textRangeInElement.getStartOffset());
     assert elementToChange != null;
@@ -192,12 +192,6 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     return myElement.getManager().areElementsEquivalent(resolve(),element);
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return EMPTY_ARRAY;
   }
 
   public boolean isSchemaLocation() { return false; }

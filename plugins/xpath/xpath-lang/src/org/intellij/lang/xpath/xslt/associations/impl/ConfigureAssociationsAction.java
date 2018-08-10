@@ -20,13 +20,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 class ConfigureAssociationsAction extends AnAction {
     public ConfigureAssociationsAction() {
         super("Configure...");
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
         final Project project = e.getProject();
         if (project == null) return;
 

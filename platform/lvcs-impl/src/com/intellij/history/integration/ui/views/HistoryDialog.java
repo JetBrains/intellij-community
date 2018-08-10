@@ -493,14 +493,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doPerform(myModel);
     }
 
     protected abstract void doPerform(T model);
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setEnabled(isEnabled());
     }

@@ -79,7 +79,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     e.getPresentation().setEnabled(isActive(e));
   }
 
-  private boolean isActive(AnActionEvent e) {
+  private boolean isActive(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return false;

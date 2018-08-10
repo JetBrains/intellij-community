@@ -137,7 +137,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
-        public void actionPerformed(AnActionEvent event) {
+        public void actionPerformed(@NotNull AnActionEvent event) {
           addGroup(null);
         }
 
@@ -153,7 +153,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       }
       return false;
     })) {
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
         final MyNode node = (MyNode)path.getLastPathComponent();
         final MyNode parentNode = (MyNode) node.getParent();
@@ -173,7 +173,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
         {
             registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
         }
-        public void actionPerformed(AnActionEvent event) {
+        public void actionPerformed(@NotNull AnActionEvent event) {
           // apply - for update of editable object
           try {
             getSelectedConfigurable().apply();
@@ -186,7 +186,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
           }
         }
 
-        public void update(AnActionEvent event) {
+        public void update(@NotNull AnActionEvent event) {
             super.update(event);
             event.getPresentation().setEnabled(getSelectedObject() != null);
         }

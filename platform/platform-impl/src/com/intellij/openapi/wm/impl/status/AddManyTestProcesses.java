@@ -34,7 +34,7 @@ public class AddManyTestProcesses extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     for (int i = 0; i < 100; i++) {
       final int finalI = i;

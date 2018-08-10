@@ -132,7 +132,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     decorator.disableUpDownActions();
     decorator.setAddActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return !myAddActions.isEmpty();
       }
     });
@@ -144,7 +144,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
     });
     decorator.setRemoveActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         boolean enabled = false;
         for (InjInfo info : getSelectedInjections()) {
           if (!info.bundled) {
@@ -164,7 +164,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
 
     decorator.setEditActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         AnAction edit = getEditAction();
         if (edit != null) edit.update(e);
         return edit != null && edit.getTemplatePresentation().isEnabled();
@@ -226,7 +226,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         {
           addCustomUpdater(new AnActionButtonUpdater() {
             @Override
-            public boolean isEnabled(AnActionEvent e) {
+            public boolean isEnabled(@NotNull AnActionEvent e) {
               CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
               e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Move to IDE Scope" : "Move to Project Scope");
               return cfg != null;

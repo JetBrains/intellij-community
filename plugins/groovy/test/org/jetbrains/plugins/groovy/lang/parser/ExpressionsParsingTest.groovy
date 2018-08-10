@@ -179,6 +179,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testmapLiteral() throws Throwable { doTest() }
 
+  void testexpressionlabelWithoutExpression() { doTest() }
+
   void testnew$arr_decl() throws Throwable { doTest() }
 
   void testnew$emptyTypeArgs() { doTest() }

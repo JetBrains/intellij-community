@@ -812,7 +812,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myEditor != null && myEditor.isRendererMode()) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return myEditor.getCopyProvider();

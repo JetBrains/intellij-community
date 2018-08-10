@@ -42,7 +42,7 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     ThreeStateCheckBox.State state = isSelected(e);
 
     Presentation presentation = e.getPresentation();

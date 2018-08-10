@@ -90,6 +90,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
+    logUnitTest("Importing data. Data size is [" + toImport.size() + "]");
     if (toImport.isEmpty()) {
       return;
     }
@@ -141,6 +142,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   private static void importData(@NotNull IdeModifiableModelsProvider modelsProvider,
                                  @NotNull final Collection<DataNode<ContentRootData>> data,
                                  @NotNull final Module module, boolean forceDirectoriesCreation) {
+    logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     final ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
     final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
@@ -257,6 +259,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   private static void createSourceRootIfAbsent(
     @NotNull ContentEntry entry, @NotNull final SourceRoot root, @NotNull Module module,
     @NotNull JpsModuleSourceRootType<?> sourceRootType, boolean generated, boolean createEmptyContentRootDirectories) {
+    logUnitTest("create source root if absent entry.url=[" + entry.getUrl() + "] root.path=[" + root.getPath() + "]" +
+                " generated=[" + generated + "] createEmptyContentRootDirectories=[" + createEmptyContentRootDirectories + "]");
+
     SourceFolder[] folders = entry.getSourceFolders();
     for (SourceFolder folder : folders) {
       VirtualFile file = folder.getFile();
@@ -286,9 +291,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         if (LOG.isDebugEnabled()) {
           LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will add when dir is created");
         }
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.info("Adding source folder listener to watch [" + root.getPath() + "] for creation in project [hashCode=" + module.getProject().hashCode() + "]" );
-        }
+        logUnitTest("Adding source folder listener to watch [" + root.getPath() + "] for creation in project [hashCode=" + module.getProject().hashCode() + "]");
         final AddSourceFolderListener listener = new AddSourceFolderListener(root, module, sourceRootType);
         saveSourceFolderCreationListener(module, listener);
         VirtualFileManager.getInstance().addVirtualFileListener(listener, module);
@@ -315,6 +318,12 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
           LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
         }
       });
+    }
+  }
+
+  private static void logUnitTest(String message) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info(message);
     }
   }
 

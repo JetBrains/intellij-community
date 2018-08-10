@@ -416,11 +416,11 @@ public class PackageChooserDialog extends PackageChooser {
             IdeBundle.message("action.description.create.new.package"), AllIcons.Actions.NewFolder);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       createNewPackage();
     }
 
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(getTreeSelection() != null);
     }

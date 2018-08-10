@@ -35,7 +35,7 @@ public class TransferToEDTQueueTestAction extends DumbAwareAction {
     super("Test TransferToEDTQueue performance");
   }
 
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     if (frame == null) {
       JLabel label = new JLabel("Set a threshold in ms to join subtasks");
       label.setBorder(JBUI.Borders.empty(0, 5));

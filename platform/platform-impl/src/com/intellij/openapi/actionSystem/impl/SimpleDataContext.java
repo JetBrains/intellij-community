@@ -38,7 +38,7 @@ public class SimpleDataContext implements DataContext {
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     Object result = getDataFromSelfOrParent(dataId);
     
     if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {

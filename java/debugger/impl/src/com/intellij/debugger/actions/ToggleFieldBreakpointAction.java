@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class ToggleFieldBreakpointAction extends AnAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -81,7 +81,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     SourcePosition place = getPlace(event);
     boolean toEnable = place != null;
 

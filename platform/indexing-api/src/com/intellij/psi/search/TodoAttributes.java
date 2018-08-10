@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +51,13 @@ public class TodoAttributes implements Cloneable {
     myTextAttributes = textAttributes;
   }
 
+  public TodoAttributes(@NotNull TextAttributes textAttributes){
+    myTextAttributes = textAttributes;
+  }
+
+  @NotNull
   public Icon getIcon(){
-    return myIcon;
+    return ObjectUtils.chooseNotNull(myIcon, AllIcons.General.TodoDefault);
   }
 
   @NotNull

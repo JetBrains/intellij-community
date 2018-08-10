@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeListener;
 
 public interface EditorEventMulticasterEx extends EditorEventMulticaster{
+  void addPrioritizedDocumentListener(@NotNull PrioritizedInternalDocumentListener listener, @NotNull Disposable parent);
+
   void addErrorStripeListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parentDisposable);
 
   void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener, @NotNull Disposable parentDisposable);

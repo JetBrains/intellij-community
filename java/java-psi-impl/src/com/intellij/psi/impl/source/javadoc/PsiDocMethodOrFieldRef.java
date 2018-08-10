@@ -275,7 +275,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       final PsiElement nameElement = getNameElement();
       assert nameElement != null;
       final ASTNode treeElement = SourceTreeToPsiMap.psiToTreeNotNull(nameElement);

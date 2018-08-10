@@ -485,6 +485,9 @@
                     interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
     <extensionPoint name="runConfigurationProducer"
                     interface="com.intellij.execution.actions.RunConfigurationProducer"/>
+
+    <extensionPoint name="multipleRunLocationsProvider" interface="com.intellij.execution.actions.MultipleRunLocationsProvider"/>
+
     <extensionPoint name="runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
     </extensionPoint>

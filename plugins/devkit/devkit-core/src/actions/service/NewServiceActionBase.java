@@ -69,7 +69,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
       return;

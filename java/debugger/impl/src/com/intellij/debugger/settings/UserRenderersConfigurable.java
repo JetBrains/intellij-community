@@ -220,7 +220,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final NodeRenderer selectedElement = myRendererChooser.getSelectedElement();
       if (selectedElement != null) {
         myRendererChooser.addElement((NodeRenderer)selectedElement.clone(), true);
@@ -228,7 +228,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     }
 
     @Override
-    public void updateButton(AnActionEvent e) {
+    public void updateButton(@NotNull AnActionEvent e) {
       super.updateButton(e);
       e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }

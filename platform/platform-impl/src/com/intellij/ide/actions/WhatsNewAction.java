@@ -22,17 +22,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class WhatsNewAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean visible = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
     e.getPresentation().setVisible(visible);
     if (visible) {

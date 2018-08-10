@@ -48,7 +48,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
-  private RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
+  private final RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
 
   // base renderers
   private final PrimitiveRenderer myPrimitiveRenderer = new PrimitiveRenderer();
@@ -82,7 +82,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   public NodeRendererSettings() {
     // default configuration
     myHexRenderer.setEnabled(false);
-    myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
   }
 
@@ -113,19 +112,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
-    final Element element = new Element("NodeRendererSettings");
+    final Element element = new Element("state");
     if (myHexRenderer.isEnabled()) {
       JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, "true");
     }
     if (!areAlternateCollectionViewsEnabled()) {
-      JDOMExternalizerUtil
-        .writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, "false");
+      JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, "false");
     }
 
     try {
-      element.addContent(writeRenderer(myToStringRenderer));
-      element.addContent(writeRenderer(myClassRenderer));
-      element.addContent(writeRenderer(myPrimitiveRenderer));
+      addRendererIfNotDefault(myToStringRenderer, element);
+      addRendererIfNotDefault(myClassRenderer, element);
+      addRendererIfNotDefault(myPrimitiveRenderer, element);
       if (myCustomRenderers.getRendererCount() > 0) {
         final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
         element.addContent(custom);
@@ -135,6 +133,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     catch (WriteExternalException ignore) {
     }
     return element;
+  }
+
+  private void addRendererIfNotDefault(@NotNull Renderer renderer, @NotNull Element to) {
+    Element element = writeRenderer(renderer);
+    if (element.getContentSize() == 0 && element.getAttributes().size() <= 1 /* ID attribute */) {
+      return;
+    }
+
+    to.addContent(element);
   }
 
   @Override
@@ -184,14 +191,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   public RendererConfiguration getCustomRenderers() {
     return myCustomRenderers;
-  }
-
-  public void setCustomRenderers(@NotNull final RendererConfiguration customRenderers) {
-    RendererConfiguration oldConfig = myCustomRenderers;
-    myCustomRenderers = customRenderers;
-    if (oldConfig == null || !oldConfig.equals(customRenderers)) {
-      fireRenderersChanged();
-    }
   }
 
   public PrimitiveRenderer getPrimitiveRenderer() {
@@ -269,10 +268,11 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return renderer;
   }
 
+  @NotNull
   public Element writeRenderer(Renderer renderer) throws WriteExternalException {
     Element root = new Element(RENDERER_TAG);
-    if(renderer != null) {
-      root.setAttribute(RENDERER_ID  , renderer.getUniqueId());
+    if (renderer != null) {
+      root.setAttribute(RENDERER_ID, renderer.getUniqueId());
       renderer.writeExternal(root);
     }
     return root;
@@ -393,7 +393,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     @Override
-    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
+    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) {
       return null;
     }
 

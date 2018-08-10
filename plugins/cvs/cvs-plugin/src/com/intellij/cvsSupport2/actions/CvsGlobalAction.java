@@ -21,10 +21,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CvsGlobalAction extends AnAction implements DumbAware {
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final CvsContext cvsContext = CvsContextWrapper.createInstance(e);
     final Presentation presentation = e.getPresentation();
     if (cvsContext.cvsIsActive()) {

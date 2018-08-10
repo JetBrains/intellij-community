@@ -41,7 +41,7 @@ public class SelectAllAction extends TextComponentEditorAction implements DumbAw
     }
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Editor editor = TextComponentEditorAction.getEditorFromContext(event.getDataContext());
     presentation.setEnabled(editor != null);

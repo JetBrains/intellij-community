@@ -12,7 +12,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
@@ -163,7 +163,7 @@ public class FileEditorFixture extends EditorFixture {
           }
         });
       }
-    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
+    }, Timeouts.INSTANCE.getMinutes02());
 
     // TODO: Maybe find a better way to keep Documents in sync with their VirtualFiles.
     invokeActionViaKeystroke("Synchronize");
@@ -275,7 +275,7 @@ public class FileEditorFixture extends EditorFixture {
         }));
         return virtualFileReference.get() != null;
       }
-    }, GuiTestUtil.INSTANCE.getTHIRTY_SEC_TIMEOUT());
+    }, Timeouts.INSTANCE.getSeconds30());
     return new FileFixture(myFrame.getProject(), virtualFileReference.get());
   }
 
@@ -346,7 +346,7 @@ public class FileEditorFixture extends EditorFixture {
    * Selects the editor with a given tab name.
    */
   public FileEditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 5).selectTab(tabName);
+    tabs.waitTab(tabName, Timeouts.INSTANCE.getSeconds05()).selectTab(tabName);
     return this;
   }
 

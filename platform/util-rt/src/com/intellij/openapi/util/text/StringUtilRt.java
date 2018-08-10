@@ -15,10 +15,16 @@
  */
 package com.intellij.openapi.util.text;
 
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.text.StringUtil}.
@@ -316,5 +322,369 @@ public class StringUtilRt {
       if (s.charAt(i) == c) return i;
     }
     return -1;
+  }
+
+  @Contract(value = "null -> true",pure = true)
+  public static boolean isEmpty(@Nullable CharSequence cs) {
+    return cs == null || cs.length() == 0;
+  }
+
+  @Contract(value = "null -> true", pure = true)
+  public static boolean isEmptyOrSpaces(@Nullable CharSequence s) {
+    if (isEmpty(s)) {
+      return true;
+    }
+    for (int i = 0; i < s.length(); i++) {
+      if (s.charAt(i) > ' ') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <T> Function<T, String> createToStringFunction() {
+    return new Function<T, String>() {
+      public String fun(@NotNull T o) {
+        return o.toString();
+      }
+    };
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String notNullize(@Nullable String s) {
+    return notNullize(s, "");
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String notNullize(@Nullable String s, @NotNull String defaultValue) {
+    return s == null ? defaultValue : s;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <T> String join(@NotNull Collection<? extends T> items,
+                                @NotNull Function<? super T, String> f,
+                                @NotNull String separator) {
+    if (items.isEmpty()) return "";
+    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
+    return join((Iterable<? extends T>)items, f, separator);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <T> String join(@NotNull Iterable<? extends T> items,
+                                @NotNull Function<? super T, String> f,
+                                @NotNull String separator) {
+    final StringBuilder result = new StringBuilder();
+    join(items, f, separator, result);
+    return result.toString();
+  }
+
+  public static <T> void join(@NotNull Iterable<? extends T> items,
+                              @NotNull Function<? super T, String> f,
+                              @NotNull String separator,
+                              @NotNull StringBuilder result) {
+    boolean isFirst = true;
+    for (T item : items) {
+      String string = f.fun(item);
+      if (string != null && string.length() > 0) {
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          result.append(separator);
+        }
+        result.append(string);
+      }
+    }
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static List<String> split(@NotNull String s, @NotNull String separator) {
+    return split(s, separator, true);
+  }
+  @NotNull
+  @Contract(pure = true)
+  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
+    return split(s, separator, true, true);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static List<String> split(@NotNull String s, @NotNull String separator,
+                                   boolean excludeSeparator) {
+    return split(s, separator, excludeSeparator, true);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  @SuppressWarnings("unchecked")
+  public static List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
+    return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
+    if (separator.length() == 0) {
+      return Collections.singletonList(s);
+    }
+    List<CharSequence> result = new ArrayList<CharSequence>();
+    int pos = 0;
+    while (true) {
+      int index = indexOf(s,separator, pos);
+      if (index == -1) break;
+      final int nextPos = index + separator.length();
+      CharSequence token = s.subSequence(pos, excludeSeparator ? index : nextPos);
+      if (token.length() != 0 || !excludeEmptyStrings) {
+        result.add(token);
+      }
+      pos = nextPos;
+    }
+    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
+      result.add(s.subSequence(pos, s.length()));
+    }
+    return result;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
+    final List<String> result = new ArrayList<String>();
+    final StringBuilder builder = new StringBuilder(s.length());
+    boolean inQuotes = false;
+    for (int i = 0; i < s.length(); i++) {
+      final char c = s.charAt(i);
+      if (c == separator && !inQuotes) {
+        if (builder.length() > 0) {
+          result.add(builder.toString());
+          builder.setLength(0);
+        }
+        continue;
+      }
+
+      if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
+        inQuotes = !inQuotes;
+      }
+      builder.append(c);
+    }
+
+    if (builder.length() > 0) {
+      result.add(builder.toString());
+    }
+    return result;
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence s, char c) {
+    return indexOf(s, c, 0, s.length());
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence s, char c, int start) {
+    return indexOf(s, c, start, s.length());
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
+      if (s.charAt(i) == c) return i;
+    }
+    return -1;
+  }
+
+  @Contract(pure = true)
+  public static boolean contains(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
+    return indexOf(sequence, infix) >= 0;
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
+    return indexOf(sequence, infix, 0);
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
+    return indexOf(sequence, infix, start, sequence.length());
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start, int end) {
+    for (int i = start; i <= end - infix.length(); i++) {
+      if (startsWith(sequence, i, infix)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
+    int l1 = text.length();
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i) != prefix.charAt(i)) return false;
+    }
+
+    return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
+    int tl = text.length();
+    if (startIndex < 0 || startIndex > tl) {
+      throw new IllegalArgumentException("Index is out of bounds: " + startIndex + ", length: " + tl);
+    }
+    int l1 = tl - startIndex;
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i + startIndex) != prefix.charAt(i)) return false;
+    }
+
+    return true;
+  }
+
+  @Contract(pure = true)
+  public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int l1 = text.length();
+    int l2 = suffix.length();
+    if (l1 < l2) return false;
+
+    for (int i = l1 - 1; i >= l1 - l2; i--) {
+      if (text.charAt(i) != suffix.charAt(i + l2 - l1)) return false;
+    }
+
+    return true;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String formatNumber(long number) {
+    return formatNumber(number, "");
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String formatNumber(long number, @NotNull String unitSeparator) {
+    return formatValue(number, null,
+                       unitSeparator, new String[]{"", "K", "M", "G", "T", "P", "E"},
+                       new long[]{1, 1000, 1000, 1000, 1000, 1000, 1000});
+  }
+
+  /**
+   * Formats the specified file size as a string.
+   *
+   * @param fileSize the size to format.
+   * @return the size formatted as a string.
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize) {
+    return formatFileSize(fileSize, " ");
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
+    return formatValue(fileSize, null,
+                       unitSeparator, new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"},
+                       new long[]{1, 1024, 1024, 1024, 1024, 1024, 1024});
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String formatDuration(long duration) {
+    return formatDuration(duration, " ");
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String formatDuration(long duration, @NotNull String unitSeparator) {
+    return formatValue(duration, " ", unitSeparator,
+                       new String[]{"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"},
+                       new long[]{1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000});
+  }
+
+  @NotNull
+  private static String formatValue(long value,
+                                    @Nullable String partSeparator, @NotNull String unitSeparator,
+                                    @NotNull String[] units, @NotNull long[] multipliers) {
+    if (units.length != multipliers.length) {
+      throw new IllegalArgumentException(units.length + " != " + multipliers.length);
+    }
+    StringBuilder sb = new StringBuilder();
+    long count = value;
+    long remainder = 0;
+    int i = 1;
+    for (; i < units.length && count > 0; i++) {
+      long multiplier = multipliers[i];
+      if (count < multiplier) break;
+      remainder = count % multiplier;
+      count /= multiplier;
+      if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
+        if (units[i - 1].length() > 0) {
+          sb.insert(0, units[i - 1]);
+          sb.insert(0, unitSeparator);
+        }
+        sb.insert(0, remainder).insert(0, partSeparator);
+      }
+      else {
+        remainder = Math.round(remainder * 100 / (double)multiplier);
+        count += remainder / 100;
+        remainder %= 100;
+      }
+    }
+    if (partSeparator != null || remainder == 0) {
+      if (units[i - 1].length() > 0) {
+        sb.insert(0, units[i - 1]);
+        sb.insert(0, unitSeparator);
+      }
+      sb.insert(0, count);
+    }
+    else if (remainder > 0) {
+      sb.append(count).append(".").append(remainder / 10 == 0 ? "0" : "").append(remainder);
+      if (units[i - 1].length() > 0) {
+        sb.append(unitSeparator);
+        sb.append(units[i - 1]);
+      }
+    }
+    return sb.toString();
+  }
+
+  private static boolean isQuoteAt(@NotNull String s, int ind) {
+    char ch = s.charAt(ind);
+    return ch == '\'' || ch == '\"';
+  }
+
+  @Contract(pure = true)
+  public static boolean isQuotedString(@NotNull String s) {
+    return s.length() > 1 && isQuoteAt(s, 0) && s.charAt(0) == s.charAt(s.length() - 1);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String unquoteString(@NotNull String s) {
+    if (isQuotedString(s)) {
+      return s.substring(1, s.length() - 1);
+    }
+    return s;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String unquoteString(@NotNull String s, char quotationChar) {
+    if (s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1)) {
+      return s.substring(1, s.length() - 1);
+    }
+    return s;
   }
 }

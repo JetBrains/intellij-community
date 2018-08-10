@@ -34,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
 public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  {
@@ -193,7 +194,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     try {
       testApplication.setDataProvider(new TestDataProvider(myFixture.getProject()) {
         @Override
-        public Object getData(@NonNls String dataId) {
+        public Object getData(@NotNull @NonNls String dataId) {
           if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
             return new VirtualFile[] {myFixture.getFile().getVirtualFile()};
           }

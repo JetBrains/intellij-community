@@ -42,7 +42,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
   }
 
   @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
+  protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
     addTypeArgumentVariants(parameters, resultSet, resultSet.getPrefixMatcher());
   }
 

@@ -74,7 +74,7 @@ public class CustomDictionariesPanel extends JPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !ContainerUtil.exists(myCustomDictionariesTableView.getSelectedObjects(), defaultDictionaries::contains);
         }
       })

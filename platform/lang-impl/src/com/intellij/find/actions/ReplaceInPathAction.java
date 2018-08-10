@@ -20,10 +20,11 @@ package com.intellij.find.actions;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceInPathAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
@@ -37,7 +38,7 @@ public class ReplaceInPathAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     FindInPathAction.doUpdate(event);
   }
 }

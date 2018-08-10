@@ -165,6 +165,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myArranger = arranger;
   }
 
+  @Override
   public FocusDegree getFocusDegree() {
     return myFocusDegree;
   }
@@ -202,6 +203,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     mySelectionTouched = selectionTouched;
   }
 
+  @Override
   public int getSelectedIndex() {
     return myList.getSelectedIndex();
   }
@@ -292,14 +294,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return withLock(() -> ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem)));
   }
 
+  @Override
   @NotNull
   public String getAdditionalPrefix() {
     return myOffsets.getAdditionalPrefix();
   }
 
+  void fireBeforeAppendPrefix(char c) {
+    myPrefixChangeListeners.forEach((listener -> listener.beforeAppend(c)));
+  }
+
   void appendPrefix(char c) {
     checkValid();
-    myPrefixChangeListeners.forEach((listener -> listener.beforeAppend(c)));
     myOffsets.appendPrefix(c);
     withLock(() -> {
       myPresentableArranger.prefixChanged(this);
@@ -658,6 +664,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return isVisible();
   }
 
+  @Override
   public boolean isShown() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -737,7 +744,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         }
       }
     };
-    final EditorMouseListener mouseListener = new EditorMouseAdapter() {
+    final EditorMouseListener mouseListener = new EditorMouseListener() {
       @Override
       public void mouseClicked(EditorMouseEvent e){
         e.consume();
@@ -755,7 +762,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         @Override
         public void showNotify() {
         }
-  
+
         @Override
         public void hideNotify() {
           hideLookup(false);
@@ -940,7 +947,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  @NotNull 
+  @NotNull
   public Editor getEditor() {
     DocumentWindow documentWindow = getInjectedDocument(myProject, myEditor, myEditor.getCaretModel().getOffset());
     if (documentWindow != null) {

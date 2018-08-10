@@ -24,6 +24,7 @@ import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -59,7 +60,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       new ComponentPanelTest(project).show();

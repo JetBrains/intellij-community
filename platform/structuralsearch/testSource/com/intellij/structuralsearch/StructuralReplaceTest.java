@@ -1837,6 +1837,37 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("Replacing try/finally should also keep unmatched resource lists and finally blocks",
                  expected2,
                  replace(in2, what2, by2));
+
+    final String in3 = "class Foo {\n" +
+                       "  {\n" +
+                       "    try {\n" +
+                       "    } catch (NullPointerException e) {\n" +
+                       "    } catch (IllegalArgumentException e) {\n" +
+                       "    } catch (Exception ignored) {\n" +
+                       "    }\n" +
+                       "  }\n" +
+                       "}";
+    final String what3 = "try {\n" +
+                         "} catch(Exception ignored) {\n" +
+                         "}";
+    final String by3 = "try {\n" +
+                       "  // 1\n" +
+                       "} catch(Exception ignored) {\n" +
+                       "  //2\n" +
+                       "}";
+    assertEquals("don't break the order of catch blocks",
+                 "class Foo {\n" +
+                 "  {\n" +
+                 "    try {\n" +
+                 "  // 1\n" +
+                 "} catch (NullPointerException e) {\n" +
+                 "    } catch (IllegalArgumentException e) {\n" +
+                 "    } catch(Exception ignored) {\n" +
+                 "  //2\n" +
+                 "}\n" +
+                 "  }\n" +
+                 "}",
+                 replace(in3, what3, by3));
   }
 
   public void testReplaceExtraSemicolon() {

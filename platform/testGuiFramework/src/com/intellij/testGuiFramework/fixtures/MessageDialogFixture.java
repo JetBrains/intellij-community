@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import com.intellij.testGuiFramework.framework.Timeouts;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
@@ -34,7 +35,7 @@ public class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> imple
 
   @NotNull
   static MessageDialogFixture findByTitle(@NotNull Robot robot, @NotNull final String title) {
-    return findByTitle(robot, title, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    return findByTitle(robot, title, Timeouts.INSTANCE.getMinutes05());
   }
 
   @NotNull
@@ -53,7 +54,7 @@ public class MessageDialogFixture extends IdeaDialogFixture<DialogWrapper> imple
   }
 
   static MessageDialogFixture findAny(@NotNull Robot robot) {
-    return findAny(robot, GuiTestUtil.INSTANCE.getLONG_TIMEOUT());
+    return findAny(robot, Timeouts.INSTANCE.getMinutes05());
   }
 
   static MessageDialogFixture findAny(@NotNull Robot robot, @NotNull Timeout timeout) {

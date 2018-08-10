@@ -40,7 +40,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
-public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport {
+public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final byte FRAMEWORK_ID = 0x0;
 
@@ -66,6 +66,8 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   private final Data myData;
+  private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
+
   final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
     @Override
     public void setName(final String qualifiedName) {
@@ -376,6 +378,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return myData.getTestObject(this);
   }
 
+  @NotNull
+  @Override
+  public InputRedirectOptions getInputRedirectOptions() {
+    return myInputRedirectOptions;
+  }
+
   @Override
   public void readExternal(@NotNull final Element element) throws InvalidDataException {
     super.readExternal(element);
@@ -442,6 +450,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
         getPersistentData().setTags(StringUtil.join(tags, "|"));
       }
     }
+    myInputRedirectOptions.readExternal(element);
   }
 
   @Override
@@ -506,6 +515,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       tagsElement.setAttribute("value", tags);
       element.addContent(tagsElement);
     }
+    myInputRedirectOptions.writeExternal(element);
   }
 
   public String getForkMode() {
@@ -715,7 +725,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
           return ExecutionBundle.message("default.junit.config.name.whole.project");
         }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
-        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(getDirName(), '/');
+        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
         if (packageName.length() == 0) {
           if (moduleName.length() > 0) {
             return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);

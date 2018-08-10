@@ -27,7 +27,7 @@ public class YAMLAliasReference extends PsiReferenceBase<YAMLAliasImpl> {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     getIdentifier().replaceWithText(newElementName);
     return myElement;
   }

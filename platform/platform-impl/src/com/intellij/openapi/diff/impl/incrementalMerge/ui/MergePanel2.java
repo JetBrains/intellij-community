@@ -533,7 +533,7 @@ public class MergePanel2 implements DiffViewer {
   }
 
   private class MyDataProvider extends GenericDataProvider {
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (FocusDiffSide.DATA_KEY.is(dataId)) {
         int index = getFocusedEditorIndex();
         if (index < 0) return null;

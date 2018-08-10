@@ -103,7 +103,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
+  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
     presentation.setDescription(description);

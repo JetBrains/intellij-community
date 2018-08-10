@@ -237,7 +237,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     final Editor e = validateCurrentEditor();
     if (e == null || e.isDisposed()) return null;
 

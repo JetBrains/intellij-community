@@ -67,7 +67,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       e.getPresentation().setVisible(false);
@@ -86,7 +86,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       return;

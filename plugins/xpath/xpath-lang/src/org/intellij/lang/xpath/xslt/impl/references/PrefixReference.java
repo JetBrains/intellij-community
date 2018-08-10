@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,12 +49,6 @@ public class PrefixReference extends SimpleAttributeReference implements EmptyRe
 
   public boolean isSoft() {
     return false;
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

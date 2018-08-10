@@ -23,12 +23,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
  */
 public final class RestoreDefaultLayoutAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e){
     Project project = e.getProject();
     if(project==null){
       return;
@@ -37,7 +38,7 @@ public final class RestoreDefaultLayoutAction extends AnAction implements DumbAw
     ToolWindowManagerEx.getInstanceEx(project).setLayout(layout);
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(event.getProject() != null);
   }

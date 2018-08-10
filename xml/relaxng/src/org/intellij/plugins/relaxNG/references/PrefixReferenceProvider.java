@@ -33,7 +33,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,12 +99,6 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
       final XmlTag tag = factory.createTagFromText("<" + (name.length > 1 ? name[1] : value) + " />", XMLLanguage.INSTANCE);
 
       return new LocalQuickFix[] { XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(tag, getCanonicalText(), null) };
-    }
-
-    @Override
-    @NotNull
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override

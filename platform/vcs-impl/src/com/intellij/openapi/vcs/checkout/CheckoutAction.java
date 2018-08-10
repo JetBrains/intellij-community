@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import org.jetbrains.annotations.NotNull;
 
 public class CheckoutAction extends AnAction implements DumbAware, ActionIdProvider {
   private final CheckoutProvider myProvider;
@@ -35,7 +36,7 @@ public class CheckoutAction extends AnAction implements DumbAware, ActionIdProvi
     myIdPrefix = idPrefix;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     project = (project == null) ? ProjectManager.getInstance().getDefaultProject() : project;
     myProvider.doCheckout(project, getListener(project));

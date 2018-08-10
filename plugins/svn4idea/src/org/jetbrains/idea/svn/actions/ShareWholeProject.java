@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -36,7 +37,7 @@ import java.util.List;
 
 public class ShareWholeProject extends AnAction implements DumbAware {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final MyChecker checker = new MyChecker();
     checker.execute(e);
 
@@ -135,7 +136,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
   }
 
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final MyChecker checker = new MyChecker();
     checker.execute(e);
     if (!checker.isEnabled()) return;

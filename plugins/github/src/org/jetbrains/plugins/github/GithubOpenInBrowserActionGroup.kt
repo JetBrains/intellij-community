@@ -55,9 +55,7 @@ open class GithubOpenInBrowserActionGroup
     getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
   }
 
-  override fun canBePerformed(context: DataContext?): Boolean {
-    if (context == null) return false
-
+  override fun canBePerformed(context: DataContext): Boolean {
     val data = getData(context)
     return data != null && data.first.size == 1
   }

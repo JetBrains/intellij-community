@@ -373,7 +373,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       addArtifact(myType, myArtifactTemplate);
     }
   }
@@ -384,7 +384,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Object o = getSelectedObject();
       if (o instanceof Artifact) {
         final Artifact selected = (Artifact)o;
@@ -403,7 +403,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
         e.getPresentation().setEnabled(false);
       }

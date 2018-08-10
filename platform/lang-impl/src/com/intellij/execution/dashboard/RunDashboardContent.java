@@ -201,7 +201,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(@NonNls String dataId) {
+      public Object getData(@NotNull @NonNls String dataId) {
         if (KEY.getName().equals(dataId)) {
           return RunDashboardContent.this;
         }
@@ -257,6 +257,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private void setTreeVisible(boolean visible) {
     myTreePanel.setVisible(visible);
     myToolbar.setBorder(visible ? null : BorderFactory.createMatteBorder(0, 0, 0, 1, CONTRAST_BORDER_COLOR));
+    if (!visible && myContentManager.getContentCount() > 0) {
+      showContentPanel();
+    }
   }
 
   private void updateContentToolbar(Content content) {
@@ -393,10 +396,17 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     JPanel toolBarPanel = new JPanel(new BorderLayout());
 
     ActionManager actionManager = ActionManager.getInstance();
-    myDashboardContentActions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
-    AnAction stopAction = actionManager.getAction(RUN_DASHBOARD_STOP_ACTION_ID);
-    stopAction.registerCustomShortcutSet(this, null);
-    myDashboardContentActions.add(stopAction);
+    AnAction registeredActions = actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR);
+    if (registeredActions instanceof DefaultActionGroup) {
+      for (AnAction action : ((DefaultActionGroup)registeredActions).getChildren(null)) {
+        if (RUN_DASHBOARD_STOP_ACTION_ID.equals(actionManager.getId(action))) {
+          // Register shortcut set on the component in order to override global stop action.
+          action.registerCustomShortcutSet(this, null);
+          break;
+        }
+      }
+    }
+    myDashboardContentActions.add(registeredActions);
     myContentActionGroup.add(myDashboardContentActions);
     ActionToolbar contentActionsToolBar = actionManager.createActionToolbar(PLACE_TOOLBAR, myContentActionGroup, false);
     toolBarPanel.add(contentActionsToolBar.getComponent(), BorderLayout.CENTER);

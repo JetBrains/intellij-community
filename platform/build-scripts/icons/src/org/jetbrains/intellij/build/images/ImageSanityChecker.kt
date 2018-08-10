@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.images
 
-import com.intellij.util.containers.MultiMap
 import org.jetbrains.intellij.build.images.ImageExtension.*
 import org.jetbrains.intellij.build.images.ImageSanityCheckerBase.Severity.*
 import org.jetbrains.intellij.build.images.ImageType.*
@@ -27,11 +26,6 @@ import java.util.*
 abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: Boolean) {
   private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
 
-  private val IMAGES_WITH_BOTH_SVG_AND_PNG = MultiMap.createSet<String, String>().apply {
-    //putValue("intellij.platform.icons", "general/settings")
-    //putValue("intellij.platform.icons", "actions/cross")
-  }
-
   fun check(module: JpsModule) {
     val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
 
@@ -42,9 +36,10 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     checkHaveCompleteIconSet(images, module)
     checkHaveValidSize(images, module)
     checkAreNotAmbiguous(images, module)
-    checkSvgFallbackVersionsAreStubIcons(images, module)
-    checkOverridingFallbackVersionsAreStubIcons(images, module)
-    checkIconsWithBothSvgAndPng(images, module)
+    checkNoStubIcons(images, module)
+    checkNoDeprecatedIcons(images, module)
+    checkNoSvgFallbackVersions(images, module)
+    checkNoOverridingFallbackVersions(images, module)
   }
 
   private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
@@ -102,57 +97,33 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     }
   }
 
-  private fun checkSvgFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
-    val imagesWithSvgAndPng = IMAGES_WITH_BOTH_SVG_AND_PNG[module.name]
-    val filteredImages = images.filter { !imagesWithSvgAndPng.contains(it.id) }
+  private fun checkNoStubIcons(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "copies of the stub.png image must be removed", module) { image ->
+      return@process image.files.none { STUB_PNG_MD5 == md5(it) }
+    }
+  }
 
-    process(filteredImages, WARNING, "SVG icons should use stub.png as fallback", module) { image ->
+  private fun checkNoDeprecatedIcons(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "deprecated icons must be moved to /compatibilityResources", module) { image ->
+      return@process image.deprecation == null || image.files.isEmpty()
+    }
+  }
+
+  private fun checkNoSvgFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "SVG icons should not use PNG icons as fallback", module) { image ->
       if (image.files.none { ImageExtension.fromFile(it) == SVG }) return@process true
 
       val legacyFiles = image.files.filter { ImageExtension.fromFile(it) != SVG }
-      return@process isStubFallbackVersion(legacyFiles)
+      return@process legacyFiles.isEmpty()
     }
   }
 
-  private fun checkOverridingFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
-    process(images, WARNING, "Overridden icons should be replaced with stub.png as fallback", module) { image ->
+  private fun checkNoOverridingFallbackVersions(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "Overridden icons should not use PNG icons as fallback", module) { image ->
       if (image.deprecation?.replacement == null) return@process true
 
-      return@process isStubFallbackVersion(image.files)
+      return@process image.files.isEmpty()
     }
-  }
-
-  private fun checkIconsWithBothSvgAndPng(images: List<ImagePaths>, module: JpsModule) {
-    val imagesWithSvgAndPng = IMAGES_WITH_BOTH_SVG_AND_PNG[module.name]
-    val filteredImages = images.filter { imagesWithSvgAndPng.contains(it.id) }
-
-    if (filteredImages.size != imagesWithSvgAndPng.size) {
-      val notFoundImagesIds = imagesWithSvgAndPng.toMutableSet().apply {
-        filteredImages.forEach { this.remove(it.id) }
-      }
-      log(WARNING, "This icon should have both SVG and PNG versions, but was not found\n" +
-                   "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module,
-          notFoundImagesIds.map { ImagePaths(it, module.sourceRoots.first(), false) })
-    }
-
-    process(filteredImages, WARNING, "This icon should have both SVG and PNG versions\n" +
-                                     "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module) { image ->
-      val svgFiles = image.files.filter { ImageExtension.fromFile(it) == SVG }
-      val pngFiles = image.files.filter { ImageExtension.fromFile(it) == PNG }
-
-      return@process svgFiles.isNotEmpty() && !isStubFallbackVersion(pngFiles)
-    }
-  }
-
-  private fun isStubFallbackVersion(files: List<File>): Boolean {
-    if (files.isEmpty()) return true
-    if (files.size > 1) return false
-
-    val file = files.single()
-    if (ImageType.fromFile(file) != BASIC) return false
-
-    val md5 = md5(file)
-    return md5 == STUB_PNG_MD5
   }
 
 

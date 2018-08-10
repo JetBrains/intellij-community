@@ -59,7 +59,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1");
-    importProjectWithErrors(true);
+    importProjectWithErrors();
 
     assertModules("project");
     assertContentRoots("project", getProjectPath());

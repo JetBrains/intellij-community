@@ -293,12 +293,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
 
     @Override
-    public boolean canBePerformed(DataContext context) {
+    public boolean canBePerformed(@NotNull DataContext context) {
       return true;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListPopup popup = JBPopupFactory.getInstance().
         createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
 

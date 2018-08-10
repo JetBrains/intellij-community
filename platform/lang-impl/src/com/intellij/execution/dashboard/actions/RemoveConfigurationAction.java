@@ -63,7 +63,7 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
+  protected void doActionPerformed(@NotNull RunDashboardContent content, @NotNull AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
     if (Messages.showYesNoDialog((Project)null,
                                  ExecutionBundle.message("run.dashboard.remove.configuration.dialog.message"),
                                  ExecutionBundle.message("run.dashboard.remove.configuration.dialog.title"),

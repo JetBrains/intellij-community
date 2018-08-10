@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This group hides itself when there's no enabled and visible child.
@@ -34,7 +35,7 @@ public class NonTrivialActionGroup extends DefaultActionGroup implements DumbAwa
     super();
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(!ActionGroupUtil.isGroupEmpty(this, e, LaterInvocator.isInModalContext()));
   }
 }

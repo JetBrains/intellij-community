@@ -37,7 +37,7 @@ public class ToggleFullScreenAction extends DumbAwareAction {
   private static final String TEXT_EXIT_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.exit");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     IdeFrameEx frame = getFrame();
     if (frame != null) {
       frame.toggleFullScreen(!frame.isInFullScreen());

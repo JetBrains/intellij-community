@@ -21,6 +21,7 @@ import com.intellij.lang.ant.config.execution.AntBuildMessageView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import org.jetbrains.annotations.NotNull;
 
 public final class PauseOutputAction extends ToggleAction {
   private final AntBuildMessageView myAntBuildMessageView;
@@ -38,7 +39,7 @@ public final class PauseOutputAction extends ToggleAction {
     myAntBuildMessageView.setOutputPaused(flag);
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     super.update(event);
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(!myAntBuildMessageView.isStopped() || isSelected(event));

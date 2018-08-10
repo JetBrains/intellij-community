@@ -51,12 +51,12 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myFile.getFileInfo().getState() == RemoteFileState.DOWNLOADED);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Collection<VirtualFile> files = findLocalFiles(myProject, Urls.newFromVirtualFile(myFile), myFile.getName());
     if (files.isEmpty()) {
       Messages.showErrorDialog(myProject, "Cannot find local file for '" + myFile.getUrl() + "'", CommonBundle.getErrorTitle());

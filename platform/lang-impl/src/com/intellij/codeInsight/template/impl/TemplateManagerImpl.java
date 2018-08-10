@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -29,7 +14,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
@@ -39,6 +24,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.LazyUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +37,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
-  private static final TemplateContextType[] ourContextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
+  // called a lot of times on save/load, so, better to use ExtensionPoint instead of name
+  static final NotNullLazyValue<ExtensionPoint<TemplateContextType>> TEMPLATE_CONTEXT_EP = LazyUtil.create(() -> TemplateContextType.EP_NAME.getPoint(null));
+
   private final Project myProject;
   private final MessageBus myMessageBus;
   private boolean myTemplateTesting;
@@ -496,9 +484,8 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   private static LinkedList<TemplateContextType> buildOrderedContextTypes() {
-    final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<>();
-    for (TemplateContextType contextType : typeCollection) {
+    for (TemplateContextType contextType : getAllContextTypes()) {
       if (contextType.getClass().getName().startsWith(Template.class.getPackage().getName())) {
         userDefinedExtensionsFirst.addLast(contextType);
       }
@@ -509,8 +496,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return userDefinedExtensionsFirst;
   }
 
-  public static TemplateContextType[] getAllContextTypes() {
-    return ourContextTypes;
+  @NotNull
+  public static List<TemplateContextType> getAllContextTypes() {
+    return TEMPLATE_CONTEXT_EP.getValue().getExtensionList();
   }
 
   @Override
@@ -554,7 +542,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     }
     return result;
   }
-  
+
   public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(Editor editor, PsiFile file, boolean selectionOnly) {
     int startOffset = editor.getSelectionModel().getSelectionStart();
     int endOffset = editor.getSelectionModel().getSelectionEnd();

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -50,7 +51,7 @@ public class InsertPathAction extends AnAction {
     myDescriptor = descriptor;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     String selectedText = myTextField.getSelectedText();
     VirtualFile virtualFile;
     if (selectedText != null ) {

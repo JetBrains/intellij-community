@@ -41,6 +41,6 @@ class TypeAheadTest : GuiTestCase() {
     val actionName = "Add New Configuration"
     GuiTestUtilKt.waitUntil("action button will be visible") { actionButton(actionName).target().isShowing }
     actionButton(actionName).click()
-    popupClick("JUnit")
+    popupMenu("JUnit").clickSearchedItem()
   }
 }

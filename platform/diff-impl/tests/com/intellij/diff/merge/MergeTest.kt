@@ -16,9 +16,11 @@
 package com.intellij.diff.merge
 
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
+import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType.*
 import com.intellij.diff.util.ThreeSide
+import com.intellij.util.ui.UIUtil
 
 class MergeTest : MergeTestBase() {
   fun testChangeTypes() {
@@ -907,6 +909,89 @@ class MergeTest : MergeTestBase() {
           "original_original_original_original_original_",
           "original_remote_remote_remote_original_") {
 
+    }
+  }
+
+  fun testIgnored() {
+    test(" x_new_y_z", "x_ y _z", "x_y _new_ z", 5, IgnorePolicy.IGNORE_WHITESPACES) {
+      0.assertRange(0, 1, 0, 1, 0, 1)
+      1.assertRange(1, 2, 1, 1, 1, 1)
+      2.assertRange(2, 3, 1, 2, 1, 2)
+      3.assertRange(3, 3, 2, 2, 2, 3)
+      4.assertRange(3, 4, 2, 3, 3, 4)
+
+      0.assertType(MODIFIED, LEFT)
+      1.assertType(INSERTED, LEFT)
+      2.assertType(MODIFIED, BOTH)
+      3.assertType(INSERTED, RIGHT)
+      4.assertType(MODIFIED, RIGHT)
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.BASE)
+      }
+      assertContent(" x_new_y_new_ z")
+
+      0.assertResolved(BOTH)
+      1.assertResolved(BOTH)
+      2.assertResolved(BOTH)
+      3.assertResolved(BOTH)
+      4.assertResolved(BOTH)
+
+      undo(1)
+
+      1.apply(Side.RIGHT)
+      2.apply(Side.RIGHT)
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.BASE)
+      }
+
+      assertContent(" x_y _new_ z")
+    }
+
+    test(" x_new_y1_z", "x_ y _z", "x_y2 _new_ z", 3, IgnorePolicy.IGNORE_WHITESPACES) {
+      0.assertRange(0, 1, 0, 1, 0, 1)
+      1.assertRange(1, 3, 1, 2, 1, 3)
+      2.assertRange(3, 4, 2, 3, 3, 4)
+
+      0.assertType(MODIFIED, LEFT)
+      1.assertType(CONFLICT, BOTH)
+      2.assertType(MODIFIED, RIGHT)
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.BASE)
+      }
+      assertContent(" x_ y _ z")
+
+      0.assertResolved(BOTH)
+      1.assertResolved(NONE)
+      2.assertResolved(BOTH)
+    }
+
+    test(" x_new_y_z", "x_ y _z", "x_y _new_ z", 1, IgnorePolicy.DEFAULT) {
+      0.assertRange(0, 4, 0, 3, 0, 4)
+      0.assertType(CONFLICT, BOTH)
+
+      viewer.textSettings.ignorePolicy = IgnorePolicy.IGNORE_WHITESPACES
+      UIUtil.dispatchAllInvocationEvents()
+      assertCantUndo()
+
+      0.assertRange(0, 1, 0, 1, 0, 1)
+      1.assertRange(1, 2, 1, 1, 1, 1)
+      2.assertRange(2, 3, 1, 2, 1, 2)
+      3.assertRange(3, 3, 2, 2, 2, 3)
+      4.assertRange(3, 4, 2, 3, 3, 4)
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.RIGHT)
+      }
+      assertContent("x_y _new_ z")
+
+      0.assertResolved(NONE)
+      1.assertResolved(NONE)
+      2.assertResolved(BOTH)
+      3.assertResolved(BOTH)
+      4.assertResolved(BOTH)
     }
   }
 }

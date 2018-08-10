@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
@@ -41,7 +42,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     myCloseSource = closeSource;
   }
 
-  public void actionPerformed(final AnActionEvent event) {
+  public void actionPerformed(@NotNull final AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
@@ -54,7 +55,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     }
   }
 
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     final int minimum = myCloseSource ? 2 : 1;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -9,7 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -53,7 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author max
  */
-public class PersistentFSImpl extends PersistentFS implements ApplicationComponent, Disposable {
+public class PersistentFSImpl extends PersistentFS implements BaseComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
@@ -1127,21 +1125,23 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         final VFilePropertyChangeEvent propertyChangeEvent = (VFilePropertyChangeEvent)event;
         VirtualFile file = propertyChangeEvent.getFile();
         Object newValue = propertyChangeEvent.getNewValue();
-        if (VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName())) {
-          executeRename(file, (String)newValue);
-        }
-        else if (VirtualFile.PROP_WRITABLE.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetWritable(file, ((Boolean)newValue).booleanValue());
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
-          }
-        }
-        else if (VirtualFile.PROP_HIDDEN.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetHidden(file, ((Boolean)newValue).booleanValue());
-        }
-        else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyChangeEvent.getPropertyName())) {
-          executeSetTarget(file, (String)newValue);
-          markForContentReloadRecursively(getFileId(file));
+        switch (propertyChangeEvent.getPropertyName()) {
+          case VirtualFile.PROP_NAME:
+            executeRename(file, (String)newValue);
+            break;
+          case VirtualFile.PROP_WRITABLE:
+            executeSetWritable(file, ((Boolean)newValue).booleanValue());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("File " + file + " writable=" + file.isWritable() + " id=" + getFileId(file));
+            }
+            break;
+          case VirtualFile.PROP_HIDDEN:
+            executeSetHidden(file, ((Boolean)newValue).booleanValue());
+            break;
+          case VirtualFile.PROP_SYMLINK_TARGET:
+            executeSetTarget(file, (String)newValue);
+            markForContentReloadRecursively(getFileId(file));
+            break;
         }
       }
     }

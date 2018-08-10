@@ -17,10 +17,11 @@ package com.jetbrains.python.newProject;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class PyCharmNewProjectAction extends AnAction {
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final PyCharmNewProjectDialog dlg = new PyCharmNewProjectDialog();
     dlg.show();
   }

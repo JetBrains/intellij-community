@@ -351,7 +351,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
       AnAction action = new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (isResultsPreviewTabActive()) {
             navigateToSelectedUsage(myResultsPreviewTable);
           }
@@ -360,7 +360,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
       action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox, myDisposable);
       new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           if (!isResultsPreviewTabActive() || myResultsPreviewTable.getSelectedRowCount() == 0) doOKAction();
           else action.actionPerformed(e);
         }
@@ -1645,7 +1645,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private void registerNavigateToSourceShortcutOnComponent(@NotNull final JBTable c, JComponent component) {
     AnAction anAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigateToSelectedUsage(c);
       }
     };

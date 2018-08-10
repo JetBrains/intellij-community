@@ -132,7 +132,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     //TODO?
     throw new IncorrectOperationException();
   }

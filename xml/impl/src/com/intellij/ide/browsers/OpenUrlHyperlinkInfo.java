@@ -61,7 +61,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
       if (browserCondition.value(browser)) {
         group.add(new AnAction("Open in " + browser.getName(), "Open URL in " + browser.getName(), browser.getIcon()) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             BrowserLauncher.getInstance().browse(url, browser, e.getProject());
           }
         });
@@ -70,7 +70,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
 
     group.add(new AnAction("Copy URL", "Copy URL to clipboard", PlatformIcons.COPY_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         CopyPasteManager.getInstance().setContents(new StringSelection(url));
       }
     });

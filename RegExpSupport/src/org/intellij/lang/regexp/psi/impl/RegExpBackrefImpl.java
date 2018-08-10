@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
 
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -88,7 +87,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                 return getElement().getText();
             }
 
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
                 throw new IncorrectOperationException();
             }
 
@@ -106,11 +105,6 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
             public PsiElement resolve() {
                 return RegExpBackrefImpl.this.resolve();
-            }
-            
-            @NotNull
-            public Object[] getVariants() {
-                return ArrayUtil.EMPTY_OBJECT_ARRAY;
             }
         };
     }

@@ -47,7 +47,7 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     final IpnbFileEditor ipnbEditor = IpnbFileEditor.DATA_KEY.getData(context);
     final Presentation presentation = e.getPresentation();

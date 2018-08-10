@@ -28,6 +28,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -443,7 +444,25 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = () -> super.createComponents(indicator);
+    Runnable task = () -> {
+      super.createComponents(indicator);
+      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
+      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
+        try {
+          listener.componentsInitialized();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+
+        try {
+          initializedExtensionPoint.reset();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+    };
 
     if (indicator == null) {
       // no splash, no need to to use progress manager

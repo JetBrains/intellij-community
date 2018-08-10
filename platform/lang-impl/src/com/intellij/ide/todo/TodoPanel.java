@@ -194,7 +194,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
                       .showUnderneathOf(e.getInputEvent().getComponent());
       }
@@ -344,7 +344,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {

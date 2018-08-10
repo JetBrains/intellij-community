@@ -1,5 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.openapi.vcs.changes.patch.PatchClipboardTracker"/>
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
 

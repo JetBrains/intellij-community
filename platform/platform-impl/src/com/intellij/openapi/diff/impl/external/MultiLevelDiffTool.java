@@ -69,7 +69,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       builder.setDimensionServiceKey(request.getGroupKey());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           builder.getDialogWrapper().close(0);
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
@@ -87,7 +87,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       DiffUtil.initDiffFrame(request.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           Disposer.dispose(frameWrapper);
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());

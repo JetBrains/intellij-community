@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class RestoreShelvedChange extends DumbAwareAction {
   public RestoreShelvedChange() {
@@ -27,7 +28,7 @@ public class RestoreShelvedChange extends DumbAwareAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
     e.getPresentation().setText(VcsBundle.message("vcs.shelf.action.restore.text"));
@@ -35,7 +36,7 @@ public class RestoreShelvedChange extends DumbAwareAction {
     e.getPresentation().setEnabled((project != null) && ((recycledChanges != null) && (recycledChanges.length == 1)));
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final ShelvedChangeList[] recycledChanges = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
     if (recycledChanges != null && recycledChanges.length == 1) {

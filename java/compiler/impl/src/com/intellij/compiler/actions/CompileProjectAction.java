@@ -43,7 +43,7 @@ public class CompileProjectAction extends CompileActionBase {
     });
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     if (!presentation.isEnabled()) {

@@ -690,12 +690,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitVariable(PsiVariable variable) {
         if (!dumb && JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType()) {
           addLocalVariableTypeFolding(list, variable, quick);
         }
 
-        super.visitLocalVariable(variable);
+        super.visitVariable(variable);
       }
 
       @Override

@@ -117,7 +117,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @Override
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    GeneralCommandLine commandLine = super.createCommandLine();
+    GeneralCommandLine commandLine = super.createCommandLine().withInput(InputRedirectAware.getInputFile(getConfiguration()));
     Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.testCases
 
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestThread
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
@@ -27,7 +28,7 @@ open class SystemPropertiesTestCase : GuiTestCase() {
     setUpBlock(systemProperties)
     GuiTestThread.client?.send(createTransportMessage(systemProperties)) ?: throw Exception(
       "Unable to get the client instance to send message.")
-    GuiTestUtilKt.waitUntil("IDE will be closed", timeoutInSeconds = 120) { false }
+    GuiTestUtilKt.waitUntil("IDE will be closed", timeout = Timeouts.minutes02) { false }
   }
 
   private fun createTransportMessage(systemProperties: Array<Pair<String, String>>) =

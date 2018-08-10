@@ -125,7 +125,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myEditor.isDisposed()) return null;
 
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {

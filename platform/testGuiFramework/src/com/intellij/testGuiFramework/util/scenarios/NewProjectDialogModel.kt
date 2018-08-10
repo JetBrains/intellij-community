@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.util.scenarios
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
@@ -196,11 +194,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, defaultTimeout)
-
-fun assertProjectPathExists(projectPath: String) {
-  assert(FileUtil.exists(projectPath)) { "Test project $projectPath should be created before test starting" }
-}
+  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, Timeouts.defaultTimeout)
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 fun LibrariesSet.isSetEmpty() = isEmpty() || all { it.isEmpty() }
@@ -213,11 +207,10 @@ fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
  * Note: only one library/framework can be checked!
  * */
 fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
-      val list: JListFixture = jList(groupJava)
-      list.clickItem(groupJava)
+      selectProjectGroup(NewProjectDialogModel.Groups.Java)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
@@ -256,12 +249,10 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
  * Note: only one library/framework can be checked!
  * */
 fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "") {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
-      val list: JListFixture = jList(groupJava)
-      assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
-      list.clickItem(groupJavaEnterprise)
+      selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
@@ -286,11 +277,10 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
 }
 
 fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
-      val list: JListFixture = jList(groupGradle)
-      list.clickItem(groupGradle)
+      selectProjectGroup(NewProjectDialogModel.Groups.Gradle)
       setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
       if (gradleOptions.framework.isNotEmpty()) {
         checkboxTree(gradleOptions.framework).check()
@@ -344,11 +334,10 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
 }
 
 fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions) {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
-      val list: JListFixture = jList(groupMaven)
-      list.clickItem(groupMaven)
+      selectProjectGroup(NewProjectDialogModel.Groups.Maven)
       Pause.pause(2000L)
       if (mavenOptions.useArchetype) {
         logUIStep("Set `$checkCreateFromArchetype` checkbox")
@@ -394,8 +383,7 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: 
 fun NewProjectDialogModel.createKotlinProject(projectPath: String, framework: String) {
   with(guiTestCase) {
     with(connectDialog()) {
-      val list: JListFixture = jList(groupKotlin)
-      list.clickItem(groupKotlin)
+      selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
 
       logUIStep("Select `$framework`")
       jList(framework).clickItem(framework)
@@ -421,8 +409,7 @@ fun NewProjectDialogModel.createKotlinMPProject(
 ) {
   with(guiTestCase) {
     with(connectDialog()) {
-      val list: JListFixture = jList(groupKotlin)
-      list.clickItem(groupKotlin)
+      selectProjectGroup(NewProjectDialogModel.Groups.Kotlin)
       logUIStep("Select `$itemKotlinMpp` kind of project")
       jList(itemKotlinMpp).clickItem(itemKotlinMpp)
       button(buttonNext).click()
@@ -483,7 +470,7 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
   with(guiTestCase) {
     with(connectDialog()) {
       // Group `Java` always exists
-      val list: JListFixture = jList("Java")
+      val list: JListFixture = jList(groupJava, timeout = Timeouts.seconds05)
       logTestStep("Check ${group} is present in the New Project dialog")
       assert(list.contents().contains(group.toString())) {
         "${group} group is absent (may be plugin not installed or Community edition runs instead of Ultimate)"
@@ -502,12 +489,10 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
 internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
                                                         projectPath: String,
                                                         libs: LibrariesSet) {
-  assertProjectPathExists(projectPath)
   with(guiTestCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
-      val list: JListFixture = jList(groupJava)
-      assertGroupPresent(group)
-      list.clickItem(group.toString())
+      selectProjectGroup(group)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
@@ -549,13 +534,11 @@ fun NewProjectDialogModel.waitLoadingTemplates() {
 
 fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath: String) {
   with(connectDialog()) {
-    val list: JListFixture = jList(groupJavaEnterprise)
-    assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
-    list.clickItem(groupJavaEnterprise)
+    selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
     guiTestCase.logUIStep("Add a new application server")
     combobox(textApplicationServer)
     buttons(buttonNew)[1].click()
-    popupClick(serverKind)
+    popupMenu(serverKind).clickSearchedItem()
     guiTestCase.dialog(serverKind) {
       typeText(serverInstallPath)
       button(buttonOk).click()
@@ -571,9 +554,7 @@ fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath:
 
 fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
   with(connectDialog()) {
-    val list: JListFixture = jList(groupJavaEnterprise)
-    assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
-    list.clickItem(groupJavaEnterprise)
+    selectProjectGroup(NewProjectDialogModel.Groups.JavaEnterprise)
     guiTestCase.logUIStep("Check that a application server `$serverName` exists")
     val cmb = combobox(textApplicationServer)
     assert(combobox(textApplicationServer)
@@ -590,8 +571,18 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
       guiTestCase.logUIStep("Include `${lib.mainPath.joinToString()}` to the project")
       checkboxTree(
         pathStrings = *lib.mainPath,
-        predicate = ExtendedJTreePathFinder.predicateWithVersion
+        predicate = Predicate.withVersion
       ).check()
     }
+  }
+}
+
+fun NewProjectDialogModel.selectProjectGroup(group: NewProjectDialogModel.Groups){
+  with(connectDialog()){
+    val list: JListFixture = jList(groupJava)
+    assertGroupPresent(group)
+    list.clickItem(group.toString())
+
+    waitLoadingTemplates()
   }
 }

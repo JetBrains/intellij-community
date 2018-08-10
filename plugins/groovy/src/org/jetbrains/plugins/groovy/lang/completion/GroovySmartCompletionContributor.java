@@ -81,7 +81,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters params,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = params.getPosition();
         if (position.getParent() instanceof GrLiteral) return;
@@ -128,7 +128,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, IN_CAST_PARENTHESES, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final GrTypeCastExpression parenthesizedExpression = ((GrTypeCastExpression)position.getParent().getParent().getParent());
@@ -178,8 +178,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                 final ProcessingContext matchingContext,
-                                 @NotNull final CompletionResultSet result) {
+                                    @NotNull final ProcessingContext matchingContext,
+                                    @NotNull final CompletionResultSet result) {
         generateInheritorVariants(parameters, result.getPrefixMatcher(), lookupElement -> result.addElement(lookupElement));
       }
     });
@@ -187,7 +187,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, IN_ANNOTATION, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters params,
-                                    ProcessingContext context,
+                                    @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = params.getPosition();
 

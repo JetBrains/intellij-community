@@ -283,7 +283,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
       DataContext context = new DataContext() {
         @Override
         @Nullable
-        public Object getData(@NonNls String dataId) {
+        public Object getData(@NotNull @NonNls String dataId) {
           if (LangDataKeys.TARGET_MODULE.is(dataId)) {
             if (module != null) return module;
           }

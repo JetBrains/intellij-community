@@ -112,7 +112,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull EditorFactory editorFactory,
                          @NotNull PsiDocumentManager psiDocumentManager,
                          @NotNull CommandProcessor commandProcessor,
-                         @NotNull EditorColorsManager editorColorsManager,
                          @NotNull final Application application,
                          @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
@@ -244,7 +243,7 @@ public class DaemonListeners implements Disposable {
     editorFactory.addEditorFactoryListener(editorFactoryListener, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)psiDocumentManager;
-    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory,connection, daemonCodeAnalyzer.getFileStatusMap());
+    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory, connection, daemonCodeAnalyzer.getFileStatusMap());
     Disposer.register(this, changeHandler);
     psiManager.addPsiTreeChangeListener(changeHandler, changeHandler);
 
@@ -269,8 +268,8 @@ public class DaemonListeners implements Disposable {
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
     connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
+    connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
 
-    commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
     inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
@@ -555,7 +554,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private static class MyEditorMouseListener extends EditorMouseAdapter {
+  private static class MyEditorMouseListener implements EditorMouseListener {
     @NotNull
     private final TooltipController myTooltipController;
 

@@ -83,6 +83,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     setResizable(true);
     setTitle(message("dialog.title.branch"));
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
+    mySwitchOnCreate.setBorder(JBUI.Borders.emptyTop(10));
     myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));
@@ -97,6 +98,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
                                                myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
+        updateSwitchOnCreate();
         updateControls();
       }
     });
@@ -141,6 +143,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateBranchTagBases();
 
     init();
+    ActionListener switchOnCreateListener = e -> updateSwitchOnCreate();
+    myWorkingCopyRadioButton.addActionListener(switchOnCreateListener);
+    myRepositoryRadioButton.addActionListener(switchOnCreateListener);
     ActionListener listener = e -> updateControls();
     myWorkingCopyRadioButton.addActionListener(listener);
     myRepositoryRadioButton.addActionListener(listener);
@@ -194,9 +199,12 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  private void updateSwitchOnCreate() {
+    mySwitchOnCreate.setText("Switch " + getSourceFile() + " to the newly created branch or tag");
+  }
+
   private void updateControls() {
     myWorkingCopyField.setEnabled(myWorkingCopyRadioButton.isSelected());
-    mySwitchOnCreate.setEnabled(myWorkingCopyRadioButton.isSelected());
     myRepositoryField.setEnabled(myRepositoryRadioButton.isSelected());
     myRevisionPanel.setEnabled(myRepositoryRadioButton.isSelected());
     myProjectButton.setEnabled(myRepositoryRadioButton.isSelected());
@@ -221,6 +229,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateControls();
 
     myWorkingCopyRadioButton.setSelected(true);
+    updateSwitchOnCreate();
   }
 
   public String getComment() {
@@ -328,10 +337,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return null;
   }
 
-  public boolean isCopyFromWorkingCopy() {
-    return myWorkingCopyRadioButton.isSelected();
-  }
-
   public boolean isSwitchOnCreate() {
     return mySwitchOnCreate.isSelected();
   }
@@ -343,7 +348,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   @NotNull
   public File getSourceFile() {
-    return new File(myWorkingCopyField.getText());
+    return myRepositoryRadioButton.isSelected() ? mySrcFile : new File(myWorkingCopyField.getText());
   }
 
   @Nullable

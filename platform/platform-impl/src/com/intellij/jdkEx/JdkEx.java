@@ -2,12 +2,14 @@
 package com.intellij.jdkEx;
 
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides extensions for OpenJDK API, implemented in JetBrains JDK.
  * For OpenJDK defaults to some meaningful results where applicable or otherwise throws runtime exception.
  */
+@ApiStatus.Experimental
 public class JdkEx {
   @NotNull
   public static InputEventEx getInputEventEx() {
@@ -15,5 +17,12 @@ public class JdkEx {
       return new JBInputEventEx();
     }
     return new DefInputEventEx();
+  }
+
+  public static DisplayModeEx getDisplayModeEx() {
+    if (SystemInfo.isJetBrainsJvm) {
+      return new JBDisplayModeEx();
+    }
+    return new DefDisplayModeEx();
   }
 }

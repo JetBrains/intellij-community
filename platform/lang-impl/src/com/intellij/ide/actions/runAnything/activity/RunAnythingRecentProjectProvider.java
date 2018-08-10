@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvider<AnAction> {
   @NotNull
   @Override
-  public Collection<AnAction> getValues(@NotNull DataContext dataContext) {
+  public Collection<AnAction> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return Arrays.stream(RecentProjectsManager.getInstance().getRecentProjectsActions(false)).collect(Collectors.toList());
   }
 

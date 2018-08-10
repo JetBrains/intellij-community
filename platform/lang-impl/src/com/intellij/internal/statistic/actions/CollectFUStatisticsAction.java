@@ -37,7 +37,7 @@ import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class CollectFUStatisticsAction extends GotoActionBase {
   @Override
-  protected void gotoActionPerformed(AnActionEvent e) {
+  protected void gotoActionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;

@@ -269,7 +269,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();

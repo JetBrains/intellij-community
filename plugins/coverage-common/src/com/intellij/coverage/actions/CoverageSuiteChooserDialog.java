@@ -260,7 +260,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final VirtualFile file =
         FileChooser.chooseFile(new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
@@ -329,7 +329,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final CheckedTreeNode[] selectedNodes = mySuitesTree.getSelectedNodes(CheckedTreeNode.class, null);
       for (CheckedTreeNode selectedNode : selectedNodes) {
         final Object userObject = selectedNode.getUserObject();
@@ -346,7 +346,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final CheckedTreeNode[] selectedSuites = mySuitesTree.getSelectedNodes(CheckedTreeNode.class, null);
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
@@ -372,7 +372,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       for (final CoverageEngine engine : collectEngines()) {
         engChooser.add(new AnAction(engine.getPresentableText()) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             myEngine = engine;
             initTree();
             updateTree();
@@ -383,7 +383,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(collectEngines().size() > 1);
     }

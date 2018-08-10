@@ -26,11 +26,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Deprecated
 abstract class BaseDiffAction extends AnAction implements PreloadableAction, DumbAware {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DiffRequest diffData = getDiffData(e.getDataContext());
     if (diffData == null) return;
     final DiffContent[] contents = diffData.getContents();
@@ -46,7 +47,7 @@ abstract class BaseDiffAction extends AnAction implements PreloadableAction, Dum
     DiffManager.getInstance().getDiffTool().show(diffData);
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DiffRequest diffData = getDiffData(e.getDataContext());
 
     boolean enabled = diffData != null && DiffManager.getInstance().getDiffTool().canShow(diffData);

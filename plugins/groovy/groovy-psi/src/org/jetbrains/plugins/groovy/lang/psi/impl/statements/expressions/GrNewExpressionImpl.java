@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -248,7 +247,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     }
 
     @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
       throw new UnsupportedOperationException("unsupported!");
     }
 
@@ -260,12 +259,6 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
       return getManager().areElementsEquivalent(element, resolve());
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @Override

@@ -729,7 +729,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     if (DATA_KEY.is(dataId)) return this;
     if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;

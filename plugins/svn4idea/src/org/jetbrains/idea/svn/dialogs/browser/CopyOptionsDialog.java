@@ -114,7 +114,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new RepositoryBrowserDialog.MkDirAction(myBrowser) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setText("New Remote Folder...");
       }

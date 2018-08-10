@@ -459,10 +459,17 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                             "  }\n" +
                                             "}";
     doTest(schema, "{\n" +
-                   "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
+                   "  \"size\": {\n" +
                    "    \"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">1</warning>," +
                    " \"b\":3, \"c\": 4, " +
                    "\"a\": <warning descr=\"Type is not allowed. Expected: boolean.\">5</warning>\n" +
+                   "  }\n" +
+                   "}");
+    doTest(schema, "{\n" +
+                   "  \"size\": <warning descr=\"Number of properties is greater than 3\">{\n" +
+                   "    \"a\": true," +
+                   " \"b\":3, \"c\": 4, " +
+                   "\"a\": false\n" +
                    "  }</warning>\n" +
                    "}");
   }
@@ -847,7 +854,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOfBestChoiceSchema.json"));
     doTest(schemaText, "{\n" +
                        "  \"results\": [\n" +
-                       "    <warning descr=\"Missing required properties 'name', 'dateOfBirth'\">{\n" +
+                       "    <warning descr=\"Missing required properties 'dateOfBirth', 'name'\">{\n" +
                        "      \"type\": \"person\"\n" +
                        "    }</warning>\n" +
                        "  ]\n" +
@@ -921,5 +928,22 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "{\"foo\": <warning>{\"x\": 4}</warning>}");
     doTest(schema, "{\"foo\": <warning>{\"x\": true}</warning>}");
     doTest(schema, "{\"foo\": { \r  \"x\"  : \t  5 \n  }}");
+  }
+
+  public void testIntersectingHighlightingRanges() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
+    doTest(schemaText, "<warning descr=\"Missing required property 'items'\">{\n" +
+                       "  \"type\": \"array\"\n" +
+                       "}</warning>");
+    doTest(schemaText, "{\n" +
+                       "  \"type\": <warning descr=\"Value should be one of: \\\"record\\\", \\\"enum\\\", \\\"array\\\", \\\"map\\\", \\\"fixed\\\"\">\"array2\"</warning>\n" +
+                       "}");
+  }
+
+  public void testMissingMultipleAltPropertySets() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
+    doTest(schemaText, "<warning descr=\"One of the following property sets is required: properties 'type' = record, 'fields', 'name', or properties 'type' = enum, 'name', 'symbols', or properties 'type' = array, 'items', or properties 'type' = map, 'values', or properties 'type' = fixed, 'name', 'size'\">{\n" +
+                       "  \n" +
+                       "}</warning>");
   }
 }

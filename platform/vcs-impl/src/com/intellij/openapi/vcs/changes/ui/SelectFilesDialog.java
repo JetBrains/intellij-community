@@ -96,7 +96,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     if (myDeletableFiles) {
       AnAction deleteAction = new DeleteAction(null, null, IconUtil.getRemoveIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           super.actionPerformed(e);
           myFileList.refresh();
         }
@@ -117,7 +117,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
     @Nullable
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) && myDeleteProvider != null) {
         return myDeleteProvider;
       }

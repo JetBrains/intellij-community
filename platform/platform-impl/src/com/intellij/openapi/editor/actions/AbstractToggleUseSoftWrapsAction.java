@@ -105,7 +105,7 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
   }
 
   @Nullable
-  protected Editor getEditor(AnActionEvent e) {
+  protected Editor getEditor(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.EDITOR);
   }
 }

@@ -67,6 +67,14 @@ public class PushDownConflicts {
     return myConflicts;
   }
 
+  public Set<PsiMember> getMovedMembers() {
+    return myMovedMembers;
+  }
+
+  public Set<PsiMethod> getAbstractMembers() {
+    return myAbstractMembers;
+  }
+
   public void checkSourceClassConflicts() {
     final PsiElement[] children = myClass.getChildren();
     for (PsiElement child : children) {

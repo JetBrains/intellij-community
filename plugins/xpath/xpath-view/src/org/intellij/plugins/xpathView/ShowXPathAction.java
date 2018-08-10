@@ -37,6 +37,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ShowXPathAction extends XPathAction {
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
         super.update(event);
 
         final Presentation presentation = event.getPresentation();
@@ -66,7 +67,7 @@ public class ShowXPathAction extends XPathAction {
         return node != null;
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
         final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         if (editor == null) {
             return;

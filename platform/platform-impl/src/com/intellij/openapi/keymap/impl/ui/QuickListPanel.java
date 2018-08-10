@@ -81,7 +81,7 @@ class QuickListPanel {
                       })
                       .addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
                         @Override
-                        public void actionPerformed(@Nullable AnActionEvent e) {
+                        public void actionPerformed(@NotNull AnActionEvent e) {
                           actionsModel.add(QuickList.SEPARATOR_ID);
                         }
                       })

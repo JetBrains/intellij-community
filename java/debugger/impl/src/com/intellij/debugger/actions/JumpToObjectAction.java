@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class JumpToObjectAction extends DebuggerAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(selectedNode == null) {
       return;
@@ -46,7 +46,7 @@ public class JumpToObjectAction extends DebuggerAction{
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     if(!isFirstStart(e)) {
       return;
     }

@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -371,7 +372,9 @@ public class CachedIntentions {
                                             AllIcons.Actions.RealIntentionBulb;
     }
     else {
-      return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixOffBulb : AllIcons.Actions.RealIntentionOffBulb;
+      if (myErrorFixes.contains(value)) return AllIcons.Actions.QuickfixOffBulb;
+      Icon disabledIcon = IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
+      return disabledIcon != null ? disabledIcon : AllIcons.Actions.RealIntentionBulb;
     }
   }
 

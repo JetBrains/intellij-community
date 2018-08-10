@@ -20,9 +20,10 @@ import com.intellij.ide.util.ExportToFileUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ExportToTextFileAction extends DumbAwareAction {
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
@@ -47,7 +48,7 @@ public class ExportToTextFileAction extends DumbAwareAction {
     return PlatformDataKeys.EXPORTER_TO_TEXT_FILE.getData(dataContext);
   }
 
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);

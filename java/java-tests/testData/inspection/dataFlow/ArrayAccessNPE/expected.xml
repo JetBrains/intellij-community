@@ -3,6 +3,6 @@
 <problem>
   <file>Test.java</file>
   <line>5</line>
-  <description>Array access &lt;code&gt;path[0]&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
+  <description>Array access &lt;code&gt;path[0]&lt;/code&gt; will produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;</description>
 </problem>
 </problems>

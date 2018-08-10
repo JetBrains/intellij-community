@@ -52,7 +52,7 @@ import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.util.containers.UtilKt.notNullize;
 
 public class RollbackAction extends AnAction implements DumbAware {
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
     e.getPresentation().setEnabledAndVisible(visible);
@@ -87,7 +87,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     return list != null && !list.getChanges().isEmpty();
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;

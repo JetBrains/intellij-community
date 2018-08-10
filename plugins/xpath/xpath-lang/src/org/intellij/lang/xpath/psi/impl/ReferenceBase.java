@@ -55,7 +55,7 @@ public abstract class ReferenceBase implements PsiReference {
         return nameNode.getText();
     }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         throw new IncorrectOperationException("unsupported");
     }
 
@@ -66,9 +66,6 @@ public abstract class ReferenceBase implements PsiReference {
     public boolean isReferenceTo(@NotNull PsiElement element) {
         return Comparing.equal(resolve(), element);
     }
-
-    @NotNull
-    public abstract Object[] getVariants();
 
     public boolean isSoft() {
         return true;

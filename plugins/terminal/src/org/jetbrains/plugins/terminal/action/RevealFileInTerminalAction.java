@@ -33,7 +33,7 @@ import org.jetbrains.plugins.terminal.TerminalView;
  */
 public class RevealFileInTerminalAction extends DumbAwareAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     e.getPresentation().setEnabledAndVisible(project != null && getSelectedFile(e) != null);
   }
@@ -44,7 +44,7 @@ public class RevealFileInTerminalAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     VirtualFile selectedFile = getSelectedFile(e);
     if (project == null || selectedFile == null) {

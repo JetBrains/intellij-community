@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
@@ -31,7 +31,6 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.Frame
 import java.io.File
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 import kotlin.concurrent.thread
@@ -90,10 +89,6 @@ abstract class FirstStart(val ideType: IdeType) {
     robotThread.start()
   }
 
-  companion object {
-    var DEFAULT_TIMEOUT: Long = defaultTimeout
-  }
-
 
   // In case we found WelcomeFrame we don't need to make completeInstallation.
   private fun completeFirstStart() {
@@ -125,7 +120,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
 
   private fun findPrivacyPolicyDialogOrLicenseAgreement(): JDialog {
-    return GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds = 120) {
+    return GuiTestUtilKt.withPauseWhenNull(timeout = Timeouts.defaultTimeout) {
       try {
         myRobot.finder().find {
           it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy"))
@@ -181,7 +176,7 @@ abstract class FirstStart(val ideType: IdeType) {
       LOG.info("Accepting Data Sharing")
       val title = "Data Sharing"
       try {
-        dialog(title, timeoutSeconds = 5)
+        dialog(title, timeout = Timeouts.seconds05)
         button("Send Usage Statistics").click()
         LOG.info("Data sharing accepted")
       }
@@ -216,7 +211,7 @@ abstract class FirstStart(val ideType: IdeType) {
         LOG.info("Click '${evaluateButton.text()}'")
         evaluateButton.click()
 
-        dialog(10) { it.startsWith("License Agreement for") }
+        dialog(timeout = Timeouts.seconds10) { it.startsWith("License Agreement for") }
         button("Accept").click()
       }
       catch (waitTimedOutError: WaitTimedOutError) {
@@ -239,55 +234,55 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   object Utils {
-    fun Robot.dialog(title: String? = null, timeoutSeconds: Long = DEFAULT_TIMEOUT): JDialogFixture {
-      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { dialog ->
+    fun Robot.dialog(title: String? = null, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeout) { dialog ->
         if (title != null) dialog.title == title else true
       }
       return JDialogFixture(this, jDialog)
     }
 
-    fun Robot.dialog(timeoutSeconds: Long = DEFAULT_TIMEOUT, titleMatcher: (String) -> Boolean): JDialogFixture {
-      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { dialog ->
+    fun Robot.dialog(timeout: Timeout = Timeouts.defaultTimeout, titleMatcher: (String) -> Boolean): JDialogFixture {
+      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeout) { dialog ->
         titleMatcher(dialog.title)
       }
       return JDialogFixture(this, jDialog)
     }
 
 
-    fun Robot.radioButton(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JRadioButtonFixture {
-      val jRadioButton = waitUntilFound(this, null, JRadioButton::class.java, timeoutSeconds) { radioButton ->
+    fun Robot.radioButton(text: String, timeout: Timeout = Timeouts.defaultTimeout): JRadioButtonFixture {
+      val jRadioButton = waitUntilFound(this, null, JRadioButton::class.java, timeout) { radioButton ->
         radioButton.text == text && radioButton.isShowing && radioButton.isEnabled
       }
       return JRadioButtonFixture(this, jRadioButton)
     }
 
-    fun Robot.button(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JButtonFixture {
-      val jButton = waitUntilFound(this, null, JButton::class.java, timeoutSeconds) { button ->
+    fun Robot.button(text: String, timeout: Timeout = Timeouts.defaultTimeout): JButtonFixture {
+      val jButton = waitUntilFound(this, null, JButton::class.java, timeout) { button ->
         button.isShowing && button.text == text
       }
       return JButtonFixture(this, jButton)
     }
 
-    fun Robot.checkbox(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JCheckBoxFixture {
-      val jCheckBox = waitUntilFound(this, null, JCheckBox::class.java, timeoutSeconds) { checkBox ->
+    fun Robot.checkbox(text: String, timeout: Timeout = Timeouts.defaultTimeout): JCheckBoxFixture {
+      val jCheckBox = waitUntilFound(this, null, JCheckBox::class.java, timeout) { checkBox ->
         checkBox.text == text && checkBox.isShowing && checkBox.isEnabled
       }
       return JCheckBoxFixture(this, jCheckBox)
     }
 
-    fun Robot.waitFrame(title: String, timeoutInSeconds: Int = 10, titleMatching: (String?) -> Boolean) {
+    fun Robot.waitFrame(title: String, timeout: Timeout = Timeouts.seconds30, titleMatching: (String?) -> Boolean) {
       GuiTestUtilKt.waitUntil("frame with title '$title' will appear",
-                              timeoutInSeconds) { this.hierarchy().roots().any { it is JFrame && titleMatching(it.title) } }
+                              timeout) { this.hierarchy().roots().any { it is JFrame && titleMatching(it.title) } }
     }
 
     fun <ComponentType : Component> waitUntilFound(myRobot: Robot,
                                                    container: Container?,
                                                    componentClass: Class<ComponentType>,
-                                                   timeoutSeconds: Long,
+                                                   timeout: Timeout,
                                                    matcher: (ComponentType) -> Boolean): ComponentType {
       return waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
         override fun isMatching(cmp: ComponentType): Boolean = matcher(cmp)
-      }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
+      }, timeout)
     }
 
     fun <T : Component> waitUntilFound(robot: Robot,

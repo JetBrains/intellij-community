@@ -208,7 +208,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     myTabs = (JBRunnerTabs)new JBRunnerTabs(myProject, myActionManager, myFocusManager, this).setDataProvider(new DataProvider() {
       @Override
-      public Object getData(@NonNls final String dataId) {
+      public Object getData(@NotNull @NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.is(dataId)) {
           TabInfo info = myTabs.getTargetInfo();
           if (info != null) {
@@ -1371,7 +1371,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     @Override
     @Nullable
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (QuickActionProvider.KEY.is(dataId)) {
         return RunnerContentUi.this;
       }

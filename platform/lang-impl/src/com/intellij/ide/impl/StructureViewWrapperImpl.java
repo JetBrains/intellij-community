@@ -91,6 +91,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     Timer timer = UIUtil.createNamedTimer("StructureView", REFRESH_TIME, event -> {
+      if (!component.isShowing()) return;
+
       int count = ActivityTracker.getInstance().getCount();
       if (count == myActivityCount) return;
 
@@ -405,7 +407,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
       return null;
     }

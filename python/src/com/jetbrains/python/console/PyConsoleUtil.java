@@ -167,7 +167,7 @@ public class PyConsoleUtil {
   public static AnAction createTabCompletionAction(PythonConsoleView consoleView) {
     final AnAction runCompletions = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           AnAction replace = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
@@ -181,7 +181,7 @@ public class PyConsoleUtil {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           e.getPresentation().setEnabled(false);
@@ -203,7 +203,7 @@ public class PyConsoleUtil {
   public static AnAction createInterruptAction(PythonConsoleView consoleView) {
     AnAction anAction = new AnAction() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         ConsoleCommunication consoleCommunication = consoleView.getExecuteActionHandler().getConsoleCommunication();
         if (consoleCommunication.isExecuting() || consoleCommunication.isWaitingForInput()) {
           consoleView.print("^C", ProcessOutputTypes.SYSTEM);
@@ -222,7 +222,7 @@ public class PyConsoleUtil {
       }
 
       @Override
-      public void update(final AnActionEvent e) {
+      public void update(@NotNull final AnActionEvent e) {
         EditorEx consoleEditor = consoleView.getConsoleEditor();
         boolean enabled = IJSwingUtilities.hasFocus(consoleEditor.getComponent()) && !consoleEditor.getSelectionModel().hasSelection();
         e.getPresentation().setEnabled(enabled);

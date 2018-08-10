@@ -49,7 +49,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     JComponent property = presentation.getClientProperty(COMPONENT_KEY);

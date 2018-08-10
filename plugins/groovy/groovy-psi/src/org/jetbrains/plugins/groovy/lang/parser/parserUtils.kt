@@ -268,12 +268,8 @@ fun parseExpressionOrMapArgument(builder: PsiBuilder, level: Int, expression: Pa
     if (T_COLON === builder.tokenType) {
       labelMarker.done(ARGUMENT_LABEL)
       builder.advanceLexer()
-      if (report_error_(builder, expression.parse(builder, level + 1))) {
-        argumentMarker.done(NAMED_ARGUMENT)
-      }
-      else {
-        argumentMarker.drop()
-      }
+      report_error_(builder, expression.parse(builder, level + 1))
+      argumentMarker.done(NAMED_ARGUMENT)
     }
     else {
       labelMarker.drop()

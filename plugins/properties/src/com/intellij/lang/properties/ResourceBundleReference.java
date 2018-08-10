@@ -67,7 +67,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (newElementName.endsWith(PropertiesFileType.DOT_DEFAULT_EXTENSION)) {
       newElementName = newElementName.substring(0, newElementName.lastIndexOf(PropertiesFileType.DOT_DEFAULT_EXTENSION));
     }

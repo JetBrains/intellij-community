@@ -63,7 +63,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
   }
 
   @Override
-  public void gotoActionPerformed(AnActionEvent e) {
+  public void gotoActionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 

@@ -71,7 +71,7 @@ public class PrepareToDeployAction extends AnAction {
 
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (module != null && PluginModuleType.isOfType(module)) {
       doPrepare(Arrays.asList(module), e.getProject());
@@ -389,7 +389,7 @@ public class PrepareToDeployAction extends AnAction {
     return manifest;
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     boolean enabled = module != null && PluginModuleType.isOfType(module);
     e.getPresentation().setVisible(enabled);

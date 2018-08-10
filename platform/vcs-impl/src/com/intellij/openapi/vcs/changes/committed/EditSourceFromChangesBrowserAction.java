@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.stream.Stream;
@@ -40,7 +41,7 @@ class EditSourceFromChangesBrowserAction extends EditSourceAction {
     myEditSourceIcon = AllIcons.Actions.EditSource;
   }
 
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     super.update(event);
     event.getPresentation().setIcon(myEditSourceIcon);
     event.getPresentation().setText("Edit Source");

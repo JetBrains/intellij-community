@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -40,7 +41,7 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
     if (tabPlacement == SwingConstants.LEFT || tabPlacement == SwingConstants.RIGHT) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
@@ -19,8 +17,6 @@ import javax.swing.*;
  * @see com.intellij.execution.configurations.ConfigurationType#getConfigurationFactories()
  */
 public abstract class ConfigurationFactory {
-  public static final Icon ADD_ICON = IconUtil.getAddIcon();
-
   private final ConfigurationType myType;
 
   protected ConfigurationFactory(@NotNull final ConfigurationType type) {
@@ -86,7 +82,7 @@ public abstract class ConfigurationFactory {
   }
 
   public Icon getAddIcon() {
-    return ADD_ICON;
+    return IconUtil.getAddIcon();
   }
 
   public Icon getIcon(@NotNull final RunConfiguration configuration) {

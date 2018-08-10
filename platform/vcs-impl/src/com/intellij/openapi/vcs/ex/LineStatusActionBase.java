@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class LineStatusActionBase extends DumbAwareAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) {
@@ -48,7 +48,7 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());

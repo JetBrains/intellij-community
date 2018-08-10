@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,13 +95,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       }
       else {
         return new PsiPolyVariantReferenceBase<PsiElement>(this) {
-
-          @NotNull
-          @Override
-          public Object[] getVariants() {
-            return ArrayUtil.EMPTY_OBJECT_ARRAY;
-          }
-
           @NotNull
           @Override
           public ResolveResult[] multiResolve(boolean incompleteCode) {
@@ -217,7 +209,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     return getRealReference().handleElementRename(newElementName);
   }
 
@@ -229,12 +221,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     return getRealReference().isReferenceTo(element);
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

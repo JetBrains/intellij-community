@@ -30,20 +30,21 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractMissingFilesAction extends AnAction implements DumbAware {
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     boolean enabled = files != null && !files.isEmpty();
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (files == null) return;

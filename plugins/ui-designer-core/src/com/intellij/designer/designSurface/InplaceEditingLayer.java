@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -116,7 +117,7 @@ public class InplaceEditingLayer extends JComponent {
       myInplaceComponent.setBorder(new LineMarginBorder(5, 5, 5, 5));
       new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           finishEditing(false);
         }
       }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myInplaceComponent);

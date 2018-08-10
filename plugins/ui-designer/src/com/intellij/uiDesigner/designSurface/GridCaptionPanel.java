@@ -262,7 +262,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
   }
 
-  @Nullable public Object getData(String dataId) {
+  @Nullable public Object getData(@NotNull String dataId) {
     if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }

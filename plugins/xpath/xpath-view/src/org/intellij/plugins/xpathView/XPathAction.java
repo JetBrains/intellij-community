@@ -23,10 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class XPathAction extends AnAction {
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     final Presentation presentation = event.getPresentation();
 

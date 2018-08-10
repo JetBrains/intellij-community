@@ -150,7 +150,7 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
     for ((catchSection, jumpOffset) in catches) {
       val param = catchSection.parameter ?: continue
       if (throwableType == null) {
-        throwableType = thrownValue?.asConstraint() ?: TypeConstraint.EMPTY
+        throwableType = thrownValue?.asConstraint() ?: TypeConstraint.empty()
       }
 
       for (caughtType in allCaughtTypes(param)) {
@@ -173,7 +173,7 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
     val catchingCopy = state.createCopy()
     val value = runner.factory.varFactory.createVariableValue(param)
     catchingCopy.applyFact(value, DfaFactType.TYPE_CONSTRAINT, constraint)
-    catchingCopy.applyFact(value, DfaFactType.CAN_BE_NULL, false)
+    catchingCopy.applyFact(value, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
     return catchingCopy
   }
 

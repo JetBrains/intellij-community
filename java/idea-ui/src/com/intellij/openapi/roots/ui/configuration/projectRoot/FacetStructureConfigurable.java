@@ -411,13 +411,13 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       e.getPresentation().setEnabled(selected instanceof FacetConfigurable);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       NamedConfigurable selected = getSelectedConfigurable();
       if (selected instanceof FacetConfigurable) {
         ProjectStructureConfigurable.getInstance(myProject).select(((FacetConfigurable)selected).getEditableObject(), true);

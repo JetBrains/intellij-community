@@ -43,7 +43,7 @@ public class UploadApplicationAction extends AnAction {
   public static final String LAST_RUN_CONFIGURATION_PROPERTY = "JAVA_APP_ENGINE_LAST_RUN_CONFIGURATION";
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(
       project != null && ProjectFacetManager.getInstance(project).hasFacets(AppEngineFacet.ID));
@@ -77,7 +77,7 @@ public class UploadApplicationAction extends AnAction {
     return ContainerUtil.getFirstItem(configurations);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     RunnerAndConfigurationSettings configurationToRun = getConfigurationToRun(project);
     if (configurationToRun != null) {

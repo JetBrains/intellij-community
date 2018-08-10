@@ -16,7 +16,6 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +49,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @NonNls public static final String METHODS_SECTION = "methods";
   @NonNls public static final String OTHER_PARAMETERS_SECTION = "other parameters";
   @NonNls public static final String YIELDS_SECTION = "yields";
-  
+
   private static final Pattern PLAIN_TEXT = Pattern.compile("\\w+(\\s+\\w+){2}"); // dumb heuristic - consecutive words
 
   protected static final Map<String, String> SECTION_ALIASES =
@@ -80,20 +79,31 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
                 .build();
   private static final Pattern SPHINX_REFERENCE_RE = Pattern.compile("(:\\w+:\\S+:`.+?`|:\\S+:`.+?`|`.+?`)");
 
-  public static Set<String> SECTION_NAMES = SECTION_ALIASES.keySet();
-  private static final ImmutableSet<String> SECTIONS_WITH_NAME_AND_OPTIONAL_TYPE = ImmutableSet.of(ATTRIBUTES_SECTION,
-                                                                                                   PARAMETERS_SECTION,
-                                                                                                   KEYWORD_ARGUMENTS_SECTION,
-                                                                                                   OTHER_PARAMETERS_SECTION);
-  private static final ImmutableSet<String> SECTIONS_WITH_TYPE_AND_OPTIONAL_NAME = ImmutableSet.of(RETURNS_SECTION, YIELDS_SECTION);
-  private static final ImmutableSet<String> SECTIONS_WITH_TYPE = ImmutableSet.of(RAISES_SECTION);
-  private static final ImmutableSet<String> SECTIONS_WITH_NAME = ImmutableSet.of(METHODS_SECTION);
+  public static final Set<String> SECTION_NAMES = SECTION_ALIASES.keySet();
+
+  protected enum FieldType {
+    NAME_WITH_OPTIONAL_TYPE(true, false, false),
+    TYPE_WITH_OPTIONAL_NAME(true, true, false),
+    ONLY_TYPE(false, true, false),
+    OPTIONAL_TYPE(false, true, true),
+    ONLY_NAME(false, false, false);
+
+    public final boolean canHaveBothNameAndType;
+    public final boolean preferType;
+    public final boolean canHaveOnlyDescription;
+
+    FieldType(boolean canHaveType, boolean preferType, boolean canHaveOnlyDescription) {
+      this.canHaveBothNameAndType = canHaveType;
+      this.canHaveOnlyDescription = canHaveOnlyDescription;
+      this.preferType = preferType;
+    }
+  }
 
   @Nullable
   public static String getNormalizedSectionTitle(@NotNull @NonNls String title) {
     return SECTION_ALIASES.get(title.toLowerCase());
   }
-  
+
   public static boolean isValidSectionTitle(@NotNull @NonNls String title) {
     return StringUtil.isCapitalized(title) && getNormalizedSectionTitle(title) != null;
   }
@@ -179,25 +189,17 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   protected Pair<SectionField, Integer> parseSectionField(int lineNum, @NotNull String normalizedSectionTitle, int sectionIndent) {
-    if (SECTIONS_WITH_NAME_AND_OPTIONAL_TYPE.contains(normalizedSectionTitle)) {
-      return parseSectionField(lineNum, sectionIndent, true, false);
-    }
-    if (SECTIONS_WITH_TYPE_AND_OPTIONAL_NAME.contains(normalizedSectionTitle)) {
-      return parseSectionField(lineNum, sectionIndent, true, true);
-    }
-    if (SECTIONS_WITH_NAME.contains(normalizedSectionTitle)) {
-      return parseSectionField(lineNum, sectionIndent, false, false);
-    }
-    if (SECTIONS_WITH_TYPE.contains(normalizedSectionTitle)) {
-      return parseSectionField(lineNum, sectionIndent, false, true);
+    final FieldType fieldType = getFieldType(normalizedSectionTitle);
+    if (fieldType != null) {
+      return parseSectionField(lineNum, sectionIndent, fieldType);
     }
     return parseGenericField(lineNum, sectionIndent);
   }
 
-  protected abstract Pair<SectionField, Integer> parseSectionField(int lineNum,
-                                                                   int sectionIndent,
-                                                                   boolean mayHaveType,
-                                                                   boolean preferType);
+  @Nullable
+  protected abstract FieldType getFieldType(@NotNull String title);
+
+  protected abstract Pair<SectionField, Integer> parseSectionField(int lineNum, int sectionIndent, @NotNull FieldType kind);
 
   @NotNull
   protected Pair<SectionField, Integer> parseGenericField(int lineNum, int sectionIndent) {
@@ -219,9 +221,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
-    return lineNum >= getLineCount() || 
+    return lineNum >= getLineCount() ||
            // note that field may have the same indent as its containing section
-           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= getSectionIndentationThreshold(curSectionIndent)) || 
+           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= getSectionIndentationThreshold(curSectionIndent)) ||
            isSectionStart(lineNum);
   }
 
@@ -254,7 +256,11 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   }
 
   protected boolean isValidType(@NotNull String type) {
-    return !type.isEmpty() && !PLAIN_TEXT.matcher(type).find();
+    return !type.isEmpty() && !isPlainText(type);
+  }
+
+  protected static boolean isPlainText(@NotNull String type) {
+    return PLAIN_TEXT.matcher(type).find();
   }
 
   protected boolean isValidName(@NotNull String name) {
@@ -387,7 +393,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     }
     return result;
   }
-  
+
   @Nullable
   @Override
   public String getKeywordArgumentDescription(@Nullable String paramName) {
@@ -444,7 +450,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     }
     return result;
   }
-  
+
   @Nullable
   private SectionField getFirstReturnField() {
     return ContainerUtil.getFirstItem(getReturnFields());
@@ -535,7 +541,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     public String getTitle() {
       return myTitle.toString();
     }
-    
+
     @NotNull
     public String getNormalizedTitle() {
       //noinspection ConstantConditions
@@ -613,7 +619,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       return myType;
     }
 
-    @Nullable 
+    @Nullable
     public String getDescription() {
       return myDescription == null ? null : PyIndentUtil.removeCommonIndent(myDescription.getValue(), true);
     }

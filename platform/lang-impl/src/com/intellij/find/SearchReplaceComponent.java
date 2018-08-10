@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.BooleanGetter;
@@ -265,7 +266,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
       return mySearchTextComponent.getText();
     }
@@ -487,9 +488,9 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   }
 
   private void installCloseOnEscapeAction(@NotNull JTextComponent c) {
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         close();
       }
     }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE), c);

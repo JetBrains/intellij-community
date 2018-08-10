@@ -30,10 +30,7 @@ import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
@@ -228,8 +225,13 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         for (MemberInfo info : myMemberInfos) {
           final PsiMember member = info.getMember();
           pushDownConflicts.checkMemberPlacementInTargetClassConflict(targetClass, member);
+          if (myCurrentInheritor == null) { //superclass to be removed
+            Set<PsiMember> movedMembers = new HashSet<>(pushDownConflicts.getMovedMembers());
+            movedMembers.addAll(Arrays.asList(mySuperClass.getConstructors()));
+            RefactoringConflictsUtil
+              .analyzeAccessibilityConflicts(movedMembers, targetClass, conflicts, null, targetClass, pushDownConflicts.getAbstractMembers());
+          }
         }
-        //todo check accessibility conflicts
       }
     }
     if (myCurrentInheritor != null) {

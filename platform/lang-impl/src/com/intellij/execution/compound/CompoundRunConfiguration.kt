@@ -105,10 +105,16 @@ class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name:
       throw ExecutionException(e.message)
     }
 
+    promptUserToUseRunDashboard(
+      project,
+      getConfigurationsWithEffectiveRunTargets().map { it.settings.configuration.type }
+    )
+
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
+        val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
         for ((settings, target) in getConfigurationsWithEffectiveRunTargets()) {
-          ExecutionUtil.runConfiguration(settings, executor, target)
+          ExecutionUtil.runConfiguration(settings, executor, target, groupId)
         }
       }
       null

@@ -302,7 +302,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final String nextChange = getNextChange();
       if (nextChange != null) {
@@ -325,7 +325,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final String nextChange = getNextChange();
       if (nextChange != null) {
@@ -343,7 +343,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       myLineNumber = lineNumber;
     }
 
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Integer lineNumber = getLineEntry();
       if (lineNumber != null) {
         moveToLine(lineNumber.intValue(), myEditor);
@@ -398,7 +398,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(getLineEntry() != null);
     }
   }
@@ -414,12 +414,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(getLineData(myLineNumber) != null);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final GeneralColorsPage colorsPage = new GeneralColorsPage();
       String fullDisplayName = "Editor | " + ApplicationBundle.message("title.colors.and.fonts") + " | " + colorsPage.getDisplayName();
       final ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions(){

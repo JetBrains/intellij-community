@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase;
 import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,7 +71,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocComment.class), new CompletionProvider<CompletionParameters>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull CompletionResultSet result) {
+      protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
         PsiDocTag tag = PsiTreeUtil.getParentOfType(position, PsiDocTag.class);
@@ -109,7 +108,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.SMART, THROWS_TAG_EXCEPTION, new CompletionProvider<CompletionParameters>() {
       @Override
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+      public void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
         final Set<PsiClass> throwsSet = new HashSet<>();
         final PsiMethod method = PsiTreeUtil.getContextOfType(element, PsiMethod.class, true);
@@ -285,7 +284,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   private static class TagChooser extends CompletionProvider<CompletionParameters> {
 
     @Override
-    protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+    protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
       final List<String> ret = new ArrayList<>();
       final PsiElement position = parameters.getPosition();
       final PsiDocComment comment = PsiTreeUtil.getParentOfType(position, PsiDocComment.class);
@@ -312,7 +311,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(position.getProject()).getCurrentProfile();
       JavaDocLocalInspection inspection =
-        (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspectionBase.SHORT_NAME, position);
+        (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspection.SHORT_NAME, position);
       if (inspection != null) {
         final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
         while (tokenizer.hasMoreTokens()) {

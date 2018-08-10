@@ -672,12 +672,12 @@ public class SwingHelper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(true);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Transferable content = new StringSelection(myUrl);
       CopyPasteManager.getInstance().setContents(content);
     }
@@ -693,12 +693,12 @@ public class SwingHelper {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(true);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       BrowserUtil.browse(myUrl);
     }
   }

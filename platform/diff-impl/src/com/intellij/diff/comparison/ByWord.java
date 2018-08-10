@@ -88,7 +88,7 @@ public class ByWord {
     wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2, indicator);
     FairDiffIterable iterable2 = matchAdjustmentDelimiters(text2, text3, words2, words3, wordChanges2, indicator);
 
-    List<MergeRange> wordConflicts = ComparisonMergeUtil.buildFair(iterable1, iterable2, indicator);
+    List<MergeRange> wordConflicts = ComparisonMergeUtil.buildSimple(iterable1, iterable2, indicator);
     List<MergeRange> result = matchAdjustmentWhitespaces(text1, text2, text3, wordConflicts, policy, indicator);
 
     return convertIntoMergeWordFragments(result);

@@ -28,6 +28,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
  */
 public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     perform(project);
   }

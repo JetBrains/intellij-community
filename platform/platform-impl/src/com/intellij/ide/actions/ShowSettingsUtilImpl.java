@@ -38,6 +38,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * @author max
@@ -111,17 +112,31 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                                           @NotNull Class<T> configurableClass,
                                                           @Nullable Consumer<T> additionalConfiguration) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
+    showSettingsDialog(project, it -> ConfigurableWrapper.cast(configurableClass, it) != null, it -> {
+      if (additionalConfiguration != null) {
+        T toConfigure = ConfigurableWrapper.cast(configurableClass, it);
+        assert toConfigure != null : "Wrong configurable found: " + it.getClass();
+        additionalConfiguration.accept(toConfigure);
+      }
+    });
+  }
 
+  @Override
+  public void showSettingsDialog(@Nullable Project project,
+                                 @NotNull Predicate<Configurable> predicate,
+                                 @Nullable Consumer<Configurable> additionalConfiguration) {
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
+    Configurable config = new ConfigurableVisitor() {
+      @Override
+      protected boolean accept(Configurable configurable) {
+        return predicate.test(configurable);
+      }
+    }.find(groups);
 
-    Configurable config = new ConfigurableVisitor.ByType(configurableClass).find(groups);
-    
-    assert config != null : "Cannot find configurable: " + configurableClass.getName();
+    assert config != null : "Cannot find configurable for specified predicate";
 
     if (additionalConfiguration != null) {
-      T toConfigure = ConfigurableWrapper.cast(configurableClass, config);
-      assert toConfigure != null : "Wrong configurable found: " + config.getClass();
-      additionalConfiguration.accept(toConfigure);
+      additionalConfiguration.accept(config);
     }
 
     getDialog(project, groups, config).show();

@@ -330,7 +330,7 @@ public class SimpleDiffChange {
     if (!DiffUtil.isEditable(myViewer.getEditor(sourceSide.other()))) return null;
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(AnActionEvent e) {
+      protected void performAction(@NotNull AnActionEvent e) {
         if (!myIsValid) return;
         final Project project = e.getProject();
         final Document document = myViewer.getEditor(sourceSide.other()).getDocument();

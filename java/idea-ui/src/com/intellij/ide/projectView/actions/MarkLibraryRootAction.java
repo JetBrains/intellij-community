@@ -18,7 +18,6 @@ package com.intellij.ide.projectView.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -40,7 +39,7 @@ import java.util.List;
  */
 public class MarkLibraryRootAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) return;
 
@@ -52,7 +51,7 @@ public class MarkLibraryRootAction extends AnAction {
   }
 
   @NotNull
-  private static List<VirtualFile> getRoots(AnActionEvent e) {
+  private static List<VirtualFile> getRoots(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (project == null || files == null || files.length == 0) return Collections.emptyList();
@@ -73,7 +72,7 @@ public class MarkLibraryRootAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     boolean visible = false;
     if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {

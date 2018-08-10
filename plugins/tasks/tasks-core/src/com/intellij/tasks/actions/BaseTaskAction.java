@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
     super(text, description, icon);
   }
 
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     event.getPresentation().setEnabled(getProject(event) != null);
   }
 

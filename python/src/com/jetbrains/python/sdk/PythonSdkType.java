@@ -147,7 +147,7 @@ public final class PythonSdkType extends SdkType {
   @Nullable
   public String suggestHomePath() {
     final Sdk[] existingSdks = ProjectJdkTable.getInstance().getAllJdks();
-    final List<PyDetectedSdk> sdks = PySdkExtKt.detectSystemWideSdks(Arrays.asList(existingSdks));
+    final List<PyDetectedSdk> sdks = PySdkExtKt.detectSystemWideSdks(null, Arrays.asList(existingSdks));
     final PyDetectedSdk latest = StreamEx.of(sdks).findFirst().orElse(null);
     if (latest != null) {
       return latest.getHomePath();

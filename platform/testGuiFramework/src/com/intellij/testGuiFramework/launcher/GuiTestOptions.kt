@@ -45,6 +45,10 @@ object GuiTestOptions {
   //system property to set what tests should be run. -Didea.gui.test.filter=ShortClassName1,ShortClassName2
   fun getFilteredListOfTests(): String = getSystemProperty(FILTER_KEY, NO_NEED_TO_FILTER_TESTS)
 
+  fun getScreenRecorderJarDirPath(): String? = System.getProperty("idea.gui.test.screenrecorder.jar.dir.path")
+  fun getTestsToRecord(): List<String> = System.getProperty("idea.gui.test.screenrecorder.tests_to_record")?.split(";") ?: emptyList()
+  fun getVideoDuration(): Long = getSystemProperty("idea.gui.test.screenrecorder.video_duration_in_minutes", 3)
+
   private fun getConfigDefaultPath(): String {
     return try {
       "${PathManager.getHomePath()}/config"
