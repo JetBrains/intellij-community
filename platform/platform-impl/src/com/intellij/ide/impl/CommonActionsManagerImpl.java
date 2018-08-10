@@ -25,6 +25,10 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return new NextOccurenceToolbarAction(navigator);
   }
 
+  public AnAction createExpandAllAction(TreeExpander expander) {
+    return new ExpandAllToolbarAction(expander);
+  }
+
   @Override
   public AnAction createExpandAllAction(TreeExpander expander, JComponent component) {
     final ExpandAllToolbarAction expandAllToolbarAction = new ExpandAllToolbarAction(expander);
@@ -43,6 +47,10 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   @Override
   public AnAction createExpandAllHeaderAction(JTree tree) {
     return createExpandAllHeaderAction(new DefaultTreeExpander(tree), tree);
+  }
+
+  public AnAction createCollapseAllAction(TreeExpander expander) {
+    return new CollapseAllToolbarAction(expander);
   }
 
   @Override
