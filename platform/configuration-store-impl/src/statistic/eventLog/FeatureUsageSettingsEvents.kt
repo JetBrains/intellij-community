@@ -11,7 +11,7 @@ import org.jdom.Element
 import java.util.*
 
 private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
-private const val RECORDER_ID = "settings."
+private const val RECORDER_ID = "settings"
 
 object FeatureUsageSettingsEvents {
   val printer = FeatureUsageSettingsEventPrinter()
@@ -52,7 +52,6 @@ open class FeatureUsageSettingsEventPrinter {
       return
     }
 
-    val groupId = RECORDER_ID + componentName
     val isDefaultProject = project?.isDefault == true
     val hash = if (!isDefaultProject) toHash(project?.name) else null
 
@@ -62,6 +61,7 @@ open class FeatureUsageSettingsEventPrinter {
         val value = accessor.read(state)
         val isNotDefault = defaultFilter.accepts(accessor, state)
         val content = HashMap<String, Any>()
+        content["name"] = accessor.name
         content["value"] = value
         if (isNotDefault) {
           content["default"] = false
@@ -75,7 +75,7 @@ open class FeatureUsageSettingsEventPrinter {
             content["project"] = hash
           }
         }
-        logConfig(groupId, accessor.name, content)
+        logConfig(RECORDER_ID, componentName, content)
       }
     }
   }

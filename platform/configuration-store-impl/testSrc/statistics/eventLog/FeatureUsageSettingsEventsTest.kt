@@ -101,56 +101,58 @@ class FeatureUsageSettingsEventsTest {
     assertNotDefaultState(printer.result, true, false)
   }
 
-  private fun assertNotDefaultState(options: List<LoggedComponentInfo>, withProject: Boolean, defaultProject: Boolean) {
-    assertEquals(1, options.size)
-    val option = options[0]
-    assertEquals("settings.MyTestComponent", option.group)
-    assertEquals("boolOption", option.option)
+  private fun assertNotDefaultState(events: List<LoggedComponentStateEvents>, withProject: Boolean, defaultProject: Boolean) {
+    assertEquals(1, events.size)
+    val event = events[0]
+    assertEquals("settings", event.group)
+    assertEquals("MyTestComponent", event.id)
+
+    var size = 3
+    if (withProject) size++
+    if (defaultProject) size++
+
+    assertEquals(size, event.data.size)
+    assertTrue { event.data["name"] == "boolOption" }
+    assertTrue { event.data["value"] == true }
+    assertTrue { event.data["default"] == false }
+    if (withProject) {
+      assertTrue { event.data.containsKey("project")}
+    }
+    if (defaultProject) {
+      assertTrue { event.data["default_project"] == true }
+    }
+  }
+
+  private fun assertDefaultState(events: List<LoggedComponentStateEvents>, withProject: Boolean, defaultProject: Boolean) {
+    assertEquals(1, events.size)
+    val event = events[0]
+    assertEquals("settings", event.group)
+    assertEquals("MyTestComponent", event.id)
 
     var size = 2
     if (withProject) size++
     if (defaultProject) size++
 
-    assertEquals(size, option.data.size)
-    assertTrue { option.data["value"] == true }
-    assertTrue { option.data["default"] == false }
+    assertEquals(size, event.data.size)
+    assertTrue { event.data["name"] == "boolOption" }
+    assertTrue { event.data["value"] == false }
     if (withProject) {
-      assertTrue { option.data.containsKey("project")}
+      assertTrue { event.data.containsKey("project")}
     }
     if (defaultProject) {
-      assertTrue { option.data["default_project"] == true }
-    }
-  }
-
-  private fun assertDefaultState(options: List<LoggedComponentInfo>, withProject: Boolean, defaultProject: Boolean) {
-    assertEquals(1, options.size)
-    val option = options[0]
-    assertEquals("settings.MyTestComponent", option.group)
-    assertEquals("boolOption", option.option)
-
-    var size = 1
-    if (withProject) size++
-    if (defaultProject) size++
-
-    assertEquals(size, option.data.size)
-    assertTrue { option.data["value"] == false }
-    if (withProject) {
-      assertTrue { option.data.containsKey("project")}
-    }
-    if (defaultProject) {
-      assertTrue { option.data["default_project"] == true }
+      assertTrue { event.data["default_project"] == true }
     }
   }
 
   private class TestFeatureUsageSettingsEventsPrinter : FeatureUsageSettingsEventPrinter() {
-    val result : MutableList<LoggedComponentInfo> = ArrayList()
+    val result : MutableList<LoggedComponentStateEvents> = ArrayList()
 
     override fun logConfig(groupId: String, eventId: String, data: Map<String, Any>) {
-      result.add(LoggedComponentInfo(groupId, eventId, data))
+      result.add(LoggedComponentStateEvents(groupId, eventId, data))
     }
   }
 
-  private class LoggedComponentInfo(val group: String, val option: String, val data: Map<String, Any>)
+  private class LoggedComponentStateEvents(val group: String, val id: String, val data: Map<String, Any>)
 
   @State(name = "MyTestComponent", reportStatistic = true)
   private class TestComponent : PersistentStateComponent<ComponentState> {
