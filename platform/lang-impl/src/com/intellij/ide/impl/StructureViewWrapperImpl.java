@@ -11,6 +11,7 @@ import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -52,6 +53,8 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.util.List;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 
 /**
  * @author Eugene Belyaev
@@ -415,6 +418,14 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private static boolean loggedRun(@NotNull String message, @NotNull Runnable task) {
     try {
       if (LOG.isTraceEnabled()) LOG.trace(message + ": started");
+      Application application = getApplication();
+      if (application == null || application.isReadAccessAllowed()) {
+        task.run();
+      }
+      else {
+        LOG.debug(new IllegalStateException("called from unexpected place"));
+        application.runReadAction(task);
+      }
       task.run();
       return true;
     }
