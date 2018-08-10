@@ -6,10 +6,7 @@ import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorEventMulticaster;
-import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -32,7 +29,7 @@ import java.beans.PropertyChangeListener;
 
 public class PositionPanel extends EditorBasedWidget
   implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
-             EditorEventMulticaster.EditorEventListener, DocumentBulkUpdateListener, PropertyChangeListener {
+             CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener, PropertyChangeListener {
 
   public static final String SPACE = "     ";
   public static final String SEPARATOR = ":";
@@ -111,9 +108,12 @@ public class PositionPanel extends EditorBasedWidget
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
+    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    multicaster.addCaretListener(this, this);
+    multicaster.addSelectionListener(this, this);
+    multicaster.addDocumentListener(this, this);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(DocumentBulkUpdateListener.TOPIC, this);
-    connection.subscribe(EditorEventMulticaster.TOPIC, this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
     Disposer.register(this,
                       () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY,

@@ -2,6 +2,8 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.Mock;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -9,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,8 +43,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
         myEditorState = state;
       }
     };
-
-    myHistory = new IdeDocumentHistoryImpl(getProject(), new EditorManager()) {
+    myHistory = new IdeDocumentHistoryImpl(getProject(), EditorFactory.getInstance(), new EditorManager(), VirtualFileManager.getInstance(), CommandProcessor.getInstance(), new Mock.MyToolWindowManager()) {
       @Override
       protected FileEditorWithProvider getSelectedEditor() {
         return mySelectedEditor == null ? null : new FileEditorWithProvider(mySelectedEditor, myProvider);
@@ -55,7 +57,6 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
         myHistory.onCommandFinished(groupId);
       }
     };
-
     mySelectedFile = new Mock.MyVirtualFile();
     myEditorState = new MyState(false, "start");
     myProvider = new Mock.MyFileEditorProvider() {
@@ -184,6 +185,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
   }
 
   private class EditorManager extends Mock.MyFileEditorManager {
+
     @Override
     public VirtualFile getFile(@NotNull FileEditor editor) {
       return mySelectedFile;
@@ -191,8 +193,10 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
 
     @Override
     @NotNull
-    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor, boolean searchForSplitter) {
-      return Pair.create(new FileEditor[]{mySelectedEditor}, new FileEditorProvider[]{myProvider});
+    public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                         boolean focusEditor,
+                                                                         boolean searchForSplitter) {
+      return Pair.create (new FileEditor[] {mySelectedEditor}, new FileEditorProvider[] {myProvider});
     }
 
     @Override
@@ -220,4 +224,5 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
       return myName;
     }
   }
+
 }

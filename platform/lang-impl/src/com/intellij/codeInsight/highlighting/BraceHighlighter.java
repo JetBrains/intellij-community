@@ -7,10 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorEventMulticaster;
-import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -20,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 public class BraceHighlighter implements StartupActivity {
@@ -29,26 +25,10 @@ public class BraceHighlighter implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return; // sorry, upsource
-    }
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; // sorry, upsource
+    final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-    MessageBusConnection busConnection = project.getMessageBus().connect();
-    busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent e) {
-        myAlarm.cancelAllRequests();
-        FileEditor oldEditor = e.getOldEditor();
-        if (oldEditor instanceof TextEditor) {
-          clearBraces(((TextEditor)oldEditor).getEditor());
-        }
-        FileEditor newEditor = e.getNewEditor();
-        if (newEditor instanceof TextEditor) {
-          updateBraces(((TextEditor)newEditor).getEditor(), myAlarm);
-        }
-      }
-    });
-    busConnection.subscribe(EditorEventMulticaster.TOPIC, new EditorEventMulticaster.EditorEventListener() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         myAlarm.cancelAllRequests();
@@ -66,7 +46,9 @@ public class BraceHighlighter implements StartupActivity {
         }
         updateBraces(editor, myAlarm);
       }
+    }, project);
 
+    final SelectionListener mySelectionListener = new SelectionListener() {
       @Override
       public void selectionChanged(@NotNull SelectionEvent e) {
         myAlarm.cancelAllRequests();
@@ -83,13 +65,32 @@ public class BraceHighlighter implements StartupActivity {
         }
         updateBraces(editor, myAlarm);
       }
+    };
+    eventMulticaster.addSelectionListener(mySelectionListener, project);
 
+    DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();
         Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), project);
         for (Editor editor : editors) {
           updateBraces(editor, myAlarm);
+        }
+      }
+    };
+    eventMulticaster.addDocumentListener(documentListener, project);
+
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent e) {
+        myAlarm.cancelAllRequests();
+        FileEditor oldEditor = e.getOldEditor();
+        if (oldEditor instanceof TextEditor) {
+          clearBraces(((TextEditor)oldEditor).getEditor());
+        }
+        FileEditor newEditor = e.getNewEditor();
+        if (newEditor instanceof TextEditor) {
+          updateBraces(((TextEditor)newEditor).getEditor(), myAlarm);
         }
       }
     });

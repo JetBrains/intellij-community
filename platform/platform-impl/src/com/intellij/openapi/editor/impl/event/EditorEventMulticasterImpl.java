@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
@@ -28,12 +27,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private final EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
   private final EventDispatcher<FocusChangeListener> myFocusChangeListenerMulticaster = EventDispatcher.create(FocusChangeListener.class);
 
-  private final EditorEventListener messageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorEventMulticaster.TOPIC);
-  private final EditorMouseEventListener mouseMessageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorEventMulticaster.MOUSE_TOPIC);
-
   public void registerDocument(@NotNull DocumentEx document) {
     document.addDocumentListener(myDocumentMulticaster.getMulticaster());
-    document.addDocumentListener(messageBusPublisher);
     document.addDocumentListener(myPrioritizedDocumentMulticaster.getMulticaster());
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
   }
@@ -41,17 +36,9 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   public void registerEditor(@NotNull EditorEx editor) {
     editor.addEditorMouseListener(myEditorMouseMulticaster.getMulticaster());
     editor.addEditorMouseMotionListener(myEditorMouseMotionMulticaster.getMulticaster());
-    editor.addEditorMouseListener(mouseMessageBusPublisher);
-    editor.addEditorMouseMotionListener(mouseMessageBusPublisher);
-
     ((EditorMarkupModel) editor.getMarkupModel()).addErrorMarkerListener(myErrorStripeMulticaster.getMulticaster(), ((EditorImpl)editor).getDisposable());
-
     editor.getCaretModel().addCaretListener(myCaretMulticaster.getMulticaster());
-    editor.getCaretModel().addCaretListener(messageBusPublisher);
-
     editor.getSelectionModel().addSelectionListener(mySelectionMulticaster.getMulticaster());
-    editor.getSelectionModel().addSelectionListener(messageBusPublisher);
-
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaMulticaster.getMulticaster());
     editor.addPropertyChangeListener(myPropertyChangeMulticaster.getMulticaster());
     editor.addFocusListener(myFocusChangeListenerMulticaster.getMulticaster());

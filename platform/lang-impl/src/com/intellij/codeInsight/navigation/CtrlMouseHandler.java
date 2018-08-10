@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -40,9 +41,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -62,7 +65,6 @@ import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -118,6 +120,7 @@ public class CtrlMouseHandler {
       }
 
       BrowseMode browseMode = getBrowseMode(modifiers);
+
       if (browseMode == BrowseMode.None) {
         disposeHighlighter();
         cancelPreviousTooltip();
@@ -153,6 +156,50 @@ public class CtrlMouseHandler {
     }
   };
 
+  private final EditorMouseListener myEditorMouseAdapter = new EditorMouseListener() {
+    @Override
+    public void mouseReleased(EditorMouseEvent e) {
+      disposeHighlighter();
+      cancelPreviousTooltip();
+    }
+  };
+
+  private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionListener() {
+    @Override
+    public void mouseMoved(final EditorMouseEvent e) {
+      if (e.isConsumed() || !myProject.isInitialized() || myProject.isDisposed()) {
+        return;
+      }
+      MouseEvent mouseEvent = e.getMouseEvent();
+
+      Point prevLocation = myPrevMouseLocation;
+      myPrevMouseLocation = mouseEvent.getLocationOnScreen();
+      if (isMouseOverTooltip(mouseEvent.getLocationOnScreen())
+          || ScreenUtil.isMovementTowards(prevLocation, mouseEvent.getLocationOnScreen(), getHintBounds())) {
+        return;
+      }
+      cancelPreviousTooltip();
+
+      myStoredModifiers = mouseEvent.getModifiers();
+      BrowseMode browseMode = getBrowseMode(myStoredModifiers);
+
+      if (browseMode == BrowseMode.None || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
+        disposeHighlighter();
+        return;
+      }
+
+      Editor editor = e.getEditor();
+      if (editor.getProject() != null && editor.getProject() != myProject) return;
+      Point point = new Point(mouseEvent.getPoint());
+      if (editor.getInlayModel().getElementAt(point) != null) {
+        disposeHighlighter();
+        return;
+      }
+      myTooltipProvider = new TooltipProvider(editor, editor.xyToLogicalPosition(point));
+      myTooltipProvider.execute(browseMode);
+    }
+  };
+
   private void cancelPreviousTooltip() {
     if (myTooltipProvider != null) {
       myTooltipProvider.dispose();
@@ -160,62 +207,28 @@ public class CtrlMouseHandler {
     }
   }
 
-  public CtrlMouseHandler(@NotNull Project project,
+  public CtrlMouseHandler(final Project project,
+                          StartupManager startupManager,
                           EditorColorsManager colorsManager,
                           FileEditorManager fileEditorManager,
-                          @NotNull DocumentationManager documentationManager) {
+                          @NotNull DocumentationManager documentationManager,
+                          @NotNull final EditorFactory editorFactory) {
     myProject = project;
     myEditorColorsManager = colorsManager;
-
-    MessageBusConnection busConnection = project.getMessageBus().connect();
-    busConnection.subscribe(EditorEventMulticaster.TOPIC, new EditorEventMulticaster.EditorEventListener() {
+    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
-        if (myHint != null) {
-          myDocumentationManager.updateToolwindowContext();
-        }
-      }
-    });
-
-    busConnection.subscribe(EditorEventMulticaster.MOUSE_TOPIC, new EditorEventMulticaster.EditorMouseEventListener() {
-      @Override
-      public void mouseReleased(EditorMouseEvent e) {
-        disposeHighlighter();
-        cancelPreviousTooltip();
-      }
-
-      @Override
-      public void mouseMoved(final EditorMouseEvent e) {
-        if (e.isConsumed() || !myProject.isInitialized() || myProject.isDisposed()) {
-          return;
-        }
-        MouseEvent mouseEvent = e.getMouseEvent();
-
-        Point prevLocation = myPrevMouseLocation;
-        myPrevMouseLocation = mouseEvent.getLocationOnScreen();
-        if (isMouseOverTooltip(mouseEvent.getLocationOnScreen())
-            || ScreenUtil.isMovementTowards(prevLocation, mouseEvent.getLocationOnScreen(), getHintBounds())) {
-          return;
-        }
-        cancelPreviousTooltip();
-
-        myStoredModifiers = mouseEvent.getModifiers();
-        BrowseMode browseMode = getBrowseMode(myStoredModifiers);
-
-        if (browseMode == BrowseMode.None || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
-          disposeHighlighter();
-          return;
-        }
-
-        Editor editor = e.getEditor();
-        if (editor.getProject() != null && editor.getProject() != myProject) return;
-        Point point = new Point(mouseEvent.getPoint());
-        if (editor.getInlayModel().getElementAt(point) != null) {
-          disposeHighlighter();
-          return;
-        }
-        myTooltipProvider = new TooltipProvider(editor, editor.xyToLogicalPosition(point));
-        myTooltipProvider.execute(browseMode);
+      public void run() {
+        EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
+        eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
+        eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
+        eventMulticaster.addCaretListener(new CaretListener() {
+          @Override
+          public void caretPositionChanged(CaretEvent e) {
+            if (myHint != null) {
+              myDocumentationManager.updateToolwindowContext();
+            }
+          }
+        }, project);
       }
     });
     myFileEditorManager = fileEditorManager;

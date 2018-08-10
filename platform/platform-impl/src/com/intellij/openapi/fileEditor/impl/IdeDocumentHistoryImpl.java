@@ -8,15 +8,11 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CommandMerger;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
@@ -24,13 +20,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
@@ -45,16 +35,20 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 @State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
-  private static final Logger LOG = Logger.getInstance(IdeDocumentHistoryImpl.class);
+public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl");
 
   private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
   private static final int CHANGE_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
 
   private final Project myProject;
 
+  private final EditorFactory myEditorFactory;
   private FileDocumentManager myFileDocumentManager;
-  private FileEditorManagerEx myFileEditorManager;
+  private FileEditorManagerEx myEditorManager;
+  private final VirtualFileManager myVfManager;
+  private final CommandProcessor myCmdProcessor;
+  private final ToolWindowManager myToolWindowManager;
 
   private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
@@ -76,28 +70,54 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   private RecentlyChangedFilesState myRecentlyChangedFiles = new RecentlyChangedFilesState();
 
-  public IdeDocumentHistoryImpl(@NotNull Project project, @NotNull FileEditorManagerEx fileEditorManager) {
+  public IdeDocumentHistoryImpl(@NotNull Project project,
+                                @NotNull EditorFactory editorFactory,
+                                @NotNull FileEditorManager editorManager,
+                                @NotNull VirtualFileManager vfManager,
+                                @NotNull CommandProcessor cmdProcessor,
+                                @NotNull ToolWindowManager toolWindowManager) {
     myProject = project;
-    myFileEditorManager = fileEditorManager;
+    myEditorFactory = editorFactory;
+    myEditorManager = (FileEditorManagerEx)editorManager;
+    myVfManager = vfManager;
+    myCmdProcessor = cmdProcessor;
+    myToolWindowManager = toolWindowManager;
+  }
 
-    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+  @Override
+  public final void projectOpened() {
+    myEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
+    EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
+
+    eventMulticaster.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        onDocumentChanged(e);
+      }
+    }, myProject);
+
+    eventMulticaster.addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(CaretEvent e) {
+        onCaretPositionChanged(e);
+      }
+    }, myProject);
+
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         onSelectionChanged();
       }
     });
-    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+
+    myVfManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileDeleteEvent) {
-            removeInvalidFilesFromStacks();
-            return;
-          }
-        }
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        removeInvalidFilesFromStacks();
       }
-    });
+    }, myProject);
+
     busConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
       public void commandStarted(CommandEvent event) {
@@ -109,38 +129,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         onCommandFinished(event.getCommandGroupId());
       }
     });
-
-    busConnection.subscribe(EditorEventMulticaster.TOPIC, new EditorEventMulticaster.EditorEventListener() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        Document document = e.getDocument();
-        final VirtualFile file = getFileDocumentManager().getFile(document);
-        if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
-          if (!ApplicationManager.getApplication().isDispatchThread()) {
-            LOG.error("Document update for physical file not in EDT: " + file);
-          }
-          myCurrentCommandHasChanges = true;
-          myChangedFilesInCurrentCommand.add(file);
-        }
-      }
-
-      @Override
-      public void caretPositionChanged(CaretEvent e) {
-        if (e.getOldPosition().line == e.getNewPosition().line) {
-          return;
-        }
-
-        Document document = e.getEditor().getDocument();
-        if (getFileDocumentManager().getFile(document) != null) {
-          myCurrentCommandHasMoves = true;
-        }
-      }
-    });
-  }
-
-  @TestOnly
-  public void setFileEditorManager(@NotNull FileEditorManagerEx value) {
-    myFileEditorManager = value;
   }
 
   public static class RecentlyChangedFilesState {
@@ -154,9 +142,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       trimToSize();
     }
 
-    private void trimToSize() {
+    private void trimToSize(){
       final int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
-      while (CHANGED_PATHS.size() > limit) {
+      while(CHANGED_PATHS.size()>limit){
         CHANGED_PATHS.remove(0);
       }
     }
@@ -172,9 +160,32 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     myRecentlyChangedFiles = state;
   }
 
+  @TestOnly
+  public void setFileEditorManager(@NotNull FileEditorManagerEx value) {
+    myEditorManager = value;
+  }
+
   public final void onSelectionChanged() {
     myCurrentCommandIsNavigation = true;
     myCurrentCommandHasMoves = true;
+  }
+
+  private void onCaretPositionChanged(CaretEvent e) {
+    if (e.getOldPosition().line == e.getNewPosition().line) return;
+    Document document = e.getEditor().getDocument();
+    if (getFileDocumentManager().getFile(document) != null) {
+      myCurrentCommandHasMoves = true;
+    }
+  }
+
+  private void onDocumentChanged(DocumentEvent e) {
+    Document document = e.getDocument();
+    final VirtualFile file = getFileDocumentManager().getFile(document);
+    if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) LOG.error("Document update for physical file not in EDT: " + file);
+      myCurrentCommandHasChanges = true;
+      myChangedFilesInCurrentCommand.add(file);
+    }
   }
 
   final void onCommandStarted() {
@@ -324,8 +335,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     myForwardInProgress = true;
     try {
       executeCommand(() -> gotoPlaceInfo(target), "", null);
-    }
-    finally {
+    } finally {
       myForwardInProgress = false;
     }
   }
@@ -400,7 +410,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
     boolean removed = false;
-    for (Iterator<PlaceInfo> iterator = backPlaces.iterator(); iterator.hasNext(); ) {
+    for (Iterator<PlaceInfo> iterator = backPlaces.iterator(); iterator.hasNext();) {
       PlaceInfo info = iterator.next();
       final VirtualFile file = info.myFile;
       if (!file.isValid()) {
@@ -413,19 +423,18 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private void gotoPlaceInfo(@NotNull PlaceInfo info) { // TODO: Msk
-    final boolean wasActive = ToolWindowManager.getInstance(myProject).isEditorComponentActive();
+    final boolean wasActive = myToolWindowManager.isEditorComponentActive();
     EditorWindow wnd = info.getWindow();
-    FileEditorManagerEx editorManager = myFileEditorManager;
-    final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = wnd != null && wnd.isValid()
-                                                                          ? editorManager.openFileWithProviders(info.getFile(), wasActive, wnd)
-                                                                          : editorManager.openFileWithProviders(info.getFile(), wasActive, false);
+    final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders = wnd != null && wnd.isValid()
+                           ? myEditorManager.openFileWithProviders(info.getFile(), wasActive, wnd)
+                           : myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
 
-    editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
+    myEditorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
     final FileEditor[] editors = editorsWithProviders.getFirst();
     final FileEditorProvider[] providers = editorsWithProviders.getSecond();
     for (int i = 0; i < editors.length; i++) {
-      String typeId = providers[i].getEditorTypeId();
+      String typeId = providers [i].getEditorTypeId();
       if (typeId.equals(info.getEditorTypeId())) {
         editors[i].setState(info.getNavigationState());
       }
@@ -437,21 +446,27 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
    */
   @Nullable
   protected FileEditorWithProvider getSelectedEditor() {
-    FileEditorManagerEx editorManager = myFileEditorManager;
+    FileEditorManagerEx editorManager = myEditorManager;
     VirtualFile file = editorManager.getCurrentFile();
     return file == null ? null : editorManager.getSelectedEditorWithProvider(file);
   }
 
   protected PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {
-    if (!fileEditor.isValid()) {
-      return null;
-    }
+    if (!fileEditor.isValid()) return null;
 
-    FileEditorManagerEx editorManager = myFileEditorManager;
-    final VirtualFile file = editorManager.getFile(fileEditor);
+    final VirtualFile file = myEditorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
-    FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
-    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
+
+    final FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
+
+    return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), myEditorManager.getCurrentWindow());
+  }
+
+
+  @Override
+  @NotNull
+  public final String getComponentName() {
+    return "IdeDocumentHistory";
   }
 
   private static void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limitSizeLimit) {
@@ -482,9 +497,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     private final Reference<EditorWindow> myWindow;
 
     public PlaceInfo(@NotNull VirtualFile file,
-                     @NotNull FileEditorState navigationState,
-                     @NotNull String editorTypeId,
-                     @Nullable EditorWindow window) {
+              @NotNull FileEditorState navigationState,
+              @NotNull String editorTypeId,
+              @Nullable EditorWindow window) {
       myNavigationState = navigationState;
       myFile = file;
       myEditorTypeId = editorTypeId;
@@ -528,7 +543,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   protected void executeCommand(Runnable runnable, String name, Object groupId) {
-    CommandProcessor.getInstance().executeCommand(myProject, runnable, name, groupId);
+    myCmdProcessor.executeCommand(myProject, runnable, name, groupId);
   }
 
   private static boolean isSame(@NotNull PlaceInfo first, @NotNull PlaceInfo second) {
