@@ -172,31 +172,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private JComponent createChangeViewComponent() {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
-    EmptyAction.registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), panel);
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
-    EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
+    registerShortcuts(panel);
 
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
-
-    group.addSeparator();
-    group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
-
-    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
-    ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
-    ignoreGroup.add(new ToggleShowIgnoredAction());
-    ignoreGroup.add(new IgnoredSettingsAction());
-    group.add(ignoreGroup);
-    group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
-    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
-    group.addSeparator();
-    group.add(new ToggleDetailsAction());
-
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
-    toolbar.setTargetComponent(myView);
+    ActionToolbar toolbar = createChangesToolbar();
 
     myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
     myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
@@ -222,6 +200,39 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myView.addTreeSelectionListener(myTsl);
     myView.addGroupingChangeListener(myGroupingChangeListener);
     return panel;
+  }
+
+  private static void registerShortcuts(@NotNull JComponent component) {
+    registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
+    registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
+    registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
+    registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
+    registerWithShortcutSet("ChangesView.SetDefault",
+                            new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), component);
+    registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), component);
+  }
+
+  @NotNull
+  private ActionToolbar createChangesToolbar() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
+
+    group.addSeparator();
+    group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
+
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
+    ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
+    ignoreGroup.add(new ToggleShowIgnoredAction());
+    ignoreGroup.add(new IgnoredSettingsAction());
+    group.add(ignoreGroup);
+    group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
+    group.addSeparator();
+    group.add(new ToggleDetailsAction());
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
+    toolbar.setTargetComponent(myView);
+    return toolbar;
   }
 
   @JdkConstants.InputEventMask
