@@ -420,6 +420,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
           }
         }
         myAwaitingRunProfiles.remove(environment.getRunProfile());
+        environment.setExecutionId(0);// At restart we have to assign new execution ID and therefore reuse 'just stopped' contents if any
         start(environment);
       }
     }, 50);
