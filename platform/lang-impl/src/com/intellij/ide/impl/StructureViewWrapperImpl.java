@@ -39,7 +39,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
-import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -84,7 +83,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myToolWindow = toolWindow;
     JComponent component = toolWindow.getComponent();
 
-    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component, Alarm.ThreadToUse.POOLED_THREAD);
+    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     Timer timer = UIUtil.createNamedTimer("StructureView", REFRESH_TIME, event -> {
