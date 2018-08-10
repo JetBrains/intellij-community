@@ -33,12 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
-import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
@@ -72,6 +68,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FilePath myPath;
   @Nullable private final Hash myRevision;
+  @NotNull private final VirtualFile myRoot;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
@@ -88,6 +85,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
     myRevision = revision;
+    myRoot = root;
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
@@ -250,14 +248,20 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
   }
 
-  @NotNull
-  public FilePath getPath() {
-    return myPath;
+  public void jumpToNearestCommit(@NotNull Hash hash) {
+    jumpTo(hash, (model, h) -> {
+      if (!myLogData.getStorage().containsCommit(new CommitId(h, myRoot))) return GraphTableModel.COMMIT_NOT_FOUND;
+      int commitIndex = myLogData.getCommitIndex(h, myRoot);
+      Integer rowIndex = myVisiblePack.getVisibleGraph().getVisibleRowIndex(commitIndex);
+      if (rowIndex == null) {
+        rowIndex = ReachableNodesUtilKt.findVisibleAncestorRow(commitIndex, myVisiblePack);
+      }
+      return rowIndex == null ? GraphTableModel.COMMIT_DOES_NOT_MATCH : rowIndex;
+    }, SettableFuture.create());
   }
 
-  @Nullable
-  public Hash getRevision() {
-    return myRevision;
+  public boolean matches(@NotNull FilePath targetPath, @Nullable Hash targetRevision) {
+    return myPath.equals(targetPath) && Objects.equals(myRevision, targetRevision);
   }
 
   @NotNull
