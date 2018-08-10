@@ -173,7 +173,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   private static void previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
-    processor.previewRefactoring();
+    processor.previewRefactoring(null);
     ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
   }
 

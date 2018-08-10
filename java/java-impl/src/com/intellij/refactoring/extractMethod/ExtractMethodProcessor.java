@@ -838,7 +838,7 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in command and in atomic action
    */
   public void doRefactoring() throws IncorrectOperationException {
-    initDuplicates();
+    initDuplicates(null);
 
     chooseAnchor();
 
@@ -884,15 +884,15 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  public void previewRefactoring() {
-    initDuplicates();
+  public void previewRefactoring(@Nullable Set<TextRange> textRanges) {
+    initDuplicates(textRanges);
     chooseAnchor();
   }
 
-  protected void initDuplicates() {
-    myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED);
+  protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
+    myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED, textRanges);
     if (myParametrizedDuplicates != null && !myParametrizedDuplicates.isEmpty()) {
-      myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT);
+      myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT, textRanges);
     }
     myDuplicates = new ArrayList<>();
   }
@@ -916,7 +916,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(), value, parameters);
     List<Match> myDuplicates = finder.findDuplicates(myTargetClass);
     if (!ContainerUtil.isEmpty(myDuplicates)) return myDuplicates.size();
-    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED);
+    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED, null);
     if (parametrizedDuplicates != null) {
       List<Match> duplicates = parametrizedDuplicates.getDuplicates();
       return duplicates != null ? duplicates.size() : 0;
@@ -1298,6 +1298,13 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public ParametrizedDuplicates getParametrizedDuplicates() {
     return myParametrizedDuplicates;
+  }
+
+  @Nullable
+  public List<Match> getAnyDuplicates() {
+    return Optional.ofNullable(getParametrizedDuplicates())
+      .map(ParametrizedDuplicates::getDuplicates)
+      .orElse(getDuplicates());
   }
 
   private static List<Match> filterChainedConstructorDuplicates(final List<Match> duplicates) {
@@ -2209,7 +2216,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public boolean hasDuplicates(Set<VirtualFile> files) {
-    initDuplicates();
+    initDuplicates(null);
     final DuplicatesFinder finder = getExactDuplicatesFinder();
 
     final Boolean hasDuplicates = hasDuplicates();

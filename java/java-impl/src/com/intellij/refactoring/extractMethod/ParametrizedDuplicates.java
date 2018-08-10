@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -80,8 +81,9 @@ public class ParametrizedDuplicates {
 
   @Nullable
   public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor,
-                                                      @NotNull DuplicatesFinder.MatchType matchType) {
-    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, matchType);
+                                                      @NotNull DuplicatesFinder.MatchType matchType,
+                                                      @Nullable Set<TextRange> textRanges) {
+    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, matchType, textRanges);
     if (finder == null) {
       return null;
     }
@@ -112,7 +114,7 @@ public class ParametrizedDuplicates {
     }
 
     // As folded parameters don't work along with extracted parameters we need to apply the finder again to actually fold the parameters
-    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.FOLDED);
+    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.FOLDED, null);
     if (finder == null) {
       return Collections.emptyMap();
     }
@@ -191,7 +193,8 @@ public class ParametrizedDuplicates {
 
   @Nullable
   private static DuplicatesFinder createDuplicatesFinder(@NotNull ExtractMethodProcessor processor,
-                                                         @NotNull DuplicatesFinder.MatchType matchType) {
+                                                         @NotNull DuplicatesFinder.MatchType matchType,
+                                                         @Nullable Set<TextRange> textRanges) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
     if (elements.length == 0) {
       return null;
@@ -202,7 +205,7 @@ public class ParametrizedDuplicates {
                                     ? processor.myInputVariables.copyWithoutFolding() : processor.myInputVariables;
     ReturnValue returnValue = processor.myOutputVariable != null ? new VariableReturnValue(processor.myOutputVariable) : null;
     return new DuplicatesFinder(elements, inputVariables, returnValue,
-                                Collections.emptyList(), matchType, effectivelyLocal);
+                                Collections.emptyList(), matchType, effectivelyLocal, textRanges);
   }
 
   @NotNull

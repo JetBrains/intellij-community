@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -60,6 +61,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -749,7 +751,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected void initDuplicates() {
+    protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
       myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
                              .map(finder -> finder.findDuplicates(myTargetClass))
                              .orElse(new ArrayList<>());

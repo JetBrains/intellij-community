@@ -34,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.ExtractMethodSnapshot;
@@ -91,7 +92,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     PsiElement[] pattern = getPatternElements();
     if (pattern.length == 0) {
       // todo suggest re-running the refactoring
-      CommonRefactoringUtil.showErrorHint(myProject, null, "Failed to extract method", REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+      CommonRefactoringUtil.showErrorHint(myProject, null, RefactoringBundle.message("refactoring.extract.method.preview.failed"),
+                                          REFACTORING_NAME, HelpID.EXTRACT_METHOD);
       return;
     }
     JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(pattern, REFACTORING_NAME);
@@ -104,17 +106,27 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   public void initLater() {
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Preparing Diff") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
+                                                              RefactoringBundle.message("refactoring.extract.method.preview.preparing")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        initLaterImpl(indicator);
+        updateLaterImpl(myTree.getModel().getAllDuplicates(), indicator);
       }
     });
   }
 
-  private void initLaterImpl(@NotNull ProgressIndicator indicator) {
-    List<DuplicateNode> allDuplicates = myTree.getModel().getAllDuplicates();
-    IncrementalProgress progress = new IncrementalProgress(indicator, allDuplicates.size() + 4);
+  public void updateLater() {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
+                                                              RefactoringBundle.message("refactoring.extract.method.preview.updating")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        updateLaterImpl(myTree.getModel().getEnabledDuplicates(), indicator);
+      }
+    });
+  }
+
+  private void updateLaterImpl(@NotNull List<DuplicateNode> selectedNodes, @NotNull ProgressIndicator indicator) {
+    IncrementalProgress progress = new IncrementalProgress(indicator, selectedNodes.size() + 4);
 
     PsiElement[] pattern = ReadAction.compute(() -> getPatternElements());
     PsiElement[] patternCopy = ReadAction.compute(() -> {
@@ -125,17 +137,13 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     ExtractMethodSnapshot copySnapshot = ReadAction.compute(() -> new ExtractMethodSnapshot(mySnapshot, pattern, patternCopy));
 
-    JavaDuplicatesExtractMethodProcessor copyProcessor = ReadAction.compute(() -> {
+    ExtractMethodProcessor copyProcessor = ReadAction.compute(() -> {
       JavaDuplicatesExtractMethodProcessor processor = new JavaDuplicatesExtractMethodProcessor(patternCopy, REFACTORING_NAME);
-      return processor.prepareFromSnapshot(copySnapshot, false) ? processor : null;
+      return processor.prepareFromSnapshot(copySnapshot, true) ? processor : null;
     });
+    if (copyProcessor == null) return;
 
-    List<Match> copyDuplicates = ReadAction.compute(() -> {
-      copyProcessor.previewRefactoring();
-      return PreviewTreeModel.getDuplicates(copyProcessor);
-    });
-
-    Map<DuplicateNode, Match> duplicateMatches = ReadAction.compute(() -> filterSelectedDuplicates(allDuplicates, copyDuplicates));
+    Map<DuplicateNode, Match> duplicateMatches = ReadAction.compute(() -> findSelectedDuplicates(copyProcessor, selectedNodes));
 
     Bounds patternReplacementBounds = ReadAction.compute(() -> {
       Bounds patternBounds = new Bounds(patternCopy[0], patternCopy[patternCopy.length - 1]);
@@ -163,7 +171,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     PsiMethod method = ReadAction.compute(() -> {
       PsiMethod extractedMethod = copyProcessor.getExtractedMethod();
-      return (PsiMethod)CodeStyleManager.getInstance(copyProcessor.getProject()).reformat(extractedMethod);
+      return (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(extractedMethod);
     });
 
     ElementsRange patternReplacement = ReadAction.compute(() -> patternReplacementBounds.getElementsRange());
@@ -181,7 +189,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     if (refactoredDocument != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(copyProcessor.getProject());
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         documentManager.doPostponedOperationsAndUnblockDocument(refactoredDocument);
         MethodNode methodNode = myTree.getModel().updateMethod(method);
 
@@ -250,6 +258,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     myDiffRequest = new PreviewDiffRequest(linesBounds, oldContent, newContent, node -> myTree.selectNode(node));
     myDiffRequest.putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, getDiffComputer(diffRanges));
     myDiffPanel.setRequest(myDiffRequest);
+    myDiffRequest.onInitialized();
   }
 
   private static int getStartLineNumber(Document document, TextRange textRange) {
@@ -282,14 +291,20 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
   private static void doExtractImpl(@NotNull JavaDuplicatesExtractMethodProcessor processor,
                                     @NotNull List<DuplicateNode> selectedNodes) {
-    processor.previewRefactoring();
-    List<Match> duplicates = PreviewTreeModel.getDuplicates(processor);
-    Map<DuplicateNode, Match> selectedDuplicates = filterSelectedDuplicates(selectedNodes, duplicates);
+    Map<DuplicateNode, Match> selectedDuplicates = findSelectedDuplicates(processor, selectedNodes);
     processor.doExtract();
     processor.initParametrizedDuplicates(false);
 
     for (Match duplicate : selectedDuplicates.values()) {
       processor.processMatch(duplicate);
+    }
+    PsiMethodCallExpression methodCall = processor.getMethodCall();
+    if (methodCall != null && methodCall.isValid()) {
+      Editor editor = getEditor(methodCall.getContainingFile(), false);
+      if (editor != null) {
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToOffset(methodCall.getTextOffset());
+      }
     }
   }
 
@@ -301,26 +316,31 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   @NotNull
-  private static Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<? extends FragmentNode> selectedNodes,
+  private static Map<DuplicateNode, Match> findSelectedDuplicates(@NotNull ExtractMethodProcessor processor,
+                                                                  @NotNull List<DuplicateNode> selectedNodes) {
+    Set<TextRange> textRanges = ContainerUtil.map2SetNotNull(selectedNodes, FragmentNode::getTextRange);
+    processor.previewRefactoring(textRanges);
+    List<Match> duplicates = processor.getAnyDuplicates();
+    return filterSelectedDuplicates(selectedNodes, duplicates);
+  }
+
+  @NotNull
+  private static Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<DuplicateNode> selectedNodes,
                                                                     @Nullable List<Match> allDuplicates) {
     if (ContainerUtil.isEmpty(allDuplicates)) {
       return Collections.emptyMap();
     }
     Map<DuplicateNode, Match> selectedDuplicates = new THashMap<>();
-    for (FragmentNode node : selectedNodes) {
-      if (node instanceof DuplicateNode) {
-        DuplicateNode duplicateNode = (DuplicateNode)node;
-        TextRange selectedRange = duplicateNode.getTextRange();
-        if (selectedRange != null) {
-          for (Match duplicate : allDuplicates) {
-            PsiElement start = duplicate.getMatchStart();
-            PsiElement end = duplicate.getMatchEnd();
-            if (start != null && end != null &&
-                start.getTextRange().getStartOffset() == selectedRange.getStartOffset() &&
-                end.getTextRange().getEndOffset() == selectedRange.getEndOffset()) {
-              selectedDuplicates.put(duplicateNode, duplicate);
-              break;
-            }
+    for (DuplicateNode duplicateNode : selectedNodes) {
+      TextRange selectedRange = duplicateNode.getTextRange();
+      if (selectedRange != null) {
+        for (Match duplicate : allDuplicates) {
+          PsiElement start = duplicate.getMatchStart();
+          PsiElement end = duplicate.getMatchEnd();
+          if (start != null && end != null &&
+              selectedRange.equalsToRange(start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())) {
+            selectedDuplicates.put(duplicateNode, duplicate);
+            break;
           }
         }
       }
@@ -352,7 +372,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       if (psiFile != null) {
         ExtractMethodSnapshot.SNAPSHOT_KEY.set(psiFile, mySnapshot);
         try {
-          Editor editor = getEditor(psiFile);
+          Editor editor = getEditor(psiFile, true);
           ExtractMethodHandler.invokeOnElements(myProject, editor, psiFile, elements);
           return;
         }
@@ -374,18 +394,19 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   @Nullable
-  private Editor getEditor(@NotNull PsiFile psiFile) {
+  private static Editor getEditor(@NotNull PsiFile psiFile, boolean canCreate) {
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     Document document = FileDocumentManager.getInstance().getDocument(vFile);
     if (document == null) {
       return null;
     }
     EditorFactory factory = EditorFactory.getInstance();
-    Editor[] editors = factory.getEditors(document, myProject);
+    Project project = psiFile.getProject();
+    Editor[] editors = factory.getEditors(document, project);
     if (editors.length != 0) {
       return editors[0];
     }
-    return EditorFactory.getInstance().createEditor(document, myProject);
+    return canCreate ? EditorFactory.getInstance().createEditor(document, project) : null;
   }
 
   boolean isModified() {
