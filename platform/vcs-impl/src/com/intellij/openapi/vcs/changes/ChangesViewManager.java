@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -62,11 +61,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
+import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit;
 import static java.util.stream.Collectors.toList;
 
@@ -171,34 +173,22 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private JComponent createChangeViewComponent() {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
-
-    registerShortcuts(panel);
-
     ActionToolbar toolbar = createChangesToolbar();
-
-    myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-    myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
-
-    myProgressLabel = new JPanel(new BorderLayout());
-
+    JPanel wrapper = simplePanel(createScrollPane(myView));
+    MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
+    mySplitterComponent = new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                                           myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+    myProgressLabel = simplePanel();
+    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
     panel.setToolbar(toolbar.getComponent());
 
-    final JPanel content = new JPanel(new BorderLayout());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(scrollPane, BorderLayout.CENTER);
-    MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent =
-      new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-
-    content.add(mySplitterComponent, BorderLayout.CENTER);
-    content.add(myProgressLabel, BorderLayout.SOUTH);
-    panel.setContent(content);
-
+    registerShortcuts(panel);
+    myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
+    myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
     ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     myView.addGroupingChangeListener(myGroupingChangeListener);
+
     return panel;
   }
 
