@@ -3280,27 +3280,23 @@ public class UIUtil {
     }
 
     if (SystemInfo.isLinux) {
-      if (SystemInfo.isJetBrainsJvm) {
-        float scale = 1f;
-        if (!isJreHiDPIEnabled()) {
-          Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-          if (JBUI.SCALE_VERBOSE) {
-            LOG.info(String.format("gnome.Xft/DPI: %s", value));
-          }
-          if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
-            // If the property is defined, then:
-            // 1) it provides correct system scale
-            // 2) the label font size is scaled
-            int dpi = ((Integer)value).intValue() / 1024;
-            if (dpi < 50) dpi = 50;
-            scale = JBUI.discreteScale(dpi / 96f);
-          }
-        }
+      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      if (JBUI.SCALE_VERBOSE) {
+        LOG.info(String.format("gnome.Xft/DPI: %s", value));
+      }
+      if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
+        // If the property is defined, then:
+        // 1) it provides correct system scale
+        // 2) the label font size is scaled
+        int dpi = ((Integer)value).intValue() / 1024;
+        if (dpi < 50) dpi = 50;
+        float scale = isJreHiDPIEnabled() ? 1f : JBUI.discreteScale(dpi / 96f); // no scaling in JRE-HiDPI mode
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
         if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
+          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE, dpi));
         }
-      } else {
+      }
+      else if (!SystemInfo.isJetBrainsJvm) {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
         float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
         font = font.deriveFont(size);
