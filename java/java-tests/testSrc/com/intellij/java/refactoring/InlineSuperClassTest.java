@@ -83,6 +83,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTest(false, true);
   }
   public void testThisQualificationInsideAnonymous() { doTest(); }
+  public void testOrderOfInnerClasses() { doTest(); }
 
   private void doTest() {
     doTest(false, false);
