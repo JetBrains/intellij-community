@@ -113,17 +113,15 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   private void initLaterImpl(@NotNull ProgressIndicator indicator) {
-    PreviewTreeModel treeModel = myTree.getModel();
-    indicator.setIndeterminate(false);
-    List<DuplicateNode> allDuplicates = treeModel.getAllDuplicates();
-    int total = allDuplicates.size() + 4, count = 0;
+    List<DuplicateNode> allDuplicates = myTree.getModel().getAllDuplicates();
+    IncrementalProgress progress = new IncrementalProgress(indicator, allDuplicates.size() + 4);
 
     PsiElement[] pattern = ReadAction.compute(() -> getPatternElements());
     PsiElement[] patternCopy = ReadAction.compute(() -> {
       PsiFile patternFile = pattern[0].getContainingFile();
       return IntroduceParameterHandler.getElementsInCopy(myProject, patternFile, pattern, false);
     });
-    indicator.setFraction(++count / (double)total); // +1
+    progress.increment(); // +1
 
     ExtractMethodSnapshot copySnapshot = ReadAction.compute(() -> new ExtractMethodSnapshot(mySnapshot, pattern, patternCopy));
 
@@ -144,10 +142,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       copyProcessor.doExtract();
       return patternBounds;
     });
-    indicator.setFraction(++count / (double)total); // +2
+    progress.increment(); // +2
 
     ReadAction.run(() -> copyProcessor.initParametrizedDuplicates(false));
-    indicator.setFraction(++count / (double)total); // +3
+    progress.increment(); // +3
 
     Map<DuplicateNode, ElementsRange> duplicateReplacements = new TreeMap<>();
     for (Map.Entry<DuplicateNode, Match> entry : duplicateMatches.entrySet()) {
@@ -160,7 +158,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
         ElementsRange replacement = bounds.getElementsRange();
         duplicateReplacements.put(duplicateNode, replacement);
       });
-      indicator.setFraction(++count / (double)total); // +size()
+      progress.increment(); // +size()
     }
 
     PsiMethod method = ReadAction.compute(() -> {
@@ -179,7 +177,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       }
       return null;
     });
-    indicator.setFraction(++count / (double)total); // +4
+    progress.increment(); // +4
 
     if (refactoredDocument != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -430,6 +428,22 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     public TextRange getTextRange() {
       return new TextRange(myStart.getTextRange().getStartOffset(), myEnd.getTextRange().getEndOffset());
+    }
+  }
+
+  static class IncrementalProgress {
+    private final ProgressIndicator myIndicator;
+    private final double myTotal;
+    private int myCount;
+
+    IncrementalProgress(@NotNull ProgressIndicator indicator, int total) {
+      myIndicator = indicator;
+      myTotal = total;
+      indicator.setIndeterminate(false);
+    }
+
+    void increment() {
+      myIndicator.setFraction(++myCount / myTotal);
     }
   }
 }
