@@ -15,7 +15,6 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +38,7 @@ import java.util.Map;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getChildren;
+import static com.intellij.openapi.util.text.StringUtil.*;
 
 /**
  * @author Vladislav.Soroka
@@ -65,9 +65,8 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
     }
     List<String> result = ContainerUtil.newSmartList();
 
-    int spaceIndex = StringUtil.lastIndexOf(pattern, ' ', getHelpCommand().length(), pattern.length());
-    String prefix = StringUtil.trim(spaceIndex < 0 ? getHelpCommand() : pattern.substring(0, spaceIndex + 1)) + ' ';
-    String toComplete = spaceIndex < 0 ? "" : pattern.substring(spaceIndex + 1);
+    String prefix = notNullize(substringBeforeLast(pattern, " "), getHelpCommand()).trim() + ' ';
+    String toComplete = notNullize(substringAfterLast(pattern, " "));
 
     appendProjectsVariants(result, dataContext, prefix);
     if (!result.isEmpty()) return result;
@@ -86,7 +85,8 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
 
     Project project = fetchProject(dataContext);
     Collection<GradleProjectSettings> projectsSettings = GradleSettings.getInstance(project).getLinkedProjectsSettings();
-    if (projectsSettings.isEmpty()) return;
+    // do not show projects variants if only one gradle project is linked
+    if (projectsSettings.size() <= 1) return;
 
     ProjectDataManager dataManager = ProjectDataManager.getInstance();
     projectsSettings.stream()
@@ -98,7 +98,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
 
   private void appendTasksVariants(@NotNull List<String> result, @NotNull String prefix, @NotNull DataContext dataContext) {
     Project project = fetchProject(dataContext);
-    String commandLine = StringUtil.trimStart(prefix, getHelpCommand()).trim();
+    String commandLine = trimStart(prefix, getHelpCommand()).trim();
     ProjectData projectData = getProjectData(project, commandLine);
     if (projectData == null) return;
 
@@ -121,7 +121,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
     for (Object option : GradleCommandLineOptionsProvider.getSupportedOptions().getOptions()) {
       if (option instanceof Option) {
         String opt = isLongOpt ? ((Option)option).getLongOpt() : ((Option)option).getOpt();
-        if (StringUtil.isNotEmpty(opt)) {
+        if (isNotEmpty(opt)) {
           result.add(prefix + opt);
         }
       }
@@ -131,12 +131,12 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
   @Override
   public void execute(@NotNull DataContext dataContext, @NotNull String value) {
     Project project = fetchProject(dataContext);
-    String commandLine = StringUtil.trimStart(value, getHelpCommand()).trim();
+    String commandLine = trimStart(value, getHelpCommand()).trim();
 
     ProjectData projectData = getProjectData(project, commandLine);
     if (projectData == null) return;
 
-    commandLine = StringUtil.trimStart(commandLine, projectData.getExternalName() + " ");
+    commandLine = trimStart(commandLine, projectData.getExternalName());
     Executor executor = EXECUTOR_KEY.getData(dataContext);
     GradleExecuteTaskAction.runGradle(project, executor, projectData.getLinkedExternalProjectPath(), commandLine);
   }
@@ -151,7 +151,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
       .map(setting -> dataManager.getExternalProjectData(project, GradleConstants.SYSTEM_ID, setting.getExternalProjectPath()))
       .filter(projectInfo -> projectInfo != null && projectInfo.getExternalProjectStructure() != null)
       .map(projectInfo -> projectInfo.getExternalProjectStructure().getData())
-      .filter(projectData -> projectsSettings.size() == 1 || StringUtil.startsWith(commandLine, projectData.getExternalName()))
+      .filter(projectData -> projectsSettings.size() == 1 || startsWith(commandLine, projectData.getExternalName()))
       .findFirst().orElse(null);
   }
 
@@ -236,7 +236,7 @@ public class GradleRunAnythingProvider extends RunAnythingProviderBase<String> {
         for (DataNode<TaskData> node : getChildren(moduleDataNode, ProjectKeys.TASK)) {
           TaskData taskData = node.getData();
           String taskName = taskData.getName();
-          if (StringUtil.isNotEmpty(taskName)) {
+          if (isNotEmpty(taskName)) {
             String taskPathPrefix = ":".equals(gradlePath) || taskName.startsWith(gradlePath) ? "" : (gradlePath + ':');
             projectTasks.putValue(taskPathPrefix, taskName);
           }
