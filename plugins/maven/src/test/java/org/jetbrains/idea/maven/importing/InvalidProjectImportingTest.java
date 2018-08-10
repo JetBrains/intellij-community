@@ -17,13 +17,17 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -104,7 +108,10 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
                    "Module 'foo' not found");
   }
 
-  public void testMissingModules() {
+  public void testMissingModules() throws IOException {
+    System.out.println(toString(getMavenGeneralSettings())); // log for flaking test
+    File settings = new File(FileUtil.toSystemDependentName(VfsUtil.urlToPath(getMavenGeneralSettings().getUserSettingsFile())));
+    System.out.println(FileUtil.loadFile(settings, false));
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
                             "<version>1</version>" +
@@ -118,6 +125,28 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, "Module 'foo' not found");
+  }
+
+  private static String toString(MavenGeneralSettings settings) {
+    return "MavenGeneralSettings{" +
+           "workOffline=" + settings.isWorkOffline() +
+           ", mavenHome='" + settings.getMavenHome() + '\'' +
+           ", mavenSettingsFile='" + settings.getUserSettingsFile() + '\'' +
+           ", overriddenLocalRepository='" + settings.getLocalRepository() + '\'' +
+           ", printErrorStackTraces=" + settings.isPrintErrorStackTraces() +
+           ", usePluginRegistry=" + settings.isUsePluginRegistry() +
+           ", nonRecursive=" + settings.isNonRecursive() +
+           ", alwaysUpdateSnapshots=" + settings.isAlwaysUpdateSnapshots() +
+           ", threads='" + settings.getThreads() + '\'' +
+           ", outputLevel=" + settings.getOutputLevel() +
+           ", checksumPolicy=" + settings.getChecksumPolicy() +
+           ", failureBehavior=" + settings.getFailureBehavior() +
+           ", pluginUpdatePolicy=" + settings.getPluginUpdatePolicy() +
+           ", myEffectiveLocalRepositoryCache=" + settings.getEffectiveLocalRepository() +
+           //", myDefaultPluginsCache=" + settings.myDefaultPluginsCache +
+           //", myBulkUpdateLevel=" + settings.myBulkUpdateLevel +
+           //", myListeners=" + settings.myListeners +
+           '}';
   }
 
   @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
