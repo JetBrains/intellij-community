@@ -330,7 +330,7 @@ public class CtrlMouseHandler {
     return sb.toString();
   }
 
-  private abstract static class Info {
+  public abstract static class Info {
     @NotNull protected final PsiElement myElementAtPointer;
     @NotNull private final List<TextRange> myRanges;
 
@@ -467,8 +467,8 @@ public class CtrlMouseHandler {
   }
 
   @Nullable
-  private static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset,
-                                @NotNull BrowseMode browseMode) {
+  public static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset,
+                               @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -948,7 +948,7 @@ public class CtrlMouseHandler {
     }
   }
 
-  private static class DocInfo {
+  public static class DocInfo {
     public static final DocInfo EMPTY = new DocInfo(null, null);
 
     @Nullable public final String text;
