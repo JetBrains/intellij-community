@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -99,11 +85,13 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     tabPane.addPropertyChangeListener(panePropertyListener);
 
     paneMouseListener = new MouseAdapter() {
+      @Override
       public void mouseEntered(MouseEvent e) {
         hoverTab = tabForCoordinate(tabPane, e.getX(), e.getY());
         tabPane.repaint();
       }
 
+      @Override
       public void mouseExited(MouseEvent e) {
         hoverTab = -1;
         tabPane.repaint();
@@ -113,6 +101,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     tabPane.addMouseListener(paneMouseListener);
 
     paneMouseMotionListener = new MouseMotionAdapter() {
+      @Override
       public void mouseMoved(MouseEvent e) {
         hoverTab = tabForCoordinate(tabPane, e.getX(), e.getY());
         tabPane.repaint();

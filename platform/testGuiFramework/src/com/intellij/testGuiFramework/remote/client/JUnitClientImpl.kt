@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.remote.client
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
+import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.InetAddress
@@ -117,7 +118,11 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
         LOG.info("Transport receiving message exception", e)
       }
       finally {
-        objectInputStream.close()
+        try {
+          objectInputStream.close()
+        } catch (e: IOException) {
+          // ignore
+        }
       }
     }
   }
@@ -137,7 +142,11 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
         Thread.currentThread().interrupt()
       }
       finally {
-        objectOutputStream.close()
+        try {
+          objectOutputStream.close()
+        } catch (e: IOException) {
+          // ignore
+        }
       }
     }
   }

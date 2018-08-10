@@ -9,6 +9,7 @@ import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -20,7 +21,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
-import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.docking.DockManager;
@@ -32,8 +32,9 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.jediterm.terminal.ui.*;
-import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
+import com.jediterm.terminal.ui.AbstractTabbedTerminalWidget;
+import com.jediterm.terminal.ui.AbstractTabs;
+import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -43,23 +44,26 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Function;
 
 /**
  * @author traff
  */
-public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable {
+public class JBTabbedTerminalWidget extends AbstractTabbedTerminalWidget<JBTabInnerTerminalWidget> implements Disposable {
 
   private final Project myProject;
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
+  private final Function<String, JBTabInnerTerminalWidget> myCreateNewSessionAction;
   private final Disposable myParent;
 
   public JBTabbedTerminalWidget(@NotNull Project project,
                                 @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
-                                final @NotNull Predicate<Pair<TerminalWidget, String>> createNewSessionAction, @NotNull Disposable parent) {
+                                final @NotNull Function<Pair<AbstractTabbedTerminalWidget<JBTabInnerTerminalWidget>, String>, JBTabInnerTerminalWidget> createNewSessionAction, @NotNull Disposable parent) {
     super(settingsProvider, input -> createNewSessionAction.apply(Pair.create(input, null)));
     myProject = project;
 
     mySettingsProvider = settingsProvider;
+    myCreateNewSessionAction = s -> createNewSessionAction.apply(Pair.create(this, s));
     myParent = parent;
 
     convertActions(this, getActions());
@@ -112,8 +116,8 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
   }
 
   @Override
-  protected JediTermWidget createInnerTerminalWidget(TabbedSettingsProvider settingsProvider) {
-    JBTerminalWidget widget = new JBTerminalWidget(myProject, mySettingsProvider, myParent);
+  public JBTabInnerTerminalWidget createInnerTerminalWidget() {
+    JBTabInnerTerminalWidget widget = new JBTabInnerTerminalWidget(myProject, mySettingsProvider, myParent, myCreateNewSessionAction, this);
 
     convertActions(widget, widget.getActions());
     convertActions(widget.getTerminalPanel(), widget.getTerminalPanel().getActions(), input -> {
@@ -125,11 +129,11 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
   }
 
   @Override
-  protected TerminalTabs createTabbedPane() {
+  protected JBTerminalTabs createTabbedPane() {
     return new JBTerminalTabs(myProject, myParent);
   }
 
-  public class JBTerminalTabs implements TerminalTabs {
+  public class JBTerminalTabs implements AbstractTabs<JBTabInnerTerminalWidget> {
     private final JBEditorTabs myTabs;
 
     private final TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
@@ -209,8 +213,8 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
 
     @Override
-    public JediTermWidget getComponentAt(int i) {
-      return (JediTermWidget)getTabAt(i).getComponent();
+    public JBTabInnerTerminalWidget getComponentAt(int i) {
+      return (JBTabInnerTerminalWidget)getTabAt(i).getComponent();
     }
 
     @Override
@@ -224,7 +228,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     }
 
     @Override
-    public void setSelectedComponent(JediTermWidget terminal) {
+    public void setSelectedComponent(JBTabInnerTerminalWidget terminal) {
       TabInfo info = myTabs.findInfo(terminal);
       if (info != null) {
         myTabs.select(info, true);
@@ -242,12 +246,12 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     }
 
     @Override
-    public void addTab(String name, JediTermWidget terminal) {
+    public void addTab(String name, JBTabInnerTerminalWidget terminal) {
       myTabs.addTab(createTabInfo(name, terminal));
       myTabs.updateUI();
     }
 
-    private TabInfo createTabInfo(String name, JediTermWidget terminal) {
+    private TabInfo createTabInfo(String name, JBTabInnerTerminalWidget terminal) {
       TabInfo tabInfo = new TabInfo(terminal).setText(name).setDragOutDelegate(myDragDelegate);
       return tabInfo
         .setObject(new TerminalSessionVirtualFileImpl(tabInfo, terminal, mySettingsProvider));
@@ -262,7 +266,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     }
 
     @Override
-    public void remove(JediTermWidget terminal) {
+    public void remove(JBTabInnerTerminalWidget terminal) {
       TabInfo info = myTabs.findInfo(terminal);
       if (info != null) {
         myTabs.removeTab(info);
@@ -338,6 +342,17 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
         });
 
         popupMenu.add(rename);
+
+        JMenuItem moveToEditor = new JMenuItem("Move to Editor");
+
+        moveToEditor.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            moveToEditor(myTabs.getTabAt(getSelectedIndex()));
+          }
+        });
+
+        popupMenu.add(moveToEditor);
 
         return popupMenu;
       }
@@ -443,5 +458,15 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
         mySession = null;
       }
     }
+
+    private void moveToEditor(TabInfo tabInfo) {
+      TerminalSessionVirtualFileImpl file = (TerminalSessionVirtualFileImpl)tabInfo.getObject();
+      file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
+      FileEditorManager.getInstance(myProject).openFile(file, true);
+      myTabs.removeTab(tabInfo);
+      file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
+    }
   }
+
+
 }

@@ -76,4 +76,54 @@ public class ArrayUtilRt {
     }
     return -1;
   }
+
+  @Contract(pure=true)
+  public static int indexOf(@NotNull long[] ints, long value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+  @Contract(pure=true)
+  public static int indexOf(@NotNull int[] ints, int value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+  @Contract(pure=true)
+  public static int indexOf(@NotNull short[] ints, short value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static int indexOf(@NotNull byte[] ints, byte value, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+
+  @Contract(pure=true)
+  public static boolean contains(@Nullable final String s, @NotNull String... strings) {
+    if (s == null) {
+      for (String str : strings) {
+        if (str == null) return true;
+      }
+    }
+    else {
+      for (String str : strings) {
+        if (s.equals(str)) return true;
+      }
+    }
+
+    return false;
+  }
 }

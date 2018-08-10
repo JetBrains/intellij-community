@@ -8,7 +8,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class InjectedCodeFoldingPassFactory implements TextEditorHighlightingPassFactory {
@@ -17,13 +16,6 @@ public class InjectedCodeFoldingPassFactory implements TextEditorHighlightingPas
   public InjectedCodeFoldingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     myProject = project;
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "InjectedCodeFoldingPassFactory";
   }
 
   @Override

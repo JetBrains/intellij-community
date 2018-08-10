@@ -17,13 +17,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.testGuiFramework.fixtures.ActionLinkFixture
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getFailedTestVideoDirPath
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
@@ -198,12 +197,12 @@ class GuiTestRule : TestRule {
 
     private fun returnToTheFirstStepOfWelcomeFrame() {
       val welcomeFrameFixture = WelcomeFrameFixture.find(robot())
-      val tenSec = org.fest.swing.timing.Timeout.timeout(10, TimeUnit.SECONDS)
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(),
-                                                                         welcomeFrameFixture.target(), tenSec)
+          val actionLinkFixture = with(welcomeFrameFixture) {
+            actionLink(CREATE_NEW_PROJECT_ACTION_NAME, Timeouts.defaultTimeout)
+          }
           actionLinkFixture.target().isShowing
         }
         catch (componentLookupException: ComponentLookupException) {

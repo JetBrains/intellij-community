@@ -235,7 +235,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.10", license: "LGPL 3",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.11", license: "LGPL 3",
                        url: "https://github.com/JetBrains/jediterm",
                        licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
     new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "16.0.1", license: "Apache 2.0",

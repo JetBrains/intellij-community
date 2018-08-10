@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblemCollector;
@@ -60,7 +61,7 @@ public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolato
       res.add(new SingleResponseValueSource("settings.localRepository", localRepository));
     }
 
-    int firstMapIndex = ContainerUtil.indexOf(res, new Condition<ValueSource>() {
+    int firstMapIndex = ContainerUtilRt.indexOf(res, new Condition<ValueSource>() {
       @Override
       public boolean value(ValueSource source) {
         return source instanceof MapBasedValueSource;

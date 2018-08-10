@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -23,7 +24,6 @@ import java.util.List;
  * author ven
  */
 public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase {
-
   protected void doTest() {
     doTest("");
   }
@@ -38,7 +38,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
 
 
-    String result = "";
+    StringBuilder result = new StringBuilder();
     try {
       myFixture.completeBasic();
 
@@ -51,20 +51,20 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
             return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult) && !(o instanceof PsiPackage);
           });
         }
-        Collections.sort(items, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
-        result = "";
+        Collections.sort(items, Comparator.comparing(LookupElement::getLookupString));
+        result = new StringBuilder();
         for (LookupElement item : items) {
-          result = result + "\n" + item.getLookupString();
+          result.append("\n").append(item.getLookupString());
         }
-        result = result.trim();
-        LookupManager.getInstance(myFixture.getProject()).hideActiveLookup();
+        result = new StringBuilder(result.toString().trim());
+        LookupManager.hideActiveLookup(myFixture.getProject());
       }
 
     }
     finally {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
     }
-    assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result);
+    assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result.toString());
   }
 
   protected String getExtension() {

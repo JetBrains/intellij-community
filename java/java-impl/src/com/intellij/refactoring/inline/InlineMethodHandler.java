@@ -100,7 +100,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
         return;
       }
-      final boolean chainingConstructor = isChainingConstructor(method);
+      final boolean chainingConstructor = InlineUtil.isChainingConstructor(method);
       if (!chainingConstructor) {
         if (!isThisReference(reference)) {
           String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
@@ -140,24 +140,6 @@ class InlineMethodHandler extends JavaInlineActionHandler {
     }
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
     dialog.show();
-  }
-
-  public static boolean isChainingConstructor(PsiMethod constructor) {
-    PsiCodeBlock body = constructor.getBody();
-    if (body != null) {
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
-            if ("this".equals(methodExpr.getReferenceName())) {
-              PsiElement resolved = methodExpr.resolve();
-              return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor(); //delegated via "this" call
-            }
-        }
-      }
-    }
-    return false;
   }
 
   public static boolean checkRecursive(PsiMethod method) {

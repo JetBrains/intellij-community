@@ -46,6 +46,18 @@ def fetch_diff_error_from_message(err_message):
         return None
 
 
+def _is_bool_supported():
+    """
+    Type "bool" is not supported before 2.9
+    """
+    try:
+        from pytest import __version__
+        from distutils import version
+        return version.LooseVersion(str(__version__)) >= version.LooseVersion("2.9")
+    except ImportError:
+        return False
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
 
@@ -54,8 +66,11 @@ def pytest_addoption(parser):
     group._addoption('--no-teamcity', action="count",
                      dest="no_teamcity", default=0, help="disable output of JetBrains TeamCity service messages")
 
-    parser.addini("skippassedoutput", help="skip output of passed tests for JetBrains TeamCity service messages",
-                  type="bool")
+    kwargs = {"help": "skip output of passed tests for JetBrains TeamCity service messages"}
+    if _is_bool_supported():
+        kwargs.update({"type": "bool"})
+
+    parser.addini("skippassedoutput", **kwargs)
 
 
 def pytest_configure(config):
@@ -69,7 +84,7 @@ def pytest_configure(config):
     if enabled:
         output_capture_enabled = getattr(config.option, 'capture', 'fd') != 'no'
         coverage_controller = _get_coverage_controller(config)
-        skip_passed_output = config.getini('skippassedoutput')
+        skip_passed_output = bool(config.getini('skippassedoutput'))
 
         config._teamcityReporting = EchoTeamCityMessages(
             output_capture_enabled,

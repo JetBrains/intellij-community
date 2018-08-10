@@ -22872,7 +22872,6 @@
     <option name="appenginejpaconfig" hit="AppEngineJpaConfig" />
     <option name="appengineweb" hit="AppEngineWeb" />
     <option name="application" hit="Application" />
-    <option name="applicationcomponent" hit="ApplicationComponent" />
     <option name="arquillian" hit="Arquillian Deployment Method" />
     <option name="deployment" hit="Arquillian Deployment Method" />
     <option name="method" hit="Arquillian Deployment Method" />

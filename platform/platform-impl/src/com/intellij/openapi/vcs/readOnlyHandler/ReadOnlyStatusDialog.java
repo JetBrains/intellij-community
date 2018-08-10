@@ -71,10 +71,12 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
   private void initFileList() {
     myFileList.setModel(new AbstractListModel<VirtualFile>() {
+      @Override
       public int getSize() {
         return myFiles.length;
       }
 
+      @Override
       public VirtualFile getElementAt(final int index) {
         return myFiles[index].getFile();
       }

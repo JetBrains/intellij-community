@@ -11,7 +11,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 
-public class ExceptionUtil {
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+public class ExceptionUtil extends ExceptionUtilRt {
   private ExceptionUtil() { }
 
   @NotNull
@@ -142,29 +143,22 @@ public class ExceptionUtil {
   }
 
   public static void rethrowUnchecked(@Nullable Throwable t) {
-    if (t instanceof Error) throw (Error)t;
-    if (t instanceof RuntimeException) throw (RuntimeException)t;
+    ExceptionUtilRt.rethrowUnchecked(t);
   }
 
   @Contract("!null->fail")
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
-    if (t != null) {
-      rethrowUnchecked(t);
-      throw (Exception)t;
-    }
+    ExceptionUtilRt.rethrowAll(t);
   }
 
   @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) {
-    rethrowUnchecked(throwable);
-    throw new RuntimeException(throwable);
+    ExceptionUtilRt.rethrow(throwable);
   }
 
   @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
-    if (t != null) {
-      rethrow(t);
-    }
+    ExceptionUtilRt.rethrowAllAsUnchecked(t);
   }
 
   @NotNull

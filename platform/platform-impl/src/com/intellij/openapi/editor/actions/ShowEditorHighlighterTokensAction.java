@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -44,7 +44,7 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
 
   private static boolean ourEscHandlerInstalled;
 
-  private static final EditorMouseMotionAdapter MOUSE_MOTION_LISTENER = new EditorMouseMotionAdapter() {
+  private static final EditorMouseMotionListener MOUSE_MOTION_LISTENER = new EditorMouseMotionListener() {
     @Override
     public void mouseMoved(EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;

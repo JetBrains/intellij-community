@@ -168,8 +168,7 @@ public class CatchAllStatement extends Statement {
     }
 
     if (!this.vars.isEmpty()) {
-      // FIXME: WTF??? vars?!
-      vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+      cas.vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                               new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
                               DecompilerContext.getVarProcessor()));
     }

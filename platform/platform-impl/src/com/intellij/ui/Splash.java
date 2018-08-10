@@ -90,6 +90,7 @@ public class Splash extends JDialog implements StartupProgress {
     setLocation(UIUtil.getCenterPoint(bounds, getSize()));
   }
 
+  @Override
   @SuppressWarnings("deprecation")
   public void show() {
     super.show();
@@ -207,6 +208,7 @@ public class Splash extends JDialog implements StartupProgress {
       myTextColor = textColor;
     }
 
+    @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       if (!myRedrawing) {
         try {
@@ -220,10 +222,12 @@ public class Splash extends JDialog implements StartupProgress {
       showLicenseeInfo(g, x, y, getIconHeight(), myTextColor, myInfo);
     }
 
+    @Override
     public int getIconWidth() {
       return myIcon.getIconWidth();
     }
 
+    @Override
     public int getIconHeight() {
       return myIcon.getIconHeight();
     }

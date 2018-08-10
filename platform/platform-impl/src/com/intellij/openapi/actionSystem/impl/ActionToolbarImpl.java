@@ -209,7 +209,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ourToolbars.add(this);
 
     // should update action right on the showing, otherwise toolbar may not be displayed at all,
-    // since by default all updates are postponed until frame gets focused.  
+    // since by default all updates are postponed until frame gets focused.
     updateActionsImmediately();
   }
 
@@ -239,7 +239,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public int getLayoutPolicy() {
-    return myLayoutPolicy;                                             
+    return myLayoutPolicy;
   }
 
   @Override
@@ -373,6 +373,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
     if (clickable != null) {
       class ToolbarClicksCollectorListener extends MouseAdapter {
+        @Override
         public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace);}
       }
       if (Arrays.stream(clickable.getMouseListeners()).noneMatch(ml -> ml instanceof ToolbarClicksCollectorListener)) {
@@ -392,7 +393,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private Dimension getMinimumButtonSize() {
     return isInsideNavBar() ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
-  } 
+  }
 
   public ActionButton createToolbarButton(final AnAction action, final ActionButtonLook look, final String place, final Presentation presentation, final Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
@@ -580,7 +581,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (actualLayout) {
       myAutoPopupRec = null;
     }
-               
+
     int autoButtonSize = AllIcons.Ide.Link.getIconWidth();
     boolean full = false;
 
@@ -968,7 +969,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static class ToolbarReference extends WeakReference<ActionToolbarImpl> {
     private static final ReferenceQueue<ActionToolbarImpl> ourQueue = new ReferenceQueue<>();
     private volatile Disposable myDisposable;
-    
+
     ToolbarReference(ActionToolbarImpl toolbar) {
       super(toolbar, ourQueue);
       processQueue();
@@ -1167,6 +1168,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private static void updateWhenFirstShown(JComponent targetComponent, final ToolbarReference ref) {
     Activatable activatable = new Activatable.Adapter() {
+      @Override
       public void showNotify() {
         ActionToolbarImpl toolbar = ref.get();
         if (toolbar != null) {

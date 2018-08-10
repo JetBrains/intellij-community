@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -483,6 +469,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
         () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
 
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             updateIssue(task.getId());
           }
@@ -507,6 +494,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public boolean testConnection(final TaskRepository repository) {
 
     TestConnectionTask task = new TestConnectionTask("Test connection") {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText("Connecting to " + repository.getUrl() + "...");
         indicator.setFraction(0);
@@ -571,6 +559,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return e == null;
   }
 
+  @Override
   @NotNull
   public Config getState() {
     myConfig.tasks = ContainerUtil.map(myTasks.values(), (Function<Task, LocalTaskImpl>)task -> new LocalTaskImpl(task));
@@ -578,6 +567,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myConfig;
   }
 
+  @Override
   public void loadState(@NotNull Config config) {
     XmlSerializerUtil.copyBean(config, myConfig);
 
@@ -621,6 +611,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return repositories;
   }
 
+  @Override
   public void projectOpened() {
 
     TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
@@ -677,14 +668,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return ServiceManager.getService(myProject, TaskProjectConfiguration.class);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "Task Manager";
-  }
-
+  @Override
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
+        @Override
         public void actionPerformed(@NotNull ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
             LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
@@ -734,6 +722,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return task;
   }
 
+  @Override
   public void disposeComponent() {
     if (myCacheRefreshTimer != null) {
       myCacheRefreshTimer.stop();
@@ -741,6 +730,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myChangeListManager.removeChangeListListener(myChangeListListener);
   }
 
+  @Override
   public void updateIssues(final @Nullable Runnable onComplete) {
     TaskRepository first = ContainerUtil.find(getAllRepositories(), repository -> repository.isConfigured());
     if (first == null) {
@@ -899,6 +889,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
+  @Override
   public void decorateChangeList(@NotNull LocalChangeList changeList,
                                  @NotNull ColoredTreeCellRenderer cellRenderer,
                                  boolean selected,

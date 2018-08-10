@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.help.impl;
 
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -24,8 +10,8 @@ import com.sun.java.help.impl.JHelpPrintHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.help.*;
-import javax.help.Map.ID;
 import javax.help.UnsupportedOperationException;
+import javax.help.Map.ID;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -78,6 +64,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Returns the default HelpSet
    */
+  @Override
   public HelpSet getHelpSet(){
     return myHelpSet;
   }
@@ -87,6 +74,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param hs The HelpSet to set for this broker.
    * A null hs is valid parameter.
    */
+  @Override
   public void setHelpSet(HelpSet hs){
     // If we already have a jhelp check if the HelpSet has changed.
     // If so change the model on the jhelp viewer.
@@ -108,6 +96,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * have a locale, the defaultLocale is returned.
    * @see #setLocale
    */
+  @Override
   public Locale getLocale(){
     if(myLocale==null){
       return Locale.getDefault();
@@ -122,6 +111,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * is the same as the defaultLocale.
    * @see #getLocale
    */
+  @Override
   public void setLocale(Locale l){
     myLocale=l;
     if(jhelp!=null){
@@ -132,6 +122,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Gets the font for this HelpBroker.
    */
+  @Override
   public Font getFont(){
     createHelpWindow();
 
@@ -145,6 +136,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * Sets the font for this this HelpBroker.
    * @param f The font.
    */
+  @Override
   public void setFont(Font f){
     myFont=f;
     if(jhelp!=null){
@@ -162,6 +154,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * IllegalArgumentException is thrown.
    * @throws IllegalArgumentException if nav is null or not a valid Navigator.
    */
+  @Override
   public void setCurrentView(String name){
     createHelpWindow();
     JHelpNavigator nav=null;
@@ -184,6 +177,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Determines the current navigator.
    */
+  @Override
   public String getCurrentView(){
     createHelpWindow();
     return jhelp.getCurrentNavigator().getNavigatorName();
@@ -196,6 +190,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * Typically this would be done in a separate thread to reduce the
    * intialization time.
    */
+  @Override
   public void initPresentation(){
     createHelpWindow();
   }
@@ -203,6 +198,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Displays the presentation to the user.
    */
+  @Override
   public void setDisplayed(boolean visible){
     createHelpWindow();
     if(myModallyActivated){
@@ -223,6 +219,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Determines if the presentation is displayed.
    */
+  @Override
   public boolean isDisplayed(){
     if(myModallyActivated){
       if(myDialog!=null){
@@ -248,6 +245,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * This operation may throw an UnsupportedOperationException if the
    * underlying implementation does not allow this.
    */
+  @Override
   public void setLocation(Point p) throws UnsupportedOperationException{
     createHelpWindow();
     if(myModallyActivated){
@@ -265,6 +263,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * displayed.
    * @return Point the location of the presentation.
    */
+  @Override
   public Point getLocation() throws UnsupportedOperationException{
     if(jhelp==null){
       throw new java.awt.IllegalComponentStateException("presentation not displayed");
@@ -287,6 +286,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * This operation may throw an UnsupportedOperationException if the
    * underlying implementation does not allow this.
    */
+  @Override
   public void setSize(Dimension d) throws UnsupportedOperationException{
     HELP_WIDTH=d.width;
     HELP_HEIGHT=d.height;
@@ -308,6 +308,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * displayed.
    * @return Point the location of the presentation.
    */
+  @Override
   public Dimension getSize() throws UnsupportedOperationException{
     if(jhelp==null){
       throw new java.awt.IllegalComponentStateException("presentation not displayed");
@@ -327,6 +328,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Hides/Shows view.
    */
+  @Override
   public void setViewDisplayed(boolean displayed){
     createHelpWindow();
     jhelp.setNavigatorDisplayed(displayed);
@@ -335,6 +337,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Determines if the current view is visible.
    */
+  @Override
   public boolean isViewDisplayed(){
     createHelpWindow();
     return jhelp.isNavigatorDisplayed();
@@ -347,6 +350,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param id A string that identifies the topic to show for the loaded (top) HelpSet
    * @exception BadIDException The ID is not valid for the HelpSet
    */
+  @Override
   public void setCurrentID(String id) throws BadIDException{
     try{
       setCurrentID(ID.create(id,myHelpSet));
@@ -363,6 +367,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @exception InvalidHelpSetContextException if the current helpset does not contain
    * id.helpset
    */
+  @Override
   public void setCurrentID(ID id) throws InvalidHelpSetContextException{
     createJHelp();
     jhelp.getModel().setCurrentID(id);
@@ -371,6 +376,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Determines which ID is displayed (if any).
    */
+  @Override
   public ID getCurrentID(){
     if(jhelp!=null){
       return jhelp.getModel().getCurrentID();
@@ -385,6 +391,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * The currentID changes if there is a mathing ID for this URL
    * @param url The url to display. A null URL is a valid url.
    */
+  @Override
   public void setCurrentURL(URL url){
     createHelpWindow();
 
@@ -400,6 +407,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Determines which URL is displayed.
    */
+  @Override
   public URL getCurrentURL(){
     return jhelp.getModel().getCurrentURL();
   }
@@ -422,7 +430,8 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param hs the default HelpSet to be displayed. If hs is null the default HelpSet
    * will be assumed.
    */
-  public void enableHelpKey(Component comp,@NotNull String id,HelpSet hs){
+  @Override
+  public void enableHelpKey(Component comp, @NotNull String id, HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);
@@ -444,6 +453,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * Invoked when a key is typed. This event occurs when a
    * key press is followed by a key release.  Not intended to be overridden or extended.
    */
+  @Override
   public void keyTyped(KeyEvent e){
     //ignore
   }
@@ -451,6 +461,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Invoked when a key is pressed. Not intended to be overridden or extended.
    */
+  @Override
   public void keyPressed(KeyEvent e){
     //ingore
   }
@@ -459,6 +470,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Invoked when a key is released.  Not intended to be overridden or extended.
    */
+  @Override
   public void keyReleased(KeyEvent e){
     // simulate what is done in JComponents registerKeyboardActions.
     int code=e.getKeyCode();
@@ -480,7 +492,8 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param hs the HelpSet the id is in. If hs is null the default HelpSet
    * will be assumed.
    */
-  public void enableHelp(Component comp,@NotNull String id,HelpSet hs){
+  @Override
+  public void enableHelp(Component comp, @NotNull String id, HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);
@@ -496,7 +509,8 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param hs the HelpSet the id is in. If hs is null the default HelpSet
    * will be assumed.
    */
-  public void enableHelp(MenuItem comp,@NotNull String id,HelpSet hs){
+  @Override
+  public void enableHelp(MenuItem comp, @NotNull String id, HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);
@@ -520,7 +534,8 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @see java.awt.Button
    * @throws IllegalArgumentException if comp is not a button.
    */
-  public void enableHelpOnButton(Component comp,@NotNull String id,HelpSet hs){
+  @Override
+  public void enableHelpOnButton(Component comp, @NotNull String id, HelpSet hs){
     if(!(comp instanceof AbstractButton)&&!(comp instanceof Button)){
       throw new IllegalArgumentException("Invalid Component. comp must be either a javax.swing.AbstractButton or a java.awt.Button");
     }
@@ -551,7 +566,8 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @see java.awt.MenuItem
    * @throws IllegalArgumentException if comp is null.
    */
-  public void enableHelpOnButton(@NotNull MenuItem comp,@NotNull String id,HelpSet hs){
+  @Override
+  public void enableHelpOnButton(@NotNull MenuItem comp, @NotNull String id, HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);
@@ -562,6 +578,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Returns the default DisplayHelpFromFocus listener.
    */
+  @Override
   protected ActionListener getDisplayHelpFromFocus(){
     if(displayHelpFromFocus==null){
       displayHelpFromFocus=new CSH.DisplayHelpFromFocus(this);
@@ -572,6 +589,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Returns the default DisplayHelpFromSource listener.
    */
+  @Override
   protected ActionListener getDisplayHelpFromSource(){
     if(displayHelpFromSource==null){
       displayHelpFromSource=new CSH.DisplayHelpFromSource(this);
@@ -587,6 +605,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param window the activating window
    * @since 1.1
    */
+  @Override
   public void setActivationWindow(Window window){
     if (window instanceof Dialog) {
       Dialog tmpDialog = (Dialog)window;
@@ -672,6 +691,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
         // is set to null so that a new dialog will be created so
         // that events aren't blocked in the HelpViewer.
         dl=new WindowAdapter(){
+          @Override
           public void windowClosing(WindowEvent e){
             // JDK1.2.1 bug not closing owned windows
             if(myDialog.isShowing()){
@@ -706,11 +726,12 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
         resize = true;
         AppUIUtil.updateWindowIcon(myFrame);
         WindowListener l = new WindowAdapter() {
+          @Override
           public void windowClosing(WindowEvent e) {
             myFrame.dispose();
             WeakHashMap handlers = ReflectionUtil.getField(JHelpPrintHandler.class, null, WeakHashMap.class, "handlers");
             if (handlers != null) {
-              // even though jHelp is a weak key in the map, corresponding map entry will never be removed, as it's also referenced 
+              // even though jHelp is a weak key in the map, corresponding map entry will never be removed, as it's also referenced
               // from the mapped value
               handlers.remove(jhelp);
             }

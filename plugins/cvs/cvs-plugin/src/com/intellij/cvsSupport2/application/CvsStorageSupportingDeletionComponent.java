@@ -10,6 +10,7 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class CvsStorageSupportingDeletionComponent implements VirtualFileListener, Disposable {
+public class CvsStorageSupportingDeletionComponent implements VirtualFileListener {
   private static final Logger LOG = Logger.getInstance(CvsStorageSupportingDeletionComponent.class);
   protected boolean myIsActive = false;
   private Project myProject;
@@ -34,12 +35,19 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
   private boolean myAnotherProjectCommand = false;
   static final Key<AbstractVcs> FILE_VCS = new Key<>("File VCS");
 
+  private Disposable myListenerDisposable = Disposer.newDisposable();
+
+  @NotNull
+  public static CvsStorageSupportingDeletionComponent getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, CvsStorageSupportingDeletionComponent.class);
+  }
+
   public void init(@NotNull Project project) {
     myProject = project;
     initializeDeletedStorage();
-    VirtualFileManager.getInstance().addVirtualFileListener(this);
+    VirtualFileManager.getInstance().addVirtualFileListener(this, myListenerDisposable);
     CvsEntriesManager.getInstance().registerAsVirtualFileListener();
-    project.getMessageBus().connect().subscribe(CommandListener.TOPIC, new CommandListener() {
+    project.getMessageBus().connect(myListenerDisposable).subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override
       public void commandStarted(CommandEvent event) {
         myCommandLevel++;
@@ -66,9 +74,15 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
     myIsActive = true;
   }
 
-  @Override
-  public void dispose() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(this);
+  public void deactivate() {
+    Disposable listenerDisposable = myListenerDisposable;
+    if (listenerDisposable == null) {
+      return;
+    }
+
+    myListenerDisposable = null;
+    Disposer.dispose(listenerDisposable);
+
     CvsEntriesManager.getInstance().unregisterAsVirtualFileListener();
     LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(myFileOperationsHandler);
     myFileOperationsHandler = null;
@@ -197,10 +211,6 @@ public class CvsStorageSupportingDeletionComponent implements VirtualFileListene
 
   public void sync() {
     //myDeletedStorage.sync();
-  }
-
-  public static CvsStorageSupportingDeletionComponent getInstance(Project project) {
-    return ServiceManager.getService(project, CvsStorageSupportingDeletionComponent.class);
   }
 
   public void deleteIfAdminDirCreated(VirtualFile addedFile) {

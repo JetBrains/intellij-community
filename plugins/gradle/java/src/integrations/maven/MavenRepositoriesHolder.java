@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -31,19 +30,16 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.idea.maven.indices.MavenIndicesManager.IndexUpdatingState.IDLE;
 
-/**
- * @author Vladislav.Soroka
- * @since 10/28/13
- */
-public class MavenRepositoriesHolder extends AbstractProjectComponent {
+public class MavenRepositoriesHolder {
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
   private static final Key<String> NOTIFICATION_KEY = Key.create(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
+  private final Project myProject;
 
   private volatile Set<MavenRemoteRepository> myRemoteRepositories;
   private volatile Set<String> myNotIndexedUrls;
 
   public MavenRepositoriesHolder(Project project) {
-    super(project);
+    myProject = project;
     myRemoteRepositories = Collections.emptySet();
     myNotIndexedUrls = Collections.emptySet();
   }

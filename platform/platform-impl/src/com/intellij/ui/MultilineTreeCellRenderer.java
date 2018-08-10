@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -67,12 +53,14 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     myTextInsets = new Insets(0,0,0,0);
 
     addComponentListener(new ComponentAdapter() {
+      @Override
       public void componentResized(ComponentEvent e) {
         onSizeChanged();
       }
     });
 
     addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (FONT_PROPERTY_NAME.equalsIgnoreCase(evt.getPropertyName())) {
           onFontChanged();
@@ -114,6 +102,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     return getFontMetrics(getFont());
   }
 
+  @Override
   public void paint(Graphics g) {
     int height = getHeight();
     int width = getWidth();
@@ -198,6 +187,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     myWrapsCalculatedForWidth = -1;
   }
 
+  @Override
   public Dimension getMinimumSize() {
     if (getFont() != null) {
       int minHeight = getCurrFontMetrics().getHeight();
@@ -212,6 +202,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   private static final int MIN_WIDTH = 10;
 
   // Calculates height for current width.
+  @Override
   public Dimension getPreferredSize() {
     recalculateWraps();
     return new Dimension(myWrapsCalculatedForWidth, myHeightCalculated);
@@ -351,6 +342,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   protected abstract void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus);
 
+  @Override
   public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     setFont(UIUtil.getTreeFont());
 
@@ -405,12 +397,14 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     JScrollPane scrollpane = new JBScrollPane(tree){
       private int myAddRemoveCounter = 0;
       private boolean myShouldResetCaches = false;
+      @Override
       public void setSize(Dimension d) {
         boolean isChanged = getWidth() != d.width || myShouldResetCaches;
         super.setSize(d);
         if (isChanged) resetCaches();
       }
 
+      @Override
       public void reshape(int x, int y, int w, int h) {
         boolean isChanged = w != getWidth() || myShouldResetCaches;
         super.reshape(x, y, w, h);
@@ -422,12 +416,14 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
         myShouldResetCaches = false;
       }
 
+      @Override
       public void addNotify() {
         super.addNotify();
         if (myAddRemoveCounter == 0) myShouldResetCaches = true;
         myAddRemoveCounter++;
       }
 
+      @Override
       public void removeNotify() {
         super.removeNotify();
         myAddRemoveCounter--;
@@ -439,10 +435,12 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     tree.setCellRenderer(renderer);
 
     scrollpane.addComponentListener(new ComponentAdapter() {
+      @Override
       public void componentResized(ComponentEvent e) {
         resetHeightCache(tree, defaultRenderer, renderer);
       }
 
+      @Override
       public void componentShown(ComponentEvent e) {
         // componentResized not called when adding to opened tool window.
         // Seems to be BUG#4765299, however I failed to create same code to reproduce it.

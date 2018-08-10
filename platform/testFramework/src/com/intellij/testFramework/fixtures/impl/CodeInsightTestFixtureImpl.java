@@ -1112,7 +1112,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return;
     }
 
-    LookupManager.getInstance(project).hideActiveLookup();
+    LookupManager.hideActiveLookup(project);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     FileEditorManagerEx.getInstanceEx(project).closeAllFiles();
     EditorHistoryManager.getInstance(project).removeAllFiles();

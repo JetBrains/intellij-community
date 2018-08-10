@@ -38,12 +38,8 @@
     <toolWindow id="Application Servers" anchor="bottom" icon="RemoteServersIcons.ServersToolWindow"
                 factoryClass="com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowFactory"
                 conditionClass="com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowFactory"/>
+    <applicationInitializedListener implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"/>
   </extensions>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar</implementation-class>
-    </component>
-  </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.remoteServer.impl.runtime.ui.DefaultServersToolWindowManager</implementation-class>

@@ -42,7 +42,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -520,7 +519,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       })
       .append(() -> {
-        ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
+        JarFileSystemImpl.cleanupForNextTest();
 
         getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
@@ -870,7 +869,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       throw new RuntimeException(e);
     }
   }
-  
+
   @NotNull
   protected static VirtualFile copy(@NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) {
     final VirtualFile[] copy = new VirtualFile[1];

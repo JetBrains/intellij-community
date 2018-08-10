@@ -23,10 +23,10 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
       if (element.textContains('\\')) {
         final List<Pair<TextRange, String>> fragments = element.getTextFragments();
         for (Pair<TextRange, String> fragment : fragments) {
-          final String escaped = fragment.getSecond();
           final TextRange fragmentRange = fragment.getFirst();
-          final String unescaped = fragmentRange.substring(element.getText());
-          if (!unescaped.startsWith("\\")) {
+          final String escaped = fragment.getSecond();
+          // Fragment without escaping, also not a broken escape sequence or a unicode code point
+          if (escaped.length() == fragmentRange.getLength() && !escaped.startsWith("\\")) {
             consumer.consumeToken(element, escaped, false, fragmentRange.getStartOffset(), TextRange.allOf(escaped), textSplitter);
           }
         }

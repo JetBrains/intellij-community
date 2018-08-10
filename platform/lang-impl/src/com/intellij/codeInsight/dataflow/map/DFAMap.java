@@ -38,7 +38,7 @@ public class DFAMap<V> {
   public DFAMap() {
   }
 
-  private DFAMap(DFAMap<V> initialMap) {
+  public DFAMap(DFAMap<V> initialMap) {
     myK = initialMap.myK;
     myV = initialMap.myV;
     myAll = initialMap.myAll == null ? null : new HashMap<>(initialMap.myAll);
@@ -168,6 +168,16 @@ public class DFAMap<V> {
       });
     }
     return Collections.emptyList();
+  }
+
+  public Map<String, V> toMap() {
+    if (myAll != null) {
+      return myAll;
+    }
+    if (myK != null) {
+      return Collections.singletonMap(myK, myV);
+    }
+    return Collections.emptyMap();
   }
 
   public DFAMap<V> asWritable() {

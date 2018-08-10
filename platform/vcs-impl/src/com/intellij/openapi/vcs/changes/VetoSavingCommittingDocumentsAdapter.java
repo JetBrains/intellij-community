@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
@@ -18,17 +17,13 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Map;
 
-public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponent {
+public class VetoSavingCommittingDocumentsAdapter {
   static final Object SAVE_DENIED = new Object();
 
   private final FileDocumentManager myFileDocumentManager;
 
   public VetoSavingCommittingDocumentsAdapter(final FileDocumentManager fileDocumentManager) {
     myFileDocumentManager = fileDocumentManager;
-  }
-
-  @Override
-  public void initComponent() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeAllDocumentsSaving() {

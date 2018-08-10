@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -113,6 +99,7 @@ public class DarculaTitlePane extends JPanel {
     return new PropertyChangeHandler();
   }
 
+  @Override
   public JRootPane getRootPane() {
     return myRootPane;
   }
@@ -121,6 +108,7 @@ public class DarculaTitlePane extends JPanel {
     return getRootPane().getWindowDecorationStyle();
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
 
@@ -138,6 +126,7 @@ public class DarculaTitlePane extends JPanel {
     }
   }
 
+  @Override
   public void removeNotify() {
     super.removeNotify();
 
@@ -420,6 +409,7 @@ public class DarculaTitlePane extends JPanel {
       super("Close", AllIcons.Windows.CloseSmall);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       close();
     }
@@ -431,6 +421,7 @@ public class DarculaTitlePane extends JPanel {
       super("Minimize", AllIcons.Windows.MinimizeSmall);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       iconify();
     }
@@ -442,6 +433,7 @@ public class DarculaTitlePane extends JPanel {
       super("Restore", AllIcons.Windows.RestoreSmall);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       restore();
     }
@@ -453,12 +445,14 @@ public class DarculaTitlePane extends JPanel {
       super("Maximize", AllIcons.Windows.MaximizeSmall);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       maximize();
     }
   }
 
   private class PropertyChangeHandler implements PropertyChangeListener {
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
       String name = pce.getPropertyName();
 
@@ -483,10 +477,12 @@ public class DarculaTitlePane extends JPanel {
   }
 
   private class WindowHandler extends WindowAdapter {
+    @Override
     public void windowActivated(WindowEvent ev) {
       setActive(true);
     }
 
+    @Override
     public void windowDeactivated(WindowEvent ev) {
       setActive(false);
     }

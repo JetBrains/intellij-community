@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.action;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -43,6 +44,7 @@ import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.ParsedCommandLine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
 import org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService;
 import org.jetbrains.plugins.gradle.service.task.GradleRunTaskDialog;
@@ -111,9 +113,16 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
 
     historyService.addCommand(fullCommandLine, workDirectory);
 
+    runGradle(project, null, workDirectory, fullCommandLine);
+  }
+
+  public static void runGradle(@NotNull Project project,
+                               @Nullable Executor executor,
+                               @NotNull String workDirectory,
+                               @NotNull String fullCommandLine) {
     final ExternalTaskExecutionInfo taskExecutionInfo;
     try {
-      taskExecutionInfo = buildTaskInfo(workDirectory, fullCommandLine);
+      taskExecutionInfo = buildTaskInfo(workDirectory, fullCommandLine, executor);
     }
     catch (CommandLineArgumentException ex) {
       final NotificationData notificationData = new NotificationData(
@@ -143,7 +152,9 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     }
   }
 
-  private static ExternalTaskExecutionInfo buildTaskInfo(@NotNull String projectPath, @NotNull String fullCommandLine)
+  private static ExternalTaskExecutionInfo buildTaskInfo(@NotNull String projectPath,
+                                                         @NotNull String fullCommandLine,
+                                                         @Nullable Executor executor)
     throws CommandLineArgumentException {
     CommandLineParser gradleCmdParser = new CommandLineParser();
 
@@ -176,7 +187,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     settings.setScriptParameters(scriptParameters);
     settings.setVmOptions(vmOptions);
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
-    return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
+    return new ExternalTaskExecutionInfo(settings, executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId());
   }
 
   private static String obtainAppropriateWorkingDirectory(AnActionEvent e) {

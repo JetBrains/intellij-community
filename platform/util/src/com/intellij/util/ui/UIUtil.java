@@ -29,8 +29,8 @@ import sun.java2d.SunGraphicsEnvironment;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -47,8 +47,8 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.*;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.*;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -69,9 +69,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
-import java.util.*;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -518,9 +518,6 @@ public class UIUtil {
         return false;
       }
       jreHiDPI_earlierVersion = true;
-      if (SystemInfo.isLinux) {
-        return false; // pending support
-      }
       if (SystemInfo.isJetBrainsJvm) {
         try {
           GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -3283,23 +3280,27 @@ public class UIUtil {
     }
 
     if (SystemInfo.isLinux) {
-      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-      if (JBUI.SCALE_VERBOSE) {
-        LOG.info(String.format("gnome.Xft/DPI: %s", value));
-      }
-      if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
-        // If the property is defined, then:
-        // 1) it provides correct system scale
-        // 2) the label font size is scaled
-        int dpi = ((Integer)value).intValue() / 1024;
-        if (dpi < 50) dpi = 50;
-        float scale = JBUI.discreteScale(dpi / 96f);
+      if (SystemInfo.isJetBrainsJvm) {
+        float scale = 1f;
+        if (!isJreHiDPIEnabled()) {
+          Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+          if (JBUI.SCALE_VERBOSE) {
+            LOG.info(String.format("gnome.Xft/DPI: %s", value));
+          }
+          if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
+            // If the property is defined, then:
+            // 1) it provides correct system scale
+            // 2) the label font size is scaled
+            int dpi = ((Integer)value).intValue() / 1024;
+            if (dpi < 50) dpi = 50;
+            scale = JBUI.discreteScale(dpi / 96f);
+          }
+        }
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
         if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi));
+          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE));
         }
-      }
-      else if (!SystemInfo.isJetBrainsJvm) {
+      } else {
         // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
         float size = DEF_SYSTEM_FONT_SIZE * getScreenScale();
         font = font.deriveFont(size);
