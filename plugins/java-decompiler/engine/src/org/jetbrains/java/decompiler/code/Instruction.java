@@ -59,23 +59,24 @@ public class Instruction implements CodeConstants {
            opcode != opc_jsr && opcode != opc_tableswitch && opcode != opc_lookupswitch;
   }
 
+  @Override
   public String toString() {
-
-    String res = wide ? "@wide " : "";
-    res += "@" + TextUtil.getInstructionName(opcode);
+    StringBuilder res = new StringBuilder();
+    if (wide) res.append("@wide ");
+    res.append("@").append(TextUtil.getInstructionName(opcode));
 
     int len = operandsCount();
     for (int i = 0; i < len; i++) {
       int op = operands[i];
       if (op < 0) {
-        res += " -" + Integer.toHexString(-op);
+        res.append(" -").append(Integer.toHexString(-op));
       }
       else {
-        res += " " + Integer.toHexString(op);
+        res.append(" ").append(Integer.toHexString(op));
       }
     }
 
-    return res;
+    return res.toString();
   }
 
   @Override

@@ -1,11 +1,11 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.cfg;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.jetbrains.java.decompiler.main.DecompilerContext;
 
 public class ExceptionRangeCFG {
   private final List<BasicBlock> protectedRange; // FIXME: replace with set
@@ -25,10 +25,9 @@ public class ExceptionRangeCFG {
     return protectedRange.contains(handler);
   }
 
+  @Override
   public String toString() {
-
     String new_line_separator = DecompilerContext.getNewLineSeparator();
-
     StringBuilder buf = new StringBuilder();
 
     buf.append("exceptionType:");
@@ -39,8 +38,8 @@ public class ExceptionRangeCFG {
 
     buf.append("handler: ").append(handler.id).append(new_line_separator);
     buf.append("range: ");
-    for (int i = 0; i < protectedRange.size(); i++) {
-      buf.append(protectedRange.get(i).id).append(" ");
+    for (BasicBlock block : protectedRange) {
+      buf.append(block.id).append(" ");
     }
     buf.append(new_line_separator);
 
