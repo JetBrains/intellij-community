@@ -67,6 +67,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_K
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
+import static com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -108,7 +109,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myProject = project;
     myContentManager = contentManager;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myView = new ChangesListView(project);
+    myView = new ChangesListView(project, isNonModalCommit());
     myTreeExpander = new MyTreeExpander();
     myView.setTreeExpander(myTreeExpander);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
