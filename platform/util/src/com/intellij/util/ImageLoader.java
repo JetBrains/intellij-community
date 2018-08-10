@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -406,6 +407,10 @@ public class ImageLoader implements Serializable {
     ScaleContext ctx = ScaleContext.create();
     return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), true, ctx).
       load(ImageConverterChain.create().withHiDPI(ctx));
+  }
+
+  public static Image loadFromBytes(@NotNull final byte[] bytes) {
+    return loadFromStream(new ByteArrayInputStream(bytes));
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream) {

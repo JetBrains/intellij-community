@@ -15,12 +15,10 @@
  */
 package com.intellij.ui.mac.foundation;
 
-import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.ByteArrayInputStream;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 import static com.intellij.ui.mac.foundation.FoundationLibrary.NSBitmapImageFileTypePNG;
@@ -54,12 +52,7 @@ public class NSWorkspace {
       ID bitmapRepresentation = invoke(invoke(getObjcClass("NSBitmapImageRep"), "alloc"),
                                        "initWithCGImage:", cgImage);
       ID nsData = invoke(bitmapRepresentation, "representationUsingType:properties:", NSBitmapImageFileTypePNG, ID.NIL);
-      if (isNil(nsData)) {
-        return null;
-      }
-
-      byte[] imageBytes = new NSData(nsData).bytes();
-      return ImageLoader.loadFromStream(new ByteArrayInputStream(imageBytes));
+      return isNil(nsData) ? null : new NSData(nsData).createImageFromBytes();
     }
     finally {
       pool.drain();

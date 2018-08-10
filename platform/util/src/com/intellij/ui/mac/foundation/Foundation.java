@@ -16,14 +16,17 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -86,6 +89,10 @@ public class Foundation {
 
   public static ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
+  }
+
+  public static boolean isNil(ID id) {
+    return id == null || ID.NIL.equals(id);
   }
 
   public static ID safeInvoke(final ID id, final String stringSelector, Object... args) {
@@ -411,7 +418,8 @@ public class Foundation {
   public static class NSData {
     private final ID myDelegate;
 
-    public NSData(ID delegate) {
+    // delegate should not be nil
+    public NSData(@NotNull ID delegate) {
       myDelegate = delegate;
     }
 
@@ -419,9 +427,15 @@ public class Foundation {
       return invoke(myDelegate, "length").intValue();
     }
 
+    @NotNull
     public byte[] bytes() {
       Pointer data = new Pointer(invoke(myDelegate, "bytes").longValue());
       return data.getByteArray(0, length());
+    }
+
+    @NotNull
+    public Image createImageFromBytes() {
+      return ImageLoader.loadFromBytes(bytes());
     }
   }
 
