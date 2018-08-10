@@ -1,0 +1,24 @@
+public final class TestSynchronizedUnprotected {
+   public final void test() {
+      synchronized(this) {// 5
+         System.out.println("test");// 6
+      }
+   }// 7
+}
+
+class 'TestSynchronizedUnprotected' {
+   method 'test ()V' {
+      3      2
+      4      3
+      7      3
+      9      3
+      e      5
+   }
+}
+
+Lines mapping:
+5 <-> 3
+6 <-> 4
+7 <-> 6
+Not mapped:
+8

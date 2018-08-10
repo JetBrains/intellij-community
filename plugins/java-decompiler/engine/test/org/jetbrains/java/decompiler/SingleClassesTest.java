@@ -108,6 +108,8 @@ public class SingleClassesTest {
   @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
   @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
   @Test public void testEmptyBlocks() { doTest("pkg/TestEmptyBlocks"); }
+  @Test public void testPrivateEmptyConstructor() { doTest("pkg/TestPrivateEmptyConstructor"); }
+  @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
 
 
   // TODO: fix all below
@@ -121,6 +123,7 @@ public class SingleClassesTest {
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
+  @Test public void testSuspendLambdaKt() { doTest("pkg/TestSuspendLambdaKt"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
