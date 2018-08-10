@@ -41,7 +41,7 @@ class FeatureUsageSettingsEventsTest {
     val spec = StoreUtil.getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, null)
-    assertDefaultState(printer.result, false, false)
+    assertDefaultState(printer, false, false)
   }
 
   @Test
@@ -50,8 +50,7 @@ class FeatureUsageSettingsEventsTest {
     val spec = StoreUtil.getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, null)
-    assertDefaultState(printer.result, false, false)
-
+    assertDefaultState(printer, false, false)
   }
 
   @Test
@@ -60,7 +59,7 @@ class FeatureUsageSettingsEventsTest {
     val spec = StoreUtil.getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
-    assertDefaultState(printer.result, true, false)
+    assertDefaultState(printer, true, false)
   }
 
   @Test
@@ -69,7 +68,22 @@ class FeatureUsageSettingsEventsTest {
     val spec = StoreUtil.getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logDefaultConfigurationState(spec.name, ComponentState::class.java, projectRule.project)
-    assertDefaultState(printer.result, true, false)
+    assertDefaultState(printer, true, false)
+  }
+
+  @Test
+  fun recordDefaultMultiComponent() {
+    val component = TestComponent()
+    component.loadState(MultiComponentState())
+    val spec = StoreUtil.getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter()
+    printer.logDefaultConfigurationState(spec.name, MultiComponentState::class.java, projectRule.project)
+
+    val withProject = true
+    val defaultProject = false
+    assertEquals(2, printer.result.size)
+    assertDefaultState(printer.getOptionByName("boolOption"), "boolOption", false, withProject, defaultProject)
+    assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true, withProject, defaultProject)
   }
 
   @Test
@@ -78,7 +92,7 @@ class FeatureUsageSettingsEventsTest {
     val spec = StoreUtil.getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, ProjectManager.getInstance().defaultProject)
-    assertDefaultState(printer.result, false, true)
+    assertDefaultState(printer, false, true)
   }
 
   @Test
@@ -88,7 +102,7 @@ class FeatureUsageSettingsEventsTest {
     val spec = StoreUtil.getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, null)
-    assertNotDefaultState(printer.result, false, false)
+    assertNotDefaultState(printer, false, false)
   }
 
   @Test
@@ -98,12 +112,50 @@ class FeatureUsageSettingsEventsTest {
     val spec = StoreUtil.getStateSpec(component)
     val printer = TestFeatureUsageSettingsEventsPrinter()
     printer.logConfigurationState(spec.name, component.state, projectRule.project)
-    assertNotDefaultState(printer.result, true, false)
+    assertNotDefaultState(printer, true, false)
   }
 
-  private fun assertNotDefaultState(events: List<LoggedComponentStateEvents>, withProject: Boolean, defaultProject: Boolean) {
-    assertEquals(1, events.size)
-    val event = events[0]
+  @Test
+  fun recordPartiallyNotDefaultMultiComponent() {
+    val component = TestComponent()
+    component.loadState(MultiComponentState(bool = true, secondBool = true))
+    val spec = StoreUtil.getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter()
+    printer.logConfigurationState(spec.name, component.state, projectRule.project)
+
+    val withProject = true
+    val defaultProject = false
+    assertEquals(2, printer.result.size)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
+    assertDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", true, withProject, defaultProject)
+  }
+
+  @Test
+  fun recordNotDefaultMultiComponent() {
+    val component = TestComponent()
+    component.loadState(MultiComponentState(bool = true, secondBool = false))
+    val spec = StoreUtil.getStateSpec(component)
+    val printer = TestFeatureUsageSettingsEventsPrinter()
+    printer.logConfigurationState(spec.name, component.state, projectRule.project)
+
+    val withProject = true
+    val defaultProject = false
+    assertEquals(2, printer.result.size)
+    assertNotDefaultState(printer.getOptionByName("boolOption"), "boolOption", true, withProject, defaultProject)
+    assertNotDefaultState(printer.getOptionByName("secondBoolOption"), "secondBoolOption", false, withProject, defaultProject)
+
+  }
+
+  private fun assertNotDefaultState(printer: TestFeatureUsageSettingsEventsPrinter, withProject: Boolean, defaultProject: Boolean) {
+    assertEquals(1, printer.result.size)
+    assertNotDefaultState(printer.result[0], "boolOption", true, withProject, defaultProject)
+  }
+
+  private fun assertNotDefaultState(event: LoggedComponentStateEvents,
+                                    name: String,
+                                    value: Any,
+                                    withProject: Boolean,
+                                    defaultProject: Boolean) {
     assertEquals("settings", event.group)
     assertEquals("MyTestComponent", event.id)
 
@@ -112,20 +164,27 @@ class FeatureUsageSettingsEventsTest {
     if (defaultProject) size++
 
     assertEquals(size, event.data.size)
-    assertTrue { event.data["name"] == "boolOption" }
-    assertTrue { event.data["value"] == true }
+    assertTrue { event.data["name"] == name }
+    assertTrue { event.data["value"] == value }
     assertTrue { event.data["default"] == false }
     if (withProject) {
-      assertTrue { event.data.containsKey("project")}
+      assertTrue { event.data.containsKey("project") }
     }
     if (defaultProject) {
       assertTrue { event.data["default_project"] == true }
     }
   }
 
-  private fun assertDefaultState(events: List<LoggedComponentStateEvents>, withProject: Boolean, defaultProject: Boolean) {
-    assertEquals(1, events.size)
-    val event = events[0]
+  private fun assertDefaultState(printer: TestFeatureUsageSettingsEventsPrinter, withProject: Boolean, defaultProject: Boolean) {
+    assertEquals(1, printer.result.size)
+    assertDefaultState(printer.result[0], "boolOption", false, withProject, defaultProject)
+  }
+
+  private fun assertDefaultState(event: LoggedComponentStateEvents,
+                                 name: String,
+                                 value: Any,
+                                 withProject: Boolean,
+                                 defaultProject: Boolean) {
     assertEquals("settings", event.group)
     assertEquals("MyTestComponent", event.id)
 
@@ -134,10 +193,10 @@ class FeatureUsageSettingsEventsTest {
     if (defaultProject) size++
 
     assertEquals(size, event.data.size)
-    assertTrue { event.data["name"] == "boolOption" }
-    assertTrue { event.data["value"] == false }
+    assertTrue { event.data["name"] == name }
+    assertTrue { event.data["value"] == value }
     if (withProject) {
-      assertTrue { event.data.containsKey("project")}
+      assertTrue { event.data.containsKey("project") }
     }
     if (defaultProject) {
       assertTrue { event.data["default_project"] == true }
@@ -145,10 +204,19 @@ class FeatureUsageSettingsEventsTest {
   }
 
   private class TestFeatureUsageSettingsEventsPrinter : FeatureUsageSettingsEventPrinter() {
-    val result : MutableList<LoggedComponentStateEvents> = ArrayList()
+    val result: MutableList<LoggedComponentStateEvents> = ArrayList()
 
     override fun logConfig(groupId: String, eventId: String, data: Map<String, Any>) {
       result.add(LoggedComponentStateEvents(groupId, eventId, data))
+    }
+
+    fun getOptionByName(name: String): LoggedComponentStateEvents {
+      for (event in result) {
+        if (event.data.containsKey("name") && event.data["name"] == name) {
+          return event
+        }
+      }
+      throw RuntimeException("Failed to find event")
     }
   }
 
@@ -168,14 +236,23 @@ class FeatureUsageSettingsEventsTest {
   }
 
   @Suppress("unused")
-  private class ComponentState(bool: Boolean = false, str: String = "string-option", list: List<Int> = ArrayList()) {
+  private open class ComponentState(bool: Boolean = false, str: String = "string-option", list: List<Int> = ArrayList()) {
     @Attribute("bool-value")
-    val boolOption : Boolean = bool
+    val boolOption: Boolean = bool
 
     @Attribute("str-value")
-    val strOption : String = str
+    val strOption: String = str
 
     @Attribute("int-values")
-    val intOption : List<Int> = list
+    val intOption: List<Int> = list
+  }
+
+  @Suppress("unused")
+  private class MultiComponentState(bool: Boolean = false,
+                                    secondBool: Boolean = true,
+                                    str: String = "string-option",
+                                    list: List<Int> = ArrayList()) : ComponentState(bool, str, list) {
+    @Attribute("second-bool-value")
+    val secondBoolOption: Boolean = secondBool
   }
 }
