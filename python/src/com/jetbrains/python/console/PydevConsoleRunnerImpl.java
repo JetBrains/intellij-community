@@ -126,9 +126,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @NotNull protected final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
   private final String[] myStatementsToExecute;
 
-
-  private static final long HANDSHAKE_TIMEOUT = 60000;
-
   private RemoteConsoleProcessData myRemoteConsoleProcessData;
 
   private String myConsoleTitle = null;
@@ -614,27 +611,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private boolean handshake() {
-    boolean res;
-    long started = System.currentTimeMillis();
-    do {
-      res = myPydevConsoleCommunication.handshake();
-      if (res) {
-        break;
-      }
-      else {
-        long now = System.currentTimeMillis();
-        if (now - started > HANDSHAKE_TIMEOUT) {
-          break;
-        }
-        else {
-          TimeoutUtil.sleep(100);
-        }
-      }
-    }
-    while (true);
-    return res;
+    return myPydevConsoleCommunication.handshake();
   }
-
 
   private AnAction createStopAction() {
     AnAction generalStopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
