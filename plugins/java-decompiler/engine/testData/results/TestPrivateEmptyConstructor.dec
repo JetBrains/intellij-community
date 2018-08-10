@@ -1,3 +1,5 @@
+package pkg;
+
 public final class TestPrivateEmptyConstructor {
    private TestPrivateEmptyConstructor() {
    }// 4
@@ -7,20 +9,20 @@ public final class TestPrivateEmptyConstructor {
    }// 8
 }
 
-class 'TestPrivateEmptyConstructor' {
+class 'pkg/TestPrivateEmptyConstructor' {
    method '<init> ()V' {
-      4      2
+      4      4
    }
 
    method 'test ()V' {
-      0      5
-      3      5
-      5      5
-      8      6
+      0      7
+      3      7
+      5      7
+      8      8
    }
 }
 
 Lines mapping:
-4 <-> 3
-7 <-> 6
-8 <-> 7
+4 <-> 5
+7 <-> 8
+8 <-> 9

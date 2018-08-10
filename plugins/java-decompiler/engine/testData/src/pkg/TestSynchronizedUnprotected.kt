@@ -1,5 +1,6 @@
+package pkg
 
-object TestSynchronizedUnprotected {
+class TestSynchronizedUnprotected {
     fun test() {
         synchronized(this) {
             println("Boom")
