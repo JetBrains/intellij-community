@@ -23,7 +23,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -76,7 +75,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
 
-
 /**
  * @author cdr
  */
@@ -111,7 +109,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull final EditorTracker editorTracker,
                          @NotNull EditorFactory editorFactory,
                          @NotNull PsiDocumentManager psiDocumentManager,
-                         @NotNull CommandProcessor commandProcessor,
                          @NotNull final Application application,
                          @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
@@ -158,8 +155,7 @@ public class DaemonListeners implements Disposable {
         stopDaemon(false, "App closing");
       }
     });
-    EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
-    eventMulticaster.addDocumentListener(new DocumentListener() {
+    connection.subscribe(EditorEventMulticaster.TOPIC, new EditorEventMulticaster.EditorEventListener() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(final DocumentEvent e) {
@@ -172,9 +168,7 @@ public class DaemonListeners implements Disposable {
           UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
         }
       }
-    }, this);
 
-    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();
@@ -190,12 +184,10 @@ public class DaemonListeners implements Disposable {
           }
         }
       }
-    }, this);
+    });
+    connection.subscribe(EditorEventMulticaster.MOUSE_TOPIC, new MyEditorMouseListener(myTooltipController));
 
-    eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
-    eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(myTooltipController), this);
-
-    EditorTrackerListener editorTrackerListener = new EditorTrackerListener() {
+    editorTracker.addEditorTrackerListener(new EditorTrackerListener() {
       private List<Editor> myActiveEditors = Collections.emptyList();
       @Override
       public void activeEditorsChanged(@NotNull List<Editor> editors) {
@@ -213,10 +205,9 @@ public class DaemonListeners implements Disposable {
           myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
         }
       }
-    };
-    editorTracker.addEditorTrackerListener(editorTrackerListener, this);
+    }, this);
 
-    EditorFactoryListener editorFactoryListener = new EditorFactoryListener() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
@@ -239,8 +230,7 @@ public class DaemonListeners implements Disposable {
         // mem leak after closing last editor otherwise
         UIUtil.invokeLaterIfNeeded(IntentionsUI.getInstance(myProject)::invalidate);
       }
-    };
-    editorFactory.addEditorFactoryListener(editorFactoryListener, this);
+    }, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)psiDocumentManager;
     PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory, connection, daemonCodeAnalyzer.getFileStatusMap());
@@ -307,7 +297,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(e -> {
+    ((EditorEventMulticasterEx)editorFactory.getEventMulticaster()).addErrorStripeListener(e -> {
       RangeHighlighter highlighter = e.getHighlighter();
       if (!highlighter.isValid()) return;
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
@@ -324,7 +314,7 @@ public class DaemonListeners implements Disposable {
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
 
-    messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
+    connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
     if (RefResolveService.ENABLED) {
       RefResolveService resolveService = RefResolveService.getInstance(project);
@@ -535,7 +525,7 @@ public class DaemonListeners implements Disposable {
     });
   }
 
-  private class MyAnActionListener extends AnActionListener.Adapter {
+  private class MyAnActionListener implements AnActionListener {
     private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
     @Override
@@ -554,7 +544,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private static class MyEditorMouseListener implements EditorMouseListener {
+  private class MyEditorMouseListener implements EditorEventMulticaster.EditorMouseEventListener {
     @NotNull
     private final TooltipController myTooltipController;
 
@@ -568,9 +558,7 @@ public class DaemonListeners implements Disposable {
         DaemonTooltipUtil.cancelTooltips();
       }
     }
-  }
 
-  private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
     public void mouseMoved(EditorMouseEvent e) {
       if (Registry.is("ide.disable.editor.tooltips")) {

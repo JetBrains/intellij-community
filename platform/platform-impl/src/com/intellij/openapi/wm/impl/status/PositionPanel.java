@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.EditorGotoLineNumberDialog;
@@ -20,7 +6,10 @@ import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -43,7 +32,7 @@ import java.beans.PropertyChangeListener;
 
 public class PositionPanel extends EditorBasedWidget
   implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
-             CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener, PropertyChangeListener {
+             EditorEventMulticaster.EditorEventListener, DocumentBulkUpdateListener, PropertyChangeListener {
 
   public static final String SPACE = "     ";
   public static final String SEPARATOR = ":";
@@ -122,15 +111,12 @@ public class PositionPanel extends EditorBasedWidget
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
-    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
-    multicaster.addCaretListener(this, this);
-    multicaster.addSelectionListener(this, this);
-    multicaster.addDocumentListener(this, this);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(DocumentBulkUpdateListener.TOPIC, this);
+    connection.subscribe(EditorEventMulticaster.TOPIC, this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
-    Disposer.register(this, 
-                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, 
+    Disposer.register(this,
+                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY,
                                                                                                                this));
   }
 

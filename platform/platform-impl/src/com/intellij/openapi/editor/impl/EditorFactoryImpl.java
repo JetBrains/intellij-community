@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -51,10 +50,9 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EditorFactoryImpl(EditorActionManager editorActionManager) {
-    Application application = ApplicationManager.getApplication();
-    MessageBus bus = application.getMessageBus();
-    MessageBusConnection connect = bus.connect();
-    connect.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
+    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+    MessageBusConnection busConnection = bus.connect();
+    busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void beforeProjectLoaded(@NotNull final Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
@@ -65,8 +63,7 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
         });
       }
     });
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         refreshAllEditors();
