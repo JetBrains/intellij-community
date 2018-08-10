@@ -15,17 +15,51 @@
  */
 package com.intellij.ui.mac.foundation;
 
+import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.io.ByteArrayInputStream;
+
+import static com.intellij.ui.mac.foundation.Foundation.*;
+import static com.intellij.ui.mac.foundation.FoundationLibrary.NSBitmapImageFileTypePNG;
 
 public class NSWorkspace {
   @Nullable
   public static String absolutePathForAppBundleWithIdentifier(@NotNull String bundleID) {
-    Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    NSAutoreleasePool pool = new NSAutoreleasePool();
     try {
-      ID workspace = Foundation.invoke(Foundation.getObjcClass("NSWorkspace"), "sharedWorkspace");
-      return Foundation.toStringViaUTF8(Foundation.invoke(workspace, "absolutePathForAppBundleWithIdentifier:", 
-                                                          Foundation.nsString(bundleID)));
+      ID workspace = getInstance();
+      return toStringViaUTF8(invoke(workspace, "absolutePathForAppBundleWithIdentifier:",
+                                                          nsString(bundleID)));
+    }
+    finally {
+      pool.drain();
+    }
+  }
+
+  @NotNull
+  private static ID getInstance() {
+    return invoke(getObjcClass("NSWorkspace"), "sharedWorkspace");
+  }
+
+  @Nullable
+  public static Image imageForFileType(@NotNull String fileType) {
+    NSAutoreleasePool pool = new NSAutoreleasePool();
+    try {
+      ID workspace = getInstance();
+      ID image = invoke(workspace, "iconForFileType:", nsString(fileType));
+      ID cgImage = invoke(image, "CGImageForProposedRect:context:hints:", ID.NIL, ID.NIL, ID.NIL);
+      ID bitmapRepresentation = invoke(invoke(getObjcClass("NSBitmapImageRep"), "alloc"),
+                                       "initWithCGImage:", cgImage);
+      ID nsData = invoke(bitmapRepresentation, "representationUsingType:properties:", NSBitmapImageFileTypePNG, ID.NIL);
+      if (isNil(nsData)) {
+        return null;
+      }
+
+      byte[] imageBytes = new NSData(nsData).bytes();
+      return ImageLoader.loadFromStream(new ByteArrayInputStream(imageBytes));
     }
     finally {
       pool.drain();
