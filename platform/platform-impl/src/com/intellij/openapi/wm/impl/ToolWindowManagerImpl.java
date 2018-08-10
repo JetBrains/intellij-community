@@ -136,6 +136,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     MessageBusConnection busConnection = project.getMessageBus().connect();
 
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
+
+    PropertyChangeListener focusListener = it -> {
+      if ("focusOwner".equals(it.getPropertyName())) {
+        myUpdateHeadersAlarm.cancelAllRequests();
+        myUpdateHeadersAlarm.addRequest(this::updateToolWindowHeaders, 50);
+      }
+    };
+    KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
@@ -148,6 +157,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       @Override
       public void projectOpened(@NotNull Project project) {
         if (project == myProject) {
+          keyboardFocusManager.addPropertyChangeListener(focusListener);
+          Disposer.register(ToolWindowManagerImpl.this, () -> keyboardFocusManager.removePropertyChangeListener(focusListener));
+
           //noinspection TestOnlyProblems
           init();
         }
@@ -176,15 +188,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         });
       }
     });
-
-    PropertyChangeListener focusListener = it -> {
-      if ("focusOwner".equals(it.getPropertyName())) {
-        myUpdateHeadersAlarm.cancelAllRequests();
-        myUpdateHeadersAlarm.addRequest(this::updateToolWindowHeaders, 50);
-      }
-    };
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(focusListener);
-    Disposer.register(this, () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(focusListener));
 
     Predicate<AWTEvent> predicate = event ->
       event.getID() == FocusEvent.FOCUS_LOST
