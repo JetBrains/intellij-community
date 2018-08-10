@@ -4,7 +4,7 @@ import my.*;
 import java.util.function.*;
 import java.util.*;
 
-class Simple<T> {
+public class Simple<T> {
   boolean process(Processor<<warning descr="Can generalize to '? super T'">T</warning>> processor) {
     if (((processor) == null) || ((processor) == (this)) & this!=processor) return false;
 
@@ -320,6 +320,34 @@ class Simple<T> {
         }
       }.run();
     }
+  }
+
+  //////////////  several same-named methods
+  private static int fillGap(List<Number> blocks, List<Number> result, int startOffset, int endOffset) {
+    return fillGap(null, blocks, result, startOffset, endOffset, 0);
+  }
+
+  private static int fillGap(Number parent,
+                             List<<warning descr="Can generalize to '? extends Number'">Number</warning>> blocks,
+                             List<<warning descr="Can generalize to '? super Number'">Number</warning>> result,
+                             int startOffset,
+                             int endOffset,
+                             int depth) {
+    int lastOffset = startOffset;
+    String currRange = "";
+    for (Number block : blocks) {
+      if (lastOffset == endOffset || block.intValue() > endOffset) return lastOffset;
+      if (currRange.contains("block")) {
+        result.add(block);
+        lastOffset = block.intValue();
+        currRange += endOffset;
+      }
+      else if (currRange.equals(block.toString())) {
+        lastOffset = fillGap(block, blocks.subList(0, lastOffset), result, lastOffset, endOffset, depth + 1);
+        currRange += lastOffset;
+      }
+    }
+    return lastOffset;
   }
 
 }
