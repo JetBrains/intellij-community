@@ -18,14 +18,17 @@ package com.jetbrains.python.codeInsight.fstrings;
 import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.fstrings.FStringParser.Fragment;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,15 +50,29 @@ public class PyFStringsInjector extends PyInjectorBase {
     
     for (ASTNode node : pyString.getStringNodes()) {
       final int relNodeOffset = node.getTextRange().getStartOffset() - pyString.getTextRange().getStartOffset();
+      final PyDocstringLanguageDialect docstringLanguage = PyDocstringLanguageDialect.getInstance();
       for (Fragment offsets : getInjectionRanges(node)) {
         if (offsets.containsNamedUnicodeEscape()) continue;
-        registrar.startInjecting(PyDocstringLanguageDialect.getInstance());
+        registrar.startInjecting(docstringLanguage);
         registrar.addPlace(null, null, pyString, offsets.getContentRange().shiftRight(relNodeOffset));
         registrar.doneInjecting();
       }
-      InjectedLanguageUtil.putInjectedFileUserData(pyString, PyDocstringLanguageDialect.getInstance(),
-                                                   CommentByLineCommentHandler.INJECTION_FORBIDS_LINE_COMMENTS, true);
     }
+
+    disableCommentingInFragments(context, pyString);
+  }
+
+  public void disableCommentingInFragments(@NotNull PsiElement context, @NotNull PyStringLiteralExpression pyString) {
+    final Project project = context.getProject();
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final PyDocstringLanguageDialect docstringLanguage = PyDocstringLanguageDialect.getInstance();
+
+    StreamEx.of(injectedLanguageManager.getCachedInjectedDocumentsInRange(pyString.getContainingFile(), pyString.getTextRange()))
+      .map(window -> documentManager.getPsiFile(window))
+      .nonNull()
+      .filter(file -> file.getLanguage().isKindOf(docstringLanguage))
+      .forEach(CommentByLineCommentHandler::markInjectedFileUnsuitableForLineComment);
   }
 
   @NotNull

@@ -45,11 +45,21 @@ import java.util.List;
 import java.util.Map;
 
 public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHandler {
+
+  private static final Key<Boolean> INJECTION_FORBIDS_LINE_COMMENTS = Key.create("INJECTION_FORBIDS_LINE_COMMENTS");
+
   /**
-   * Put this marker key in an injected file to make "Comment with line comment" action operate on its host file
-   * instead of the injected fragment itself.
+   * Disable line commenting in an injected file making this action operate on its host file instead.
+   *
+   * @param file injected file where line comment action shouldn't be available
    */
-  public static final Key<Boolean> INJECTION_FORBIDS_LINE_COMMENTS = Key.create("INJECTION_FORBIDS_LINE_COMMENTS");
+  public static void markInjectedFileUnsuitableForLineComment(@NotNull PsiFile file) {
+    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      throw new IllegalArgumentException("This method should be called only on injected files");
+    }
+
+    file.putUserData(INJECTION_FORBIDS_LINE_COMMENTS, true);
+  }
 
   private final List<Block> myBlocks = new ArrayList<>();
 

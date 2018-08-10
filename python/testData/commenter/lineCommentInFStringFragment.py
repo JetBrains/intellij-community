@@ -1,1 +1,1 @@
-s = f'{4<caret>2}'
+s = f'{foo} {b<caret>ar}'
