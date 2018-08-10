@@ -31,7 +31,7 @@ class TNettyServer private constructor(transport: TServerTransport, processor: T
     server.serve()
   }
 
-  fun stop(): Future<Void?> {
+  fun stop(): Future<*> {
     server.stop()
 
     return object : Future<Void?> {
