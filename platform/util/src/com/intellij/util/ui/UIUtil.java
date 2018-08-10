@@ -1900,7 +1900,9 @@ public class UIUtil {
     final boolean drawRound = endXf - startXf > 4;
 
     GraphicsConfig config = new GraphicsConfig(g);
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+    float alpha = ((float)JBUI.getInt("SearchMatch.transparency", 70) / 100f);
+    alpha = alpha < 0 || alpha > 1 ? 0.7f : alpha;
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
     if (isJreHiDPI(g)) {
