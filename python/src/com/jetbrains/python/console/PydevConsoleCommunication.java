@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -40,16 +39,10 @@ import com.jetbrains.python.console.protocol.*;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.console.transport.client.TNettyClientTransport;
-import com.jetbrains.python.console.transport.server.TNettyServer;
-import com.jetbrains.python.console.transport.server.TNettyServerTransport;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.TServerTransport;
-import org.apache.thrift.transport.TTransport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +50,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
@@ -67,17 +63,7 @@ import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
  *
  * @author Fabio
  */
-public class PydevConsoleCommunication extends AbstractConsoleCommunication implements PyFrameAccessor {
-  /**
-   * Thrift RPC client for sending messages to the server.
-   */
-  private PythonConsoleBackendServiceDisposable myClient;
-
-  /**
-   * This is the server responsible for giving input to a raw_input() requested.
-   */
-  @Nullable private TNettyServer myServer;
-
+public abstract class PydevConsoleCommunication extends AbstractConsoleCommunication implements PyFrameAccessor {
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class);
 
   /**
@@ -111,115 +97,11 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Nullable private XCompositeNode myCurrentRootNode;
 
-  @NotNull
-  private final SettableFuture<PythonConsoleBackendService.Client> myInitialPythonConsoleClientFuture = SettableFuture.create();
-
-  @NotNull
-  private final SettableFuture<Process> myPythonConsoleProcessFuture = SettableFuture.create();
-
-  /**
-   * Indicates that {@link #close()} was executed.
-   */
-  private boolean myClose = false;
-
   /**
    * Initializes the bidirectional RPC communication.
    */
   public PydevConsoleCommunication(Project project) {
     super(project);
-  }
-
-  public void startServer(int port) throws InterruptedException {
-    PythonConsoleFrontendHandler serverHandler = new PythonConsoleFrontendHandler();
-    PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface> serverProcessor =
-      new PythonConsoleFrontendService.Processor<>(serverHandler);
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    TNettyServerTransport serverTransport = new TNettyServerTransport(port);
-    TNettyServer server = new TNettyServer(serverTransport, serverProcessor);
-
-    ApplicationManager.getApplication().executeOnPooledThread(() -> server.serve());
-
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      TTransport clientTransport = serverTransport.getReverseTransport();
-      TBinaryProtocol clientProtocol = new TBinaryProtocol(clientTransport);
-      PythonConsoleBackendService.Client client = new PythonConsoleBackendService.Client(clientProtocol);
-
-      this.myServer = server;
-      this.myInitialPythonConsoleClientFuture.set(client);
-
-      PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(myProject);
-      executionService.sessionStarted(this);
-      addFrameListener(new PyFrameListener() {
-        @Override
-        public void frameChanged() {
-          executionService.cancelSubmittedTasks(PydevConsoleCommunication.this);
-        }
-      });
-    });
-
-    serverTransport.waitForBind();
-  }
-
-  public void startClient(@NotNull String host, int port, @NotNull Process pythonConsoleProcess) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      TNettyClientTransport clientTransport = new TNettyClientTransport(host, port);
-      clientTransport.open();
-
-      TBinaryProtocol clientProtocol = new TBinaryProtocol(clientTransport);
-      PythonConsoleBackendService.Client client = new PythonConsoleBackendService.Client(clientProtocol);
-
-      TServerTransport serverTransport = clientTransport.getServerTransport();
-
-      PythonConsoleFrontendHandler serverHandler = new PythonConsoleFrontendHandler();
-      PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface> serverProcessor =
-        new PythonConsoleFrontendService.Processor<>(serverHandler);
-
-      TNettyServer server = new TNettyServer(serverTransport, serverProcessor);
-
-      ApplicationManager.getApplication().executeOnPooledThread(() -> server.serve());
-
-      this.myServer = server;
-      this.myInitialPythonConsoleClientFuture.set(client);
-      this.myPythonConsoleProcessFuture.set(pythonConsoleProcess);
-
-      PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(myProject);
-      executionService.sessionStarted(this);
-      addFrameListener(new PyFrameListener() {
-        @Override
-        public void frameChanged() {
-          executionService.cancelSubmittedTasks(PydevConsoleCommunication.this);
-        }
-      });
-    });
-  }
-
-  @NotNull
-  private Process getPythonConsoleProcess() {
-    try {
-      return myPythonConsoleProcessFuture.get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  public void setPythonConsoleProcess(@NotNull Process pythonConsoleProcess) {
-    myPythonConsoleProcessFuture.set(pythonConsoleProcess);
-  }
-
-  /**
-   * Returns initial non-thread safe {@link PythonConsoleBackendService.Client}.
-   *
-   * @return {@link PythonConsoleBackendService.Client}
-   */
-  @NotNull
-  private PythonConsoleBackendService.Client getInitialPythonConsoleBackendClient() {
-    try {
-      return myInitialPythonConsoleClientFuture.get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new IllegalStateException(e);
-    }
   }
 
   /**
@@ -232,57 +114,39 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    *
    * @return thread safe and related Python Console process-aware
    * {@link PythonConsoleBackendService.Iface}
+   * @throws CommunicationClosedException if transport is closed
    */
   @NotNull
-  private PythonConsoleBackendServiceDisposable getPythonConsoleBackendClient() {
-    if (myClient == null) {
-      myClient = PythonConsoleClientUtil.synchronizedPythonConsoleClient(PydevConsoleCommunication.class.getClassLoader(),
-                                                                         getInitialPythonConsoleBackendClient(), getPythonConsoleProcess());
-    }
-    return myClient;
-  }
+  protected abstract PythonConsoleBackendServiceDisposable getPythonConsoleBackendClient();
 
+  /**
+   * Sends <i>handshake</i> message to Python Console backend. Returns
+   * {@code true} if Python Console backend replies with <i>PyCharm</i> string.
+   * Returns {@code false} if Python Console backend replies with unexpected
+   * message or Python Console process is finished or Python Console is closed.
+   *
+   * @return whether <i>handshake</i> with Python Console backend succeeded
+   * @throws RuntimeException if transport (protocol) error occurs
+   */
   public boolean handshake() {
-    if (!myClose) {
+    if (!isCommunicationClosed()) {
       try {
         return "PyCharm".equals(getPythonConsoleBackendClient().handshake());
       }
-      catch (PyConsoleProcessFinishedException | TException e) {
+      catch (CommunicationClosedException | PyConsoleProcessFinishedException e) {
+        return false;
+      }
+      catch (TException e) {
         throw new RuntimeException(e);
       }
     }
     return false;
   }
 
-  private void sendCloseMessageToScript() {
-    if (!myClose) {
-      myClose = true;
-      new Task.Backgroundable(myProject, "Close Console Communication", true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            getPythonConsoleBackendClient().close();
-          }
-          catch (Exception e) {
-            //Ok, we can ignore this one on close.
-          }
-          finally {
-            getPythonConsoleBackendClient().dispose();
-          }
-        }
-      }.queue();
-    }
-  }
-
   /**
    * Stops the communication with the client (passes message for it to quit).
    */
   public void close() {
-    if (myClose) {
-      return;
-    }
-    myClose = true;
-
     PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
     myCallbackHashMap.clear();
 
@@ -290,32 +154,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          indicator.setText2("Sending close message to Python Console...");
-          try {
-            getPythonConsoleBackendClient().close();
-          }
-          catch (Exception e) {
-            //Ok, we can ignore this one on close.
-          }
-          finally {
-            getPythonConsoleBackendClient().dispose();
-          }
-          indicator.setText2("Waiting for Python Console process to finish...");
-          try {
-            do {
-              indicator.checkCanceled();
-            }
-            while (!getPythonConsoleProcess().waitFor(500, TimeUnit.MILLISECONDS));
-          }
-          catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-          }
+          closeCommunication().get();
         }
-        finally {
-          if (myServer != null) {
-            myServer.stop();
-            myServer = null;
-          }
+        catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        catch (ExecutionException e) {
+          // it could help us diagnose some intricate cases
+          LOG.debug(e);
         }
       }
     }.queue();
@@ -324,31 +170,32 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Stops the communication with the client (passes message for it to quit).
    *
-   * @return {@link Future} that allows to wait for Python console server
-   * thread {@link WebServer#listener} to die
+   * @return {@link Future} that allows to wait for Python Console transport
+   * thread(s) to finish its execution
    */
   @NotNull
-  public Future<Void> closeAsync() {
-    sendCloseMessageToScript();
+  public Future<?> closeAsync() {
     PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
     myCallbackHashMap.clear();
-    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        getPythonConsoleProcess().waitFor(5L, TimeUnit.SECONDS);
-      }
-      catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      finally {
-        if (myServer != null) {
-          Future<Void> stopFuture = myServer.stop();
-          myServer = null;
-          stopFuture.get();
-        }
-      }
-      return null;
-    });
+
+    return closeCommunication();
   }
+
+  /**
+   * Closes the communication with Python Console backend gracefully. Returns
+   * {@link Future} that allows to wait for communication resources
+   * (corresponding {@link java.util.concurrent.ExecutorService} and threads)
+   * to be finished.
+   * <p>
+   * The method is not expected to throw any exception as well as the returned
+   * {@link Future}.
+   *
+   * @return {@link Future}
+   */
+  @NotNull
+  protected abstract Future<?> closeCommunication();
+
+  protected abstract boolean isCommunicationClosed();
 
   /**
    * Variables that control when we're expecting to give some input to the server or when we're
@@ -617,7 +464,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     try {
       getPythonConsoleBackendClient().interrupt();
     }
-    catch (PyConsoleProcessFinishedException | TException e) {
+    catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
       LOG.error(e);
     }
   }
@@ -633,7 +480,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Override
   public PyDebugValue evaluate(String expression, boolean execute, boolean doTrunc) throws PyDebuggerException {
-    if (!myClose) {
+    if (!isCommunicationClosed()) {
       try {
         List<DebugValue> debugValues = getPythonConsoleBackendClient().evaluate(expression);
         return createPyDebugValue(debugValues.iterator().next(), this);
@@ -648,12 +495,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @Nullable
   @Override
   public XValueChildrenList loadFrame() throws PyDebuggerException {
-    if (!myClose) {
+    if (!isCommunicationClosed()) {
       try {
         List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
         return parseVars(frame, null, this);
       }
-      catch (PyConsoleProcessFinishedException | TException e) {
+      catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
         throw new PyDebuggerException("Get frame from console failed", e);
       }
     }
@@ -680,7 +527,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
         // previously `loadFullValue()` might return `List<PyDebugValue>` but this is no longer true
       }
-      catch (PyConsoleProcessFinishedException | TException e) {
+      catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
         for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
           PyDebugValue value = asyncValue.getDebugValue();
           XValueNode node = value.getLastNode();
@@ -699,12 +546,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Override
   public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
-    if (!myClose) {
+    if (!isCommunicationClosed()) {
       try {
         List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(GetVariableCommand.composeName(var));
         return parseVars(ret, var, this);
       }
-      catch (PyConsoleProcessFinishedException e) {
+      catch (CommunicationClosedException | PyConsoleProcessFinishedException e) {
         throw new PyDebuggerException(e.getLocalizedMessage(), e);
       }
       catch (TException e) {
@@ -727,13 +574,13 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Override
   public void changeVariable(PyDebugValue variable, String value) throws PyDebuggerException {
-    if (!myClose) {
+    if (!isCommunicationClosed()) {
       try {
         // NOTE: The actual change is being scheduled in the exec_queue in main thread
         // This method is async now
         getPythonConsoleBackendClient().changeVariable(variable.getEvaluationExpression(), value);
       }
-      catch (PyConsoleProcessFinishedException | TException e) {
+      catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
         throw new PyDebuggerException("Get change variable", e);
       }
     }
@@ -748,7 +595,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @Override
   public ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
     throws PyDebuggerException {
-    if (!myClose) {
+    if (!isCommunicationClosed()) {
       try {
         GetArrayResponse ret = getPythonConsoleBackendClient().getArray(var.getName(), rowOffset, colOffset, rows, cols, format);
         return createArrayChunk(ret, this);
@@ -789,7 +636,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       // though `connectToDebugger` returns "connect complete" string, let us just ignore it
       getPythonConsoleBackendClient().connectToDebugger(localPort, dbgOpts, extraEnvs);
     }
-    catch (PyConsoleProcessFinishedException | TException e) {
+    catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
       throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", e);
     }
   }
@@ -826,8 +673,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   @NotNull
-  private static Future<Void> completedFuture() {
-    return CompletableFuture.completedFuture(null);
+  protected final PythonConsoleFrontendService.Iface createPythonConsoleFrontendHandler() {
+    return new PythonConsoleFrontendHandler();
   }
 
   private class PythonConsoleFrontendHandler implements PythonConsoleFrontendService.Iface {
@@ -879,5 +726,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     public boolean IPythonEditor(String path, String line) {
       return execIPythonEditor(path);
     }
+  }
+
+  protected static class CommunicationClosedException extends RuntimeException {
   }
 }

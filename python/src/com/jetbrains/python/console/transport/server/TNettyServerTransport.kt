@@ -62,6 +62,7 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
     nettyServer.close()
   }
 
+  @Throws(InterruptedException::class)
   fun getReverseTransport(): TTransport = nettyServer.takeReverseTransport()
 
   private class NettyServer(val port: Int) {
@@ -117,7 +118,7 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
 
             ch.pipeline().addLast(DirectedMessageHandler(reverseTransport.outputStream, thriftTransport.outputStream))
 
-            ch.pipeline().addLast(object: ChannelInboundHandlerAdapter() {
+            ch.pipeline().addLast(object : ChannelInboundHandlerAdapter() {
               override fun channelInactive(ctx: ChannelHandlerContext) {
                 thriftTransport.close()
                 reverseTransport.close()
@@ -156,9 +157,18 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
       serverBound.countDown()
     }
 
+    /**
+     * @throws InterruptedException if [CountDownLatch.await] is interrupted
+     * @throws ServerClosedException if [NettyServer] gets closed
+     */
     @Throws(InterruptedException::class)
     fun waitForBind() {
-      serverBound.await()
+      while (!closed.get()) {
+        if (serverBound.await(100L, TimeUnit.MILLISECONDS)) {
+          return
+        }
+      }
+      throw ServerClosedException()
     }
 
     fun accept(): TTransport {
@@ -178,7 +188,20 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
       }
     }
 
-    fun takeReverseTransport(): TTransport = reverseTransportQueue.take()
+    /**
+     * @throws InterruptedException if [BlockingQueue.poll] is interrupted
+     * @throws ServerClosedException if [NettyServer] gets closed
+     */
+    @Throws(InterruptedException::class)
+    fun takeReverseTransport(): TTransport {
+      while (!closed.get()) {
+        val element = reverseTransportQueue.poll(100L, TimeUnit.MILLISECONDS)
+        if (element != null) {
+          return element
+        }
+      }
+      throw ServerClosedException()
+    }
 
     /**
      * Shutdown the server [NioEventLoopGroup].

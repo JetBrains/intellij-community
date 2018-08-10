@@ -96,7 +96,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
@@ -395,21 +394,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       Map<String, String> envs = generalCommandLine.getEnvironment();
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
 
-      Future<Void> connectionFuture;
-
-      myPydevConsoleCommunication = new PydevConsoleCommunication(myProject);
-      // first of all - start server
+      PydevConsoleCommunicationServer communicationServer = new PydevConsoleCommunicationServer(myProject, port);
+      myPydevConsoleCommunication = communicationServer;
       try {
-        // todo use process in `PydevConsoleCommunication`
-        // todo we might want to add a timeout here on start
-        myPydevConsoleCommunication.startServer(port);
+        communicationServer.serve();
       }
       catch (Exception e) {
+        communicationServer.close();
         throw new ExecutionException(e.getMessage(), e);
       }
 
       Process process = generalCommandLine.createProcess();
-      myPydevConsoleCommunication.setPythonConsoleProcess(process);
+      communicationServer.setPythonConsoleProcess(process);
       return new CommandLineProcess(process, generalCommandLine.getCommandLineString());
     }
   }
