@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
@@ -54,7 +55,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
                              @NotNull DataContext dataContext) {
     if (project == null) return;
     CustomActionsSchema schema = CustomActionsSchema.getInstance();
-    group.add(schema.getCorrectedAction("Vcs.Operations.Popup"));
+    group.add(schema.getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP));
   }
 
   @NotNull
