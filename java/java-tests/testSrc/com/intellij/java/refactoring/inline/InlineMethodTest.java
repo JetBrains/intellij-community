@@ -98,6 +98,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testChangeContextForThisInNestedClasses() { doTest(); }
 
   public void testCallUnderIf() { doTest(); }
+  public void testInlineEnumArgsChangeContext() { doTest(); }
 
   //This gives extra 'result' local variable, currently I don't see a way to cope with it, todo: think about addional inline possibilities
   //public void testLocalVariableResult() throws Exception { doTest(); }
