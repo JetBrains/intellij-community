@@ -623,7 +623,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (enumConstant != null) {
         PsiExpression returnExpr = getSimpleReturnedExpression(myMethod);
         if (returnExpr != null) {
+          ChangeContextUtil.encodeContextInfo(returnExpr, true);
           PsiElement copy = returnExpr.copy();
+          ChangeContextUtil.clearContextInfo(returnExpr);
           copy.accept(new JavaRecursiveElementVisitor() {
             @Override
             public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -640,7 +642,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               }
             }
           });
-          methodCall.replace(copy);
+          PsiElement replace = methodCall.replace(copy);
+          if (blockData.thisVar != null) {
+            ChangeContextUtil.decodeContextInfo(replace, myMethod.getContainingClass(), blockData.thisVar.getInitializer());
+          }
         }
       }
       return;
