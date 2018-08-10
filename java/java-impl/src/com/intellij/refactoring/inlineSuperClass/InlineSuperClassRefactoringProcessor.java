@@ -158,7 +158,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression &&
-              PsiTreeUtil.isAncestor(targetClass, element, false)) {
+              PsiTreeUtil.isAncestor(targetClass, element, false) &&
+              !PushDownConflicts.isSuperCallToBeInlined(member, targetClass, mySuperClass, element)) {
             usages.add(new RemoveQualifierUsageInfo((PsiReferenceExpression)element));
           }
         }
