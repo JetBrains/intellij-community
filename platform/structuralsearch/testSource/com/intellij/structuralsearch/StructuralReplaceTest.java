@@ -17,7 +17,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final MatchOptions matchOptions = this.options.getMatchOptions();
+    final MatchOptions matchOptions = options.getMatchOptions();
     matchOptions.setFileType(StdFileTypes.JAVA);
   }
 
@@ -808,47 +808,51 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testClassReplacement() {
-    boolean formatAccordingToStyle = options.isToReformatAccordingToStyle();
     options.setToReformatAccordingToStyle(true);
 
     String s1 = "class A { public void b() {} }";
     String s2 = "class 'a { '_Other* }";
     String s3 = "class $a$New { Logger LOG; $Other$ }";
-    String expectedResult = "    class ANew {\n" +
-                            "        Logger LOG;\n\n" +
-                            "        public void b() {\n" +
-                            "        }\n" +
-                            "    }";
-    assertEquals("Basic class replacement", expectedResult, replace(s1, s2, s3));
+    String expectedResult = "class ANew {\n" +
+                            "    Logger LOG;\n" +
+                            "\n" +
+                            "    public void b() {\n" +
+                            "    }\n" +
+                            "}";
+    assertEquals("Basic class replacement", expectedResult, replace(s1, s2, s3, true));
 
     String s4 = "class A { class C {} public void b() {} int f; }";
     String s5 = "class 'a { '_Other* }";
     String s6 = "class $a$ { Logger LOG; $Other$ }";
-    String expectedResult2 = "    class A {\n" +
-                             "        Logger LOG;\n\n" +
-                             "        class C {\n" +
-                             "        }\n\n" +
-                             "        public void b() {\n" +
-                             "        }\n\n" +
-                             "        int f;\n" +
-                             "    }";
+    String expectedResult2 = "class A {\n" +
+                             "    Logger LOG;\n" +
+                             "\n" +
+                             "    class C {\n" +
+                             "    }\n" +
+                             "\n" +
+                             "    public void b() {\n" +
+                             "    }\n" +
+                             "\n" +
+                             "    int f;\n" +
+                             "}";
 
-    assertEquals("Order of members in class replacement", expectedResult2, replace(s4, s5, s6));
+    assertEquals("Order of members in class replacement", expectedResult2, replace(s4, s5, s6, true));
 
     String s7 = "class A extends B { int c; void b() {} { a = 1; } }";
     String s8 = "class 'A extends B { '_Other* }";
     String s9 = "class $A$ extends B2 { $Other$ }";
-    String expectedResult3 = "    class A extends B2 {\n" +
-                             "        int c;\n\n" +
-                             "        void b() {\n" +
-                             "        }\n\n" +
-                             "        {\n" +
-                             "            a = 1;\n" +
-                             "        }\n" +
-                             "    }";
+    String expectedResult3 = "class A extends B2 {\n" +
+                             "    int c;\n" +
+                             "\n" +
+                             "    void b() {\n" +
+                             "    }\n" +
+                             "\n" +
+                             "    {\n" +
+                             "        a = 1;\n" +
+                             "    }\n" +
+                             "}";
 
-    assertEquals("Unsupported pattern exception", expectedResult3, replace(s7, s8, s9));
-    options.setToReformatAccordingToStyle(formatAccordingToStyle);
+    assertEquals("Unsupported pattern exception", expectedResult3, replace(s7, s8, s9, true));
 
     String s10 = "/** @example */\n" +
                  "class A {\n" +
@@ -860,19 +864,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s12 = "public class $a$ {\n" +
                  "  $Other$\n" +
                  "}";
-    String expectedResult4 = "    /**\n" +
-                             "     * @example\n" +
-                             "     */\n" +
-                             "    public class A {\n" +
-                             "        class C {\n" +
-                             "        }\n\n" +
-                             "        public void b() {\n" +
-                             "        }\n\n" +
-                             "        int f;\n" +
-                             "    }";
+    String expectedResult4 = "/**\n" +
+                             " * @example\n" +
+                             " */\n" +
+                             "public class A {\n" +
+                             "    class C {\n" +
+                             "    }\n" +
+                             "\n" +
+                             "    public void b() {\n" +
+                             "    }\n" +
+                             "\n" +
+                             "    int f;\n" +
+                             "}";
 
     options.setToReformatAccordingToStyle(true);
-    assertEquals("Make class public", expectedResult4, replace(s10, s11, s12));
+    assertEquals("Make class public", expectedResult4, replace(s10, s11, s12, true));
     options.setToReformatAccordingToStyle(false);
 
     String s13 = "class CustomThread extends Thread {\n" +
@@ -901,21 +907,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  }\n" +
                  "}";
 
-    String expectedResult5 = "    class CustomThread extends CustomThread {\n" +
-                             "        CustomThread(InputStream in, OutputStream out, boolean closeOutOnExit) {\n" +
-                             "            super(\"CustomThread\");\n" +
-                             "            setDaemon(true);\n" +
-                             "            if (in instanceof BufferedInputStream) {\n" +
-                             "                bis = (BufferedInputStream) in;\n" +
-                             "            } else {\n" +
-                             "                bis = new BufferedInputStream(in);\n" +
-                             "            }\n" +
-                             "            this.out = out;\n" +
-                             "            this.closeOutOnExit = closeOutOnExit;\n" +
+    String expectedResult5 = "class CustomThread extends CustomThread {\n" +
+                             "    CustomThread(InputStream in, OutputStream out, boolean closeOutOnExit) {\n" +
+                             "        super(\"CustomThread\");\n" +
+                             "        setDaemon(true);\n" +
+                             "        if (in instanceof BufferedInputStream) {\n" +
+                             "            bis = (BufferedInputStream) in;\n" +
+                             "        } else {\n" +
+                             "            bis = new BufferedInputStream(in);\n" +
                              "        }\n" +
-                             "    }";
+                             "        this.out = out;\n" +
+                             "        this.closeOutOnExit = closeOutOnExit;\n" +
+                             "    }\n" +
+                             "}";
     options.setToReformatAccordingToStyle(true);
-    assertEquals("Constructor replacement", expectedResult5, replace(s13, s14, s15));
+    assertEquals("Constructor replacement", expectedResult5, replace(s13, s14, s15, true));
     options.setToReformatAccordingToStyle(false);
 
     String s16 = "public class A {}\n" +
@@ -985,19 +991,19 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s33 = "/**$Comment$*/\n" +
                  "$Type$ $Variable$ = $Value$;";
 
-    String expectedResult12 = "    class A {\n" +
-                              "        /**\n" +
-                              "         * comment\n" +
-                              "         */\n" +
-                              "        int a;\n" +
-                              "        char b;\n" +
-                              "        /**\n" +
-                              "         * comment2\n" +
-                              "         */\n" +
-                              "        int c;\n" +
-                              "    }";
+    String expectedResult12 = "class A {\n" +
+                              "    /**\n" +
+                              "     * comment\n" +
+                              "     */\n" +
+                              "    int a;\n" +
+                              "    char b;\n" +
+                              "    /**\n" +
+                              "     * comment2\n" +
+                              "     */\n" +
+                              "    int c;\n" +
+                              "}";
     options.setToReformatAccordingToStyle(true);
-    assertEquals("Replacing comments with javadoc for fields", expectedResult12, replace(s31, s32, s33));
+    assertEquals("Replacing comments with javadoc for fields", expectedResult12, replace(s31, s32, s33, true));
     options.setToReformatAccordingToStyle(false);
 
     String s34 = "/**\n" +
@@ -1245,7 +1251,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   public void _testClassReplacement10() throws IOException {
     String s1 = loadFile("before2.java");
     String s2 = "class '_Class {\n" +
-                "  '_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*){\n" +
+                "  '_ReturnType '_MethodName+('_ParameterType '_Parameter*){\n" +
                 "    '_content*;\n" +
                 "  }\n" +
                 "  '_remainingclass*" +
