@@ -350,4 +350,14 @@ public class Simple<T> {
     return lastOffset;
   }
 
+  //////// class copy
+  interface II {
+    void foox(Processor<II> p);
+  }
+  class CCII implements II {
+    @Override
+    public void foox(Processor<<warning descr="Can generalize to '? super II'">II</warning>> p) {
+      if (p.process(this)) return;
+    }
+  }
 }
