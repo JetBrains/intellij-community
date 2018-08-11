@@ -296,11 +296,7 @@ public class PyDocumentationBuilder {
   }
 
   private void buildFromDocstring(@NotNull final PyDocStringOwner elementDefinition, boolean isProperty) {
-    PyClass pyClass = null;
     PyStringLiteralExpression docStringExpression = getEffectiveDocStringExpression(elementDefinition);
-    if (docStringExpression != null && !isProperty) {
-      myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
-    }
 
     if (PyUtil.isTopLevel(elementDefinition)) {
       final PsiFile containing = elementDefinition.getContainingFile();
@@ -313,25 +309,23 @@ public class PyDocumentationBuilder {
     }
 
     if (elementDefinition instanceof PyClass) {
-      pyClass = (PyClass)elementDefinition;
+      final PyClass pyClass = (PyClass)elementDefinition;
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody
         .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, myContext));
     }
     else if (elementDefinition instanceof PyFunction) {
       final PyFunction pyFunction = (PyFunction)elementDefinition;
-      if (!isProperty) {
-        pyClass = pyFunction.getContainingClass();
-        if (pyClass != null) {
-          final String link = getLinkToClass(pyClass, true);
-          if (link != null) {
-            myProlog.addItem(link);
-          }
+      final PyClass pyClass = pyFunction.getContainingClass();
+      if (!isProperty && pyClass != null) {
+        final String link = getLinkToClass(pyClass, true);
+        if (link != null) {
+          myProlog.addItem(link);
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myOriginalElement, myContext, false));
-      if (docStringExpression == null && !isProperty) {
+      if (docStringExpression == null && pyClass != null && !isProperty) {
         docStringExpression = addInheritedDocString(pyFunction, pyClass);
       }
       if (docStringExpression != null) {
@@ -353,6 +347,10 @@ public class PyDocumentationBuilder {
         }
       }
       myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
+    }
+
+    if (docStringExpression != null && !isProperty) {
+      myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
     }
   }
 
@@ -441,9 +439,9 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private PyStringLiteralExpression addInheritedDocString(@NotNull final PyFunction pyFunction, @Nullable final PyClass pyClass) {
+  private PyStringLiteralExpression addInheritedDocString(@NotNull PyFunction pyFunction, @NotNull PyClass pyClass) {
     final String methodName = pyFunction.getName();
-    if (pyClass == null || methodName == null) {
+    if (methodName == null) {
       return null;
     }
     final boolean isConstructor = PyNames.INIT.equals(methodName);
@@ -456,26 +454,22 @@ public class PyDocumentationBuilder {
       PyStringLiteralExpression docstringElement = null;
       PyFunction inherited = null;
       boolean isFromClass = false;
-      if (isConstructor) docstringElement = getEffectiveDocStringExpression(ancestor);
-      if (docstringElement != null) {
-        isFromClass = true;
+      if (isConstructor) {
+        docstringElement = getEffectiveDocStringExpression(ancestor);
+        isFromClass = docstringElement != null;
       }
-      else {
+      if (!isFromClass) {
         inherited = ancestor.findMethodByName(methodName, false, null);
-      }
-      if (inherited != null) {
-        docstringElement = getEffectiveDocStringExpression(inherited);
-      }
-      if (docstringElement != null) {
-        final String inheritedDoc = docstringElement.getStringValue();
-        if (inheritedDoc.length() > 1) {
-          final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
-          if (ancestorLink != null) {
-            mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
-          }
-          myContent.add(formatDocString(pyFunction, inheritedDoc));
-          return docstringElement;
+        if (inherited != null) {
+          docstringElement = getEffectiveDocStringExpression(inherited);
         }
+      }
+      if (docstringElement != null && docstringElement.getStringValue().length() > 1) {
+        final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
+        if (ancestorLink != null) {
+          mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
+        }
+        return docstringElement;
       }
     }
 
