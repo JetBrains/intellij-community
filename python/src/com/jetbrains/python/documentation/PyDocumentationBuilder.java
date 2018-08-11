@@ -317,6 +317,12 @@ public class PyDocumentationBuilder {
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
       myBody
         .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, myContext));
+      if (docStringExpression == null) {
+        final PyFunction constructor = pyClass.findMethodByName(PyNames.INIT, false, myContext);
+        if (constructor != null) {
+          docStringExpression = constructor.getDocStringExpression();
+        }
+      }
     }
     else if (elementDefinition instanceof PyFunction) {
       final PyFunction pyFunction = (PyFunction)elementDefinition;
