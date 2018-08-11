@@ -12,6 +12,7 @@
 
   <depends>com.intellij.properties</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
+  <depends config-file="json-devkit.xml" optional="true">com.intellij.modules.json</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
