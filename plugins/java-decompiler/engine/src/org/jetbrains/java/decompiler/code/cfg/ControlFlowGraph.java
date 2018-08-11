@@ -682,7 +682,7 @@ public class ControlFlowGraph implements CodeConstants {
 
       VarType var = null;
       if (instr.opcode == CodeConstants.opc_astore || instr.opcode == CodeConstants.opc_pop) {
-        var = stack.getByOffset(-1);
+        var = stack.peek(1);
       }
 
       InstructionImpact.stepTypes(data, instr, pool);

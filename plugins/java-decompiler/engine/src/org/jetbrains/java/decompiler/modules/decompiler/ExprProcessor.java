@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
@@ -196,7 +197,7 @@ public class ExprProcessor implements CodeConstants {
           String ndentrykey = buildEntryPointKey(ndentrypoints);
           if (!mapSucc.containsKey(ndentrykey)) {
 
-            mapSucc.put(ndentrykey, copyVarExprents(data.copyStack()));
+            mapSucc.put(ndentrykey, data.copyStack());
 
             stack.add(nd);
             stackEntryPoint.add(ndentrypoints);
@@ -220,18 +221,6 @@ public class ExprProcessor implements CodeConstants {
         buffer.append(":");
       }
       return buffer.toString();
-    }
-  }
-
-  private static PrimitiveExprsList copyVarExprents(PrimitiveExprsList data) {
-    ExprentStack stack = data.getStack();
-    copyEntries(stack);
-    return data;
-  }
-
-  public static void copyEntries(List<Exprent> stack) {
-    for (int i = 0; i < stack.size(); i++) {
-      stack.set(i, stack.get(i).copy());
     }
   }
 
@@ -276,7 +265,7 @@ public class ExprProcessor implements CodeConstants {
 
     BasicBlock block = stat.getBlock();
 
-    ExprentStack stack = data.getStack();
+    ListStack<Exprent> stack = data.getStack();
     List<Exprent> exprlist = data.getLstExprents();
 
     InstructionSequence seq = block.getSeq();
@@ -546,13 +535,13 @@ public class ExprProcessor implements CodeConstants {
           pushEx(stack, exprlist, new NewExprent(new VarType(arrTypeIds[instr.operand(0) - 4], 1), stack, 1, bytecode_offsets));
           break;
         case opc_dup:
-          pushEx(stack, exprlist, stack.getByOffset(-1).copy());
+          pushEx(stack, exprlist, stack.peek(1).copy());
           break;
         case opc_dup_x1:
           insertByOffsetEx(-2, stack, exprlist, -1);
           break;
         case opc_dup_x2:
-          if (stack.getByOffset(-2).getExprType().stackSize == 2) {
+          if (stack.peek(2).getExprType().stackSize == 2) {
             insertByOffsetEx(-2, stack, exprlist, -1);
           }
           else {
@@ -560,16 +549,16 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
-            pushEx(stack, exprlist, stack.getByOffset(-1).copy());
+          if (stack.peek(1).getExprType().stackSize == 2) {
+            pushEx(stack, exprlist, stack.peek(1).copy());
           }
           else {
-            pushEx(stack, exprlist, stack.getByOffset(-2).copy());
-            pushEx(stack, exprlist, stack.getByOffset(-2).copy());
+            pushEx(stack, exprlist, stack.peek(2).copy());
+            pushEx(stack, exprlist, stack.peek(2).copy());
           }
           break;
         case opc_dup2_x1:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
+          if (stack.peek(1).getExprType().stackSize == 2) {
             insertByOffsetEx(-2, stack, exprlist, -1);
           }
           else {
@@ -578,8 +567,8 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2_x2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
-            if (stack.getByOffset(-2).getExprType().stackSize == 2) {
+          if (stack.peek(1).getExprType().stackSize == 2) {
+            if (stack.peek(2).getExprType().stackSize == 2) {
               insertByOffsetEx(-2, stack, exprlist, -1);
             }
             else {
@@ -587,7 +576,7 @@ public class ExprProcessor implements CodeConstants {
             }
           }
           else {
-            if (stack.getByOffset(-3).getExprType().stackSize == 2) {
+            if (stack.peek(3).getExprType().stackSize == 2) {
               insertByOffsetEx(-3, stack, exprlist, -2);
               insertByOffsetEx(-3, stack, exprlist, -1);
             }
@@ -605,7 +594,7 @@ public class ExprProcessor implements CodeConstants {
           stack.pop();
           break;
         case opc_pop2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 1) {
+          if (stack.peek(1).getExprType().stackSize == 1) {
             // Since value at the top of the stack is a value of category 1 (JVMS9 2.11.1)
             // we should remove one more item from the stack.
             // See JVMS9 pop2 chapter.
@@ -634,11 +623,11 @@ public class ExprProcessor implements CodeConstants {
     return -1;
   }
 
-  private void pushEx(ExprentStack stack, List<Exprent> exprlist, Exprent exprent) {
+  private void pushEx(ListStack<Exprent> stack, List<Exprent> exprlist, Exprent exprent) {
     pushEx(stack, exprlist, exprent, null);
   }
 
-  private void pushEx(ExprentStack stack, List<Exprent> exprlist, Exprent exprent, VarType vartype) {
+  private void pushEx(ListStack<Exprent> stack, List<Exprent> exprlist, Exprent exprent, VarType vartype) {
     int varindex = VarExprent.STACK_BASE + stack.size();
     VarExprent var = new VarExprent(varindex, vartype == null ? exprent.getExprType() : vartype, varProcessor);
     var.setStack(true);
@@ -647,7 +636,7 @@ public class ExprProcessor implements CodeConstants {
     stack.push(var.copy());
   }
 
-  private void insertByOffsetEx(int offset, ExprentStack stack, List<Exprent> exprlist, int copyoffset) {
+  private void insertByOffsetEx(int offset, ListStack<Exprent> stack, List<Exprent> exprlist, int copyoffset) {
 
     int base = VarExprent.STACK_BASE + stack.size();
 
