@@ -3,7 +3,6 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -1560,132 +1559,130 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String in = "class X {{ Math.abs(-1); }}";
     final String what = "Math.abs('_a)";
     final String by = "Math.abs($a$)";
-    final boolean save = options.isToUseStaticImport();
     options.setToUseStaticImport(true);
-    try {
-      final String expected = "import static java.lang.Math.abs;class X {{ abs(-1); }}";
-      assertEquals("Replacing with static import", expected, replace(in, what, by, true));
+    final String expected = "import static java.lang.Math.abs;\n" +
+                            "\n" +
+                            "class X {{ abs(-1); }}";
+    assertEquals("Replacing with static import", expected, replace(in, what, by, true, true));
 
-      final String in2 = "class X { void m(java.util.Random r) { Math.abs(r.nextInt()); }}";
-      final String expected2 = "import static java.lang.Math.abs;class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
-      assertEquals("don't add broken static imports", expected2, replace(in2, what, by, true));
+    final String in2 = "class X { void m(java.util.Random r) { Math.abs(r.nextInt()); }}";
+    final String expected2 = "import static java.lang.Math.abs;\n" +
+                             "\n" +
+                             "class X { void m(java.util.Random r) { abs(r.nextInt()); }}";
+    assertEquals("don't add broken static imports", expected2, replace(in2, what, by, true, true));
 
-      final String by2 = "new java.util.Map.Entry() {}";
-      final String expected3 = "import static java.util.Map.Entry;class X {{ new Entry() {}; }}";
-      assertEquals("", expected3, replace(in, what, by2, true));
+    final String by2 = "new java.util.Map.Entry() {}";
+    final String expected3 = "import static java.util.Map.Entry;\n" +
+                             "\n" +
+                             "class X {{ new Entry() {}; }}";
+    assertEquals("", expected3, replace(in, what, by2, true, true));
 
-      final String in3 = "import java.util.Collections;" +
-                         "class X {" +
-                         "  void m() {" +
-                         "    System.out.println(Collections.<String>emptyList());" +
-                         "  }" +
-                         "}";
-      final String what3 = "'_q.'_method:[regex( println )]('_a)";
-      final String by3 = "$q$.$method$($a$)";
-      final String expected4 = "import java.util.Collections;" +
-                               "import static java.lang.System.out;" +
-                               "class X {" +
-                               "  void m() {" +
-                               "    out.println(Collections.<String>emptyList());" +
-                               "  }" +
-                               "}";
-      assertEquals("don't break references with type parameters", expected4,
-                   replace(in3, what3, by3, true));
+    final String in3 = "import java.util.Collections;" +
+                       "class X {" +
+                       "  void m() {" +
+                       "    System.out.println(Collections.<String>emptyList());" +
+                       "  }" +
+                       "}";
+    final String what3 = "'_q.'_method:[regex( println )]('_a)";
+    final String by3 = "$q$.$method$($a$)";
+    final String expected4 = "import java.util.Collections;\n" +
+                             "\n" +
+                             "import static java.lang.System.out;\n" +
+                             "\n" +
+                             "class X {  void m() {    out.println(Collections.<String>emptyList());  }}";
+    assertEquals("don't break references with type parameters", expected4,
+                 replace(in3, what3, by3, true, true));
 
-      final String in4 = "import java.util.Collections;\n" +
-                         "public class X {\n" +
-                         "    void some() {\n" +
-                         "        System.out.println(1);\n" +
-                         "        boolean b = Collections.eq(null, null);\n" +
-                         "    }\n" +
-                         "}";
-      final String what4 = "System.out.println(1);";
-      final String by4 = "System.out.println(2);";
-      final String expected5 = "import java.util.Collections;" +
-                               "import static java.lang.System.out;\n" +
-                               "public class X {\n" +
-                               "    void some() {\n" +
-                               "        out.println(2);\n" +
-                               "        boolean b = Collections.eq(null, null);\n" +
-                               "    }\n" +
-                               "}";
-      assertEquals("don't add static import to inaccessible members", expected5,
-                   replace(in4, what4, by4, true));
+    final String in4 = "import java.util.Collections;\n" +
+                       "public class X {\n" +
+                       "    void some() {\n" +
+                       "        System.out.println(1);\n" +
+                       "        boolean b = Collections.eq(null, null);\n" +
+                       "    }\n" +
+                       "}";
+    final String what4 = "System.out.println(1);";
+    final String by4 = "System.out.println(2);";
+    final String expected5 = "import java.util.Collections;\n" +
+                             "\n" +
+                             "import static java.lang.System.out;\n" +
+                             "\n" +
+                             "public class X {\n" +
+                             "    void some() {\n" +
+                             "        out.println(2);\n" +
+                             "        boolean b = Collections.eq(null, null);\n" +
+                             "    }\n" +
+                             "}";
+    assertEquals("don't add static import to inaccessible members", expected5,
+                 replace(in4, what4, by4, true, true));
 
-      final String in5 = "package cz.ahoj.sample.annotations;\n" +
-                         "/**\n" +
-                         " * @author Ales Holy\n" +
-                         " * @since 18. 7. 2017.\n" +
-                         " */\n" +
-                         "@OuterAnnotation({\n" +
-                         "        @InnerAnnotation(classes = {Integer.class}),\n" +
-                         "        @InnerAnnotation(classes = {String.class}),\n" +
-                         "        @InnerAnnotation(classes = {ReplacementTest.ReplacementTestConfig.class})\n" +
-                         "})\n" +
-                         "public class ReplacementTest {\n" +
-                         "    static class ReplacementTestConfig {\n" +
-                         "    }\n" +
-                         "}\n" +
-                         "@interface InnerAnnotation {\n" +
-                         "    Class<?>[] classes() default {};\n" +
-                         "}\n" +
-                         "@interface OuterAnnotation {\n" +
-                         "\n" +
-                         "    InnerAnnotation[] value();\n" +
-                         "}";
-      configureFromFileText("ReplacementTest.java", in5);
-      options.getMatchOptions().setScope(new LocalSearchScope(getFile()));
+    final String in5 = "package cz.ahoj.sample.annotations;\n" +
+                       "/**\n" +
+                       " * @author Ales Holy\n" +
+                       " * @since 18. 7. 2017.\n" +
+                       " */\n" +
+                       "@OuterAnnotation({\n" +
+                       "        @InnerAnnotation(classes = {Integer.class}),\n" +
+                       "        @InnerAnnotation(classes = {String.class}),\n" +
+                       "        @InnerAnnotation(classes = {ReplacementTest.ReplacementTestConfig.class})\n" +
+                       "})\n" +
+                       "public class ReplacementTest {\n" +
+                       "    static class ReplacementTestConfig {\n" +
+                       "    }\n" +
+                       "}\n" +
+                       "@interface InnerAnnotation {\n" +
+                       "    Class<?>[] classes() default {};\n" +
+                       "}\n" +
+                       "@interface OuterAnnotation {\n" +
+                       "\n" +
+                       "    InnerAnnotation[] value();\n" +
+                       "}";
+    final String what5 = "@'_a:[regex( InnerAnnotation )](classes = { String.class })";
+    final String by5 = "@$a$(classes = { Integer.class })\n" +
+                       "@$a$(classes = { String.class })";
+    assertEquals("add import when reference is just outside the class",
 
-      final String what5 = "@'_a:[regex( InnerAnnotation )](classes = { String.class })";
-      final String by5 = "@$a$(classes = { Integer.class })\n" +
-                         "@$a$(classes = { String.class })";
-      assertEquals("add import when reference is just outside the class",
+                 "package cz.ahoj.sample.annotations;\n" +
+                 "\n" +
+                 "import static cz.ahoj.sample.annotations.ReplacementTest.ReplacementTestConfig;\n" +
+                 "\n" +
+                 "/**\n" +
+                 " * @author Ales Holy\n" +
+                 " * @since 18. 7. 2017.\n" +
+                 " */\n" +
+                 "@OuterAnnotation({\n" +
+                 "        @InnerAnnotation(classes = {Integer.class}),\n" +
+                 "        @InnerAnnotation(classes = { Integer.class }),\n" +
+                 "@InnerAnnotation(classes = { String.class }),\n" +
+                 "        @InnerAnnotation(classes = {ReplacementTestConfig.class})\n" +
+                 "})\n" +
+                 "public class ReplacementTest {\n" +
+                 "    static class ReplacementTestConfig {\n" +
+                 "    }\n" +
+                 "}\n" +
+                 "@interface InnerAnnotation {\n" +
+                 "    Class<?>[] classes() default {};\n" +
+                 "}\n" +
+                 "@interface OuterAnnotation {\n" +
+                 "\n" +
+                 "    InnerAnnotation[] value();\n" +
+                 "}",
+                 replace(in5, what5, by5, true, true));
 
-                   "package cz.ahoj.sample.annotations;\n" +
-                   "\n" +
-                   "import static cz.ahoj.sample.annotations.ReplacementTest.ReplacementTestConfig;\n" +
-                   "\n" +
-                   "/**\n" +
-                   " * @author Ales Holy\n" +
-                   " * @since 18. 7. 2017.\n" +
-                   " */\n" +
-                   "@OuterAnnotation({\n" +
-                   "        @InnerAnnotation(classes = {Integer.class}),\n" +
-                   "        @InnerAnnotation(classes = { Integer.class }),\n" +
-                   "@InnerAnnotation(classes = { String.class }),\n" +
-                   "        @InnerAnnotation(classes = {ReplacementTestConfig.class})\n" +
-                   "})\n" +
-                   "public class ReplacementTest {\n" +
-                   "    static class ReplacementTestConfig {\n" +
-                   "    }\n" +
-                   "}\n" +
-                   "@interface InnerAnnotation {\n" +
-                   "    Class<?>[] classes() default {};\n" +
-                   "}\n" +
-                   "@interface OuterAnnotation {\n" +
-                   "\n" +
-                   "    InnerAnnotation[] value();\n" +
-                   "}",
-                   replace(null, what5, by5, true));
-
-      final String in6 = "class X {{" +
-                         "  Predicate<String> p = Integer::valueOf;" +
-                         "}}" +
-                         "interface Predicate<T> {" +
-                         "  boolean test(T t);" +
-                         "}";
-      final String what6 = "Integer::valueOf";
-      final String by6 = "Boolean::valueOf";
-      assertEquals("class X {{" +
-                   "  Predicate<String> p = Boolean::valueOf;" +
-                   "}}" +
-                   "interface Predicate<T> {" +
-                   "  boolean test(T t);" +
-                   "}",
-                   replace(in6, what6, by6, true));
-    } finally {
-      options.setToUseStaticImport(save);
-    }
+    final String in6 = "class X {{" +
+                       "  Predicate<String> p = Integer::valueOf;" +
+                       "}}" +
+                       "interface Predicate<T> {" +
+                       "  boolean test(T t);" +
+                       "}";
+    final String what6 = "Integer::valueOf";
+    final String by6 = "Boolean::valueOf";
+    assertEquals("class X {{" +
+                 "  Predicate<String> p = Boolean::valueOf;" +
+                 "}}" +
+                 "interface Predicate<T> {" +
+                 "  boolean test(T t);" +
+                 "}",
+                 replace(in6, what6, by6, true));
   }
 
   public void testUseStaticStarImport() {
@@ -1701,45 +1698,37 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     try {
 
       // depends on default setting being equal to 3 for names count to use import on demand
-      final String expected = "import static java.lang.Math.*;class ImportTest {{\n" +
+      final String expected = "import static java.lang.Math.*;\n" +
+                              "\n" +
+                              "class ImportTest {{\n" +
                               "    abs(-0.5);\n" +
                               "    sin(0.5);\n" +
                               "    max(1,2);\n" +
                               "}}";
-      assertEquals("Replacing with static star import", expected, replace(in, what, by, true));
+      assertEquals("Replacing with static star import", expected, replace(in, what, by, true, true));
     } finally {
       options.setToUseStaticImport(save);
     }
   }
 
-  public void testReformatAndShortenClassRefPerformance() {
-    final String testName = getTestName(false);
-    final String ext = "java";
-    final String message = "Reformat And Shorten Class Ref Performance";
-
+  public void testReformatAndShortenClassRefPerformance() throws IOException {
     options.setToReformatAccordingToStyle(true);
+
+    final String source = loadFile("ReformatAndShortenClassRefPerformance_source.java");
+    final String pattern = loadFile("ReformatAndShortenClassRefPerformance_pattern.java");
+    final String replacement = loadFile("ReformatAndShortenClassRefPerformance_replacement.java");
+
+    PlatformTestUtil.startPerformanceTest("SSR", 20000,
+                                          () -> assertEquals("Reformat Performance", loadFile("ReformatPerformance_result.java"),
+                                                             replace(source, pattern, replacement, true, true))).assertTiming();
+
+    options.setToReformatAccordingToStyle(false);
     options.setToShortenFQN(true);
 
-    try {
-      PlatformTestUtil.startPerformanceTest("SSR", 3500, () -> doTest(testName, ext, message)).useLegacyScaling().assertTiming();
-    } finally {
-      options.setToReformatAccordingToStyle(false);
-      options.setToShortenFQN(false);
-    }
-  }
+    PlatformTestUtil.startPerformanceTest("SSR", 90000,
+                                          () -> assertEquals("Shorten Class Ref Performance", loadFile("ShortenPerformance_result.java"),
+                                                             replace(source, pattern, replacement, true, true))).assertTiming();
 
-  private void doTest(final String testName, final String ext, final String message) {
-    try {
-      String source = loadFile(testName + "_source." + ext);
-      String pattern = loadFile(testName + "_pattern." + ext);
-      String replacement = loadFile(testName + "_replacement." + ext);
-      String expected = loadFile(testName + "_result." + ext);
-
-      assertEquals(message, expected, replace(source, pattern, replacement));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public void testLeastSurprise() {
