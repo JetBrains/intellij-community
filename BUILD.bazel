@@ -472,7 +472,6 @@ iml_project(
         "//tools/vendor/intellij/cidr:intellij.c",
         "//tools/vendor/intellij/cidr:intellij.c.doxygen",
         "//tools/vendor/intellij/cidr:intellij.cidr.common",
-        "//tools/vendor/intellij/cidr:intellij.cidr.ide",
         "//tools/vendor/intellij/cidr:intellij.cmake.psi",
     ],
     tags = [

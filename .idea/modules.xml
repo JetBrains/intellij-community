@@ -450,7 +450,6 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/intellij.cidr.debugger.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/intellij.cidr.ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/intellij.cidr.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/intellij.commander.iml" filepath="$PROJECT_DIR$/plugins/commander/intellij.commander.iml" />
