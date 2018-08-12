@@ -27,7 +27,10 @@ import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.*
+import com.intellij.vcs.log.data.CompressedRefs
+import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
@@ -245,13 +248,12 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       showAllBranches: Boolean): VcsLogFilterCollection {
       val fileFilter = VcsLogFileHistoryFilter(path, revision)
 
-      if (revision != null) {
-        val revisionFilter = VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
-        return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build()
+      val revisionFilter = when {
+        showAllBranches -> null
+        revision != null -> VcsLogRevisionFilterImpl.fromCommit(CommitId(revision, root))
+        else -> VcsLogBranchFilterImpl.fromBranch("HEAD")
       }
-
-      val branchFilter = if (showAllBranches) null else VcsLogBranchFilterImpl.fromBranch("HEAD")
-      return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, branchFilter).build()
+      return VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build()
     }
   }
 }
