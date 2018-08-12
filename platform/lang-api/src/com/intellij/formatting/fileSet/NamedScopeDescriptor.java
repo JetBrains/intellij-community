@@ -25,9 +25,9 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
     myScopeName = scopeName;
   }
 
-  public void setPattern(@NotNull String pattern) {
+  public void setPattern(@Nullable String pattern) {
     try {
-      myFileSet = PackageSetFactory.getInstance().compile(pattern);
+      myFileSet = pattern != null ? PackageSetFactory.getInstance().compile(pattern) : null;
     }
     catch (ParsingException e) {
       myFileSet = null;

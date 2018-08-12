@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
@@ -127,11 +128,11 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
         }
       }
       else if (dialog.getExitCode() == ExcludedFilesScopeDialog.EDIT_SCOPES) {
-        editScopes(null);
+        editScope(null);
       }
     }
     else {
-      editScopes(null);
+      editScope(null);
     }
   }
 
@@ -172,10 +173,10 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     FileSetDescriptor selectedDescriptor = i >= 0 ? myModel.get(i) : null;
     if (selectedDescriptor instanceof NamedScopeDescriptor) {
       ensureScopeExists((NamedScopeDescriptor)selectedDescriptor);
-      editScopes(selectedDescriptor.getName());
+      editScope(selectedDescriptor.getName());
     }
     else {
-      editScopes(null);
+      editScope(null);
     }
   }
 
@@ -183,7 +184,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     mySchemesModel = schemesModel;
   }
 
-  public void editScopes(@Nullable final String selectedName) {
+  public void editScope(@Nullable final String selectedName) {
     assert mySchemesModel != null;
     EditScopesDialog scopesDialog = EditScopesDialog.showDialog(getScopeHolderProject(), selectedName);
     if (scopesDialog.isOK()) {
@@ -199,8 +200,8 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
           }
         }
         else {
+          FileSetDescriptor oldDescriptor = findDescriptor(selectedName);
           if (!selectedName.equals(newName)) {
-            FileSetDescriptor oldDescriptor = findDescriptor(selectedName);
             int index = myModel.indexOf(oldDescriptor);
             myModel.removeElement(oldDescriptor);
             newDesciptor = findDescriptor(newName);
@@ -208,6 +209,10 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
               newDesciptor = new NamedScopeDescriptor(scope);
               myModel.add(index, newDesciptor);
             }
+          }
+          else if (oldDescriptor != null) {
+            PackageSet fileSet = scope.getValue();
+            oldDescriptor.setPattern(fileSet != null ? fileSet.getText() : null);
           }
         }
         if (newDesciptor != null) {

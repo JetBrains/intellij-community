@@ -27,6 +27,8 @@ public interface FileSetDescriptor {
   @Nullable
   String getPattern();
 
+  void setPattern(@Nullable String pattern);
+
   @NotNull
   default State getState() {
     return new FileSetDescriptor.State(getType(), getName(), getPattern());

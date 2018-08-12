@@ -2,6 +2,7 @@
 package com.intellij.formatting.fileSet;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import java.util.regex.Pattern;
 public class PatternDescriptor implements FileSetDescriptor {
 
   public static final String PATTERN_TYPE = "pattern";
-  private final String myRawPattern;
+  private @Nullable String myRawPattern;
   private @Nullable Pattern myPathPattern;
   private @Nullable Pattern myFileNamePattern;
   private final static String FORBIDDEN_CHARS = "<>:\"\\;";
@@ -151,8 +152,21 @@ public class PatternDescriptor implements FileSetDescriptor {
   }
 
   @Override
+  public void setPattern(@Nullable String pattern) {
+    myRawPattern = pattern;
+    if (pattern != null) {
+      compileSpec(pattern);
+    }
+    else {
+      myPathPattern = null;
+      myFileNamePattern = null;
+    }
+  }
+
+  @Override
   public boolean equals(Object obj) {
-    return obj instanceof PatternDescriptor && myRawPattern.equals(((PatternDescriptor)obj).getPattern());
+    return obj instanceof PatternDescriptor &&
+           Comparing.equal(myRawPattern, ((PatternDescriptor)obj).getPattern());
   }
 
   public static boolean isValidPattern(@NotNull String pattern) {
