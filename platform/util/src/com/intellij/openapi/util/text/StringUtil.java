@@ -121,7 +121,11 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
-    return StringUtilRt.createToStringFunction();
+    return new Function<T, String>() {
+      public String fun(@NotNull T o) {
+        return o.toString();
+      }
+    };
   }
 
   @NotNull
@@ -1429,7 +1433,9 @@ public class StringUtil extends StringUtilRt {
   public static <T> String join(@NotNull Collection<? extends T> items,
                                 @NotNull Function<? super T, String> f,
                                 @NotNull String separator) {
-    return StringUtilRt.join(items, f, separator);
+    if (items.isEmpty()) return "";
+    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
+    return join((Iterable<? extends T>)items, f, separator);
   }
 
   @Contract(pure = true)
@@ -1449,14 +1455,27 @@ public class StringUtil extends StringUtilRt {
   public static <T> String join(@NotNull Iterable<? extends T> items,
                                 @NotNull Function<? super T, String> f,
                                 @NotNull String separator) {
-    return StringUtilRt.join(items, f, separator);
+    StringBuilder result = new StringBuilder();
+    join(items, f, separator, result);
+    return result.toString();
   }
 
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, String> f,
                               @NotNull String separator,
                               @NotNull StringBuilder result) {
-    StringUtilRt.join(items, f, separator, result);
+    boolean isFirst = true;
+    for (T item : items) {
+      String string = f.fun(item);
+      if (string != null && string.length() > 0) {
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          result.append(separator);
+        }
+        result.append(string);
+      }
+    }
   }
 
   @NotNull
