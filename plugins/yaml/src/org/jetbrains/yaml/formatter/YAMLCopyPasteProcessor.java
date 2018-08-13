@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
+  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "([\\w$-]+\\.)+[\\w$-]+:?\\s*";
+
   @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
@@ -224,7 +226,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   /** @return separated key sequence or null if text is not a key sequence */
   @Nullable
   private static List<String> separateCompositeKey(@NotNull String text) {
-    if (!text.matches("([\\w$-]+\\.)+[\\w$-]+:?\\s*")) {
+    if (!text.matches(CONFIG_KEY_SEQUENCE_PATTERN)) {
       return null;
     }
     text = text.trim();
