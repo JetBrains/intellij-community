@@ -98,7 +98,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         onCaretPositionChanged(e);
       }
     }, myProject);

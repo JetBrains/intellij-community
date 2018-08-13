@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.snapShooter;
 
@@ -88,6 +86,7 @@ public class CreateSnapShotAction extends AnAction {
     return false;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
@@ -305,6 +304,7 @@ public class CreateSnapShotAction extends AnAction {
       myComponentTree.setModel(model);
       myComponentTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       myComponentTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+        @Override
         public void valueChanged(TreeSelectionEvent e) {
           updateOKAction();
         }
@@ -323,6 +323,7 @@ public class CreateSnapShotAction extends AnAction {
         new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, attributes.getForegroundColor());
 
       myComponentTree.setCellRenderer(new ColoredTreeCellRenderer() {
+        @Override
         public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
           SnapShotRemoteComponent rc = (SnapShotRemoteComponent) value;
 
@@ -357,6 +358,7 @@ public class CreateSnapShotAction extends AnAction {
         }
       });
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
         protected void textChanged(DocumentEvent e) {
           updateOKAction();
         }
@@ -503,6 +505,7 @@ public class CreateSnapShotAction extends AnAction {
       }
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       return myRootPanel;

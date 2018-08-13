@@ -93,7 +93,7 @@ public class HintManagerImpl extends HintManager {
 
     myCaretMoveListener = new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         hideHints(HIDE_BY_ANY_KEY | HIDE_BY_CARET_MOVE, false, false);
       }
     };
@@ -116,7 +116,7 @@ public class HintManagerImpl extends HintManager {
 
     myEditorMouseListener = new EditorMouseListener() {
       @Override
-      public void mousePressed(EditorMouseEvent event) {
+      public void mousePressed(@NotNull EditorMouseEvent event) {
         hideAllHints();
       }
     };

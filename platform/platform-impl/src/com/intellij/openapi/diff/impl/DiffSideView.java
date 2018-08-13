@@ -143,7 +143,7 @@ public class DiffSideView {
 
     private final EditorMouseListener myMouseListener = new EditorMouseListener() {
       @Override
-      public void mouseReleased(EditorMouseEvent e) {
+      public void mouseReleased(@NotNull EditorMouseEvent e) {
         if (!isEventHandled(e.getMouseEvent()) || !isInMyArea(e)) {
           return;
         }

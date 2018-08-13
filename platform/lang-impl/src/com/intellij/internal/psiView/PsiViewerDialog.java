@@ -1037,7 +1037,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   private class EditorListener implements SelectionListener, DocumentListener, CaretListener {
     @Override
-    public void caretPositionChanged(CaretEvent e) {
+    public void caretPositionChanged(@NotNull CaretEvent e) {
       if (!available() || myEditor.getSelectionModel().hasSelection()) return;
       final ViewerTreeStructure treeStructure = getTreeStructure();
       final PsiElement rootPsiElement = treeStructure.getRootPsiElement();

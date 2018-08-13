@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -107,7 +107,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         }
       }
     }, this);
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         queueUpdateEncodingFromContent(event.getEditor().getDocument());

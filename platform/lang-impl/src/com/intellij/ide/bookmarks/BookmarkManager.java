@@ -359,7 +359,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   private class MyEditorMouseListener implements EditorMouseListener {
     @Override
-    public void mouseClicked(final EditorMouseEvent e) {
+    public void mouseClicked(@NotNull final EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
       if (e.getMouseEvent().isPopupTrigger()) return;
       if ((e.getMouseEvent().getModifiers() & (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)) == 0) return;

@@ -58,10 +58,12 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     myVcs = vcs;
   }
 
+  @Override
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new HgVersionFilterComponent(showDateFilter);
   }
 
+  @Override
   @Nullable
   public RepositoryLocation getLocationFor(FilePath filePath) {
     VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
@@ -71,6 +73,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return new HgRepositoryLocation(repo.getUrl(), repo);
   }
 
+  @Override
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     return null;
@@ -93,6 +96,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     }
   }
 
+  @Override
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                                        RepositoryLocation repositoryLocation,
                                                        int maxCount) {
@@ -157,10 +161,12 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 
+  @Override
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[]{BRANCH_COLUMN, ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 
+  @Override
   public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager, RepositoryLocation repositoryLocation) {
     AnAction copyHashAction = new DumbAwareAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
       @Override
@@ -176,6 +182,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     }, Collections.singletonList(copyHashAction));
   }
 
+  @Override
   public int getUnlimitedCountValue() {
     return -1;
   }
@@ -254,10 +261,12 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     (o1, o2) -> Comparing.compare(o1.getBranch(), o2.getBranch());
 
   private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
+    @Override
     public String getTitle() {
       return HgVcsMessages.message("hg4idea.changelist.column.branch");
     }
 
+    @Override
     public Object getValue(final HgCommittedChangeList changeList) {
       final String branch = changeList.getBranch();
       return branch.isEmpty() ? "default" : branch;

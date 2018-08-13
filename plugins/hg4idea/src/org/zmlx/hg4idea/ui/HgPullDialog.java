@@ -42,6 +42,7 @@ public class HgPullDialog extends DialogWrapper {
     this.project = project;
     hgRepositorySelector.setTitle("Select repository to pull changesets for");
     hgRepositorySelector.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         onChangeRepository();
       }
@@ -85,6 +86,7 @@ public class HgPullDialog extends DialogWrapper {
     onChangeRepository();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return mainPanel;
   }

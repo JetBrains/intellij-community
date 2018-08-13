@@ -15,8 +15,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -112,7 +112,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     myNewDocument.addDocumentListener(this, this);
     EditorFactory editorFactory = ObjectUtils.assertNotNull(EditorFactory.getInstance());
     // not FileEditorManager listener because of RegExp checker and alike
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       int useCount;
 
       @Override

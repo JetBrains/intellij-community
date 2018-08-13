@@ -220,12 +220,12 @@ public class XLineBreakpointManager {
 
   private class MyEditorMouseListener implements EditorMouseListener {
     @Override
-    public void mousePressed(EditorMouseEvent e) {
+    public void mousePressed(@NotNull EditorMouseEvent e) {
       myDragDetected = false;
     }
 
     @Override
-    public void mouseClicked(final EditorMouseEvent e) {
+    public void mouseClicked(@NotNull final EditorMouseEvent e) {
       final Editor editor = e.getEditor();
       final MouseEvent mouseEvent = e.getMouseEvent();
       if (mouseEvent.isPopupTrigger()

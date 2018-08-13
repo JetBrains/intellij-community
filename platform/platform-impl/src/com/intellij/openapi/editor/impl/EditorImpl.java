@@ -458,7 +458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Nullable private IndentGuideDescriptor myCurrentCaretGuide;
 
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (myStickySelection) {
           int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
@@ -489,7 +489,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void caretAdded(CaretEvent e) {
+      public void caretAdded(@NotNull CaretEvent e) {
         if (myPrimaryCaret != null) {
           myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
         }
@@ -498,7 +498,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void caretRemoved(CaretEvent e) {
+      public void caretRemoved(@NotNull CaretEvent e) {
         repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
         myPrimaryCaret.updateVisualPosition();

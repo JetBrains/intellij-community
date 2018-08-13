@@ -104,9 +104,9 @@ public class TemplateState implements Disposable {
         myDocumentChanged = true;
       }
     };
-    myLookupListener = new LookupAdapter() {
+    myLookupListener = new LookupListener() {
       @Override
-      public void itemSelected(LookupEvent event) {
+      public void itemSelected(@NotNull LookupEvent event) {
         if (isCaretOutsideCurrentSegment(null)) {
           if (isCaretInsideNextVariable()) {
             nextTab();
@@ -161,14 +161,14 @@ public class TemplateState implements Disposable {
   private void installCaretListener(@NotNull Editor editor) {
     CaretListener listener = new CaretListener() {
       @Override
-      public void caretAdded(CaretEvent e) {
+      public void caretAdded(@NotNull CaretEvent e) {
         if (isMultiCaretMode()) {
           finishTemplateEditing();
         }
       }
 
       @Override
-      public void caretRemoved(CaretEvent e) {
+      public void caretRemoved(@NotNull CaretEvent e) {
         if (isMultiCaretMode()) {
           finishTemplateEditing();
         }
@@ -660,15 +660,15 @@ public class TemplateState implements Disposable {
     }
     lookup.refreshUi(true, true);
     ourLookupShown = true;
-    lookup.addLookupListener(new LookupAdapter() {
+    lookup.addLookupListener(new LookupListener() {
       @Override
-      public void lookupCanceled(LookupEvent event) {
+      public void lookupCanceled(@NotNull LookupEvent event) {
         lookup.removeLookupListener(this);
         ourLookupShown = false;
       }
 
       @Override
-      public void itemSelected(LookupEvent event) {
+      public void itemSelected(@NotNull LookupEvent event) {
         lookup.removeLookupListener(this);
         if (isFinished()) return;
         ourLookupShown = false;

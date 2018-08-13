@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -69,6 +55,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     final JTextField textField = myTfWithButton.getTextField();
     textField.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           fireValueCommitted(false, false);
         }
@@ -76,6 +63,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     );
     textField.getDocument().addDocumentListener(
       new DocumentAdapter() {
+        @Override
         protected void textChanged(final DocumentEvent e) {
           // Order of document listeners invocation is not defined in Swing. In practice, custom listeners like this one are invoked
           // before internal JTextField listeners, so at this point the internal state of JTextField can be inconsistent.
@@ -98,6 +86,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     return myTfWithButton.getPreferredSize();
   }
 
+  @Override
   public void updateUI() {
     SwingUtilities.updateComponentTreeUI(myTfWithButton);
   }
@@ -128,10 +117,12 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(@NotNull final JComponent component) {
     return ((TextFieldWithBrowseButton)component).getTextField();
   }
 
+  @Override
   public JComponent getComponent(final RadComponent component, final StringDescriptor value, final InplaceContext inplaceContext) {
     myComponent = component;
     setValue(value);
@@ -144,6 +135,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     return myTfWithButton;
   }
 
+  @Override
   public StringDescriptor getValue(){
     if(myValue == null || (myValue.getValue() != null && myTextFieldModified)) {
       // editor is for "trivial" StringDescriptor
@@ -165,12 +157,14 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   }
 
   private final class MyCancelEditingAction extends AnAction{
+    @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
       fireEditingCancelled();
     }
   }
 
   private final class MyActionListener implements ActionListener{
+    @Override
     public void actionPerformed(final ActionEvent e) {
       // 1. Show editor dialog
 

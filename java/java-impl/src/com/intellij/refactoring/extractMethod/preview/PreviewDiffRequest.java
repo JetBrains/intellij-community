@@ -100,7 +100,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
       }
 
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (!myInitialized) return;
         myMoveCaret = false;
         try {

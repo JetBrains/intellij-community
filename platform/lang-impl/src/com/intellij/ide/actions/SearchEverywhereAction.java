@@ -196,8 +196,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private FileEditor myFileEditor;
   private HistoryItem myHistoryItem;
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return new ActionButton(this, presentation, ActionPlaces.NAVIGATION_BAR_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();

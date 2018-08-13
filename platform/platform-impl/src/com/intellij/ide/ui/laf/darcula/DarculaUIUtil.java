@@ -267,13 +267,13 @@ public class DarculaUIUtil {
       super(editorTextField, editor);
       editor.addEditorMouseListener(new EditorMouseListener() {
         @Override
-        public void mouseEntered(EditorMouseEvent e) {
+        public void mouseEntered(@NotNull EditorMouseEvent e) {
           editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
           editorTextField.repaint();
         }
 
         @Override
-        public void mouseExited(EditorMouseEvent e) {
+        public void mouseExited(@NotNull EditorMouseEvent e) {
           editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
           editorTextField.repaint();
         }

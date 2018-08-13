@@ -65,7 +65,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
       multicaster.addCaretListener(new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           restartTimer();
         }
       }, this);

@@ -179,12 +179,12 @@ class DiffPreviewPanel implements PreviewPanel {
     }
 
     @Override
-    public void mouseClicked(EditorMouseEvent e) {
+    public void mouseClicked(@NotNull EditorMouseEvent e) {
       selectColorForLine(mySide, getLineNumber(mySide, e));
     }
 
     @Override
-    public void caretPositionChanged(CaretEvent e) {
+    public void caretPositionChanged(@NotNull CaretEvent e) {
       selectColorForLine(mySide, e.getNewPosition().line);
     }
   }

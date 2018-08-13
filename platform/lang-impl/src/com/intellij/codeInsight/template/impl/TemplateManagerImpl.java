@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -49,7 +48,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public TemplateManagerImpl(Project project, MessageBus messageBus) {
     myProject = project;
     myMessageBus = messageBus;
-    final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
+    final EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();

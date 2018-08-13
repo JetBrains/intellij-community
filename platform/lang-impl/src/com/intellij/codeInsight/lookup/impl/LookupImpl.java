@@ -730,7 +730,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     final EditorMouseListener mouseListener = new EditorMouseListener() {
       @Override
-      public void mouseClicked(EditorMouseEvent e){
+      public void mouseClicked(@NotNull EditorMouseEvent e){
         e.consume();
         hideLookup(false);
       }
@@ -738,7 +738,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myEditor.getCaretModel().addCaretListener(new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (!myChangeGuard && !myFinishing) {
           hideLookup(false);
         }

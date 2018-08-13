@@ -64,6 +64,7 @@ public class HgTagDialog extends DialogWrapper {
     hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPanel;
   }

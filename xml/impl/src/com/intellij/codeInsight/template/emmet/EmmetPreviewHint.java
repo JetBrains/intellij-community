@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -25,7 +25,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 public class EmmetPreviewHint extends LightweightHint implements Disposable {
   private static final Key<EmmetPreviewHint> KEY = new Key<>("emmet.preview");
@@ -47,7 +47,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     myEditor = editor;
 
     final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myParentEditor);
-    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myParentEditor || event.getEditor() == myEditor || event.getEditor() == topLevelEditor) {
@@ -87,11 +87,11 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
   }
 
-  public void updateText(@NotNull final Producer<String> contentProducer) {
+  public void updateText(@NotNull final Supplier<String> contentProducer) {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
       if (!isDisposed) {
-        final String newText = contentProducer.produce();
+        final String newText = contentProducer.get();
         if (StringUtil.isEmpty(newText)) {
           hide();
         }

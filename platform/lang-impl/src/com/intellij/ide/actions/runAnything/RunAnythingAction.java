@@ -171,8 +171,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }, null);
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     JPanel panel = new BorderLayoutPanel() {
       @Override
       public Dimension getPreferredSize() {

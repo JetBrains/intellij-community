@@ -175,7 +175,7 @@ public abstract class CompletionPhase implements Disposable {
       };
       final CaretListener caretListener = new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };

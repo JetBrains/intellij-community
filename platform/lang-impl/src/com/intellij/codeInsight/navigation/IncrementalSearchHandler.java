@@ -162,7 +162,7 @@ public class IncrementalSearchHandler {
 
     caretListener[0] = new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         PerHintSearchData data = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
         if (data != null && data.ignoreCaretMove) return;
         if (!hint.isVisible()) return;

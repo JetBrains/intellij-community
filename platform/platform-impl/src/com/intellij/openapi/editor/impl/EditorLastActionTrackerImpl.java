@@ -26,7 +26,7 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
     myActionManager = actionManager;
     myEditorEventMulticaster = editorFactory.getEventMulticaster();
     // to prevent leaks
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         EditorImpl killedEditor = (EditorImpl)event.getEditor();
@@ -81,17 +81,17 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
   }
 
   @Override
-  public void mousePressed(EditorMouseEvent e) {
+  public void mousePressed(@NotNull EditorMouseEvent e) {
     resetLastAction();
   }
 
   @Override
-  public void mouseClicked(EditorMouseEvent e) {
+  public void mouseClicked(@NotNull EditorMouseEvent e) {
     resetLastAction();
   }
 
   @Override
-  public void mouseReleased(EditorMouseEvent e) {
+  public void mouseReleased(@NotNull EditorMouseEvent e) {
     resetLastAction();
   }
 

@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -62,7 +62,7 @@ public class XmlTagNameSynchronizer implements CommandListener {
 
   public XmlTagNameSynchronizer(EditorFactory editorFactory, FileDocumentManager manager) {
     myFileDocumentManager = manager;
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         installSynchronizer(event.getEditor());

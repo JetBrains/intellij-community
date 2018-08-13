@@ -144,7 +144,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     myEditorCaretListener = new CaretListener(){
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         syncUpdateOnCaretMove();
         rescheduleUpdate();
       }

@@ -176,7 +176,7 @@ public class DaemonListeners implements Disposable {
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         final Editor editor = e.getEditor();
         if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) &&
             worthBothering(editor.getDocument(), editor.getProject())) {
@@ -563,7 +563,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void mouseExited(EditorMouseEvent e) {
+    public void mouseExited(@NotNull EditorMouseEvent e) {
       if (!myTooltipController.shouldSurvive(e.getMouseEvent())) {
         DaemonTooltipUtil.cancelTooltips();
       }

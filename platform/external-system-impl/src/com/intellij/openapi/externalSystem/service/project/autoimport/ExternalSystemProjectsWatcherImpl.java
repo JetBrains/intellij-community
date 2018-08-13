@@ -442,7 +442,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
       multicaster.addCaretListener(new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           mergingUpdateQueue.restartTimer();
         }
       }, mergingUpdateQueue);

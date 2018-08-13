@@ -59,7 +59,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
   }
 
   @Override
-  public void mouseExited(EditorMouseEvent e) {
+  public void mouseExited(@NotNull EditorMouseEvent e) {
     myAlarm.cancelAllRequests();
   }
 

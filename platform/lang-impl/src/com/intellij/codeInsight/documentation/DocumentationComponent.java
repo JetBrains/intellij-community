@@ -4,9 +4,9 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -92,8 +92,8 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
 
@@ -382,7 +382,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                                                                    KeymapUtil.parseMouseShortcut("button5"));
       back.registerCustomShortcutSet(backShortcutSet, this);
       forward.registerCustomShortcutSet(forwardShortcutSet, this);
-      // mouse actions are checked only for exact component over which click was performed, 
+      // mouse actions are checked only for exact component over which click was performed,
       // so we need to register shortcuts for myEditorPane as well
       back.registerCustomShortcutSet(backShortcutSet, myEditorPane);
       forward.registerCustomShortcutSet(forwardShortcutSet, myEditorPane);
@@ -869,9 +869,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           myHint.show(point);
           LookupEx lookup = LookupManager.getActiveLookup(editor);
           if (lookup != null) {
-            lookup.addLookupListener(new LookupAdapter() {
+            lookup.addLookupListener(new LookupListener() {
               @Override
-              public void lookupCanceled(LookupEvent event) {
+              public void lookupCanceled(@NotNull LookupEvent event) {
                 AbstractPopup hint = myHint;
                 if (hint != null && hint.canClose() && hint.isVisible()) {
                   hint.cancel();
