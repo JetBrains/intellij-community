@@ -8,9 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
-import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.json.psi.*;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -44,6 +42,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 10/1/2015.
@@ -224,6 +223,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       }
       else if (isSurelyValue) {
         final JsonSchemaType type = schema.getType();
+        suggestSpecialValues(type);
         if (type != null) {
           suggestByType(schema, type);
         } else if (schema.getTypeVariants() != null) {
@@ -231,6 +231,21 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
             suggestByType(schema, schemaType);
           }
         }
+      }
+    }
+
+    private void suggestSpecialValues(@Nullable JsonSchemaType type) {
+      if (JsonSchemaVersion.isSchemaSchemaId(myRootSchema.getId()) && type == JsonSchemaType._string) {
+        JsonPropertyAdapter propertyAdapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
+        if (propertyAdapter == null || !"required".equals(propertyAdapter.getName())) return;
+        PsiElement checkable = myWalker.goUpToCheckable(myPosition);
+        if (!(checkable instanceof JsonStringLiteral) && !(checkable instanceof JsonReferenceExpression)) return;
+        JsonObject propertiesObject = JsonRequiredPropsReferenceProvider.findPropertiesObject(checkable);
+        if (propertiesObject == null) return;
+        PsiElement parent = checkable.getParent();
+        Set<String> items = parent instanceof JsonArray ? ((JsonArray)parent).getValueList().stream()
+          .filter(v -> v instanceof JsonStringLiteral).map(v -> ((JsonStringLiteral)v).getValue()).collect(Collectors.toSet()) : ContainerUtil.newHashSet();
+        propertiesObject.getPropertyList().stream().map(p -> p.getName()).filter(n -> !items.contains(n)).forEach(n -> addStringVariant(n));
       }
     }
 
@@ -257,6 +272,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private void addPossibleStringValue(JsonSchemaObject schema) {
       Object defaultValue = schema.getDefault();
       String defaultValueString = defaultValue == null ? null : defaultValue.toString();
+      addStringVariant(defaultValueString);
+    }
+
+    private void addStringVariant(String defaultValueString) {
       if (!StringUtil.isEmpty(defaultValueString)) {
         String normalizedValue = defaultValueString;
         boolean shouldQuote = myWalker.quotesForStringLiterals();
