@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.StripeButton;
 import com.intellij.testGuiFramework.framework.Timeouts;
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt;
 import com.intellij.ui.content.Content;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -165,7 +166,8 @@ public abstract class ToolWindowFixture {
 
   @NotNull
   public Content[] getContents() {
-    return myToolWindow.getContentManager().getContents();
+    //noinspection ConstantConditions
+    return GuiTestUtilKt.INSTANCE.computeOnEdt(() -> myToolWindow.getContentManager().getContents());
   }
 
   protected boolean isActive() {

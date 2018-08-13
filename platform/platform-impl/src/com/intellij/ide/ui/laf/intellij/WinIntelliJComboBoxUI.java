@@ -135,6 +135,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
 
+  @Override
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     @SuppressWarnings("unchecked")
     ListCellRenderer<Object> renderer = comboBox.getRenderer();
@@ -279,6 +280,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       @Override
       protected JTextField createEditorComponent() {
         return new JTextField() {
+          @Override
           public void setText(String s) {
             if (getText().equals(s)) {
               return;
@@ -530,6 +532,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         wrapRenderer();
       }
 
+      @Override
       protected PropertyChangeListener createPropertyChangeListener() {
         PropertyChangeListener listener = super.createPropertyChangeListener();
         return new PropertyChangeListener() {

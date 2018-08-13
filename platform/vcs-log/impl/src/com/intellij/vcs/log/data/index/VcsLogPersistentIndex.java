@@ -181,7 +181,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myIndexStorage.messages.put(index, detail.getFullMessage());
       myIndexStorage.trigrams.update(index, detail);
       myIndexStorage.users.update(index, detail);
-      myIndexStorage.paths.update(index, detail);
+      if (detail instanceof VcsIndexableDetails) myIndexStorage.paths.update(index, (VcsIndexableDetails)detail);
       myIndexStorage.parents.put(index, ContainerUtil.map(detail.getParents(), p -> myStorage.getCommitIndex(p, detail.getRoot())));
       // we know the whole graph without timestamps now
       if (!(detail instanceof VcsIndexableDetails) || ((VcsIndexableDetails)detail).hasRenames()) {

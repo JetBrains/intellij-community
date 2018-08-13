@@ -323,6 +323,7 @@ public class TipUIUtil {
       setBackground(UIUtil.getTextFieldBackground());
       addHyperlinkListener(
         new HyperlinkListener() {
+          @Override
           public void hyperlinkUpdate(HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               BrowserUtil.browse(e.getURL());

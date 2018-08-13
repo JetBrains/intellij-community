@@ -33,7 +33,7 @@ public class PlatformIconsAPITest extends PlatformTestCase {
 
   private static String missedIconsMsg(ArrayList<String> icons) {
     StringBuilder str =
-      new StringBuilder("API compatibility is broken. Please add the following icons to './community/platform/icons/old_icons_src/':");
+      new StringBuilder("API compatibility is broken. Please add the following icons to './community/platform/icons/compatibilityResources/':");
     for (String icon: icons) {
       str.append("\n'").append(icon).append("'");
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -42,11 +28,12 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     e.getPresentation().setText(ApplicationManager.getApplication().isRestartCapable() ? "Invalidate Caches / Restart..." : "Invalidate Caches...");
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     final boolean mac = Messages.canShowMacSheetPanel();
     boolean canRestart = app.isRestartCapable();
-    
+
     String[] options = new String[canRestart ? 4 : 3];
     options[0] = canRestart ? "Invalidate and &Restart" : "Invalidate and &Exit";
     options[1] = mac ? "Cancel" : "&Invalidate";
@@ -64,7 +51,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       ContainerUtil.addIfNotNull(descriptions, invalidater.getDescription());
     }
     Collections.sort(descriptions);
-    
+
     String warnings = "WARNING: ";
     if (descriptions.size() == 1) {
       warnings += descriptions.get(0) + " will be also cleared.";
@@ -73,7 +60,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       warnings += "The following items will also be cleared:\n"
                   + StringUtil.join(descriptions, s -> "  " + s, "\n");
     }
-    
+
     String message = "The caches will be invalidated and rebuilt on the next startup.\n\n" +
                      (descriptions.isEmpty() ? "" :  warnings + "\n\n") +
                      "Would you like to continue?\n";
@@ -86,7 +73,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     if (result == -1 || result == (mac ? 1 : 2)) {
       return;
     }
-    
+
     if (result == 3) {
       app.restart(true);
       return;

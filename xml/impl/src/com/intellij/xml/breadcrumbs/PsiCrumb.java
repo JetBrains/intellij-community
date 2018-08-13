@@ -12,11 +12,24 @@ import org.jetbrains.annotations.Nullable;
  */
 final class PsiCrumb extends Crumb.Impl {
   private final PsiAnchor anchor;
+  private BreadcrumbsProvider provider;
+  private String tooltip;
   CrumbPresentation presentation;
 
   PsiCrumb(PsiElement element, BreadcrumbsProvider provider) {
-    super(provider, element);
+    super(provider.getElementIcon(element), provider.getElementInfo(element), null, provider.getContextActions(element));
     anchor = PsiAnchor.create(element);
+    this.provider = provider;
+  }
+
+  @Override
+  public String getTooltip() {
+    if (tooltip == null && provider != null) {
+      PsiElement element = getElement(this);
+      if (element != null) tooltip = provider.getElementTooltip(element);
+      provider = null; // do not try recalculate tooltip
+    }
+    return tooltip;
   }
 
   @Nullable

@@ -254,7 +254,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         return myTypeCodeFragment.getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
-        LOG.info(e);
+        LOG.debug(e);
         return null;
       }
     }

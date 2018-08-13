@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorLastActionTracker;
@@ -27,8 +14,7 @@ import com.intellij.openapi.editor.event.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EditorLastActionTrackerImpl extends EditorMouseAdapter
-  implements AnActionListener, EditorMouseListener, Disposable, EditorLastActionTracker, ApplicationComponent {
+public class EditorLastActionTrackerImpl implements AnActionListener, EditorMouseListener, Disposable, EditorLastActionTracker, BaseComponent {
   private final ActionManager myActionManager;
   private final EditorEventMulticaster myEditorEventMulticaster;
 
@@ -60,7 +46,7 @@ public class EditorLastActionTrackerImpl extends EditorMouseAdapter
 
   @Override
   public void initComponent() {
-    myActionManager.addAnActionListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, this);
     myEditorEventMulticaster.addEditorMouseListener(this, this);
   }
 
@@ -75,7 +61,7 @@ public class EditorLastActionTrackerImpl extends EditorMouseAdapter
   }
 
   @Override
-  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
     myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
     if (myCurrentEditor != myLastEditor) {
       resetLastAction();

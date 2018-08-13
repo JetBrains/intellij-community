@@ -15,9 +15,8 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
@@ -214,7 +213,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
     catch (RuntimeRemoteException e) {
       throw e.getCause();
     }
-    catch (ProcessCanceledException e) {
+    catch (MavenProcessCanceledRuntimeException e) {
       throw new MavenServerProcessCanceledException();
     }
     catch (Exception e) {
@@ -240,7 +239,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         Document doc = r.document(i);
         String uinfo = doc.get(ArtifactInfo.UINFO);
         if (uinfo == null) continue;
-        List<String> uInfoParts = StringUtil.split(uinfo, ArtifactInfoRecord.FS);
+        List<String> uInfoParts = StringUtilRt.split(uinfo, ArtifactInfoRecord.FS);
         String groupId = uInfoParts.get(0);
         String artifactId = uInfoParts.get(1);
         String version = uInfoParts.get(2);
@@ -367,7 +366,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
     public void scanningStarted(IndexingContext ctx) {
       try {
-        if (p.isCanceled()) throw new ProcessCanceledException();
+        if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
       }
       catch (RemoteException e) {
         throw new RuntimeRemoteException(e);
@@ -376,7 +375,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
     public void scanningFinished(IndexingContext ctx, ScanningResult result) {
       try {
-        if (p.isCanceled()) throw new ProcessCanceledException();
+        if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
       }
       catch (RemoteException e) {
         throw new RuntimeRemoteException(e);
@@ -388,7 +387,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
     public void artifactDiscovered(ArtifactContext ac) {
       try {
-        if (p.isCanceled()) throw new ProcessCanceledException();
+        if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
         ArtifactInfo info = ac.getArtifactInfo();
         p.setText2(info.groupId + ":" + info.artifactId + ":" + info.version);
       }

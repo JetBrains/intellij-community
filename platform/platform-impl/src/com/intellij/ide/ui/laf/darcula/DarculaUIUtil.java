@@ -4,8 +4,8 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
@@ -40,18 +40,21 @@ import static javax.swing.SwingConstants.WEST;
 public class DarculaUIUtil {
   public enum Outline {
     error {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         g.setColor(JBUI.CurrentTheme.Focus.errorColor(focused));
       }
     },
 
     warning {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         g.setColor(JBUI.CurrentTheme.Focus.warningColor(focused));
       }
     },
 
     defaultButton {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         if (focused) {
           g.setColor(JBUI.CurrentTheme.Focus.defaultButtonColor());
@@ -60,6 +63,7 @@ public class DarculaUIUtil {
     },
 
     focus {
+      @Override
       public void setGraphicsColor(Graphics2D g, boolean focused) {
         if (focused) {
           g.setColor(JBUI.CurrentTheme.Focus.focusColor());
@@ -234,7 +238,7 @@ public class DarculaUIUtil {
   public static class WinEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
     public WinEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
       super(editorTextField, editor);
-      editor.addEditorMouseListener(new EditorMouseAdapter() {
+      editor.addEditorMouseListener(new EditorMouseListener() {
         @Override
         public void mouseEntered(EditorMouseEvent e) {
           editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);

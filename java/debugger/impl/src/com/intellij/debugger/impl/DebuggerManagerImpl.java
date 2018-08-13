@@ -34,7 +34,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -135,17 +135,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myDispatcher.removeListener(listener);
   }
 
-  public DebuggerManagerImpl(Project project, StartupManager startupManager) {
+  public DebuggerManagerImpl(@NotNull Project project) {
     myProject = project;
-    myBreakpointManager = new BreakpointManager(myProject, startupManager, this);
+    myBreakpointManager = new BreakpointManager(myProject, this);
+    MessageBusConnection busConnection = project.getMessageBus().connect();
     if (!project.isDefault()) {
-      project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
         @Override
         public void globalSchemeChange(EditorColorsScheme scheme) {
           getBreakpointManager().updateBreakpointsUI();
         }
       });
     }
+    myBreakpointManager.addListeners(busConnection);
   }
 
   @Nullable
@@ -162,11 +164,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       final Collection<DebuggerSession> values = mySessions.values();
       return values.isEmpty() ? Collections.emptyList() : new ArrayList<>(values);
     }
-  }
-
-  @Override
-  public void projectOpened() {
-    myBreakpointManager.init();
   }
 
   @Nullable
@@ -322,12 +319,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   public boolean isDebuggerManagerThread() {
     return DebuggerManagerThreadImpl.isManagerThread();
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "DebuggerManager";
   }
 
   @NotNull

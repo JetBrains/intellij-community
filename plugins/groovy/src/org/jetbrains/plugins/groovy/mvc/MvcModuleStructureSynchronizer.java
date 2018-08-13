@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ProjectTopics;
@@ -8,7 +6,7 @@ import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -40,17 +38,16 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer.SyncAction;
 import org.jetbrains.plugins.groovy.mvc.projectView.MvcToolWindowDescriptor;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author peter
- */
-public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
+public class MvcModuleStructureSynchronizer implements ProjectComponent {
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("MvcModuleStructureSynchronizer Pool");
   private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
+  private final Project myProject;
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
 
@@ -61,7 +58,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public MvcModuleStructureSynchronizer(Project project) {
-    super(project);
+    myProject = project;
   }
 
   public SimpleModificationTracker getFileAndRootsModificationTracker() {
@@ -259,7 +256,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
     ReadTask task = new ReadTask() {
 
-      @Nullable
+      @NotNull
       @Override
       public Continuation performInReadAction(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
         final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)

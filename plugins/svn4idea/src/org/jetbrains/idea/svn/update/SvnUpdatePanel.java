@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.ui.MultiLineTooltipUI;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -28,7 +27,6 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
   private JPanel myConfigureRootsPanel;
   private JCheckBox myForceBox;
   private JPanel myPanel;
-  private JCheckBox myLockOnDemand;
   private DepthCombo myDepthCombo;
   private JLabel myDepthLabel;
   private JPanel myAdditionalPanel;
@@ -50,8 +48,6 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
     myDepthLabel.setLabelFor(myDepthCombo);
 
     SvnConfiguration svnConfiguration = myVCS.getSvnConfiguration();
-    myLockOnDemand.setSelected(svnConfiguration.isUpdateLockOnDemand());
-    myLockOnDemand.addActionListener(e -> svnConfiguration.setUpdateLockOnDemand(myLockOnDemand.isSelected()));
     myForceBox.setSelected(svnConfiguration.isForceUpdate());
     myIgnoreExternalsCheckBox.setSelected(svnConfiguration.isIgnoreExternals());
     myForceBox.addActionListener(e -> svnConfiguration.setForceUpdate(myForceBox.isSelected()));
@@ -80,16 +76,6 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
   }
 
   private void createUIComponents() {
-    myLockOnDemand = new JCheckBox() {
-      @Override
-      public JToolTip createToolTip() {
-        JToolTip toolTip = new JToolTip() {{
-          setUI(new MultiLineTooltipUI());
-        }};
-        toolTip.setComponent(this);
-        return toolTip;
-      }
-    };
     myDepthCombo = new DepthCombo(true);
   }
 }

@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(name = "FileBasedIndex", storages = @Storage(value = "stubIndex.xml", roamingType = RoamingType.DISABLED))
-public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState>, ApplicationComponent {
+public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState>, BaseComponent {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
 
@@ -333,7 +333,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   // Self repair for IDEA-181227, caused by (yet) unknown file event processing problem in indices
-  // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost  
+  // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost
   private <Key> void wipeProblematicFileIdsForParticularKeyAndStubIndex(@NotNull StubIndexKey<Key, ?> indexKey,
                                                                         @NotNull Key key,
                                                                         @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex) {
@@ -509,7 +509,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(key);
     index.removeTransientDataForKeys(inputId, keys);
   }
-  
+
   private boolean dropUnregisteredIndices(@NotNull AsyncState state) {
     if (ApplicationManager.getApplication().isDisposed() || !IndexInfrastructure.hasIndices()) {
       return false;

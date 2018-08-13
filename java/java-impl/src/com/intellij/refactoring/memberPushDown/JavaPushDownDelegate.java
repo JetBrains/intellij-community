@@ -30,18 +30,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
+import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -300,6 +303,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               }
             }
           }
+          inlineSuperCall(memberInfo, methodBySignature);
         }
       }
       else if (member instanceof PsiClass) {
@@ -342,6 +346,22 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         }
         final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(newMember.getProject());
         ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(sourceClass, newMember);
+      }
+    }
+  }
+
+  public void inlineSuperCall(MemberInfoBase<? extends PsiElement> memberInfo, PsiMethod methodBySignature) {
+    PsiMethod superMethod = (PsiMethod)memberInfo.getMember();
+    Collection<PsiReference> superReferences =
+      ReferencesSearch.search(superMethod, new LocalSearchScope(methodBySignature)).findAll();
+    if (superReferences.size() == 1) {
+      PsiReference reference = ContainerUtil.getFirstItem(superReferences);
+      if (reference == null) return;
+      PsiElement element = reference.getElement();
+      if (element instanceof PsiReferenceExpression) {
+        PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+        new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
+          .inlineMethodCall(referenceExpression);
       }
     }
   }
@@ -496,7 +516,9 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               psiClass = targetClass;
             } else if (psiClass.getContainingClass() == sourceClass) {
               psiClass = targetClass.findInnerClassByName(psiClass.getName(), false);
-              LOG.assertTrue(psiClass != null);
+              if (psiClass == null) {
+                return;
+              }
             }
 
             if (!(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression) && ref instanceof PsiReferenceExpression) {

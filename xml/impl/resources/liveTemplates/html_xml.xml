@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templateSet group="html/xml">
+<templateSet group="HTML/XML">
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.tag.pair" 
       name="t" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$END$&lt;/$TAG_NAME$&gt;" shortcut="TAB">
     <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
@@ -14,16 +14,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.tag"
-    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;&#13;&#10;" shortcut="TAB">
-    <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
-    <variable name="TAGNAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
-    <context>
-      <option name="XML" value="false" />
-      <option name="XML_TEXT" value="true" />
-    </context>
-  </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.tag.in.htmlorjsp"
-    name="T2" toReformat="false" toShortenFQNames="false" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;">
+    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;" shortcut="TAB">
     <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
     <variable name="TAGNAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
     <context>
@@ -31,6 +22,7 @@
       <option name="JAVA_COMMENT" value="false" />
       <option name="JAVA_STRING" value="false" />
       <option name="XML" value="false" />
+      <option name="XML_TEXT" value="true" />
       <option name="HTML" value="true" />
       <option name="JSX_HTML" value="true" />
       <option name="JSP" value="true" />

@@ -211,14 +211,14 @@ public class XLineBreakpointManager {
 
   private boolean myDragDetected = false;
 
-  private class MyEditorMouseMotionListener extends EditorMouseMotionAdapter {
+  private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
     public void mouseDragged(EditorMouseEvent e) {
       myDragDetected = true;
     }
   }
 
-  private class MyEditorMouseListener extends EditorMouseAdapter {
+  private class MyEditorMouseListener implements EditorMouseListener {
     @Override
     public void mousePressed(EditorMouseEvent e) {
       myDragDetected = false;

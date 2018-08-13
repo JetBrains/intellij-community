@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -23,9 +24,10 @@ public abstract class PathMacros {
   @NotNull
   public abstract Set<String> getAllMacroNames();
 
-  public abstract String getValue(String name);
+  @Nullable
+  public abstract String getValue(@NotNull String name);
 
-  public abstract void setMacro(@NotNull String name, @NotNull String value);
+  public abstract void setMacro(@NotNull String name, @Nullable String value);
 
   /**
    * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted

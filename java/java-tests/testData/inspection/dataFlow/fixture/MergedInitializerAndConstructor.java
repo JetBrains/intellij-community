@@ -6,7 +6,7 @@ class MergedInitializerAndConstructor {
     private Collection<Object> collection2 = null;
 
     public Test1() {
-      collection2.<warning descr="Method invocation 'add' may produce 'java.lang.NullPointerException'">add</warning>("");
+      collection2.<warning descr="Method invocation 'add' will produce 'java.lang.NullPointerException'">add</warning>("");
     }
   }
 
@@ -18,7 +18,7 @@ class MergedInitializerAndConstructor {
     }
 
     {
-      collection2.<warning descr="Method invocation 'add' may produce 'java.lang.NullPointerException'">add</warning>(""); //<- warning here
+      collection2.<warning descr="Method invocation 'add' will produce 'java.lang.NullPointerException'">add</warning>(""); //<- warning here
     }
   }
 
@@ -27,7 +27,7 @@ class MergedInitializerAndConstructor {
 
     public Test3(String s) {
       super();
-      collection2.<warning descr="Method invocation 'add' may produce 'java.lang.NullPointerException'">add</warning>(s);
+      collection2.<warning descr="Method invocation 'add' will produce 'java.lang.NullPointerException'">add</warning>(s);
     }
   }
 

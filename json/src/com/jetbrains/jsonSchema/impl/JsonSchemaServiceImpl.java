@@ -5,10 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
@@ -28,6 +25,7 @@ import java.util.stream.Collectors;
 public class JsonSchemaServiceImpl implements JsonSchemaService {
   @NotNull private final Project myProject;
   @NotNull private final MyState myState;
+  @NotNull private final ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
   private final ModificationTracker myAnySchemaChangeTracker;
 
@@ -36,6 +34,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
     myState = new MyState(() -> getProvidersFromFactories());
+    myBuiltInSchemaIds = new ClearableLazyValue<Set<String>>() {
+      @NotNull
+      @Override
+      protected Set<String> compute() {
+        return myState.getFiles().stream().map(f -> JsonCachedValues.getSchemaId(f, myProject)).collect(Collectors.toSet());
+      }
+    };
     myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
@@ -76,6 +81,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   public void reset() {
     myState.reset();
+    myBuiltInSchemaIds.drop();
     myAnyChangeCount.incrementAndGet();
     for (Runnable action: myResetActions) {
       action.run();
@@ -91,8 +97,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   private Optional<VirtualFile> findBuiltInSchemaByReference(@NotNull String reference) {
+    String id = JsonSchemaService.normalizeId(reference);
+    if (!myBuiltInSchemaIds.getValue().contains(id)) return Optional.empty();
     return myState.getFiles().stream()
-        .filter(file -> JsonSchemaService.normalizeId(reference).equals(JsonCachedValues.getSchemaId(file, myProject)))
+        .filter(file -> id.equals(JsonCachedValues.getSchemaId(file, myProject)))
         .findFirst();
   }
 

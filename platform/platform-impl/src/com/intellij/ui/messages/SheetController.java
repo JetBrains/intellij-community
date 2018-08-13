@@ -497,6 +497,7 @@ public class SheetController implements Disposable {
     return myResult;
   }
 
+  @Override
   public void dispose() {
     mySheetPanel.unregisterKeyboardAction(VK_ESC_KEYSTROKE);
     mySheetMessage = null;

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
 import org.assertj.core.api.Assertions.assertThat
@@ -292,7 +293,23 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         if (it.value.contains("unreachable")) it.value else it.groups[2]!!.value
       }
     }
-    highlight("test.java", checkFileText, checkFileInTests)
+    highlight("test.java", checkFileText, isTest = checkFileInTests)
+  }
+
+  fun testPackageAccessibilityOverTestScope() {
+    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
+
+    highlight("module-info.java", "module M.test { requires M2; }", M_TEST, isTest = true)
+
+    val highlightText = """
+        import pkg.m2.C2;
+        import pkg.m2.*;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M.test'">pkg.m2.impl</error>.C2Impl;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M.test'">pkg.m2.impl</error>.*;
+        """.trimIndent()
+    highlight("test.java", highlightText, M_TEST, isTest = true)
   }
 
   fun testPrivateJdkPackage() {
@@ -436,8 +453,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
-  private fun highlight(path: String, text: String, isTest: Boolean = false) {
-    myFixture.configureFromExistingVirtualFile(if (isTest) addTestFile(path, text) else addFile(path, text))
+  private fun highlight(path: String, text: String, module: ModuleDescriptor = MAIN, isTest: Boolean = false) {
+    myFixture.configureFromExistingVirtualFile(if (isTest) addTestFile(path, text, module) else addFile(path, text, module))
     myFixture.checkHighlighting()
   }
 

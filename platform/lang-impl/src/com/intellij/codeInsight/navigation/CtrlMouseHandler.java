@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,7 +17,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -88,8 +86,10 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CtrlMouseHandler extends AbstractProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
+public class CtrlMouseHandler {
+  private static final Logger LOG = Logger.getInstance(CtrlMouseHandler.class);
+
+  private final Project myProject;
   private final EditorColorsManager myEditorColorsManager;
 
   private HighlightersSet myHighlighter;
@@ -156,7 +156,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   };
 
-  private final EditorMouseAdapter myEditorMouseAdapter = new EditorMouseAdapter() {
+  private final EditorMouseListener myEditorMouseAdapter = new EditorMouseListener() {
     @Override
     public void mouseReleased(EditorMouseEvent e) {
       disposeHighlighter();
@@ -164,7 +164,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   };
 
-  private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionAdapter() {
+  private final EditorMouseMotionListener myEditorMouseMotionListener = new EditorMouseMotionListener() {
     @Override
     public void mouseMoved(final EditorMouseEvent e) {
       if (e.isConsumed() || !myProject.isInitialized() || myProject.isDisposed()) {
@@ -213,7 +213,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                           FileEditorManager fileEditorManager,
                           @NotNull DocumentationManager documentationManager,
                           @NotNull final EditorFactory editorFactory) {
-    super(project);
+    myProject = project;
     myEditorColorsManager = colorsManager;
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
@@ -233,12 +233,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     });
     myFileEditorManager = fileEditorManager;
     myDocumentationManager = documentationManager;
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "CtrlMouseHandler";
   }
 
   private boolean isMouseOverTooltip(@NotNull Point mouseLocationOnScreen) {
@@ -280,7 +274,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   @TestOnly
   public static String getInfo(@NotNull Editor editor, BrowseMode browseMode) {
     Project project = editor.getProject();
-    if (project == null) return null; 
+    if (project == null) return null;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
     Info info = getInfoAt(project, editor, file, editor.getCaretModel().getOffset(), browseMode);
@@ -336,7 +330,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return sb.toString();
   }
 
-  private abstract static class Info {
+  public abstract static class Info {
     @NotNull protected final PsiElement myElementAtPointer;
     @NotNull private final List<TextRange> myRanges;
 
@@ -377,7 +371,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public abstract DocInfo getInfo();
 
     public abstract boolean isValid(@NotNull Document document);
-    
+
     public abstract boolean isNavigatable();
 
     public abstract void showDocInfo(@NotNull DocumentationManager docManager);
@@ -471,10 +465,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private Info getInfoAt(@NotNull final Editor editor, @NotNull PsiFile file, int offset, @NotNull BrowseMode browseMode) {
     return getInfoAt(myProject, editor, file, offset, browseMode);
   }
-  
+
   @Nullable
-  private static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset, 
-                                @NotNull BrowseMode browseMode) {
+  public static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset,
+                               @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -562,14 +556,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           @Override
           public void showDocInfo(@NotNull DocumentationManager docManager) {
           }
-  
+
           @NotNull
           @Override
           public DocInfo getInfo() {
             String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
             return new DocInfo("Show usages of "+name, null);
           }
-  
+
           @Override
           public boolean isValid(@NotNull Document document) {
             return element.isValid();
@@ -625,7 +619,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       JComponent component = hint.getComponent();
       Dimension oldSize = component.getPreferredSize();
       newTextConsumer.consume(updatedText);
-      
+
 
       Dimension newSize = component.getPreferredSize();
       if (newSize.width == oldSize.width) {
@@ -810,9 +804,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       Consumer<String> newTextConsumer = newTextConsumerRef.get();
 
       label.setBorder(JBUI.Borders.empty(6, 6, 5, 6));
-      
+
       final LightweightHint hint = new LightweightHint(label);
-      
+
       myHint = hint;
       hint.addHintListener(new HintListener() {
         @Override
@@ -904,13 +898,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
     List<RangeHighlighter> highlighters = new ArrayList<>();
-    TextAttributes attributes = info.isNavigatable() 
-                                ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR) 
+    TextAttributes attributes = info.isNavigatable()
+                                ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
                                 : new TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN);
     for (TextRange range : info.getRanges()) {
       TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                                                       HighlighterLayer.HYPERLINK, 
+                                                                                       HighlighterLayer.HYPERLINK,
                                                                                        attr,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(highlighter);
@@ -954,7 +948,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  private static class DocInfo {
+  public static class DocInfo {
     public static final DocInfo EMPTY = new DocInfo(null, null);
 
     @Nullable public final String text;
@@ -965,7 +959,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       docProvider = provider;
     }
   }
-  
+
   private class QuickDocHyperlinkListener implements HyperlinkListener {
     @NotNull private final DocumentationProvider myProvider;
     @NotNull private final PsiElement myContext;

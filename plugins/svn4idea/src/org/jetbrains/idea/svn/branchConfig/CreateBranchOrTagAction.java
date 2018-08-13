@@ -93,7 +93,7 @@ public class CreateBranchOrTagAction extends BasicAction {
         throw new VcsException(exception.get());
       }
 
-      if (dialog.isCopyFromWorkingCopy() && dialog.isSwitchOnCreate()) {
+      if (dialog.isSwitchOnCreate()) {
         SingleRootSwitcher switcher =
           new SingleRootSwitcher(vcs.getProject(), VcsUtil.getFilePath(sourceFile, sourceFile.isDirectory()), destination);
         AutoSvnUpdater.run(switcher, SvnBundle.message("action.name.switch"));

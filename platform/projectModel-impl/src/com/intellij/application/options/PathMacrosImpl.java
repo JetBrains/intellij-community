@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 )
 public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element>, ModificationTracker {
   public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
+  public static final String MAVEN_REPOSITORY = "MAVEN_REPOSITORY";
 
   private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);
 
@@ -117,8 +118,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     return ContainerUtil.union(getUserMacroNames(), getSystemMacroNames());
   }
 
+  @Nullable
   @Override
-  public String getValue(String name) {
+  public String getValue(@NotNull String name) {
     try {
       myLock.readLock().lock();
       return myMacros.get(name);
@@ -153,13 +155,17 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   }
 
   @Override
-  public void setMacro(@NotNull String name, @NotNull String value) {
-    if (StringUtil.isEmptyOrSpaces(value)) {
-      return;
-    }
-
+  public void setMacro(@NotNull String name, @Nullable String value) {
     try {
       myLock.writeLock().lock();
+
+      if (StringUtil.isEmptyOrSpaces(value)) {
+        if (myMacros.remove(name) != null) {
+          myModificationStamp++;
+        }
+        return;
+      }
+
       String prevValue = myMacros.put(name, value);
       if (!value.equals(prevValue)) {
         myModificationStamp++;

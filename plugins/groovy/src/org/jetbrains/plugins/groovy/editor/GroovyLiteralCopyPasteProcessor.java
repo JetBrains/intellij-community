@@ -21,8 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * @author peter
@@ -52,7 +55,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     if (node == null) return null;
 
     final IElementType tokenType = node.getElementType();
-    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (GroovyTokenSets.STRING_LITERALS.contains(tokenType)) {
       final String text = token.getText();
       if (text == null) return null;
       return GroovyStringLiteralManipulator.getLiteralRange(text).shiftRight(node.getStartOffset());
@@ -129,10 +132,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     final IElementType type = token.getNode().getElementType();
-    if (type == GroovyTokenTypes.mGSTRING_LITERAL || type == GroovyTokenTypes.mGSTRING_CONTENT) {
+    if (type == STRING_DQ || type == STRING_TDQ || type == GroovyTokenTypes.mGSTRING_CONTENT) {
       return super.getLineBreaker(token);
     }
-    if (type == GroovyTokenTypes.mSTRING_LITERAL) {
+    if (type == STRING_SQ || type == STRING_TSQ) {
       return super.getLineBreaker(token).replace('"', '\'');
     }
 
@@ -184,7 +187,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       return GrStringUtil.escapeSymbolsForDollarSlashyStrings(s);
     }
 
-    if (tokenType == GroovyTokenTypes.mGSTRING_CONTENT || tokenType == GroovyTokenTypes.mGSTRING_LITERAL || tokenType == GroovyElementTypes.GSTRING_INJECTION) {
+    if (tokenType == GroovyTokenTypes.mGSTRING_CONTENT ||
+        tokenType == STRING_DQ ||
+        tokenType == STRING_TDQ ||
+        tokenType == GroovyElementTypes.GSTRING_INJECTION) {
       boolean singleLine = !GrStringUtil.findContainingLiteral(token).getText().contains("\"\"\"");
       StringBuilder b = new StringBuilder();
       GrStringUtil.escapeStringCharacters(s.length(), s, singleLine ? "\"" : "", singleLine, true, b);
@@ -204,7 +210,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       return b.toString();
     }
 
-    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL) {
+    if (tokenType == STRING_SQ || tokenType == STRING_TSQ) {
       return GrStringUtil.escapeSymbolsForString(s, !token.getText().contains("'''"), false);
     }
 
@@ -224,11 +230,11 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       return GrStringUtil.unescapeDollarSlashyString(s);
     }
 
-    if (tokenType == GroovyTokenTypes.mGSTRING_CONTENT || tokenType == GroovyTokenTypes.mGSTRING_LITERAL) {
+    if (tokenType == GroovyTokenTypes.mGSTRING_CONTENT || tokenType == STRING_DQ || tokenType == STRING_TDQ) {
       return GrStringUtil.unescapeString(s);
     }
 
-    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL) {
+    if (tokenType == STRING_SQ || tokenType == STRING_TSQ) {
       return GrStringUtil.unescapeString(s);
     }
 

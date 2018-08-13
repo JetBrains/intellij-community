@@ -16,12 +16,11 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.*;
@@ -185,7 +184,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
       if (mavenEmbedderCliOptions != null) {
-        commandLineOptions.addAll(StringUtil.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
+        commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
       }
       if (commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots")) {
         myAlwaysUpdateSnapshots = true;
@@ -260,7 +259,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
 
     if (result.getLocalRepository() == null) {
-      result.setLocalRepository(new File(SystemProperties.getUserHome(), ".m2/repository").getPath());
+      result.setLocalRepository(new File(System.getProperty("user.home"), ".m2/repository").getPath());
     }
 
     return result;
@@ -574,14 +573,14 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     Collection<MavenExecutionResult> results =
       doResolveProject(files, new ArrayList<String>(activeProfiles), new ArrayList<String>(inactiveProfiles),
                        Collections.<ResolutionListener>singletonList(listener));
-    return ContainerUtil.mapNotNull(results, new Function<MavenExecutionResult, MavenServerExecutionResult>() {
+    return ContainerUtilRt.mapNotNull(results, new Function<MavenExecutionResult, MavenServerExecutionResult>() {
       @Override
       public MavenServerExecutionResult fun(MavenExecutionResult result) {
         try {
           return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
         }
         catch (RemoteException e) {
-          ExceptionUtil.rethrowAllAsUnchecked(e);
+          ExceptionUtilRt.rethrowAllAsUnchecked(e);
         }
         return null;
       }
@@ -636,7 +635,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    final Collection<MavenExecutionResult> executionResults = ContainerUtil.newArrayList();
+    final Collection<MavenExecutionResult> executionResults = ContainerUtilRt.newArrayList();
 
     executeWithMavenSession(request, new Runnable() {
       @Override

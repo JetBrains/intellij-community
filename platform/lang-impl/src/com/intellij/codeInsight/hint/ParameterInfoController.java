@@ -667,6 +667,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    @Override
     public UserDataHolderEx getCustomContext() {
       return ParameterInfoController.this;
     }

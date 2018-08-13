@@ -30,10 +30,7 @@ import com.intellij.refactoring.inlineSuperClass.usageInfo.*;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.memberPushDown.PushDownConflicts;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
@@ -161,7 +158,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression &&
-              PsiTreeUtil.isAncestor(targetClass, element, false)) {
+              PsiTreeUtil.isAncestor(targetClass, element, false) &&
+              !PushDownConflicts.isSuperCallToBeInlined(member, targetClass, mySuperClass, element)) {
             usages.add(new RemoveQualifierUsageInfo((PsiReferenceExpression)element));
           }
         }
@@ -169,6 +167,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
       if (!mySuperClass.isInterface()) {
         final PsiMethod[] superConstructors = mySuperClass.getConstructors();
+        Set<PsiMethod> addedSuperConstructors = new HashSet<>();
         for (PsiMethod constructor : targetClass.getConstructors()) {
           final PsiCodeBlock constrBody = constructor.getBody();
           PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
@@ -176,6 +175,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             final PsiMethod superConstructor = call.resolveMethod();
             if (superConstructor != null && superConstructor.getBody() != null) {
               usages.add(new InlineSuperCallUsageInfo(call));
+              processChainedCallsInSuper(superConstructor, targetClass, usages, addedSuperConstructors);
               continue;
             }
           }
@@ -185,6 +185,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
             if (superConstructor.getParameterList().isEmpty()) {
               final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
               usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
+              processChainedCallsInSuper(superConstructor, targetClass, usages, addedSuperConstructors);
             }
           }
         }
@@ -199,6 +200,18 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           }
         }
       }
+    }
+  }
+
+  private static void processChainedCallsInSuper(PsiMethod superConstructorWithChain,
+                                                 PsiClass targetClass,
+                                                 List<FixableUsageInfo> usages,
+                                                 Set<PsiMethod> addedSuperConstructors) {
+    addedSuperConstructors.add(superConstructorWithChain);
+    PsiMethod chainedConstructor = InlineUtil.getChainedConstructor(superConstructorWithChain);
+    while (chainedConstructor != null && addedSuperConstructors.add(chainedConstructor)) {
+      usages.add(new CopyDefaultConstructorUsageInfo(targetClass, chainedConstructor));
+      chainedConstructor = InlineUtil.getChainedConstructor(chainedConstructor);
     }
   }
 
@@ -228,8 +241,13 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         for (MemberInfo info : myMemberInfos) {
           final PsiMember member = info.getMember();
           pushDownConflicts.checkMemberPlacementInTargetClassConflict(targetClass, member);
+          if (myCurrentInheritor == null) { //superclass to be removed
+            Set<PsiMember> movedMembers = new HashSet<>(pushDownConflicts.getMovedMembers());
+            movedMembers.addAll(Arrays.asList(mySuperClass.getConstructors()));
+            RefactoringConflictsUtil
+              .analyzeAccessibilityConflicts(movedMembers, targetClass, conflicts, null, targetClass, pushDownConflicts.getAbstractMembers());
+          }
         }
-        //todo check accessibility conflicts
       }
     }
     if (myCurrentInheritor != null) {

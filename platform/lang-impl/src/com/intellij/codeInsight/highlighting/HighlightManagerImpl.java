@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -34,15 +35,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class HighlightManagerImpl extends HighlightManager {
   private final Project myProject;
 
   public HighlightManagerImpl(Project project, ActionManagerEx actionManagerEx, final EditorFactory editorFactory) {
     myProject = project;
-    actionManagerEx.addAnActionListener(new MyAnActionListener(), myProject);
+    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(AnActionListener.TOPIC, new MyAnActionListener());
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
@@ -223,8 +224,8 @@ public class HighlightManagerImpl extends HighlightManager {
       TextRange range = element.getTextRange();
       range = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, range);
       addOccurrenceHighlight(editor,
-                             trimOffsetToDocumentSize(editor, range.getStartOffset()), 
-                             trimOffsetToDocumentSize(editor, range.getEndOffset()), 
+                             trimOffsetToDocumentSize(editor, range.getStartOffset()),
+                             trimOffsetToDocumentSize(editor, range.getEndOffset()),
                              attributes, flags, outHighlighters, scrollMarkColor);
     }
   }
@@ -232,7 +233,7 @@ public class HighlightManagerImpl extends HighlightManager {
   private static int trimOffsetToDocumentSize(@NotNull Editor editor, int offset) {
     if (offset < 0) return 0;
     int textLength = editor.getDocument().getTextLength();
-    return offset < textLength ? offset : textLength; 
+    return offset < textLength ? offset : textLength;
   }
 
   @Nullable
@@ -282,7 +283,7 @@ public class HighlightManagerImpl extends HighlightManager {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, final DataContext dataContext, AnActionEvent event) {
       requestHideHighlights(dataContext);
     }
 

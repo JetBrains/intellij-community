@@ -21,7 +21,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.TestClassCollector;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
@@ -118,7 +117,7 @@ class TestDirectory extends TestPackage {
     }
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
-      throw new RuntimeConfigurationWarning("Directory \'" + dirName + "\' is not found");
+      throw new RuntimeConfigurationError("Directory \'" + dirName + "\' is not found");
     }
     final Module module = getConfiguration().getConfigurationModule().getModule();
     if (module == null) {

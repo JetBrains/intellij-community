@@ -44,12 +44,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@State(
-  name = "BookmarkManager",
-  storages = {
-    @Storage(StoragePathMacros.WORKSPACE_FILE)
-  }
-)
+@State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class BookmarkManager implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private final MultiMap<VirtualFile, Bookmark> myBookmarks = MultiMap.createConcurrentSet();
@@ -108,6 +103,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void editDescription(@NotNull Bookmark bookmark, @NotNull JComponent popup) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     String description = Messages.showInputDialog(popup, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
                        IdeBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
                        bookmark.getDescription(), null);
@@ -117,6 +113,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Document document = editor.getDocument();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return;
@@ -129,6 +126,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   @NotNull
   public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull String description) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
     // increment all other indices and put new bookmark at index 0
     myBookmarks.values().forEach(bookmark -> bookmark.index++);
@@ -195,8 +193,12 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void removeBookmark(@NotNull Bookmark bookmark) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile file = bookmark.getFile();
     if (myBookmarks.remove(file, bookmark)) {
+      int index = bookmark.index;
+      // decrement all other indices to maintain them monotonic
+      myBookmarks.values().forEach(b -> b.index -= b.index > index ? 1 : 0);
       bookmark.release();
       myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkRemoved(bookmark);
     }
@@ -288,6 +290,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
    * Try to move bookmark one position up in the list
    */
   public void moveBookmarkUp(@NotNull Bookmark bookmark) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final int index = bookmark.index;
     if (index > 0) {
       Bookmark other = ContainerUtil.find(myBookmarks.values(), b -> b.index == index - 1);
@@ -304,6 +307,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
    * Try to move bookmark one position down in the list
    */
   public void moveBookmarkDown(@NotNull Bookmark bookmark) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final int index = bookmark.index;
     if (index < myBookmarks.values().size() - 1) {
       Bookmark other = ContainerUtil.find(myBookmarks.values(), b -> b.index == index + 1);
@@ -333,6 +337,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void setMnemonic(@NotNull Bookmark bookmark, char c) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Bookmark old = findBookmarkForMnemonic(c);
     if (old != null) removeBookmark(old);
 
@@ -341,6 +346,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   public void setDescription(@NotNull Bookmark bookmark, @NotNull String description) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     bookmark.setDescription(description);
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
   }
@@ -351,7 +357,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
   }
 
-  private class MyEditorMouseListener extends EditorMouseAdapter {
+  private class MyEditorMouseListener implements EditorMouseListener {
     @Override
     public void mouseClicked(final EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;

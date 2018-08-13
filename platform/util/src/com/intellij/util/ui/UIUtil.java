@@ -29,8 +29,8 @@ import sun.java2d.SunGraphicsEnvironment;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -47,8 +47,8 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
-import javax.swing.text.html.*;
 import javax.swing.text.html.ParagraphView;
+import javax.swing.text.html.*;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
@@ -69,9 +69,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
-import java.util.*;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -518,9 +518,6 @@ public class UIUtil {
         return false;
       }
       jreHiDPI_earlierVersion = true;
-      if (SystemInfo.isLinux) {
-        return false; // pending support
-      }
       if (SystemInfo.isJetBrainsJvm) {
         try {
           GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -1894,8 +1891,8 @@ public class UIUtil {
                                      final float startX,
                                      final float endX,
                                      final int height) {
-    Color c1 = new Color(255, 234, 162);
-    Color c2 = new Color(255, 208, 66);
+    Color c1 = JBColor.namedColor("SearchMatch.startColor", new Color(0xffeaa2));
+    Color c2 = JBColor.namedColor("SearchMatch.endColor", new Color(0xffd042));
     drawSearchMatch(g, startX, endX, height, c1, c2);
   }
 
@@ -1903,7 +1900,9 @@ public class UIUtil {
     final boolean drawRound = endXf - startXf > 4;
 
     GraphicsConfig config = new GraphicsConfig(g);
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+    float alpha = ((float)JBUI.getInt("SearchMatch.transparency", 70) / 100f);
+    alpha = alpha < 0 || alpha > 1 ? 0.7f : alpha;
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
     if (isJreHiDPI(g)) {
@@ -3293,10 +3292,10 @@ public class UIUtil {
         // 2) the label font size is scaled
         int dpi = ((Integer)value).intValue() / 1024;
         if (dpi < 50) dpi = 50;
-        float scale = JBUI.discreteScale(dpi / 96f);
+        float scale = isJreHiDPIEnabled() ? 1f : JBUI.discreteScale(dpi / 96f); // no scaling in JRE-HiDPI mode
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
         if (JBUI.SCALE_VERBOSE) {
-          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f, %d", DEF_SYSTEM_FONT_SIZE, dpi));
+          LOG.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE, dpi));
         }
       }
       else if (!SystemInfo.isJetBrainsJvm) {

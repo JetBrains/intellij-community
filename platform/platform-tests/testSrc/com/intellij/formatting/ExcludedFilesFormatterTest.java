@@ -5,13 +5,19 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.DirectoryFormattingOptions;
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.TextRangeType;
+import com.intellij.formatting.fileSet.PatternDescriptor;
+import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +37,8 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     assertFormatted(f2);
   }
 
-  public void testExcluded() throws IOException {
-    addExclusions("*2.xml", "test/*");
+  public void testPatternExclusions() throws IOException {
+    addPatternExclusions("*2.xml", "test/*");
     VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
     VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
     VirtualFile f3 = createFile("src/subdir/test/f3.xml", UNFORMATTED_SAMPLE);
@@ -42,10 +48,76 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     assertUnformatted(f3);
   }
 
-  private void addExclusions(String... fileSpecs) {
+  public void testProjectScopeExclusions() throws Exception {
+    createTestProjectStructure();
+    VirtualFile srcRoot = createFile("src/");
+    PsiTestUtil.addSourceRoot(ModuleManager.getInstance(getProject()).getModules()[0], srcRoot);
+    VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
+    VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
+    VirtualFile f3 = createFile("src/subdir/test/f3.xml", UNFORMATTED_SAMPLE);
+    NamedScopesHolder localHolder = NamedScopeManager.getInstance(getProject());
+    @SuppressWarnings("unused") NamedScope testScope = createScope(localHolder, "testScope", "file:*2.xml");
+    CodeStyle.getSettings(getProject()).getExcludedFiles().addDescriptor(new NamedScopeDescriptor("testScope"));
+    try {
+      formatProjectFiles(false, false);
+      assertFormatted(f1);
+      assertUnformatted(f2);
+      assertFormatted(f3);
+    }
+    finally {
+      localHolder.removeAllSets();
+    }
+  }
+
+  public void testGlobalScopeExclusions() throws Exception {
+    createTestProjectStructure();
+    VirtualFile srcRoot = createFile("src/");
+    PsiTestUtil.addSourceRoot(ModuleManager.getInstance(getProject()).getModules()[0], srcRoot);
+    VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
+    VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
+    VirtualFile f3 = createFile("src/subdir/test/f3.xml", UNFORMATTED_SAMPLE);
+    NamedScopesHolder appHolder = NamedScopeManager.getInstance(ProjectManager.getInstance().getDefaultProject());
+    @SuppressWarnings("unused") NamedScope testScope = createScope(appHolder, "testScope", "file:*2.xml");
+    CodeStyle.getSettings(getProject()).getExcludedFiles().addDescriptor(new NamedScopeDescriptor("testScope"));
+    try {
+      formatProjectFiles(false, false);
+      assertFormatted(f1);
+      assertUnformatted(f2);
+      assertFormatted(f3);
+    }
+    finally {
+      appHolder.removeAllSets();
+    }
+  }
+
+  public void testNonExistentScope() throws Exception {
+    createTestProjectStructure();
+    VirtualFile srcRoot = createFile("src/");
+    PsiTestUtil.addSourceRoot(ModuleManager.getInstance(getProject()).getModules()[0], srcRoot);
+    VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
+    VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
+    VirtualFile f3 = createFile("src/subdir/test/f3.xml", UNFORMATTED_SAMPLE);
+    NamedScopeDescriptor nonExistentContainer = new NamedScopeDescriptor("nonExistentScope");
+    nonExistentContainer.setPattern("file:*2.xml");
+    CodeStyle.getSettings(getProject()).getExcludedFiles().addDescriptor(nonExistentContainer);
+    formatProjectFiles(false, false);
+    assertFormatted(f1);
+    assertUnformatted(f2);
+    assertFormatted(f3);
+  }
+
+  private static NamedScope createScope(@NotNull NamedScopesHolder holder, @NotNull String name, @NotNull String pattern)
+    throws ParsingException {
+    PackageSet fileSet = PackageSetFactory.getInstance().compile(pattern);
+    NamedScope scope = holder.createScope(name, fileSet);
+    holder.addScope(scope);
+    return scope;
+  }
+
+  private void addPatternExclusions(String... patterns) {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
-    for (String fileSpec : fileSpecs) {
-      settings.getExcludedFiles().addDescriptor(fileSpec);
+    for (String pattern : patterns) {
+      settings.getExcludedFiles().addDescriptor(new PatternDescriptor(pattern));
     }
   }
 

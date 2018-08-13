@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView.impl;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -27,25 +25,30 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
     myCbShowDetails = new JCheckBox(IdeBundle.message("checkbox.errortree.export.details"));
     myCbShowDetails.setSelected(true);
     myCbShowDetails.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myChangeListener.stateChanged(null);
       }
     });
   }
 
+  @Override
   public JComponent getSettingsEditor() {
     return myCbShowDetails;
   }
 
+  @Override
   public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
     if (myChangeListener != null) throw new TooManyListenersException();
     myChangeListener = listener;
   }
 
+  @Override
   public void removeSettingsChangedListener(ChangeListener listener) {
     myChangeListener = null;
   }
 
+  @Override
   @NotNull
   public String getReportText() {
     StringBuffer buffer = new StringBuffer();
@@ -53,11 +56,13 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
     return buffer.toString();
   }
 
+  @Override
   @NotNull
   public String getDefaultFilePath() {
     return "";
   }
 
+  @Override
   public boolean canExport() {
     return true;
   }

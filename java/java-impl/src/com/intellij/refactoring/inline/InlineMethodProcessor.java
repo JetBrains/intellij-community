@@ -408,7 +408,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void doRefactoring(UsageInfo[] usages) {
     try {
       if (myInlineThisOnly) {
-        if (myMethod.isConstructor() && InlineMethodHandler.isChainingConstructor(myMethod)) {
+        if (myMethod.isConstructor() && InlineUtil.isChainingConstructor(myMethod)) {
           if (myReference instanceof PsiMethodReferenceExpression) {
             inlineMethodReference((PsiMethodReferenceExpression)myReference);
           }
@@ -623,7 +623,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (enumConstant != null) {
         PsiExpression returnExpr = getSimpleReturnedExpression(myMethod);
         if (returnExpr != null) {
+          ChangeContextUtil.encodeContextInfo(returnExpr, true);
           PsiElement copy = returnExpr.copy();
+          ChangeContextUtil.clearContextInfo(returnExpr);
           copy.accept(new JavaRecursiveElementVisitor() {
             @Override
             public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -640,7 +642,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               }
             }
           });
-          methodCall.replace(copy);
+          PsiElement replace = methodCall.replace(copy);
+          if (blockData.thisVar != null) {
+            ChangeContextUtil.decodeContextInfo(replace, myMethod.getContainingClass(), blockData.thisVar.getInitializer());
+          }
         }
       }
       return;
@@ -951,7 +956,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (parent instanceof PsiClass) {
           PsiClass parentClass = (PsiClass)parent;
           final PsiClass containingClass = myMethod.getContainingClass();
-          if (InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
+          if (containingClass != null && parentClass.isInheritor(containingClass, true)) {
+            qualifier = myFactory.createExpressionFromText(parentClass.getName() + ".this", null);
+          }
+          else if (containingClass != null && parentClass.equals(containingClass)) {
             qualifier = myFactory.createExpressionFromText("this", null);
           }
           else {

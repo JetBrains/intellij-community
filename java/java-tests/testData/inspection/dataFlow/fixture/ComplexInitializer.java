@@ -13,7 +13,7 @@ class InitializerTest {
     z = "foo";
   }
 
-  boolean b = <warning descr="Condition 'z.startsWith(\"bar\")' is always 'false'">z.startsWith("bar")</warning>;
+  boolean b = <warning descr="Result of 'z.startsWith(\"bar\")' is always 'false'">z.startsWith("bar")</warning>;
 
   static final String ABC;
   static {

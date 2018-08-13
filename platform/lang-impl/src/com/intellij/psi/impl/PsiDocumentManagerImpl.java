@@ -193,7 +193,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         PsiFile injectedPsiFile = getCachedPsiFile(document);
         if (injectedPsiFile  == null || !injectedPsiFile.isValid()) continue;
 
-        BooleanRunnable runnable = InjectedLanguageUtil.reparse(injectedPsiFile, document, hostPsiFile, hostViewProvider, indicator, oldRoot, newRoot);
+        BooleanRunnable runnable = InjectedLanguageUtil.reparse(injectedPsiFile, document, hostPsiFile, hostDocument, hostViewProvider, indicator, oldRoot, newRoot, this);
         ContainerUtil.addIfNotNull(result, runnable);
       }
     }

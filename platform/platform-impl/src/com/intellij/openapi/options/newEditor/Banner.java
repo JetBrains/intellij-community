@@ -23,6 +23,7 @@ import java.util.Collection;
 final class Banner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();
   private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
+    @Override
     protected int getFontStyle(Crumb crumb) {
       return Font.BOLD;
     }

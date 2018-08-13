@@ -4,7 +4,7 @@ Groovy script
   Generalized list
     PsiElement([)('[')
     Literal
-      PsiElement(Gstring)('"abc"')
+      PsiElement(double quoted string)('"abc"')
     PsiElement(,)(',')
     PsiErrorElement:<expression> expected, got ','
       <empty list>

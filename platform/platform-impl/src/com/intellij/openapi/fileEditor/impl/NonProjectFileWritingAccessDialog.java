@@ -102,6 +102,7 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK;
   }
 
+  @Override
   protected String getHelpId() {
     return "Non-Project_Files_Access_Dialog";
   }

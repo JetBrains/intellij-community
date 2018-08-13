@@ -67,8 +67,8 @@ class AppUIExecutorImpl implements AppUIExecutor {
   public AppUIExecutor later() {
     Integer edtEventCount = ApplicationManager.getApplication().isDispatchThread() ? IdeEventQueue.getInstance().getEventCount() : null;
     return withConstraint(new ConstrainedExecutor() {
-      volatile boolean usedOnce; 
-      
+      volatile boolean usedOnce;
+
       @Override
       public boolean isCorrectContext() {
         return edtEventCount == null ? ApplicationManager.getApplication().isDispatchThread()
@@ -158,7 +158,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
   @Override
   public AppUIExecutor expireWith(@NotNull Disposable parentDisposable) {
     if (myDisposables.contains(parentDisposable)) return this;
-    
+
     Set<Disposable> disposables = ContainerUtil.newHashSet(myDisposables);
     disposables.add(parentDisposable);
     return new AppUIExecutorImpl(myModality, disposables, myConstraints);
@@ -198,7 +198,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       app.invokeLater(() -> checkConstraints(task, future, log), myModality);
       return;
     }
-    
+
     if (future.isCancelled()) return;
 
     for (ConstrainedExecutor constraint : myConstraints) {
@@ -225,6 +225,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
   private abstract static class ConstrainedExecutor {
     public abstract boolean isCorrectContext();
     public abstract void doReschedule(Runnable r);
+    @Override
     public abstract String toString();
 
     void rescheduleInCorrectContext(Runnable r) {

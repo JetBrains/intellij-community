@@ -358,7 +358,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   @Override
-  public void selectionChanged(SelectionEvent e) {
+  public void selectionChanged(@NotNull SelectionEvent e) {
     updateResults(false);
   }
 

@@ -27,4 +27,4 @@ Groovy script
       PsiElement(=)('=')
       PsiWhiteSpace(' ')
       Literal
-        PsiElement(Gstring)('"foo"')
+        PsiElement(double quoted string)('"foo"')

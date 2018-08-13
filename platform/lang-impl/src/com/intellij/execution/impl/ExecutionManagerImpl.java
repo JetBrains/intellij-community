@@ -91,7 +91,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     if (environment.getProject().isDisposed()) return;
 
     RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
+    ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), environment.getExecutionId() == 0);
   }
 
   private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
@@ -420,6 +420,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
           }
         }
         myAwaitingRunProfiles.remove(environment.getRunProfile());
+        environment.setExecutionId(0);// At restart we have to assign new execution ID and therefore reuse 'just stopped' contents if any
         start(environment);
       }
     }, 50);

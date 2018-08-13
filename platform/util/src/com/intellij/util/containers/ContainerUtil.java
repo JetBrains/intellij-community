@@ -835,7 +835,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure=true)
   public static <T, V extends T> V find(@NotNull Iterable<V> iterable, @NotNull Condition<T> condition) {
-    return find(iterable.iterator(), condition);
+    return ContainerUtilRt.find(iterable, condition);
   }
 
   @Nullable
@@ -862,11 +862,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   public static <T, V extends T> V find(@NotNull Iterator<V> iterator, @NotNull Condition<T> condition) {
-    while (iterator.hasNext()) {
-      V value = iterator.next();
-      if (condition.value(value)) return value;
-    }
-    return null;
+    return ContainerUtilRt.find(iterator, condition);
   }
 
   @Nullable
@@ -1685,13 +1681,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
-    return isEmpty(list) ? def : list.get(list.size() - 1);
+    return ContainerUtilRt.getLastItem(list, def);
   }
 
   @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
-    return getLastItem(list, null);
+    return ContainerUtilRt.getLastItem(list);
   }
 
   /**
@@ -1958,18 +1954,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapping) {
-    if (collection.isEmpty()) {
-      return emptyList();
-    }
-
-    List<V> result = new ArrayList<V>(collection.size());
-    for (T t : collection) {
-      final V o = mapping.fun(t);
-      if (o != null) {
-        result.add(o);
-      }
-    }
-    return result.isEmpty() ? ContainerUtil.<V>emptyList() : result;
+    return ContainerUtilRt.mapNotNull(collection, mapping);
   }
 
   /**
@@ -2379,13 +2364,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<T> list, @NotNull Condition<? super T> condition) {
-    for (int i = 0, listSize = list.size(); i < listSize; i++) {
-      T t = list.get(i);
-      if (condition.value(t)) {
-        return i;
-      }
-    }
-    return -1;
+    return ContainerUtilRt.indexOf(list, condition);
   }
 
   @Contract(pure=true)
@@ -2748,7 +2727,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(value = "null -> true", pure = true)
   public static <T> boolean isEmpty(@Nullable Collection<T> collection) {
-    return collection == null || collection.isEmpty();
+    return ContainerUtilRt.isEmpty(collection);
   }
 
   @Contract(value = "null -> true", pure = true)

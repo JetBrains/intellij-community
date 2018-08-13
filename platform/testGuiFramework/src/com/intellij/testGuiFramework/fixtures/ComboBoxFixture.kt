@@ -22,6 +22,7 @@ import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JComboBoxFixture
 import org.fest.swing.timing.Timeout
+import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JComboBox
 
@@ -32,6 +33,12 @@ class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(r
     val arrowButton = target().components.firstOrNull { it is JButton } ?: throw ComponentLookupException(
       "Unable to find bounded arrow button for a combobox")
     robot().click(arrowButton)
+    return this
+  }
+
+  fun expandAndClose(): ComboBoxFixture {
+    expand()
+    robot().pressAndReleaseKeys(KeyEvent.VK_ESCAPE)
     return this
   }
 

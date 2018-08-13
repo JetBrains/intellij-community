@@ -507,14 +507,8 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      if (value instanceof DfaVariableValue) {
-        value = state.getConstantValue((DfaVariableValue)value);
-      }
-      if (value instanceof DfaConstValue) {
-        Object constant = ((DfaConstValue)value).getValue();
-        return Boolean.valueOf(myValue).equals(constant);
-      }
-      return true;
+      DfaConstValue dfaConst = state.getConstantValue(value);
+      return dfaConst == null || Boolean.valueOf(myValue).equals(dfaConst.getValue());
     }
   }
 

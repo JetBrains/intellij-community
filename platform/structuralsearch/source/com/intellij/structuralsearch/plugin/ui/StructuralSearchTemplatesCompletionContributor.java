@@ -21,6 +21,7 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
       if (configuration == null) continue;
       LookupElementBuilder element = LookupElementBuilder.create(configuration, configuration.getMatchOptions().getSearchPattern())
                                                          .withLookupString(configurationName)
+                                                         .withTailText(" (search template)", true)
                                                          .withCaseSensitivity(false)
                                                          .withPresentableText(configurationName);
       insensitive.addElement(element);

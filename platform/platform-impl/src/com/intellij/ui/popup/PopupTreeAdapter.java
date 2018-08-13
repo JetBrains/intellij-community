@@ -81,6 +81,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
       myTree.addMouseMotionListener(new MouseMotionAdapter() {
         boolean myIsEngaged = false;
 
+        @Override
         public void mouseMoved(MouseEvent e) {
           if (myIsEngaged) {
             final Point p = e.getPoint();

@@ -121,12 +121,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
-    return new Function<T, String>() {
-      @Override
-      public String fun(@NotNull T o) {
-        return o.toString();
-      }
-    };
+    return StringUtilRt.createToStringFunction();
   }
 
   @NotNull
@@ -661,25 +656,19 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
-    return s.length() > 1 && isQuoteAt(s, 0) && s.charAt(0) == s.charAt(s.length() - 1);
+    return StringUtilRt.isQuotedString(s);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s) {
-    if (isQuotedString(s)) {
-      return s.substring(1, s.length() - 1);
-    }
-    return s;
+    return StringUtilRt.unquoteString(s);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s, char quotationChar) {
-    if (s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1)) {
-      return s.substring(1, s.length() - 1);
-    }
-    return s;
+    return StringUtilRt.unquoteString(s, quotationChar);
   }
 
   private static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {
@@ -1110,7 +1099,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(value = "null -> true",pure = true)
   public static boolean isEmpty(@Nullable CharSequence cs) {
-    return cs == null || cs.length() == 0;
+    return StringUtilRt.isEmpty(cs);
   }
 
   @Contract(pure = true)
@@ -1121,13 +1110,13 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String notNullize(@Nullable String s) {
-    return notNullize(s, "");
+    return StringUtilRt.notNullize(s);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String notNullize(@Nullable String s, @NotNull String defaultValue) {
-    return s == null ? defaultValue : s;
+    return StringUtilRt.notNullize(s, defaultValue);
   }
 
   @Nullable
@@ -1151,15 +1140,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(value = "null -> true", pure = true)
   public static boolean isEmptyOrSpaces(@Nullable CharSequence s) {
-    if (isEmpty(s)) {
-      return true;
-    }
-    for (int i = 0; i < s.length(); i++) {
-      if (s.charAt(i) > ' ') {
-        return false;
-      }
-    }
-    return true;
+    return StringUtilRt.isEmptyOrSpaces(s);
   }
 
   /**
@@ -1213,79 +1194,38 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    final List<String> result = new ArrayList<String>();
-    final StringBuilder builder = new StringBuilder(s.length());
-    boolean inQuotes = false;
-    for (int i = 0; i < s.length(); i++) {
-      final char c = s.charAt(i);
-      if (c == separator && !inQuotes) {
-        if (builder.length() > 0) {
-          result.add(builder.toString());
-          builder.setLength(0);
-        }
-        continue;
-      }
-
-      if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
-        inQuotes = !inQuotes;
-      }
-      builder.append(c);
-    }
-
-    if (builder.length() > 0) {
-      result.add(builder.toString());
-    }
-    return result;
+    return StringUtilRt.splitHonorQuotes(s, separator);
   }
 
 
   @NotNull
   @Contract(pure = true)
   public static List<String> split(@NotNull String s, @NotNull String separator) {
-    return split(s, separator, true);
+    return StringUtilRt.split(s, separator);
   }
   @NotNull
   @Contract(pure = true)
   public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
-    return split(s, separator, true, true);
+    return StringUtilRt.split(s, separator);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static List<String> split(@NotNull String s, @NotNull String separator,
-                                   boolean excludeSeparator) {
-    return split(s, separator, excludeSeparator, true);
+  public static List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
+    return StringUtilRt.split(s, separator, excludeSeparator);
   }
 
   @NotNull
   @Contract(pure = true)
   @SuppressWarnings("unchecked")
   public static List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
-    return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
+    return StringUtilRt.split(s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
   @NotNull
   @Contract(pure = true)
   public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
-    if (separator.length() == 0) {
-      return Collections.singletonList(s);
-    }
-    List<CharSequence> result = new ArrayList<CharSequence>();
-    int pos = 0;
-    while (true) {
-      int index = indexOf(s,separator, pos);
-      if (index == -1) break;
-      final int nextPos = index + separator.length();
-      CharSequence token = s.subSequence(pos, excludeSeparator ? index : nextPos);
-      if (token.length() != 0 || !excludeEmptyStrings) {
-        result.add(token);
-      }
-      pos = nextPos;
-    }
-    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
-      result.add(s.subSequence(pos, s.length()));
-    }
-    return result;
+    return StringUtilRt.split(s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
   @NotNull
@@ -1471,9 +1411,7 @@ public class StringUtil extends StringUtilRt {
   public static <T> String join(@NotNull Collection<? extends T> items,
                                 @NotNull Function<? super T, String> f,
                                 @NotNull String separator) {
-    if (items.isEmpty()) return "";
-    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
-    return join((Iterable<? extends T>)items, f, separator);
+    return StringUtilRt.join(items, f, separator);
   }
 
   @Contract(pure = true)
@@ -1493,27 +1431,14 @@ public class StringUtil extends StringUtilRt {
   public static <T> String join(@NotNull Iterable<? extends T> items,
                                 @NotNull Function<? super T, String> f,
                                 @NotNull String separator) {
-    final StringBuilder result = new StringBuilder();
-    join(items, f, separator, result);
-    return result.toString();
+    return StringUtilRt.join(items, f, separator);
   }
 
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, String> f,
                               @NotNull String separator,
                               @NotNull StringBuilder result) {
-    boolean isFirst = true;
-    for (T item : items) {
-      String string = f.fun(item);
-      if (string != null && !string.isEmpty()) {
-        if (isFirst) {
-          isFirst = false;
-        } else {
-          result.append(separator);
-        }
-        result.append(string);
-      }
-    }
+    StringUtilRt.join(items, f, separator, result);
   }
 
   @NotNull
@@ -1588,15 +1513,13 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatNumber(long number) {
-    return formatNumber(number, "");
+    return StringUtilRt.formatNumber(number);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatNumber(long number, @NotNull String unitSeparator) {
-    return formatValue(number, null,
-                       unitSeparator, new String[]{"", "K", "M", "G", "T", "P", "E"},
-                       new long[]{1, 1000, 1000, 1000, 1000, 1000, 1000});
+    return StringUtilRt.formatNumber(number, unitSeparator);
   }
 
   /**
@@ -1609,73 +1532,25 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
-    return formatFileSize(fileSize, " ");
+    return StringUtilRt.formatFileSize(fileSize);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
-    return formatValue(fileSize, null,
-                       unitSeparator, new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"},
-                       new long[]{1, 1024, 1024, 1024, 1024, 1024, 1024});
+    return StringUtilRt.formatFileSize(fileSize, unitSeparator);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    return formatDuration(duration, " ");
+    return StringUtilRt.formatDuration(duration);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration, @NotNull String unitSeparator) {
-    return formatValue(duration, " ", unitSeparator,
-                       new String[]{"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"},
-                       new long[]{1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000});
-  }
-
-  @NotNull
-  private static String formatValue(long value,
-                                    @Nullable String partSeparator, @NotNull String unitSeparator,
-                                    @NotNull String[] units, @NotNull long[] multipliers) {
-    LOG.assertTrue(units.length == multipliers.length);
-    StringBuilder sb = new StringBuilder();
-    long count = value;
-    long remainder = 0;
-    int i = 1;
-    for (; i < units.length && count > 0; i++) {
-      long multiplier = multipliers[i];
-      if (count < multiplier) break;
-      remainder = count % multiplier;
-      count /= multiplier;
-      if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
-        if (!units[i - 1].isEmpty()) {
-          sb.insert(0, units[i - 1]);
-          sb.insert(0, unitSeparator);
-        }
-        sb.insert(0, remainder).insert(0, partSeparator);
-      }
-      else {
-        remainder = Math.round(remainder * 100 / (double)multiplier);
-        count += remainder / 100;
-        remainder %= 100;
-      }
-    }
-    if (partSeparator != null || remainder == 0) {
-      if (!units[i - 1].isEmpty()) {
-        sb.insert(0, units[i - 1]);
-        sb.insert(0, unitSeparator);
-      }
-      sb.insert(0, count);
-    }
-    else if (remainder > 0) {
-      sb.append(count).append(".").append(remainder / 10 == 0 ? "0" : "").append(remainder);
-      if (!units[i - 1].isEmpty()) {
-        sb.append(unitSeparator);
-        sb.append(units[i - 1]);
-      }
-    }
-    return sb.toString();
+    return StringUtilRt.formatDuration(duration, unitSeparator);
   }
 
   /**
@@ -1821,45 +1696,17 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
-    int l1 = text.length();
-    int l2 = prefix.length();
-    if (l1 < l2) return false;
-
-    for (int i = 0; i < l2; i++) {
-      if (text.charAt(i) != prefix.charAt(i)) return false;
-    }
-
-    return true;
+    return StringUtilRt.startsWith(text, prefix);
   }
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
-    int tl = text.length();
-    if (startIndex < 0 || startIndex > tl) {
-      throw new IllegalArgumentException("Index is out of bounds: " + startIndex + ", length: " + tl);
-    }
-    int l1 = tl - startIndex;
-    int l2 = prefix.length();
-    if (l1 < l2) return false;
-
-    for (int i = 0; i < l2; i++) {
-      if (text.charAt(i + startIndex) != prefix.charAt(i)) return false;
-    }
-
-    return true;
+    return StringUtilRt.startsWith(text, startIndex, prefix);
   }
 
   @Contract(pure = true)
   public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
-    int l1 = text.length();
-    int l2 = suffix.length();
-    if (l1 < l2) return false;
-
-    for (int i = l1 - 1; i >= l1 - l2; i--) {
-      if (text.charAt(i) != suffix.charAt(i + l2 - l1)) return false;
-    }
-
-    return true;
+    return StringUtilRt.endsWith(text, suffix);
   }
 
   @NotNull
@@ -1932,46 +1779,37 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c) {
-    return indexOf(s, c, 0, s.length());
+    return StringUtilRt.indexOf(s, c);
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start) {
-    return indexOf(s, c, start, s.length());
+    return StringUtilRt.indexOf(s, c, start);
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
-    end = Math.min(end, s.length());
-    for (int i = Math.max(start, 0); i < end; i++) {
-      if (s.charAt(i) == c) return i;
-    }
-    return -1;
+    return StringUtilRt.indexOf(s, c, start, end);
   }
 
   @Contract(pure = true)
   public static boolean contains(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
-    return indexOf(sequence, infix) >= 0;
+    return StringUtilRt.contains(sequence, infix);
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
-    return indexOf(sequence, infix, 0);
+    return StringUtilRt.indexOf(sequence, infix);
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
-    return indexOf(sequence, infix, start, sequence.length());
+    return StringUtilRt.indexOf(sequence, infix, start);
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start, int end) {
-    for (int i = start; i <= end - infix.length(); i++) {
-      if (startsWith(sequence, i, infix)) {
-        return i;
-      }
-    }
-    return -1;
+    return StringUtilRt.indexOf(sequence, infix, start, end);
   }
 
   @Contract(pure = true)

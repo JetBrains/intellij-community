@@ -1,5 +1,18 @@
 import org.jetbrains.annotations.Nullable;
 
+abstract class Node {
+  abstract @Nullable Node getParent();
+  abstract @Nullable String getName();
+
+  Node getRoot() {
+    Node node = this;
+    while(node.<warning descr="Method invocation 'getName' may produce 'java.lang.NullPointerException'">getName</warning>() == null) {
+      node = node.getParent();
+    }
+    return node;
+  }
+}
+
 class GetUnknownTest {
   private void test(Message message, boolean isApplicable) {
     if (message == null && field == null) {
