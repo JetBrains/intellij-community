@@ -49,12 +49,14 @@
     <xi:fallback/>
   </xi:include>
 
+  <!-- Android Studio: disable until we adapt our embedded JDK configurator to use this mechanism.
   <application-components>
     <component>
       <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
       <headless-implementation-class/>
     </component>
   </application-components>
+  -->
 
   <project-components>
 
