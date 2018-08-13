@@ -470,7 +470,7 @@ public class PyDocumentationBuilder {
           docstringElement = getEffectiveDocStringExpression(inherited);
         }
       }
-      if (docstringElement != null && docstringElement.getStringValue().length() > 1) {
+      if (docstringElement != null && !docstringElement.getStringValue().isEmpty()) {
         final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
         if (ancestorLink != null) {
           mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
@@ -497,7 +497,7 @@ public class PyDocumentationBuilder {
       if (predefinedMethod != null) {
         final PyStringLiteralExpression predefinedDocstring = getEffectiveDocStringExpression(predefinedMethod);
         final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
-        if (predefinedDoc != null && predefinedDoc.length() > 1) { // only a real-looking doc string counts
+        if (predefinedDoc != null && !predefinedDoc.isEmpty()) {
           mySectionsMap.get(PyBundle.message("QDOC.documentation.is.copied.from")).addItem("built-in description");
           myContent.add(formatDocString(fun, predefinedDoc));
         }
