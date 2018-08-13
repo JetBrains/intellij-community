@@ -1347,11 +1347,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (enabledProviders.isEmpty()) return Collections.emptyList();
       if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
 
-      Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
-      List<FilePath> beforePaths = mapNotNull(changes, ChangesUtil::getBeforePath);
-      List<FilePath> afterPaths = mapNotNull(changes, ChangesUtil::getAfterPath);
+      List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
+      List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
+      List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
 
-      return filter(enabledProviders, it -> !it.collectExplicitMovements(project, beforePaths, afterPaths).isEmpty());
+      return filter(enabledProviders, it -> {
+        Collection<Movement> movements = it.collectExplicitMovements(project, beforePaths, afterPaths);
+        List<Movement> filteredMovements = filterExcludedChanges(movements, changes);
+        return !filteredMovements.isEmpty();
+      });
     }
   }
 
