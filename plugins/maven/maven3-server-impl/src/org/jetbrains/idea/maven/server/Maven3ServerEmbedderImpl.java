@@ -52,8 +52,8 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.profiles.activation.*;
-import org.apache.maven.project.*;
 import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -92,8 +92,8 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.embedder.*;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -911,8 +911,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       result.setStartTime(myBuildStartTime);
 
-      final Method setMultiModuleProjectDirectoryMethod =
-        ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(result.getClass()), "setMultiModuleProjectDirectory", File.class);
+      final Method setMultiModuleProjectDirectoryMethod = getSetMultiModuleProjectDirectoryMethod(result);
       if (setMultiModuleProjectDirectoryMethod != null) {
         try {
           File mavenMultiModuleProjectDirectory;
@@ -934,6 +933,20 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
     catch (MavenExecutionRequestPopulationException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static Method getSetMultiModuleProjectDirectoryMethod(MavenExecutionRequest result) {
+    try {
+      Method method = result.getClass().getDeclaredMethod("setMultiModuleProjectDirectory", File.class);
+      method.setAccessible(true);
+      return method;
+    }
+    catch (NoSuchMethodException e) {
+      return null;
+    }
+    catch (SecurityException e) {
+      return null;
     }
   }
 
@@ -1152,7 +1165,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       try {
         Object polyglotManager = myContainer.lookup("org.sonatype.maven.polyglot.PolyglotModelManager");
         if (polyglotManager != null) {
-          Method getReaderFor = ReflectionUtil.getMethod(polyglotManager.getClass(), "getReaderFor", Map.class);
+          Method getReaderFor = polyglotManager.getClass().getMethod("getReaderFor", Map.class);
           if (getReaderFor != null) {
             reader = (ModelReader)getReaderFor.invoke(polyglotManager, inputOptions);
           }
