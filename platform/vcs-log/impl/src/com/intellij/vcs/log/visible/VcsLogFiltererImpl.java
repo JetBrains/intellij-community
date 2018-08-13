@@ -18,6 +18,7 @@ package com.intellij.vcs.log.visible;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +33,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
+import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,9 +72,11 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     VcsLogHashFilter hashFilter = filters.get(VcsLogFilterCollection.HASH_FILTER);
     if (hashFilter != null && !hashFilter.getHashes().isEmpty()) { // hashes should be shown, no matter if they match other filters or not
-      VisiblePack visiblePack = applyHashFilter(dataPack, hashFilter.getHashes(), sortType);
-      if (visiblePack != null) {
-        return Pair.create(visiblePack, commitCount);
+      Pair<VisiblePack, CommitCountStage> hashFilterResult = applyHashFilter(dataPack, hashFilter.getHashes(), sortType, commitCount);
+      if (hashFilterResult != null) {
+        LOG.debug(
+          StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + hashFilterResult.getFirst().getFilters());
+        return hashFilterResult;
       }
     }
 
@@ -178,18 +182,25 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   }
 
   @Nullable
-  private VisiblePack applyHashFilter(@NotNull DataPack dataPack,
-                                      @NotNull Collection<String> hashes,
-                                      @NotNull PermanentGraph.SortType sortType) {
-    Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, partOfHash -> {
+  private Pair<VisiblePack, CommitCountStage> applyHashFilter(@NotNull DataPack dataPack,
+                                                              @NotNull Collection<String> hashes,
+                                                              @NotNull PermanentGraph.SortType sortType,
+                                                              @NotNull CommitCountStage commitCount) {
+    Set<Integer> hashFilterResult = ContainerUtil.map2SetNotNull(hashes, partOfHash -> {
       CommitId commitId = myStorage.findCommitId(new CommitIdByStringCondition(partOfHash));
       return commitId != null ? myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
     });
-    if (indices.isEmpty()) return null;
+    VcsLogTextFilterImpl textFilter = new VcsLogTextFilterImpl(StringUtil.join(hashes, "|"), true, false);
+    FilterByDetailsResult textFilterResult = filterByDetails(dataPack, new VcsLogFilterCollectionBuilder(textFilter).build(),
+                                                             commitCount, dataPack.getLogProviders().keySet(), null);
+    if (hashFilterResult.isEmpty() && matchesNothing(textFilterResult.matchingCommits)) return null;
+    Set<Integer> filterResult = textFilterResult.matchingCommits == null ? hashFilterResult :
+                                ContainerUtil.union(hashFilterResult, textFilterResult.matchingCommits);
 
-    VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
-    return new VisiblePack(dataPack, visibleGraph, false,
-                           new VcsLogFilterCollectionBuilder(new VcsLogHashFilterImpl(hashes)).build());
+    VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, filterResult);
+    VisiblePack visiblePack = new VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
+                                              new VcsLogFilterCollectionBuilder(new VcsLogHashFilterImpl(hashes), textFilter).build());
+    return Pair.create(visiblePack, textFilterResult.commitCount);
   }
 
   @Nullable
@@ -245,7 +256,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull
   private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull Collection<VirtualFile> roots) {
     Set<Integer> result = new HashSet<>();
-    for (VcsRef branch: refs.getBranches()) {
+    for (VcsRef branch : refs.getBranches()) {
       if (roots.contains(branch.getRoot())) {
         result.add(myStorage.getCommitIndex(branch.getCommitHash(), branch.getRoot()));
       }
@@ -258,7 +269,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
                                               @NotNull List<VcsLogDetailsFilter> detailsFilters,
                                               @Nullable Set<Integer> matchingHeads) {
     Collection<CommitId> result = ContainerUtil.newArrayList();
-    for (GraphCommit<Integer> commit: permanentGraph.getAllCommits()) {
+    for (GraphCommit<Integer> commit : permanentGraph.getAllCommits()) {
       VcsCommitMetadata data = getDetailsFromCache(commit.getId());
       if (data == null) {
         // no more continuous details in the cache
@@ -306,7 +317,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     Set<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keySet(), filterCollection);
 
     Collection<CommitId> commits = ContainerUtil.newArrayList();
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry: providers.entrySet()) {
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       final VirtualFile root = entry.getKey();
 
       VcsLogUserFilter userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER);
