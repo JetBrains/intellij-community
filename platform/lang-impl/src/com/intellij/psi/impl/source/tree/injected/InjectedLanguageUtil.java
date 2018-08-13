@@ -161,7 +161,11 @@ public class InjectedLanguageUtil {
       host = inTree;
       containingFile = host.getContainingFile();
     }
-    probeElementsUp(host, containingFile, probeUp, visitor);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(containingFile.getProject());
+    Document document = documentManager.getDocument(containingFile);
+    if (document == null || documentManager.isCommitted(document)) {
+      probeElementsUp(host, containingFile, probeUp, visitor);
+    }
     return true;
   }
   
