@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -98,6 +99,9 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
       myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
       myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
       myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
+      for (int i = 0; i < 4; i++) {
+        myKeywordsLists[i].setCaretPosition(0);
+      }
     }
   }
 
@@ -167,7 +171,9 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     tabbedPaneWrapper.getComponent().setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords"),
                                                                                    false));
     for (int i = 0; i < 4; i++) {
-      tabbedPaneWrapper.addTab(" " + (i + 1) + " ", myKeywordsLists[i]);
+      JTextArea list = myKeywordsLists[i];
+      list.setRows(10);
+      tabbedPaneWrapper.addTab(" " + (i + 1) + " ", new JBScrollPane(list));
     }
 
     highlighterPanel.add(tabbedPaneWrapper.getComponent(), BorderLayout.CENTER);
