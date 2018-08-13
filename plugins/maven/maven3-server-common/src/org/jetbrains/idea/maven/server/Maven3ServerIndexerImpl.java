@@ -243,7 +243,6 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         String groupId = uInfoParts[0];
         String artifactId = uInfoParts[1];
         String version = uInfoParts[2];
-        if (groupId == null || artifactId == null || version == null) continue;
 
         String packaging = doc.get(ArtifactInfo.PACKAGING);
         String description = doc.get(ArtifactInfo.DESCRIPTION);
