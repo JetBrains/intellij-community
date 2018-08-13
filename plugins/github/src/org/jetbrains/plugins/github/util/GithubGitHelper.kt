@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -52,14 +53,27 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
     }.toSet()
   }
 
-  fun getPossibleRemoteUrls(repository: GitRepository): List<String> {
+  fun getPossibleRemoteUrlCoordinates(project: Project): Set<GitRemoteUrlCoordinates> {
+    val repositories = project.service<GitRepositoryManager>().repositories
+    if (repositories.isEmpty()) return emptySet()
+
     val knownServers = getKnownGithubServers()
-    return repository.getRemoteUrls().filter { url -> knownServers.any { it.matches(url) } }
+
+    return repositories.flatMap { repo ->
+      repo.remotes.flatMap { remote ->
+        remote.urls.mapNotNull { url ->
+          if (knownServers.any { it.matches(url) }) GitRemoteUrlCoordinates(url, remote, repo) else null
+        }
+      }
+    }.toSet()
   }
 
-  fun hasPossibleRemotes(repository: GitRepository): Boolean {
+  fun havePossibleRemotes(project: Project): Boolean {
+    val repositories = project.service<GitRepositoryManager>().repositories
+    if (repositories.isEmpty()) return false
+
     val knownServers = getKnownGithubServers()
-    return repository.getRemoteUrls().any { url -> knownServers.any { it.matches(url) } }
+    return repositories.any { repo -> repo.getRemoteUrls().any { url -> knownServers.any { it.matches(url) } } }
   }
 
   private fun getKnownGithubServers(): Set<GithubServerPath> {

@@ -9,30 +9,34 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerAdapter
 import com.intellij.ui.content.ContentManagerEvent
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
 import icons.GithubIcons
 import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsComponentFactory
-import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"
 
 private val REPOSITORY_KEY = Key<GitRepository>("REPOSITORY")
+private val REMOTE_KEY = Key<GitRemote>("REMOTE")
 private val REMOTE_URL_KEY = Key<String>("REMOTE_URL")
 private val ACCOUNT_KEY = Key<GithubAccount>("ACCOUNT")
 
 class GithubPullRequestsToolWindowManager(private val project: Project,
                                           private val toolWindowManager: ToolWindowManager,
+                                          private val gitRepositoryManager: GitRepositoryManager,
                                           private val componentFactory: GithubPullRequestsComponentFactory) {
 
-  fun showPullRequestsTab(repository: GitRepository, remoteUrl: String, account: GithubAccount) {
+  fun showPullRequestsTab(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount) {
     val toolWindow = getCurrentOrRegisterNewToolWindow()
     val contentManager = toolWindow.contentManager
 
@@ -46,6 +50,7 @@ class GithubPullRequestsToolWindowManager(private val project: Project,
           displayName = GithubUrlUtil.removeProtocolPrefix(remoteUrl)
 
           putUserData(REPOSITORY_KEY, repository)
+          putUserData(REMOTE_KEY, remote)
           putUserData(REMOTE_URL_KEY, remoteUrl)
           putUserData(ACCOUNT_KEY, account)
         }
@@ -76,11 +81,12 @@ class GithubPullRequestsToolWindowManager(private val project: Project,
     busConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
       runInEdt {
         val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return@runInEdt
-        val repository: GitRepository = GithubGitHelper.findGitRepository(project) ?: run {
+        val repositories = gitRepositoryManager.repositories
+        if (repositories.isEmpty()) {
           unregisterToolWindow()
           return@runInEdt
         }
-        removeContentsForRemovedRemotes(toolWindow, repository)
+        removeContentsForRemovedRepositories(toolWindow, repositories)
       }
     })
 
@@ -88,6 +94,7 @@ class GithubPullRequestsToolWindowManager(private val project: Project,
       runInEdt {
         val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return@runInEdt
         removeContentsForRemovedRemotes(toolWindow, repository)
+        removeContentsForRemovedRemoteUrls(toolWindow, repository)
       }
     })
 
@@ -101,12 +108,31 @@ class GithubPullRequestsToolWindowManager(private val project: Project,
     })
   }
 
+  private fun removeContentsForRemovedRepositories(toolWindow: ToolWindow, repositories: List<GitRepository>) {
+    findAndRemoveContents(toolWindow) {
+      repositories.contains(it.getUserData(REPOSITORY_KEY))
+    }
+  }
+
   private fun removeContentsForRemovedRemotes(toolWindow: ToolWindow, repository: GitRepository) {
+    findAndRemoveContents(toolWindow) {
+      it.getUserData(REPOSITORY_KEY) == repository && !repository.remotes.contains(it.getUserData(REMOTE_KEY))
+    }
+  }
+
+  private fun removeContentsForRemovedRemoteUrls(toolWindow: ToolWindow, repository: GitRepository) {
     val urls = repository.remotes.map { it.urls }.flatten().toSet()
+    findAndRemoveContents(toolWindow) {
+      it.getUserData(REPOSITORY_KEY) == repository && !urls.contains(it.getUserData(REMOTE_URL_KEY))
+    }
+  }
+
+  private fun findAndRemoveContents(toolWindow: ToolWindow, predicate: (Content) -> Boolean) {
     val contentManager = toolWindow.contentManager
-    contentManager.contents
-      .find { it.getUserData(REPOSITORY_KEY) == repository && !urls.contains(it.getUserData(REMOTE_URL_KEY)) }
-      ?.run { contentManager.removeContent(this, true) }
+    for (content in contentManager.contents) {
+      if (predicate(content))
+        contentManager.removeContent(content, true)
+    }
   }
 
   private fun removeContentsUsingRemovedAccount(toolWindow: ToolWindow, removedAccount: GithubAccount) {

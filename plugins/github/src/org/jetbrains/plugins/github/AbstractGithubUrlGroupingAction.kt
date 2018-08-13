@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -23,7 +24,6 @@ import javax.swing.Icon
  *
  * If it is not possible to automatically determine suitable account, [GithubChooseAccountDialog] dialog will be shown.
  */
-//TODO: handle multi-root projects
 abstract class AbstractGithubUrlGroupingAction(text: String?, description: String?, icon: Icon?)
   : ActionGroup(text, description, icon), DumbAware {
 
@@ -35,19 +35,19 @@ abstract class AbstractGithubUrlGroupingAction(text: String?, description: Strin
     val project = e.getData(CommonDataKeys.PROJECT)
     if (project == null || project.isDefault) return false
 
-    return GithubGitHelper.findGitRepository(project)?.let(service<GithubGitHelper>()::hasPossibleRemotes) ?: false
+    return service<GithubGitHelper>().havePossibleRemotes(project)
   }
 
   final override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.getData(CommonDataKeys.PROJECT) ?: return AnAction.EMPTY_ARRAY
-    val repository = GithubGitHelper.findGitRepository(project) ?: return AnAction.EMPTY_ARRAY
-    val urls = service<GithubGitHelper>().getPossibleRemoteUrls(repository)
 
-    return if (urls.size > 1) {
-      urls.map {
-        object : DumbAwareAction(GithubUrlUtil.removeProtocolPrefix(it)) {
+    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrlCoordinates(project)
+
+    return if (coordinates.size > 1) {
+      coordinates.map {
+        object : DumbAwareAction(GithubUrlUtil.removeProtocolPrefix(it.url)) {
           override fun actionPerformed(e: AnActionEvent) {
-            actionPerformed(e, project, repository, it)
+            actionPerformed(e, project, it.repository, it.remote, it.url)
           }
         }
       }.toTypedArray()
@@ -57,27 +57,25 @@ abstract class AbstractGithubUrlGroupingAction(text: String?, description: Strin
 
   final override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
-    val repository = GithubGitHelper.findGitRepository(project) ?: return
 
-    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrls(repository)
-    coordinates.singleOrNull()?.let { url -> actionPerformed(e, project, repository, url) }
+    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrlCoordinates(project)
+    coordinates.singleOrNull()?.let { actionPerformed(e, project, it.repository, it.remote, it.url) }
   }
 
   final override fun canBePerformed(context: DataContext): Boolean {
     val project = context.getData(CommonDataKeys.PROJECT) ?: return false
-    val repository = GithubGitHelper.findGitRepository(project) ?: return false
 
-    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrls(repository)
+    val coordinates = service<GithubGitHelper>().getPossibleRemoteUrlCoordinates(project)
     return coordinates.size == 1
   }
 
   final override fun isPopup(): Boolean = true
   final override fun disableIfNoVisibleChildren(): Boolean = false
 
-  private fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remoteUrl: String) {
+  private fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remote: GitRemote, remoteUrl: String) {
     if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
     val account = getAccount(project, remoteUrl) ?: return
-    actionPerformed(e, project, repository, remoteUrl, account)
+    actionPerformed(e, project, repository, remote, remoteUrl, account)
   }
 
   private fun getAccount(project: Project, remoteUrl: String): GithubAccount? {
@@ -110,5 +108,10 @@ abstract class AbstractGithubUrlGroupingAction(text: String?, description: Strin
     return account
   }
 
-  protected abstract fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remoteUrl: String, account: GithubAccount)
+  protected abstract fun actionPerformed(e: AnActionEvent,
+                                         project: Project,
+                                         repository: GitRepository,
+                                         remote: GitRemote,
+                                         remoteUrl: String,
+                                         account: GithubAccount)
 }
