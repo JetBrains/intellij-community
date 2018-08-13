@@ -168,6 +168,9 @@ public class TestsPattern extends TestPackage {
       if (psiClass != null && !JUnitUtil.isTestClass(psiClass)) {
         throw new RuntimeConfigurationWarning("Class " + className + " not a test");
       }
+      if (psiClass == null && !pattern.contains("*")) {
+        throw new RuntimeConfigurationWarning("Class " + className + " not found");
+      }
     }
   }
 }
