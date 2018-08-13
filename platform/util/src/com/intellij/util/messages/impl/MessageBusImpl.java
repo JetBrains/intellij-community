@@ -44,8 +44,7 @@ public class MessageBusImpl implements MessageBus {
    */
   private List<Integer> myOrder;
 
-  private final ConcurrentMap<Topic, Object> mySyncPublishers = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<Topic, Object> myAsyncPublishers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic, Object> myPublishers = ContainerUtil.newConcurrentMap();
 
   /**
    * This bus's subscribers
@@ -186,7 +185,7 @@ public class MessageBusImpl implements MessageBus {
   @SuppressWarnings("unchecked")
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
-    L publisher = (L)mySyncPublishers.get(topic);
+    L publisher = (L)myPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
       InvocationHandler handler = new InvocationHandler() {
@@ -200,28 +199,7 @@ public class MessageBusImpl implements MessageBus {
         }
       };
       publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(mySyncPublishers, topic, publisher);
-    }
-    return publisher;
-  }
-
-  @Override
-  @NotNull
-  @SuppressWarnings("unchecked")
-  public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
-    checkNotDisposed();
-    L publisher = (L)myAsyncPublishers.get(topic);
-    if (publisher == null) {
-      final Class<L> listenerClass = topic.getListenerClass();
-      InvocationHandler handler = new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) {
-          postMessage(new Message(topic, method, args));
-          return NA;
-        }
-      };
-      publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(myAsyncPublishers, topic, publisher);
+      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, publisher);
     }
     return publisher;
   }
