@@ -212,48 +212,53 @@ public class DarculaUIUtil {
       EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
       if (editorTextField == null) return;
 
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
-          g2.setColor(UIUtil.getPanelBackground());
-          g2.fillRect(x, y, width, height);
+      if (isTableCellEditor(c)) {
+        paintCellEditorBorder((Graphics2D)g, c, new Rectangle(x, y, width, height));
+      } else {
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
+            g2.setColor(UIUtil.getPanelBackground());
+            g2.fillRect(x, y, width, height);
+          }
+
+          Rectangle2D rect = new Rectangle2D.Float(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3)*2, height - JBUI.scale(3)*2);
+          g2.setColor(c.getBackground());
+          g2.fill(rect);
+
+          if (!editorTextField.isEnabled()) {
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+          }
+
+          float bw = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
+          Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+          outline.append(rect, false);
+          outline.append(new Rectangle2D.Float((float)rect.getX() + bw,
+                                               (float)rect.getY() + bw,
+                                               (float)rect.getWidth() - 2*bw,
+                                               (float)rect.getHeight() - 2*bw), false);
+          g2.setColor(Gray.xBC);
+          g2.fill(outline);
+
+          g2.translate(x, y);
+
+          boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
+          Object op = editorTextField.getClientProperty("JComponent.outline");
+          if (op != null) {
+            paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
+          } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
+            paintFocusBorder(g2, width, height, 0, true);
+          }
+        } finally {
+          g2.dispose();
         }
-
-        Rectangle2D rect = new Rectangle2D.Float(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3)*2, height - JBUI.scale(3)*2);
-        g2.setColor(c.getBackground());
-        g2.fill(rect);
-
-        if (!editorTextField.isEnabled()) {
-          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-        }
-
-        float bw = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
-        Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        outline.append(rect, false);
-        outline.append(new Rectangle2D.Float((float)rect.getX() + bw,
-                                             (float)rect.getY() + bw,
-                                             (float)rect.getWidth() - 2*bw,
-                                             (float)rect.getHeight() - 2*bw), false);
-        g2.setColor(Gray.xBC);
-        g2.fill(outline);
-
-        g2.translate(x, y);
-
-        boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
-        Object op = editorTextField.getClientProperty("JComponent.outline");
-        if (op != null) {
-          paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
-        } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
-          paintFocusBorder(g2, width, height, 0, true);
-        }
-      } finally {
-        g2.dispose();
       }
     }
 
-    @Override
+      @Override
     public Insets getBorderInsets(Component c) {
-      return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
+      return isTableCellEditor(c) ? JBUI.insets(2).asUIResource() :
+             isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
     }
   }
 
