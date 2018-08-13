@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -243,18 +243,18 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     myContainer.getLoggerManager().setThreshold(serverSettings.getLoggingLevel());
 
-    mySystemProperties = ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
+    mySystemProperties = ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
 
     if (serverSettings.getProjectJdk() != null) {
       mySystemProperties.setProperty("java.home", serverSettings.getProjectJdk());
     }
 
     if (settingsBuilder == null) {
-      settingsBuilder = ReflectionUtil.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder");
+      settingsBuilder = ReflectionUtilRt.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder");
     }
 
     myMavenSettings = buildSettings(settingsBuilder, serverSettings, mySystemProperties,
-                                    ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
+                                    ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
 
