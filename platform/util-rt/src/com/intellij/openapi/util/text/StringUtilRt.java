@@ -113,7 +113,7 @@ public class StringUtilRt {
                                                   boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
-    final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
+    boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       if (c == '\n') {
@@ -182,7 +182,7 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int parseInt(@Nullable String string, final int defaultValue) {
+  public static int parseInt(@Nullable String string, int defaultValue) {
     if (string == null) {
       return defaultValue;
     }
@@ -209,7 +209,7 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static double parseDouble(final String string, final double defaultValue) {
+  public static double parseDouble(String string, double defaultValue) {
     try {
       return Double.parseDouble(string);
     }
@@ -219,7 +219,7 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean parseBoolean(final String string, final boolean defaultValue) {
+  public static boolean parseBoolean(String string, boolean defaultValue) {
     try {
       return Boolean.parseBoolean(string);
     }
@@ -267,8 +267,8 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWithIgnoreCase(@NotNull String str, @NotNull String prefix) {
-    final int stringLength = str.length();
-    final int prefixLength = prefix.length();
+    int stringLength = str.length();
+    int prefixLength = prefix.length();
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
@@ -339,11 +339,11 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    final List<String> result = new ArrayList<String>();
-    final StringBuilder builder = new StringBuilder(s.length());
+    List<String> result = new ArrayList<String>();
+    StringBuilder builder = new StringBuilder(s.length());
     boolean inQuotes = false;
     for (int i = 0; i < s.length(); i++) {
-      final char c = s.charAt(i);
+      char c = s.charAt(i);
       if (c == separator && !inQuotes) {
         if (builder.length() > 0) {
           result.add(builder.toString());
@@ -373,17 +373,11 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatNumber(long number, @NotNull String unitSeparator) {
-    return formatValue(number, null,
-                       unitSeparator, new String[]{"", "K", "M", "G", "T", "P", "E"},
+    return formatValue(number, null, unitSeparator,
+                       new String[]{"", "K", "M", "G", "T", "P", "E"},
                        new long[]{1, 1000, 1000, 1000, 1000, 1000, 1000});
   }
 
-  /**
-   * Formats the specified file size as a string.
-   *
-   * @param fileSize the size to format.
-   * @return the size formatted as a string.
-   */
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
@@ -393,8 +387,8 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
-    return formatValue(fileSize, null,
-                       unitSeparator, new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"},
+    return formatValue(fileSize, null, unitSeparator,
+                       new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"},
                        new long[]{1, 1024, 1024, 1024, 1024, 1024, 1024});
   }
 
@@ -413,9 +407,7 @@ public class StringUtilRt {
   }
 
   @NotNull
-  private static String formatValue(long value,
-                                    @Nullable String partSeparator, @NotNull String unitSeparator,
-                                    @NotNull String[] units, @NotNull long[] multipliers) {
+  private static String formatValue(long value, @Nullable String partSeparator, String unitSeparator, String[] units, long[] multipliers) {
     if (units.length != multipliers.length) {
       throw new IllegalArgumentException(units.length + " != " + multipliers.length);
     }
