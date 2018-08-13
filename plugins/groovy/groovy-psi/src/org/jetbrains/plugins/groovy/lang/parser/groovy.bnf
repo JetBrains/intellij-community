@@ -153,8 +153,10 @@
     NUM_FLOAT = 'Float'
     NUM_DOUBLE = 'Double'
 
-    STR_SQ = 'string'
-    STR_DQ = 'Gstring'
+    STRING_SQ = 'single quoted string'
+    STRING_TSQ = 'triple single quoted string'
+    STRING_DQ = 'double quoted string'
+    STRING_TDQ = 'triple double quoted string'
 
     GSTRING_BEGIN = 'Gstring begin'
     GSTRING_CONTENT = 'Gstring content'
@@ -443,7 +445,7 @@ annotation_method ::= method_identifier parse_parameter_list [mb_nl annotation_m
 }
 private annotation_method_default ::= 'default' annotation_value { pin = 1 }
 
-private method_identifier ::= IDENTIFIER | STR_SQ | STR_DQ { consumeTokenMethod = 'consumeTokenFast' }
+private method_identifier ::= IDENTIFIER | string_literal_tokens { consumeTokenMethod = 'consumeTokenFast' }
 private constructor_identifier ::= <<constructorIdentifier>>
 // endregion
 
@@ -813,7 +815,6 @@ private expression_start ::= IDENTIFIER
                            | DOLLAR_SLASHY_BEGIN
                            | GSTRING_BEGIN
                            | SLASHY_BEGIN
-                           | STR_DQ | STR_SQ
                            | 'new'
                            | primitive_type
                            | simple_literal_tokens
@@ -853,7 +854,7 @@ unqualified_reference_expression ::= IDENTIFIER soft_type_argument_list?
                                    | 'this'
                                    | 'super'
                                    | code_reference_identifiers_soft &(reference_dot | '.&')
-                                   | (STR_SQ | STR_DQ | regex_literal) &string_literal_as_reference
+                                   | (string_literal_tokens | regex_literal) &string_literal_as_reference
 {
   elementType = reference_expression
 }
@@ -882,8 +883,7 @@ private simple_literal_tokens ::= NUM_INT
                                 | NUM_BIG_DECIMAL
                                 | NUM_FLOAT
                                 | NUM_DOUBLE
-                                | STR_SQ
-                                | STR_DQ
+                                | string_literal_tokens
                                 | 'true'
                                 | 'false'
                                 | 'null'
@@ -987,7 +987,7 @@ private reference_dot ::= '.' attribute_dot? | '?.' attribute_dot? | '*.' { cons
 private attribute_dot ::= mb_nl ('@') { consumeTokenMethod = 'consumeTokenFast' }
 private property_dot ::= reference_dot | method_reference_dot
 private qualified_reference_expression_identifiers ::= IDENTIFIER
-                                                     | STR_SQ | STR_DQ
+                                                     | string_literal_tokens
                                                      | regex_literal
                                                      | 'true'
                                                      | 'false'
@@ -1155,7 +1155,7 @@ private named_argument_tail ::= ':' expression
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | STR_SQ | STR_DQ | '*' | 'null' | 'class' | primitive_type | 'default'
+argument_label ::= IDENTIFIER | string_literal_tokens | '*' | 'null' | 'class' | primitive_type | 'default'
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
@@ -1251,6 +1251,8 @@ private fast_question ::= '?'
 private fast_colon ::= ':'
 private fast_comma ::= ','
 private fast_l_angle ::= '<'
+
+private string_literal_tokens ::= STRING_SQ | STRING_TSQ | STRING_DQ | STRING_TDQ { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
 

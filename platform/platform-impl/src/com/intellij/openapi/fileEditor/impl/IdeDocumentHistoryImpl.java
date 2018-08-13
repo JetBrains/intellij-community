@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -113,7 +114,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myVfManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        onFileDeleted();
+        removeInvalidFilesFromStacks();
       }
     }, myProject);
 
@@ -159,8 +160,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myRecentlyChangedFiles = state;
   }
 
-  final void onFileDeleted() {
-    removeInvalidFilesFromStacks();
+  @TestOnly
+  public void setFileEditorManager(@NotNull FileEditorManagerEx value) {
+    myEditorManager = value;
   }
 
   public final void onSelectionChanged() {
@@ -194,12 +196,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myChangedFilesInCurrentCommand.clear();
   }
 
+  @Nullable
   private PlaceInfo getCurrentPlaceInfo() {
-    final Pair<FileEditor,FileEditorProvider> selectedEditorWithProvider = getSelectedEditor();
-    if (selectedEditorWithProvider != null) {
-      return createPlaceInfo(selectedEditorWithProvider.getFirst (), selectedEditorWithProvider.getSecond ());
+    FileEditorWithProvider selectedEditorWithProvider = getSelectedEditor();
+    if (selectedEditorWithProvider == null) {
+      return null;
     }
-    return null;
+    return createPlaceInfo(selectedEditorWithProvider.getFileEditor(), selectedEditorWithProvider.getProvider());
   }
 
   final void onCommandFinished(Object commandGroupId) {
@@ -380,7 +383,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return myCurrentIndex > myStartIndex;
   }
 
-  private void removeInvalidFilesFromStacks() {
+  void removeInvalidFilesFromStacks() {
     removeInvalidFilesFrom(myBackPlaces);
 
     removeInvalidFilesFrom(myForwardPlaces);
@@ -441,9 +444,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   /**
    * @return currently selected FileEditor or null.
    */
-  protected Pair<FileEditor,FileEditorProvider> getSelectedEditor() {
-    VirtualFile file = myEditorManager.getCurrentFile();
-    return file != null ? myEditorManager.getSelectedEditorWithProvider(file) : null;
+  @Nullable
+  protected FileEditorWithProvider getSelectedEditor() {
+    FileEditorManagerEx editorManager = myEditorManager;
+    VirtualFile file = editorManager.getCurrentFile();
+    return file == null ? null : editorManager.getSelectedEditorWithProvider(file);
   }
 
   protected PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {

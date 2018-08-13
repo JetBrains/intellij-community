@@ -20,9 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -151,7 +149,7 @@ public class PushDownConflicts {
           if (myConflicts.containsKey(element)) continue;
           final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
           final PsiExpression qualifier = referenceExpression.getQualifierExpression();
-          if (qualifier instanceof PsiSuperExpression) continue;
+          if (qualifier instanceof PsiSuperExpression && isSuperCallToBeInlined(member, targetClass, myClass, element)) continue;
           if (qualifier != null) {
             final PsiType qualifierType = qualifier.getType();
             PsiClass aClass = null;
@@ -221,6 +219,20 @@ public class PushDownConflicts {
         !(targetClass.getParent() instanceof PsiFile)) {
       myConflicts.putValue(movedMember, "Static " + RefactoringUIUtil.getDescription(movedMember, false) + " can't be pushed to non-static " + RefactoringUIUtil.getDescription(targetClass, false));
     }
+  }
+
+  public static boolean isSuperCallToBeInlined(PsiMember member,
+                                               PsiClass targetClass,
+                                               PsiClass sourceClass,
+                                               PsiElement referenceOnSuper) {
+    if (member instanceof PsiMethod) {
+      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(sourceClass, targetClass, PsiSubstitutor.EMPTY);
+      PsiMethod methodInTarget = MethodSignatureUtil.findMethodBySuperSignature(targetClass, 
+                                                                                ((PsiMethod)member).getSignature(substitutor), 
+                                                                                true);
+      return methodInTarget != null && PsiTreeUtil.isAncestor(methodInTarget, referenceOnSuper, false);
+    }
+    return false;
   }
 
   private class UsedMovedMembersConflictsCollector extends ClassMemberReferencesVisitor {

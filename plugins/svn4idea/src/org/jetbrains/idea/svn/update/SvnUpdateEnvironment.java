@@ -88,7 +88,6 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         updateClient.setIgnoreExternals(configuration.isIgnoreExternals());
       }
       updateClient.setEventHandler(myHandler);
-      updateClient.setUpdateLocksOnDemand(configuration.isUpdateLockOnDemand());
 
       return updateClient;
     }

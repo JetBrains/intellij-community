@@ -112,9 +112,9 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
 import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -2091,9 +2091,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             updatePopupBounds();
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
 
-            ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+            ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
@@ -2101,7 +2101,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   myPopup.cancel();
                 }
               }
-            }, myPopup);
+            });
           }
           else {
             myList.revalidate();

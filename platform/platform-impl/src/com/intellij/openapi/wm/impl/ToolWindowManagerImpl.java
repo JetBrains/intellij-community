@@ -7,9 +7,8 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,8 +61,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 @State(
@@ -134,16 +133,17 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
-    actionManager.addAnActionListener((action, dataContext, event) -> {
-      if (myCurrentState != KeyState.hold) {
-        resetHoldState();
-      }
-    }, project);
-
     MessageBusConnection busConnection = project.getMessageBus().connect();
 
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
-
+    busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
+      @Override
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (myCurrentState != KeyState.hold) {
+          resetHoldState();
+        }
+      }
+    });
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {

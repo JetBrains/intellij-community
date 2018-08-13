@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -30,6 +29,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +41,9 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
-public class HintManagerImpl extends HintManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.HintManager");
+public class HintManagerImpl extends HintManager {
+  private static final Logger LOG = Logger.getInstance(HintManager.class);
 
-  private final AnActionListener myAnActionListener;
   private final MyEditorManagerListener myEditorManagerListener;
   private final EditorMouseListener myEditorMouseListener;
 
@@ -89,11 +88,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
     return (HintManagerImpl)ServiceManager.getService(HintManager.class);
   }
 
-  public HintManagerImpl(ActionManagerEx actionManagerEx, ProjectManager projectManager) {
+  public HintManagerImpl(@NotNull ProjectManager projectManager) {
     myEditorManagerListener = new MyEditorManagerListener();
-
-    myAnActionListener = new MyAnActionListener();
-    actionManagerEx.addAnActionListener(myAnActionListener);
 
     myCaretMoveListener = new CaretListener() {
       @Override
@@ -104,7 +100,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     mySelectionListener = new SelectionListener() {
       @Override
-      public void selectionChanged(SelectionEvent e) {
+      public void selectionChanged(@NotNull SelectionEvent e) {
         hideHints(HIDE_BY_CARET_MOVE, false, false);
       }
     };
@@ -114,7 +110,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
       projectManagerListener.projectOpened(project);
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, projectManagerListener);
+    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    busConnection.subscribe(ProjectManager.TOPIC, projectManagerListener);
+    busConnection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
 
     myEditorMouseListener = new EditorMouseListener() {
       @Override
@@ -221,11 +219,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     }
     return false;
-  }
-
-  @Override
-  public void dispose() {
-    ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
   }
 
   private static void updateScrollableHintPosition(VisibleAreaEvent e, LightweightHint hint, boolean hideIfOutOfEditor) {
@@ -872,7 +865,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
       if (action instanceof ActionToIgnore) return;
 
       AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);

@@ -169,7 +169,7 @@ public abstract class CompletionPhase implements Disposable {
       };
       final SelectionListener selectionListener = new SelectionListener() {
         @Override
-        public void selectionChanged(SelectionEvent e) {
+        public void selectionChanged(@NotNull SelectionEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };

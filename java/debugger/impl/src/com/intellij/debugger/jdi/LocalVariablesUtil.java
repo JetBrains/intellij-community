@@ -307,6 +307,9 @@ public class LocalVariablesUtil {
     }
     catch (UnsupportedOperationException ignored) {
     }
+    catch (VMDisconnectedException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }

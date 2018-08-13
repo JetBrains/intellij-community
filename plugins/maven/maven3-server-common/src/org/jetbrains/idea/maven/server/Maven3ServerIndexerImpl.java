@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.text.StringUtilRt;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
@@ -239,11 +238,11 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
         Document doc = r.document(i);
         String uinfo = doc.get(ArtifactInfo.UINFO);
         if (uinfo == null) continue;
-        List<String> uInfoParts = StringUtilRt.split(uinfo, ArtifactInfoRecord.FS);
-        String groupId = uInfoParts.get(0);
-        String artifactId = uInfoParts.get(1);
-        String version = uInfoParts.get(2);
-        if (groupId == null || artifactId == null || version == null) continue;
+        String[] uInfoParts = uinfo.split("\\|");
+        if (uInfoParts.length < 3) continue;
+        String groupId = uInfoParts[0];
+        String artifactId = uInfoParts[1];
+        String version = uInfoParts[2];
 
         String packaging = doc.get(ArtifactInfo.PACKAGING);
         String description = doc.get(ArtifactInfo.DESCRIPTION);

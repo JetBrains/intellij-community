@@ -12,6 +12,7 @@
 
   <depends>com.intellij.properties</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
+  <depends config-file="json-devkit.xml" optional="true">com.intellij.modules.json</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -270,6 +271,9 @@
            class="com.intellij.ide.actions.NonTrivialActionGroup">
       <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
       <separator/>
+
+      <action text="Theme" id="DevKit.NewTheme"
+              class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <action text="Application Service" id="NewApplicationService"
               class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
       <action text="Project Service" id="NewProjectService"

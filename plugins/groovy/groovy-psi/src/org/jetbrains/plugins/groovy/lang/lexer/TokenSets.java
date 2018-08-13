@@ -39,7 +39,7 @@ public interface TokenSets {
     mNUM_LONG
   );
 
-  TokenSet CONSTANTS = TokenSet.create(
+  TokenSet CONSTANTS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
     mNUM_INT,
     mNUM_BIG_DECIMAL,
     mNUM_BIG_INT,
@@ -49,11 +49,9 @@ public interface TokenSets {
     kTRUE,
     kFALSE,
     kNULL,
-    mSTRING_LITERAL,
-    mGSTRING_LITERAL,
     mREGEX_LITERAL,
     mDOLLAR_SLASH_REGEX_LITERAL
-  );
+  ));
 
   TokenSet BUILT_IN_TYPES = TokenSet.create(
     kVOID,
@@ -67,13 +65,11 @@ public interface TokenSets {
     kDOUBLE
   );
 
-  TokenSet PROPERTY_NAMES = TokenSet.create(
+  TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
     mIDENT,
-    mSTRING_LITERAL,
-    mGSTRING_LITERAL,
     mREGEX_LITERAL,
     mDOLLAR_SLASH_REGEX_LITERAL
-  );
+  ));
 
   TokenSet KEYWORDS = TokenSet.create(
     kABSTRACT, kAS, kASSERT,
@@ -96,13 +92,18 @@ public interface TokenSets {
 
   TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
-  TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(NUMBERS, KEYWORDS, TokenSet.create(mIDENT,
-                                                                                       mSTRING_LITERAL,
-                                                                                       mGSTRING_LITERAL,
-                                                                                       mGSTRING_BEGIN,
-                                                                                       mREGEX_BEGIN,
-                                                                                       mDOLLAR_SLASH_REGEX_BEGIN,
-                                                                                       mAT));
+  TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(
+    NUMBERS,
+    KEYWORDS,
+    GroovyTokenSets.STRING_LITERALS,
+    TokenSet.create(
+      mIDENT,
+      mGSTRING_BEGIN,
+      mREGEX_BEGIN,
+      mDOLLAR_SLASH_REGEX_BEGIN,
+      mAT
+    )
+  );
 
   TokenSet VISIBILITY_MODIFIERS = TokenSet.create(kPRIVATE, kPROTECTED, kPUBLIC);
 
@@ -123,9 +124,7 @@ public interface TokenSets {
     kDEF
   );
 
-  TokenSet STRING_LITERALS = TokenSet.create(
-    mSTRING_LITERAL,
-    mGSTRING_LITERAL,
+  TokenSet STRING_LITERALS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
     mGSTRING_BEGIN,
     mGSTRING_CONTENT,
     mGSTRING_END,
@@ -137,7 +136,7 @@ public interface TokenSets {
     mDOLLAR_SLASH_REGEX_BEGIN,
     mDOLLAR_SLASH_REGEX_CONTENT,
     mDOLLAR_SLASH_REGEX_END
-  );
+  ));
 
   TokenSet GSTRING_CONTENT_PARTS = TokenSet.create(GSTRING_CONTENT, GSTRING_INJECTION);
 
@@ -149,7 +148,7 @@ public interface TokenSets {
 
   TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT, GROOVY_DOC_COMMENT);
 
-  TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL);
+  TokenSet STRING_LITERAL_SET = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL));
 
   TokenSet LEFT_BRACES = TokenSet.create(mLBRACK, mLPAREN, mLCURLY);
   TokenSet RIGHT_BRACES = TokenSet.create(mRBRACK, mRPAREN, mRCURLY);
@@ -214,5 +213,5 @@ public interface TokenSets {
     TRAIT_DEFINITION
   );
 
-  TokenSet METHOD_IDENTIFIERS = TokenSet.create(mIDENT, mGSTRING_LITERAL, mSTRING_LITERAL);
+  TokenSet METHOD_IDENTIFIERS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(mIDENT));
 }

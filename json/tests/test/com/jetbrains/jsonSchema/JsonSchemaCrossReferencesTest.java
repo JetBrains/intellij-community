@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.idea.Bombed;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,6 +118,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
+  @Bombed(month = Calendar.AUGUST, day = 20, year = 2018, user = "Anton.Lobov")
   public void testJsonSchemaCrossReferenceCompletionWithSchemaEditing() throws Exception {
     skeleton(new Callback() {
       private String myModuleDir;

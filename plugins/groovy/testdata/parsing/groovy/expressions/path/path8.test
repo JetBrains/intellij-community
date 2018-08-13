@@ -17,4 +17,4 @@ Groovy script
       PsiErrorElement:'>' expected, got ''preved''
         <empty list>
     PsiWhiteSpace(' ')
-    PsiElement(string)(''preved'')
+    PsiElement(single quoted string)(''preved'')

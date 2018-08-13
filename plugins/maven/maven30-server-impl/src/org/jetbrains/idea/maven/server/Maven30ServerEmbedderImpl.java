@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -53,8 +53,8 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.profiles.activation.*;
-import org.apache.maven.project.*;
 import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -81,8 +81,8 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationExce
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.embedder.*;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.repository.LocalRepositoryManager;
@@ -216,18 +216,18 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
 
     // reset threshold
-    myContainer = ReflectionUtil.getField(MavenCli.class, cli, DefaultPlexusContainer.class, "container");
+    myContainer = ReflectionUtilRt.getField(MavenCli.class, cli, DefaultPlexusContainer.class, "container");
     myContainer.getLoggerManager().setThreshold(settings.getLoggingLevel());
 
-    mySystemProperties = ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
+    mySystemProperties = ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "systemProperties");
 
     if (settings.getProjectJdk() != null) {
       mySystemProperties.setProperty("java.home", settings.getProjectJdk());
     }
 
     myMavenSettings =
-      buildSettings(ReflectionUtil.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder"), settings, mySystemProperties,
-                    ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
+      buildSettings(ReflectionUtilRt.getField(MavenCli.class, cli, SettingsBuilder.class, "settingsBuilder"), settings, mySystemProperties,
+                    ReflectionUtilRt.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
 

@@ -516,7 +516,9 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               psiClass = targetClass;
             } else if (psiClass.getContainingClass() == sourceClass) {
               psiClass = targetClass.findInnerClassByName(psiClass.getName(), false);
-              LOG.assertTrue(psiClass != null);
+              if (psiClass == null) {
+                return;
+              }
             }
 
             if (!(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression) && ref instanceof PsiReferenceExpression) {

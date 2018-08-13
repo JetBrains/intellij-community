@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -21,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -57,8 +44,7 @@ public class MessageBusImpl implements MessageBus {
    */
   private List<Integer> myOrder;
 
-  private final ConcurrentMap<Topic, Object> mySyncPublishers = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<Topic, Object> myAsyncPublishers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Topic, Object> myPublishers = ContainerUtil.newConcurrentMap();
 
   /**
    * This bus's subscribers
@@ -199,39 +185,21 @@ public class MessageBusImpl implements MessageBus {
   @SuppressWarnings("unchecked")
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     checkNotDisposed();
-    L publisher = (L)mySyncPublishers.get(topic);
+    L publisher = (L)myPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
       InvocationHandler handler = new InvocationHandler() {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) {
+          if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
+            return EventDispatcher.handleObjectMethod(proxy, args, method.getName());
+          }
           sendMessage(new Message(topic, method, args));
           return NA;
         }
       };
       publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(mySyncPublishers, topic, publisher);
-    }
-    return publisher;
-  }
-
-  @Override
-  @NotNull
-  @SuppressWarnings("unchecked")
-  public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
-    checkNotDisposed();
-    L publisher = (L)myAsyncPublishers.get(topic);
-    if (publisher == null) {
-      final Class<L> listenerClass = topic.getListenerClass();
-      InvocationHandler handler = new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) {
-          postMessage(new Message(topic, method, args));
-          return NA;
-        }
-      };
-      publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      publisher = (L)ConcurrencyUtil.cacheOrGet(myAsyncPublishers, topic, publisher);
+      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, publisher);
     }
     return publisher;
   }

@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*;
 
 /**
@@ -90,8 +91,10 @@ public class TypesUtil implements TypeConstants {
   private static final String NULL = "null";
 
   static {
-    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mGSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_SQ, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_TSQ, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_DQ, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_TDQ, CommonClassNames.JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mREGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_INT, CommonClassNames.JAVA_LANG_INTEGER);

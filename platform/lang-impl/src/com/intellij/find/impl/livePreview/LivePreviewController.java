@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.*;
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -39,7 +40,12 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private boolean myListeningSelection;
 
-  private final SelectionListener mySelectionListener = e -> smartUpdate();
+  private final SelectionListener mySelectionListener = new SelectionListener() {
+    @Override
+    public void selectionChanged(@NotNull SelectionEvent e) {
+      smartUpdate();
+    }
+  };
   private boolean myDisposed;
 
   public void setTrackingSelection(boolean b) {

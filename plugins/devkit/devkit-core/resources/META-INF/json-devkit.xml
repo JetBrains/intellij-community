@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
+  </extensions>
+</idea-plugin>
