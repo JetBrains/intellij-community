@@ -68,4 +68,14 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
     complete();
     assertStringItems("insideTopObject1", "insideTopObject2");
   }
+
+  @Override
+  public void testRequiredPropsFirst() throws Exception {
+    // do nothing
+  }
+
+  @Override
+  public void testRequiredPropsLast() throws Exception {
+    // do nothing
+  }
 }
