@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Use {@code 'com.intellij.openapi.components.ComponentManager#getMessageBus()'} to obtain one.
  * <p/>
- * Please see <a href="docs">http://www.jetbrains.org/intellij/sdk/docs/reference_guide/messaging_infrastructure.html</a>.
+ * Please see <a href="docs">https://www.jetbrains.org/intellij/sdk/docs/reference_guide/messaging_infrastructure.html</a>.
  */
 public interface MessageBus extends Disposable {
 
