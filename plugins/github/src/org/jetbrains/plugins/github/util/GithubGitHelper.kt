@@ -13,11 +13,13 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 
 /**
  * Utilities for Github-Git interactions
+ *
+ * accessible url - url that matches at least one registered account
+ * possible url - accessible urls + urls that match github.com + urls that match server saved in old settings
  */
 class GithubGitHelper(private val githubSettings: GithubSettings,
                       private val authenticationManager: GithubAuthenticationManager,
                       private val migrationHelper: GithubAccountsMigrationHelper) {
-  private val DEFAULT_SERVER = GithubServerPath(GithubServerPath.DEFAULT_HOST)
 
   fun getRemoteUrl(server: GithubServerPath, repoPath: GithubFullPath): String {
     return getRemoteUrl(server, repoPath.user, repoPath.repository)
@@ -33,28 +35,41 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
   }
 
   fun getAccessibleRemoteUrls(repository: GitRepository): List<String> {
-    return repository.remotes.map { it.urls }.flatten().filter(::isRemoteUrlAccessible)
+    return repository.getRemoteUrls().filter(::isRemoteUrlAccessible)
   }
 
   fun hasAccessibleRemotes(repository: GitRepository): Boolean {
-    return repository.remotes.map { it.urls }.flatten().any(::isRemoteUrlAccessible)
+    return repository.getRemoteUrls().any(::isRemoteUrlAccessible)
   }
 
   private fun isRemoteUrlAccessible(url: String) = authenticationManager.getAccounts().find { it.server.matches(url) } != null
 
   fun getPossibleRepositories(repository: GitRepository): Set<GithubRepositoryPath> {
-    val registeredServers = mutableSetOf(DEFAULT_SERVER)
+    val knownServers = getKnownGithubServers()
+    return repository.getRemoteUrls().mapNotNull { url ->
+      knownServers.find { it.matches(url) }
+        ?.let { server -> GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GithubRepositoryPath(server, it) } }
+    }.toSet()
+  }
+
+  fun getPossibleRemoteUrls(repository: GitRepository): List<String> {
+    val knownServers = getKnownGithubServers()
+    return repository.getRemoteUrls().filter { url -> knownServers.any { it.matches(url) } }
+  }
+
+  fun hasPossibleRemotes(repository: GitRepository): Boolean {
+    val knownServers = getKnownGithubServers()
+    return repository.getRemoteUrls().any { url -> knownServers.any { it.matches(url) } }
+  }
+
+  private fun getKnownGithubServers(): Set<GithubServerPath> {
+    val registeredServers = mutableSetOf(GithubServerPath.DEFAULT_SERVER)
     migrationHelper.getOldServer()?.run(registeredServers::add)
     authenticationManager.getAccounts().mapTo(registeredServers) { it.server }
-    val repositoryPaths = mutableSetOf<GithubRepositoryPath>()
-    for (url in repository.remotes.map { it.urls }.flatten()) {
-      registeredServers.filter { it.matches(url) }
-        .mapNotNullTo(repositoryPaths, { server ->
-          GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GithubRepositoryPath(server, it) }
-        })
-    }
-    return repositoryPaths
+    return registeredServers
   }
+
+  private fun GitRepository.getRemoteUrls() = remotes.map { it.urls }.flatten()
 
   companion object {
     @JvmStatic
