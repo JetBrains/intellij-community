@@ -728,22 +728,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       }
     }, this);
 
-    final CaretListener caretListener = new CaretListener() {
-      @Override
-      public void caretPositionChanged(CaretEvent e) {
-        if (!myChangeGuard && !myFinishing) {
-          hideLookup(false);
-        }
-      }
-    };
-    final SelectionListener selectionListener = new SelectionListener() {
-      @Override
-      public void selectionChanged(@NotNull final SelectionEvent e) {
-        if (!myChangeGuard && !myFinishing) {
-          hideLookup(false);
-        }
-      }
-    };
     final EditorMouseListener mouseListener = new EditorMouseListener() {
       @Override
       public void mouseClicked(EditorMouseEvent e){
@@ -752,8 +736,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       }
     };
 
-    myEditor.getCaretModel().addCaretListener(caretListener, this);
-    myEditor.getSelectionModel().addSelectionListener(selectionListener, this);
+    myEditor.getCaretModel().addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(CaretEvent e) {
+        if (!myChangeGuard && !myFinishing) {
+          hideLookup(false);
+        }
+      }
+    }, this);
+    myEditor.getSelectionModel().addSelectionListener(new SelectionListener() {
+      @Override
+      public void selectionChanged(@NotNull final SelectionEvent e) {
+        if (!myChangeGuard && !myFinishing) {
+          hideLookup(false);
+        }
+      }
+    }, this);
     myEditor.addEditorMouseListener(mouseListener, this);
 
     JComponent editorComponent = myEditor.getContentComponent();
