@@ -1,4 +1,5 @@
 {
+  "version": "0.1",
   "type": "object",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "required": ["name", "dark", "author", "ui"],
