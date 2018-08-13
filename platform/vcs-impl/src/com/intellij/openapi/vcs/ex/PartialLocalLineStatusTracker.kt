@@ -254,7 +254,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
   private inner class MyUndoDocumentListener : DocumentListener {
-    override fun beforeDocumentChange(event: DocumentEvent?) {
+    override fun beforeDocumentChange(event: DocumentEvent) {
       if (hasUndoInCommand) return
       if (undoManager.isRedoInProgress || undoManager.isUndoInProgress) return
       hasUndoInCommand = true
@@ -735,7 +735,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private fun restoreChangelistsState(states: List<RangeState>) {
     val changelistIds = changeListManager.changeLists.map { it.id }
-    val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator(), { ChangeListMarker(it) })
+    val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator()) { ChangeListMarker(it) }
 
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->

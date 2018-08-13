@@ -71,18 +71,21 @@ public class PyIntroduceDialog extends DialogWrapper {
     myNameComboBox.setMaximumRowCount(8);
 
     myNameComboBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         updateControls();
       }
     });
 
     ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
+      @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         updateControls();
       }
     });
 
     myContentPane.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
           IdeFocusManager.getGlobalInstance().requestFocus(myNameComboBox, true);
@@ -115,10 +118,12 @@ public class PyIntroduceDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameComboBox;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myContentPane;
   }

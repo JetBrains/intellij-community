@@ -87,7 +87,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent e) {
+  public void beforeDocumentChange(@NotNull DocumentEvent e) {
     myIsInUpdate = true;
     if (!myEditor.getDocument().isInBulkUpdate() && e.isWholeTextReplaced()) {
       for (CaretImpl caret : myCarets) {

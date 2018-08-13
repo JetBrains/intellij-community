@@ -45,6 +45,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
     myAllowRemoteResolve = allowRemoteResolve;
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     if (!myAllowRemoteResolve) {
@@ -103,6 +104,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
     return pyStatement instanceof PyExpressionStatement ? ((PyExpressionStatement)pyStatement).getExpression() : null;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     Map<String, LookupElement> variants = Maps.newHashMap();

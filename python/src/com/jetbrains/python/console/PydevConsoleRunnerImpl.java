@@ -912,6 +912,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     return XDebuggerManager.getInstance(myProject).
       startSessionAndShowTab("Python Console Debugger", PythonIcons.Python.Python, null, true, new XDebugProcessStarter() {
+        @Override
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PythonDebugLanguageConsoleView debugConsoleView = new PythonDebugLanguageConsoleView(myProject, mySdk);

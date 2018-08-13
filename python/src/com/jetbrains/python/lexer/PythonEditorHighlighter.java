@@ -60,7 +60,7 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent e) {
+  public void beforeDocumentChange(@NotNull DocumentEvent e) {
     final Document document = e.getDocument();
     hadUnicodeImport = document.getUserData(KEY);
   }

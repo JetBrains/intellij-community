@@ -84,7 +84,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
 
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
+      public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
         if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {

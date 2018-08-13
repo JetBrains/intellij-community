@@ -96,6 +96,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     final Alarm alarm = new Alarm();
     myDocumentListener = new DocumentListener() {
+      @Override
       public void documentChanged(@NotNull final DocumentEvent e) {
         if (mySynchronize) {
           alarm.cancelAllRequests();
@@ -501,6 +502,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   private class MySynchronizeRequest implements Runnable {
 
+    @Override
     public void run() {
       final Project project = getProject();
       if (project.isDisposed()) {
