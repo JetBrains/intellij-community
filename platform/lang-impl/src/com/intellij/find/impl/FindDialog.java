@@ -351,6 +351,26 @@ public class FindDialog extends DialogWrapper implements FindUI {
           else action.actionPerformed(e);
         }
       }.registerCustomShortcutSet(CommonShortcuts.ENTER, comboBox, myDisposable);
+      DumbAwareAction escAction = new DumbAwareAction() {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          doCancelAction();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          if (myInputComboBox.isPopupVisible()
+              || myReplaceComboBox.isPopupVisible()
+              || mySearchContext.isPopupVisible()
+              || myDirectoryComboBox.isPopupVisible()
+              || myFileFilter.isPopupVisible()
+              || myScopeCombo.getComboBox().isPopupVisible()
+          ) {
+            e.getPresentation().setEnabled(false);
+          }
+        }
+      };
+      escAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this.getRootPane(), myDisposable);
     }
   }
 
