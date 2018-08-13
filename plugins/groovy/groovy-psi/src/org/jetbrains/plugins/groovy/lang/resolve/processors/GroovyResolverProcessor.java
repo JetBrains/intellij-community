@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
@@ -257,6 +258,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (it.getExpression() != null) {
         return getTopLevelTypeCached(it.getExpression());
       } else {
+        if (it.getType() instanceof GrMapType) {
+          return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, myRef);
+        }
         return it.getType();
       }
     }).toArray(PsiType[]::new);
