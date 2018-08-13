@@ -3,18 +3,22 @@
 package com.intellij.testGuiFramework.recorder
 
 import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorPanel
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 
 object GlobalActionRecorder {
   private val LOG = logger<GlobalActionRecorder>()
+
+  private var disposable: Disposable? = null
 
   var isActive: Boolean = false
     private set
@@ -48,19 +52,21 @@ object GlobalActionRecorder {
   fun activate() {
     if (isActive) return
     LOG.info("Global action recorder is active")
-    ActionManager.getInstance().addAnActionListener(globalActionListener)
-    IdeEventQueue.getInstance().addDispatcher(globalAwtProcessor, GuiRecorderManager.frame) //todo: add disposal dependency on component
+    disposable = Disposer.newDisposable()
+    ApplicationManager.getApplication().messageBus.connect(disposable!!).subscribe(AnActionListener.TOPIC, globalActionListener)
+    IdeEventQueue.getInstance().addDispatcher(globalAwtProcessor, disposable) //todo: add disposal dependency on component
     isActive = true
   }
 
   fun deactivate() {
     if (isActive) {
       LOG.info("Global action recorder is non active")
-      ActionManager.getInstance().removeAnActionListener(globalActionListener)
-      IdeEventQueue.getInstance().removeDispatcher(globalAwtProcessor)
+      disposable?.let {
+        this.disposable = null
+        Disposer.dispose(it)
+      }
     }
     isActive = false
     ContextChecker.clearContext()
   }
-
 }

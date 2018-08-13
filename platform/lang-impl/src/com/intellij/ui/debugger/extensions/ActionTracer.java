@@ -2,9 +2,12 @@
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +20,11 @@ import java.awt.*;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionTracer implements UiDebuggerExtension, AnActionListener {
-
-  private final Logger LOG = Logger.getInstance("ActionTracer");
+  private static final Logger LOG = Logger.getInstance("ActionTracer");
 
   private JTextArea myText;
   private JPanel myComponent;
+  private Disposable myListenerDisposable;
 
   @Override
   public JComponent getComponent() {
@@ -40,7 +43,8 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
       myComponent.add(ActionManager.getInstance().createActionToolbar("ActionTracer", group, true).getComponent(), BorderLayout.NORTH);
       myComponent.add(log);
 
-      ActionManager.getInstance().addAnActionListener(this);
+      myListenerDisposable = Disposer.newDisposable();
+      ApplicationManager.getApplication().getMessageBus().connect(myListenerDisposable).subscribe(AnActionListener.TOPIC, this);
     }
 
     return myComponent;
@@ -49,10 +53,6 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
   @Override
   public String getName() {
     return "Actions";
-  }
-
-  @Override
-  public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
   }
 
   @Override
@@ -89,9 +89,12 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
 
   @Override
   public void disposeUiResources() {
-    ActionManager.getInstance().removeAnActionListener(this);
+    Disposable disposable = myListenerDisposable;
+    if (disposable != null) {
+      myListenerDisposable = null;
+      Disposer.dispose(disposable);
+    }
     myComponent = null;
     myText = null;
-
   }
 }
