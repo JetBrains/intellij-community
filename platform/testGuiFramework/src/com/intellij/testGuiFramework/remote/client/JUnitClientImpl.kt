@@ -141,6 +141,9 @@ class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHan
       catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
       }
+      catch (e: SocketException) {
+        // ignore
+      }
       finally {
         try {
           objectOutputStream.close()
