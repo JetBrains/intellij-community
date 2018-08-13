@@ -264,6 +264,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
                                     @NotNull PsiMethod[] methods,
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor consumer,
                                     @Nullable Runnable doWhenDone) {
+    if (DumbService.isDumb(project)) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       processMethodsInner(project, methods, consumer);
       if (doWhenDone != null) {
