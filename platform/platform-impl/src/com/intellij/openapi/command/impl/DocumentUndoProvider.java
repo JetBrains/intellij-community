@@ -18,7 +18,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class DocumentUndoProvider {
+public class DocumentUndoProvider {
   private static final Key<Boolean> UNDOING_EDITOR_CHANGE = Key.create("DocumentUndoProvider.UNDOING_EDITOR_CHANGE");
 
   DocumentUndoProvider(@Nullable Project project, @NotNull  MessageBusConnection busConnection) {

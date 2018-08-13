@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.core;
 
@@ -22,7 +8,6 @@ import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
-import com.intellij.util.Consumer;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.TestOnly;
 
@@ -115,6 +100,7 @@ public class ChangeList {
   // todo synchronization issue: changeset may me modified while being iterated
   public synchronized Iterable<ChangeSet> iterChanges() {
     return new Iterable<ChangeSet>() {
+      @Override
       public Iterator<ChangeSet> iterator() {
         return new Iterator<ChangeSet>() {
           private final TIntHashSet recursionGuard = new TIntHashSet(1000);
@@ -122,10 +108,12 @@ public class ChangeList {
           private ChangeSetHolder currentBlock;
           private ChangeSet next = fetchNext();
 
+          @Override
           public boolean hasNext() {
             return next != null;
           }
 
+          @Override
           public ChangeSet next() {
             ChangeSet result = next;
             next = fetchNext();
@@ -152,6 +140,7 @@ public class ChangeList {
             return currentBlock.changeSet;
           }
 
+          @Override
           public void remove() {
             throw new UnsupportedOperationException();
           }
