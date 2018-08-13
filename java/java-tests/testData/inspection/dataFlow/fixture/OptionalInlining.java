@@ -80,7 +80,7 @@ public class OptionalInlining {
     if (<warning descr="Condition 's1.equals(\"xz\")' is always 'false'">s1.equals("xz")</warning>) {
       System.out.println("never");
     }
-    String abc = opt.filter(s -> s == "xyz").orElse("abc"); // s.equals("xyz") does not work yet :(
+    String abc = opt.filter(s -> s.equals("xyz")).orElse("abc");
     if (<warning descr="Condition 'abc.equals(\"123\")' is always 'false'">abc.equals("123")</warning>) {
       System.out.println("never");
     }
@@ -184,7 +184,8 @@ public class OptionalInlining {
   }
 
   void testIntermediate(Optional<String> opt) {
-    if (<warning descr="Condition 'opt.filter(x -> x == \"foo\").filter(x -> x == \"bar\").isPresent()' is always 'false'">opt.filter(x -> x == "foo").filter(x -> <warning descr="Condition 'x == \"bar\"' is always 'false'">x == "bar"</warning>).isPresent()</warning>) {
+    if (<warning descr="Condition 'opt.filter(x -> x.equals(\"foo\")) .filter(\"bar\"::equals).isPresent()' is always 'false'">opt.filter(x -> x.equals("foo"))
+            .filter(<warning descr="Method reference result is always 'false'">"bar"::equals</warning>).isPresent()</warning>) {
       System.out.println("never");
     }
   }

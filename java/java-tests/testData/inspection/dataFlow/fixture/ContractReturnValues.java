@@ -50,7 +50,7 @@ class ContractReturnValues {
   }
 
   void testNullToEmpty(String s, String s1) {
-    if(nullToEmpty(s) != s) {
+    if(!nullToEmpty(s).equals(s)) {
       System.out.println(<warning descr="Condition 's == null' is always 'true'">s == null</warning>);
     }
     if(<warning descr="Condition 'nullToEmpty(s1) == null' is always 'false'">nullToEmpty(s1) == null</warning>) {

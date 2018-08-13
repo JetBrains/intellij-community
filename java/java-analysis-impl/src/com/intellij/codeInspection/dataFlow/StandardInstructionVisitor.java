@@ -646,6 +646,19 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     DfaValue dfaLeft,
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
+    if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
+       isStringComparison(instruction.getExpression()) &&
+       !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
+      ArrayList<DfaInstructionState> states = new ArrayList<>(2);
+      DfaMemoryState equality = memState.createCopy();
+      if (equality.applyCondition(factory.createCondition(dfaLeft, RelationType.EQ, dfaRight))) {
+        states.add(makeBooleanResult(instruction, runner, equality, ThreeState.UNSURE));
+      }
+      if (memState.applyCondition(factory.createCondition(dfaLeft, RelationType.NE, dfaRight))) {
+        states.add(makeBooleanResult(instruction, runner, memState, ThreeState.fromBoolean(relationType == RelationType.NE)));
+      }
+      return states.toArray(DfaInstructionState.EMPTY_ARRAY);
+    }
     RelationType[] relations = splitRelation(relationType);
 
     ArrayList<DfaInstructionState> states = new ArrayList<>(relations.length);
@@ -674,6 +687,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  private static boolean isStringComparison(PsiExpression expression) {
+    if (expression instanceof PsiBinaryExpression) {
+      PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
+      return right != null && (TypeUtils.isJavaLangString(left.getType()) || TypeUtils.isJavaLangString(right.getType()));
+    }
+    return false;
   }
 
   @NotNull
