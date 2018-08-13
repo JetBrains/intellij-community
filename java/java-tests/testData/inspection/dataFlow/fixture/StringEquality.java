@@ -40,4 +40,13 @@ class StringEquality {
     System.out.println(<warning descr="Result of 'vv.equals(vvv)' is always 'false'">vv.equals(vvv)</warning>);
     System.out.println(<warning descr="Condition 'vv == vvv' is always 'false'">vv == vvv</warning>);
   }
+
+  boolean compare(Object a, Object b) {
+    if(a == b) return true;
+    if(a instanceof String && b instanceof String) {
+      // false-positive
+      return <warning descr="Result of '((String)a).equals((String)b)' is always 'false'">((String)a).equals((String)b)</warning>;
+    }
+    return false;
+  }
 }
