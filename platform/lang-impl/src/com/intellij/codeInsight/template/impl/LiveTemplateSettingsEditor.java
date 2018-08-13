@@ -148,7 +148,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     myTemplateEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         validateEditVariablesButton();
 
         myTemplate.setString(myTemplateEditor.getDocument().getText());

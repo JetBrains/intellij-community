@@ -132,7 +132,7 @@ public class HintManagerImpl extends HintManager {
 
     myEditorDocumentListener = new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         LOG.assertTrue(SwingUtilities.isEventDispatchThread());
         if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
         HintInfo[] infos = getHintsStackArray();

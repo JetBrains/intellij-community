@@ -195,7 +195,7 @@ public class XLineBreakpointManager {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(final DocumentEvent e) {
+    public void documentChanged(@NotNull final DocumentEvent e) {
       final Document document = e.getDocument();
       Collection<XLineBreakpointImpl> breakpoints = getDocumentBreakpoints(document);
       if (!breakpoints.isEmpty()) {

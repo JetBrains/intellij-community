@@ -383,7 +383,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void beforeDocumentChange(DocumentEvent e) {
+    public void beforeDocumentChange(@NotNull DocumentEvent e) {
       Document doc = e.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
       if (file != null) {
@@ -399,7 +399,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (!ApplicationManager.getApplication().isDispatchThread()) {
         return;// Changes in lightweight documents are irrelevant to bookmarks and have to be ignored
       }

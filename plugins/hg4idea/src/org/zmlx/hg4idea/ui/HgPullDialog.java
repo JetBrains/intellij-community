@@ -57,7 +57,7 @@ public class HgPullDialog extends DialogWrapper {
     myRepositoryURL = new EditorComboBox("");
     myRepositoryURL.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         onChangePullSource();
       }
     });

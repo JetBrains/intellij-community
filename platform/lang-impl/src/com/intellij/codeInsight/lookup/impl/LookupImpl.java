@@ -721,7 +721,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private void addListeners() {
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         if (!myChangeGuard && !myFinishing) {
           hideLookup(false);
         }

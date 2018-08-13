@@ -144,7 +144,7 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
     onDocumentUpdate(document);

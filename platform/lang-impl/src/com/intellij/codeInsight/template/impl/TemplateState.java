@@ -100,7 +100,7 @@ public class TemplateState implements Disposable {
     if (isDisposed()) return;
     myEditorDocumentListener = new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent e) {
+      public void beforeDocumentChange(@NotNull DocumentEvent e) {
         myDocumentChanged = true;
       }
     };

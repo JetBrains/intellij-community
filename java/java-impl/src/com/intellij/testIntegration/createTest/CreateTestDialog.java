@@ -60,8 +60,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
@@ -227,9 +227,9 @@ public class CreateTestDialog extends DialogWrapper {
 
     constr.fill = GridBagConstraints.HORIZONTAL;
     constr.anchor = GridBagConstraints.WEST;
-    
+
     int gridy = 1;
-    
+
     constr.insets = insets(4);
     constr.gridy = gridy++;
     constr.gridx = 0;
@@ -266,7 +266,7 @@ public class CreateTestDialog extends DialogWrapper {
     myTargetClassNameField = new EditorTextField(suggestTestClassName(myTargetClass));
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         getOKAction().setEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(getClassName()));
       }
     });

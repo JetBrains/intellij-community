@@ -70,7 +70,7 @@ public class BraceHighlighter implements StartupActivity {
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
         Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), project);
         for (Editor editor : editors) {

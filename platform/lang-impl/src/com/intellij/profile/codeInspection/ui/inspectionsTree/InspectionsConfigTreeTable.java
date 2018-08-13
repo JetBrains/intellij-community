@@ -43,8 +43,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -162,6 +162,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     getTableHeader().setReorderingAllowed(false);
     getTableHeader().setResizingAllowed(false);
     registerKeyboardAction(new ActionListener() {
+                             @Override
                              public void actionPerformed(ActionEvent e) {
                                model.swapInspectionEnableState();
                                updateUI();

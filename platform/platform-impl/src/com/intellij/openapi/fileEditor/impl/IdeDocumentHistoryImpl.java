@@ -91,7 +91,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     eventMulticaster.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         onDocumentChanged(e);
       }
     }, myProject);

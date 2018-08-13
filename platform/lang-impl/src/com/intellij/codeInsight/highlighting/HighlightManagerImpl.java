@@ -47,7 +47,7 @@ public class HighlightManagerImpl extends HighlightManager {
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         Document document = event.getDocument();
         Editor[] editors = EditorFactory.getInstance().getEditors(document);
         for (Editor editor : editors) {

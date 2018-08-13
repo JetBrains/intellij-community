@@ -22,7 +22,7 @@ public class UndoHelper {
   private boolean myDirty;
   private final DocumentListener myDocumentAdapter = new DocumentListener() {
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (myShowing) {
         myDirty = true;
       }

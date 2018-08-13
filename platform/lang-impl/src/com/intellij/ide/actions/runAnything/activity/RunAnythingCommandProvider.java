@@ -35,6 +35,7 @@ public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase
   public final String AD_DELETE_COMMAND_TEXT =
     IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
 
+  @Override
   public void execute(@NotNull DataContext dataContext, @NotNull String value) {
     VirtualFile workDirectory = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
     Executor executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY);

@@ -145,7 +145,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     if (editor != null) {
       editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
           String filter = myFilterField.getText();
           if (StringUtil.isNotEmpty(filter)) {
             highlightOccurrences(filter, project, editor);

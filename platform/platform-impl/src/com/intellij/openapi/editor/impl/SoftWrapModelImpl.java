@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -51,7 +49,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private static final Logger LOG = Logger.getInstance(SoftWrapModelImpl.class);
 
   private final List<SoftWrapChangeListener>  mySoftWrapListeners = new ArrayList<>();
-  
+
   /**
    * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc).
    * We don't want to process them at the same time we get notifications about that because there is a big chance that
@@ -78,14 +76,14 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   /**
    * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
    * regions etc). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
-   * provided by editor and there is a possible case that that information is inconsistent during update time (e.g. fold model 
+   * provided by editor and there is a possible case that that information is inconsistent during update time (e.g. fold model
    * advances fold region offsets when end-user types before it, hence, fold regions data is inconsistent between the moment
    * when text changes are applied to the document and fold data is actually updated).
    * <p/>
-   * Current field serves as a flag that indicates if all preliminary actions necessary for successful soft wraps processing is done. 
+   * Current field serves as a flag that indicates if all preliminary actions necessary for successful soft wraps processing is done.
    */
   private boolean myUpdateInProgress;
-  
+
   private boolean myBulkUpdateInProgress;
 
   /**
@@ -98,7 +96,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
    * Current field serves as a flag for that {@code 'dirty document, need complete soft wraps cache recalculation'} state.
    */
   private boolean myDirty;
-  
+
   private boolean myForceAdditionalColumns;
 
   SoftWrapModelImpl(@NotNull EditorImpl editor) {
@@ -119,7 +117,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     });
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     myEditor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
-    
+
     editor.addPropertyChangeListener(this, this);
 
     myApplianceManager.addListener(myDataMapper);
@@ -149,7 +147,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       ((DefaultEditorTextRepresentationHelper)myEditorTextRepresentationHelper).clearSymbolWidthCache();
       myPainter.reinit();
     }
-    
+
     if (myUseSoftWraps != softWrapsUsedBefore || tabWidthBefore >= 0 && myTabWidth != tabWidthBefore || fontsChanged) {
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
@@ -166,7 +164,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void forceAdditionalColumnsUsage() {
-    myForceAdditionalColumns = true; 
+    myForceAdditionalColumns = true;
   }
 
   @Override
@@ -200,7 +198,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
 
     List<? extends SoftWrap> softWraps = myStorage.getSoftWraps();
-    
+
     int startIndex = myStorage.getSoftWrapIndex(start);
     if (startIndex < 0) {
       startIndex = -startIndex - 1;
@@ -228,7 +226,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     Document document = myEditor.getDocument();
     if (documentLine >= document.getLineCount()) {
       return Collections.emptyList();
-    } 
+    }
     int start = document.getLineStartOffset(documentLine);
     int end = document.getLineEndOffset(documentLine);
     return getSoftWrapsForRange(start, end + 1/* it's theoretically possible that soft wrap is registered just before the line feed,
@@ -283,7 +281,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     return doPaint(g, drawingType, x, y, lineHeight);
   }
-  
+
   public int doPaint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     return myPainter.paint(g, drawingType, x, y, lineHeight);
   }
@@ -381,7 +379,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     if (softWrap == null) {
       return;
     }
-    
+
     myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
     caretModel.moveToVisualPosition(visualCaretPosition);
   }
@@ -411,7 +409,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     if (myBulkUpdateInProgress) {
       return;
     }

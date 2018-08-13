@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -42,12 +28,12 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable, Dumpable, InlayModel.Listener {
   private final EditorImpl myEditor;
-  
+
   private final EventDispatcher<CaretListener> myCaretListeners = EventDispatcher.create(CaretListener.class);
 
   private TextAttributes myTextAttributes;
@@ -92,7 +78,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void documentChanged(final DocumentEvent e) {
+  public void documentChanged(@NotNull final DocumentEvent e) {
     myIsInUpdate = false;
     myDocumentUpdateCounter++;
     if (!myEditor.getDocument().isInBulkUpdate()) {
@@ -498,7 +484,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         if (caretState != null && caretState.getCaretPosition() != null && caretState.getVisualColumnAdjustment() != 0) {
           caret.myVisualColumnAdjustment = caretState.getVisualColumnAdjustment();
           caret.updateVisualPosition();
-        } 
+        }
         if (caretState != null && caretState.getSelectionStart() != null && caretState.getSelectionEnd() != null) {
           if (selectionStartsBefore == null) {
             int capacity = caretStates.size();
@@ -512,7 +498,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           caret.doSetSelection(myEditor.logicalToVisualPosition(caretState.getSelectionStart()),
                                myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
                                myEditor.logicalToVisualPosition(caretState.getSelectionEnd()),
-                               myEditor.logicalPositionToOffset(caretState.getSelectionEnd()), 
+                               myEditor.logicalPositionToOffset(caretState.getSelectionEnd()),
                                true, false, false);
           selectionStartsAfter.add(caret.getSelectionStart());
           selectionEndsAfter.add(caret.getSelectionEnd());
@@ -531,7 +517,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         updateSystemSelection();
       }
       if (selectionStartsBefore != null) {
-        SelectionEvent event = new SelectionEvent(myEditor, selectionStartsBefore.toNativeArray(), selectionEndsBefore.toNativeArray(), 
+        SelectionEvent event = new SelectionEvent(myEditor, selectionStartsBefore.toNativeArray(), selectionEndsBefore.toNativeArray(),
                                                   selectionStartsAfter.toNativeArray(), selectionEndsAfter.toNativeArray());
         myEditor.getSelectionModel().fireSelectionChanged(event);
       }

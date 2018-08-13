@@ -370,7 +370,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     AtomicInteger maxEditedVariable = new AtomicInteger(-1);
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         maxEditedVariable.set(Math.max(maxEditedVariable.get(), templateState.getCurrentVariableNumber()));
       }
     }, templateState);

@@ -95,7 +95,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     super.documentChanged(event);
     // optimisation: avoid documents piling up during batch processing
     if (isUncommited(event.getDocument()) && FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
@@ -226,7 +226,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
       if (cachedDocument != null && cachedDocument != document) {
         throw new IllegalStateException("Can't replace existing document");
       }
-      
+
       FileDocumentManagerImpl.registerDocument(document, vFile);
     }
   }
