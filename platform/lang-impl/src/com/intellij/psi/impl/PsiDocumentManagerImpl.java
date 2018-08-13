@@ -55,11 +55,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                                 @NotNull PsiManager psiManager,
                                 @NotNull EditorFactory editorFactory,
                                 @NotNull MessageBus bus,
-                                @NonNls @NotNull final DocumentCommitProcessor documentCommitThread) {
+                                @NotNull final DocumentCommitProcessor documentCommitThread) {
     super(project, psiManager, bus, documentCommitThread);
     myDocumentCommitThread = documentCommitThread;
     ((EditorEventMulticasterEx)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(this, project);
-    MessageBusConnection connection = bus.connect();
+    MessageBusConnection connection = bus.connect(this);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {

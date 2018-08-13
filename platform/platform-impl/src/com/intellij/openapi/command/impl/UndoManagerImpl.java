@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,15 +86,15 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  public UndoManagerImpl(CommandProcessor commandProcessor) {
-    this(null, commandProcessor);
+  public UndoManagerImpl() {
+    this(null);
   }
 
-  public UndoManagerImpl(@Nullable ProjectEx project, @NotNull CommandProcessor commandProcessor) {
+  public UndoManagerImpl(@Nullable ProjectEx project) {
     myProject = project;
 
     if (myProject == null || !myProject.isDefault()) {
-      runStartupActivity(myProject, commandProcessor);
+      runStartupActivity(myProject);
     }
 
     myMerger = new CommandMerger(this);
@@ -109,7 +109,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public void dispose() {
   }
 
-  private void runStartupActivity(@Nullable Project project, @NotNull CommandProcessor commandProcessor) {
+  private void runStartupActivity(@Nullable Project project) {
     myUndoProviders = project == null
                       ? Extensions.getExtensions(UndoProvider.EP_NAME)
                       : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
@@ -121,9 +121,8 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
     myEditorProvider = new FocusBasedCurrentEditorProvider();
 
-    MessageBus messageBus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-
-    messageBus.connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
+    MessageBusConnection busConnection = (project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus()).connect(this);
+    busConnection.subscribe(CommandListener.TOPIC, new CommandListener() {
       private boolean myStarted;
 
       @Override
@@ -157,7 +156,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
       }
     });
 
-    Disposer.register(this, new DocumentUndoProvider(myProject));
+    new DocumentUndoProvider(myProject, busConnection);
   }
 
   public boolean isActive() {

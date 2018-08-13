@@ -1,42 +1,28 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.EditorEventListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DocumentUndoProvider implements Disposable {
+class DocumentUndoProvider {
   private static final Key<Boolean> UNDOING_EDITOR_CHANGE = Key.create("DocumentUndoProvider.UNDOING_EDITOR_CHANGE");
 
-  private final Project myProject;
-
-  DocumentUndoProvider(Project project) {
-    MyEditorDocumentListener documentListener = new MyEditorDocumentListener();
-    myProject = project;
-
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, this);
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  private UndoManagerImpl getUndoManager() {
-    return (UndoManagerImpl)(myProject == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(myProject));
+  DocumentUndoProvider(@Nullable Project project, @NotNull  MessageBusConnection busConnection) {
+    busConnection.subscribe(EditorEventListener.TOPIC, new MyEditorDocumentListener(project));
   }
 
   public static void startDocumentUndo(@Nullable Document doc) {
@@ -47,7 +33,18 @@ public class DocumentUndoProvider implements Disposable {
     if (doc != null) doc.putUserData(UNDOING_EDITOR_CHANGE, null);
   }
 
-  private class MyEditorDocumentListener implements DocumentListener {
+  private static class MyEditorDocumentListener implements EditorEventListener {
+    @Nullable
+    private final Project myProject;
+
+    public MyEditorDocumentListener(@Nullable Project project) {
+      myProject = project;
+    }
+
+    private UndoManagerImpl getUndoManager() {
+      return (UndoManagerImpl)(myProject == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(myProject));
+    }
+
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
@@ -83,7 +80,7 @@ public class DocumentUndoProvider implements Disposable {
              && shouldRecordActions(document);
     }
 
-    private boolean shouldRecordActions(final Document document) {
+    private static boolean shouldRecordActions(final Document document) {
       if (document.getUserData(UndoConstants.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
 
       VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);

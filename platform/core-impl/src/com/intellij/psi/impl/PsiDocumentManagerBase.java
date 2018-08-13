@@ -67,12 +67,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected PsiDocumentManagerBase(@NotNull final Project project,
                                    @NotNull PsiManager psiManager,
                                    @NotNull MessageBus bus,
-                                   @NonNls @NotNull final DocumentCommitProcessor documentCommitProcessor) {
+                                   @NotNull DocumentCommitProcessor documentCommitProcessor) {
     myProject = project;
     myPsiManager = psiManager;
     myDocumentCommitProcessor = documentCommitProcessor;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
+
     bus.connect(this).subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
       @Override
       public void transactionStarted(@NotNull Document document, @NotNull PsiFile file) {
