@@ -31,6 +31,7 @@ import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
@@ -268,8 +269,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         PsiField fieldCopy = classCopy.getFields()[fieldIndex];
         Collection<PsiReference> refs = ReferencesSearch.search(fieldCopy, new LocalSearchScope(classCopy)).findAll();
         Map<PsiMethod, List<PsiReference>> collect =
-          refs.stream().collect(Collectors.groupingBy(ref -> PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethod.class)));
-        methodsToErrorCheck = collect.keySet();
+          refs.stream()
+            // map null to "method" to filter it out later
+            .collect(Collectors.groupingBy(ref -> ObjectUtils.notNull(PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethod.class), method)));
+        methodsToErrorCheck = ContainerUtil.filter(collect.keySet(), k->k != method);
       }
       else {
         methodsToErrorCheck = Collections.singletonList(methodCopyInClass);
