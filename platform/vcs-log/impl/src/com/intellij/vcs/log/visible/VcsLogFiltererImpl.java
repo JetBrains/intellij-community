@@ -31,6 +31,7 @@ import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
@@ -186,10 +187,21 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
                                                               @NotNull Collection<String> hashes,
                                                               @NotNull PermanentGraph.SortType sortType,
                                                               @NotNull CommitCountStage commitCount) {
-    Set<Integer> hashFilterResult = ContainerUtil.map2SetNotNull(hashes, partOfHash -> {
-      CommitId commitId = myStorage.findCommitId(new CommitIdByStringCondition(partOfHash));
-      return commitId != null ? myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
-    });
+    Set<Integer> hashFilterResult = ContainerUtil.newHashSet();
+    for (String partOfHash : hashes) {
+      if (partOfHash.length() == VcsLogUtil.FULL_HASH_LENGTH) {
+        Hash hash = HashImpl.build(partOfHash);
+        for (VirtualFile root : dataPack.getLogProviders().keySet()) {
+          if (myStorage.containsCommit(new CommitId(hash, root))) {
+            hashFilterResult.add(myStorage.getCommitIndex(hash, root));
+          }
+        }
+      }
+      else {
+        CommitId commitId = myStorage.findCommitId(new CommitIdByStringCondition(partOfHash));
+        if (commitId != null) hashFilterResult.add(myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
+      }
+    }
     VcsLogTextFilterImpl textFilter = new VcsLogTextFilterImpl(StringUtil.join(hashes, "|"), true, false);
     FilterByDetailsResult textFilterResult = filterByDetails(dataPack, new VcsLogFilterCollectionBuilder(textFilter).build(),
                                                              commitCount, dataPack.getLogProviders().keySet(), null);
