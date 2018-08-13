@@ -1201,31 +1201,49 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> split(@NotNull String s, @NotNull String separator) {
-    return StringUtilRt.split(s, separator);
+    return split(s, separator, true);
   }
   @NotNull
   @Contract(pure = true)
   public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator) {
-    return StringUtilRt.split(s, separator);
+    return split(s, separator, true, true);
   }
 
   @NotNull
   @Contract(pure = true)
   public static List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator) {
-    return StringUtilRt.split(s, separator, excludeSeparator);
+    return split(s, separator, excludeSeparator, true);
   }
 
   @NotNull
   @Contract(pure = true)
   @SuppressWarnings("unchecked")
   public static List<String> split(@NotNull String s, @NotNull String separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
-    return StringUtilRt.split(s, separator, excludeSeparator, excludeEmptyStrings);
+    return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
   }
 
   @NotNull
   @Contract(pure = true)
   public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator, boolean excludeSeparator, boolean excludeEmptyStrings) {
-    return StringUtilRt.split(s, separator, excludeSeparator, excludeEmptyStrings);
+    if (separator.length() == 0) {
+      return Collections.singletonList(s);
+    }
+    List<CharSequence> result = new ArrayList<CharSequence>();
+    int pos = 0;
+    while (true) {
+      int index = indexOf(s, separator, pos);
+      if (index == -1) break;
+      final int nextPos = index + separator.length();
+      CharSequence token = s.subSequence(pos, excludeSeparator ? index : nextPos);
+      if (token.length() != 0 || !excludeEmptyStrings) {
+        result.add(token);
+      }
+      pos = nextPos;
+    }
+    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
+      result.add(s.subSequence(pos, s.length()));
+    }
+    return result;
   }
 
   @NotNull
@@ -1696,17 +1714,45 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
-    return StringUtilRt.startsWith(text, prefix);
+    int l1 = text.length();
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i) != prefix.charAt(i)) return false;
+    }
+
+    return true;
   }
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
-    return StringUtilRt.startsWith(text, startIndex, prefix);
+    int tl = text.length();
+    if (startIndex < 0 || startIndex > tl) {
+      throw new IllegalArgumentException("Index is out of bounds: " + startIndex + ", length: " + tl);
+    }
+    int l1 = tl - startIndex;
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i + startIndex) != prefix.charAt(i)) return false;
+    }
+
+    return true;
   }
 
   @Contract(pure = true)
   public static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
-    return StringUtilRt.endsWith(text, suffix);
+    int l1 = text.length();
+    int l2 = suffix.length();
+    if (l1 < l2) return false;
+
+    for (int i = l1 - 1; i >= l1 - l2; i--) {
+      if (text.charAt(i) != suffix.charAt(i + l2 - l1)) return false;
+    }
+
+    return true;
   }
 
   @NotNull
@@ -1779,37 +1825,46 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c) {
-    return StringUtilRt.indexOf(s, c);
+    return indexOf(s, c, 0, s.length());
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start) {
-    return StringUtilRt.indexOf(s, c, start);
+    return indexOf(s, c, start, s.length());
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
-    return StringUtilRt.indexOf(s, c, start, end);
+    end = Math.min(end, s.length());
+    for (int i = Math.max(start, 0); i < end; i++) {
+      if (s.charAt(i) == c) return i;
+    }
+    return -1;
   }
 
   @Contract(pure = true)
   public static boolean contains(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
-    return StringUtilRt.contains(sequence, infix);
+    return indexOf(sequence, infix) >= 0;
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix) {
-    return StringUtilRt.indexOf(sequence, infix);
+    return indexOf(sequence, infix, 0);
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
-    return StringUtilRt.indexOf(sequence, infix, start);
+    return indexOf(sequence, infix, start, sequence.length());
   }
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start, int end) {
-    return StringUtilRt.indexOf(sequence, infix, start, end);
+    for (int i = start; i <= end - infix.length(); i++) {
+      if (startsWith(sequence, i, infix)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   @Contract(pure = true)
