@@ -675,10 +675,30 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
       setVariableState((DfaVariableValue)value, newState);
+      if (newState.getTypeConstraint().isExact(CommonClassNames.JAVA_LANG_STRING) &&
+          !newState.getTypeConstraint().equals(oldState.getTypeConstraint())) {
+        // Type is narrowed to java.lang.String: we consider String equivalence by content,
+        // but other object types by reference, so we need to remove distinct pairs, if any.
+        convertReferenceEqualityToValueEquality(value);
+      }
       updateEquivalentVariables((DfaVariableValue)value, newState);
       return updateEqClassesByState((DfaVariableValue)value);
     }
     return true;
+  }
+
+  private void convertReferenceEqualityToValueEquality(DfaValue value) {
+    int id = value.getID();
+    int[] indices = myIdToEqClassesIndices.get(id);
+    for (int index : indices) {
+      for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
+        DistinctPairSet.DistinctPair pair = iterator.next();
+        EqClass otherClass = pair.getOtherClass(index);
+        if (otherClass != null && otherClass.findConstant(false) != getFactory().getConstFactory().getNull()) {
+          iterator.remove();
+        }
+      }
+    }
   }
 
   private boolean updateEqClassesByState(DfaVariableValue value) {

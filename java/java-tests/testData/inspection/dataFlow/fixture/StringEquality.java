@@ -42,10 +42,14 @@ class StringEquality {
   }
 
   boolean compare(Object a, Object b) {
-    if(a == b) return true;
+    if(a == b) {
+      if(a instanceof String) {
+        return <warning descr="Result of '((String)a).equals(b)' is always 'true'">((String)a).equals(b)</warning>;
+      }
+      return true;
+    }
     if(a instanceof String && b instanceof String) {
-      // false-positive
-      return <warning descr="Result of '((String)a).equals((String)b)' is always 'false'">((String)a).equals((String)b)</warning>;
+      return ((String)a).equals(b);
     }
     return false;
   }
