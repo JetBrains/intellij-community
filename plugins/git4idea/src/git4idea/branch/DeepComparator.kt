@@ -13,308 +13,258 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.branch;
+package git4idea.branch
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBPoint;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter;
-import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.util.TroveUtil;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import git4idea.GitBranch;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerListener;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBPoint
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.ui.AbstractVcsLogUi
+import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
+import com.intellij.vcs.log.util.TroveUtil
+import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.GitBranch
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import gnu.trove.TIntHashSet
 
-import java.awt.*;
-import java.util.Map;
+class DeepComparator(private val project: Project,
+                     private val repositoryManager: GitRepositoryManager,
+                     private val dataProvider: VcsLogDataProvider,
+                     private val ui: VcsLogUi,
+                     parent: Disposable) : VcsLogHighlighter, Disposable {
+  private var task: MyTask? = null
+  private var nonPickedCommits: TIntHashSet? = null
 
-public class DeepComparator implements VcsLogHighlighter, Disposable {
-  private static final Logger LOG = Logger.getInstance(DeepComparator.class);
-  private static final String HIGHLIGHTING_CANCELLED = "Highlighting of non-picked commits has been cancelled";
-
-  @NotNull private final Project myProject;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final VcsLogDataProvider myDataProvider;
-  @NotNull private final VcsLogUi myUi;
-
-  @Nullable private MyTask myTask;
-  @Nullable private TIntHashSet myNonPickedCommits;
-
-  public DeepComparator(@NotNull Project project,
-                        @NotNull GitRepositoryManager manager,
-                        @NotNull VcsLogDataProvider dataProvider,
-                        @NotNull VcsLogUi ui,
-                        @NotNull Disposable parent) {
-    myProject = project;
-    myRepositoryManager = manager;
-    myDataProvider = dataProvider;
-    myUi = ui;
-    Disposer.register(parent, this);
+  init {
+    Disposer.register(parent, this)
   }
 
-  public void highlightInBackground(@NotNull String branchToCompare) {
-    if (myTask != null) {
-      LOG.error("Shouldn't be possible");
-      return;
+  fun highlightInBackground(branchToCompare: String) {
+    if (task != null) {
+      LOG.error("Shouldn't be possible")
+      return
     }
 
-    Map<GitRepository, GitBranch> repositories = getRepositories(myUi.getDataPack().getLogProviders(), branchToCompare);
-    LOG.debug("Highlighting requested: " + repositories);
+    val repositories = getRepositories(ui.dataPack.logProviders, branchToCompare)
+    LOG.debug("Highlighting requested: $repositories")
     if (repositories.isEmpty()) {
-      removeHighlighting();
-      return;
+      removeHighlighting()
+      return
     }
 
-    myTask = new MyTask(myProject, myDataProvider, repositories, branchToCompare);
-    myTask.queue();
+    task = MyTask(repositories, branchToCompare)
+    task!!.queue()
   }
 
-  @NotNull
-  private Map<GitRepository, GitBranch> getRepositories(@NotNull Map<VirtualFile, VcsLogProvider> providers,
-                                                        @NotNull String branchToCompare) {
-    Map<GitRepository, GitBranch> repos = ContainerUtil.newHashMap();
-    for (VirtualFile root : providers.keySet()) {
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null || repository.getCurrentBranch() == null ||
-          repository.getBranches().findBranchByName(branchToCompare) == null) {
-        continue;
+  private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
+                              branchToCompare: String): Map<GitRepository, GitBranch> {
+    val repos = ContainerUtil.newHashMap<GitRepository, GitBranch>()
+    for (root in providers.keys) {
+      val repository = repositoryManager.getRepositoryForRoot(root)
+      if (repository == null || repository.currentBranch == null ||
+          repository.branches.findBranchByName(branchToCompare) == null) {
+        continue
       }
-      repos.put(repository, repository.getCurrentBranch());
+      repos[repository] = repository.currentBranch
     }
-    return repos;
+    return repos
   }
 
-  public void stopAndUnhighlight() {
-    stopTask();
-    removeHighlighting();
+  fun stopAndUnhighlight() {
+    stopTask()
+    removeHighlighting()
   }
 
-  private void stopTask() {
-    if (myTask != null) {
-      myTask.cancel();
-      myTask = null;
+  private fun stopTask() {
+    if (task != null) {
+      task!!.cancel()
+      task = null
     }
   }
 
-  private void removeHighlighting() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myNonPickedCommits = null;
+  private fun removeHighlighting() {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    nonPickedCommits = null
   }
 
-  @Override
-  public void dispose() {
-    stopAndUnhighlight();
+  override fun dispose() {
+    stopAndUnhighlight()
   }
 
-  public boolean hasHighlightingOrInProgress() {
-    return myTask != null;
+  fun hasHighlightingOrInProgress(): Boolean {
+    return task != null
   }
 
-  public static DeepComparator getInstance(@NotNull Project project,
-                                           @NotNull VcsLogDataProvider dataProvider,
-                                           @NotNull VcsLogUi logUi) {
-    return ServiceManager.getService(project, DeepComparatorHolder.class).getInstance(dataProvider, logUi);
+  override fun getStyle(commitId: Int, commitDetails: VcsShortCommitDetails, isSelected: Boolean): VcsLogHighlighter.VcsCommitStyle {
+    return if (nonPickedCommits == null) VcsLogHighlighter.VcsCommitStyle.DEFAULT
+    else VcsCommitStyleFactory.foreground(
+      if (!nonPickedCommits!!.contains(commitId))
+        MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND
+      else
+        null)
   }
 
-  @NotNull
-  @Override
-  public VcsLogHighlighter.VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
-    if (myNonPickedCommits == null) return VcsCommitStyle.DEFAULT;
-    return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(commitId)
-                                            ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND
-                                            : null);
-  }
-
-  @Override
-  public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-    if (myTask == null) { // no task in progress => not interested in refresh events
-      return;
+  override fun update(dataPack: VcsLogDataPack, refreshHappened: Boolean) {
+    if (task == null) { // no task in progress => not interested in refresh events
+      return
     }
 
-    String comparedBranch = myTask.myComparedBranch;
-    String singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
-    if (!myTask.myComparedBranch.equals(singleFilteredBranch)) {
-      LOG.debug(String.format("Branch filter changed. Compared branch: %s, filtered branch: %s",
-                              myTask.myComparedBranch, singleFilteredBranch));
-      stopAndUnhighlight();
-      notifyHighlightingCancelled();
-      return;
+    val comparedBranch = task!!.comparedBranch
+    val singleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.filters, dataPack.refs)
+    if (task!!.comparedBranch != singleFilteredBranch) {
+      LOG.debug("Branch filter changed. Compared branch: ${task!!.comparedBranch}, filtered branch: $singleFilteredBranch")
+      stopAndUnhighlight()
+      notifyHighlightingCancelled()
+      return
     }
 
     if (refreshHappened) {
-      Map<GitRepository, GitBranch> repositoriesWithCurrentBranches = myTask.myRepositoriesWithCurrentBranches;
+      val repositoriesWithCurrentBranches = task!!.repositoriesWithCurrentBranches
 
-      stopTask();
+      stopTask()
 
       // highlight again
-      Map<GitRepository, GitBranch> repositories = getRepositories(dataPack.getLogProviders(), comparedBranch);
-      if (repositories.equals(repositoriesWithCurrentBranches)) {
+      val repositories = getRepositories(dataPack.logProviders, comparedBranch)
+      if (repositories == repositoriesWithCurrentBranches) {
         // but not if current branch changed
-        highlightInBackground(comparedBranch);
+        highlightInBackground(comparedBranch)
       }
       else {
-        LOG.debug(String.format("Repositories with current branches changed. Actual:\n%s\nExpected:\n%s",
-                                repositories, repositoriesWithCurrentBranches));
-        removeHighlighting();
+        LOG.debug("Repositories with current branches changed. Actual:\n$repositories\nExpected:\n$repositoriesWithCurrentBranches")
+        removeHighlighting()
       }
     }
   }
 
-  private void notifyHighlightingCancelled() {
-    if (myUi instanceof AbstractVcsLogUi) {
-      Balloon balloon = JBPopupFactory.getInstance()
-                                      .createHtmlTextBalloonBuilder(HIGHLIGHTING_CANCELLED, null, MessageType.INFO.getPopupBackground(),
-                                                                    null)
-                                      .setFadeoutTime(5000)
-                                      .createBalloon();
-      Component component = ((AbstractVcsLogUi)myUi).getTable();
-      balloon.show(new RelativePoint(component, new JBPoint(component.getWidth() / 2, 0)), Balloon.Position.below);
-      Disposer.register(this, balloon);
+  private fun notifyHighlightingCancelled() {
+    if (ui is AbstractVcsLogUi) {
+      val balloon = JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(HIGHLIGHTING_CANCELLED, null, MessageType.INFO.popupBackground, null)
+        .setFadeoutTime(5000)
+        .createBalloon()
+      val component = ui.table
+      balloon.show(RelativePoint(component, JBPoint(component.width / 2, 0)), Balloon.Position.below)
+      Disposer.register(this, balloon)
     }
   }
 
-  public static class Factory implements VcsLogHighlighterFactory {
-    @NotNull private static final String ID = "CHERRY_PICKED_COMMITS";
+  class Factory : VcsLogHighlighterFactory {
 
-    @NotNull
-    @Override
-    public VcsLogHighlighter createHighlighter(@NotNull VcsLogData logDataManager, @NotNull VcsLogUi logUi) {
-      return getInstance(logDataManager.getProject(), logDataManager, logUi);
+    override fun createHighlighter(logDataManager: VcsLogData, logUi: VcsLogUi): VcsLogHighlighter {
+      return getInstance(logDataManager.project, logDataManager, logUi)
     }
 
-    @NotNull
-    @Override
-    public String getId() {
-      return ID;
+    override fun getId(): String {
+      return "CHERRY_PICKED_COMMITS"
     }
 
-    @NotNull
-    @Override
-    public String getTitle() {
-      return "Cherry Picked Commits";
+    override fun getTitle(): String {
+      return "Cherry Picked Commits"
     }
 
-    @Override
-    public boolean showMenuItem() {
-      return false;
+    override fun showMenuItem(): Boolean {
+      return false
     }
   }
 
-  private class MyTask extends Task.Backgroundable {
+  private inner class MyTask(val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
+                             val comparedBranch: String) : Task.Backgroundable(project, "Comparing Branches...") {
 
-    @NotNull private final Project myProject;
-    @NotNull private final VcsLogDataProvider myDataProvider;
-    @NotNull private final Map<GitRepository, GitBranch> myRepositoriesWithCurrentBranches;
-    @NotNull private final String myComparedBranch;
+    private val collectedNonPickedCommits = TIntHashSet()
+    private var exception: VcsException? = null
+    private var isCancelled: Boolean = false
 
-    @NotNull private final TIntHashSet myCollectedNonPickedCommits = new TIntHashSet();
-    @Nullable private VcsException myException;
-    private boolean myCancelled;
-
-    public MyTask(@NotNull Project project,
-                  @NotNull VcsLogDataProvider dataProvider,
-                  @NotNull Map<GitRepository, GitBranch> repositoriesWithCurrentBranches,
-                  @NotNull String branchToCompare) {
-      super(project, "Comparing Branches...");
-      myProject = project;
-      myDataProvider = dataProvider;
-      myRepositoriesWithCurrentBranches = repositoriesWithCurrentBranches;
-      myComparedBranch = branchToCompare;
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
+    override fun run(indicator: ProgressIndicator) {
       try {
-        for (Map.Entry<GitRepository, GitBranch> entry : myRepositoriesWithCurrentBranches.entrySet()) {
-          GitRepository repo = entry.getKey();
-          GitBranch currentBranch = entry.getValue();
-          TIntHashSet commitsFromGit = getNonPickedCommitsFromGit(repo.getRoot(), currentBranch.getName(), myComparedBranch);
-          TroveUtil.addAll(myCollectedNonPickedCommits, commitsFromGit);
+        repositoriesWithCurrentBranches.forEach { repo, currentBranch ->
+          TroveUtil.addAll(collectedNonPickedCommits, getNonPickedCommitsFromGit(repo.root, currentBranch.name, comparedBranch))
         }
       }
-      catch (VcsException e) {
-        LOG.warn(e);
-        myException = e;
-      }
-    }
-
-    @Override
-    public void onSuccess() {
-      if (myCancelled) {
-        return;
+      catch (e: VcsException) {
+        LOG.warn(e)
+        exception = e
       }
 
-      removeHighlighting();
+    }
 
-      if (myException != null) {
-        VcsNotifier.getInstance(myProject).notifyError("Couldn't compare with branch " + myComparedBranch, myException.getMessage());
-        return;
+    override fun onSuccess() {
+      if (isCancelled) {
+        return
       }
-      myNonPickedCommits = myCollectedNonPickedCommits;
+
+      removeHighlighting()
+
+      if (exception != null) {
+        VcsNotifier.getInstance(myProject).notifyError("Couldn't compare with branch $comparedBranch", exception!!.message)
+        return
+      }
+      nonPickedCommits = collectedNonPickedCommits
     }
 
-    public void cancel() {
-      myCancelled = true;
+    fun cancel() {
+      isCancelled = true
     }
 
-    @NotNull
-    private TIntHashSet getNonPickedCommitsFromGit(@NotNull VirtualFile root,
-                                                   @NotNull String currentBranch,
-                                                   @NotNull String comparedBranch) throws VcsException {
-      GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHERRY);
-      handler.addParameters(currentBranch, comparedBranch); // upstream - current branch; head - compared branch
+    @Throws(VcsException::class)
+    private fun getNonPickedCommitsFromGit(root: VirtualFile,
+                                           currentBranch: String,
+                                           comparedBranch: String): TIntHashSet {
+      val handler = GitLineHandler(project, root, GitCommand.CHERRY)
+      handler.addParameters(currentBranch, comparedBranch) // upstream - current branch; head - compared branch
 
-      TIntHashSet pickedCommits = new TIntHashSet();
-      handler.addLineListener(new GitLineHandlerListener() {
-        @Override
-        public void onLineAvailable(String line, Key outputType) {
-          // + 645caac042ff7fb1a5e3f7d348f00e9ceea5c317
-          // - c3b9b90f6c26affd7e597ebf65db96de8f7e5860
-          if (line.startsWith("+")) {
-            try {
-              line = line.substring(2).trim();
-              int firstSpace = line.indexOf(' ');
-              if (firstSpace > 0) {
-                line = line.substring(0, firstSpace); // safety-check: take just the first word for sure
-              }
-              Hash hash = HashImpl.build(line);
-              pickedCommits.add(myDataProvider.getCommitIndex(hash, root));
+      val pickedCommits = TIntHashSet()
+      handler.addLineListener { l, _ ->
+        var line = l
+        // + 645caac042ff7fb1a5e3f7d348f00e9ceea5c317
+        // - c3b9b90f6c26affd7e597ebf65db96de8f7e5860
+        if (line.startsWith("+")) {
+          try {
+            line = line.substring(2).trim { it <= ' ' }
+            val firstSpace = line.indexOf(' ')
+            if (firstSpace > 0) {
+              line = line.substring(0, firstSpace) // safety-check: take just the first word for sure
             }
-            catch (Exception e) {
-              LOG.error("Couldn't parse line [" + line + "]");
-            }
+            val hash = HashImpl.build(line)
+            pickedCommits.add(dataProvider.getCommitIndex(hash, root))
+          }
+          catch (e: Exception) {
+            LOG.error("Couldn't parse line [$line]")
           }
         }
-      });
-      Git.getInstance().runCommandWithoutCollectingOutput(handler);
-      return pickedCommits;
+      }
+      Git.getInstance().runCommandWithoutCollectingOutput(handler)
+      return pickedCommits
+    }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(DeepComparator::class.java)
+    private const val HIGHLIGHTING_CANCELLED = "Highlighting of non-picked commits has been cancelled"
+
+    @JvmStatic
+    fun getInstance(project: Project, dataProvider: VcsLogDataProvider, logUi: VcsLogUi): DeepComparator {
+      return ServiceManager.getService(project, DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
     }
   }
 }
