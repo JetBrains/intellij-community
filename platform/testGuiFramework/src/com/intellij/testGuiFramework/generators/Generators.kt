@@ -36,7 +36,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
-import com.intellij.testGuiFramework.fixtures.*
+import com.intellij.testGuiFramework.fixtures.MainToolbarFixture
+import com.intellij.testGuiFramework.fixtures.MessagesFixture
+import com.intellij.testGuiFramework.fixtures.NavigationBarFixture
+import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
 import com.intellij.testGuiFramework.fixtures.extended.getPathStrings
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
@@ -564,7 +567,7 @@ class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
   override fun priority(): Int = 2
 
   override fun acceptor(): (Component) -> Boolean = { cmp ->
-    cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
+    cmp is JDialog && MessagesFixture.isMessageDialog(cmp)
   }
 
   override fun generate(cmp: JDialog): String {
