@@ -1,6 +1,9 @@
 <component name="libraryTable">
   <library name="netty-codec-http" type="repository">
     <properties maven-id="io.netty:netty-codec-http:4.1.28.Final" />
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/netty" />
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.28.Final/netty-codec-http-4.1.28.Final.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.28.Final/netty-codec-4.1.28.Final.jar!/" />
