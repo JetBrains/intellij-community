@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -31,9 +30,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
@@ -360,8 +357,34 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiMethod methodInClassCopy = classCopy.getMethods()[methodIndex];
     PsiMethod result = (PsiMethod)methodInClassCopy.replace(methodCopy); // patch method parameter type
 
+    patchThisExpression(result, containingClass);
+
     return result;
   }
+
+  private static void patchThisExpression(PsiMethod methodCopy, PsiClass containingClass) {
+    PsiClass classCopy = methodCopy.getContainingClass();
+    List<PsiThisExpression> these = new ArrayList<>();
+    methodCopy.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        super.visitThisExpression(expression);
+        if (PsiUtil.resolveClassInType(expression.getType()) == classCopy) {
+          these.add(expression);
+        }
+      }
+    });
+    if (!these.isEmpty()) {
+      PsiElementFactory f = PsiElementFactory.SERVICE.getInstance(containingClass.getProject());
+      PsiParameter __this__ = f.createParameter("__this__", f.createType(containingClass));
+      methodCopy.getParameterList().add(__this__);
+      for (PsiThisExpression thisExpr : these) {
+        PsiExpression newExpr = f.createExpressionFromText("__this__", thisExpr);
+        thisExpr.replace(newExpr);
+      }
+    }
+  }
+
 
   private static boolean errorChecks(@NotNull PsiElement method, @NotNull List<PsiElement> elementsToIgnore) {
     HighlightVisitor visitor = ContainerUtil.find(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, method.getProject()), h -> h instanceof HighlightVisitorImpl).clone();

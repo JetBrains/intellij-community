@@ -360,4 +360,19 @@ public class Simple<T> {
       if (p.process(this)) return;
     }
   }
+
+
+  // patch "this" expressions to resolve to original class instead of copy
+  class X {
+    private Consumer<X> myPopupTuner;
+
+    public X setPopupTuner(Consumer<<warning descr="Can generalize to '? super X'">X</warning>> tuner) {
+      myPopupTuner = tuner;
+
+      if (myPopupTuner != null) {
+        myPopupTuner.accept(this);
+      }
+      return this;
+    }
+  }
 }
