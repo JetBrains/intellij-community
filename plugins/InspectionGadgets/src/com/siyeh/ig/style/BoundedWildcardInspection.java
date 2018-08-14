@@ -218,11 +218,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private static PsiField findFieldAssignedFromMethodParameter(@NotNull PsiParameter methodParameter, @NotNull PsiMethod method) {
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return null;
-
+    PsiClass containingClass = method.getContainingClass();
     Ref<Pair<PsiField, PsiType>> assignedToField = Ref.create();
     ReferencesSearch.search(methodParameter, new LocalSearchScope(methodBody)).forEach(ref -> {
       ProgressManager.checkCanceled();
-      Pair<PsiField, PsiType> assigned = isAssignedToField(ref);
+      Pair<PsiField, PsiType> assigned = isAssignedToField(ref, containingClass);
       if (assigned != null) {
         if (!assignedToField.isNull() && !assigned.equals(assignedToField.get())) {
           assignedToField.set(null);
@@ -433,7 +433,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   // return field assigned to, type of the expression assigned from
-  private static Pair<PsiField, PsiType> isAssignedToField(@NotNull PsiReference ref) {
+  private static Pair<PsiField, PsiType> isAssignedToField(@NotNull PsiReference ref, PsiClass containingClass) {
     PsiElement refElement = ref.getElement();
     PsiElement parent = skipParensAndCastsUp(refElement);
     if (!(parent instanceof PsiAssignmentExpression) || ((PsiAssignmentExpression)parent).getOperationTokenType() != JavaTokenType.EQ) return null;
@@ -444,14 +444,16 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
     PsiExpression lQualifier = skipParensAndCastsDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
-    PsiElement field = lExpression.resolve();
+    PsiElement resolved = lExpression.resolve();
+    if (!(resolved instanceof PsiField)) return null;
     // too expensive to search for usages of public field otherwise
-    if (!(field instanceof PsiField) ||
-        !((PsiField)field).hasModifierProperty(PsiModifier.PRIVATE) &&
-        !((PsiField)field).hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
+    PsiField field = (PsiField)resolved;
+    if (!field.hasModifierProperty(PsiModifier.PRIVATE) &&
+        !field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
     PsiType type = r.getType();
     if (type == null) return null;
-    return Pair.createNonNull((PsiField)field, type);
+    if (field.getContainingClass() != containingClass) return null;
+    return Pair.createNonNull(field, type);
   }
 
 
