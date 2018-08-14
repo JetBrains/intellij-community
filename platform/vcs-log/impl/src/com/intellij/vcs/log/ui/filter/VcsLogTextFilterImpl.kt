@@ -75,7 +75,7 @@ class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) :
   }
 }
 
-class VcsLogMultiplePatternsTextFilter internal constructor(private val patterns: List<String>,
+class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<String>,
                                                             private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
   override fun getText(): String = if (patterns.size == 1) patterns.single() else patterns.joinToString("|") { Pattern.quote(it) }
 
