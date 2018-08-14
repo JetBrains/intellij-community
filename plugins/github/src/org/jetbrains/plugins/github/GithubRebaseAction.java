@@ -158,7 +158,7 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
         return null;
       }
 
-      String parentRepoUrl = GithubGitHelper.getInstance().getRemoteUrl(myServer, fullPath);
+      String parentRepoUrl = GithubGitHelper.getInstance().getRemoteUrl(myServer, repositoryInfo.getParent().getFullPath());
 
       LOG.info("Adding GitHub parent as a remote host");
       indicator.setText("Adding GitHub parent as a remote host...");
