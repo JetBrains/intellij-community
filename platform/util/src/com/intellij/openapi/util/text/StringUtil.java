@@ -3059,11 +3059,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean parseBoolean(String string, final boolean defaultValue) {
-    return StringUtilRt.parseBoolean(string, defaultValue);
-  }
-
-  @Contract(pure = true)
   public static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
     return StringUtilRt.parseEnum(string, defaultValue, clazz);
   }

@@ -207,16 +207,6 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean parseBoolean(String string, boolean defaultValue) {
-    try {
-      return Boolean.parseBoolean(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
-  @Contract(pure = true)
   static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
     try {
       return Enum.valueOf(clazz, string);
