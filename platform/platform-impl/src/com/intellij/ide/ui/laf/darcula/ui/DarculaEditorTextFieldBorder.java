@@ -68,11 +68,12 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
 
     EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
     if (editorTextField == null) return;
+    boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
 
     Rectangle r = new Rectangle(x, y, width, height);
 
     if (isTableCellEditor(c)) {
-      paintCellEditorBorder((Graphics2D)g, c, r);
+      paintCellEditorBorder((Graphics2D)g, c, r, hasFocus);
     } else {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
@@ -94,8 +95,6 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
         Shape outer = new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2);
         g2.setColor(c.getBackground());
         g2.fill(outer);
-
-        boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
 
         Object op = editorTextField.getClientProperty("JComponent.outline");
         if (op != null) {

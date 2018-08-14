@@ -38,11 +38,12 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     if (((JComponent)c).getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE) return;
 
     Rectangle r = new Rectangle(x, y, width, height);
+    boolean focused = isFocused(c);
 
     if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
       paintSearchArea((Graphics2D)g, r, (JTextComponent)c, false);
     } else if (isTableCellEditor(c)) {
-      paintCellEditorBorder((Graphics2D)g, c, r);
+      paintCellEditorBorder((Graphics2D)g, c, r, focused);
     } else if (!(c.getParent() instanceof JComboBox)){
       Graphics2D g2 = (Graphics2D)g.create();
       try {
@@ -59,7 +60,6 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         clipForBorder(c, g2, r.width, r.height);
 
         Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-        boolean focused = isFocused(c);
         if (op != null) {
           paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), focused, Outline.valueOf(op.toString()));
         } else {
