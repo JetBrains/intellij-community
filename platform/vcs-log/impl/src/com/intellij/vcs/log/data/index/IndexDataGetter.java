@@ -296,6 +296,7 @@ public class IndexDataGetter {
   }
 
   private class MyFileNamesData extends FileNamesData {
+    @Override
     @NotNull
     protected FilePath getPathById(int pathId) {
       return notNull(myIndexStorage.paths.getPath(pathId));

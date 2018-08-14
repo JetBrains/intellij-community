@@ -51,6 +51,7 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         return (uri != null ? uri.hashCode() : 0);
     }
 
+    @Override
     protected Namespace clone() {
         try {
             return (Namespace)super.clone();
@@ -59,6 +60,7 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
         }
     }
 
+    @Override
     public Namespace copy() {
         return clone();
     }

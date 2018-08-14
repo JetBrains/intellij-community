@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import java.util.List;
 
 public class ReimportProjectAction extends MavenProjectsAction {
+  @Override
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
     manager.forceUpdateProjects(mavenProjects);
   }

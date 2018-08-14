@@ -168,6 +168,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       myMethodKind = methodKind;
     }
 
+    @Override
     public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
       final PsiClass targetClass = findTargetClass(editor, file);
       final List<TestFramework> frameworks = new ArrayList<>(TestIntegrationUtils.findSuitableFrameworks(targetClass));
@@ -252,6 +253,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       return result;
     }
 
+    @Override
     public boolean startInWriteAction() {
       return false;
     }

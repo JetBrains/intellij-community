@@ -83,6 +83,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
     userSettingsFileOverrider =
       new PathOverrider(settingsFileComponent, settingsOverrideCheckBox, listener, new PathProvider() {
+        @Override
         @Nullable
         protected File getFile() {
           return MavenUtil.resolveUserSettingsFile("");
@@ -91,6 +92,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
     localRepositoryOverrider =
       new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, listener, new PathProvider() {
+        @Override
         @Nullable
         protected File getFile() {
           return MavenUtil.resolveLocalRepository("",
@@ -178,6 +180,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
                                                               null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
                                                               TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     mavenHomeField.addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         updateMavenVersionLabel();
       }
@@ -231,6 +234,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       this.checkBox = checkBox;
       this.pathProvider = pathProvider;
       checkBox.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           update();
         }

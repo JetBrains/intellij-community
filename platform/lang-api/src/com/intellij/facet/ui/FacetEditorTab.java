@@ -44,6 +44,7 @@ public abstract class FacetEditorTab implements Configurable {
   public void onTabLeaving() {
   }
 
+  @Override
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     return null;

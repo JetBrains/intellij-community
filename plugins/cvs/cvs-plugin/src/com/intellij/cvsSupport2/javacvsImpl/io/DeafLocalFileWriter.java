@@ -15,14 +15,13 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import org.netbeans.lib.cvsclient.file.*;
 
-import java.util.Date;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
-
-import com.intellij.cvsSupport2.CvsUtil;
+import java.util.Date;
 
 /**
  * author: lesya
@@ -32,9 +31,11 @@ public class DeafLocalFileWriter implements ILocalFileWriter{
   private DeafLocalFileWriter() {
   }
 
+  @Override
   public void setNextFileDate(Date modifiedDate) {
   }
 
+  @Override
   public void writeBinaryFile(FileObject fileObject,
                               int length,
                               InputStream inputStream,
@@ -44,15 +45,18 @@ public class DeafLocalFileWriter implements ILocalFileWriter{
     CvsUtil.skip(inputStream, length);
   }
 
+  @Override
   public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName) {
 
   }
 
+  @Override
   public void removeLocalFile(FileObject fileObject,
                               ICvsFileSystem cvsFileSystem,
                               IFileReadOnlyHandler fileReadOnlyHandler) {
   }
 
+  @Override
   public void writeTextFile(FileObject fileObject,
                             int length,
                             InputStream inputStream,
@@ -63,6 +67,7 @@ public class DeafLocalFileWriter implements ILocalFileWriter{
     CvsUtil.skip(inputStream, length);
   }
 
+  @Override
   public void setNextFileMode(String nextFileMode) {
   }
 }

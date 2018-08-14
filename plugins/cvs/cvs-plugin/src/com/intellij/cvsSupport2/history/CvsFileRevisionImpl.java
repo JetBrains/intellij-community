@@ -54,6 +54,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return new GetFileContentOperation(cvsLightweightFile, cvsEnvironment, new SimpleRevision(revisionNumber));
   }
 
+  @Override
   public Collection<String> getBranches() {
     return getBranchList(true);
   }
@@ -119,10 +120,12 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return myLogInformation.getSymNamesForRevision(symRevNumber.asString());
   }
 
+  @Override
   public String getAuthor() {
     return myCvsRevision.getAuthor();
   }
 
+  @Override
   public String getState() {
     return myCvsRevision.getState();
   }
@@ -133,6 +136,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return null;
   }
 
+  @Override
   public Collection<String> getTags() {
     if (myTags == null) {
       myTags = myLogInformation == null ? Collections.emptyList() : collectSymNamesForRevision();
@@ -150,6 +154,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return result;
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     if (myCvsRevision != null) {
@@ -159,10 +164,12 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return number == null ? VcsRevisionNumber.NULL : number;
   }
 
+  @Override
   public Date getRevisionDate() {
     return myCvsRevision.getDate();
   }
 
+  @Override
   public String getCommitMessage() {
     return myCvsRevision.getMessage();
   }
@@ -171,6 +178,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return getRevisionNumber().asString();
   }
 
+  @Override
   public String getBranchName() {
     return StringUtil.join(getBranchList(false), ", ");
   }

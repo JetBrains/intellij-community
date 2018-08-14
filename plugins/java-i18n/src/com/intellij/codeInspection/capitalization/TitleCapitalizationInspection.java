@@ -198,6 +198,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return "Properly capitalize '" + myTitleValue + '\'';
     }
 
+    @Override
     public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement problemElement = descriptor.getPsiElement();
       if (problemElement == null || !problemElement.isValid()) {

@@ -74,64 +74,78 @@ public final class ImageEditorImpl implements ImageEditor {
     }
   }
 
+  @Override
   public boolean isValid() {
     ImageDocument document = editorUI.getImageComponent().getDocument();
     return document.getValue() != null;
   }
 
+  @Override
   public ImageEditorUI getComponent() {
     return editorUI;
   }
 
+  @Override
   public JComponent getContentComponent() {
     return editorUI.getImageComponent();
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return file;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return project;
   }
 
+  @Override
   public ImageDocument getDocument() {
     return editorUI.getImageComponent().getDocument();
   }
 
+  @Override
   public void setTransparencyChessboardVisible(boolean visible) {
     editorUI.getImageComponent().setTransparencyChessboardVisible(visible);
     editorUI.repaint();
   }
 
+  @Override
   public boolean isTransparencyChessboardVisible() {
     return editorUI.getImageComponent().isTransparencyChessboardVisible();
   }
 
+  @Override
   public boolean isEnabledForActionPlace(String place) {
     // Disable for thumbnails action
     return !ThumbnailViewActions.ACTION_PLACE.equals(place);
   }
 
+  @Override
   public void setGridVisible(boolean visible) {
     editorUI.getImageComponent().setGridVisible(visible);
     editorUI.repaint();
   }
 
+  @Override
   public boolean isGridVisible() {
     return editorUI.getImageComponent().isGridVisible();
   }
 
+  @Override
   public boolean isDisposed() {
     return disposed;
   }
 
+  @Override
   public ImageZoomModel getZoomModel() {
     return editorUI.getZoomModel();
   }
 
+  @Override
   public void dispose() {
     disposed = true;
   }

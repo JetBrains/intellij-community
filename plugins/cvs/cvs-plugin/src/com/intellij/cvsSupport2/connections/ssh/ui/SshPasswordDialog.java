@@ -38,6 +38,7 @@ public class SshPasswordDialog extends DialogWrapper{
     myAdditionalLbl.setVisible(false);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -50,6 +51,7 @@ public class SshPasswordDialog extends DialogWrapper{
     return myStoreCheckbox.isSelected();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPasswordField;
   }

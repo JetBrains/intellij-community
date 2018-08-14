@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -46,6 +45,7 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
     }
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     if (myTypeElement.isValid()) {
       Project project = myTypeElement.getProject();

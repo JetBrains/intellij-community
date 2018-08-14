@@ -38,14 +38,17 @@ public class FilteringListModel<T> extends AbstractListModel {
 
 
   private final ListDataListener myListDataListener = new ListDataListener() {
+    @Override
     public void contentsChanged(ListDataEvent e) {
       refilter();
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
       refilter();
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
       refilter();
     }
@@ -98,10 +101,12 @@ public class FilteringListModel<T> extends AbstractListModel {
     myData.add(elt);
   }
 
+  @Override
   public int getSize() {
     return myData.size();
   }
 
+  @Override
   public T getElementAt(int index) {
     return myData.get(index);
   }
@@ -132,7 +137,7 @@ public class FilteringListModel<T> extends AbstractListModel {
     myData.addAll(elements);
     ((CollectionListModel)myOriginalModel).replaceAll(elements);
   }
-  
+
   public void remove(int index) {
     ((DefaultListModel)myOriginalModel).removeElement(myData.get(index));
   }

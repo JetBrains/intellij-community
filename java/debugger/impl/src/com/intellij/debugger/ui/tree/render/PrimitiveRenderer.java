@@ -23,26 +23,32 @@ public class PrimitiveRenderer extends NodeRendererImpl {
     super("Primitive");
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public void setName(String text) {
     // prohibit name change
   }
 
+  @Override
   public final boolean isEnabled() {
     return true;
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     // prohibit change
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return type == null || type instanceof PrimitiveType || type instanceof VoidType;
   }
 
+  @Override
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
     if (value == null) {

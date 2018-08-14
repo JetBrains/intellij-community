@@ -267,6 +267,7 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
       super(robot, target);
     }
 
+    @Override
     @Nullable
     public String getTitle(){
       final JEditorPane messageTextPane = getMessageTextPane(target());

@@ -40,6 +40,7 @@ public abstract class SearchSupport<T extends Task> {
   protected boolean myCancelled;
 
   private final ActionListener myCancelAction = new ActionListener() {
+    @Override
     public void actionPerformed(final ActionEvent e) {
       if (myCurrentPopup != null) {
         myCancelled = true;
@@ -63,6 +64,7 @@ public abstract class SearchSupport<T extends Task> {
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> myTextField.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(final KeyEvent e) {
           processListSelection(e);
       }
@@ -210,11 +212,13 @@ public abstract class SearchSupport<T extends Task> {
 
     final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
+      @Override
       public void beforeShown(LightweightWindowEvent event) {
         myTextField
           .registerKeyboardAction(myCancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
       }
 
+      @Override
       public void onClosed(LightweightWindowEvent event) {
         myTextField.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
       }

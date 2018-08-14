@@ -36,6 +36,7 @@ public abstract class MavenTreeAction extends MavenAction {
   }
 
   public static class CollapseAll extends MavenTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;
@@ -49,6 +50,7 @@ public abstract class MavenTreeAction extends MavenAction {
   }
 
   public static class ExpandAll extends MavenTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;

@@ -118,16 +118,19 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new InlineViewDescriptor(myMethod);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
@@ -185,6 +188,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myMethod = (PsiMethod)elements[0];
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (!myInlineThisOnly && checkReadOnly()) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
@@ -368,6 +372,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     RangeMarker position = null;
     if (myEditor != null) {
@@ -1432,6 +1437,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiExpression callExpr = JavaPsiFacade.getInstance(myProject).getParserFacade().createExpressionFromText(text, call);
       PsiElement classExpr = ref.replace(callExpr);
       classExpr.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
         public void visitReturnStatement(final PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
           PsiExpression expr = statement.getReturnValue();

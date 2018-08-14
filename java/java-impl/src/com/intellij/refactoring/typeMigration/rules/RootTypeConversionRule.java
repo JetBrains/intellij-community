@@ -34,6 +34,7 @@ import java.util.Objects;
  * @author anna
  */
 public class RootTypeConversionRule extends TypeConversionRule {
+  @Override
   public TypeConversionDescriptorBase findConversion(final PsiType from,
                                                      final PsiType to,
                                                      final PsiMember member,

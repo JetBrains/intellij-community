@@ -30,6 +30,7 @@ public class RemoteStateState implements RemoteState {
     myAutoRestart = autoRestart;
   }
 
+  @Override
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
     RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject, myAutoRestart);
@@ -37,6 +38,7 @@ public class RemoteStateState implements RemoteState {
     return new DefaultExecutionResult(consoleView, process);
   }
 
+  @Override
   public RemoteConnection getRemoteConnection() {
     return myConnection;
   }

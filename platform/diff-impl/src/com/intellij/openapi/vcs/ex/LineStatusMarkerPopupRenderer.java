@@ -153,6 +153,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = new HintListener() {
+      @Override
       public void hintHidden(final EventObject event) {
         Disposer.dispose(disposable);
       }
@@ -375,6 +376,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
           transferEvent(e, editor);
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
           transferEvent(e, editor);
         }

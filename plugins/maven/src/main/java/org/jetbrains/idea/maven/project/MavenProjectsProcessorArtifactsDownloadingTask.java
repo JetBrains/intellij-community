@@ -49,6 +49,7 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
     myCallbackResult = callbackResult;
   }
 
+  @Override
   public void perform(final Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     MavenArtifactDownloader.DownloadResult result =

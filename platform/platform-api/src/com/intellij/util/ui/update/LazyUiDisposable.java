@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
@@ -51,6 +51,7 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
     new UiNotifyConnector.Once(ui, this);
   }
 
+  @Override
   public final void showNotify() {
     JComponent ui = myUI.getAndSet(null);
     if (ui == null) return;
@@ -79,6 +80,7 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
     Disposer.register(parent, myChild);
   }
 
+  @Override
   public final void hideNotify() {
   }
 

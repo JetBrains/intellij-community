@@ -16,6 +16,7 @@ public class RemoteNativeMavenProjectHolder implements NativeMavenProjectHolder 
     myMap.put(getId(), this);
   }
 
+  @Override
   public int getId() {
     return System.identityHashCode(this);
   }

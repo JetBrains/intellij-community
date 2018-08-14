@@ -355,6 +355,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return myPanel;
   }

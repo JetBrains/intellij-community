@@ -24,6 +24,7 @@ import java.util.Set;
 
 class EnumSwitchPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       PsiElement prevSibling = element.getPrevSibling();

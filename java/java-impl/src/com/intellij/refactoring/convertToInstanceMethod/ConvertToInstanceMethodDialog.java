@@ -39,6 +39,7 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
     init();
   }
 
+  @Override
   protected void doAction() {
     final Object targetVariable = myList.getSelectedValue();
     LOG.assertTrue(targetVariable != null);
@@ -49,10 +50,12 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
     invokeRefactoring(processor);
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.CONVERT_TO_INSTANCE_METHOD);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     final JLabel label = new JLabel(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));

@@ -27,6 +27,7 @@ import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
 
 public final class FitZoomToWindowAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (decorator != null) {
@@ -35,6 +36,7 @@ public final class FitZoomToWindowAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     if (ImageEditorActionUtil.setEnabled(e)) {
       Options options = OptionsManager.getInstance().getOptions();

@@ -42,14 +42,17 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myNumber = number;
   }
 
+  @Override
   public String getCommitterName() {
     return myCommitterName;
   }
 
+  @Override
   public Date getCommitDate() {
     return myCommitDate;
   }
 
+  @Override
   public long getNumber() {
     return myNumber;
   }
@@ -59,6 +62,7 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     return null;
   }
 
+  @Override
   public AbstractVcs getVcs() {
     return null;
   }
@@ -73,15 +77,18 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     myComment = newMessage;
   }
 
+  @Override
   public Collection<Change> getChanges() {
     return myChanges;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
+  @Override
   public String getComment() {
     return myComment;
   }

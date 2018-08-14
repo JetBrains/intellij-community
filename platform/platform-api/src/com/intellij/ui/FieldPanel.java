@@ -43,6 +43,7 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
     createComponent();
   }
 
+  @Override
   public void createComponent() {
     super.createComponent();
     TextFieldWithBrowseButton.MyDoClickAction doClickAction = getDoClickAction();
@@ -51,6 +52,7 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
     }
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         if (getChangeListener() != null) {
           getChangeListener().run();
@@ -59,10 +61,12 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
     });
   }
 
+  @Override
   public String getText() {
     return myTextField.getText();
   }
 
+  @Override
   public void setText(String text) {
     myTextField.setText(text);
   }

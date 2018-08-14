@@ -20,7 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InterruptThreadAction extends DebuggerAction{
-  
+
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DebuggerTreeNodeImpl[] nodes = getSelectedNodes(e.getDataContext());
     if (nodes == null) {
@@ -35,12 +36,13 @@ public class InterruptThreadAction extends DebuggerAction{
         threadsToInterrupt.add(((ThreadDescriptorImpl)descriptor).getThreadReference());
       }
     }
-    
+
     if (!threadsToInterrupt.isEmpty()) {
       final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
       final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
       if (debugProcess != null) {
         debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+          @Override
           protected void action() {
             boolean unsupported = false;
             for (ThreadReferenceProxyImpl thread : threadsToInterrupt) {
@@ -62,6 +64,7 @@ public class InterruptThreadAction extends DebuggerAction{
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
@@ -78,7 +81,7 @@ public class InterruptThreadAction extends DebuggerAction{
           break;
         }
       }
-      
+
       if (visible) {
         for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
           final ThreadDescriptorImpl threadDescriptor = (ThreadDescriptorImpl)selectedNode.getDescriptor();

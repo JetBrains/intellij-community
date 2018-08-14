@@ -20,6 +20,7 @@ public class HideCoverageInfoAction extends IconWithTextAction {
     super("Hide coverage", "Hide coverage data", null);
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     CoverageDataManager.getInstance(e.getData(CommonDataKeys.PROJECT)).chooseSuitesBundle(null);
   }

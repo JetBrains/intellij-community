@@ -41,11 +41,13 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     return mySettings;
   }
 
+  @Override
   @NotNull
   public MavenRunnerSettings getState() {
     return mySettings;
   }
 
+  @Override
   public void loadState(@NotNull MavenRunnerSettings settings) {
     mySettings = settings;
   }
@@ -58,6 +60,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
       final MavenExecutor[] executor = new MavenExecutor[]{createExecutor(parameters, null, settings, console)};
 
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor[0].getCaption(), true) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             try {

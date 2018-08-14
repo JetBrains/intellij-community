@@ -54,6 +54,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
     doValidateInput();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
   }

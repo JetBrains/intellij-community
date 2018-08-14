@@ -63,6 +63,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     ManifestFileUtil.setupMainClassField(context.getProject(), myMainClassField);
 
     myClasspathField.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         Messages.showTextAreaDialog(myClasspathField.getTextField(), "Edit Classpath", "classpath-attribute-editor");
       }
@@ -74,11 +75,13 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
       }
     });
     myUseExistingManifestButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         chooseManifest();
       }
     });
     myCreateManifestButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         createManifest();
       }
@@ -131,12 +134,14 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     ((CardLayout)myPropertiesPanel.getLayout()).show(myPropertiesPanel, card);
   }
 
+  @Override
   public void reset() {
     myTitleLabel.setText("'" + myElement.getName() + "' manifest properties:");
     myManifestNotFoundLabel.setText("META-INF/MANIFEST.MF file not found in '" + myElement.getName() + "'");
     updateManifest();
   }
 
+  @Override
   public boolean isModified() {
     return myManifestFileConfiguration != null && (!myManifestFileConfiguration.getClasspath().equals(getConfiguredClasspath())
            || !Comparing.equal(myManifestFileConfiguration.getMainClass(), getConfiguredMainClass())
@@ -162,6 +167,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     return StringUtil.split(myClasspathField.getText(), " ");
   }
 
+  @Override
   @NotNull
   public JComponent createComponent() {
     return myMainPanel;

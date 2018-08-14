@@ -40,10 +40,12 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
   private static final UserFileType imageFileType = new ImageFileType();
 
+  @Override
   public boolean isImage(@NotNull VirtualFile file) {
     return file.getFileType() == imageFileType || file.getFileType() instanceof SvgFileType;
   }
 
+  @Override
   @NotNull
   public FileType getImageFileType() {
     return imageFileType;
@@ -61,6 +63,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
     }
   }
 
+  @Override
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     final Set<String> processed = new THashSet<>();
     for (String format : ImageIO.getReaderFormatNames()) {

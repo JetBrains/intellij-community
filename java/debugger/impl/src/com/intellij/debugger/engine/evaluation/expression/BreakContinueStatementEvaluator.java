@@ -26,6 +26,7 @@ public class BreakContinueStatementEvaluator {
 
   public static Evaluator createBreakEvaluator(final String labelName) {
     return new Evaluator() {
+      @Override
       public Object evaluate(EvaluationContextImpl context) throws BreakException {
         throw new BreakException(labelName);
       }
@@ -34,6 +35,7 @@ public class BreakContinueStatementEvaluator {
 
   public static Evaluator createContinueEvaluator(final String labelName) {
     return new Evaluator() {
+      @Override
       public Object evaluate(EvaluationContextImpl context) throws ContinueException {
         throw new ContinueException(labelName);
       }

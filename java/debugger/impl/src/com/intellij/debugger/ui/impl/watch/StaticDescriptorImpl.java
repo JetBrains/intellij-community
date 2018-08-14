@@ -28,22 +28,27 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
     myHasStaticFields = myType.allFields().stream().anyMatch(TypeComponent::isStatic);
   }
 
+  @Override
   public ReferenceType getType() {
     return myType;
   }
 
+  @Override
   public String getName() {
     //noinspection HardCodedStringLiteral
     return "static";
   }
 
+  @Override
   public boolean isExpandable() {
     return myHasStaticFields;
   }
 
+  @Override
   public void setContext(EvaluationContextImpl context) {
   }
 
+  @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();

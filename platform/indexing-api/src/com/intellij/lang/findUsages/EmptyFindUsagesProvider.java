@@ -27,30 +27,36 @@ import org.jetbrains.annotations.Nullable;
  */
 public class EmptyFindUsagesProvider implements FindUsagesProvider {
 
+  @Override
   @Nullable
   public WordsScanner getWordsScanner() {
     return null;
   }
 
+  @Override
   public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
     return false;
   }
 
+  @Override
   @Nullable
   public String getHelpId(@NotNull PsiElement psiElement) {
     return null;
   }
 
+  @Override
   @NotNull
   public String getType(@NotNull PsiElement element) {
     return "";
   }
 
+  @Override
   @NotNull
   public String getDescriptiveName(@NotNull PsiElement element) {
     return getNodeText(element, true);
   }
 
+  @Override
   @NotNull
   public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof PsiNamedElement) {

@@ -204,7 +204,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     myCouldPin = callback;
     return this;
   }
-  
+
   @NotNull
   public PopupChooserBuilder<T> setEastComponent(@NotNull JComponent cmp) {
     myEastComponent = cmp;
@@ -439,6 +439,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private void registerClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
     registerPopupKeyboardAction(keyStroke, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!shouldPerformAction && myChooserComponent.checkResetFilter()) return;
         closePopup(shouldPerformAction, null, shouldPerformAction);

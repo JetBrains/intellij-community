@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CompileActionBase extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getData(CommonDataKeys.PROJECT);
@@ -45,6 +46,7 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
 
   protected abstract void doAction(final DataContext dataContext, final Project project);
 
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Project project = e.getData(CommonDataKeys.PROJECT);

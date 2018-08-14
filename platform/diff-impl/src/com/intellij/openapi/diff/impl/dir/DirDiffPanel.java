@@ -464,6 +464,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     return myTable;
   }
 
+  @Override
   public void dispose() {
     myModel.stopUpdating();
     PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, mySplitPanel.getDividerLocation(), DIVIDER_PROPERTY_DEFAULT_VALUE);

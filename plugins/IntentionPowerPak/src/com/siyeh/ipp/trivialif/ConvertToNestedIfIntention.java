@@ -27,6 +27,7 @@ public class ConvertToNestedIfIntention extends Intention {
   public PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
 
+      @Override
       public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof PsiReturnStatement)) {
           return false;

@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.NotNull;
 
 public class ResumeThreadAction extends DebuggerAction{
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
@@ -57,6 +58,7 @@ public class ResumeThreadAction extends DebuggerAction{
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 

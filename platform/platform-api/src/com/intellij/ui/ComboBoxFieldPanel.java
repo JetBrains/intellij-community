@@ -42,6 +42,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     createComponent();
   }
 
+  @Override
   public void createComponent() {
     super.createComponent();
     TextFieldWithBrowseButton.MyDoClickAction doClickAction = getDoClickAction();
@@ -54,6 +55,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     myComboBox.setEditable(true);
     final JTextField editorComponent = (JTextField)myComboBox.getEditor().getEditorComponent();
     editorComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         final String text = getText();
         if (!Comparing.equal(text, oldText, true)) {
@@ -67,11 +69,13 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     });
   }
 
+  @Override
   public String getText() {
     final Object selectedItem = myComboBox.isEditable()? myComboBox.getEditor().getItem() : myComboBox.getSelectedItem();
     return selectedItem instanceof String ? (String)selectedItem : null;
   }
 
+  @Override
   public void setText(String text) {
     myComboBox.setSelectedItem(text);
   }

@@ -62,6 +62,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     return result;
   }
 
+  @Override
   @NotNull
   protected Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());
@@ -260,6 +261,7 @@ class InOutAnalysis extends ContractAnalysis {
     super(richControlFlow, direction, resultOrigins, stable, pending);
   }
 
+  @Override
   boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) throws AnalyzerException {
     if (interpreter.deReferenced) {
       return true;
@@ -322,6 +324,7 @@ class InThrowAnalysis extends ContractAnalysis {
     super(richControlFlow, direction, resultOrigins, stable, pending);
   }
 
+  @Override
   boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) {
     Result subResult;
     if (interpreter.deReferenced) {

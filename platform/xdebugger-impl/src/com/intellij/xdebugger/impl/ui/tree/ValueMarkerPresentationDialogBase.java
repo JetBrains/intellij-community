@@ -52,11 +52,13 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     setModal(true);
     myExistingMarkups = StreamEx.of(markups).map(ValueMarkup::getText).toSet();
     myLabelField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(final DocumentEvent e) {
         updateLabelSample();
       }
     });
     myChooseColorButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final Color color = ColorChooser.chooseColor(myColorSample, "Choose Label Color", myColor);
         if (color != null) {
@@ -72,6 +74,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myLabelField;
   }

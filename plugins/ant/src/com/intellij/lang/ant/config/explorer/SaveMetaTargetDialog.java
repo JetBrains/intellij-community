@@ -55,15 +55,18 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.ant.explorer.SaveMetaTargetDialog";
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected void doOKAction() {
     final ExecuteCompositeTargetEvent eventObject = createEventObject();
     if (myAntConfiguration.getTargetForEvent(eventObject) == null) {
@@ -76,10 +79,12 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTfName;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final JLabel nameLabel = new JLabel(AntBundle.message("save.meta.data.name.label"));
@@ -113,6 +118,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
                                                  GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(6), 0, 0));
 
     class UpdateAction implements ActionListener {
+      @Override
       public void actionPerformed(ActionEvent e) {
         upButton.setEnabled(ListUtil.canMoveSelectedItemsUp(myTargetList));
         downButton.setEnabled(ListUtil.canMoveSelectedItemsDown(myTargetList));
@@ -120,6 +126,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     }
 
     upButton.addActionListener(new UpdateAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ListUtil.moveSelectedItemsUp(myTargetList);
         super.actionPerformed(e);
@@ -127,6 +134,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     });
 
     downButton.addActionListener(new UpdateAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ListUtil.moveSelectedItemsDown(myTargetList);
         super.actionPerformed(e);
@@ -134,6 +142,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     });
 
     myTargetList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         upButton.setEnabled(ListUtil.canMoveSelectedItemsUp(myTargetList));
         downButton.setEnabled(ListUtil.canMoveSelectedItemsDown(myTargetList));

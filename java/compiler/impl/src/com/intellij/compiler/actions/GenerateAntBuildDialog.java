@@ -139,11 +139,13 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     properties.setValue(OUTPUT_FILE_NAME_PROPERTY, StringUtil.nullize(getOutputFileName()));
   }
 
+  @Override
   public void dispose() {
     saveSettings();
     super.dispose();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final ButtonGroup group = new ButtonGroup();
     group.add(myRbGenerateMultipleFilesBuild);
@@ -195,6 +197,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     myChunksPanel.add(scrollPane, BorderLayout.CENTER);
   }
 
+  @Override
   protected void doOKAction() {
     if (myTable != null) {
       TableCellEditor cellEditor = myTable.getCellEditor();
@@ -235,11 +238,11 @@ public class GenerateAntBuildDialog extends DialogWrapper {
   public boolean isIdeaHomeGenerated() {
     return myGenerateIdeaHomeProperty.isSelected();
   }
-  
+
   public String getOutputFileName() {
     return myOutputFileNameField.getText().trim();
   }
-  
+
   private static class MyTableModel extends AbstractTableModel {
     private static final int NUMBER_COLUMN = 0;
     private static final int NAME_COLUMN = 1;
@@ -279,18 +282,22 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       return names;
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public int getRowCount() {
       return myItems.size();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == 1;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       switch (columnIndex) {
         case NUMBER_COLUMN:
@@ -302,6 +309,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NUMBER_COLUMN:
@@ -313,12 +321,14 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (columnIndex == NAME_COLUMN) {
         myItems.get(rowIndex).getSecond().select(aValue);
       }
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
         case NUMBER_COLUMN:
@@ -331,6 +341,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
   }
 
   private static class MyTableCellRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
                                                    boolean isSelected,
@@ -346,11 +357,13 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.GENERATE_ANT_BUILD);
   }

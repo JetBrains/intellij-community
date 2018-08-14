@@ -57,11 +57,13 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
+  @Override
   @Nullable
   public XmlFile getDescriptorFile() {
      return myFile;
    }
 
+  @Override
   public PsiElement getDeclaration() {
      return myFile;
    }

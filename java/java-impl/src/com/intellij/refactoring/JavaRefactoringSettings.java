@@ -118,10 +118,12 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
     this.RENAME_PARAMETER_IN_HIERARCHY = rename;
   }
 
+  @Override
   public JavaRefactoringSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull JavaRefactoringSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

@@ -32,6 +32,7 @@ public class ReplaceThisCallWithDelegateCall extends FixableUsageInfo {
         this.delegateFieldName = delegateFieldName;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException {
         final PsiReferenceExpression methodExpression = call.getMethodExpression();
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();

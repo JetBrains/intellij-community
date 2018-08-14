@@ -193,6 +193,7 @@ public class SrcFileAnnotator implements Disposable {
       if (myOldContent == null) {
         final LocalHistory localHistory = LocalHistory.getInstance();
         byte[] byteContent = localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
+          @Override
           public boolean isSuitable(long revisionTimestamp) {
             return revisionTimestamp < date;
           }
@@ -616,6 +617,7 @@ public class SrcFileAnnotator implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     hideCoverageData();
     myEditor = null;

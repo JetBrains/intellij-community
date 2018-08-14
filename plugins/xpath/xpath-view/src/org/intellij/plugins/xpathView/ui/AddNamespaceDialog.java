@@ -69,6 +69,7 @@ public class AddNamespaceDialog extends DialogWrapper {
             final Component component = boxEditor.getEditorComponent();
             if (component instanceof JTextField) {
                 ((JTextField)component).getDocument().addDocumentListener(new DocumentAdapter() {
+                    @Override
                     protected void textChanged(DocumentEvent e) {
                         updateOkAction();
                     }
@@ -76,6 +77,7 @@ public class AddNamespaceDialog extends DialogWrapper {
             }
         }
         comboBox.addItemListener(new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 updateOkAction();
             }
@@ -86,6 +88,7 @@ public class AddNamespaceDialog extends DialogWrapper {
         getOKAction().setEnabled(getURI().length() > 0 && getPrefix().length() > 0);
     }
 
+    @Override
     protected JComponent createCenterPanel() {
         return myRoot;
     }

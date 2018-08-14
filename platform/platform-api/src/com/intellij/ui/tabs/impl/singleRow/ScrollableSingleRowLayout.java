@@ -83,6 +83,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     myScrollSelectionInViewPending = true;
   }
 
+  @Override
   public int getScrollUnitIncrement() {
     if (myLastSingRowLayout != null) {
       final List<TabInfo> visibleInfos = myLastSingRowLayout.myVisibleInfos;
@@ -124,6 +125,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
   }
 
+  @Override
   protected void layoutMoreButton(SingleRowPassInfo data) {
     if (data.requiredLength > data.toFitLength) {
       data.moreRect = getStrategy().getMoreRect(data);

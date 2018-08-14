@@ -38,6 +38,7 @@ public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
   }
 
   public static class CollapseAll extends ExternalSystemTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;
@@ -51,6 +52,7 @@ public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
   }
 
   public static class ExpandAll extends ExternalSystemTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;

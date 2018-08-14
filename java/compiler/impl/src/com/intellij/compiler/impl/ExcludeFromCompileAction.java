@@ -45,6 +45,7 @@ class ExcludeFromCompileAction extends AnAction {
     myErrorTreeView = errorTreeView;
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile file = getSelectedFile();
 
@@ -68,6 +69,7 @@ class ExcludeFromCompileAction extends AnAction {
     return element instanceof GroupingElement? ((GroupingElement)element).getFile() : null;
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final boolean isApplicable = getSelectedFile() != null;

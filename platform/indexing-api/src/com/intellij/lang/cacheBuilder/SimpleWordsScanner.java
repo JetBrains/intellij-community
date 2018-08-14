@@ -26,6 +26,7 @@ import com.intellij.util.text.CharArrayUtil;
  * @author max
  */
 public class SimpleWordsScanner extends VersionedWordsScanner {
+  @Override
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     int index = 0;
     WordOccurrence occurrence = null;

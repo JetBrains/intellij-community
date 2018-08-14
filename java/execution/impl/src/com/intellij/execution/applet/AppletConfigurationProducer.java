@@ -11,7 +11,10 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +49,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     return settings;
   }
 
+  @Override
   public int compareTo(Object o) {
     return PREFERED;
   }

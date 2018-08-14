@@ -44,11 +44,13 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     mySettings = settings;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new TypeCookViewDescriptor(myElements);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final SystemBuilder systemBuilder = new SystemBuilder(myProject, mySettings);
@@ -98,6 +100,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     myElements = elements;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     final Set<PsiElement> victims = new HashSet<>();
 
@@ -115,6 +118,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("type.cook.command");

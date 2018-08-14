@@ -200,7 +200,7 @@ public abstract class IntroduceParameterSettingsUI {
       getTypeSelectionManager().setAllOccurrences(myIsInvokedOnDeclaration);
     }
   }
-  
+
   protected abstract TypeSelectorManager getTypeSelectionManager();
 
   protected void createRemoveParamsPanel(GridBagConstraints gbConstraints, JPanel panel) {
@@ -228,6 +228,7 @@ public abstract class IntroduceParameterSettingsUI {
     if (myCbReplaceAllOccurences != null) {
       myCbReplaceAllOccurences.addItemListener(
         new ItemListener() {
+          @Override
           public void itemStateChanged(ItemEvent e) {
             updateControls(removeParamsCb);
           }

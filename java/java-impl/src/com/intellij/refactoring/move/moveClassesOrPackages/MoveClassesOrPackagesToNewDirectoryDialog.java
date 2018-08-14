@@ -74,6 +74,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     myDestDirectoryField.setText(FileUtil.toSystemDependentName(directory.getVirtualFile().getPath()));
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myDestDirectoryField.getButton().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final VirtualFile file = FileChooser.chooseFile(descriptor, myDirectory.getProject(), directory.getVirtualFile());
         if (file != null) {
@@ -96,6 +97,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     mySearchForTextOccurrencesCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_FOR_TEXT);
 
     myDestDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         setOKActionEnabled(myDestDirectoryField.getText().length() > 0);
       }
@@ -148,6 +150,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     return mySearchInCommentsAndStringsCheckBox.isSelected();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myRootPanel;
@@ -220,7 +223,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
 
     MoveClassesOrPackagesProcessor processor = createMoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
         searchInComments, searchForTextOccurences, myMoveCallback);
-    
+
     processor.setOpenInEditor(isOpenInEditor());
     if (processor.verifyValidPackageName()) {
       return processor;

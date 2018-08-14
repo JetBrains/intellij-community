@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class OpenOrCreateSettingsXmlAction extends MavenOpenOrCreateFilesAction {
+  @Override
   protected List<File> getFiles(AnActionEvent e) {
     final MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
     if(projectsManager == null) return Collections.emptyList();

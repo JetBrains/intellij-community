@@ -46,6 +46,7 @@ public class EditMigrationDialog extends DialogWrapper{
     validateOKButton();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
@@ -68,9 +69,11 @@ public class EditMigrationDialog extends DialogWrapper{
     return myDescriptionTextArea.getText();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myNameField = new JTextField(myMigrationMap.getName());
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         validateOKButton();
       }
@@ -95,6 +98,7 @@ public class EditMigrationDialog extends DialogWrapper{
       .addVerticalGap(UIUtil.LARGE_VGAP).getPanel();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return ToolbarDecorator.createDecorator(createTable())
       .setAddAction(new AnActionButtonRunnable() {
@@ -205,14 +209,17 @@ public class EditMigrationDialog extends DialogWrapper{
 
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
+      @Override
       public int getColumnCount() {
         return 3;
       }
 
+      @Override
       public int getRowCount() {
         return myMigrationMap.getEntryCount();
       }
 
+      @Override
       public Object getValueAt(int row, int col) {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(row);
         if (col == 0){
@@ -236,18 +243,22 @@ public class EditMigrationDialog extends DialogWrapper{
         }
       }
 
+      @Override
       public String getColumnName(int column) {
         return names[column];
       }
 
+      @Override
       public Class getColumnClass(int c) {
         return String.class;
       }
 
+      @Override
       public boolean isCellEditable(int row, int col) {
         return false;
       }
 
+      @Override
       public void setValueAt(Object aValue, int row, int column) {
       }
     };

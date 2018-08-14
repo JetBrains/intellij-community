@@ -16,10 +16,10 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.util.config.AbstractProperty;
-import java.util.HashMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class EditPropertyContainer extends AbstractProperty.AbstractPropertyContainer {
@@ -44,6 +44,7 @@ public class EditPropertyContainer extends AbstractProperty.AbstractPropertyCont
     this(parentEditor, new AbstractProperty.AbstractPropertyContainer[]{original});
   }
 
+  @Override
   protected Object getValueOf(AbstractProperty property) {
     if (myModifications.containsKey(property)) return myModifications.get(property);
     AbstractProperty.AbstractPropertyContainer container = findContainerOf(property);
@@ -53,10 +54,12 @@ public class EditPropertyContainer extends AbstractProperty.AbstractPropertyCont
     return originalValue;
   }
 
+  @Override
   public boolean hasProperty(AbstractProperty property) {
     return findContainerOf(property) != null;
   }
 
+  @Override
   protected void setValueOf(AbstractProperty property, Object value) {
     if (myParent.hasProperty(property)) delegateSet(myParent, property, value);
     else myModifications.put(property, value);

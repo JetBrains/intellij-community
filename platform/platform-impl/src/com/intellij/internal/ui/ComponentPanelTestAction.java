@@ -187,6 +187,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         {"twelve", "12"}, {"thirteen", "13"}, {"fourteen", "14"}, {"fifteen", "15"}, {"sixteen", "16"}};
 
       JBTable table = new JBTable(new DefaultTableModel() {
+        @Override
         public String getColumnName(int column) { return columns[column]; }
         @Override
         public int getRowCount() { return data.length; }

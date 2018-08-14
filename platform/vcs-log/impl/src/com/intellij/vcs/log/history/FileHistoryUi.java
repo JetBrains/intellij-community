@@ -57,8 +57,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -311,6 +311,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myRefresher.onFiltersChange(myFilterUi.getFilters());
   }
 
+  @Override
   @NotNull
   public FileHistoryUiProperties getProperties() {
     return myUiProperties;

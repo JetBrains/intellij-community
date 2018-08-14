@@ -27,10 +27,12 @@ public class ModuleDataProvider extends AbstractVcsDataProvider{
     super(environment);
   }
 
+  @Override
   public DirectoryContentProvider createDirectoryContentProvider(String path) {
     return new GetModuleContentOperation(myEnvironment, path);
   }
 
+  @Override
   public AbstractVcsDataProvider getChildrenDataProvider() {
     return new FolderDataProvider(myEnvironment);
   }

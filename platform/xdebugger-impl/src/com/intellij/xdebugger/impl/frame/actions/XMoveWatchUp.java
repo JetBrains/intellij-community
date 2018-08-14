@@ -36,6 +36,7 @@ public class XMoveWatchUp extends XWatchesTreeActionBase {
     getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.UP.getIcon());
   }
 
+  @Override
   protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
     List<? extends WatchNodeImpl> nodes = getSelectedNodes(tree, WatchNodeImpl.class);
     if (nodes.size() == 1) {

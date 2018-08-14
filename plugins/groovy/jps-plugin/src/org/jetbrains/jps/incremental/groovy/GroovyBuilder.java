@@ -61,6 +61,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     JavaBuilder.registerClassPostProcessor(new RecompileStubSources());
   }
 
+  @Override
   public ModuleLevelBuilder.ExitCode build(final CompileContext context,
                                            final ModuleChunk chunk,
                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
@@ -150,6 +151,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return myBuilderName;
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return myBuilderName;
@@ -157,6 +159,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static class RecompileStubSources implements ClassPostProcessor {
 
+    @Override
     public void process(CompileContext context, OutputFileObject out) {
       Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
       if (stubToSrc == null) {

@@ -95,16 +95,19 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
       myContext = context;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return MavenDomBundle.message("fix.parent.path");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       GenericDomValue el = (GenericDomValue)myContext.getInvocationElement();
       MavenId id = MavenArtifactCoordinatesHelper.getId(myContext);
@@ -118,6 +121,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     }
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     Project project = element.getProject();

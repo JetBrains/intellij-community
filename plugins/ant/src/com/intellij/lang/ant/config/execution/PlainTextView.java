@@ -60,10 +60,12 @@ public final class PlainTextView implements AntOutputView {
     return "_text_view_";
   }
 
+  @Override
   public JComponent getComponent() {
     return myConsole.getComponent();
   }
 
+  @Override
   @Nullable
   public Object addMessage(AntMessage message) {
     print(message.getText() + "\n", ProcessOutputTypes.STDOUT);
@@ -80,6 +82,7 @@ public final class PlainTextView implements AntOutputView {
     }
   }
 
+  @Override
   public void addJavacMessage(AntMessage message, String url) {
     final VirtualFile file = message.getFile();
     if (message.getLine() > 0) {
@@ -111,6 +114,7 @@ public final class PlainTextView implements AntOutputView {
     print(message.getText(), ProcessOutputTypes.STDOUT);
   }
 
+  @Override
   public void addException(AntMessage exception, boolean showFullTrace) {
     String text = exception.getText();
     if (!showFullTrace) {
@@ -126,34 +130,42 @@ public final class PlainTextView implements AntOutputView {
     myConsole.clear();
   }
 
+  @Override
   public void startBuild(AntMessage message) {
     print(myCommandLine + "\n", ProcessOutputTypes.SYSTEM);
     addMessage(message);
   }
 
+  @Override
   public void buildFailed(AntMessage message) {
     print(myCommandLine + "\n", ProcessOutputTypes.SYSTEM);
     addMessage(message);
   }
 
+  @Override
   public void startTarget(AntMessage message) {
     addMessage(message);
   }
 
+  @Override
   public void startTask(AntMessage message) {
     addMessage(message);
   }
 
+  @Override
   public void finishBuild(String messageText) {
     print("\n" + messageText + "\n", ProcessOutputTypes.SYSTEM);
   }
 
+  @Override
   public void finishTarget() {
   }
 
+  @Override
   public void finishTask() {
   }
 
+  @Override
   @Nullable
   public Object getData(String dataId) {
     return null;
@@ -164,6 +176,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   private final class JUnitFilter implements Filter {
+    @Override
     @Nullable
     public Result applyFilter(String line, int entireLength) {
       HyperlinkUtil.PlaceInfo placeInfo = HyperlinkUtil.parseJUnitMessage(myProject, line);
@@ -181,6 +194,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   private final class AntMessageFilter implements Filter {
+    @Override
     public Result applyFilter(String line, int entireLength) {
       int afterLineNumberIndex = line.indexOf(": "); // end of file_name_and_line_number sequence
       if (afterLineNumberIndex == -1) {

@@ -154,6 +154,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return CvsUtil.getModuleName(file);
   }
 
+  @Override
   @SuppressWarnings({"RefusedBequest"})
   protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(myRoot);
@@ -163,6 +164,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return myRoot;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     myState = LOADING;
     myRoot.changeAdminRootTo(new File("."));
@@ -224,6 +226,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
   }
 
+  @Override
   public void gotEntry(FileObject abstractFileObject, Entry entry) {
     super.gotEntry(abstractFileObject, entry);
     if (entry == null) {
@@ -250,10 +253,12 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return myCvsRevisionNumber;
   }
 
+  @Override
   protected String getOperationName() {
     return "checkout";
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
     if (!error) {
@@ -265,6 +270,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
   }
 
+  @Override
   public void binaryMessageSent(final byte[] bytes) {
     super.binaryMessageSent(bytes);
     myReader.binaryMessageSent(bytes);
@@ -274,6 +280,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return false;
   }
 
+  @Override
   protected boolean runInExclusiveLock() {
     return false;
   }

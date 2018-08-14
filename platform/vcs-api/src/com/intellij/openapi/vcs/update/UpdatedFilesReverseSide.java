@@ -73,7 +73,7 @@ public class UpdatedFilesReverseSide {
   public void rebuildFromUpdatedFiles() {
     myFileIdx.clear();
     myGroupHolder.clear();
-    
+
     for (FileGroup group : myFiles.getTopLevelGroups()) {
       addGroupToIndexes(group);
     }
@@ -107,6 +107,7 @@ public class UpdatedFilesReverseSide {
   }
 
   private class TopLevelParent implements Parent {
+    @Override
     public void accept(final FileGroup group) {
       myFiles.getTopLevelGroups().add(group);
     }
@@ -119,6 +120,7 @@ public class UpdatedFilesReverseSide {
       myGroup = group;
     }
 
+    @Override
     public void accept(final FileGroup group) {
       myGroup.addChild(group);
     }
@@ -177,38 +179,46 @@ public class UpdatedFilesReverseSide {
     }
 
     public static final DuplicateLevel NO_DUPLICATES = new DuplicateLevel() {
+      @Override
       boolean searchPreviousContainment(final String groupId) {
         return true;
       }
 
+      @Override
       boolean doesExistingWin(final String groupId, final String existingGroupId) {
         return false;
       }
     };
     public static final DuplicateLevel DUPLICATE_ERRORS_LOCALS = new DuplicateLevel() {
+      @Override
       boolean searchPreviousContainment(final String groupId) {
         return (! ourLocals.contains(groupId)) && (! ourErrorGroups.contains(groupId));
       }
 
+      @Override
       boolean doesExistingWin(final String groupId, final String existingGroupId) {
         return ourLocals.contains(groupId);
       }
     };
 
     public static final DuplicateLevel DUPLICATE_ERRORS = new DuplicateLevel() {
+      @Override
       boolean searchPreviousContainment(final String groupId) {
         return ! ourErrorGroups.contains(groupId);
       }
 
+      @Override
       boolean doesExistingWin(final String groupId, final String existingGroupId) {
         return false;
       }
     };
     public static final DuplicateLevel ALLOW_DUPLICATES = new DuplicateLevel() {
+      @Override
       boolean searchPreviousContainment(final String groupId) {
         return false;
       }
 
+      @Override
       boolean doesExistingWin(final String groupId, final String existingGroupId) {
         return false;
       }

@@ -64,6 +64,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     return myProject;
   }
 
+  @Override
   public void activate() {
     if (myConnection == null) {
       myDisposable = Disposer.newDisposable();
@@ -91,6 +92,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     }
   }
 
+  @Override
   public void deactivate() {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
@@ -102,6 +104,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     }
   }
 
+  @Override
   public boolean isUpToDate(int modificationStamp) {
     return myModificationStamp == modificationStamp;
   }

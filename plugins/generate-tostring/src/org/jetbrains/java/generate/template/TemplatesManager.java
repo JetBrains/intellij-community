@@ -31,7 +31,7 @@ import java.util.*;
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
 
   public static final Key<Map<String, PsiType>> TEMPLATE_IMPLICITS = Key.create("TEMPLATE_IMPLICITS");
-  
+
   private TemplatesState myState = new TemplatesState();
 
   public abstract TemplateResource[] getDefaultTemplates();
@@ -48,10 +48,12 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
     return StringUtil.convertLineSeparators(FileUtil.loadTextAndClose(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET)));
   }
 
+  @Override
   public TemplatesState getState() {
         return myState;
     }
 
+    @Override
     public void loadState(@NotNull TemplatesState state) {
         myState = state;
     }
@@ -122,7 +124,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
     @NotNull
     public static PsiType createFieldListElementType(Project project) {
       final PsiType classType = createElementType(project, FieldElement.class);
-      PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_UTIL_LIST, 
+      PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_UTIL_LIST,
                                                                           GlobalSearchScope.allScope(project));
       for (PsiClass listClass : classes) {
         if (listClass.getTypeParameters().length == 1) {
@@ -134,7 +136,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
 
     @NotNull
     public static PsiType createElementType(Project project, Class<?> elementClass) {
-      final List<String> methodNames = 
+      final List<String> methodNames =
         ContainerUtil.mapNotNull(elementClass.getMethods(),
                                  method -> {
                                    final String methodName = method.getName();
@@ -145,7 +147,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
                                    String parametersString = StringUtil.join(method.getParameters(),
                                                                              param -> param.getParameterizedType().getTypeName() +
                                                                                       " " +
-                                                                                      param.getName(), 
+                                                                                      param.getName(),
                                                                              ", ");
                                    return method.getGenericReturnType().getTypeName() + " " + methodName + "(" + parametersString + ");";
                                  });

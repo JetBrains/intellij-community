@@ -82,11 +82,13 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     myCreateNewBuilderClass = createNewBuilderClass;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
     return new ReplaceConstructorWithBuilderViewDescriptor();
   }
 
+  @Override
   protected void findUsages(@NotNull final List<FixableUsageInfo> usages) {
     final String builderQualifiedName = StringUtil.getQualifiedName(myPackageName, myClassName);
     final PsiClass builderClass =
@@ -295,7 +297,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return "create" + StringUtil.capitalize(myConstructors[0].getName());
   }
 
-  
+
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -309,7 +311,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     } else if (myCreateNewBuilderClass){
       conflicts.putValue(builderClass, "Class with chosen name already exist.");
     }
-    
+
     if (myMoveDestination != null && myCreateNewBuilderClass) {
       myMoveDestination.analyzeModuleConflicts(Collections.emptyList(), conflicts, refUsages.get());
     }
@@ -322,6 +324,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return showConflicts(conflicts, refUsages.get());
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;

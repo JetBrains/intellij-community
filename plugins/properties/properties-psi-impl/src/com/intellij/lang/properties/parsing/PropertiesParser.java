@@ -51,6 +51,7 @@ public class PropertiesParser implements PsiParser {
   }
 
 
+  @Override
   @NotNull
   public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     doParse(root, builder);

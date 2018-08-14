@@ -33,6 +33,7 @@ public abstract class TextFieldValueEditor<T> extends AbstractValueEditor<T> {
     super(valueName, defaultValue);
     myField = field;
     myField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         String errorText = validateTextOnChange(myField.getText(), e);
         highlightState(StringUtil.isEmpty(errorText));

@@ -75,7 +75,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
 
   public void refresherActivated(@NotNull VisiblePackRefresher refresher, boolean firstTime) {
     myLogData.initialize();
-    
+
     if (!myRootsToRefresh.isEmpty()) {
       refreshPostponedRoots();
     }
@@ -92,6 +92,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
     }
   }
 
+  @Override
   public void refresh(@NotNull final VirtualFile root) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (canRefreshNow()) {

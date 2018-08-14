@@ -169,18 +169,21 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     popup.setAdText("Press SHIFT to merge with current context");
 
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
         popup.setCaption("Merge with Current Context");
       }
     });
     popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
         popup.setCaption("Switch to Task");
       }
     });
     popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         popup.handleSelect(true);
       }
@@ -194,6 +197,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
       group.add(new DumbAwareAction("&Switch to") {
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           manager.activateTask(task, !shiftPressed.get());
         }

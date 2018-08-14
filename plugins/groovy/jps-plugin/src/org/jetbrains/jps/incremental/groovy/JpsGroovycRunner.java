@@ -190,18 +190,18 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     if (explicit != null) {
       return explicit;
     }
-    
+
     int bytecodeTarget = JavaBuilder.getModuleBytecodeTarget(context, chunk, getJavaCompilerSettings(context));
-    return bytecodeTarget == 0 ? null : 
-           bytecodeTarget >= 9 ? String.valueOf(bytecodeTarget) : 
+    return bytecodeTarget == 0 ? null :
+           bytecodeTarget >= 9 ? String.valueOf(bytecodeTarget) :
            "1." + bytecodeTarget;
   }
 
   private static boolean shouldRunGroovycInProcess(int jdkVersion) {
     String explicitProperty = System.getProperty("groovyc.in.process");
-    return explicitProperty != null ? "true".equals(explicitProperty) 
-                                    : jdkVersion == JavaVersion.current().feature 
-                                      || jdkVersion < 5; // our own jars require at least JDK 5 
+    return explicitProperty != null ? "true".equals(explicitProperty)
+                                    : jdkVersion == JavaVersion.current().feature
+                                      || jdkVersion < 5; // our own jars require at least JDK 5
   }
 
   static void clearContinuation(CompileContext context, ModuleChunk chunk) {
@@ -333,6 +333,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
     final List<File> toCompile = new ArrayList<>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
+      @Override
       public boolean apply(T target, File file, R sourceRoot) {
         if (shouldProcessSourceFile(file, sourceRoot, file.getPath(), configuration)) {
           if (forStubs && settings.isExcludedFromStubGeneration(file)) {

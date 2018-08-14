@@ -131,6 +131,7 @@ public class AppEngineUploader {
   public void startUploading() {
     FileDocumentManager.getInstance().saveAllDocuments();
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Uploading application", true, null) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         compileAndUpload();
       }
@@ -144,6 +145,7 @@ public class AppEngineUploader {
     final CompileScope moduleScope = compilerManager.createModuleCompileScope(myAppEngineFacet.getModule(), true);
     final CompileScope compileScope = ArtifactCompileScope.createScopeWithArtifacts(moduleScope, Collections.singletonList(myArtifact));
     ApplicationManager.getApplication().invokeLater(() -> compilerManager.make(compileScope, new CompileStatusNotification() {
+      @Override
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
         if (!aborted && errors == 0) {
           startUploading.run();

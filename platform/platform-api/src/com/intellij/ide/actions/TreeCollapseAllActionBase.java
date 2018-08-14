@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public abstract class TreeCollapseAllActionBase extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     TreeExpander expander = getExpander(e.getDataContext());
     if (expander == null) {
@@ -40,6 +41,7 @@ public abstract class TreeCollapseAllActionBase extends AnAction implements Dumb
 
   protected abstract TreeExpander getExpander(DataContext dataContext);
 
+  @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     TreeExpander expander = getExpander(event.getDataContext());

@@ -53,14 +53,17 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myClassChooser.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         updateUI();
       }
     });
 
     myClassChooser.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         PsiClass currentClass = getSelectedClass();
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(DebuggerBundle.message("add.field.breakpoint.dialog.classchooser.title"));
@@ -82,6 +85,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     });
 
     myFieldChooser.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         PsiClass selectedClass = getSelectedClass();
         if (selectedClass != null) {
@@ -117,6 +121,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassChooser.getTextField();
   }
@@ -125,6 +130,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
     return myClassChooser.getText();
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog.AddFieldBreakpointDialog";
   }
@@ -135,6 +141,7 @@ public abstract class AddFieldBreakpointDialog extends DialogWrapper {
 
   protected abstract boolean validateData();
 
+  @Override
   protected void doOKAction() {
     if(validateData()) {
       super.doOKAction();

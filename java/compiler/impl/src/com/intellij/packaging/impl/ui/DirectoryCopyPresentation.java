@@ -51,10 +51,12 @@ public class DirectoryCopyPresentation extends PackagingElementPresentation {
     mySourcePath = parentPath;
   }
 
+  @Override
   public String getPresentableName() {
     return mySourceFileName;
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     presentationData.setIcon(AllIcons.Nodes.CopyOfFolder);
     if (myFile == null || !myFile.isDirectory()) {

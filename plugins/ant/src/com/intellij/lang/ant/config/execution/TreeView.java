@@ -72,10 +72,12 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myProject = project;
     myBuildFile = buildFile;
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+      @Override
       protected boolean isAutoScrollMode() {
         return AntConfigurationBase.getInstance(myProject).isAutoScrollToSource();
       }
 
+      @Override
       protected void setAutoScrollMode(boolean state) {
         AntConfigurationBase.getInstance(myProject).setAutoScrollToSource(state);
       }
@@ -89,6 +91,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return "_tree_view_";
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
@@ -103,6 +106,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myTree.setLargeModel(true);
 
     myTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myTree), false);
@@ -111,6 +115,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     });
 
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         popupInvoked(comp, x, y);
       }
@@ -141,11 +146,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
                                    .createNavigatable(myProject, messageNode.getFile(), messageNode.getOffset());
       }
 
+      @Override
       @Nullable
       public String getNextOccurenceActionName() {
         return AntBundle.message("ant.execution.next.error.warning.action.name");
       }
 
+      @Override
       @Nullable
       public String getPreviousOccurenceActionName() {
         return AntBundle.message("ant.execution.previous.error.warning.action.name");
@@ -175,6 +182,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
   }
 
+  @Override
   public Object addMessage(AntMessage message) {
     MessageNode messageNode = createMessageNode(message);
 
@@ -230,6 +238,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
   }
 
+  @Override
   public void addJavacMessage(AntMessage message, String url) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
@@ -270,6 +279,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     handleExpansion();
   }
 
+  @Override
   public void addException(AntMessage exception, boolean showFullTrace) {
     MessageNode exceptionRootNode = null;
 
@@ -338,13 +348,16 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myTree.setModel(myTreeModel);
   }
 
+  @Override
   public void startBuild(AntMessage message) {
   }
 
+  @Override
   public void buildFailed(AntMessage message) {
     addMessage(message);
   }
 
+  @Override
   public void startTarget(AntMessage message) {
     collapseTargets();
     MessageNode targetNode = (MessageNode)addMessage(message);
@@ -361,6 +374,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
   }
 
+  @Override
   public void startTask(AntMessage message) {
     myCurrentTaskName = message.getText();
     MessageNode taskNode = (MessageNode)addMessage(message);
@@ -386,6 +400,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return (MessageNode)path.getLastPathComponent();
   }
 
+  @Override
   @Nullable
   public Object getData(String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
@@ -435,6 +450,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return file != null && ReadAction.compute(() -> file.isValid()).booleanValue();
   }
 
+  @Override
   public void finishBuild(String messageText) {
     collapseTargets();
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
@@ -448,6 +464,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
   }
 
+  @Override
   public void finishTarget() {
     final TreePath parentPath = myParentPath.getParentPath();
     if (parentPath != null) {
@@ -455,6 +472,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
   }
 
+  @Override
   public void finishTask() {
     myCurrentTaskName = null;
     final TreePath parentPath = myParentPath.getParentPath();
@@ -562,26 +580,32 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return myAutoScrollToSourceHandler.createToggleAction();
   }
 
+  @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigatorSupport.getNextOccurenceActionName();
   }
 
+  @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigatorSupport.getPreviousOccurenceActionName();
   }
 
+  @Override
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {
     return myOccurenceNavigatorSupport.goNextOccurence();
   }
 
+  @Override
   public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigatorSupport.goPreviousOccurence();
   }
 
+  @Override
   public boolean hasNextOccurence() {
     return myOccurenceNavigatorSupport.hasNextOccurence();
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     return myOccurenceNavigatorSupport.hasPreviousOccurence();
   }
@@ -591,16 +615,19 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       super(myTreeModel);
     }
 
+    @Override
     public void setRowHeight(int i) {
       super.setRowHeight(0);
       // this is needed in order to make UI calculate the height for each particular row
     }
 
+    @Override
     public void updateUI() {
       super.updateUI();
       TreeUtil.installActions(this);
     }
 
+    @Override
     public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new TextCopyProvider() {

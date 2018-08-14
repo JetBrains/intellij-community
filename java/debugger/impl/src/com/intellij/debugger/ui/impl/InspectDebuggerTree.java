@@ -39,6 +39,7 @@ public class InspectDebuggerTree extends DebuggerTree{
     super(project);
 
     final PopupHandler popupHandler = new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
@@ -56,6 +57,7 @@ public class InspectDebuggerTree extends DebuggerTree{
     return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.INSPECT_PANEL_POPUP, group);
   }
 
+  @Override
   protected void build(DebuggerContextImpl context) {
     updateNode(context);
   }
@@ -72,6 +74,7 @@ public class InspectDebuggerTree extends DebuggerTree{
 
   private void updateNode(final DebuggerContextImpl context) {
     context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
+      @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerTreeNodeImpl node = getNodeFactory().createNode(myInspectDescriptor, context.createEvaluationContext());
 

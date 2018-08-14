@@ -52,28 +52,34 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("ant-properties");
   private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN =
     new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.name.column.name")) {
+      @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
         return buildFileProperty.getPropertyName();
       }
 
+      @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
         return USER_PROPERTY_CONDITION.value(buildFileProperty);
       }
 
+      @Override
       public void setValue(BuildFileProperty buildFileProperty, String name) {
         buildFileProperty.setPropertyName(name);
       }
     };
   private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN =
     new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.value.column.name")) {
+      @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
         return USER_PROPERTY_CONDITION.value(buildFileProperty);
       }
 
+      @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
         return buildFileProperty.getPropertyValue();
       }
 
+      @Override
       public void setValue(BuildFileProperty buildFileProperty, String value) {
         buildFileProperty.setPropertyValue(value);
       }
@@ -99,11 +105,13 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myContext = context;
     myPostProcessing = postProcessing;
     mySelectTargetButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         selectTarget();
       }
     });
     myRunTargetCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         mySelectTargetButton.setEnabled(myRunTargetCheckBox.isSelected());
         if (myRunTargetCheckBox.isSelected() && myTarget == null) {
@@ -198,10 +206,12 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     UIUtil.setEnabled(myPropertiesPanel, enabled, true);
   }
 
+  @Override
   public String getTabName() {
     return myPostProcessing ? POST_PROCESSING_TAB : PRE_PROCESSING_TAB;
   }
 
+  @Override
   public void apply() {
     myProperties.setEnabled(myRunTargetCheckBox.isSelected());
     if (myTarget != null) {
@@ -225,10 +235,12 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     return ContainerUtil.filter(allProperties, USER_PROPERTY_CONDITION);
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public boolean isModified() {
     if (myProperties.isEnabled() != myRunTargetCheckBox.isSelected()) return true;
     if (myTarget == null) {
@@ -242,6 +254,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     return !getUserProperties().equals(myProperties.getUserProperties());
   }
 
+  @Override
   public void reset() {
     myRunTargetCheckBox.setSelected(myProperties.isEnabled());
     myTarget = myProperties.findTarget(AntConfiguration.getInstance(myContext.getProject()));
@@ -254,6 +267,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     updatePanel();
   }
 
+  @Override
   public void disposeUIResources() {
     AntConfiguration.getInstance(myContext.getProject()).removeAntConfigurationListener(myAntConfigurationListener);
   }

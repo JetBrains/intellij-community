@@ -95,20 +95,24 @@ class JiraSoapTask extends JiraTask {
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return myKey;
   }
 
+  @Override
   @NotNull
   public String getSummary() {
     return mySummary;
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }
 
+  @Override
   @NotNull
   public Comment[] getComments() {
     return myComments.toArray(Comment.EMPTY_ARRAY);

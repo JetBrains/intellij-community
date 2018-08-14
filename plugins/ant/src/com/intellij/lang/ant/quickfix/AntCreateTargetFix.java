@@ -39,16 +39,19 @@ public class AntCreateTargetFix implements LocalQuickFix {
     myCanonicalText = canonicalText;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return AntBundle.message("ant.create.target.intention.description", myCanonicalText);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return AntBundle.message("ant.intention.create.target.family.name");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
     final PsiFile containingFile = psiElement.getContainingFile();

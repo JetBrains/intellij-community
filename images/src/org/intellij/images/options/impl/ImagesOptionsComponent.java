@@ -79,7 +79,7 @@ final class ImagesOptionsComponent {
   ImagesOptionsComponent() {
 
     wheelZooming.setText(ImagesBundle.message("enable.mousewheel.zooming", SystemInfo.isMac ? "Cmd" : "Ctrl"));
-      
+
     // Setup labels
     gridLineZoomFactorLabel.setLabelFor(gridLineZoomFactor);
     gridLineSpanLabel.setLabelFor(gridLineSpan);
@@ -137,6 +137,7 @@ final class ImagesOptionsComponent {
       this.children = children.clone();
     }
 
+    @Override
     public void itemStateChanged(ItemEvent e) {
       setSelected(e.getStateChange() == ItemEvent.SELECTED);
     }
@@ -183,6 +184,7 @@ final class ImagesOptionsComponent {
       this.name = name;
     }
 
+    @Override
     @SuppressWarnings({"UnnecessaryBoxing"})
     public void itemStateChanged(ItemEvent e) {
       options.setOption(name, Boolean.valueOf(ItemEvent.SELECTED == e.getStateChange()));
@@ -196,6 +198,7 @@ final class ImagesOptionsComponent {
       this.name = name;
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
       JSpinner source = (JSpinner)e.getSource();
       options.setOption(name, source.getValue());
@@ -209,6 +212,7 @@ final class ImagesOptionsComponent {
       this.name = name;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       ColorPanel source = (ColorPanel)e.getSource();
       options.setOption(name, source.getSelectedColor());
@@ -222,6 +226,7 @@ final class ImagesOptionsComponent {
       this.name = name;
     }
 
+    @Override
     protected void textChanged(DocumentEvent documentEvent) {
       Document document = documentEvent.getDocument();
       Position startPosition = document.getStartPosition();
@@ -235,6 +240,7 @@ final class ImagesOptionsComponent {
   }
 
   private final class ExternalEditorPathActionListener implements ActionListener {
+    @Override
     public void actionPerformed(ActionEvent e) {
       Application application = ApplicationManager.getApplication();
       VirtualFile previous = application.runWriteAction((NullableComputable<VirtualFile>)() -> {

@@ -73,10 +73,12 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     return nonFieldUsages;
   }
 
+  @Override
   public boolean isReplaceUsages() {
     return true;
   }
 
+  @Override
   public boolean isMakeClassParameter() {
     if (myMakeClassParameter != null)
       return myMakeClassParameter.isSelected();
@@ -84,6 +86,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
       return false;
   }
 
+  @Override
   public String getClassParameterName() {
     if (isMakeClassParameter()) {
       if (myClassParameterNameInputField instanceof JTextField) {
@@ -104,6 +107,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
    *
    * @return null if field parameters are not selected
    */
+  @Override
   public VariableData[] getVariableData() {
     if(myMakeFieldParameters != null && myMakeFieldParameters.isSelected()) {
       return myVariableData;
@@ -113,10 +117,12 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MAKE_METHOD_STATIC);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
@@ -155,6 +161,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
       JTextField textField = new JTextField();
       textField.setText(myNameSuggestions[0]);
       textField.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
         public void textChanged(DocumentEvent event) {
           updateControls();
         }
@@ -178,13 +185,16 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
       myMakeFieldParameters.setSelected(!myAnyNonFieldMembersUsed);
 
       myParameterPanel = new ParameterTablePanel(myProject, myVariableData, myMember) {
+        @Override
         protected void updateSignature() {
         }
 
+        @Override
         protected void doEnterAction() {
           clickDefaultButton();
         }
 
+        @Override
         protected void doCancelAction() {
         }
       };
@@ -197,6 +207,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     }
 
     ActionListener inputFieldValidator = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }
@@ -221,6 +232,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     return myGenerateDelegateCb != null && myGenerateDelegateCb.isSelected();
   }
 
+  @Override
   protected boolean validateData() {
     int ret = Messages.YES;
     if (isMakeClassParameter()) {
@@ -283,6 +295,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
 
     combobox.addItemListener(
       new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           updateControls();
         }
@@ -290,14 +303,17 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     );
     combobox.getEditor().getEditorComponent().addKeyListener(
       new KeyAdapter() {
+        @Override
         public void keyPressed(KeyEvent e) {
           updateControls();
         }
 
+        @Override
         public void keyReleased(KeyEvent e) {
           updateControls();
         }
 
+        @Override
         public void keyTyped(KeyEvent e) {
           updateControls();
         }

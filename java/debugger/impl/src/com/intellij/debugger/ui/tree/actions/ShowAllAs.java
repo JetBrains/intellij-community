@@ -16,10 +16,10 @@
 package com.intellij.debugger.ui.tree.actions;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -61,15 +61,17 @@ public class ShowAllAs extends AnAction {
     return false;
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     DebuggerTreeNode selectedNode = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
     e.getPresentation().setVisible(myRenderer != null && selectedNode != null && isPrimitiveArray(selectedNode));
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = (DebuggerTreeNodeImpl)((DebuggerUtilsEx)DebuggerUtils.getInstance()).getSelectedNode(e.getDataContext());
     if(selectedNode == null) return;
-    
+
     if(!isPrimitiveArray(selectedNode)) return;
 
     final DebuggerContext debuggerContext = DebuggerUtils.getInstance().getDebuggerContext(e.getDataContext());
@@ -79,14 +81,17 @@ public class ShowAllAs extends AnAction {
       final DebuggerTreeNode child = (DebuggerTreeNode)children.nextElement();
       if(child.getDescriptor() instanceof ValueDescriptor) {
         debuggerContext.getDebugProcess().getManagerThread().invokeCommand(new SuspendContextCommand() {
+          @Override
           public SuspendContext getSuspendContext() {
             return debuggerContext.getSuspendContext();
           }
 
+          @Override
           public void action() {
             child.setRenderer(myRenderer);
           }
 
+          @Override
           public void commandCancelled() {
           }
         });

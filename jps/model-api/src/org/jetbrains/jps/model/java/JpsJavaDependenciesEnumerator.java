@@ -77,12 +77,16 @@ public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator
   JpsJavaDependenciesEnumerator recursivelyExportedOnly();
 
 
+  @Override
   @NotNull
   JpsJavaDependenciesEnumerator withoutLibraries();
+  @Override
   @NotNull
   JpsJavaDependenciesEnumerator withoutDepModules();
+  @Override
   @NotNull
   JpsJavaDependenciesEnumerator withoutSdk();
+  @Override
   @NotNull
   JpsJavaDependenciesEnumerator withoutModuleSourceEntries();
 

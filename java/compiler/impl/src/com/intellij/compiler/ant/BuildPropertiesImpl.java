@@ -119,6 +119,7 @@ public class BuildPropertiesImpl extends BuildProperties {
     }
   }
 
+  @Override
   protected void createJdkGenerators(final Project project) {
     final Sdk[] jdks = getUsedJdks(project);
 

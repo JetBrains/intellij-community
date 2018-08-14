@@ -30,13 +30,13 @@ import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,6 +77,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return isInTestContent ? myTestDirCoverageInfos.get(path) : myDirCoverageInfos.get(path);
   }
 
+  @Override
   @Nullable
   public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
                                                 @NotNull final CoverageSuitesBundle currentSuite,
@@ -118,6 +119,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return FileUtil.toSystemIndependentName(filePath);
   }
 
+  @Override
   @Nullable
   public String getFileCoverageInformationString(@NotNull final PsiFile psiFile,
                                                  @NotNull final CoverageSuitesBundle currentSuite,
@@ -326,6 +328,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       // gather coverage from all content roots
       for (VirtualFile root : modulesContentRoots) {
         annotate(root, suite, dataManager, data, project, new Annotator() {
+          @Override
           public void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info) {
             myDirCoverageInfos.put(dirPath, info);
 
@@ -337,6 +340,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
             }
           }
 
+          @Override
           public void annotateTestDirectory(final String dirPath, final DirCoverageInfo info) {
             myTestDirCoverageInfos.put(dirPath, info);
 
@@ -348,6 +352,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
             }
           }
 
+          @Override
           public void annotateFile(@NotNull final String filePath, @NotNull final FileCoverageInfo info) {
             myFileCoverageInfos.put(filePath, info);
 

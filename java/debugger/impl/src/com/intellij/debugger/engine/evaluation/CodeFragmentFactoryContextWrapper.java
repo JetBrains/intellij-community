@@ -39,18 +39,22 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     myDelegate = delegate;
   }
 
+  @Override
   public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
     return prepareResolveScope(myDelegate.createCodeFragment(item, wrapContext(project, context), project));
   }
 
+  @Override
   public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
     return prepareResolveScope(myDelegate.createPresentationCodeFragment(item, wrapContext(project, context), project));
   }
 
+  @Override
   public boolean isContextAccepted(PsiElement contextElement) {
     return myDelegate.isContextAccepted(contextElement);
   }
 
+  @Override
   @NotNull
   public LanguageFileType getFileType() {
     return myDelegate.getFileType();
@@ -73,7 +77,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     });
     return codeFragment;
   }
-  
+
   private PsiElement wrapContext(Project project, final PsiElement originalContext) {
     if (project.isDefault()) return originalContext;
     //TODO [egor] : does not work for anything other than java anyway, see IDEA-132677
@@ -92,6 +96,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
           PsiCodeBlock codeFragment =
             JavaPsiFacade.getInstance(project).getElementFactory().createCodeBlockFromText("{" + text + "}", context);
           codeFragment.accept(new JavaRecursiveElementVisitor() {
+            @Override
             public void visitLocalVariable(PsiLocalVariable variable) {
               final String name = variable.getName();
               variable.putUserData(LABEL_VARIABLE_VALUE_KEY, markupVariables.getSecond().get(name));
@@ -103,7 +108,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     }
     return context;
   }
-  
+
   private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<?, ValueMarkup> markupMap) {
     final Map<String, ObjectReference> reverseMap = new HashMap<>();
     final StringBuilder buffer = new StringBuilder();

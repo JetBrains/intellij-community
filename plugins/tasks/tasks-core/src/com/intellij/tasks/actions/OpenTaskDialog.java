@@ -165,6 +165,7 @@ public class OpenTaskDialog extends DialogWrapper {
     return myClearContext.isSelected();
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "SimpleOpenTaskDialog";
@@ -194,6 +195,7 @@ public class OpenTaskDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

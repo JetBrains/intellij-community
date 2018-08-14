@@ -17,10 +17,10 @@
 package com.intellij.tasks.context;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +50,7 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
     return "Project view state";
   }
 
+  @Override
   public void saveContext(Element toElement) throws WriteExternalException {
     for (AbstractProjectViewPane pane : myPanes) {
       Element paneElement = new Element(pane.getId());
@@ -58,6 +59,7 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
     }
   }
 
+  @Override
   public void loadContext(Element fromElement) throws InvalidDataException {
     for (AbstractProjectViewPane pane : myPanes) {
       Element paneElement = fromElement.getChild(pane.getId());
@@ -70,6 +72,7 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
     }
   }
 
+  @Override
   public void clearContext() {
     for (AbstractProjectViewPane pane : myPanes) {
       JTree tree = pane.getTree();

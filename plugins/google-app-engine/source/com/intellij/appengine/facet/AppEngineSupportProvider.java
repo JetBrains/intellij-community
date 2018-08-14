@@ -292,12 +292,14 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
       myMainPanel.repaint();
     }
 
+    @Override
     public void frameworkSelected(@NotNull FrameworkSupportProvider provider) {
       if (provider.getId().equals(JPA_FRAMEWORK_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getDisplayName());
       }
     }
 
+    @Override
     public void frameworkUnselected(@NotNull FrameworkSupportProvider provider) {
       if (provider.getId().equals(JPA_FRAMEWORK_ID)) {
         myPersistenceApiComboBox.setSelectedItem(PersistenceApiComboboxUtil.NONE_ITEM);

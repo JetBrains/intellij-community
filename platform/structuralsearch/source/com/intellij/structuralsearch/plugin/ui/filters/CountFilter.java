@@ -71,6 +71,7 @@ public class CountFilter extends FilterAction {
         });
       }
 
+      @Override
       protected void layoutComponents() {
         final GroupLayout layout = new GroupLayout(this);
         setLayout(layout);

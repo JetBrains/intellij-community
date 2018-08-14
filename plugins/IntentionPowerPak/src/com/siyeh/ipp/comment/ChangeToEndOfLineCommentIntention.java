@@ -24,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChangeToEndOfLineCommentIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new CStyleCommentPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     final PsiComment comment = (PsiComment)element;
     final Project project = comment.getProject();

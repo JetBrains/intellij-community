@@ -46,6 +46,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   private Map<Integer, String> myMnemonics = null;
 
   public static final PropertyChangeListener TEXT_LISTENER = new PropertyChangeListener() {
+    @Override
     public void propertyChange(PropertyChangeEvent event) {
       Object source = event.getSource();
       // SwingUtilities.invokeLater is needed to process this event,
@@ -72,6 +73,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
 
+  @Override
   protected void processComponent(Component parentComponent) {
     if (parentComponent instanceof AbstractButton) {
       final AbstractButton abstractButton = ((AbstractButton)parentComponent);
@@ -120,6 +122,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     }
   }
 
+  @Override
   protected void unprocessComponent(Component component) {
   }
 

@@ -33,10 +33,12 @@ public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsC
     myPing = false;
   }
 
+  @Override
   public boolean isAlive() {
     return myPing;
   }
 
+  @Override
   public void resetAlive() {
     myPing = false;
   }
@@ -45,6 +47,7 @@ public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsC
     return new CvsListenerWithProgress(ProgressManager.getInstance().getProgressIndicator());
   }
 
+  @Override
   public void addFileMessage(FileMessage message) {
     if (myProgressIndicator != null) {
       message.showMessageIn(myProgressIndicator);
@@ -62,6 +65,7 @@ public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsC
     myIndirectCancel = true;
   }
 
+  @Override
   public boolean isAborted() {
     myPing = true;
     if (myLastError != null) throw new CvsProcessException(myLastError);
@@ -71,6 +75,7 @@ public class CvsListenerWithProgress extends CvsMessagesAdapter implements ICvsC
     return progressIndicator.isCanceled();
   }
 
+  @Override
   public void registerError(String description) {
     myLastError = description;
   }

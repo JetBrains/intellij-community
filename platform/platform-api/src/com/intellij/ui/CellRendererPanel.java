@@ -43,13 +43,16 @@ public class CellRendererPanel extends JPanel {
   }
 
   // property change support ----------------
+  @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
   }
 
+  @Override
   public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
   }
 
   // isOpaque() optimization ----------------
+  @Override
   public final boolean isOpaque() {
     return false;
   }
@@ -114,6 +117,7 @@ public class CellRendererPanel extends JPanel {
     AWTAccessor.getComponentAccessor().setSize(component, w, h);
   }
 
+  @Override
   public void invalidate() {
   }
 
@@ -128,6 +132,7 @@ public class CellRendererPanel extends JPanel {
     }
   }
 
+  @Override
   public void validate() {
     doLayout();
   }
@@ -136,15 +141,19 @@ public class CellRendererPanel extends JPanel {
     super.validate();
   }
 
+  @Override
   public void revalidate() {
   }
 
+  @Override
   public void repaint(long tm, int x, int y, int width, int height) {
   }
 
+  @Override
   public void repaint(Rectangle r) {
   }
 
+  @Override
   public void repaint() {
   }
 

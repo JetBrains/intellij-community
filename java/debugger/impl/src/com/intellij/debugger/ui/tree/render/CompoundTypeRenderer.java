@@ -51,6 +51,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     LOG.assertTrue(childrenRenderer == null || childrenRenderer instanceof TypeRenderer);
   }
 
+  @Override
   public void setLabelRenderer(ValueLabelRenderer labelRenderer) {
     final ValueLabelRenderer prevRenderer = getLabelRenderer();
     super.setLabelRenderer(isBaseRenderer(labelRenderer) ? null : labelRenderer);
@@ -62,6 +63,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     }
   }
 
+  @Override
   public void setChildrenRenderer(ChildrenRenderer childrenRenderer) {
     final ChildrenRenderer prevRenderer = getChildrenRenderer();
     super.setChildrenRenderer(isBaseRenderer(childrenRenderer) ? null : childrenRenderer);
@@ -73,6 +75,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     }
   }
 
+  @Override
   public ChildrenRenderer getChildrenRenderer() {
     final ChildrenRenderer childrenRenderer = super.getChildrenRenderer();
     return childrenRenderer != null ? childrenRenderer : getDefaultRenderer();
@@ -86,6 +89,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     return name.endsWith("]") ? myRendererSettings.getArrayRenderer() : AUTO_TO_STRING_RENDERER;
   }
 
+  @Override
   public ValueLabelRenderer getLabelRenderer() {
     final ValueLabelRenderer labelRenderer = super.getLabelRenderer();
     return labelRenderer != null ? labelRenderer : getDefaultRenderer();
@@ -103,6 +107,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     return originalRenderer == classRenderer ? null : originalRenderer;
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     if (DebuggerUtils.instanceOf(type, getClassName())) {
       return super.isApplicable(type);

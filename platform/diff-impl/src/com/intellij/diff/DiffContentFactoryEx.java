@@ -49,6 +49,7 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
                                               @NotNull FilePath filePath,
                                               @Nullable Charset defaultCharset) throws IOException;
 
+  @Override
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
                                               @NotNull byte[] content,

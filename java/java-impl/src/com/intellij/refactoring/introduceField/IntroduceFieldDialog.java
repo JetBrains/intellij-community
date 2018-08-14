@@ -130,12 +130,14 @@ class IntroduceFieldDialog extends DialogWrapper {
   }
 
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
 
+  @Override
   protected JComponent createNorthPanel() {
 
     JPanel panel = new JPanel(new GridBagLayout());
@@ -180,17 +182,17 @@ class IntroduceFieldDialog extends DialogWrapper {
     myNameField.addDataChangedListener(() -> updateButtons());
     namePrompt.setLabelFor(myNameField.getFocusableComponent());
 
-    // We delay initialization of name field till dialog is shown, so that it will be executed in a different command and won't 
+    // We delay initialization of name field till dialog is shown, so that it will be executed in a different command and won't
     // be tied to any document changes performed in current command (and won't prevent undo for them later)
     new UiNotifyConnector.Once(panel, new Activatable.Adapter() {
       @Override
       public void showNotify() {
         myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
-                                                              createGenerator(myWillBeDeclaredStatic, myLocalVariable, 
-                                                                              myInitializerExpression, myIsInvokedOnDeclaration, 
+                                                              createGenerator(myWillBeDeclaredStatic, myLocalVariable,
+                                                                              myInitializerExpression, myIsInvokedOnDeclaration,
                                                                               myEnteredName, myParentClass, myProject));
         myNameSuggestionsManager.setLabelsFor(type, namePrompt);
-        
+
         Editor editor = myNameField.getEditor();
         if (editor != null) {
           editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
@@ -212,6 +214,7 @@ class IntroduceFieldDialog extends DialogWrapper {
            RefactoringBundle.message("introduce.field.field.of.type");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myCentralPanel.createCenterPanel();
   }
@@ -225,6 +228,7 @@ class IntroduceFieldDialog extends DialogWrapper {
                                                   final Project project) {
     return new NameSuggestionsGenerator() {
       private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      @Override
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         VariableKind variableKind = willBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
 
@@ -249,6 +253,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   }
 
 
+  @Override
   protected void doOKAction() {
     String fieldName = getEnteredName();
     String errorString = null;
@@ -291,10 +296,12 @@ class IntroduceFieldDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_FIELD);
   }

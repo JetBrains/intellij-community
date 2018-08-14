@@ -42,6 +42,7 @@ public class DetailsComponentTest {
     details.setSelected(true);
     frame.getContentPane().add(details, BorderLayout.SOUTH);
     details.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         d.setDetailsModeEnabled(details.isSelected());
       }

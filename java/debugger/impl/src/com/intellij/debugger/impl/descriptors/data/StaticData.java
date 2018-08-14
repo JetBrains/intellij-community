@@ -34,6 +34,7 @@ public final class StaticData extends DescriptorData<StaticDescriptorImpl>{
     return myRefType;
   }
 
+  @Override
   protected StaticDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new StaticDescriptorImpl(myRefType);
   }
@@ -47,6 +48,7 @@ public final class StaticData extends DescriptorData<StaticDescriptorImpl>{
     return STATIC.hashCode();
   }
 
+  @Override
   public DisplayKey<StaticDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(STATIC);
   }

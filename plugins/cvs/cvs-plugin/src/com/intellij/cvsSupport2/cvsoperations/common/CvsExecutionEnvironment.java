@@ -27,14 +27,17 @@ import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 public class CvsExecutionEnvironment {
 
   public final static ICvsCommandStopper DUMMY_STOPPER = new ICvsCommandStopper() {
+    @Override
     public boolean isAborted() {
       return false;
     }
 
+    @Override
     public boolean isAlive() {
       return true;
     }
 
+    @Override
     public void resetAlive() {
     }
   };
