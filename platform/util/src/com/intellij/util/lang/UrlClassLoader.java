@@ -342,7 +342,6 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
-  @Override
   @SuppressWarnings("unused")
   protected Object getClassLoadingLock(String className) {
     //noinspection RedundantStringConstructorCall
