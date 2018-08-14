@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.openapi.util.ShutDownTracker;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
@@ -65,7 +64,7 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
     myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+    MavenServerUtil.registerShutdownTask(new Runnable() {
       @Override
       public void run() {
         release();
