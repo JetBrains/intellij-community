@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -48,6 +49,8 @@ class CommonCodeStyleSettingsManager {
 
   @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
+
+  private static final Logger LOG = Logger.getInstance(CommonCodeStyleSettingsManager.class);
 
   private static class DefaultsHolder {
     private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
@@ -116,7 +119,7 @@ class CommonCodeStyleSettingsManager {
     for (final LanguageCodeStyleSettingsProvider provider : providers) {
       Language target = provider.getLanguage();
       if (!myCommonSettingsMap.containsKey(target)) {
-        CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
+        CommonCodeStyleSettings initialSettings = getAndCheckDefaults(provider);
         if (initialSettings != null) {
           init(initialSettings, target);
         }
@@ -173,7 +176,7 @@ class CommonCodeStyleSettingsManager {
           if (isKnownLanguage) {
             final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(target);
             if (provider != null) {
-              CommonCodeStyleSettings settings = provider.getDefaultCommonSettings();
+              CommonCodeStyleSettings settings = getAndCheckDefaults(provider);
               if (settings != null) {
                 settings.readExternal(commonSettingsElement);
                 init(settings, target);
@@ -190,6 +193,15 @@ class CommonCodeStyleSettingsManager {
       }
       initNonReadSettings();
     }
+  }
+
+  private static CommonCodeStyleSettings getAndCheckDefaults(LanguageCodeStyleSettingsProvider provider) {
+    CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
+    if (defaultSettings instanceof CodeStyleSettings) {
+      LOG.error(
+        "#" + provider.getLanguageName() + " language plugin must not instantiate root CodeStyleSettings in getDefaultCommonSettings()");
+    }
+    return defaultSettings;
   }
 
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
