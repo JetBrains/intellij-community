@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.impl.AsyncExecution.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
@@ -23,42 +24,6 @@ import kotlin.coroutines.experimental.CoroutineContext
 internal abstract class AsyncExecutionSupport : AbstractCoroutineContextElement(ContinuationInterceptor),
                                                 ContinuationInterceptor,
                                                 AsyncExecution {
-
-  interface ContextConstraint {
-    val isCorrectContext: Boolean
-
-    fun toCoroutineDispatcher(delegate: CoroutineDispatcher): CoroutineDispatcher
-
-    override fun toString(): String
-  }
-
-  /**
-   * Implementation MUST guarantee to execute a runnable passed to [schedule] at some point.
-   * For dispatchers that may refuse to run the task based on some condition
-   * consider using [ExpirableContextConstraint] instead.
-   */
-  interface SimpleContextConstraint : ContextConstraint {
-    fun schedule(runnable: Runnable)
-
-    override fun toCoroutineDispatcher(delegate: CoroutineDispatcher): CoroutineDispatcher =
-      SimpleConstraintDispatcher(delegate, this)
-  }
-
-  /**
-   * This class ensures that a coroutine continuation is invoked at some point
-   * even if the underlying dispatcher doesn't usually run a task once some [Disposable] is disposed.
-   *
-   * At the very least, the implementation MUST guarantee to execute a runnable passed to [scheduleExpirable]
-   * if the corresponding [expirable] is still not disposed by the time the dispatcher arranges the proper execution context.
-   * It is OK to execute it after the [expirable] has been disposed though.
-   */
-  interface ExpirableContextConstraint : ContextConstraint {
-    val expirable: Disposable
-    fun scheduleExpirable(runnable: Runnable)
-
-    override fun toCoroutineDispatcher(delegate: CoroutineDispatcher): CoroutineDispatcher =
-      ExpirableConstraintDispatcher(delegate, this)
-  }
 
   protected abstract val disposables: Set<Disposable>
   protected abstract val dispatcher: CoroutineDispatcher
@@ -105,7 +70,7 @@ internal abstract class AsyncExecutionSupport : AbstractCoroutineContextElement(
     RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
-  private abstract class DelegateDispatcher : CoroutineDispatcher() {
+  internal abstract class DelegateDispatcher : CoroutineDispatcher() {
     abstract val delegate: CoroutineDispatcher
     abstract val isChainFallback: Boolean
 
@@ -121,8 +86,8 @@ internal abstract class AsyncExecutionSupport : AbstractCoroutineContextElement(
   }
 
   /** A DelegateDispatcher backed by a ContextConstraint. */
-  private abstract class ChainedConstraintDispatcher(private val myDelegate: CoroutineDispatcher) : DelegateDispatcher(),
-                                                                                                    ContextConstraint {
+  internal abstract class ChainedConstraintDispatcher(private val myDelegate: CoroutineDispatcher) : DelegateDispatcher(),
+                                                                                                     ContextConstraint {
     override val isChainFallback: Boolean
       get() = false  // TODO[eldar] any ContextConstraint-backed dispatcher is considered unreliable to be a chain fallback
 
@@ -159,16 +124,16 @@ internal abstract class AsyncExecutionSupport : AbstractCoroutineContextElement(
   }
 
   /** @see SimpleContextConstraint */
-  private class SimpleConstraintDispatcher(delegate: CoroutineDispatcher,
-                                           constraint: SimpleContextConstraint) : ChainedConstraintDispatcher(delegate),
+  internal class SimpleConstraintDispatcher(delegate: CoroutineDispatcher,
+                                            constraint: SimpleContextConstraint) : ChainedConstraintDispatcher(delegate),
                                                                                   SimpleContextConstraint by constraint {
     override fun doConstraintSchedule(context: CoroutineContext, block: Runnable) = schedule(block)
     override fun toString() = super.toString()
   }
 
   /** @see ExpirableContextConstraint */
-  private class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
-                                              private val constraint: ExpirableContextConstraint) : ChainedConstraintDispatcher(delegate),
+  internal class ExpirableConstraintDispatcher(delegate: CoroutineDispatcher,
+                                               private val constraint: ExpirableContextConstraint) : ChainedConstraintDispatcher(delegate),
                                                                                                     ExpirableContextConstraint by constraint {
     private val myDisposable = object : THashSet<Runnable>(ContainerUtil.identityStrategy()),
                                         Disposable {
