@@ -35,7 +35,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return getElement() != null && getPresentation().isSuppressed(getElement());
   }
 
-  public boolean hasDescriptorsUnder() {
+  boolean hasDescriptorsUnder() {
     return myHasDescriptorsUnder;
   }
 

@@ -618,8 +618,8 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
-  public static <T> void processSortedListsInOrder(@NotNull List<T> list1,
-                                                   @NotNull List<T> list2,
+  public static <T> void processSortedListsInOrder(@NotNull List<? extends T> list1,
+                                                   @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
                                                    @NotNull Consumer<? super T> processor) {
