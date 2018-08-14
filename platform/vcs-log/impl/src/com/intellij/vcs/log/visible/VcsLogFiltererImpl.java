@@ -202,7 +202,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         if (commitId != null) hashFilterResult.add(myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
       }
     }
-    VcsLogTextFilterImpl textFilter = new VcsLogTextFilterImpl(StringUtil.join(hashes, "|"), true, false);
+    VcsLogTextFilter textFilter = VcsLogTextFilterImpl.createTextFilter(StringUtil.join(hashes, "|"), true, false);
     FilterByDetailsResult textFilterResult = filterByDetails(dataPack, new VcsLogFilterCollectionBuilder(textFilter).build(),
                                                              commitCount, dataPack.getLogProviders().keySet(), null);
     if (hashFilterResult.isEmpty() && matchesNothing(textFilterResult.matchingCommits)) return null;

@@ -21,51 +21,49 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-class VcsLogTextFilterImpl(private val text: String,
-                           isRegexAllowed: Boolean,
-                           private val matchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
-  private val pattern: Pattern?
-
-  init {
-    pattern = createPattern(text, isRegexAllowed, matchCase)
-  }
-
+class VcsLogTextFilterImpl internal constructor(private val text: String,
+                                                private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
   @Suppress("unused")
   // used in upsource
-  constructor(text: String) : this(text, false, false)
+  constructor(text: String) : this(text, false)
 
-  override fun matches(message: String): Boolean {
-    if (pattern != null) return pattern.matcher(message).find()
-    return message.contains(text, !matchCase)
-  }
+  override fun matches(message: String): Boolean = message.contains(text, !isMatchCase)
 
-  override fun getText(): String {
-    return text
-  }
+  override fun getText(): String = text
 
-  override fun isRegex(): Boolean {
-    return pattern != null
-  }
+  override fun isRegex(): Boolean = false
 
-  override fun matchesCase(): Boolean {
-    return matchCase
-  }
+  override fun matchesCase(): Boolean = isMatchCase
 
   override fun toString(): String {
-    return (if (isRegex) "matching " else "containing ") + text + " (case " + (if (matchCase) "sensitive" else "insensitive") + ")"
+    return "containing $text (case ${if (isMatchCase) "sensitive" else "insensitive"})"
   }
 
   companion object {
-    private fun createPattern(text: String, isRegexAllowed: Boolean, matchCase: Boolean): Pattern? {
-      if (isRegexAllowed && VcsLogUtil.maybeRegexp(text)) {
+    @JvmStatic
+    fun createTextFilter(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
+      if (isRegexpAllowed && VcsLogUtil.maybeRegexp(text)) {
         try {
-          return if (matchCase) Pattern.compile(text) else Pattern.compile(text, Pattern.CASE_INSENSITIVE)
+          return VcsLogRegexTextFilter(Pattern.compile(text, if (isMatchCase) 0 else Pattern.CASE_INSENSITIVE))
         }
         catch (ignored: PatternSyntaxException) {
         }
-
       }
-      return null
+      return VcsLogTextFilterImpl(text, isMatchCase)
     }
+  }
+}
+
+class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
+  override fun matches(message: String): Boolean = pattern.matcher(message).find()
+
+  override fun getText(): String = pattern.pattern()
+
+  override fun isRegex(): Boolean = true
+
+  override fun matchesCase(): Boolean = (pattern.flags() and Pattern.CASE_INSENSITIVE) == 0
+
+  override fun toString(): String {
+    return "matching $text (case ${if (matchesCase()) "sensitive" else "insensitive"})"
   }
 }
