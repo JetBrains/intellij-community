@@ -26,7 +26,6 @@ public class StringUtilRt {
   @Contract(pure = true)
   public static CharSequence toUpperCase(@NotNull CharSequence s) {
     StringBuilder answer = null;
-
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
       char upCased = toUpperCase(c);
@@ -34,36 +33,24 @@ public class StringUtilRt {
         answer = new StringBuilder(s.length());
         answer.append(s.subSequence(0, i));
       }
-
       if (answer != null) {
         answer.append(upCased);
       }
     }
-
     return answer == null ? s : answer;
   }
 
   @Contract(pure = true)
   public static char toUpperCase(char a) {
-    if (a < 'a') {
-      return a;
-    }
-    if (a <= 'z') {
-      return (char)(a + ('A' - 'a'));
-    }
+    if (a < 'a') return a;
+    if (a <= 'z') return (char)(a + ('A' - 'a'));
     return Character.toUpperCase(a);
   }
 
   @Contract(pure = true)
   public static char toLowerCase(char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') {
-      return a;
-    }
-
-    if (a <= 'Z') {
-      return (char)(a + ('a' - 'A'));
-    }
-
+    if (a < 'A' || a >= 'a' && a <= 'z') return a;
+    if (a <= 'Z') return (char)(a + ('a' - 'A'));
     return Character.toLowerCase(a);
   }
 
@@ -352,13 +339,11 @@ public class StringUtilRt {
         }
         continue;
       }
-
       if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
         inQuotes = !inQuotes;
       }
       builder.append(c);
     }
-
     if (builder.length() > 0) {
       result.add(builder.toString());
     }
@@ -384,26 +369,19 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
-    return s.length() > 1 &&
-           (s.charAt(0) == '\'' || s.charAt(0) == '\"') &&
-           s.charAt(0) == s.charAt(s.length() - 1);
+    return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s) {
-    if (isQuotedString(s)) {
-      return s.substring(1, s.length() - 1);
-    }
-    return s;
+    return isQuotedString(s) ? s.substring(1, s.length() - 1) : s;
   }
 
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s, char quotationChar) {
-    if (s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1)) {
-      return s.substring(1, s.length() - 1);
-    }
-    return s;
+    boolean quoted = s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1);
+    return quoted ? s.substring(1, s.length() - 1) : s;
   }
 }
