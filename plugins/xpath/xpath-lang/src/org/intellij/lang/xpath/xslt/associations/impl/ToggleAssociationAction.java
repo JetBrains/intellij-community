@@ -51,10 +51,12 @@ class ToggleAssociationAction extends ToggleAction {
         return path != null ? (module != null ? "[" + module.getName() + "] - " + path : path) : virtualFile.getPresentableUrl();
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
         return true;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
         assert !state;
         myFileAssociationsManager.removeAssociation(myPsiFile, myAssoc);

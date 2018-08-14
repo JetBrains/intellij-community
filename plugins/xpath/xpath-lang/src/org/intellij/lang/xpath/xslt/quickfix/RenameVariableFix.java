@@ -38,21 +38,25 @@ public class RenameVariableFix extends AbstractFix {
         myPlace = place;
     }
 
+    @Override
     @NotNull
     public String getText() {
         final String type = LanguageFindUsages.INSTANCE.forLanguage(myElement.getLanguage()).getType(myElement);
         return "Rename " + myPlace + " " + StringUtil.capitalize(type);
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myElement.isValid();
     }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{myElement},
                                                                                DataManager.getInstance().getDataContext());
   }
 
+    @Override
     protected boolean requiresEditor() {
         return false;
     }

@@ -32,6 +32,7 @@ public class CreateClassFixTest extends UsefulTestCase {
   @org.junit.runners.Parameterized.Parameter(0) public String myTestName;
   @org.junit.runners.Parameterized.Parameter(1) public boolean myCreateClass;
 
+  @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
@@ -46,6 +47,7 @@ public class CreateClassFixTest extends UsefulTestCase {
     myFixture.enableInspections(new RegistrationProblemsInspection());
   }
 
+  @Override
   @After
   public void tearDown() throws Exception {
     try {

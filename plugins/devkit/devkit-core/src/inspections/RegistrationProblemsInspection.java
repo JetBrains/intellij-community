@@ -40,12 +40,14 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   public boolean CHECK_JAVA_CODE = true;
   public boolean CHECK_ACTIONS = true;
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "ComponentRegistrationProblems";
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel jPanel = new JPanel();
@@ -55,6 +57,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             DevKitBundle.message("inspections.registration.problems.option.check.plugin.xml"),
             CHECK_PLUGIN_XML);
     checkPluginXml.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         CHECK_PLUGIN_XML = checkPluginXml.isSelected();
       }
@@ -64,6 +67,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             DevKitBundle.message("inspections.registration.problems.option.check.java.actions"),
             CHECK_ACTIONS);
     checkJavaActions.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         CHECK_ACTIONS = checkJavaActions.isSelected();
       }
@@ -73,6 +77,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             DevKitBundle.message("inspections.registration.problems.option.check.java.code"),
             CHECK_JAVA_CODE);
     checkJavaCode.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         final boolean selected = checkJavaCode.isSelected();
         CHECK_JAVA_CODE = selected;
@@ -86,6 +91,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return jPanel;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (CHECK_PLUGIN_XML && DescriptorUtil.isPluginXml(file)) {
@@ -94,6 +100,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
@@ -295,6 +302,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       return new String[]{ fqn };
     }
 
+    @Override
     public boolean process(ActionType type, XmlTag action) {
       final XmlAttribute attribute = action.getAttribute("class");
       if (attribute != null) {

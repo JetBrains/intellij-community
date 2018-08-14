@@ -28,6 +28,7 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     myMergerFactory = mergerFactory;
   }
 
+  @Override
   public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, @NotNull Url url, final long revision) {
     onBranchSelected(url, null, null);
   }

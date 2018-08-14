@@ -44,33 +44,39 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
         super(astNode);
     }
 
+    @Override
     public PsiReference getReference() {
         final ASTNode lbrace = getNode().findChildByType(RegExpTT.LBRACE);
         if (lbrace == null) return null;
         return new MyPsiReference();
     }
 
+    @Override
     public boolean isNegated() {
         final ASTNode node1 = getNode().findChildByType(RegExpTT.PROPERTY);
         final ASTNode node2 = getNode().findChildByType(RegExpTT.CARET);
         return (node1 != null && node1.textContains('P')) ^ (node2 != null);
     }
 
+    @Override
     @Nullable
     public ASTNode getCategoryNode() {
         return getNode().findChildByType(RegExpTT.NAME);
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpProperty(this);
     }
 
   private class MyPsiReference implements PsiReference {
+        @Override
         @NotNull
         public PsiElement getElement() {
             return RegExpPropertyImpl.this;
         }
 
+        @Override
         @NotNull
         public TextRange getRangeInElement() {
             ASTNode firstNode = getNode().findChildByType(RegExpTT.CARET);
@@ -85,28 +91,34 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             return t.shiftRight(-getTextRange().getStartOffset());
         }
 
+        @Override
         @Nullable
         public PsiElement resolve() {
             return RegExpPropertyImpl.this;
         }
 
+        @Override
         @NotNull
         public String getCanonicalText() {
             return getRangeInElement().substring(getElement().getText());
         }
 
+        @Override
         public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
             throw new IncorrectOperationException();
         }
 
+        @Override
         public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
             throw new IncorrectOperationException();
         }
 
+        @Override
         public boolean isReferenceTo(@NotNull PsiElement element) {
             return false;
         }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       final ASTNode categoryNode = getCategoryNode();
@@ -137,6 +149,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
       return 0;
     }
 
+    @Override
     public boolean isSoft() {
       return true;
     }

@@ -65,6 +65,7 @@ public class SvnRevisionPanel extends JPanel {
 
     myRevisionField.getTextField().setColumns(10);
     myRevisionField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(final DocumentEvent e) {
         notifyChangeListeners();
       }

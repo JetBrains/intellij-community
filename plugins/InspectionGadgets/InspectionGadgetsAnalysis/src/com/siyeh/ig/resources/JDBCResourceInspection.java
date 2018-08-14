@@ -72,6 +72,7 @@ public class JDBCResourceInspection extends ResourceInspection {
     return InspectionGadgetsBundle.message("jdbc.resource.opened.not.closed.display.name");
   }
 
+  @Override
   protected boolean isResourceCreation(PsiExpression expression) {
     if (!(expression instanceof PsiMethodCallExpression)) {
       return false;

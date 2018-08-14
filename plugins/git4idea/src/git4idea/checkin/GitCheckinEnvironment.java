@@ -129,12 +129,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return true;
   }
 
+  @Override
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return new GitCheckinOptions(myProject, panel);
   }
 
+  @Override
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
@@ -172,14 +174,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return FileUtil.loadFile(messageFile, encoding);
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }
 
+  @Override
   public String getCheckinOperationName() {
     return GitBundle.getString("commit.action.name");
   }
 
+  @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
@@ -724,6 +729,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
@@ -960,6 +966,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
@@ -1014,6 +1021,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;

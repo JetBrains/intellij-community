@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +36,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     if (myComponent == null) {
       myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings(), null, null);
       myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
+        @Override
         public void execute(final Project project, final VirtualFile vcsRoot) {
           sendUpdateCachedListsMessage(vcsRoot);
         }
@@ -54,6 +55,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
                                                 myProject, vcsRoot), o -> (! myProject.isOpen()) || myProject.isDisposed() || myComponent == null);
   }
 
+  @Override
   public JComponent initContent() {
     myConnection = myBus.connect();
     myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
@@ -63,6 +65,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     return myComponent;
   }
 
+  @Override
   public void disposeContent() {
     myConnection.disconnect();
     Disposer.dispose(myComponent);
@@ -70,6 +73,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   }
 
   private class MyVcsListener implements VcsListener {
+    @Override
     public void directoryMappingChanged() {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myProject.isDisposed()) {
@@ -80,6 +84,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   }
 
   private class MyCommittedChangesListener extends CommittedChangesAdapter {
+    @Override
     public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
       presentationChanged();
     }
@@ -93,6 +98,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
       });
     }
 
+    @Override
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
       if (lastError != null) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);

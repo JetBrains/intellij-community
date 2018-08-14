@@ -15,6 +15,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
   private boolean myIsShowDetails;
 
 
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     setIcon(null);
     if (value instanceof RepositoryTreeNode) {

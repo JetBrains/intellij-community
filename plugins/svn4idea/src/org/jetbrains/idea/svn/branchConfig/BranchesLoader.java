@@ -41,6 +41,7 @@ public class BranchesLoader implements Runnable {
     myPassive = passive;
   }
 
+  @Override
   public void run() {
     try {
       List<SvnBranchItem> branches = loadBranches();

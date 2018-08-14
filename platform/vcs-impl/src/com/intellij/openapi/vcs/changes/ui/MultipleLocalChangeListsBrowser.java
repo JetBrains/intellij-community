@@ -49,8 +49,8 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
@@ -214,6 +214,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     ((MyChangesBrowserTreeList)myViewer).updateExclusionStates();
   }
 
+  @Override
   public void updateDisplayedChangeLists() {
     List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
     myChangeListChooser.setAvailableLists(changeLists);

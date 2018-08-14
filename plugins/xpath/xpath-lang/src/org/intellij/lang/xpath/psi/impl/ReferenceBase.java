@@ -34,39 +34,47 @@ public abstract class ReferenceBase implements PsiReference {
         this.nameNode = nameNode;
     }
 
+    @Override
     @NotNull
     public XPathElement getElement() {
         return element;
     }
 
+    @Override
     @NotNull
     public TextRange getRangeInElement() {
         final int outer = element.getTextRange().getStartOffset();
         return TextRange.from(nameNode.getTextRange().getStartOffset() - outer, nameNode.getTextLength());
     }
 
+    @Override
     @Nullable
     public PsiElement resolve() {
         return null;
     }
 
+    @Override
     @NotNull
     public String getCanonicalText() {
         return nameNode.getText();
     }
 
+    @Override
     public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         throw new IncorrectOperationException("unsupported");
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         throw new IncorrectOperationException("unsupported");
     }
 
+    @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
         return Comparing.equal(resolve(), element);
     }
 
+    @Override
     public boolean isSoft() {
         return true;
     }

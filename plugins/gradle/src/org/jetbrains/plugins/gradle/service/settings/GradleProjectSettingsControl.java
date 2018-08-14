@@ -75,6 +75,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   /**
    * see {@linkplain AbstractImportFromExternalSystemControl#setCurrentProject(Project)}
    */
+  @Override
   public void setCurrentProject(@Nullable Project project) {
     super.setCurrentProject(project);
   }

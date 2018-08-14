@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RenameChangeListAction extends AnAction implements DumbAware {
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     LocalChangeList target = getTargetChangeList(e);
     final boolean visible = target != null && !target.isReadOnly();
@@ -29,6 +30,7 @@ public class RenameChangeListAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     LocalChangeList target = getTargetChangeList(e);

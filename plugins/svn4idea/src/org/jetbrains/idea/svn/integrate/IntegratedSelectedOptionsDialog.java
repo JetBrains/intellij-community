@@ -100,6 +100,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
       }
 
+      @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
@@ -133,12 +134,14 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
         registerCustomShortcutSet(CommonShortcuts.getDelete(), myWorkingCopiesList);
       }
 
+      @Override
       public void update(@NotNull final AnActionEvent e) {
         final Presentation presentation = e.getPresentation();
         final int idx = (myWorkingCopiesList == null) ? -1 : myWorkingCopiesList.getSelectedIndex();
         presentation.setEnabled(idx != -1);
       }
 
+      @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         final int idx = myWorkingCopiesList.getSelectedIndex();
         if (idx != -1) {
@@ -215,6 +218,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     svnConfig.setIgnoreSpacesInMerge(myIgnoreWhitespacesCheckBox.isSelected());
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
@@ -229,6 +233,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     private WorkingCopyInfoComparator() {
     }
 
+    @Override
     public int compare(final WorkingCopyInfo o1, final WorkingCopyInfo o2) {
       return o1.getLocalPath().compareTo(o2.getLocalPath());
     }

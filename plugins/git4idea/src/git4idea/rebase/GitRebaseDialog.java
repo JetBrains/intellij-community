@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -153,6 +139,7 @@ public class GitRebaseDialog extends DialogWrapper {
                                                 validateRunnable);
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, null);
     myGitRootComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateFields();
       }
@@ -251,17 +238,20 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   private void setupBranches() {
     GitUIUtil.getTextField(myOntoComboBox).getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(final DocumentEvent e) {
         validateFields();
       }
     });
     final ActionListener rootListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         loadRefs();
         updateBranches();
       }
     };
     final ActionListener showListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         updateOntoFrom();
       }
@@ -270,6 +260,7 @@ public class GitRebaseDialog extends DialogWrapper {
     rootListener.actionPerformed(null);
     myGitRootComboBox.addActionListener(rootListener);
     myBranchComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         updateTrackedBranch();
       }
@@ -427,6 +418,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * {@inheritDoc}
    */
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

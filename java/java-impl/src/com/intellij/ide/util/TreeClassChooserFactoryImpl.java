@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -31,6 +17,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createWithInnerClassesScopeChooser(String title,
                                                              GlobalSearchScope scope,
@@ -39,6 +26,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     return TreeJavaClassChooserDialog.withInnerClasses(title, myProject, scope, classFilter, initialClass);
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createNoInnerClassesScopeChooser(String title,
                                                            GlobalSearchScope scope,
@@ -47,21 +35,25 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, initialClass);
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createProjectScopeChooser(String title, PsiClass initialClass) {
     return new TreeJavaClassChooserDialog(title, myProject, initialClass);
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createProjectScopeChooser(String title) {
     return new TreeJavaClassChooserDialog(title, myProject);
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createAllProjectScopeChooser(String title) {
     return new TreeJavaClassChooserDialog(title, myProject, GlobalSearchScope.allScope(myProject), null, null);
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createInheritanceClassChooser(String title,
                                                         GlobalSearchScope scope,
@@ -74,17 +66,20 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, null, false);
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass) {
     return createInheritanceClassChooser(title, scope, base, initialClass, null);
   }
 
+  @Override
   @NotNull
   public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
                                                         ClassFilter classFilter) {
     return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, initialClass, false);
   }
 
+  @Override
   @NotNull
   public TreeFileChooser createFileChooser(@NotNull String title,
                                            final PsiFile initialFile,
@@ -93,6 +88,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
     return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, false, false);
   }
 
+  @Override
   @NotNull
   public
   TreeFileChooser createFileChooser(@NotNull String title,
@@ -104,6 +100,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   }
 
 
+  @Override
   @NotNull
   public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType,
                                            @Nullable TreeFileChooser.PsiFileFilter filter,

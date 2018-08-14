@@ -181,6 +181,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return null;
   }
 
+  @Override
   public List<JsonSchemaInfo> getAllUserVisibleSchemas() {
     List<String> schemas = myCatalogManager.getAllCatalogSchemas();
     Collection<JsonSchemaFileProvider> providers = myState.getProviders();

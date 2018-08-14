@@ -111,10 +111,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
 
+  @Override
   public void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs) {
     showFileHistory(historyProvider, vcs.getAnnotationProvider(), path, vcs);
   }
 
+  @Override
   public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
                               @Nullable AnnotationProvider annotationProvider,
                               @NotNull FilePath path,
@@ -133,10 +135,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     refresher.refresh(true);
   }
 
+  @Override
   public void showRollbackChangesDialog(List<Change> changes) {
     RollbackChangesDialog.rollbackChanges(myProject, changes);
   }
 
+  @Override
   @Nullable
   public Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files,
                                                       String title,
@@ -177,6 +181,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return null;
   }
 
+  @Override
   @Nullable
   public Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
                                                        String title,
@@ -204,6 +209,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return dlg.showAndGet() ? dlg.getSelectedFiles() : null;
   }
 
+  @Override
   @Nullable
   public Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
                                                        String title,
@@ -214,6 +220,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return selectFilePathsToProcess(files, title, prompt, singleFileTitle, singleFilePromptTemplate, confirmationOption, null, null);
   }
 
+  @Override
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
     showErrorsImpl(abstractVcsExceptions.isEmpty(), () -> abstractVcsExceptions.get(0), tabDisplayName,
                    vcsErrorViewPanel -> addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions));
@@ -311,6 +318,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
+  @Override
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {
     List<VcsException> exceptions = new ArrayList<>();
 
@@ -341,10 +349,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return exceptions;
   }
 
+  @Override
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs) {
     showAnnotation(annotation, file, vcs, 0);
   }
 
+  @Override
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
     TextEditor textFileEditor;
     FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
@@ -374,10 +384,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs);
   }
 
+  @Override
   public void showChangesBrowser(List<CommittedChangeList> changelists) {
     showChangesBrowser(changelists, null);
   }
 
+  @Override
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
     showChangesBrowser(new CommittedChangesTableModel(changelists, false), title, false, null);
   }
@@ -419,10 +431,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     dlg.show();
   }
 
+  @Override
   public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
     showChangesListBrowser(changelist, null, title);
   }
 
+  @Override
   public void showWhatDiffersBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {
     final ChangeListViewerDialog dlg;
     if (parent != null) {
@@ -437,6 +451,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     dlg.show();
   }
 
+  @Override
   public void showChangesBrowser(final CommittedChangesProvider provider,
                                  final RepositoryLocation location,
                                  @Nls String title,
@@ -506,6 +521,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return fileMergeDialog.getProcessedFiles();
   }
 
+  @Override
   public void openCommittedChangesTab(final AbstractVcs vcs,
                                       final VirtualFile root,
                                       final ChangeBrowserSettings settings,
@@ -516,6 +532,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     openCommittedChangesTab(vcs.getCommittedChangesProvider(), location, settings, maxCount, title);
   }
 
+  @Override
   public void openCommittedChangesTab(final CommittedChangesProvider provider,
                                       final RepositoryLocation location,
                                       final ChangeBrowserSettings settings,
@@ -535,6 +552,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     contentManager.setSelectedContent(content);
 
     extraActions.add(new CloseTabToolbarAction() {
+      @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         contentManager.removeContent(content);
       }
@@ -696,6 +714,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myCanceled = true;
     }
 
+    @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       final AsynchConsumer<List<CommittedChangeList>> appender = myDlg.getAppender();
       final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(10, appender, -1);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.help.HelpManager;
@@ -61,17 +47,20 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     init();
   }
 
+  @Override
   protected void doHelpAction() {
     if (myHelpID != null) {
       HelpManager.getInstance().invokeHelp(myHelpID);
     }
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void init() {
     super.init();
 
@@ -81,22 +70,27 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     myFilesList.addListener(() -> getOKAction().setEnabled(isOKActionEnabled()));
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.selectFilesDialog";
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return true;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myFilesList;
   }
 
+  @Override
   public boolean isOKActionEnabled() {
     return myFilesList.getSelectedPaths().length > 0;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(5,5));
 
@@ -126,6 +120,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     return panel;
   }
 
+  @Override
   public void actionPerformed(ActionEvent e) {
     for (String file : myFiles) {
       myFilesList.setChecked(file, e.getSource() == mySelectAllButton);
@@ -149,14 +144,17 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
         mySelectedFiles.put(file, Boolean.TRUE);
       }
     }
+    @Override
     public boolean isCheckable(final String entry) {
       return true;
     }
 
+    @Override
     public boolean isChecked(final String entry) {
       return Boolean.TRUE.equals(mySelectedFiles.get(entry));
     }
 
+    @Override
     public void setChecked(final String entry, final boolean checked) {
       mySelectedFiles.put(entry, checked);
       getOKAction().setEnabled(isOKActionEnabled());

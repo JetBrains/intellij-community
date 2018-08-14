@@ -22,6 +22,7 @@ class ArrayBinding extends AbstractCollectionBinding  {
     return "array";
   }
 
+  @Override
   @NotNull
   protected Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     int size = elements.size();

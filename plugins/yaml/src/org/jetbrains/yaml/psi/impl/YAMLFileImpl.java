@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -25,6 +26,7 @@ public class YAMLFileImpl extends PsiFileBase implements YAMLFile {
     super(viewProvider, YAMLLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return YAMLFileType.YML;
@@ -35,6 +37,7 @@ public class YAMLFileImpl extends PsiFileBase implements YAMLFile {
     return "YAML file";
   }
 
+  @Override
   public List<YAMLDocument> getDocuments() {
     final ArrayList<YAMLDocument> result = new ArrayList<>();
     for (ASTNode node : getNode().getChildren(TokenSet.create(YAMLElementTypes.DOCUMENT))) {
@@ -43,6 +46,7 @@ public class YAMLFileImpl extends PsiFileBase implements YAMLFile {
     return result;
   }
 
+  @Override
   public List<YAMLPsiElement> getYAMLElements() {
     final ArrayList<YAMLPsiElement> result = new ArrayList<>();
     for (ASTNode node : getNode().getChildren(null)) {

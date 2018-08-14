@@ -51,6 +51,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     super(new VirtualFileContentsChangedAdapter() {
       private final MyUpdater myUpdater = updater;
 
+      @Override
       protected void onFileChange(@NotNull final VirtualFile schemaFile) {
         myUpdater.onFileChange(schemaFile);
       }

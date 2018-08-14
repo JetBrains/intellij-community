@@ -572,6 +572,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     return myLoginButtonComponent.getPanel();
   }
 
+  @Override
   @NotNull
   protected JComponent createCenterPanel() {
     JPanel panel = PanelFactory.grid()

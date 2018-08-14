@@ -386,10 +386,12 @@ public class ChangesCacheFile {
       }
     }
 
+    @Override
     public boolean hasNext() {
       return myOffset > 0;
     }
 
+    @Override
     @Nullable
     public ChangesBunch next() {
       try {
@@ -409,6 +411,7 @@ public class ChangesCacheFile {
       }
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }
@@ -751,10 +754,10 @@ public class ChangesCacheFile {
 
   public boolean refreshIncomingChanges() throws IOException, VcsException {
     if (myProject.isDisposed()) return false;
-    
+
     DiffProvider diffProvider = myVcs.getDiffProvider();
     if (diffProvider == null) return false;
-    
+
     return new RefreshIncomingChangesOperation(this, myProject, diffProvider).invoke();
   }
 
@@ -825,7 +828,7 @@ public class ChangesCacheFile {
     private boolean refreshIncomingInFile(Collection<FilePath> incomingFiles, List<IncomingChangeListData> list) throws IOException {
       // the incoming changelist pointers are actually sorted in reverse chronological order,
       // so we process file delete changes before changes made to deleted files before they were deleted
-      
+
       Map<Pair<IncomingChangeListData, Change>, VirtualFile> revisionDependentFiles = ContainerUtil.newHashMap();
       Map<Pair<IncomingChangeListData, Change>, ProcessingResult> results = ContainerUtil.newHashMap();
 
@@ -838,7 +841,7 @@ public class ChangesCacheFile {
 
         for(Change change: data.getChangesToProcess()) {
           final ProcessingResult result = processIncomingChange(change, data, incomingFiles);
-          
+
           Pair<IncomingChangeListData, Change> key = Pair.create(data, change);
           results.put(key, result);
           if (result.revisionDependentProcessing != null) {
@@ -891,9 +894,9 @@ public class ChangesCacheFile {
       }
       return myAnyChanges || !list.isEmpty();
     }
-    
+
     private static class ProcessingResult {
-      final boolean changeFound; 
+      final boolean changeFound;
       final IncomingChangeState.State state;
       final VirtualFile file;
       final Function<VcsRevisionNumber, ProcessingResult> revisionDependentProcessing;
@@ -1108,7 +1111,7 @@ public class ChangesCacheFile {
         changeList = myChangesCacheFile.loadChangeListAt(offset);
         myPreviousChangeListsCache.put(offset, changeList);
       }
-      return changeList; 
+      return changeList;
     }
 
     private static boolean isDeletedFile(final Set<FilePath> deletedFiles,

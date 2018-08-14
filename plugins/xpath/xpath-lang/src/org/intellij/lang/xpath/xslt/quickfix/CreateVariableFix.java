@@ -42,11 +42,13 @@ public class CreateVariableFix extends AbstractFix {
         myReference = reference;
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Create Variable '" + myReference.getReferencedName() + "'";
     }
 
+    @Override
     public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
 
@@ -85,6 +87,7 @@ public class CreateVariableFix extends AbstractFix {
         return XsltCodeInsightUtil.getUsageBlock(myReference);
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         if (!myReference.isValid()) {
             return false;
@@ -94,6 +97,7 @@ public class CreateVariableFix extends AbstractFix {
         return myReference.isValid() && psiFile.isValid();
     }
 
+    @Override
     protected boolean requiresEditor() {
         return true;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,16 +61,19 @@ public class SetPropertyDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPropertyNameBox;
   }
@@ -90,14 +93,17 @@ public class SetPropertyDialog extends DialogWrapper {
     return myRecursiveButton.isSelected();
   }
 
+  @Override
   public boolean shouldCloseOnCross() {
     return true;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.propertyDialog";
   }
 
+  @Override
   protected void init() {
     super.init();
     if (myPropertyName != null) {
@@ -117,6 +123,7 @@ public class SetPropertyDialog extends DialogWrapper {
     if (editor instanceof JTextField) {
       JTextField jTextField = (JTextField)editor;
       jTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
         protected void textChanged(DocumentEvent e) {
           String name = getPropertyName();
           updatePropertyValue(name);
@@ -160,6 +167,7 @@ public class SetPropertyDialog extends DialogWrapper {
     return result;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     fillPropertyNames(myFiles);
     if (myPropertyName != null) {
@@ -184,6 +192,7 @@ public class SetPropertyDialog extends DialogWrapper {
       File file = files[0];
       try {
         PropertyConsumer handler = new PropertyConsumer() {
+          @Override
           public void handleProperty(File path, PropertyData property) {
             String name = property.getName();
             if (name != null) {
@@ -191,9 +200,11 @@ public class SetPropertyDialog extends DialogWrapper {
             }
           }
 
+          @Override
           public void handleProperty(Url url, PropertyData property) {
           }
 
+          @Override
           public void handleProperty(long revision, PropertyData property) {
           }
         };

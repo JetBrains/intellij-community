@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -69,8 +55,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
@@ -125,6 +111,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myDetailsView.getViewerScrollPane().setBorder(RIGHT_BORDER);
 
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         updateBySelectionChange();
       }
@@ -160,8 +147,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ITEMS_RELOADED, new CommittedChangesReloadListener() {
+      @Override
       public void itemsReloaded() {
       }
+      @Override
       public void emptyRefresh() {
         updateGrouping();
       }
@@ -233,6 +222,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myDetailsView.syncSizeWithToolbar(toolBar);
   }
 
+  @Override
   public void dispose() {
     myConnection.disconnect();
     mySplitterProportionsData.saveSplitterProportions(this);
@@ -375,6 +365,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
+  @Override
   public void removeFilteringStrategy(final CommittedChangesFilterKey key) {
     final ChangeListFilteringStrategy strategy = myFilteringStrategy.removeStrategy(key);
     if (strategy != null) {
@@ -383,6 +374,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myInnerSplitter.remove(key);
   }
 
+  @Override
   public boolean setFilteringStrategy(final ChangeListFilteringStrategy filteringStrategy) {
     if (myInnerSplitter.canAdd()) {
       filteringStrategy.addChangeListener(myFilterChangeListener);
@@ -424,6 +416,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return ActionManager.getInstance().createActionToolbar("CommittedChangesTree", toolbarGroup, true);
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key.equals(VcsDataKeys.CHANGES)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
@@ -458,21 +451,25 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return myTreeExpander;
   }
 
+  @Override
   public void repaintTree() {
     myChangesTree.revalidate();
     myChangesTree.repaint();
   }
 
+  @Override
   public void install(final CommittedChangeListDecorator decorator) {
     myDecorators.add(decorator);
     repaintTree();
   }
 
+  @Override
   public void remove(final CommittedChangeListDecorator decorator) {
     myDecorators.remove(decorator);
     repaintTree();
   }
 
+  @Override
   public void reportLoadedLists(final CommittedChangeListsListener listener) {
     List<CommittedChangeList> lists = new ArrayList<>(myChangeLists);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -516,12 +513,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       myList = list;
     }
 
+    @Override
     public void run() {
       ChangeListDetailsAction.showDetailsPopup(myProject, myList);
     }
   }
 
   private class FilterChangeListener implements ChangeListener {
+    @Override
     public void stateChanged(ChangeEvent e) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
         updateModel();
@@ -541,6 +540,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       return true;
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);

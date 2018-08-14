@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
@@ -476,6 +462,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       new OperatingSystemProfileActivator()};
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> T getComponent(Class<T> clazz, String roleHint) {
     try {
@@ -486,6 +473,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public <T> T getComponent(Class<T> clazz) {
     try {
@@ -559,6 +547,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
+  @Override
   public void customizeComponents() throws RemoteException {
     // replace some plexus components
     myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
@@ -614,6 +603,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     return MavenEffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
   }
 
+  @Override
   public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     RepositorySystemSession repositorySession = maven.newRepositorySession(request);
@@ -1269,6 +1259,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
+  @Override
   @NotNull
   protected List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
     List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
@@ -1374,10 +1365,12 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     myContainer.dispose();
   }
 
+  @Override
   public void clearCaches() throws RemoteException {
     // do nothing
   }
 
+  @Override
   public void clearCachesFor(final MavenId projectId) throws RemoteException {
     // do nothing
   }

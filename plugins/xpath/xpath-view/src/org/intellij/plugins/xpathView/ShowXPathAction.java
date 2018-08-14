@@ -18,7 +18,10 @@ package org.intellij.plugins.xpathView;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -46,6 +49,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ShowXPathAction extends XPathAction {
+    @Override
     public void update(@NotNull AnActionEvent event) {
         super.update(event);
 
@@ -57,6 +61,7 @@ public class ShowXPathAction extends XPathAction {
         }
     }
 
+    @Override
     protected boolean isEnabledAt(XmlFile xmlFile, int offset) {
         final PsiElement element = xmlFile.findElementAt(offset);
         if (!(element instanceof XmlElement || element instanceof PsiWhiteSpace)) {
@@ -67,6 +72,7 @@ public class ShowXPathAction extends XPathAction {
         return node != null;
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         if (editor == null) {
@@ -126,6 +132,7 @@ public class ShowXPathAction extends XPathAction {
         p.add(copy, BorderLayout.EAST);
 
       final LightweightHint hint = new LightweightHint(p) {
+            @Override
             public void hide() {
                 super.hide();
                 HighlighterUtil.removeHighlighter(editor, h);

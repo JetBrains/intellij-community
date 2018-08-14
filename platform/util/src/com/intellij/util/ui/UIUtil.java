@@ -105,7 +105,7 @@ public class UIUtil {
   public static void decorateFrame(@NotNull JRootPane pane) {
     decorateWindowHeader(pane);
   }
-  
+
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMac) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
@@ -1233,9 +1233,9 @@ public class UIUtil {
   public static Color getToolTipBackground() {
     return UIManager.getColor("ToolTip.background");
   }
-  
+
   public static Color getToolTipActionBackground() {
-    return JBColor.namedColor("ToolTip.actions.background", new JBColor(0xebebeb, 0x43474a)); 
+    return JBColor.namedColor("ToolTip.actions.background", new JBColor(0xebebeb, 0x43474a));
   }
 
   public static Color getToolTipForeground() {
@@ -2986,11 +2986,13 @@ public class UIUtil {
 
   public static class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
     private final HTMLFactory myFactory = new HTMLFactory() {
+      @Override
       public View create(Element e) {
         View view = super.create(e);
         if (view instanceof javax.swing.text.html.ParagraphView) {
           // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
           return new ParagraphView(e) {
+            @Override
             protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
               if (r == null) {
                 r = new SizeRequirements();

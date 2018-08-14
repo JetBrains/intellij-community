@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.project.DumbService;
@@ -50,6 +36,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !"com.intellij".equals(plugin.getPluginId());
 
+  @Override
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
     Collection<IdeaPlugin> plugins = getAllPluginsWithoutSelf(context);
@@ -73,6 +60,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     return DevKitBundle.message("error.cannot.resolve.plugin", s);
   }
 
+  @Override
   public IdeaPlugin fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
       final String otherId = ideaPlugin.getPluginId();
@@ -86,6 +74,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     return null;
   }
 
+  @Override
   public String toString(@Nullable final IdeaPlugin ideaPlugin, final ConvertContext context) {
     return ideaPlugin != null ? ideaPlugin.getPluginId() : null;
   }
@@ -100,7 +89,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   public static Collection<IdeaPlugin> getAllPlugins(final Project project) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
-    
+
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
         union(ProjectScope.getLibrariesScope(project));

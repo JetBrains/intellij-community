@@ -80,6 +80,7 @@ public class PackageChooserDialog extends PackageChooser {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
@@ -92,6 +93,7 @@ public class PackageChooserDialog extends PackageChooser {
     UIUtil.setLineStyleAngled(myTree);
     myTree.setCellRenderer(
       new DefaultTreeCellRenderer() {
+        @Override
         public Component getTreeCellRendererComponent(
           JTree tree, Object value,
           boolean sel,
@@ -132,6 +134,7 @@ public class PackageChooserDialog extends PackageChooser {
     });
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         PsiPackage selection = getTreeSelection();
         if (selection != null) {
@@ -210,22 +213,27 @@ public class PackageChooserDialog extends PackageChooser {
     return group;
   }
 
+  @Override
   public String getDimensionServiceKey(){
     return "#com.intellij.ide.util.PackageChooserDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return myTree;
   }
 
+  @Override
   public PsiPackage getSelectedPackage(){
     return getTreeSelection();
   }
 
+  @Override
   public List<PsiPackage> getSelectedPackages() {
     return TreeUtil.collectSelectedObjectsOfType(myTree, PsiPackage.class);
   }
 
+  @Override
   public void selectPackage(final String qualifiedName) {
     /*ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {*/
@@ -337,10 +345,12 @@ public class PackageChooserDialog extends PackageChooser {
 
     final String newPackageName = Messages.showInputDialog(myProject, IdeBundle.message("prompt.enter.a.new.package.name"), IdeBundle.message("title.new.package"), Messages.getQuestionIcon(), "",
                                                            new InputValidator() {
+                                                             @Override
                                                              public boolean checkInput(final String inputString) {
                                                                return inputString != null && inputString.length() > 0;
                                                              }
 
+                                                             @Override
                                                              public boolean canClose(final String inputString) {
                                                                return checkInput(inputString);
                                                              }
@@ -402,10 +412,12 @@ public class PackageChooserDialog extends PackageChooser {
             IdeBundle.message("action.description.create.new.package"), AllIcons.Actions.NewFolder);
     }
 
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       createNewPackage();
     }
 
+    @Override
     public void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(getTreeSelection() != null);

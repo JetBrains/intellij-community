@@ -31,6 +31,7 @@ public class XPathPrefixExpressionImpl extends XPathElementImpl implements XPath
         super(node);
     }
 
+    @Override
     @NotNull
     public XPathType getType() {
       // +/-: isn't this always a number?
@@ -38,6 +39,7 @@ public class XPathPrefixExpressionImpl extends XPathElementImpl implements XPath
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
+    @Override
     @Nullable
     public XPathExpression getExpression() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
@@ -53,6 +55,7 @@ public class XPathPrefixExpressionImpl extends XPathElementImpl implements XPath
     return elementType;
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathPrefixExpression(this);
   }

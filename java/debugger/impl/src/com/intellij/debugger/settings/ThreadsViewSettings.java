@@ -26,10 +26,12 @@ public class ThreadsViewSettings implements PersistentStateComponent<ThreadsView
     return ServiceManager.getService(ThreadsViewSettings.class);
  }
 
+  @Override
   public ThreadsViewSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull final ThreadsViewSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

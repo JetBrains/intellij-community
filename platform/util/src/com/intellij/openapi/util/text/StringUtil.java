@@ -122,6 +122,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
     return new Function<T, String>() {
+      @Override
       public String fun(@NotNull T o) {
         return o.toString();
       }

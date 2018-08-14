@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.response;
 
 /**
@@ -8,11 +9,13 @@ abstract class AbstractResponseHandler
 
 	// Implemented ============================================================
 
-	public final void processOkResponse(IResponseServices responseServices) {
+	@Override
+        public final void processOkResponse(IResponseServices responseServices) {
 		responseServices.getEventSender().notifyTerminationListeners(false);
 	}
 
-	public final void processErrorResponse(byte[] message, IResponseServices responseServices) {
+	@Override
+        public final void processErrorResponse(byte[] message, IResponseServices responseServices) {
 		responseServices.getEventSender().notifyMessageListeners(message, true, false);
 		responseServices.getEventSender().notifyTerminationListeners(true);
 	}

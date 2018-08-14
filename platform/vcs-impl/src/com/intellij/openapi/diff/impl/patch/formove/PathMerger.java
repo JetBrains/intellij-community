@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -51,7 +37,7 @@ public class PathMerger {
   public static File getFile(final File base, final String path, final List<String> tail) {
     return getFile(new IoFilePathMerger(base), path, tail);
   }
-  
+
   @Nullable
   public static FilePath getFile(final FilePath base, final String path) {
     return getFile(new FilePathPathMerger(base), path);
@@ -140,11 +126,13 @@ public class PathMerger {
       myCurrent = current;
     }
 
+    @Override
     public boolean up() {
       myCurrent = myCurrent.getParent();
       return myCurrent != null;
     }
 
+    @Override
     public boolean down(final String name) {
       VirtualFile nextChild = myCurrent.findChild(name);
       if (nextChild == null) {
@@ -157,10 +145,12 @@ public class PathMerger {
       return false;
     }
 
+    @Override
     public VirtualFile getResult() {
       return myCurrent;
     }
 
+    @Override
     public String getCurrentName() {
       return myCurrent == null ? null : myCurrent.getName();
     }
@@ -176,6 +166,7 @@ public class PathMerger {
       myChildPathElements = new LinkedList<>();
     }
 
+    @Override
     public boolean up() {
       if (! myChildPathElements.isEmpty()) {
         myChildPathElements.remove(myChildPathElements.size() - 1);
@@ -185,11 +176,13 @@ public class PathMerger {
       return myBase != null;
     }
 
+    @Override
     public boolean down(String name) {
       myChildPathElements.add(name);
       return true;
     }
 
+    @Override
     public File getResult() {
       final StringBuilder sb = new StringBuilder();
       for (String element : myChildPathElements) {
@@ -201,6 +194,7 @@ public class PathMerger {
       return new File(myBase, sb.toString());
     }
 
+    @Override
     @Nullable
     public String getCurrentName() {
       if (! myChildPathElements.isEmpty()) {
