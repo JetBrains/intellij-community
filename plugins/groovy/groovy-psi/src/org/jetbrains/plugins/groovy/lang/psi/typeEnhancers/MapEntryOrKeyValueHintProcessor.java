@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -51,8 +51,6 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   }
 
   private static int extractArgNum(String[] options) {
-
-
     for (String value : options) {
       Integer parsedValue = parseArgNum(value);
       if (parsedValue != null) {
@@ -61,7 +59,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     }
 
     if (options.length == 1) {
-      return StringUtilRt.parseInt(options[0], 0);
+      return StringUtil.parseInt(options[0], 0);
     }
 
     return 0;
@@ -97,9 +95,8 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     Couple<String> pair = parseValue(value);
     if (pair == null) return null;
 
-    Integer parsedValue = StringUtilRt.parseInt(pair.getSecond(), 0);
     if ("argNum".equals(pair.getFirst())) {
-      return parsedValue;
+      return StringUtil.parseInt(pair.getSecond(), 0);
     }
 
     return null;
@@ -107,12 +104,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
 
   @Nullable
   private static Couple<String> parseValue(String value) {
-    String[] splitted = value.split("=");
-
-    if (splitted.length == 2) {
-      return Couple.of(splitted[0].trim(), splitted[1].trim());
-    }
-
-    return null;
+    String[] split = value.split("=");
+    return split.length == 2 ? Couple.of(split[0].trim(), split[1].trim()) : null;
   }
 }
