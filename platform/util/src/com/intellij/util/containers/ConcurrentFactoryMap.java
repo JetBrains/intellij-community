@@ -215,7 +215,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * needed for compatibility in case of moronic subclassing
    * TODO to remove in IDEA 2018
    */
-  @Override
+  @SuppressWarnings("override")
   @Deprecated
   public V getOrDefault(Object key, V defaultValue) {
       V v;
