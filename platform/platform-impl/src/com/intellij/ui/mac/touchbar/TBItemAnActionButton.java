@@ -5,9 +5,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
@@ -61,13 +63,15 @@ class TBItemAnActionButton extends TBItemButton {
 
   void setLinkedButtons(@Nullable List<TBItemAnActionButton> linkedButtons) { myLinkedButtons = linkedButtons; }
 
-  void updateAnAction(Presentation presentation) {
+  @NotNull Presentation updateAnAction() {
+    final Presentation presentation = myAnAction.getTemplatePresentation().clone();
+
     if (ApplicationManager.getApplication() == null) {
       if (myComponent instanceof JButton) {
         presentation.setEnabled(myComponent.isEnabled());
         presentation.setText(DialogWrapper.extractMnemonic(((JButton)myComponent).getText()).second);
       }
-      return;
+      return presentation;
     }
 
     final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());
@@ -80,7 +84,15 @@ class TBItemAnActionButton extends TBItemButton {
       am,
       0
     );
-    myAnAction.update(e);
+
+    try {
+      ActionUtil.performFastUpdate(false, myAnAction, e);
+    } catch (IndexNotReadyException e1) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+    }
+
+    return presentation;
   }
 
   boolean isAutoVisibility() { return myAutoVisibility; }
