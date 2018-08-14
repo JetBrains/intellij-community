@@ -29,7 +29,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.history.FileNamesData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
@@ -205,7 +204,7 @@ public class IndexDataGetter {
             try {
               String value = myIndexStorage.messages.get(commit);
               if (value != null) {
-                if (VcsLogTextFilterImpl.matches(filter, value)) {
+                if (filter.matches(value)) {
                   result.add(commit);
                 }
               }
@@ -224,7 +223,7 @@ public class IndexDataGetter {
       if (resultByTrigrams != null) return resultByTrigrams;
     }
 
-    return filter(myIndexStorage.messages, message -> VcsLogTextFilterImpl.matches(filter, message));
+    return filter(myIndexStorage.messages, filter::matches);
   }
 
   @NotNull

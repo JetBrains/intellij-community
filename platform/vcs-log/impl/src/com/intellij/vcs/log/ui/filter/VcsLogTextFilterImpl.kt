@@ -15,12 +15,9 @@
  */
 package com.intellij.vcs.log.ui.filter
 
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.util.VcsLogUtil
-
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
@@ -37,8 +34,9 @@ class VcsLogTextFilterImpl(private val text: String,
   // used in upsource
   constructor(text: String) : this(text, false, false)
 
-  override fun matches(details: VcsCommitMetadata): Boolean {
-    return matches(this, details.fullMessage)
+  override fun matches(message: String): Boolean {
+    if (pattern != null) return pattern.matcher(message).find()
+    return message.contains(text, !matchCase)
   }
 
   override fun getText(): String {
@@ -68,19 +66,6 @@ class VcsLogTextFilterImpl(private val text: String,
 
       }
       return null
-    }
-
-    @JvmStatic
-    fun matches(filter: VcsLogTextFilter, message: String): Boolean {
-      val pattern = if (filter is VcsLogTextFilterImpl) {
-        filter.pattern
-      }
-      else {
-        createPattern(filter.text, filter.isRegex, filter.matchesCase())
-      }
-      if (pattern != null) return pattern.matcher(message).find()
-
-      return if (filter.matchesCase()) message.contains(filter.text) else StringUtil.containsIgnoreCase(message, filter.text)
     }
   }
 }
