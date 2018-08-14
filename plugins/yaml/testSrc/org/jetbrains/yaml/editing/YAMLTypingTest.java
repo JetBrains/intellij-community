@@ -28,19 +28,35 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testNewIndentedSequenceItem_indentedSequence() {
-    checkSameResultForAnySequenceIndent("\n", true);
+    doTestForSettings("\n", true, false);
   }
 
   public void testNewIndentedSequenceItem_sameIndent() {
-    checkSameResultForAnySequenceIndent("\n", false);
+    doTestForSettings("\n", false, false);
+  }
+
+  public void testNewIndentedAutoHyphen_indentedSequence() {
+    doTestForSettings("\n", true, true);
+  }
+
+  public void testNewIndentedAutoHyphen_sameIndent() {
+    doTestForSettings("\n", false, true);
   }
 
   public void testNewSequenceItemZeroIndent_indentedSequence() {
-    checkSameResultForAnySequenceIndent("\n", true);
+    doTestForSettings("\n", true, false);
   }
 
   public void testNewSequenceItemZeroIndent_sameIndent() {
-    checkSameResultForAnySequenceIndent("\n", false);
+    doTestForSettings("\n", false, false);
+  }
+
+  public void testNewZeroIndentAutoHyphen_indentedSequence() {
+    doTestForSettings("\n", true, true);
+  }
+
+  public void testNewZeroIndentAutoHyphen_sameIndent() {
+    doTestForSettings("\n", false, true);
   }
 
   public void testEmptyInlinedValue() {
@@ -56,7 +72,7 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testRegressionRuby21808() {
-    doTest("\n");
+    doTestForSettings("\n", false, false);
   }
 
   public void testPreserveDedent() {
@@ -64,6 +80,14 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testPreserveDedentAfterInlinedMap() {
+    doTest("\n");
+  }
+
+  public void testRemoveHyphenOnEnterInTheMiddleItem() {
+    doTest("\n");
+  }
+
+  public void testRemoveHyphenOnEnterInTheLastItem() {
     doTest("\n");
   }
 
@@ -76,12 +100,13 @@ public class YAMLTypingTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private void checkSameResultForAnySequenceIndent(@NotNull String insert, boolean indentSequenceVal) {
+  private void doTestForSettings(@NotNull String insert, boolean indentSequenceVal, boolean autoHyphen) {
     String testName = getTestName(true);
     String fileName = ObjectUtils.notNull(StringUtil.substringBefore(testName, "_"), testName);
     myFixture.configureByFile(fileName + ".yml");
 
     getCustomSettings().INDENT_SEQUENCE_VALUE = indentSequenceVal;
+    getCustomSettings().AUTOINSERT_SEQUENCE_MARKER = autoHyphen;
     myFixture.type(insert);
     myFixture.checkResultByFile(fileName + ".txt");
   }
