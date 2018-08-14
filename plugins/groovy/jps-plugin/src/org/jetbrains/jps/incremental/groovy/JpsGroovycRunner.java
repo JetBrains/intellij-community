@@ -16,6 +16,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -45,7 +46,6 @@ import java.util.*;
  * @author peter
  */
 public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
-  static final String GROOVY_TARGET_BYTECODE = "groovy.target.bytecode";
   private static final int ourOptimizeThreshold = Integer.parseInt(System.getProperty("groovyc.optimized.class.loading.threshold", "10"));
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.JpsGroovycRunner");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
@@ -186,7 +186,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   @Nullable
   static String getBytecodeTarget(CompileContext context, ModuleChunk chunk) {
-    String explicit = System.getProperty(GROOVY_TARGET_BYTECODE);
+    String explicit = System.getProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE);
     if (explicit != null) {
       return explicit;
     }
