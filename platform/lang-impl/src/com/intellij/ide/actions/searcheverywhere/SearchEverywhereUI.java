@@ -14,6 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,6 +33,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -59,8 +61,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -138,6 +140,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         }
       }
     });
+
+    if (Registry.is("new.search.everywhere.use.editor.font")) {
+      Font editorFont = EditorUtil.getEditorFont();
+      myResultsList.setFont(editorFont);
+    }
 
     ScrollingUtil.installActions(myResultsList, getSearchField());
 
@@ -352,7 +359,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        size.height = JBUI.scale(29);
+        size.height = Integer.max(JBUI.scale(29), size.height);
         return size;
       }
     };
@@ -387,13 +394,24 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     };
     searchField.setExtensions(searchExtension, hintExtension);
 
-    //todo gap between icon and text #UX-1
     Insets insets = JBUI.CurrentTheme.SearchEverywhere.searchFieldInsets();
     Border empty = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     Border topLine = JBUI.Borders.customLine(JBUI.CurrentTheme.SearchEverywhere.searchFieldBorderColor(), 1, 0, 0, 0);
     searchField.setBorder(JBUI.Borders.merge(empty, topLine, true));
     searchField.setBackground(JBUI.CurrentTheme.SearchEverywhere.searchFieldBackground());
     searchField.setFocusTraversalKeysEnabled(false);
+
+    if (Registry.is("new.search.everywhere.use.editor.font")) {
+      Font editorFont = EditorUtil.getEditorFont();
+      searchField.setFont(editorFont);
+    }
+
+    int fontDelta = Registry.intValue("new.search.everywhere.font.size.delta");
+    if (fontDelta != 0) {
+      Font font = searchField.getFont();
+      font = font.deriveFont((float) fontDelta + font.getSize());
+      searchField.setFont(font);
+    }
 
     return searchField;
   }
