@@ -51,7 +51,7 @@ public class DependentGroovycRunner {
                                    @Nullable String configScript,
                                    @Nullable String targetBytecode, @Nullable Queue mailbox) {
     File argsFile = new File(argsPath);
-    final CompilerConfiguration config = new CompilerConfiguration();
+    CompilerConfiguration config = createCompilerConfiguration(targetBytecode);
     config.setClasspath("");
     config.setOutput(new PrintWriter(System.err));
     config.setWarningLevel(WarningMessage.PARANOIA);
@@ -92,10 +92,6 @@ public class DependentGroovycRunner {
       }
       catch (LinkageError ignored) {
       }
-    }
-
-    if (targetBytecode != null) {
-      config.setTargetBytecode(targetBytecode);
     }
 
     System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
@@ -141,6 +137,28 @@ public class DependentGroovycRunner {
       printMessage(message);
     }
     return false;
+  }
+
+  private static CompilerConfiguration createCompilerConfiguration(@Nullable String targetBytecode) {
+    CompilerConfiguration config = new CompilerConfiguration();
+    if (targetBytecode != null) {
+      config.setTargetBytecode(targetBytecode);
+    }
+
+    if (config.getTargetBytecode() == null) {
+      // unsupported value (e.g. "1.6" with older Groovyc versions which know only 1.5)
+
+      // clear env because CompilerConfiguration constructor just sets the target bytecode to null on encountering invalid value in the env
+      System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE);
+
+      // now recreate conf taking the default from VM version
+      config = new CompilerConfiguration();
+
+      if (config.getTargetBytecode() == null) {
+        throw new AssertionError("Cannot determine bytecode target");
+      }
+    }
+    return config;
   }
 
   // adapted from https://github.com/gradle/gradle/blob/c4fdfb57d336b1a0f1b27354c758c61c0a586942/subprojects/language-groovy/src/main/java/org/gradle/api/internal/tasks/compile/ApiGroovyCompiler.java
