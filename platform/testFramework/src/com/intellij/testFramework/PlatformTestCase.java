@@ -584,8 +584,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     resetClassFields(getClass());
   }
 
+  @NotNull
   @Override
-  protected final <T extends Disposable> T disposeOnTearDown(T disposable) {
+  protected final <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
     Disposer.register(myProject, disposable);
     return disposable;
   }
