@@ -1547,47 +1547,60 @@ public class StringUtil extends StringUtilRt {
     return text;
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static String formatNumber(long number) {
-    return StringUtilRt.formatNumber(number);
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String formatNumber(long number, @NotNull String unitSeparator) {
-    return StringUtilRt.formatNumber(number, unitSeparator);
-  }
-
-  /**
-   * Formats the specified file size as a string.
-   *
-   * @param fileSize the size to format.
-   * @return the size formatted as a string.
-   * @since 5.0.1
-   */
+  /** Formats given file size in metric (1 kB = 1000 B) units (example: {@code formatFileSize(1234) = "1.23 KB"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
     return StringUtilRt.formatFileSize(fileSize);
   }
 
+  /** Formats given file size in metric (1 kB = 1000 B) units (example: {@code formatFileSize(1234, "") = "1.23KB"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
     return StringUtilRt.formatFileSize(fileSize, unitSeparator);
   }
 
+  /** Formats given duration as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    return StringUtilRt.formatDuration(duration);
+    return formatDuration(duration, " ");
   }
 
+  /** Formats given duration as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration, @NotNull String unitSeparator) {
-    return StringUtilRt.formatDuration(duration, unitSeparator);
+    String[] units = {"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"};
+    long[] multipliers = {1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000};
+
+    StringBuilder sb = new StringBuilder();
+    long count = duration, remainder;
+    int i = 1;
+    for (; i < units.length && count > 0; i++) {
+      long multiplier = multipliers[i];
+      if (count < multiplier) break;
+      remainder = count % multiplier;
+      count /= multiplier;
+      if (remainder != 0 || sb.length() > 0) {
+        if (units[i - 1].length() > 0) {
+          sb.insert(0, units[i - 1]);
+          sb.insert(0, unitSeparator);
+        }
+        sb.insert(0, remainder).insert(0, " ");
+      }
+      else {
+        remainder = Math.round(remainder * 100 / (double)multiplier);
+        count += remainder / 100;
+      }
+    }
+    if (units[i - 1].length() > 0) {
+      sb.insert(0, units[i - 1]);
+      sb.insert(0, unitSeparator);
+    }
+    sb.insert(0, count);
+    return sb.toString();
   }
 
   /**

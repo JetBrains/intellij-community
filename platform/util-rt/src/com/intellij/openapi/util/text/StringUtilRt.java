@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -366,20 +367,6 @@ public class StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String formatNumber(long number) {
-    return formatNumber(number, "");
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String formatNumber(long number, @NotNull String unitSeparator) {
-    return formatValue(number, null, unitSeparator,
-                       new String[]{"", "K", "M", "G", "T", "P", "E"},
-                       new long[]{1, 1000, 1000, 1000, 1000, 1000, 1000});
-  }
-
-  @NotNull
-  @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
     return formatFileSize(fileSize, " ");
   }
@@ -387,67 +374,12 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
-    return formatValue(fileSize, null, unitSeparator,
-                       new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"},
-                       new long[]{1, 1024, 1024, 1024, 1024, 1024, 1024});
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String formatDuration(long duration) {
-    return formatDuration(duration, " ");
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static String formatDuration(long duration, @NotNull String unitSeparator) {
-    return formatValue(duration, " ", unitSeparator,
-                       new String[]{"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"},
-                       new long[]{1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000});
-  }
-
-  @NotNull
-  private static String formatValue(long value, @Nullable String partSeparator, String unitSeparator, String[] units, long[] multipliers) {
-    if (units.length != multipliers.length) {
-      throw new IllegalArgumentException(units.length + " != " + multipliers.length);
-    }
-    StringBuilder sb = new StringBuilder();
-    long count = value;
-    long remainder = 0;
-    int i = 1;
-    for (; i < units.length && count > 0; i++) {
-      long multiplier = multipliers[i];
-      if (count < multiplier) break;
-      remainder = count % multiplier;
-      count /= multiplier;
-      if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
-        if (units[i - 1].length() > 0) {
-          sb.insert(0, units[i - 1]);
-          sb.insert(0, unitSeparator);
-        }
-        sb.insert(0, remainder).insert(0, partSeparator);
-      }
-      else {
-        remainder = Math.round(remainder * 100 / (double)multiplier);
-        count += remainder / 100;
-        remainder %= 100;
-      }
-    }
-    if (partSeparator != null || remainder == 0) {
-      if (units[i - 1].length() > 0) {
-        sb.insert(0, units[i - 1]);
-        sb.insert(0, unitSeparator);
-      }
-      sb.insert(0, count);
-    }
-    else if (remainder > 0) {
-      sb.append(count).append(".").append(remainder / 10 == 0 ? "0" : "").append(remainder);
-      if (units[i - 1].length() > 0) {
-        sb.append(unitSeparator);
-        sb.append(units[i - 1]);
-      }
-    }
-    return sb.toString();
+    if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
+    if (fileSize == 0) return '0' + unitSeparator + 'B';
+    int rank = (int)(Math.log10(fileSize) / 3);
+    double value = fileSize / Math.pow(1000, rank);
+    String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
+    return new DecimalFormat("#,##0.##").format(value) + unitSeparator + units[rank];
   }
 
   @Contract(pure = true)
