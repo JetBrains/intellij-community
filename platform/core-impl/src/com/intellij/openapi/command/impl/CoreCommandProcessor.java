@@ -188,12 +188,12 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   private void executeCommand(@Nullable Project project,
-                             @NotNull Runnable command,
-                             @Nullable String name,
-                             @Nullable Object groupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy,
-                             boolean shouldRecordCommandForActiveDocument,
-                             @Nullable Document document) {
+                              @NotNull Runnable command,
+                              @Nullable String name,
+                              @Nullable Object groupId,
+                              @NotNull UndoConfirmationPolicy confirmationPolicy,
+                              boolean shouldRecordCommandForActiveDocument,
+                              @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (project != null && project.isDisposed()) {
