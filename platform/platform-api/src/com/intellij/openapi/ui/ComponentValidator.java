@@ -55,12 +55,17 @@ public class ComponentValidator {
     return this;
   }
 
-  public Optional<ComponentValidator> installOn(@NotNull JComponent component) {
-    Component fc = getFocusable(component);
-    if (fc != null) {
+  public ComponentValidator installOn(@NotNull JComponent component) {
+    Component fc = getFocusable(component).orElse(null);
+    if (fc == null) {
+      return null;
+    }
+    else {
       component.putClientProperty(PROPERTY_NAME, this);
 
       FocusListener focusListener = new ValidationFocusListener();
+      MouseListener mouseListener = new ValidationMouseListener();
+
       ComponentListener componentListener = new ComponentAdapter() {
         @Override public void componentMoved(ComponentEvent e) {
           if (popup != null && popup.isVisible() && popupLocation != null) {
@@ -88,16 +93,16 @@ public class ComponentValidator {
       }
 
       fc.addFocusListener(focusListener);
+      fc.addMouseListener(mouseListener);
       Disposer.register(parentDisposable, () -> {
         fc.removeFocusListener(focusListener);
+        fc.removeMouseListener(mouseListener);
 
         if (w != null) {
           w.removeComponentListener(componentListener);
         }
       });
-      return Optional.of(this);
-    } else {
-      return Optional.empty();
+      return this;
     }
   }
 
@@ -110,12 +115,9 @@ public class ComponentValidator {
       validationInfo.component.putClientProperty("JComponent.outline", null);
     }
 
-    if (popup != null && popup.isVisible()) {
-      popup.cancel();
-    }
+    hidePopup();
 
     popupBuilder = null;
-    popup = null;
     popupLocation = null;
     popupSize = null;
     validationInfo = null;
@@ -150,16 +152,18 @@ public class ComponentValidator {
             setBorderColor(validationInfo.warning ? WARNING_BORDER_COLOR : ERROR_BORDER_COLOR).
                                          setShowShadow(false);
 
-          if (getFocusable(validationInfo.component).hasFocus()) {
-            showPopup();
-          }
+          getFocusable(validationInfo.component).ifPresent(fc -> {
+            if (fc.hasFocus()) {
+              showPopup();
+            }
+          });
         }
       }
     }
   }
 
   private void showPopup() {
-    if (popupBuilder != null && validationInfo != null && validationInfo.component != null) {
+    if (popupBuilder != null && validationInfo != null && validationInfo.component != null && validationInfo.component.isEnabled()) {
       popup = popupBuilder.createPopup();
 
       Insets i = validationInfo.component.getInsets();
@@ -170,15 +174,22 @@ public class ComponentValidator {
     }
   }
 
+  private void hidePopup() {
+    if (popup != null && popup.isVisible()) {
+      popup.cancel();
+      popup = null;
+    }
+  }
+
   private static Border getBorder() {
     Insets i = UIManager.getInsets("ValidationTooltip.borderInsets");
     return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty(4, 8);
   }
 
-  private static Component getFocusable(Component source) {
+  private static Optional<Component> getFocusable(Component source) {
     return source instanceof JComboBox && !((JComboBox)source).isEditable() ?
-           source :
-           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst().orElse(null);
+           Optional.of(source) :
+           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst();
   }
 
   private class ValidationFocusListener implements FocusListener {
@@ -189,13 +200,28 @@ public class ComponentValidator {
 
     @Override
     public void focusLost(FocusEvent e) {
-      if (popup != null && popup.isVisible()) {
-        popup.cancel();
-        popup = null;
-      }
+      hidePopup();
 
       if(infoSupplier != null) {
         updateInfo(infoSupplier.get());
+      }
+    }
+  }
+
+  private class ValidationMouseListener extends MouseAdapter {
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      showPopup();
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      if (validationInfo != null) {
+        getFocusable(validationInfo.component).ifPresent(fc -> {
+          if (!fc.hasFocus()) {
+            hidePopup();
+          }
+        });
       }
     }
   }

@@ -1974,7 +1974,7 @@ public abstract class DialogWrapper {
       myInfo.forEach(vi -> {
         if (vi.component != null) {
           ComponentValidator v = ComponentValidator.getInstance(vi.component).
-            orElse(new ComponentValidator(getDisposable()).installOn(vi.component).orElse(null));
+            orElseGet(() -> new ComponentValidator(getDisposable()).installOn(vi.component));
 
           if (v != null) {
             v.updateInfo(vi);
