@@ -13,9 +13,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintCellEditorBorder;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,6 +25,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
+      boolean focused = isFocused(c);
       if (!isTableCellEditor(c)) {
         g2.translate(x, y);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -54,14 +53,13 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
         clipForBorder(c, g2, width, height);
 
         Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-        boolean focused = isFocused(c);
         if (op != null) {
           paintOutlineBorder(g2, width, height, arc, isSymmetric(), focused, DarculaUIUtil.Outline.valueOf(op.toString()));
         } else if (focused) {
           paintOutlineBorder(g2, width, height, arc, isSymmetric(), true, DarculaUIUtil.Outline.focus);
         }
       } else {
-        paintCellEditorBorder(g2, c, new Rectangle(x, y, width, height));
+        paintCellEditorBorder(g2, c, new Rectangle(x, y, width, height), focused);
       }
     } finally {
       g2.dispose();
