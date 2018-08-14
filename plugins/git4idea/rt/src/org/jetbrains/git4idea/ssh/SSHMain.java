@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.GitExternalApp;
 
@@ -117,7 +118,7 @@ public class SSHMain implements GitExternalApp {
    * @param command  a command
    * @throws IOException if config file could not be loaded
    */
-  private SSHMain(String host, String username, Integer port, String command) throws IOException {
+  private SSHMain(@NotNull String host, @Nullable String username, @Nullable Integer port, @NotNull String command) throws IOException {
     SSHConfig config = SSHConfig.load();
     myHost = config.lookup(username, host, port);
     myHandlerNo = System.getenv(GitSSHHandler.SSH_HANDLER_ENV);
@@ -475,18 +476,14 @@ public class SSHMain implements GitExternalApp {
    * @throws IOException if loading configuration file failed
    */
   private static SSHMain parseArguments(String[] args) throws IOException {
-    if (args.length != 2 && args.length != 4) {
+    if (args.length < 2) {
       System.err.println(SSHMainBundle.message("sshmain.invalid.amount.of.arguments", Arrays.asList(args)));
       System.exit(1);
     }
-    int i = 0;
-    Integer port = null;
-    //noinspection HardCodedStringLiteral
-    if ("-p".equals(args[i])) {
-      i++;
-      port = Integer.parseInt(args[i++]);
-    }
-    String host = args[i++];
+    String command = args[args.length - 1];
+    String host = args[args.length - 2];
+    List<String> parameters = Arrays.asList(args).subList(0, args.length - 2);
+
     String user;
     int atIndex = host.lastIndexOf('@');
     if (atIndex == -1) {
@@ -496,7 +493,20 @@ public class SSHMain implements GitExternalApp {
       user = host.substring(0, atIndex);
       host = host.substring(atIndex + 1);
     }
-    String command = args[i];
+
+    Integer port = null;
+    for (Iterator<String> it = parameters.iterator(); it.hasNext();) {
+      String parameter = it.next();
+      if ("-p".equals(parameter)) {
+        if (it.hasNext()) {
+          port = Integer.valueOf(it.next());
+        }
+        else {
+          System.err.println("No value specified for argument -p: " + Arrays.toString(args));
+        }
+      }
+    }
+
     return new SSHMain(host, user, port, command);
   }
 
