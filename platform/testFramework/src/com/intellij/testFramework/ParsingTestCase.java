@@ -42,13 +42,9 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiCachedValuesFactory;
-import com.intellij.psi.impl.PsiFileFactoryImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.impl.BlockSupportImpl;
-import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -205,7 +201,40 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return true;
   }
 
+  /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
+  protected void ensureNoErrorElements() {
+    myFile.accept(new PsiRecursiveElementVisitor() {
+      private static final int TAB_WIDTH = 8;
+
+      @Override
+      public void visitErrorElement(PsiErrorElement element) {
+        // Very dump approach since a corresponding Document is not available.
+        String text = myFile.getText();
+        String[] lines = StringUtil.splitByLinesKeepSeparators(text);
+
+        int offset = element.getTextOffset();
+        int lineNumber = StringUtil.offsetToLineNumber(text, offset);
+        int column = offset - StringUtil.lineColToOffset(text, lineNumber, 0);
+
+        String line = StringUtil.trimTrailing(lines[lineNumber]);
+        // Sanitize: expand indentation tabs, replace the rest with a single space
+        int numIndentTabs = StringUtil.countChars(line.subSequence(0, column), '\t', 0, true);
+        int indentedColumn = column + numIndentTabs * (TAB_WIDTH - 1);
+        String lineWithNoTabs = StringUtil.repeat(" ", numIndentTabs * TAB_WIDTH) + line.substring(numIndentTabs).replace('\t', ' ');
+        String errorUnderline = StringUtil.repeat(" ", indentedColumn) + StringUtil.repeat("^", Math.max(1, element.getTextLength()));
+
+        fail(String.format("Unexpected error element: %s:%d:%d\n\n%s\n%s\n%s",
+                           myFile.getName(), lineNumber + 1, column,
+                           lineWithNoTabs, errorUnderline, element.getErrorDescription()));
+      }
+    });
+  }
+
   protected void doTest(boolean checkResult) {
+    doTest(checkResult, false);
+  }
+
+  protected void doTest(boolean checkResult, boolean ensureNoErrorElements) {
     String name = getTestName();
     try {
       String text = loadFile(name + "." + myFileExt);
@@ -218,6 +247,9 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       ensureCorrectReparse(myFile);
       if (checkResult){
         checkResult(name, myFile);
+        if (ensureNoErrorElements) {
+          ensureNoErrorElements();
+        }
       }
       else{
         toParseTreeText(myFile, skipSpaces(), includeRanges());
