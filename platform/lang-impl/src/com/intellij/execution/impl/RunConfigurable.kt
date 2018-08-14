@@ -965,10 +965,25 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         node = node.parent as DefaultMutableTreeNode
       }
     }
-    val settings = runManager.createConfiguration(createUniqueName(typeNode, null, CONFIGURATION, TEMPORARY_CONFIGURATION), factory)
+    val settings = runManager.createConfiguration("", factory)
+    val configuration = settings.configuration;
+    val suggestedName = suggestName(configuration)
+    val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
+    configuration.name = name
+    (configuration as? LocatableConfigurationBase)?.setNameChangedByUser(false)
     @Suppress("UNCHECKED_CAST")
-    (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(settings.configuration)
+    (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
     return createNewConfiguration(settings, node, selectedNode)
+  }
+
+  private fun suggestName(configuration: RunConfiguration): String? {
+    if (configuration is LocatableConfiguration) {
+      val name = configuration.suggestedName()
+      if (name != null && name.isNotEmpty()) {
+        return name
+      }
+    }
+    return null
   }
 
   private inner class MyToolbarAddAction : AnAction(ExecutionBundle.message("add.new.run.configuration.action2.name"),
