@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.ID;
@@ -241,14 +240,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
         return;
 
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
-      final Presentation presentation = item.getAnAction().getTemplatePresentation().clone();
-
-      try {
-        item.updateAnAction(presentation);
-      } catch (IndexNotReadyException e1) {
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
-      }
+      final @NotNull Presentation presentation = item.updateAnAction();
 
       final boolean itemVisibilityChanged = item.updateVisibility(presentation);
       if (itemVisibilityChanged)

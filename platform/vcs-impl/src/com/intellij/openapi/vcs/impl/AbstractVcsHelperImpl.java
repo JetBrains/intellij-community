@@ -78,8 +78,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
@@ -573,26 +573,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          if (!isNonLocal) {
-            final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
-            if (pair != null) {
-              list[0] = pair.getFirst();
-              targetPath[0] = pair.getSecond();
-            }
-          }
-          else {
-            if (location != null) {
-              final ChangeBrowserSettings settings = provider.createDefaultSettings();
-              settings.USE_CHANGE_BEFORE_FILTER = true;
-              settings.CHANGE_BEFORE = revision.asString();
-              final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, 1);
-              if (changes != null && changes.size() == 1) {
-                list[0] = changes.get(0);
-              }
-            }
-            else {
-              list[0] = getRemoteList(vcs, revision, virtualFile);
-            }
+          Pair<CommittedChangeList, FilePath> pair = getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
+          if (pair != null) {
+            list[0] = pair.first;
+            targetPath[0] = pair.second;
           }
         }
         catch (VcsException e) {
@@ -601,13 +585,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       }
 
       @Override
-      public void onCancel() {
+      public void onFinished() {
         lock.unlock();
       }
 
       @Override
       public void onSuccess() {
-        lock.unlock();
         if (exc[0] != null) {
           showError(exc[0], failedText(virtualFile, revision));
         }
@@ -629,15 +612,47 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Nullable
-  public static CommittedChangeList getRemoteList(@NotNull AbstractVcs vcs,
+  private static Pair<CommittedChangeList, FilePath> getAffectedChanges(@NotNull CommittedChangesProvider provider,
+                                                                        @NotNull VirtualFile virtualFile,
+                                                                        @NotNull VcsRevisionNumber revision,
+                                                                        @Nullable RepositoryLocation location,
+                                                                        boolean isNonLocal) throws VcsException {
+    if (!isNonLocal) {
+      //noinspection unchecked
+      Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
+      if (pair != null) return pair;
+    }
+    else {
+      if (location != null) {
+        final ChangeBrowserSettings settings = provider.createDefaultSettings();
+        settings.USE_CHANGE_BEFORE_FILTER = true;
+        settings.CHANGE_BEFORE = revision.asString();
+
+        //noinspection unchecked
+        final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, 1);
+        if (changes != null && changes.size() == 1) {
+          return Pair.create(changes.get(0), null);
+        }
+      }
+      else {
+        CommittedChangeList list = getRemoteList(provider, revision, virtualFile);
+        if (list != null) return Pair.create(list, null);
+      }
+    }
+    LOG.warn(String.format("Can't get affected files: path: %s; revision: %s; location: %s; nonLocal: %s",
+                           virtualFile.getPath(), revision.asString(), location, isNonLocal), new Throwable());
+    return null;
+  }
+
+  @Nullable
+  public static CommittedChangeList getRemoteList(@NotNull CommittedChangesProvider provider,
                                                   @NotNull VcsRevisionNumber revision,
-                                                  @NotNull VirtualFile nonLocal)
-    throws VcsException {
-    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+                                                  @NotNull VirtualFile nonLocal) throws VcsException {
     final RepositoryLocation local = provider.getForNonLocal(nonLocal);
     if (local != null) {
       final String number = revision.asString();
       final ChangeBrowserSettings settings = provider.createDefaultSettings();
+      //noinspection unchecked
       final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
       if (changes != null) {
         for (CommittedChangeList change : changes) {

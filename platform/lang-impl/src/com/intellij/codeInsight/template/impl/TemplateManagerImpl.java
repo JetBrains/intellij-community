@@ -40,14 +40,14 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   static final NotNullLazyValue<ExtensionPoint<TemplateContextType>> TEMPLATE_CONTEXT_EP = LazyUtil.create(() -> TemplateContextType.EP_NAME.getPoint(null));
 
   private final Project myProject;
-  private final MessageBus myMessageBus;
   private boolean myTemplateTesting;
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
+  private final TemplateManagerListener myEventPublisher;
 
-  public TemplateManagerImpl(Project project, MessageBus messageBus) {
+  public TemplateManagerImpl(@NotNull Project project, @NotNull MessageBus messageBus) {
     myProject = project;
-    myMessageBus = messageBus;
+    myEventPublisher = messageBus.syncPublisher(TEMPLATE_STARTED_TOPIC);
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -66,7 +66,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @Override
   public void dispose() {
-
   }
 
   @TestOnly
@@ -74,10 +73,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);
     instance.myTemplateTesting = true;
     Disposer.register(parentDisposable, () -> instance.myTemplateTesting = false);
-  }
-
-  private static void disposeState(@NotNull TemplateState state) {
-    Disposer.dispose(state);
   }
 
   @Override
@@ -103,11 +98,12 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   static void clearTemplateState(@NotNull Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
-      disposeState(prevState);
+      Disposer.dispose(prevState);
+      editor.putUserData(TEMPLATE_STATE_KEY, null);
     }
-    editor.putUserData(TEMPLATE_STATE_KEY, null);
   }
 
+  @NotNull
   private TemplateState initTemplateState(@NotNull Editor editor) {
     clearTemplateState(editor);
     TemplateState state = new TemplateState(myProject, editor);
@@ -167,7 +163,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         editor.getSelectionModel().removeSelection();
       }
       templateState.start((TemplateImpl)template, processor, predefinedVarValues);
-      fireTemplateStarted(templateState);
+      myEventPublisher.templateStarted(templateState);
     };
     if (inSeparateCommand) {
       CommandProcessor.getInstance().executeCommand(myProject, r, CodeInsightBundle.message("insert.code.template.command"), null);
@@ -428,12 +424,8 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
       templateState.start(template, processor, predefinedVarValues);
-      fireTemplateStarted(templateState);
+      myEventPublisher.templateStarted(templateState);
     }, CodeInsightBundle.message("insert.code.template.command"), null);
-  }
-
-  private void fireTemplateStarted(TemplateState templateState) {
-    myMessageBus.syncPublisher(TEMPLATE_STARTED_TOPIC).templateStarted(templateState);
   }
 
   private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {

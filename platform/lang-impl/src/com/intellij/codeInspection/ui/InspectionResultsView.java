@@ -228,11 +228,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     SmartExpander.installOn(myTree);
   }
 
+  @NotNull
   private OccurenceNavigatorSupport initOccurenceNavigator() {
     return new OccurenceNavigatorSupport(myTree) {
       @Override
       @Nullable
-      protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+      protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
         if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded()) {
           return null;
         }
@@ -250,19 +251,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
-          boolean isValid;
-          if (((ProblemDescriptionNode)node).isValid()) {
-            if (((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) {
-              isValid = ((ProblemDescriptionNode)node).calculateIsValid();
-            } else {
-              isValid = true;
-            }
-          } else {
-            isValid = false;
-          }
+          ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+          boolean isValid = problemNode.isValid() && (!problemNode.isQuickFixAppliedFromView() ||
+                                                      problemNode.calculateIsValid());
           return isValid
-                 ? navigate(((ProblemDescriptionNode)node).getDescriptor())
-                 : InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
+                 ? navigate(problemNode.getDescriptor())
+                 : InspectionResultsViewUtil.getNavigatableForInvalidNode(problemNode);
         }
         return null;
       }

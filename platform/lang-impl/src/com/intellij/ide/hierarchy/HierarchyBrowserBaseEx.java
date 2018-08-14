@@ -133,7 +133,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       myOccurrenceNavigators.put(key, new OccurenceNavigatorSupport(tree) {
         @Override
         @Nullable
-        protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+        protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           HierarchyNodeDescriptor descriptor = getDescriptor(node);
           if (descriptor != null) {
             PsiElement psiElement = getOpenFileElementFromDescriptor(descriptor);

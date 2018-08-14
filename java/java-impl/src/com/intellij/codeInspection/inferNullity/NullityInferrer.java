@@ -313,6 +313,12 @@ public class NullityInferrer {
     private boolean isNeverNull() {
       return neverNull;
     }
+
+    @Override
+    public void visitClass(PsiClass aClass) { }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) { }
   }
 
   private static boolean trunkImpossibleBrunch(PsiExpression condition,
@@ -351,6 +357,12 @@ public class NullityInferrer {
       if (sometimesNull) return;
       super.visitElement(element);
     }
+
+    @Override
+    public void visitClass(PsiClass aClass) { }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) { }
 
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {

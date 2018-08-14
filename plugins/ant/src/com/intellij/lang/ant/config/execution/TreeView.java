@@ -121,7 +121,8 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myAutoScrollToSourceHandler.install(myTree);
 
     myOccurenceNavigatorSupport = new OccurenceNavigatorSupport(myTree) {
-      protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+      @Override
+      protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
         if (!(node instanceof MessageNode)) {
           return null;
         }
