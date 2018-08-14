@@ -13,86 +13,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.filter;
+package com.intellij.vcs.log.ui.filter
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsLogDetailsFilter;
-import com.intellij.vcs.log.VcsLogTextFilter;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogDetailsFilter
+import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.util.VcsLogUtil
 
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
-public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilter {
+class VcsLogTextFilterImpl(private val text: String,
+                           isRegexAllowed: Boolean,
+                           private val matchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
+  private val pattern: Pattern?
 
-  @NotNull private final String myText;
-  private final boolean myMatchCase;
-  @Nullable private final Pattern myPattern;
-
-  public VcsLogTextFilterImpl(@NotNull String text, boolean isRegexAllowed, boolean matchCase) {
-    myText = text;
-    myMatchCase = matchCase;
-    myPattern = createPattern(myText, isRegexAllowed, myMatchCase);
+  init {
+    pattern = createPattern(text, isRegexAllowed, matchCase)
   }
 
-  @Nullable
-  private static Pattern createPattern(@NotNull String text, boolean isRegexAllowed, boolean matchCase) {
-    if (isRegexAllowed && VcsLogUtil.maybeRegexp(text)) {
-      try {
-        return matchCase ? Pattern.compile(text) : Pattern.compile(text, Pattern.CASE_INSENSITIVE);
-      }
-      catch (PatternSyntaxException ignored) {
-      }
-    }
-    return null;
-  }
-
+  @Suppress("unused")
   // used in upsource
-  @SuppressWarnings("unused")
-  public VcsLogTextFilterImpl(@NotNull String text) {
-    this(text, false, false);
+  constructor(text: String) : this(text, false, false)
+
+  override fun matches(details: VcsCommitMetadata): Boolean {
+    return matches(this, details.fullMessage)
   }
 
-  @Override
-  public boolean matches(@NotNull VcsCommitMetadata details) {
-    return matches(this, details.getFullMessage());
+  override fun getText(): String {
+    return text
   }
 
-  @Override
-  @NotNull
-  public String getText() {
-    return myText;
+  override fun isRegex(): Boolean {
+    return pattern != null
   }
 
-  @Override
-  public boolean isRegex() {
-    return myPattern != null;
+  override fun matchesCase(): Boolean {
+    return matchCase
   }
 
-  @Override
-  public boolean matchesCase() {
-    return myMatchCase;
+  override fun toString(): String {
+    return (if (isRegex) "matching " else "containing ") + text + " (case " + (if (matchCase) "sensitive" else "insensitive") + ")"
   }
 
-  @Override
-  public String toString() {
-    return (isRegex() ? "matching " : "containing ") + myText + " (case " + (myMatchCase ? "sensitive" : "insensitive") + ")";
-  }
+  companion object {
+    private fun createPattern(text: String, isRegexAllowed: Boolean, matchCase: Boolean): Pattern? {
+      if (isRegexAllowed && VcsLogUtil.maybeRegexp(text)) {
+        try {
+          return if (matchCase) Pattern.compile(text) else Pattern.compile(text, Pattern.CASE_INSENSITIVE)
+        }
+        catch (ignored: PatternSyntaxException) {
+        }
 
-  public static boolean matches(@NotNull VcsLogTextFilter filter, @NotNull String message) {
-    Pattern pattern;
-    if (filter instanceof VcsLogTextFilterImpl) {
-      pattern = ((VcsLogTextFilterImpl)filter).myPattern;
+      }
+      return null
     }
-    else {
-      pattern = createPattern(filter.getText(), filter.isRegex(), filter.matchesCase());
-    }
-    if (pattern != null) return pattern.matcher(message).find();
 
-    if (filter.matchesCase()) return message.contains(filter.getText());
-    return StringUtil.containsIgnoreCase(message, filter.getText());
+    @JvmStatic
+    fun matches(filter: VcsLogTextFilter, message: String): Boolean {
+      val pattern = if (filter is VcsLogTextFilterImpl) {
+        filter.pattern
+      }
+      else {
+        createPattern(filter.text, filter.isRegex, filter.matchesCase())
+      }
+      if (pattern != null) return pattern.matcher(message).find()
+
+      return if (filter.matchesCase()) message.contains(filter.text) else StringUtil.containsIgnoreCase(message, filter.text)
+    }
   }
 }
