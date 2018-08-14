@@ -36,7 +36,7 @@ class VcsLogTextFilterImpl internal constructor(private val text: String,
   override fun matchesCase(): Boolean = isMatchCase
 
   override fun toString(): String {
-    return "containing $text (case ${if (isMatchCase) "sensitive" else "insensitive"})"
+    return "containing $text ${caseSensitiveText()}"
   }
 
   companion object {
@@ -51,6 +51,13 @@ class VcsLogTextFilterImpl internal constructor(private val text: String,
       }
       return VcsLogTextFilterImpl(text, isMatchCase)
     }
+
+    @JvmStatic
+    fun createTextFilter(patterns: List<String>, isMatchCase: Boolean = false): VcsLogTextFilter {
+      if (patterns.isEmpty()) return createTextFilter("", false, isMatchCase)
+      if (patterns.size == 1) return createTextFilter(patterns.single(), false, isMatchCase)
+      return VcsLogMultiplePatternsTextFilter(patterns, isMatchCase)
+    }
   }
 }
 
@@ -64,6 +71,24 @@ class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) :
   override fun matchesCase(): Boolean = (pattern.flags() and Pattern.CASE_INSENSITIVE) == 0
 
   override fun toString(): String {
-    return "matching $text (case ${if (matchesCase()) "sensitive" else "insensitive"})"
+    return "matching $text ${caseSensitiveText()}"
   }
 }
+
+class VcsLogMultiplePatternsTextFilter internal constructor(private val patterns: List<String>,
+                                                            private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
+  override fun getText(): String = if (patterns.size == 1) patterns.single() else patterns.joinToString("|") { Pattern.quote(it) }
+
+  override fun isRegex(): Boolean = patterns.size > 1
+
+  override fun matchesCase(): Boolean = isMatchCase
+
+  override fun matches(message: String): Boolean = patterns.any { message.contains(it, !isMatchCase) }
+
+  override fun toString(): String {
+    return "containing at least one of the ${patterns.joinToString(", ")} ${caseSensitiveText()}"
+  }
+
+}
+
+private fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})"

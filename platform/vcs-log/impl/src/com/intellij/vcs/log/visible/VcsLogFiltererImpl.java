@@ -18,7 +18,6 @@ package com.intellij.vcs.log.visible;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -202,7 +201,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         if (commitId != null) hashFilterResult.add(myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
       }
     }
-    VcsLogTextFilter textFilter = VcsLogTextFilterImpl.createTextFilter(StringUtil.join(hashes, "|"), true, false);
+    VcsLogTextFilter textFilter = VcsLogTextFilterImpl.createTextFilter(ContainerUtil.newArrayList(hashes), false);
     FilterByDetailsResult textFilterResult = filterByDetails(dataPack, new VcsLogFilterCollectionBuilder(textFilter).build(),
                                                              commitCount, dataPack.getLogProviders().keySet(), null);
     if (hashFilterResult.isEmpty() && matchesNothing(textFilterResult.matchingCommits)) return null;
