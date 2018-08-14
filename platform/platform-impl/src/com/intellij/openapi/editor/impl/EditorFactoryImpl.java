@@ -248,12 +248,6 @@ public class EditorFactoryImpl extends EditorFactory implements BaseComponent {
 
   @Override
   @NotNull
-  public Editor[] getEditors(@NotNull Document document) {
-    return getEditors(document, null);
-  }
-
-  @Override
-  @NotNull
   public Editor[] getAllEditors() {
     return myEditors.toArray(Editor.EMPTY_ARRAY);
   }
