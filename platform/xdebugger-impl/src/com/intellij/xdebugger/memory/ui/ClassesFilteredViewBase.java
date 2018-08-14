@@ -83,7 +83,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
         if (KeyboardUtils.isEnterKey(keyCode)) {
           handleClassSelection(myTable.getSelectedClass());
         }
-        else if (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isBackSpace(keyCode)) {
+        else if (KeyboardUtils.isCharacter(e) || KeyboardUtils.isBackSpace(keyCode)) {
           final String text = myFilterTextField.getText();
           final String newText = KeyboardUtils.isBackSpace(keyCode)
             ? text.substring(0, text.length() - 1)
@@ -107,7 +107,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
       private void dispatch(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        if (myTable.isInClickableMode() && (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isEnterKey(keyCode))) {
+        if (myTable.isInClickableMode() && (KeyboardUtils.isCharacter(e) || KeyboardUtils.isEnterKey(keyCode))) {
           myTable.exitClickableMode();
           updateClassesAndCounts(true);
         }
