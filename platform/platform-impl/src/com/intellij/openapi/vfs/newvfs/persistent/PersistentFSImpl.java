@@ -1350,6 +1350,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
         throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
       }
       myPathBeforeSlash = pathBeforeSlash;
+      assert !(fs == LocalFileSystem.getInstance() && "/".equals(getPath()));
     }
 
     @NotNull
