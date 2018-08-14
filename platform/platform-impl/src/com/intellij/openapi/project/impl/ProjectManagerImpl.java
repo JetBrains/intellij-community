@@ -661,11 +661,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-/* Android Studio: b/111942793
     //Here could be false positives iff checkCanClose && !ensureCouldCloseIfUnableToSave(project)
     //but this saving should be before saving project
     FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.closed");
-Android Studio: b/111942793 */
 
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
@@ -772,10 +770,8 @@ Android Studio: b/111942793 */
       LOG.debug("projectOpened");
     }
 
-/* Android Studio: b/111942793
     FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.opened");
     FeatureUsageLogger.INSTANCE.log("lifecycle", "project.opened");
-Android Studio: b/111942793 */
 
     myBusPublisher.projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
