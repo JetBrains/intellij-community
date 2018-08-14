@@ -576,11 +576,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
                                                           e.getClass().getName() + " : " + e.getLocalizedMessage()));
     }
-    Connector connector = StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
-    if (connector == null) {
-      throw new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName));
-    }
-    return connector;
+    return StreamEx.of(virtualMachineManager.allConnectors())
+      .findFirst(c -> connectorName.equals(c.name()))
+      .orElseThrow(() -> new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName)));
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
