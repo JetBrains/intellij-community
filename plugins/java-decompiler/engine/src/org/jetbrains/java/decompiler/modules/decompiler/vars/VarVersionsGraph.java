@@ -4,12 +4,12 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.*;
 
 public class VarVersionsGraph {
-  public final VBStyleCollection<VarVersionNode, VarVersionPair> nodes = new VBStyleCollection<>();
+  public final KeyedList<VarVersionPair, VarVersionNode> nodes = new KeyedList<>();
 
   private GenericDominatorEngine engine;
 

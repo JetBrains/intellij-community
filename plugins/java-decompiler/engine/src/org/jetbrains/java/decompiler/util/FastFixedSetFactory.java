@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class FastFixedSetFactory<E> {
 
-  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<>();
+  private final KeyedList<E, int[]> colValuesInternal = new KeyedList<>();
 
   private final int dataLength;
 
@@ -42,7 +42,7 @@ public class FastFixedSetFactory<E> {
     return dataLength;
   }
 
-  private VBStyleCollection<int[], E> getInternalValuesCollection() {
+  private KeyedList<E, int[]> getInternalValuesCollection() {
     return colValuesInternal;
   }
 
@@ -50,7 +50,7 @@ public class FastFixedSetFactory<E> {
 
     private final FastFixedSetFactory<E> factory;
 
-    private final VBStyleCollection<int[], E> colValuesInternal;
+    private final KeyedList<E, int[]> colValuesInternal;
 
     private int[] data;
 
@@ -244,7 +244,7 @@ public class FastFixedSetFactory<E> {
 
   public static class FastFixedSetIterator<E> implements Iterator<E> {
 
-    private final VBStyleCollection<int[], E> colValuesInternal;
+    private final KeyedList<E, int[]> colValuesInternal;
     private final int[] data;
     private final int size;
 

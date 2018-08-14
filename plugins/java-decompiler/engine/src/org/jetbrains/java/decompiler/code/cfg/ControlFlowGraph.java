@@ -10,7 +10,7 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.DataPoint;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.ListStack;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -23,7 +23,7 @@ public class ControlFlowGraph implements CodeConstants {
   // private fields
   // *****************************************************************************
 
-  private VBStyleCollection<BasicBlock, Integer> blocks;
+  private KeyedList<Integer, BasicBlock> blocks;
 
   private BasicBlock first;
 
@@ -192,7 +192,7 @@ public class ControlFlowGraph implements CodeConstants {
     short[] states = findStartInstructions(instrseq);
 
     Map<Integer, BasicBlock> mapInstrBlocks = new HashMap<>();
-    VBStyleCollection<BasicBlock, Integer> colBlocks = createBasicBlocks(states, instrseq, mapInstrBlocks);
+    KeyedList<Integer, BasicBlock> colBlocks = createBasicBlocks(states, instrseq, mapInstrBlocks);
 
     blocks = colBlocks;
 
@@ -255,11 +255,11 @@ public class ControlFlowGraph implements CodeConstants {
   }
 
 
-  private VBStyleCollection<BasicBlock, Integer> createBasicBlocks(short[] startblock,
+  private KeyedList<Integer, BasicBlock> createBasicBlocks(short[] startblock,
                                                                    InstructionSequence instrseq,
                                                                    Map<Integer, BasicBlock> mapInstrBlocks) {
 
-    VBStyleCollection<BasicBlock, Integer> col = new VBStyleCollection<>();
+    KeyedList<Integer, BasicBlock> col = new KeyedList<>();
 
     InstructionSequence currseq = null;
     List<Integer> lstOffs = null;
@@ -791,7 +791,7 @@ public class ControlFlowGraph implements CodeConstants {
   // getter and setter methods
   // *****************************************************************************
 
-  public VBStyleCollection<BasicBlock, Integer> getBlocks() {
+  public KeyedList<Integer, BasicBlock> getBlocks() {
     return blocks;
   }
 

@@ -3,7 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -60,7 +60,7 @@ public class DominatorTreeExceptionFilter {
   }
 
   private void buildDominatorTree() {
-    VBStyleCollection<Integer, Integer> orderedIDoms = domEngine.getOrderedIDoms();
+    KeyedList<Integer, Integer> orderedIDoms = domEngine.getOrderedIDoms();
 
     List<Integer> lstKeys = orderedIDoms.getLstKeys();
     for (int index = lstKeys.size() - 1; index >= 0; index--) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.List;
 import java.util.Set;
@@ -10,7 +10,7 @@ public class GenericDominatorEngine {
 
   private final IGraph graph;
 
-  private final VBStyleCollection<IGraphNode, IGraphNode> colOrderedIDoms = new VBStyleCollection<>();
+  private final KeyedList<IGraphNode, IGraphNode> colOrderedIDoms = new KeyedList<>();
 
   private Set<? extends IGraphNode> setRoots;
 
@@ -31,7 +31,7 @@ public class GenericDominatorEngine {
     }
   }
 
-  private static IGraphNode getCommonIDom(IGraphNode node1, IGraphNode node2, VBStyleCollection<IGraphNode, IGraphNode> orderedIDoms) {
+  private static IGraphNode getCommonIDom(IGraphNode node1, IGraphNode node2, KeyedList<IGraphNode, IGraphNode> orderedIDoms) {
 
     IGraphNode nodeOld;
 

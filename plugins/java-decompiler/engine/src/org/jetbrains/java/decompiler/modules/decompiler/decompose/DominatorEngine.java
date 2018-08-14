@@ -3,7 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ public class DominatorEngine {
 
   private final Statement statement;
 
-  private final VBStyleCollection<Integer, Integer> colOrderedIDoms = new VBStyleCollection<>();
+  private final KeyedList<Integer, Integer> colOrderedIDoms = new KeyedList<>();
 
 
   public DominatorEngine(Statement statement) {
@@ -29,7 +29,7 @@ public class DominatorEngine {
     }
   }
 
-  private static Integer getCommonIDom(Integer key1, Integer key2, VBStyleCollection<Integer, Integer> orderedIDoms) {
+  private static Integer getCommonIDom(Integer key1, Integer key2, KeyedList<Integer, Integer> orderedIDoms) {
 
     if (key1 == null) {
       return key2;
@@ -91,7 +91,7 @@ public class DominatorEngine {
     }
   }
 
-  public VBStyleCollection<Integer, Integer> getOrderedIDoms() {
+  public KeyedList<Integer, Integer> getOrderedIDoms() {
     return colOrderedIDoms;
   }
 

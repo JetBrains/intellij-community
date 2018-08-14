@@ -10,7 +10,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.NewClassNameBuilder;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.io.IOException;
 import java.util.*;
@@ -176,7 +176,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
       setMethodNames.add(md.getName());
     }
 
-    VBStyleCollection<StructMethod, String> methods = cl.getMethods();
+    KeyedList<String, StructMethod> methods = cl.getMethods();
     for (int i = 0; i < methods.size(); i++) {
 
       StructMethod mt = methods.get(i);

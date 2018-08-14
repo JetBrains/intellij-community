@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class FastSparseSetFactory<E> {
 
-  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<>();
+  private final KeyedList<E, int[]> colValuesInternal = new KeyedList<>();
 
   private int lastBlock;
 
@@ -64,7 +64,7 @@ public class FastSparseSetFactory<E> {
     return lastBlock;
   }
 
-  private VBStyleCollection<int[], E> getInternalValuesCollection() {
+  private KeyedList<E, int[]> getInternalValuesCollection() {
     return colValuesInternal;
   }
 
@@ -74,7 +74,7 @@ public class FastSparseSetFactory<E> {
 
     private final FastSparseSetFactory<E> factory;
 
-    private final VBStyleCollection<int[], E> colValuesInternal;
+    private final KeyedList<E, int[]> colValuesInternal;
 
     private int[] data;
     private int[] next;
@@ -362,7 +362,7 @@ public class FastSparseSetFactory<E> {
 
   public static class FastSparseSetIterator<E> implements Iterator<E> {
 
-    private final VBStyleCollection<int[], E> colValuesInternal;
+    private final KeyedList<E, int[]> colValuesInternal;
     private final int[] data;
     private final int[] next;
     private final int size;

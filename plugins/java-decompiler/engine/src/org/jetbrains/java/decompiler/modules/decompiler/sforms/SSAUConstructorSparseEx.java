@@ -15,7 +15,7 @@ import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -469,7 +469,7 @@ public class SSAUConstructorSparseEx {
 
   private void varMapToGraph(VarVersionPair varpaar, SFormsFastMapDirect varmap) {
 
-    VBStyleCollection<VarVersionNode, VarVersionPair> nodes = ssuversions.nodes;
+    KeyedList<VarVersionPair, VarVersionNode> nodes = ssuversions.nodes;
 
     VarVersionNode node = nodes.getWithKey(varpaar);
 

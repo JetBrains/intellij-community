@@ -12,7 +12,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.*;
 
@@ -21,8 +21,8 @@ public class DomHelper {
 
   private static RootStatement graphToStatement(ControlFlowGraph graph) {
 
-    VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<>();
-    VBStyleCollection<BasicBlock, Integer> blocks = graph.getBlocks();
+    KeyedList<Integer, Statement> stats = new KeyedList<>();
+    KeyedList<Integer, BasicBlock> blocks = graph.getBlocks();
 
     for (BasicBlock block : blocks) {
       stats.addWithKey(new BasicBlockStatement(block), block.id);
@@ -87,7 +87,7 @@ public class DomHelper {
     return new RootStatement(general, dummyexit);
   }
 
-  public static VBStyleCollection<List<Integer>, Integer> calcPostDominators(Statement container) {
+  public static KeyedList<Integer, List<Integer>> calcPostDominators(Statement container) {
 
     HashMap<Statement, FastFixedSet<Statement>> lists = new HashMap<>();
 
@@ -162,7 +162,7 @@ public class DomHelper {
     }
     while (!setFlagNodes.isEmpty());
 
-    VBStyleCollection<List<Integer>, Integer> ret = new VBStyleCollection<>();
+    KeyedList<Integer, List<Integer>> ret = new KeyedList<>();
     List<Statement> lstRevPost = container.getReversePostOrderList(); // sort order crucial!
 
     final HashMap<Integer, Integer> mapSortOrder = new HashMap<>();
@@ -404,8 +404,8 @@ public class DomHelper {
 
   private static Statement findGeneralStatement(Statement stat, boolean forceall, HashMap<Integer, Set<Integer>> mapExtPost) {
 
-    VBStyleCollection<Statement, Integer> stats = stat.getStats();
-    VBStyleCollection<List<Integer>, Integer> vbPost;
+    KeyedList<Integer, Statement> stats = stat.getStats();
+    KeyedList<Integer, List<Integer>> vbPost;
 
     if (mapExtPost.isEmpty()) {
       FastExtendedPostdominanceHelper extpost = new FastExtendedPostdominanceHelper();
@@ -413,7 +413,7 @@ public class DomHelper {
     }
 
     if (forceall) {
-      vbPost = new VBStyleCollection<>();
+      vbPost = new KeyedList<>();
       List<Statement> lstAll = stat.getPostReversePostOrderList();
 
       for (Statement st : lstAll) {

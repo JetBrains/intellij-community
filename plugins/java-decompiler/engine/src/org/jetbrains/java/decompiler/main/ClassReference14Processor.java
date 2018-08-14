@@ -17,7 +17,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -95,7 +95,7 @@ public class ClassReference14Processor {
 
     // search initializers
     for (int j = 0; j < 2; j++) {
-      VBStyleCollection<Exprent, String> initializers =
+      KeyedList<String, Exprent> initializers =
         j == 0 ? wrapper.getStaticFieldInitializers() : wrapper.getDynamicFieldInitializers();
 
       for (int i = 0; i < initializers.size(); i++) {

@@ -16,7 +16,7 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
+import org.jetbrains.java.decompiler.util.KeyedList;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -66,7 +66,7 @@ public class Statement implements IMatchable {
   private final Map<Integer, List<Statement>> mapPredStates = new HashMap<>();
 
   // statement as graph
-  protected final VBStyleCollection<Statement, Integer> stats = new VBStyleCollection<>();
+  protected final KeyedList<Integer, Statement> stats = new KeyedList<>();
 
   protected Statement parent;
 
@@ -141,7 +141,7 @@ public class Statement implements IMatchable {
     Statement head = stat.getFirst();
     Statement post = stat.getPost();
 
-    VBStyleCollection<Statement, Integer> setNodes = stat.getStats();
+    KeyedList<Integer, Statement> setNodes = stat.getStats();
 
     // post edges
     if (post != null) {
@@ -745,7 +745,7 @@ public class Statement implements IMatchable {
     return post;
   }
 
-  public VBStyleCollection<Statement, Integer> getStats() {
+  public KeyedList<Integer, Statement> getStats() {
     return stats;
   }
 
