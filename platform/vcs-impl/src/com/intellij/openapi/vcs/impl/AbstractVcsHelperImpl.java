@@ -78,8 +78,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
@@ -601,13 +601,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       }
 
       @Override
-      public void onCancel() {
+      public void onFinished() {
         lock.unlock();
       }
 
       @Override
       public void onSuccess() {
-        lock.unlock();
         if (exc[0] != null) {
           showError(exc[0], failedText(virtualFile, revision));
         }
