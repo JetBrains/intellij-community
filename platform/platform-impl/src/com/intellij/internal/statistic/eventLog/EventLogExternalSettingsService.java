@@ -49,7 +49,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   @NotNull
   public LogEventFilter getEventFilter() {
     final Set<String> whitelist = getWhitelistedGroups();
-    return new LogEventWhitelistFilter(whitelist);
+    return new LogEventCompositeFilter(new LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter.INSTANCE);
   }
 
   @NotNull
