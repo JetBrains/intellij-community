@@ -36,7 +36,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
   }
 
   @Nullable
-  protected abstract Navigatable createDescriptorForNode(DefaultMutableTreeNode node);
+  protected abstract Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node);
 
   @Override
   public OccurenceInfo goNextOccurence() {
@@ -151,7 +151,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     return result;
   }
 
-  protected DefaultMutableTreeNode getNode(TreeNode node, TreeNode selectedNode, boolean[] ready) {
+  protected DefaultMutableTreeNode getNode(@NotNull TreeNode node, TreeNode selectedNode, boolean[] ready) {
     if (!ready[0]) {
       if (node == selectedNode) {
         ready[0] = true;
