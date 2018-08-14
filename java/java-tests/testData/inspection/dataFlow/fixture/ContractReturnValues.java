@@ -95,4 +95,28 @@ class ContractReturnValues {
 
   @Contract("null -> fail")
   native static void check(@Nullable String s);
+
+  // IDEA-197174
+  private void withNullInspectionInsideIf(@Nullable String text) {
+    if (!Objects.toString(text, "").isEmpty()) {
+      System.out.println(text.trim());
+    }
+  }
+
+  private void withNullInspectionOutsideIf(@Nullable String text) {
+    if (Objects.toString(text, "").isEmpty()) {
+      System.out.println("Is Empty");
+    } else {
+      System.out.println(text.trim());
+    }
+  }
+
+  private void withNullInspectionWithoutDefaultValue(@Nullable String text) {
+    if (Objects.toString(text).isEmpty()) {
+      System.out.println("Is Empty");
+    } else {
+      // In this case system can produce NullPointerException, because Objects.toString(String str) calls methods String.valueOf()
+      System.out.println(text.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+    }
+  }
 }
