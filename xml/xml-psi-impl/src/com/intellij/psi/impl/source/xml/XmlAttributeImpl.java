@@ -73,6 +73,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     super(XmlElementType.XML_ATTRIBUTE);
   }
 
+  protected XmlAttributeImpl(@NotNull IElementType elementType) {
+    super(elementType);
+  }
+
   @Override
   public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
