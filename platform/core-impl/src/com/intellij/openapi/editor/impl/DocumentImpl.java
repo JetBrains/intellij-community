@@ -535,6 +535,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void setModificationStamp(long modificationStamp) {
     myModificationStamp = modificationStamp;
+    myFrozen = null;
   }
 
   @Override
@@ -1195,7 +1196,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       synchronized (myLineSetLock) {
         frozen = myFrozen;
         if (frozen == null) {
-          frozen = new FrozenDocument(myText, myLineSet, myModificationStamp, SoftReference.dereference(myTextString));
+          myFrozen = frozen = new FrozenDocument(myText, myLineSet, myModificationStamp, SoftReference.dereference(myTextString));
         }
       }
     }
