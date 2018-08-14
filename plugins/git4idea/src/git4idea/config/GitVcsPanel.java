@@ -78,10 +78,14 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JBCheckBox myPreviewPushOnCommitAndPush;
   private JBCheckBox myPreviewPushProtectedOnly;
   private JPanel myPreviewPushProtectedOnlyBorder;
+  private JBCheckBox mySSHOverrideAskpassCheckbox;
 
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
     myExecutableManager = executableManager;
+    mySSHExecutableComboBox.addItemListener(item -> {
+      mySSHOverrideAskpassCheckbox.setVisible(NATIVE_SSH.equals(item.getItem()));
+    });
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
@@ -189,6 +193,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myGitField.setText(ObjectUtils.coalesce(projectSettingsPathToGit, myApplicationGitPath));
     myProjectGitPathCheckBox.setSelected(projectSettingsPathToGit != null);
     mySSHExecutableComboBox.setSelectedItem(projectSettings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    mySSHOverrideAskpassCheckbox.setSelected(applicationSettings.isOverrideSshAskPass());
     myAutoUpdateIfPushRejected.setSelected(projectSettings.autoUpdateIfPushRejected());
     mySyncControl.setSelected(projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
     myAutoCommitOnCherryPick.setSelected(projectSettings.isAutoCommitOnCherryPick());
@@ -218,6 +223,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
 
     return isGitPathModified(applicationSettings, projectSettings) ||
            (projectSettings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
+           applicationSettings.isOverrideSshAskPass() != mySSHOverrideAskpassCheckbox.isSelected() ||
            !projectSettings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
             projectSettings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
@@ -256,6 +262,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     applicationSettings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
                                    GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
                                    GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
+    applicationSettings.setOverrideSshAskPass(mySSHOverrideAskpassCheckbox.isSelected());
 
     projectSettings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
