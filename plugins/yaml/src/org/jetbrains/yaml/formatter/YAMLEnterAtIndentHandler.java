@@ -48,9 +48,7 @@ public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
         ApplicationManager.getApplication().runWriteAction(() -> {
           document.replaceString(caretOffset.get() - 2, caretOffset.get(), StringUtil.repeat(" ", indentSize));
           PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-          //editor.getCaretModel().moveToOffset(caretOffset.get() - 2);
         });
-        //System.err.println("autoinsert");
         return Result.Stop;
       }
     }
@@ -108,7 +106,6 @@ public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
       editor.getCaretModel().moveToOffset(caretOffset + 2);
     });
 
-    //System.err.println("autoinsert");
     return Result.Stop;
   }
 
