@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -483,6 +484,29 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
     }
     finally {
+      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+    }
+  }
+
+  public void testAutoInsertImportForInnerClassAllowInnerClassImports() {
+    @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
+    configureByText(StdFileTypes.JAVA, text);
+
+    JavaCodeStyleSettings javaCodeStyleSettings = CodeStyle.getSettings(getFile()).getCustomSettings(JavaCodeStyleSettings.class);
+    boolean old_imports = javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS;
+    javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
+    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    try {
+      List<HighlightInfo> errs = highlightErrors();
+      assertEmpty(errs);
+
+      assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    }
+    finally {
+      javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = old_imports;
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
     }
   }
