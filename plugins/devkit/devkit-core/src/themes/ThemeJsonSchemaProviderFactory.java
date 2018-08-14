@@ -9,7 +9,6 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,10 +22,6 @@ public class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory
   @NotNull
   @Override
   public List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {
-    if (!PsiUtil.isPluginProject(project)) {
-      return Collections.emptyList();
-    }
-
     return Collections.singletonList(new JsonSchemaFileProvider() {
       @Override
       public boolean isAvailable(@NotNull VirtualFile file) {
