@@ -52,6 +52,21 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private Map<String, String> myEnv = ContainerUtilRt.newHashMap();
   private boolean myPassParentEnvs = true;
 
+  public ExternalSystemTaskExecutionSettings() {
+  }
+
+  private ExternalSystemTaskExecutionSettings(@NotNull ExternalSystemTaskExecutionSettings source) {
+    setExecutionName(source.getExecutionName());
+    setExternalSystemIdString(source.getExternalSystemIdString());
+    setExternalProjectPath(source.getExternalProjectPath());
+    setVmOptions(source.getVmOptions());
+    setScriptParameters(source.getScriptParameters());
+    setTaskNames(ContainerUtilRt.newArrayList(source.getTaskNames()));
+    setTaskDescriptions(ContainerUtilRt.newArrayList(source.getTaskDescriptions()));
+    setEnv(ContainerUtilRt.newHashMap(source.getEnv()));
+    setPassParentEnvs(source.isPassParentEnvs());
+  }
+
   @Nullable
   public String getExecutionName() {
     return myExecutionName;
@@ -132,17 +147,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @Override
   public ExternalSystemTaskExecutionSettings clone() {
-    ExternalSystemTaskExecutionSettings result = new ExternalSystemTaskExecutionSettings();
-    result.setExecutionName(getExecutionName());
-    result.setExternalSystemIdString(getExternalSystemIdString());
-    result.setExternalProjectPath(getExternalProjectPath());
-    result.setVmOptions(getVmOptions());
-    result.setScriptParameters(getScriptParameters());
-    result.setTaskNames(ContainerUtilRt.newArrayList(getTaskNames()));
-    result.setTaskDescriptions(ContainerUtilRt.newArrayList(getTaskDescriptions()));
-    result.setEnv(ContainerUtilRt.newHashMap(getEnv()));
-    result.setPassParentEnvs(isPassParentEnvs());
-    return result;
+    return new ExternalSystemTaskExecutionSettings(this);
   }
 
   @Override

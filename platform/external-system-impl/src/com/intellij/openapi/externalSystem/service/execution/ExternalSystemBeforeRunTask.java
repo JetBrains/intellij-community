@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +37,20 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     super(providerId);
     myTaskExecutionSettings = new ExternalSystemTaskExecutionSettings();
     myTaskExecutionSettings.setExternalSystemIdString(systemId.getId());
+  }
+
+  private ExternalSystemBeforeRunTask(@NotNull ExternalSystemBeforeRunTask source) {
+    super(source.myProviderId);
+    new ExternalSystemTaskExecutionSettings().setExecutionName(source.myTaskExecutionSettings.getExecutionName());
+    new ExternalSystemTaskExecutionSettings().setExternalSystemIdString(source.myTaskExecutionSettings.getExternalSystemIdString());
+    new ExternalSystemTaskExecutionSettings().setExternalProjectPath(source.myTaskExecutionSettings.getExternalProjectPath());
+    new ExternalSystemTaskExecutionSettings().setVmOptions(source.myTaskExecutionSettings.getVmOptions());
+    new ExternalSystemTaskExecutionSettings().setScriptParameters(source.myTaskExecutionSettings.getScriptParameters());
+    new ExternalSystemTaskExecutionSettings().setTaskNames(ContainerUtilRt.newArrayList(source.myTaskExecutionSettings.getTaskNames()));
+    new ExternalSystemTaskExecutionSettings().setTaskDescriptions(ContainerUtilRt.newArrayList(source.myTaskExecutionSettings.getTaskDescriptions()));
+    new ExternalSystemTaskExecutionSettings().setEnv(ContainerUtilRt.newHashMap(source.myTaskExecutionSettings.getEnv()));
+    new ExternalSystemTaskExecutionSettings().setPassParentEnvs(source.myTaskExecutionSettings.isPassParentEnvs());
+    myTaskExecutionSettings = new ExternalSystemTaskExecutionSettings();
   }
 
   @NotNull
@@ -84,5 +99,10 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     int result = super.hashCode();
     result = 31 * result + myTaskExecutionSettings.hashCode();
     return result;
+  }
+
+  @Override
+  public BeforeRunTask clone() {
+    return new ExternalSystemBeforeRunTask(this);
   }
 }

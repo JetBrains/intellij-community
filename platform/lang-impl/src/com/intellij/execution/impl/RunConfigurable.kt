@@ -1178,6 +1178,12 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       try {
         val typeNode = selectedConfigurationTypeNode!!
         val settings = configuration!!.snapshot
+        val runTasksSnapshot = runManager.getBeforeRunTasks(settings.configuration)
+        val tasks = ArrayList<BeforeRunTask<*>>()
+        for (task in runTasksSnapshot) {
+          tasks.add(task.clone())
+        }
+        runManager.setBeforeRunTasks(settings.configuration, tasks)
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
         settings!!.name = copyName
         val factory = settings.factory
