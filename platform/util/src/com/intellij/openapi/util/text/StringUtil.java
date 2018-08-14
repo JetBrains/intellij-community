@@ -3044,7 +3044,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int parseInt(final String string, final int defaultValue) {
+  public static int parseInt(@Nullable String string, int defaultValue) {
     return StringUtilRt.parseInt(string, defaultValue);
   }
 
@@ -3054,7 +3054,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static double parseDouble(final String string, final double defaultValue) {
+  public static double parseDouble(@Nullable String string, double defaultValue) {
     return StringUtilRt.parseDouble(string, defaultValue);
   }
 

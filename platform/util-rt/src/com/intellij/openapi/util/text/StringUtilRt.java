@@ -171,39 +171,29 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static int parseInt(@Nullable String string, int defaultValue) {
-    if (string == null) {
-      return defaultValue;
+    if (string != null) {
+      try { return Integer.parseInt(string); }
+      catch (NumberFormatException ignored) { }
     }
-
-    try {
-      return Integer.parseInt(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
+    return defaultValue;
   }
 
   @Contract(pure = true)
   public static long parseLong(@Nullable String string, long defaultValue) {
-    if (string == null) {
-      return defaultValue;
+    if (string != null) {
+      try { return Long.parseLong(string); }
+      catch (NumberFormatException ignored) { }
     }
-    try {
-      return Long.parseLong(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
+    return defaultValue;
   }
 
   @Contract(pure = true)
-  public static double parseDouble(String string, double defaultValue) {
-    try {
-      return Double.parseDouble(string);
+  public static double parseDouble(@Nullable String string, double defaultValue) {
+    if (string != null) {
+      try { return Double.parseDouble(string); }
+      catch (NumberFormatException ignored) { }
     }
-    catch (Exception e) {
-      return defaultValue;
-    }
+    return defaultValue;
   }
 
   @Contract(pure = true)
