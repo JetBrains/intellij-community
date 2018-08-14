@@ -16,7 +16,7 @@
 
 buildscript {
   repositories {
-    maven { url "https://cache-redirector.shared.aws.intellij.net/plugins.gradle.org" }
+    maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
   }
   dependencies {
     classpath "de.undercouch:gradle-download-task:3.2.0"
