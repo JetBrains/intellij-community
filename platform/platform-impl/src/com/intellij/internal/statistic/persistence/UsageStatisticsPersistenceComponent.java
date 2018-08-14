@@ -161,8 +161,6 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
   public void setAllowed(boolean allowed) {
     ConsentOptions.getInstance().setSendingUsageStatsAllowed(allowed);
-    // Android Studio: we need to tell our Android Studio specific logging system whether the user opted-in or not.
-    updateAndroidStudioMetrics(allowed);
   }
 
   public void updateAndroidStudioMetrics() {
@@ -196,6 +194,14 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     AnalyticsSettings.initialize(logger, scheduler);
 
     try {
+      // If AnalyticsSettings and IJ opt-in status disagree, then we assume IJ is correct.
+      // This catches cornercases such as manual modifications as well as deal with the
+      // incorrect rename of "hasOptedIn" to "optedIn" in some early 3.3 canary builds.
+      boolean ijOptedIn = ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+      if (AnalyticsSettings.getOptedIn() != ijOptedIn) {
+        AnalyticsSettings.setOptedIn(ijOptedIn);
+        AnalyticsSettings.saveSettings();
+      }
       UsageTracker.initialize(scheduler);
     } catch (Exception e) {
       logger.error(e, "Unable to initialize analytics tracker");

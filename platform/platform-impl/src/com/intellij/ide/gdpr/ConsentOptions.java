@@ -203,6 +203,10 @@ public final class ConsentOptions {
       catch (IOException e) {
         LOG.info(e);
       }
+      // Android Studio addition:
+      // Update the Android Studio metrics after saving consents in case the IJ Statistics consent
+      // has been updated. This will write any changed settings and reinitialize the UsageTracker
+      // & Publisher if changes were made.
       UsageStatisticsPersistenceComponent.getInstance().updateAndroidStudioMetrics();
     }
   }
