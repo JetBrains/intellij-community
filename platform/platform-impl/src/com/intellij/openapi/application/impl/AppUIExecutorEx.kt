@@ -9,6 +9,7 @@ import kotlinx.coroutines.experimental.withContext
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
+import kotlin.coroutines.experimental.coroutineContext
 
 /**
  * @author eldar
@@ -24,7 +25,7 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution {
     //   - errors thrown within launch() are not caught, and usually result in an error
     //     message with a stack trace to be logged on the corresponding thread.
     //
-    launch(this) {
+    launch(createJobContext()) {
       command.run()
     }
   }
@@ -37,7 +38,7 @@ interface AppUIExecutorEx : AppUIExecutor, AsyncExecution {
   }
 
   override fun <T> submit(task: Callable<T>): CancellablePromise<T> {
-    val deferred = async(this) {
+    val deferred = async(createJobContext()) {
       task.call()
     }
     return AsyncPromise<T>().apply {
@@ -65,6 +66,6 @@ fun AppUIExecutor.inWriteAction() =
 
 
 suspend fun <T> AppUIExecutor.runCoroutine(block: suspend () -> T): T =
-  withContext(this as AsyncExecution) {
+  withContext((this as AsyncExecution).createJobContext(coroutineContext)) {
     block()
   }

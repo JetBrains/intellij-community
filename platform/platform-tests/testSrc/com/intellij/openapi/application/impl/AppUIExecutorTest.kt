@@ -7,9 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
-import kotlinx.coroutines.experimental.Runnable
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.experimental.*
 import java.util.concurrent.LinkedBlockingQueue
 
 /**
@@ -21,7 +19,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
   fun `test coroutine onUiThread`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
-    runBlocking(executor as AsyncExecution) {
+    runBlocking((executor as AsyncExecution).createJobContext()) {
       ApplicationManager.getApplication().assertIsDispatchThread()
     }
   }
@@ -36,21 +34,24 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       .expireWith(disposable)
 
     queue.add("start")
-    runBlocking(executor as AsyncExecution) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-
-      queue.add("coroutine start")
-      Disposer.dispose(disposable)
-      queue.add("coroutine before delay")
-      try {
-        yield()
-      }
-      catch (e: Exception) {
+    runBlocking(Unconfined) {
+      launch((executor as AsyncExecution).createJobContext()) {
         ApplicationManager.getApplication().assertIsDispatchThread()
-        queue.add("coroutine delay thrown ${e}")
-        throw e
-      }
-      queue.add("coroutine after delay")
+
+        queue.add("coroutine start")
+        Disposer.dispose(disposable)
+        try {
+          queue.add("coroutine before yield")
+          yield()
+          queue.add("coroutine after yield")
+        }
+        catch (e: Exception) {
+          ApplicationManager.getApplication().assertIsDispatchThread()
+          queue.add("coroutine yield caught ${e.javaClass.simpleName} because of ${e.cause?.javaClass?.simpleName}")
+          throw e
+        }
+        queue.add("coroutine end")
+      }.join()
     }
     queue.add("end")
 
@@ -58,8 +59,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                         "start",
                         "coroutine start",
                         "disposed",
-                        "coroutine before delay",
-                        "coroutine delay thrown",
+                        "coroutine before yield",
+                        "coroutine yield caught JobCancellationException because of DisposedException",
                         "end")
   }
 }
