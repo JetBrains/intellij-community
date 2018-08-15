@@ -154,7 +154,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
         Class clazz = String.class;
-        if (withElement != null || isClassField(fieldName)) {
+        if (withElement != null && isClassField(fieldName)) {
           clazz = PsiClass.class;
         } else if (PsiType.BOOLEAN.equals(field.getType())) {
           clazz = Boolean.class;
@@ -201,16 +201,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
-    if (withElement != null) {
-      final String withClassName = withElement.getImplements().getStringValue();
-      extension.addCustomAnnotation(new ExtendClassImpl() {
-        @Override
-        public String value() {
-          return withClassName;
-        }
-      });
-    }
-    if (withElement != null || isClassField(fieldName)) {
+    if (withElement == null) return;
+
+    final String withClassName = withElement.getImplements().getStringValue();
+    extension.addCustomAnnotation(new ExtendClassImpl() {
+      @Override
+      public String value() {
+        return withClassName;
+      }
+    });
+
+    if (isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
   }
