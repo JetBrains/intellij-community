@@ -26,18 +26,18 @@ import com.intellij.testFramework.PlatformTestCase;
 public class SystemHealthMonitorTest extends PlatformTestCase {
   public void testGetActionName() {
     // normal class in our packages should yield simple name
-    assertEquals("SystemHealthMonitorTest", SystemHealthMonitor.getActionName(SystemHealthMonitorTest.class, new Presentation("foo")));
+    assertEquals("SystemHealthMonitorTest", AndroidStudioSystemHealthMonitor.getActionName(SystemHealthMonitorTest.class, new Presentation("foo")));
     // ExecutorAction class should yield simple name plus presentation text.
-    assertEquals("ExecutorAction#Run", SystemHealthMonitor.getActionName(ExecutorAction.class, new Presentation("Run")));
+    assertEquals("ExecutorAction#Run", AndroidStudioSystemHealthMonitor.getActionName(ExecutorAction.class, new Presentation("Run")));
     // Anonymous inner-class should yield name of enclosing class.
-    assertEquals("SystemHealthMonitorTest", SystemHealthMonitor.getActionName(new AnAction(){
+    assertEquals("SystemHealthMonitorTest", AndroidStudioSystemHealthMonitor.getActionName(new AnAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
 
       }
     }.getClass(), new Presentation("foo")));
     // class outside of our packages should yield full class name.
-    assertEquals("java.lang.String", SystemHealthMonitor.getActionName(String.class, new Presentation("Foo")));
+    assertEquals("java.lang.String", AndroidStudioSystemHealthMonitor.getActionName(String.class, new Presentation("Foo")));
   }
 
   /**

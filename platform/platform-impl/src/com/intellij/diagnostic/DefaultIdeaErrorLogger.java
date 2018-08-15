@@ -2,14 +2,13 @@
 package com.intellij.diagnostic;
 
 import com.android.tools.analytics.AnalyticsSettings;
-import com.android.utils.NullLogger;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.ide.AndroidStudioSystemHealthMonitor;
 import com.intellij.ide.ExceptionRegistry;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.StackTrace;
-import com.intellij.ide.SystemHealthMonitor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
@@ -98,7 +97,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         if (isReportableCrash(t)) {
           StackTrace stackTrace = ExceptionRegistry.INSTANCE.register(t);
           incrementAndSaveExceptionCount(t);
-          SystemHealthMonitor.reportException(t, stackTrace);
+          AndroidStudioSystemHealthMonitor.reportException(t, stackTrace);
         }
       }
     }
@@ -142,15 +141,15 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   private static void incrementAndSaveExceptionCount(@NotNull Throwable t) {
-    SystemHealthMonitor.incrementAndSaveExceptionCount();
+    AndroidStudioSystemHealthMonitor.incrementAndSaveExceptionCount();
     PluginId pluginId = IdeErrorsDialog.findPluginId(t);
     if (pluginId != null) {
       IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
       if (plugin != null && plugin.isBundled()) {
-        SystemHealthMonitor.incrementAndSaveBundledPluginsExceptionCount();
+        AndroidStudioSystemHealthMonitor.incrementAndSaveBundledPluginsExceptionCount();
       }
       else {
-        SystemHealthMonitor.incrementAndSaveNonBundledPluginsExceptionCount();
+        AndroidStudioSystemHealthMonitor.incrementAndSaveNonBundledPluginsExceptionCount();
       }
     }
   }

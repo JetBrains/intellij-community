@@ -5,6 +5,7 @@ import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ActivityTracker;
+import com.intellij.ide.AndroidStudioSystemHealthMonitor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.SystemHealthMonitor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -1193,8 +1194,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   public void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     if (action != null) {
       if (!ourActionsExcludedFromTracking.containsKey(action.getClass())) {
-        SystemHealthMonitor.ourStudioActionCount.incrementAndGet();
-        SystemHealthMonitor.countActionInvocation(action.getClass(), action.getTemplatePresentation(), event);
+        AndroidStudioSystemHealthMonitor.ourStudioActionCount.incrementAndGet();
+        AndroidStudioSystemHealthMonitor.countActionInvocation(action.getClass(), action.getTemplatePresentation(), event);
       }
 
       myPrevPerformedActionId = myLastPreformedActionId;
