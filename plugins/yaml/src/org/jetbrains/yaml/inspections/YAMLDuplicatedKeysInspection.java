@@ -3,6 +3,7 @@ package org.jetbrains.yaml.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -24,6 +25,11 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
     return new YamlPsiElementVisitor() {
       @Override
       public void visitMapping(@NotNull YAMLMapping mapping) {
+        FileViewProvider provider = mapping.getContainingFile().getViewProvider();
+        if (provider.getLanguages().size() > 1) {
+          return;
+        }
+
         MultiMap<String, YAMLKeyValue> occurrences = new MultiMap<>();
 
         for (YAMLKeyValue keyValue : mapping.getKeyValues()) {
