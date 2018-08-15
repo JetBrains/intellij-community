@@ -91,16 +91,16 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
     override fun doDispatch(context: CoroutineContext, block: Runnable) {
       for (dispatcher in myDelegateChain) {
         if (!dispatcher.isCorrectContext) {
-          delegateSchedule(dispatcher, context, block)
+          delegateScheduleTo(dispatcher, context, block)
           return
         }
       }
       block.run()
     }
 
-    protected open fun delegateSchedule(dispatcher: ChainedConstraintDispatcher,
-                                        context: CoroutineContext,
-                                        block: Runnable) {
+    protected open fun delegateScheduleTo(dispatcher: ChainedConstraintDispatcher,
+                                          context: CoroutineContext,
+                                          block: Runnable) {
       dispatcher.doConstraintSchedule(context, Runnable {
         LOG.assertTrue(dispatcher.isCorrectContext, this)
         dispatch(context, block)  // retry
@@ -192,9 +192,9 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
       return super.interceptContinuation(continuation)
     }
 
-    override fun delegateSchedule(dispatcher: ChainedConstraintDispatcher, context: CoroutineContext, block: Runnable) {
+    override fun delegateScheduleTo(dispatcher: ChainedConstraintDispatcher, context: CoroutineContext, block: Runnable) {
       if (checkHaveMoreRescheduleAttempts(dispatcher)) {
-        dispatcher.dispatch(context, block)
+        super.delegateScheduleTo(dispatcher, context, block)
       }
       else {
         context.cancel(TooManyRescheduleAttemptsException(myLastDispatchers))  // makes block.run() call resumeWithException()
