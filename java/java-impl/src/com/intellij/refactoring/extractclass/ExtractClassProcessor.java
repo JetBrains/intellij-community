@@ -412,9 +412,13 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final String fullyQualifiedName = getQualifiedName();
     fieldBuffer.append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
+      boolean isFirst = true;
       fieldBuffer.append('<');
       for (PsiTypeParameter typeParameter : typeParams) {
+        if(!isFirst)
+          fieldBuffer.append(", ");
         fieldBuffer.append(typeParameter.getName());
+        isFirst = false;
       }
       fieldBuffer.append('>');
     }
@@ -423,8 +427,12 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     fieldBuffer.append(" = new ").append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
       fieldBuffer.append('<');
+      boolean isFirst = true;
       for (PsiTypeParameter typeParameter : typeParams) {
+        if(!isFirst)
+          fieldBuffer.append(", ");
         fieldBuffer.append(typeParameter.getName());
+        isFirst = false;
       }
       fieldBuffer.append('>');
     }

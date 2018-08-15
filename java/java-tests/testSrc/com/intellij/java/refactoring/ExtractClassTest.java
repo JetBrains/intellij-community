@@ -137,6 +137,10 @@ public class ExtractClassTest extends MultiFileTestCase {
     doTestMethod();
   }
 
+  public void testTypeParameters() {
+    doTestMethod();
+  }
+
   public void testStaticImports() {
     doTestMethod("foo", null, "foo.Test");
   }
