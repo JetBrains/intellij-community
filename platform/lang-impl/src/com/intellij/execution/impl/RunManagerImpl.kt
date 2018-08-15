@@ -48,8 +48,8 @@ private const val RECENT = "recent_temporary"
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    const val CONFIGURATION: String = "configuration"
-    const val NAME_ATTR: String = "name"
+    const val CONFIGURATION = "configuration"
+    const val NAME_ATTR = "name"
 
     internal val LOG = logger<RunManagerImpl>()
 

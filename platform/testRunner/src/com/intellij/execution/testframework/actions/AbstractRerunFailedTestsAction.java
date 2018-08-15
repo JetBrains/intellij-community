@@ -3,8 +3,8 @@ package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -160,7 +160,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
     final LinkedHashMap<Executor, ProgramRunner> availableRunners = new LinkedHashMap<>();
     for (Executor ex : new Executor[] {DefaultRunExecutor.getRunExecutorInstance(), DefaultDebugExecutor.getDebugExecutorInstance()}) {
-      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(ex.getId(), profile);
+      final ProgramRunner runner = ProgramRunnerUtil.getRunner(ex.getId(), profile);
       if (runner != null) {
         availableRunners.put(ex, runner);
       }
