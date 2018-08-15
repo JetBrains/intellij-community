@@ -303,6 +303,9 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android","lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork","resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
+      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout
