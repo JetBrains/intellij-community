@@ -112,7 +112,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     BitSet changedLines = new BitSet();
     for (Range range : ranges) {
       if (range.getType() == Range.DELETED) {
-        changedLines.set(range.getLine1() - 1, range.getLine1() + 1);
+        changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
       }
       else {
         changedLines.set(range.getLine1(), range.getLine2());
