@@ -9,12 +9,14 @@ import kotlin.coroutines.experimental.EmptyCoroutineContext
 /**
  * @author eldar
  */
-interface AsyncExecution {
+interface AsyncExecution<E : AsyncExecution<E>> {
   /**
    * Creates a new [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
    */
   fun createJobContext(context: CoroutineContext = EmptyCoroutineContext, parent: Job? = null): CoroutineContext
 
+  fun withConstraint(constraint: ContextConstraint): E
+  fun expireWith(parentDisposable: Disposable): E
 
   interface ContextConstraint {
     val isCorrectContext: Boolean

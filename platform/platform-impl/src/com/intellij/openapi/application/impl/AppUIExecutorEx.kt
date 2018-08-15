@@ -14,7 +14,7 @@ import kotlin.coroutines.experimental.coroutineContext
 /**
  * @author eldar
  */
-interface AppUIExecutorEx : AppUIExecutor, AsyncExecution {
+interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
 
   override fun execute(command: Runnable) {
     // Note, that launch() is different from async() used by submit():
@@ -66,6 +66,6 @@ fun AppUIExecutor.inWriteAction() =
 
 
 suspend fun <T> AppUIExecutor.runCoroutine(block: suspend () -> T): T =
-  withContext((this as AsyncExecution).createJobContext(coroutineContext)) {
+  withContext((this as AsyncExecution<*>).createJobContext(coroutineContext)) {
     block()
   }

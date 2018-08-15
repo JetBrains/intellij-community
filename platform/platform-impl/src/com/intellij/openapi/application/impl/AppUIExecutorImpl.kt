@@ -7,7 +7,8 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.impl.AsyncExecution.*
+import com.intellij.openapi.application.impl.AsyncExecution.ExpirableContextConstraint
+import com.intellij.openapi.application.impl.AsyncExecution.SimpleContextConstraint
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -22,7 +23,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      override val disposables: Set<Disposable>,
-                                                     override val dispatcher: CoroutineDispatcher) : AsyncExecutionSupport(),
+                                                     override val dispatcher: CoroutineDispatcher) : AsyncExecutionSupport<AppUIExecutorEx>(),
                                                                                                      AppUIExecutorEx {
   constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), /* fallback */ object : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
@@ -34,14 +35,8 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
     override fun toString() = "onUiThread($modality)"
   })
 
-  private fun withConstraint(constraint: ContextConstraint): AppUIExecutor {
-    return AppUIExecutorImpl(myModality, disposables, constraint.toCoroutineDispatcher(dispatcher))
-  }
-
-  override fun expireWith(parentDisposable: Disposable): AppUIExecutor {
-    val disposables = disposables + parentDisposable
-    return if (disposables == this.disposables) this else AppUIExecutorImpl(myModality, disposables, dispatcher)
-  }
+  override fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): AppUIExecutorImpl =
+    AppUIExecutorImpl(myModality, disposables, dispatcher)
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else null

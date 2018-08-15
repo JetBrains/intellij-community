@@ -24,7 +24,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
   fun `test coroutine onUiThread`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
-    runBlocking((executor as AsyncExecution).createJobContext()) {
+    runBlocking((executor as AppUIExecutorEx).createJobContext()) {
       ApplicationManager.getApplication().assertIsDispatchThread()
     }
   }
@@ -40,7 +40,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     queue.add("start")
     runBlocking(Unconfined) {
-      launch((executor as AsyncExecution).createJobContext(coroutineContext)) {
+      launch((executor as AppUIExecutorEx).createJobContext(coroutineContext)) {
         ApplicationManager.getApplication().assertIsDispatchThread()
 
         queue.add("coroutine start")
@@ -85,7 +85,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     runBlocking(Unconfined) {
       val pdm = PsiDocumentManager.getInstance(getProject())
       val commitChannel = Channel<Unit>()
-      val job = launch((executor as AsyncExecution).createJobContext(coroutineContext)) {
+      val job = launch((executor as AppUIExecutorEx).createJobContext(coroutineContext)) {
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
 
@@ -106,7 +106,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         commitChannel.close()
       }
-      launch((writeActionExecutor as AsyncExecution).createJobContext(coroutineContext, job)) {
+      launch((writeActionExecutor as AppUIExecutorEx).createJobContext(coroutineContext, job)) {
         while (true) {
           pdm.commitAllDocuments()
           commitChannel.send(Unit)

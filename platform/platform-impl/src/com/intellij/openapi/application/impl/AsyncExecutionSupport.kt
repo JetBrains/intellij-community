@@ -20,10 +20,22 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * @author eldar
  */
-internal abstract class AsyncExecutionSupport : AsyncExecution {
+internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExecution<E> {
 
   protected abstract val disposables: Set<Disposable>
   protected abstract val dispatcher: CoroutineDispatcher
+
+  protected abstract fun cloneWith(disposables: Set<Disposable>, dispatcher: CoroutineDispatcher): E
+
+  override fun withConstraint(constraint: ContextConstraint): E {
+    return cloneWith(disposables, constraint.toCoroutineDispatcher(dispatcher))
+  }
+
+  override fun expireWith(parentDisposable: Disposable): E {
+    val disposables = disposables + parentDisposable
+    @Suppress("UNCHECKED_CAST")
+    return if (disposables == this.disposables) this as E else cloneWith(disposables, dispatcher)
+  }
 
   /**
    * Creates a new [CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
