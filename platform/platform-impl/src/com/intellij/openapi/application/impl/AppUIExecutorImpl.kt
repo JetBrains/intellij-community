@@ -35,15 +35,12 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
   })
 
   private fun withConstraint(constraint: ContextConstraint): AppUIExecutor {
-    val disposables = (constraint as? ExpirableContextConstraint)?.expirable?.let { disposable ->
-      disposables + disposable
-    } ?: disposables
     return AppUIExecutorImpl(myModality, disposables, constraint.toCoroutineDispatcher(dispatcher))
   }
 
   override fun expireWith(parentDisposable: Disposable): AppUIExecutor {
     val disposables = disposables + parentDisposable
-    return if (disposables === this.disposables) this else AppUIExecutorImpl(myModality, disposables, dispatcher)
+    return if (disposables == this.disposables) this else AppUIExecutorImpl(myModality, disposables, dispatcher)
   }
 
   override fun later(): AppUIExecutor {
