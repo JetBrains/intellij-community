@@ -70,10 +70,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     doReset(settings);
   }
 
-  private void doReset(RunnerAndConfigurationSettings settings) {
-    final RunConfiguration runConfiguration = settings.getConfiguration();
+  private void doReset(@NotNull RunnerAndConfigurationSettings settings) {
     myBeforeRunStepsPanel.doReset(settings);
-    myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof WithoutOwnBeforeRunSteps));
+    myBeforeLaunchContainer.setVisible(!(settings.getConfiguration() instanceof WithoutOwnBeforeRunSteps));
   }
 
   @Override

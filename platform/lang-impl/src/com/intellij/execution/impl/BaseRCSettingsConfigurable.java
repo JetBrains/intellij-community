@@ -32,9 +32,10 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       }
 
       RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
-      if (isSnapshotSpecificallyModified(runManager, original, snapshot) || !runManager.getBeforeRunTasks(original.getConfiguration()).equals(runManager.getBeforeRunTasks(snapshot.getConfiguration()))) {
+      if (isSnapshotSpecificallyModified(original, snapshot) || !RunManagerImplKt.doGetBeforeRunTasks(original.getConfiguration()).equals(RunManagerImplKt.doGetBeforeRunTasks(snapshot.getConfiguration()))) {
         return true;
       }
+
       if (original instanceof JDOMExternalizable && snapshot instanceof JDOMExternalizable) {
         applySnapshotToComparison(original, snapshot);
 
@@ -58,9 +59,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
 
   void applySnapshotToComparison(RunnerAndConfigurationSettings original, RunnerAndConfigurationSettings snapshot) {}
 
-  boolean isSnapshotSpecificallyModified(RunManagerImpl runManager,
-                                         RunnerAndConfigurationSettings original,
-                                         RunnerAndConfigurationSettings snapshot) {
+  boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original, @NotNull RunnerAndConfigurationSettings snapshot) {
     return false;
   }
 

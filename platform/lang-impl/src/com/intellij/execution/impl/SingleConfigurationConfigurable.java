@@ -102,9 +102,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @Override
-  boolean isSnapshotSpecificallyModified(RunManagerImpl runManager,
-                                         RunnerAndConfigurationSettings original,
-                                         RunnerAndConfigurationSettings snapshot) {
+  boolean isSnapshotSpecificallyModified(@NotNull RunnerAndConfigurationSettings original, @NotNull RunnerAndConfigurationSettings snapshot) {
     return original.isShared() != myStoreProjectConfiguration;
   }
 
