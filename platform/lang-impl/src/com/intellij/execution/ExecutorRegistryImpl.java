@@ -207,7 +207,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
             return false;
           }
         }
-        final ProgramRunner runner = ProgramRunnerUtil.getRunner(myExecutor.getId(), configuration);
+        final ProgramRunner runner = ProgramRunner.getRunner(myExecutor.getId(), configuration);
         if (runner == null
             || !ExecutionTargetManager.canRun(runnerAndConfigurationSettings, pair.getTarget())
             || isStarting(project, myExecutor.getId(), runner.getRunnerId())) {

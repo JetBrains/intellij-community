@@ -34,17 +34,7 @@ public class ProgramRunnerUtil {
 
   @Nullable
   public static ProgramRunner getRunner(@NotNull String executorId, @Nullable RunnerAndConfigurationSettings configuration) {
-    return configuration == null ? null : getRunner(executorId, configuration.getConfiguration());
-  }
-
-  @Nullable
-  public static ProgramRunner getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
-    for (ProgramRunner runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensionList()) {
-      if (runner.canRun(executorId, settings)) {
-        return runner;
-      }
-    }
-    return null;
+    return configuration == null ? null : ProgramRunner.getRunner(executorId, configuration.getConfiguration());
   }
 
   public static void executeConfiguration(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {

@@ -94,7 +94,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
         }
         final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
         final ProgramRunner runner =
-          initialConfiguration != null ? ProgramRunnerUtil.getRunner(executor.getId(), initialConfiguration) : null;
+          initialConfiguration != null ? ProgramRunner.getRunner(executor.getId(), initialConfiguration) : null;
         if (runner != null) {
           builder = builder.runner(runner);
         }

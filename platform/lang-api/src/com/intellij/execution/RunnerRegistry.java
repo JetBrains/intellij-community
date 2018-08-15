@@ -7,15 +7,27 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RunnerRegistry {
+public class RunnerRegistry {
   @NotNull
   public static RunnerRegistry getInstance() {
     return ServiceManager.getService(RunnerRegistry.class);
   }
 
+  /**
+   * Use {@link ProgramRunner#getRunner)}
+   */
   @Nullable
-  public abstract ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings);
+  @Deprecated
+  public ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings) {
+    return settings == null ? null : ProgramRunner.getRunner(executorId, settings);
+  }
 
+  /**
+   * Use {@link ProgramRunner#findRunnerById(String)}
+   */
   @Nullable
-  public abstract ProgramRunner findRunnerById(@NotNull String id);
+  @Deprecated
+  public ProgramRunner findRunnerById(@NotNull String id) {
+    return ProgramRunner.findRunnerById(id);
+  }
 }

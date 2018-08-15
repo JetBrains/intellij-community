@@ -64,7 +64,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
 
   @Nullable
   private ProgramRunner getRunner(final RunConfiguration configuration) {
-    return ProgramRunnerUtil.getRunner(myExecutor.getId(), configuration);
+    return ProgramRunner.getRunner(myExecutor.getId(), configuration);
   }
 
   @Override

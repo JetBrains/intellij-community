@@ -2,7 +2,10 @@
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
@@ -169,7 +172,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         snapshot.setName(getNameText());
         snapshot.checkSettings(myExecutor);
         for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-          ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), snapshot.getConfiguration());
+          ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), snapshot.getConfiguration());
           if (runner != null) {
             checkConfiguration(runner, snapshot);
           }

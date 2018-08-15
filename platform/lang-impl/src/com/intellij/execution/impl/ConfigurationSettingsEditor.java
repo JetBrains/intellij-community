@@ -2,7 +2,10 @@
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -73,7 +76,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
 
       final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
       for (final Executor executor : executors) {
-        ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), myConfiguration);
+        ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), myConfiguration);
         if (runner != null) {
           JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
           if (perRunnerSettings != null) {
@@ -166,7 +169,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   public <T extends SettingsEditor> T selectExecutorAndGetEditor(final ProgramRunner runner, Class<T> editorClass) {
     myGroupSettingsBuilder.selectEditor(RUNNERS_TAB_NAME);
     Executor executor = ContainerUtil.find(myRunnersComponent.getExecutors(),
-                                           executor1 -> runner.equals(ProgramRunnerUtil.getRunner(executor1.getId(), myConfiguration)));
+                                           executor1 -> runner.equals(ProgramRunner.getRunner(executor1.getId(), myConfiguration)));
     if (executor == null) {
       return null;
     }

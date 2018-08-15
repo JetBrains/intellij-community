@@ -6,6 +6,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -134,6 +135,6 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
   }
 
   public static boolean canBeRun(@NotNull RunnerAndConfigurationSettings configuration) {
-    return ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, configuration.getConfiguration()) != null;
+    return ProgramRunner.getRunner(DefaultRunExecutor.EXECUTOR_ID, configuration.getConfiguration()) != null;
   }
 }
