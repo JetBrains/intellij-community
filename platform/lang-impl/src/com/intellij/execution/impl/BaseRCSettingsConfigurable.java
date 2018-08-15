@@ -22,7 +22,6 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
   public boolean isModified() {
     try {
       RunnerAndConfigurationSettings original = getSettings();
-      RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
 
       final RunManagerImpl runManager = ((RunnerAndConfigurationSettingsImpl)original).getManager();
       if (!original.isTemplate() && !runManager.hasSettings(original)) {
@@ -31,6 +30,8 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (!super.isModified()) {
         return false;
       }
+
+      RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
       if (isSnapshotSpecificallyModified(runManager, original, snapshot) || !runManager.getBeforeRunTasks(original.getConfiguration()).equals(runManager.getBeforeRunTasks(snapshot.getConfiguration()))) {
         return true;
       }
