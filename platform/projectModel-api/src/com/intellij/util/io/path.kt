@@ -140,16 +140,22 @@ val Path.systemIndependentPath: String
 val Path.parentSystemIndependentPath: String
   get() = parent!!.toString().replace(File.separatorChar, '/')
 
+@Throws(IOException::class)
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 
+@Throws(IOException::class)
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
+@Throws(IOException::class)
 fun Path.readChars(): CharSequence = inputStream().reader().readCharSequence(size().toInt())
 
+@Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
 
+@Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
 
+@Throws(IOException::class)
 @JvmOverloads
 fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   outputStream().use { it.write(data, offset, size) }
@@ -184,6 +190,7 @@ fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
   return this
 }
 
+@Throws(IOException::class)
 fun Path.write(data: String): Path {
   parent?.createDirectories()
 
