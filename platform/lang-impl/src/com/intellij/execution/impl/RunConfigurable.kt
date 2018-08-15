@@ -966,7 +966,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       }
     }
     val settings = runManager.createConfiguration("", factory)
-    val configuration = settings.configuration;
+    val configuration = settings.configuration
     val suggestedName = suggestName(configuration)
     val name = createUniqueName(typeNode, suggestedName, CONFIGURATION, TEMPORARY_CONFIGURATION)
     configuration.name = name
@@ -1021,7 +1021,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     private fun getTypesToShow(showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
       if (showApplicableTypesOnly) {
-        val applicableTypes = allTypes.filter { it.configurationFactories.any { it.isApplicable(project) } }
+        val applicableTypes = allTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
         if (applicableTypes.size < (allTypes.size - 3)) {
           return applicableTypes
         }
@@ -1173,11 +1173,10 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val configuration = selectedConfiguration
-      LOG.assertTrue(configuration != null)
+      val configuration = selectedConfiguration!!
       try {
         val typeNode = selectedConfigurationTypeNode!!
-        val settings = configuration!!.snapshot
+        val settings = configuration.snapshot
         val runTasksSnapshot = runManager.getBeforeRunTasks(settings.configuration)
         val tasks = ArrayList<BeforeRunTask<*>>()
         for (task in runTasksSnapshot) {
