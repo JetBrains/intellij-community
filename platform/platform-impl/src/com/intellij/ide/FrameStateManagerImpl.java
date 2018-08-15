@@ -32,9 +32,6 @@ import java.util.List;
 public class FrameStateManagerImpl extends FrameStateManager {
   private final List<FrameStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private boolean myShouldSynchronize;
-  private final Alarm mySyncAlarm;
-
   private final BusyObject.Impl myActive;
   private final ApplicationImpl myApp;
 
@@ -47,31 +44,20 @@ public class FrameStateManagerImpl extends FrameStateManager {
       }
     };
 
-    myShouldSynchronize = false;
-    mySyncAlarm = new Alarm();
-
     app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
       public void applicationActivated(IdeFrame ideFrame) {
         System.setProperty("com.jetbrains.suppressWindowRaise", "false");
         myActive.onReady();
-        mySyncAlarm.cancelAllRequests();
-        if (myShouldSynchronize) {
-          myShouldSynchronize = false;
-          fireActivationEvent();
-        }
+        fireActivationEvent();
       }
 
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
         System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        mySyncAlarm.cancelAllRequests();
-        mySyncAlarm.addRequest(() -> {
-          if (!app.isActive() && !app.isDisposed()) {
-            myShouldSynchronize = true;
-            fireDeactivationEvent();
-          }
-        }, 200);
+        if (!app.isActive() && !app.isDisposed()) {
+          fireDeactivationEvent();
+        }
       }
     });
   }
