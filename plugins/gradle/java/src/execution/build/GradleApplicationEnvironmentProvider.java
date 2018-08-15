@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -162,10 +165,9 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
 
       // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
-      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration).stream()
+      gradleRunConfiguration.setBeforeRunTasks(RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration).stream()
                                                 .filter(task -> task.getProviderId() != CompileStepBeforeRun.ID)
-                                                .collect(Collectors.toList());
-      gradleRunConfiguration.setBeforeRunTasks(tasks);
+                                                .collect(Collectors.toList()));
       return environment;
     }
     else {
