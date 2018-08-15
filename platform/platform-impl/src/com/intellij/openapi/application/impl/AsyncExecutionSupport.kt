@@ -11,7 +11,6 @@ import gnu.trove.THashSet
 import kotlinx.coroutines.experimental.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
@@ -21,36 +20,29 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * @author eldar
  */
-internal abstract class AsyncExecutionSupport : AbstractCoroutineContextElement(ContinuationInterceptor),
-                                                ContinuationInterceptor,
-                                                AsyncExecution {
+internal abstract class AsyncExecutionSupport : AsyncExecution {
 
   protected abstract val disposables: Set<Disposable>
   protected abstract val dispatcher: CoroutineDispatcher
 
   /**
-   * Invoked by the Coroutines framework just before the very first bits of coroutine code are executed.
-   * The interceptor [initializes][createChildJob] a child [Job] within the [CoroutineContext], so that it is
-   * cancelled whenever any of the [disposables] is expired, and replaces itself with the [dispatcher]
-   * (possibly wrapped using the [createCoroutineDispatcher] method) as the new [ContinuationInterceptor]
-   * of this coroutine, which then takes care to establish the necessary execution context.
+   * Creates a new [CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
+   *
+   * The context inherits from the specified [one][context], and contains a child [Job] [initialized][createChildJob]
+   * so that it is cancelled whenever any of the [disposables] is expired, and a custom [dispatcher] for the installed context constraints
+   * (possibly wrapped using the [createCoroutineDispatcher] method), which takes care to establish the necessary execution context.
    */
-  override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+  override fun createJobContext(context: CoroutineContext, parent: Job?): CoroutineContext {
     val dispatcher = createCoroutineDispatcher()
     val delegateChain = generateSequence(dispatcher as? DelegateDispatcher) { it.delegate as? DelegateDispatcher }.toList().asReversed()
 
-    val oldContext = continuation.context
-    val job = createChildJob(oldContext, delegateChain)
+    val job = createChildJob(parent ?: context[Job], delegateChain)
 
-    val newContext = newCoroutineContext(oldContext, job) + dispatcher
-
-    return dispatcher.interceptContinuation(object : Continuation<T> by continuation {
-      override val context get() = newContext
-    })
+    return newCoroutineContext(context, job) + dispatcher
   }
 
-  protected open fun createChildJob(context: CoroutineContext, dispatchers: List<DelegateDispatcher>): Job =
-    Job(context[Job]).also { job ->
+  protected open fun createChildJob(parent: Job?, dispatchers: List<DelegateDispatcher>): Job =
+    Job(parent).also { job ->
       disposables.forEach { disposable ->
         disposable.cancelJobOnDisposal(job)
       }
