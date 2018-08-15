@@ -8,12 +8,13 @@ import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This class provides 'smart' isModified() behavior: it compares original settings with current snapshot by their XML 'externalized' presentations
  */
 abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
-  BaseRCSettingsConfigurable(SettingsEditor<RunnerAndConfigurationSettings> editor, RunnerAndConfigurationSettings settings) {
+  BaseRCSettingsConfigurable(@NotNull SettingsEditor<RunnerAndConfigurationSettings> editor, @NotNull RunnerAndConfigurationSettings settings) {
     super(editor, settings);
   }
 

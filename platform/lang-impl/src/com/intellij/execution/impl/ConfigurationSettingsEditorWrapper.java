@@ -98,6 +98,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     doApply(settings);
   }
 
+  @NotNull
   @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings result = myEditor.getSnapshot();
