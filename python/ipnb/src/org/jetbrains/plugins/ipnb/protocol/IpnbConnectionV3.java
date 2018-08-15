@@ -24,10 +24,10 @@ public class IpnbConnectionV3 extends IpnbConnection {
   }
 
   @Override
-  protected void initializeClients() throws URISyntaxException {
+  public void initializeClients() throws URISyntaxException {
     final Draft draft = new Draft17WithOrigin();
 
-    myChannelsClient = new IpnbWebSocketClient(getChannelsURI(), draft);
+    myChannelsClient = new IpnbWebSocketClient(getChannelsURI(), draft, this);
     myChannelsThread = new Thread(myChannelsClient, "IPNB channel client");
     myChannelsThread.start();
   }

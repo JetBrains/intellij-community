@@ -31,6 +31,8 @@ import com.jetbrains.python.run.PyRunConfigurationFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
+import org.jetbrains.plugins.ipnb.debugger.IpnbDebugConnection;
+import org.jetbrains.plugins.ipnb.debugger.IpnbDebuggerTransport;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
@@ -74,17 +76,27 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
   }
 
   public void executeCell(@NotNull final IpnbCodePanel codePanel) {
+    executeCellAddConnection(codePanel, null);
+  }
+
+  public void executeCellAddConnection(@NotNull final IpnbCodePanel codePanel, @Nullable String connectionId) {
     final IpnbFileEditor fileEditor = codePanel.getFileEditor();
     final VirtualFile virtualFile = fileEditor.getVirtualFile();
-    final String path = virtualFile.getPath();
+    String path;
+    if (connectionId == null) {
+      path = virtualFile.getPath();
+    }
+    else {
+      path = connectionId;
+    }
     if (!hasConnection(path)) {
-      startConnection(codePanel, path);
+      startConnection(codePanel, path, null);
     }
     else {
       IpnbConnection connection = myKernels.get(path);
       if (!connection.isAlive()) {
         myKernels.remove(path);
-        startConnection(codePanel, path);
+        startConnection(codePanel, path, null);
       }
       else {
         final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
@@ -97,7 +109,12 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     return myKernels.containsKey(path);
   }
 
-  private void startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String filePath) {
+  public IpnbConnection getConnection(String path) {
+    return myKernels.get(path);
+  }
+
+  public void startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String filePath,
+                              @Nullable IpnbConnectionListenerBase additionalListener) {
     final List<RunContentDescriptor> descriptors = ExecutionManagerImpl.getInstance(myProject).getRunningDescriptors(
       settings -> settings.getConfiguration() instanceof IpnbRunConfiguration
     );
@@ -111,7 +128,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       if (descriptors.size() == 1) {
         final RunContentDescriptor descriptor = descriptors.get(0);
         final Pair<String, String> urlToken = getUrlTokenByDescriptor(descriptor);
-        startConnection(codePanel, filePath, urlToken.getFirst(), urlToken.getSecond());
+        startConnection(codePanel, filePath, urlToken.getFirst(), urlToken.getSecond(), additionalListener);
       }
       else {
         selectRunningInstance(codePanel, filePath, descriptors);
@@ -132,7 +149,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     builder.setTitle("Choose Jupyter Notebook Server");
     builder.setItemChoosenCallback(() -> {
       final Pair<String, String> urlToken = getUrlTokenByDescriptor(list.getSelectedValue());
-      startConnection(codePanel, filePath, urlToken.getFirst(), urlToken.getSecond());
+      startConnection(codePanel, filePath, urlToken.getFirst(), urlToken.getSecond(), null);
     });
     final JBPopup popup = builder.createPopup();
     final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
@@ -152,7 +169,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       });
     }
     if (myUrl != null) {
-      startConnection(codePanel, filePath, myUrl, myToken);
+      startConnection(codePanel, filePath, myUrl, myToken, null);
       return true;
     }
     return false;
@@ -197,18 +214,20 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
   }
 
   public void startConnection(@Nullable final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
-                              @Nullable final String token) {
+                              @Nullable final String token, @Nullable IpnbConnectionListenerBase additionalListener) {
     if (codePanel == null) return;
     final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
     String pathToFile = getRelativePathToFile(file);
     if (pathToFile == null) return;
     final boolean format = IpnbParser.isIpythonNewFormat(file);
-    IpnbUtils.runCancellableProcessUnderProgress(myProject, () -> setupConnection(codePanel, path, urlString, token, format),
-                                                 "Connecting to Jupyter Notebook Server");
+    IpnbUtils
+      .runCancellableProcessUnderProgress(myProject, () -> setupConnection(codePanel, path, urlString, token, format, additionalListener),
+                                          "Connecting to Jupyter Notebook Server");
   }
 
   @NotNull
-  private IpnbConnectionListenerBase createConnectionListener(@Nullable IpnbCodePanel codePanel, Ref<Boolean> connectionOpened) {
+  private IpnbConnectionListenerBase createConnectionListener(@Nullable IpnbCodePanel codePanel, Ref<Boolean> connectionOpened,
+                                                              @Nullable IpnbConnectionListenerBase additionalListener) {
     return new IpnbConnectionListenerBase() {
       @Override
       public void onOpen(@NotNull IpnbConnection connection) {
@@ -216,6 +235,9 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
         if (codePanel == null) return;
         final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
         myUpdateMap.put(messageId, codePanel);
+        if (additionalListener != null) {
+          additionalListener.onOpen(connection);
+        }
       }
 
       @Override
@@ -225,6 +247,9 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
         final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
         cell.getCell().setPromptNumber(connection.getExecCount());
         cell.updatePanel(null, connection.getOutput());
+        if (additionalListener != null) {
+          additionalListener.onOutput(connection, parentMessageId);
+        }
       }
 
       @Override
@@ -234,6 +259,9 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
         if (payload != null) {
           cell.updatePanel(payload, null);
         }
+        if (additionalListener != null) {
+          additionalListener.onPayload(payload, parentMessageId);
+        }
       }
 
       @Override
@@ -242,15 +270,18 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
         final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
         cell.getCell().setPromptNumber(connection.getExecCount());
         cell.finishExecution();
+        if (additionalListener != null) {
+          additionalListener.onFinished(connection, parentMessageId);
+        }
       }
     };
   }
 
   private boolean setupConnection(@NotNull IpnbCodePanel codePanel, @NotNull String path, @NotNull String urlString,
-                                  String token, boolean isNewFormat) {
+                                  String token, boolean isNewFormat, @Nullable IpnbConnectionListenerBase additionalListener) {
     try {
       Ref<Boolean> connectionOpened = new Ref<>(false);
-      final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened);
+      final IpnbConnectionListenerBase listener = createConnectionListener(codePanel, connectionOpened, additionalListener);
       final VirtualFile file = codePanel.getFileEditor().getVirtualFile();
       final String pathToFile = getRelativePathToFile(file);
       if (pathToFile == null) return false;
@@ -285,7 +316,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
           }
         });
         if (myToken != null) {
-          return setupConnection(codePanel, path, urlString, token, isNewFormat);
+          return setupConnection(codePanel, path, urlString, token, isNewFormat, additionalListener);
         }
       }
       final String message = e.getMessage();
@@ -306,6 +337,9 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
   @NotNull
   private IpnbConnection getConnection(@NotNull String urlString, @NotNull IpnbConnectionListenerBase listener, @NotNull String pathToFile,
                                        String token, boolean isNewFormat) throws IOException, URISyntaxException {
+    if (pathToFile.startsWith(IpnbDebuggerTransport.DEBUG_CONNECTION_PREFIX)) {
+      return new IpnbDebugConnection(urlString, listener, token, myProject, pathToFile);
+    }
     if (!isNewFormat) {
       return new IpnbConnection(urlString, listener, token, myProject, pathToFile);
     }

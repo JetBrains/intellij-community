@@ -45,7 +45,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private static final SecureRandom ourRandom = new SecureRandom();
 
-  private final IPyDebugProcess myDebugProcess;
+  protected final IPyDebugProcess myDebugProcess;
 
   private int mySequence = -1;
   private final Object mySequenceObject = new Object(); // for synchronization on mySequence
@@ -58,7 +58,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private final DebuggerTransport myDebuggerTransport;
+  @NotNull protected final DebuggerTransport myDebuggerTransport;
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
     myDebugProcess = debugProcess;

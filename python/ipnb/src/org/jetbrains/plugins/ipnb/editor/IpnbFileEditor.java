@@ -126,7 +126,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     myCellTypeCombo = new ComboBox(ourCellTypes);
 
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.addAll(new IpnbRunCellAction(this), new IpnbInterruptKernelAction(this), new IpnbReloadKernelAction(this));
+    toolbarGroup.addAll(new IpnbDebugAction(this), new IpnbRunCellAction(this), new IpnbInterruptKernelAction(this),
+                        new IpnbReloadKernelAction(this));
     toolbarGroup.add(new Separator());
     toolbarGroup.addAll(new IpnbMoveCellUpAction(this), new IpnbMoveCellDownAction(this));
     toolbarGroup.add(new IpnbAddCellBelowAction(this));

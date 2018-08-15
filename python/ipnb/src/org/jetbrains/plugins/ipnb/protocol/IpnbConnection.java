@@ -24,7 +24,6 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import java.io.*;
 import java.net.*;
@@ -342,7 +341,28 @@ public class IpnbConnection {
     }
   }
 
-  protected void initializeClients() throws URISyntaxException {
+  public HashMap<String, String> getHeaders() {
+    return myHeaders;
+  }
+
+  @NotNull
+  public IpnbConnectionListener getListener() {
+    return myListener;
+  }
+
+  public void setIOPubOpen(boolean IOPubOpen) {
+    myIsIOPubOpen = IOPubOpen;
+  }
+
+  public void setOutput(IpnbOutputCell output) {
+    myOutput = output;
+  }
+
+  public void setExecCount(int execCount) {
+    myExecCount = execCount;
+  }
+
+  public void initializeClients() throws URISyntaxException {
     final Draft draft = new Draft17WithOrigin();
 
     myShellClient = new WebSocketClient(getShellURI(), draft, myHeaders, 0) {
@@ -369,7 +389,7 @@ public class IpnbConnection {
     myShellThread = new Thread(myShellClient, "IPNB shell client");
     myShellThread.start();
 
-    myIOPubClient = new IpnbWebSocketClient(getIOPubURI(), draft);
+    myIOPubClient = new IpnbWebSocketClient(getIOPubURI(), draft, this);
     myIOPubThread = new Thread(myIOPubClient, "IPNB pub client");
     myIOPubThread.start();
   }
@@ -517,10 +537,10 @@ public class IpnbConnection {
     return createMessage("execute_request", messageId, content, USERNAME_PARAMETER);
   }
 
-  private Message createMessage(@NotNull String messageType,
-                                @NotNull String messageId,
-                                @Nullable JsonObject content,
-                                @Nullable String username) {
+  public Message createMessage(@NotNull String messageType,
+                               @NotNull String messageId,
+                               @Nullable JsonObject content,
+                               @Nullable String username) {
     final Header header = Header.create(messageId, username, mySessionId, messageType);
     final JsonObject parentHeader = new JsonObject();
 
@@ -681,6 +701,10 @@ public class IpnbConnection {
     public List<Payload> getPayload() {
       return payload;
     }
+
+    public String getStatus() {
+      return status;
+    }
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -745,7 +769,7 @@ public class IpnbConnection {
     }
   }
 
-  protected class Draft17WithOrigin extends Draft_17 {
+  public class Draft17WithOrigin extends Draft_17 {
     @Override
     public Draft copyInstance() {
       return new Draft17WithOrigin();
@@ -760,88 +784,6 @@ public class IpnbConnection {
     }
   }
 
-  protected class IpnbWebSocketClient extends WebSocketClient {
-    protected IpnbWebSocketClient(@NotNull final URI serverUri, @NotNull final Draft draft) {
-      super(serverUri, draft, myHeaders, 10000);
-      configureSsl(serverUri);
-    }
-
-    private void configureSsl(@NotNull URI serverUri) {
-      if (serverUri.getScheme().equals("wss")) {
-        final SSLContext sslContext = CertificateManager.getInstance().getSslContext();
-        try {
-          this.setSocket(sslContext.getSocketFactory().createSocket());
-        }
-        catch (IOException e) {
-          LOG.warn(e.getMessage());
-        }
-      }
-    }
-
-    @Override
-    public void onOpen(ServerHandshake handshakeData) {
-      final Message message = createMessage("connect_request", UUID.randomUUID().toString(), null, null);
-      send(new Gson().toJson(message));
-      myIsIOPubOpen = true;
-      notifyOpen();
-    }
-
-    @Override
-    public void onMessage(String message) {
-      final Gson gson = new Gson();
-      final Message msg = gson.fromJson(message, Message.class);
-      final Header header = msg.getHeader();
-      final Header parentHeader = gson.fromJson(msg.getParentHeader(), Header.class);
-      final String messageType = header.getMessageType();
-      if ("pyout".equals(messageType) || "display_data".equals(messageType) || "execute_result".equals(messageType)) {
-        final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
-        addCellOutput(content);
-        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
-      }
-      if ("execute_reply".equals(messageType)) {
-        final PyExecuteReplyContent content = gson.fromJson(msg.getContent(), PyExecuteReplyContent.class);
-        final List<Payload> payloads = content.payload;
-        if (payloads != null && !payloads.isEmpty()) {
-          final Payload payload = payloads.get(0);
-          if (payload.replace) {
-            myListener.onPayload(payload.text, parentHeader.getMessageId());
-          }
-        }
-        if ("ok".equals(content.status) || "error".equals(content.status)) {
-          myListener.onFinished(IpnbConnection.this, parentHeader.getMessageId());
-        }
-      }
-      else if ("pyerr".equals(messageType) || "error".equals(messageType)) {
-        final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
-        addCellOutput(content);
-        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
-      }
-      else if ("stream".equals(messageType)) {
-        final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
-        addCellOutput(content);
-        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
-      }
-      else if ("pyin".equals(messageType) || "execute_input".equals(messageType)) {
-        final JsonElement executionCount = msg.getContent().get("execution_count");
-        if (executionCount != null) {
-          myExecCount = executionCount.getAsInt();
-        }
-        myOutput = null;
-        myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
-      }
-    }
-
-    @Override
-    public void onClose(int code, String reason, boolean remote) {
-      LOG.info("IPNB WebSocket was closed:  code " + code + " reason: " + reason);
-    }
-
-    @Override
-    public void onError(Exception ex) {
-      LOG.error(ex);
-    }
-  }
-
   public IpnbOutputCell getOutput() {
     return myOutput;
   }
@@ -849,7 +791,7 @@ public class IpnbConnection {
   public int getExecCount() {
     return myExecCount;
   }
-  
+
   private static class SessionWrapper {
     KernelWrapper kernel;
     String name;

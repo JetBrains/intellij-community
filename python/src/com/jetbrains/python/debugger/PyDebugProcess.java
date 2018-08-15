@@ -77,7 +77,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.debugger.PyDebugProcess");
   private static final int CONNECTION_TIMEOUT = 60000;
 
-  private final ProcessDebugger myDebugger;
+  protected final ProcessDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
   private final PyDebuggerEditorsProvider myEditorsProvider;
   private final ProcessHandler myProcessHandler;
@@ -119,7 +119,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     this(session, process -> new ClientModeMultiProcessDebugger(process, serverHost, serverPort), executionConsole, processHandler);
   }
 
-  private PyDebugProcess(@NotNull XDebugSession session,
+  public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull DebuggerFactory debuggerFactory,
                         @NotNull ExecutionConsole executionConsole,
                         @Nullable ProcessHandler processHandler) {
@@ -1237,7 +1237,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return pyType;
   }
 
-  private interface DebuggerFactory {
+  public interface DebuggerFactory {
     @NotNull ProcessDebugger createDebugger(@NotNull PyDebugProcess process);
   }
 }

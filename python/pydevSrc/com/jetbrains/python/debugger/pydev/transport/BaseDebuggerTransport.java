@@ -17,7 +17,7 @@ public abstract class BaseDebuggerTransport implements DebuggerTransport {
 
   protected final Object mySocketObject = new Object();
 
-  @NotNull protected final RemoteDebugger myDebugger;
+  @NotNull protected RemoteDebugger myDebugger;
 
   protected BaseDebuggerTransport(@NotNull RemoteDebugger debugger) {myDebugger = debugger;}
 
