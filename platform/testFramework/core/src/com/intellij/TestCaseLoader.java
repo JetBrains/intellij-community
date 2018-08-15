@@ -68,30 +68,17 @@ public class TestCaseLoader {
       System.out.println("Using patterns: [" + patterns + "]");
       return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
     }
-
-    List<String> testGroupNames = getTestGroups();
-
-    MultiMap<String, String> groups = readGroups(classFilterName, getClassLoader());
-
-    if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
-      System.out.println("Using all classes");
-      return TestClassesFilter.ALL_CLASSES;
-    }
-    System.out.println("Using test groups: " + testGroupNames);
-    return new GroupBasedTestClassFilter(groups, testGroupNames);
-  }
-
-  public static MultiMap<String, String> readGroups(String classFilterName, ClassLoader classLoader) {
     List<URL> groupingFileUrls = Collections.emptyList();
     if (!StringUtil.isEmpty(classFilterName)) {
       try {
-        groupingFileUrls = Collections.list(classLoader.getResources(classFilterName));
+        groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
       }
       catch (IOException e) {
         e.printStackTrace();
       }
     }
 
+    List<String> testGroupNames = getTestGroups();
     MultiMap<String, String> groups = MultiMap.createLinked();
 
     for (URL fileUrl : groupingFileUrls) {
@@ -103,7 +90,13 @@ public class TestCaseLoader {
         System.err.println("Failed to load test groups from " + fileUrl);
       }
     }
-    return groups;
+
+    if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
+      System.out.println("Using all classes");
+      return TestClassesFilter.ALL_CLASSES;
+    }
+    System.out.println("Using test groups: " + testGroupNames);
+    return new GroupBasedTestClassFilter(groups, testGroupNames);
   }
 
   @Nullable
