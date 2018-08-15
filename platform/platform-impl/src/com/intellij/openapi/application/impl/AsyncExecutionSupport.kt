@@ -9,9 +9,9 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashSet
 import kotlinx.coroutines.experimental.*
+import java.lang.UnsupportedOperationException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -55,66 +55,71 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
     RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
-  internal abstract class DelegateDispatcher : CoroutineDispatcher() {
-    abstract val delegate: CoroutineDispatcher
+  internal abstract class DelegateDispatcher(val delegate: CoroutineDispatcher) : CoroutineDispatcher() {
     abstract val isChainFallback: Boolean
 
     open fun initializeJob(job: Job) = Unit
 
     override fun isDispatchNeeded(context: CoroutineContext) = true  // because of the need to check the delegate
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-      delegate.dispatchIfNeededOrInvoke(context) {
-        doDispatch(context, block)
-      }
-    }
-
-    protected abstract fun doDispatch(context: CoroutineContext, block: Runnable)
   }
 
   /** A DelegateDispatcher backed by a ContextConstraint. */
-  internal abstract class ChainedConstraintDispatcher(private val myDelegate: CoroutineDispatcher) : DelegateDispatcher(),
-                                                                                                     ContextConstraint {
+  internal abstract class ChainedConstraintDispatcher(delegate: CoroutineDispatcher) : DelegateDispatcher(delegate),
+                                                                                       ContextConstraint {
     override val isChainFallback: Boolean
       get() = false  // TODO[eldar] any ContextConstraint-backed dispatcher is considered unreliable to be a chain fallback
 
-    override val delegate: CoroutineDispatcher  // outside the chain
-      get() = myDelegateChain[0].myDelegate
-
     // This optimization eliminates the need to recurse through each link of the chain
     // down to the outermost delegate dispatcher and back, which is quite hard to debug usually.
-    private val myDelegateChain: Array<ChainedConstraintDispatcher> = run {
-      val delegateChain = (myDelegate as? ChainedConstraintDispatcher)?.myDelegateChain ?: emptyArray()
+    private val myChain: Array<ChainedConstraintDispatcher> = run {
+      val delegateChain = (delegate as? ChainedConstraintDispatcher)?.myChain ?: emptyArray()
       arrayOf(*delegateChain, this)
     }
 
-    override fun doDispatch(context: CoroutineContext, block: Runnable) {
-      for (dispatcher in myDelegateChain) {
+    private val myChainDelegate: CoroutineDispatcher = myChain[0].delegate  // outside the chain
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+      myChainDelegate.dispatchIfNeededOrInvoke(context) {
+        dispatchChain(context, block)
+      }
+    }
+
+    private fun dispatchChain(context: CoroutineContext, block: Runnable) {
+      for (dispatcher in myChain) {
         if (!dispatcher.isCorrectContext) {
-          delegateScheduleTo(dispatcher, context, block)
+          dispatcher.doConstraintSchedule(context) { isRetryDispatchNeeded ->
+            if (isRetryDispatchNeeded) {
+              LOG.assertTrue(dispatcher.isCorrectContext, this)
+              this.retryDispatch(context, block, causeDispatcher = dispatcher)
+            }
+            else {
+              block.run()
+            }
+          }
           return
         }
       }
       block.run()
     }
 
-    protected open fun delegateScheduleTo(dispatcher: ChainedConstraintDispatcher,
-                                          context: CoroutineContext,
-                                          block: Runnable) {
-      dispatcher.doConstraintSchedule(context, Runnable {
-        LOG.assertTrue(dispatcher.isCorrectContext, this)
-        dispatch(context, block)  // retry
-      })
-    }
+    protected open fun retryDispatch(context: CoroutineContext,
+                                     block: Runnable,
+                                     causeDispatcher: ChainedConstraintDispatcher) = this.dispatch(context, block)
 
-    protected abstract fun doConstraintSchedule(context: CoroutineContext, block: Runnable)
+    protected abstract fun doConstraintSchedule(context: CoroutineContext,
+                                                block: (isRetryDispatchNeeded: Boolean) -> Unit)
   }
 
   /** @see SimpleContextConstraint */
   internal class SimpleConstraintDispatcher(delegate: CoroutineDispatcher,
                                             private val constraint: SimpleContextConstraint) : ChainedConstraintDispatcher(delegate),
                                                                                                SimpleContextConstraint by constraint {
-    override fun doConstraintSchedule(context: CoroutineContext, block: Runnable) = schedule(block)
+    override fun doConstraintSchedule(context: CoroutineContext,
+                                      block: (isRetryDispatchNeeded: Boolean) -> Unit) {
+      schedule(Runnable {
+        block(true)
+      })
+    }
     override fun toString() = constraint.toString()
   }
 
@@ -155,12 +160,13 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
     override val isCorrectContext: Boolean
       get() = !myInvokeOnDisposal.isDisposed && constraint.isCorrectContext
 
-    override fun doConstraintSchedule(context: CoroutineContext, block: Runnable) {
+    override fun doConstraintSchedule(context: CoroutineContext,
+                                      block: (isRetryDispatchNeeded: Boolean) -> Unit) {
       val runOnce = RunOnce()
 
       val fallbackRunnable = runOnce.runnable {
         LOG.assertTrue(context[Job]!!.isCancelled, "Job should have been cancelled through initializeJob()")
-        fallbackDispatch(context) { block.run() }
+        fallbackDispatch(context) { block(false) }
       }
       if (!myInvokeOnDisposal.register(fallbackRunnable)) {
         fallbackRunnable.run()
@@ -168,7 +174,7 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
       else {
         scheduleExpirable(runOnce.runnable {
           myInvokeOnDisposal.unregister(fallbackRunnable)
-          block.run()
+          block(true)
         })
       }
     }
@@ -176,6 +182,7 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
     override fun toString() = "$constraint : $expirable"
   }
 
+  // must be the ContinuationInterceptor in order to work properly
   private class RescheduleAttemptLimitAwareDispatcher(delegate: CoroutineDispatcher,
                                                       private val myLimit: Int = 3000) : ChainedConstraintDispatcher(delegate) {
     private var myAttemptCount: Int = 0
@@ -184,17 +191,20 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
     private val myLastDispatchers: Deque<CoroutineDispatcher> = ArrayDeque(myLogLimit)
 
     override val isCorrectContext get() = true
-    override fun doConstraintSchedule(context: CoroutineContext, block: Runnable) = block.run()  // never used
+    override fun doConstraintSchedule(context: CoroutineContext,
+                                      block: (isRetryDispatchNeeded: Boolean) -> Unit) = throw UnsupportedOperationException()
     override fun toCoroutineDispatcher(delegate: CoroutineDispatcher) = RescheduleAttemptLimitAwareDispatcher(delegate)
 
-    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
       resetAttemptCount()
-      return super.interceptContinuation(continuation)
+      super.dispatch(context, block)
     }
 
-    override fun delegateScheduleTo(dispatcher: ChainedConstraintDispatcher, context: CoroutineContext, block: Runnable) {
-      if (checkHaveMoreRescheduleAttempts(dispatcher)) {
-        super.delegateScheduleTo(dispatcher, context, block)
+    override fun retryDispatch(context: CoroutineContext,
+                               block: Runnable,
+                               causeDispatcher: ChainedConstraintDispatcher) {
+      if (checkHaveMoreRescheduleAttempts(causeDispatcher)) {
+        super.dispatch(context, block)
       }
       else {
         context.cancel(TooManyRescheduleAttemptsException(myLastDispatchers))  // makes block.run() call resumeWithException()
