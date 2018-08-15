@@ -64,7 +64,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     setNameText(configuration.getName());
     myNameDocument.addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent event) {
+      public void textChanged(@NotNull DocumentEvent event) {
         setModified(true);
         if (!myChangingNameFromCode) {
           RunConfiguration runConfiguration = getSettings().getConfiguration();

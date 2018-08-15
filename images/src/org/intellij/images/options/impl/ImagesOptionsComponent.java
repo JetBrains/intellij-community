@@ -29,6 +29,7 @@ import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.options.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -227,7 +228,7 @@ final class ImagesOptionsComponent {
     }
 
     @Override
-    protected void textChanged(DocumentEvent documentEvent) {
+    protected void textChanged(@NotNull DocumentEvent documentEvent) {
       Document document = documentEvent.getDocument();
       Position startPosition = document.getStartPosition();
       try {

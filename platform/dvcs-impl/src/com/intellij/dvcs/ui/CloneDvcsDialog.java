@@ -614,7 +614,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       setText(myDefaultParentPath.toString());
       getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           myModifiedByUser = true;
         }
       });

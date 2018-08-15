@@ -129,7 +129,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
 
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           setOKActionEnabled(myFormNameTextField.getText().length() > 0);
           if (myNeedAdjust) {
             myAdjusting = true;
@@ -141,7 +141,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
 
       myClassNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (!myAdjusting) {
             myNeedAdjust = false;
           }

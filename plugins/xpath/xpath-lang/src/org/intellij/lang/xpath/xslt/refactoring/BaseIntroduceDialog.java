@@ -23,6 +23,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.TextFieldWithHistory;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.util.NameValidator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -62,7 +63,7 @@ public abstract class BaseIntroduceDialog extends DialogWrapper implements Refac
 
         getNameField().addDocumentListener(new DocumentAdapter() {
             @Override
-            protected void textChanged(DocumentEvent e) {
+            protected void textChanged(@NotNull DocumentEvent e) {
                 getOKAction().setEnabled(myInputValidator.checkInput(getName()));
             }
         });

@@ -308,7 +308,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 //    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         final String pattern = editor.getText();
         if (editor.hasFocus()) {
           rebuildList(pattern);

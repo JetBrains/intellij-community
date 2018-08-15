@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
@@ -63,7 +63,7 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
     final JTextField textField = new JTextField(StringUtil.join(ArrayUtil.toStringArray(groups), ","));
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         groups.clear();
         String text = textField.getText();
         if (!StringUtil.isEmptyOrSpaces(text)) {

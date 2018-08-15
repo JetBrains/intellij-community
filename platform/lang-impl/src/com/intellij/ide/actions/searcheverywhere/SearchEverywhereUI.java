@@ -587,7 +587,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         String newSearchString = getSearchPattern();
         if (nonProjectCheckBoxAutoSet && isUseNonProjectItems() && !newSearchString.contains(notFoundString)) {
           doSetUseNonProjectItems(false, true);

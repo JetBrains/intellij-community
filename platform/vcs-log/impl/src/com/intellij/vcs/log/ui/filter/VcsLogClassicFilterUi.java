@@ -449,7 +449,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       getTextEditor().addActionListener(e -> applyFilter());
       addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           try {
             myTextFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
           }

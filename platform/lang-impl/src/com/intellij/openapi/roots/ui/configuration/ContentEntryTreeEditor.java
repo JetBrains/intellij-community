@@ -89,7 +89,7 @@ public class ContentEntryTreeEditor {
     myExcludePatternsField = new JTextField();
     myExcludePatternsField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         if (myContentEntryEditor != null) {
           ContentEntry entry = myContentEntryEditor.getContentEntry();
           if (entry != null) {

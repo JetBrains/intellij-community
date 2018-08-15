@@ -119,7 +119,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
 
     myFilterTextField.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myTable.setFilterPattern(myFilterTextField.getText());
       }
     });

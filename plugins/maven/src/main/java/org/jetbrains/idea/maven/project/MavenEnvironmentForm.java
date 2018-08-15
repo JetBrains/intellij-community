@@ -33,6 +33,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -65,7 +66,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   public MavenEnvironmentForm() {
     DocumentAdapter listener = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         UIUtil.invokeLaterIfNeeded(() -> {
           if (isUpdating) return;
           if (!panel.isShowing()) return;
@@ -181,7 +182,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
                                                               TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     mavenHomeField.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateMavenVersionLabel();
       }
     });

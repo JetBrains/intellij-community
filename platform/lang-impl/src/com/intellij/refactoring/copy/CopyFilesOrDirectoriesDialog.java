@@ -231,7 +231,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
                                                      TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
       getTargetDirectoryComponent().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           validateOKButton();
         }
       });

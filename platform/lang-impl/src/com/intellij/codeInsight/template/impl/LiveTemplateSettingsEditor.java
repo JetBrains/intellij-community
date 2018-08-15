@@ -90,14 +90,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     myKeyField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(javax.swing.event.DocumentEvent e) {
+      protected void textChanged(@NotNull javax.swing.event.DocumentEvent e) {
         myTemplate.setKey(StringUtil.notNullize(myKeyField.getText()).trim());
         myNodeChanged.run();
       }
     });
     myDescription.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(javax.swing.event.DocumentEvent e) {
+      protected void textChanged(@NotNull javax.swing.event.DocumentEvent e) {
         myTemplate.setDescription(myDescription.getText());
         myNodeChanged.run();
       }

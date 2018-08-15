@@ -76,7 +76,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     myNameField.selectAll();
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         update();
       }
     });

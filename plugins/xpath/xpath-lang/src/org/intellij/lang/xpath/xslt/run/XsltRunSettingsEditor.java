@@ -145,7 +145,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         final FileAssociationsManager associationsManager = FileAssociationsManager.getInstance(project);
 
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           final String text = myXsltFile.getText();
           final JComboBox comboBox = myXmlInputFile.getComboBox();
           final Object oldXml = getXmlInputFile();

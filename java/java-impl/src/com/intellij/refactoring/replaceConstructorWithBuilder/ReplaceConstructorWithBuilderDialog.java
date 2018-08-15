@@ -168,7 +168,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
     final DocumentAdapter validateButtonsListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         validateButtons();
       }
     };

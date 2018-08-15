@@ -1383,7 +1383,7 @@ public class Messages {
           actions[0].putValue(DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
-            public void textChanged(DocumentEvent event) {
+            public void textChanged(@NotNull DocumentEvent event) {
               final String text = myField.getText().trim();
               actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(text));
               if (myValidator instanceof InputValidatorEx) {

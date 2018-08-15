@@ -60,7 +60,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     this.sourceClass = sourceClass;
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateButtons();
       }
     };

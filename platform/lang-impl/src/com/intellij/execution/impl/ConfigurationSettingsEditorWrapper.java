@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
@@ -114,18 +113,20 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
       runManagerSettings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
-    } else {
+    }
+    else {
       settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
       settings.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
     }
   }
 
-  public void addBeforeLaunchStep(BeforeRunTask<?> task) {
+  public void addBeforeLaunchStep(@NotNull BeforeRunTask<?> task) {
     myBeforeRunStepsPanel.addTask(task);
   }
 
+  @NotNull
   public List<BeforeRunTask> getStepsBeforeLaunch() {
-    return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(true));
+    return myBeforeRunStepsPanel.getTasks(true);
   }
 
   @Override

@@ -124,7 +124,7 @@ public class SetPropertyDialog extends DialogWrapper {
       JTextField jTextField = (JTextField)editor;
       jTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           String name = getPropertyName();
           updatePropertyValue(name);
           getOKAction().setEnabled(name != null && !"".equals(name.trim()));

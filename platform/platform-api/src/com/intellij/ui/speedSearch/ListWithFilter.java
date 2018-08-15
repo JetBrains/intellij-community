@@ -115,7 +115,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
       // native mac "clear button" is not captured by SearchTextField.onFieldCleared
       mySearchField.addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (myInUpdate) return;
           if (mySearchField.getText().isEmpty()) {
             mySpeedSearch.reset();

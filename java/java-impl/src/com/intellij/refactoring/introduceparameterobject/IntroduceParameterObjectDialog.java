@@ -66,7 +66,7 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
     super(sourceMethod);
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateButtons();
       }
     };

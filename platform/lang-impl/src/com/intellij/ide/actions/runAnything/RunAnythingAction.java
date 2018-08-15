@@ -291,7 +291,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     //    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myIsUsedTrigger = true;
 
         final String pattern = editor.getText();
@@ -805,7 +805,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private void setHandleMatchedConfiguration() {
     myPopupField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
       }
     });

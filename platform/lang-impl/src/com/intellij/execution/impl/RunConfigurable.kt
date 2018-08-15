@@ -406,18 +406,18 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
   }
 
   private fun installUpdateListeners(info: SingleConfigurationConfigurable<RunConfiguration>) {
-    val changed = booleanArrayOf(false)
+    var changed = false
     info.editor.addSettingsEditorListener { editor ->
       update()
       val configuration = info.configuration
       if (configuration is LocatableConfiguration) {
-        if (configuration.isGeneratedName && !changed[0]) {
+        if (configuration.isGeneratedName && !changed) {
           try {
             val snapshot = editor.snapshot.configuration as LocatableConfiguration
             val generatedName = snapshot.suggestedName()
             if (generatedName != null && generatedName.isNotEmpty()) {
               info.nameText = generatedName
-              changed[0] = false
+              changed = false
             }
           }
           catch (ignore: ConfigurationException) {
@@ -429,13 +429,13 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     info.addNameListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        changed[0] = true
+        changed = true
         update()
       }
     })
 
     info.addSharedListener {
-      changed[0] = true
+      changed = true
       update()
     }
   }

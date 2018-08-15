@@ -470,7 +470,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       });
       myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           updateOkButton();
         }
       });

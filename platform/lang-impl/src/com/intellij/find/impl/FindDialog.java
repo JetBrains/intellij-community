@@ -285,7 +285,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
         final javax.swing.text.Document document = ((JTextComponent)editorComponent).getDocument();
         final DocumentAdapter documentAdapter = new DocumentAdapter() {
           @Override
-          protected void textChanged(javax.swing.event.DocumentEvent e) {
+          protected void textChanged(@NotNull javax.swing.event.DocumentEvent e) {
             handleAnyComboBoxValueChanged(comboBox);
           }
         };

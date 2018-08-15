@@ -89,7 +89,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     myFilterField = new SearchTextField();
     myFilterField.addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateThreadList();
       }
     });

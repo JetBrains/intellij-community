@@ -145,7 +145,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
     final DocumentListener docListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateButtons();
       }
     };

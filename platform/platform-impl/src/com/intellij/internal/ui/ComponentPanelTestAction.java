@@ -152,7 +152,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       ComponentPanel cp = ComponentPanel.getComponentPanel(text2);
       text1.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (cp != null) {
             cp.setCommentText(text1.getText());
           }
@@ -209,7 +209,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JTextField cellEditor = new JTextField();
       cellEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           Object op = ALLOWED_VALUES.contains(cellEditor.getText()) ? null : "error";
           cellEditor.putClientProperty("JComponent.outline", op);
         }

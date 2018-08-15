@@ -4179,7 +4179,7 @@ public class UIUtil {
 
   private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
     @Override
-    protected void textChanged(DocumentEvent e) {
+    protected void textChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
       if (document instanceof AbstractDocument) {
         StackTraceElement[] stackTrace = new Throwable().getStackTrace();

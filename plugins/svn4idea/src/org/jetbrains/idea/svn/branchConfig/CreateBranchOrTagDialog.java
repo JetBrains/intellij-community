@@ -98,7 +98,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
                                                myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateSwitchOnCreate();
         updateControls();
       }
@@ -111,7 +111,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateToURL();
       }
     });
@@ -156,7 +156,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateControls();
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateToURL();
       }
     });

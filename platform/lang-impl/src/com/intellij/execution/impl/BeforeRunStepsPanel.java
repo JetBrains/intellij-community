@@ -33,8 +33,8 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.execution.impl.RunManagerImplKt.getBeforeRunTasks;
 
@@ -223,6 +223,7 @@ class BeforeRunStepsPanel extends JPanel {
     myListener.titleChanged(sb.toString());
   }
 
+  @NotNull
   public List<BeforeRunTask> getTasks(boolean applyCurrentState) {
     if (applyCurrentState) {
       originalTasks.clear();

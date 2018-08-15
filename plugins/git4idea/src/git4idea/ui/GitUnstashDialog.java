@@ -93,7 +93,7 @@ public class GitUnstashDialog extends DialogWrapper {
     });
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateDialogState();
       }
     });

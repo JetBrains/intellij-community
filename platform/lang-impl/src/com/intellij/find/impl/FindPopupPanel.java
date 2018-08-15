@@ -386,7 +386,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       if (editorComponent instanceof JTextComponent) {
         ((JTextComponent)editorComponent).getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          protected void textChanged(DocumentEvent e) {
+          protected void textChanged(@NotNull DocumentEvent e) {
             onFileMaskChanged();
           }
         });
@@ -676,7 +676,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         mySearchComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
         myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
 

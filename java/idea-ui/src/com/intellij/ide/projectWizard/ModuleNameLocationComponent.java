@@ -87,7 +87,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
   public void bindModuleSettings(final NamePathComponent namePathComponent) {
     namePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myModuleNameChangedByUser) {
           setModuleName(namePathComponent.getNameValue());
         }
@@ -100,7 +100,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
 
     namePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myContentRootChangedByUser) {
           setModuleContentRoot(namePathComponent.getPath(), true);
         }
@@ -108,7 +108,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     });
     myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myUpdatePathsWhenNameIsChanged) {
           return;
         }
@@ -131,7 +131,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     });
     myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (myContentRootDocListenerEnabled) {
           myContentRootChangedByUser = true;
         }
@@ -155,7 +155,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
                                                  myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     myModuleFileLocation.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (myImlLocationDocListenerEnabled) {
           myImlLocationChangedByUser = true;
         }
@@ -163,7 +163,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     });
     namePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         if (!myImlLocationChangedByUser) {
           setImlFileLocation(namePathComponent.getPath());
         }

@@ -127,7 +127,7 @@ public class GitTagDialog extends DialogWrapper {
     fetchTags();
     myTagNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateFields();
       }
     });

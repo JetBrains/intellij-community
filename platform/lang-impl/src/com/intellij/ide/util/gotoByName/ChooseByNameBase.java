@@ -82,8 +82,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
@@ -539,7 +539,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         SelectionPolicy toSelect = currentChosenInfo != null && currentChosenInfo.hasSamePattern(ChooseByNameBase.this)
                                    ? PreserveSelection.INSTANCE : SelectMostRelevant.INSTANCE;
         rebuildList(toSelect, myRebuildDelay, ModalityState.current(), null);
