@@ -133,8 +133,8 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog): JDialogFixture(r
       pluginPathTextField.text = pluginPath
     }
 
-    fun install() = findAndClickButtonWhenEnabled(this, "OK")
+    fun clickOk() = findAndClickButtonWhenEnabled(this, "OK")
 
-    fun cancel() = findAndClickButtonWhenEnabled(this, "Cancel")
+    fun clickCancel() = findAndClickButtonWhenEnabled(this, "Cancel")
   }
 }

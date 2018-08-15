@@ -308,6 +308,11 @@ object GuiTestUtilKt {
     return result?.first
   }
 
+  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+    action()
+  }
+  catch (ignore: ComponentLookupException) { }
+
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
     try {
       com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntilGone(robot = guiTestCase.robot(),
