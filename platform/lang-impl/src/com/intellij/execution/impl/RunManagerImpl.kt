@@ -883,12 +883,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return result ?: emptyList()
   }
 
-  override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
-    return when (configuration) {
-      is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
-      else -> configuration.beforeRunTasks
-    }
-  }
+  override fun getBeforeRunTasks(configuration: RunConfiguration) = doGetBeforeRunTasks(configuration)
 
   fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
     if (settings.isShared == value) {
@@ -1030,9 +1025,13 @@ private inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(han
   }
 }
 
-fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
+internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
   return when (configuration) {
-    is WrappingRunConfiguration<*> -> getBeforeRunTasks(configuration.peer)
+    is WrappingRunConfiguration<*> -> doGetBeforeRunTasks(configuration.peer)
     else -> configuration.beforeRunTasks
   }
+}
+
+internal fun RunConfiguration.cloneBeforeRunTasks() {
+  beforeRunTasks = doGetBeforeRunTasks(this).mapSmart { it.clone() }
 }

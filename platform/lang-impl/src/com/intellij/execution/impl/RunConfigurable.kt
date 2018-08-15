@@ -1176,13 +1176,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       val configuration = selectedConfiguration!!
       try {
         val typeNode = selectedConfigurationTypeNode!!
-        val settings = configuration.createSnapshot()
-        val runTasksSnapshot = runManager.getBeforeRunTasks(settings.configuration)
-        val tasks = ArrayList<BeforeRunTask<*>>()
-        for (task in runTasksSnapshot) {
-          tasks.add(task.clone())
-        }
-        runManager.setBeforeRunTasks(settings.configuration, tasks)
+        val settings = configuration.createSnapshot(true)
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
         settings.name = copyName
         val factory = settings.factory
@@ -1620,7 +1614,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
 private fun canRunConfiguration(configuration: SingleConfigurationConfigurable<RunConfiguration>?, executor: Executor): Boolean {
   return try {
-    configuration != null && RunManagerImpl.canRunConfiguration(configuration.createSnapshot(), executor)
+    configuration != null && RunManagerImpl.canRunConfiguration(configuration.createSnapshot(false), executor)
   }
   catch (e: ConfigurationException) {
     false

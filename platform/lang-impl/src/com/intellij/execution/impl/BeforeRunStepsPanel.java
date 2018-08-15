@@ -36,8 +36,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.execution.impl.RunManagerImplKt.getBeforeRunTasks;
-
 /**
  * @author Vassiliy Kudryashov
  */
@@ -166,7 +164,7 @@ class BeforeRunStepsPanel extends JPanel {
     myRunConfiguration = settings.getConfiguration();
 
     originalTasks.clear();
-    originalTasks.addAll(getBeforeRunTasks(myRunConfiguration));
+    originalTasks.addAll(RunManagerImplKt.doGetBeforeRunTasks(myRunConfiguration));
     myModel.replaceAll(originalTasks);
     myShowSettingsBeforeRunCheckBox.setSelected(settings.isEditBeforeRun());
     myShowSettingsBeforeRunCheckBox.setEnabled(!isUnknown());

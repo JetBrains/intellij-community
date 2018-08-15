@@ -168,7 +168,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myLastValidationResult = null;
       RunnerAndConfigurationSettings snapshot = null;
       try {
-        snapshot = createSnapshot();
+        snapshot = createSnapshot(false);
         snapshot.setName(getNameText());
         snapshot.checkSettings(myExecutor);
         for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
@@ -286,9 +286,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @NotNull
-  public RunnerAndConfigurationSettings createSnapshot() throws ConfigurationException {
+  public RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
     snapshot.setSingleton(isSingleton());
+    if (cloneBeforeRunTasks) {
+      RunManagerImplKt.cloneBeforeRunTasks(snapshot.getConfiguration());
+    }
     return snapshot;
   }
 
