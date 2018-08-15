@@ -1099,22 +1099,6 @@ public class PluginManagerCore {
       String s = t.nextToken();
       IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s), PLUGIN_XML, false);
       if (ideaPluginDescriptor != null) {
-        // Android Studio: when adding the Kotlin plugin via -Dplugin.path, we're either running tests or running from within the IDE.
-        // In this case, the Android plugin and the platform are loaded in the same (default) UrlClassLoader, which we must also use.
-        if ("org.jetbrains.kotlin".equals(ideaPluginDescriptor.getPluginId().getIdString())) {
-          ideaPluginDescriptor.setUseCoreClassLoader(true);
-
-          try {
-            final ClassLoader loader = PluginManagerCore.class.getClassLoader();
-            final Method addUrlMethod = getAddUrlMethod(loader);
-            for (File aClassPath : ideaPluginDescriptor.getClassPath()) {
-              final File file = aClassPath.getCanonicalFile();
-              addUrlMethod.invoke(loader, file.toURI().toURL());
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
         result.add(ideaPluginDescriptor);
       }
     }
@@ -1141,6 +1125,28 @@ public class PluginManagerCore {
     loadDescriptorsFromProperty(result);
 
     loadDescriptorsFromClassPath(result, PluginManagerCore.class.getClassLoader(), fromSources ? progress : null);
+
+    // Android Studio: If running tests or running from within the IDE, the Android plugin and the platform are loaded in the same
+    // (default) UrlClassLoader, which we must also use when loading the Kotlin plugin.
+    if (application != null && application.isInternal()) {
+      for (IdeaPluginDescriptorImpl ideaPluginDescriptor : result) {
+        if ("org.jetbrains.kotlin".equals(ideaPluginDescriptor.getPluginId().getIdString())) {
+          ideaPluginDescriptor.setUseCoreClassLoader(true);
+
+          try {
+            final ClassLoader loader = PluginManagerCore.class.getClassLoader();
+            final Method addUrlMethod = getAddUrlMethod(loader);
+            for (File aClassPath : ideaPluginDescriptor.getClassPath()) {
+              final File file = aClassPath.getCanonicalFile();
+              addUrlMethod.invoke(loader, file.toURI().toURL());
+            }
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      }
+    }
 
     return topoSortPlugins(result, errors);
   }
