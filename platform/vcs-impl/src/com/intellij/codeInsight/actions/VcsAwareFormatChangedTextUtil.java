@@ -72,7 +72,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            @NotNull Change[] changes,
-                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+                                                           @NotNull Convertor<? super VirtualFile, ? extends List<T>> elementsConvertor) {
     List<T> result = ContainerUtil.newSmartList();
     for (Change change : changes) {
       if (change.getType() == Change.Type.DELETED) continue;
