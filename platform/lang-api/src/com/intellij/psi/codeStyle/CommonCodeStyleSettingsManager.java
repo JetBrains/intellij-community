@@ -201,7 +201,12 @@ class CommonCodeStyleSettingsManager {
       return null;
     }
     else {
-      return defaultSettingsRef.get();
+      CommonCodeStyleSettings defaultSettings = defaultSettingsRef.get();
+      if (defaultSettings instanceof CodeStyleSettings) {
+        LOG.error(
+          provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings");
+      }
+      return defaultSettings;
     }
   }
 
