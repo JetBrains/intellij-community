@@ -50,7 +50,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (myOrigin instanceof ActionGroup) {
-      return ((ActionGroup)myOrigin).getChildren(wrapEvent(e));
+      return ((ActionGroup)myOrigin).getChildren(e == null ? null : wrapEvent(e));
     }
     return AnAction.EMPTY_ARRAY;
   }
@@ -85,11 +85,8 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myOrigin.update(wrapEvent(e));
   }
 
-  @Nullable
-  private AnActionEvent wrapEvent(@Nullable AnActionEvent e) {
-    if (e == null) {
-      return null;
-    }
+  @NotNull
+  private AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
     DataContext dataContext = wrapContext(e.getDataContext());
     return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
   }
