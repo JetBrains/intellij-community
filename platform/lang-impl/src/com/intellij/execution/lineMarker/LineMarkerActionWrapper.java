@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.lineMarker;
 
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.ide.DataManager;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class LineMarkerActionWrapper extends ActionGroup {
+public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction {
   public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final PsiElement myElement;
@@ -106,6 +107,12 @@ public class LineMarkerActionWrapper extends ActionGroup {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     myOrigin.actionPerformed(wrapEvent(e));
+  }
+
+  @NotNull
+  @Override
+  public Priority getPriority() {
+    return Priority.HIGH;
   }
 
   private class MyDataContext extends UserDataHolderBase implements DataContext {
