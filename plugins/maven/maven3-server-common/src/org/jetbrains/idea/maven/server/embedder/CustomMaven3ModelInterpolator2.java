@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
