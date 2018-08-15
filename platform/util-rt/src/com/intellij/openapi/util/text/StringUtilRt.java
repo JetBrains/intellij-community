@@ -341,10 +341,10 @@ public class StringUtilRt {
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
     if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
     if (fileSize == 0) return '0' + unitSeparator + 'B';
-    int rank = (int)(Math.log10(fileSize) / 3);
+    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
-    return new DecimalFormat("#,##0.##").format(value) + unitSeparator + units[rank];
+    return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
   }
 
   @Contract(pure = true)
