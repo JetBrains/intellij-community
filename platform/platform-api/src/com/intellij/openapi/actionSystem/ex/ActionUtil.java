@@ -105,8 +105,9 @@ public class ActionUtil {
    * Calculates time spent for update,
    * remember average time (with exponential smoothing) and caches update results inside action.getTemplatePresentation().getClientProperty(ACTION_UPDATE_DATA),
    * if average time is quite big then skip update invocation and use cached presentation.
+   * @param forceUseCached use cached results for slow actions if presented (relax time doesn't take into account)
    */
-  public static void performFastUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent event) {
+  public static void performFastUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent event, boolean forceUseCached) {
     final Presentation templatePresentation = action.getTemplatePresentation();
     ActionUpdateData ud = (ActionUpdateData)templatePresentation.getClientProperty(ACTION_UPDATE_DATA);
     if (ud == null)
@@ -115,7 +116,7 @@ public class ActionUtil {
     final boolean isSlow = ud.averageUpdateDurationMs > 10;// empiric val: 10 ms
     final long startTimeNs = System.nanoTime();
     final long relaxMs = Math.min(ud.averageUpdateDurationMs*100, 10000); // empiric vals: min 1 sec, max 10 sec
-    if (isSlow && ud.lastUpdateEvent != null && (startTimeNs - ud.lastUpdateTimeNs)/1000000l < relaxMs) {
+    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs)/1000000l < relaxMs)) {
       // System.out.println("use cached presentation for action '" + String.valueOf(action) + "', averageUpdateDuration=" + ud.averageUpdateDurationMs + " ms, " + (startTimeNs - ud.lastUpdateTimeNs)/1000000l + " ms elapsed from last update");
       event.getPresentation().copyFrom(ud.lastUpdateEvent.getPresentation());
       return;
