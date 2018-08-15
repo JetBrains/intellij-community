@@ -56,8 +56,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
     ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
-  private final IntObjectMap<VirtualFileSystemEntry>
-    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
 
   // FS roots must be in this map too. findFileById() relies on this.
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
@@ -1018,7 +1016,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
 
       myRoots.put(rootUrl, newRoot);
-      myRootsById.put(rootId, newRoot);
       myIdToDirCache.put(rootId, newRoot);
     }
 
@@ -1043,11 +1040,13 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   @Override
   public void clearIdCache() {
-    // remove all except myRootsById contents
-    int[] ids = myIdToDirCache.keys();
-    for (int id : ids) {
-      if (!myRootsById.containsKey(id)) {
-        myIdToDirCache.remove(id);
+    // remove all except roots
+    for (IntObjectMap.Entry<VirtualFileSystemEntry> e : myIdToDirCache.entries()) {
+      // leave root in the map
+      VirtualFileSystemEntry dir = e.getValue();
+      if (dir.getParent() != null) {
+        int id = e.getKey();
+        myIdToDirCache.remove(id, dir);
       }
     }
   }
@@ -1207,7 +1206,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       String rootUrl = normalizeRootUrl(file.getPath(), (NewVirtualFileSystem)file.getFileSystem());
       synchronized (myRoots) {
         myRoots.remove(rootUrl);
-        myRootsById.remove(id);
         myIdToDirCache.remove(id);
         FSRecords.deleteRootRecord(id);
       }
