@@ -51,6 +51,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final HashSet<PsiElement> myUnusedElements;
   private final HashSet<PsiElement> myUsedElements;
 
+  private final HashSet<PyAnnotationOwner> myUnusedTypeDeclarations;
+  private final HashSet<PyAnnotationOwner> myUsedTypeDeclarations;
+
   public PyUnusedLocalInspectionVisitor(@NotNull ProblemsHolder holder,
                                         @NotNull LocalInspectionToolSession session,
                                         boolean ignoreTupleUnpacking,
@@ -64,6 +67,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     myIgnoreVariablesStartingWithUnderscore = ignoreVariablesStartingWithUnderscore;
     myUnusedElements = new HashSet<>();
     myUsedElements = new HashSet<>();
+    myUnusedTypeDeclarations = new HashSet<>();
+    myUsedTypeDeclarations = new HashSet<>();
   }
 
   @Override
@@ -90,7 +95,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     if (!(owner instanceof PyClass) && !callsLocals(owner)) {
       collectAllWrites(owner);
     }
-    collectUsedReads(owner);
+    filterOutUsedWrites(owner);
+    filterOutUsedTypeDeclarations(owner);
   }
 
   @Override
@@ -170,6 +176,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (parameterInMethodWithFixedSignature(owner, element)) {
           continue;
         }
+        if (element instanceof PyAnnotationOwner && ((PyAnnotationOwner)element).getAnnotation() != null) {
+          myUnusedTypeDeclarations.add((PyAnnotationOwner)element);
+        }
         if (!myUsedElements.contains(element)) {
           myUnusedElements.add(element);
         }
@@ -192,7 +201,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void collectUsedReads(final ScopeOwner owner) {
+  private void filterOutUsedWrites(final ScopeOwner owner) {
     final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
@@ -258,6 +267,75 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (instElement != null && PsiTreeUtil.isAncestor(owner, instElement, false)) {
             myUsedElements.add(instElement);
             myUnusedElements.remove(instElement);
+          }
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+      }
+      return ControlFlowUtil.Operation.NEXT;
+    });
+  }
+
+  private void filterOutUsedTypeDeclarations(final ScopeOwner owner) {
+    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
+    for (int i = 0; i < instructions.length; i++) {
+      final ReadWriteInstruction readWriteInstruction = as(instructions[i], ReadWriteInstruction.class);
+      if (readWriteInstruction != null) {
+        if (!readWriteInstruction.getAccess().isWriteAccess()) {
+          continue;
+        }
+        final String name = readWriteInstruction.getName();
+        if (name == null) {
+          continue;
+        }
+        final PsiElement element = readWriteInstruction.getElement();
+        // Ignore elements out of scope
+        if (element == null || !PsiTreeUtil.isAncestor(owner, element, false)) {
+          continue;
+        }
+        if (element instanceof PyTypeCommentOwner && ((PyTypeCommentOwner)element).getTypeComment() != null ||
+            element instanceof PyAnnotationOwner && ((PyAnnotationOwner)element).getAnnotation() != null) {
+          continue;
+        }
+
+        final int startInstruction;
+        final PyAugAssignmentStatement augAssignmentStatement = PyAugAssignmentStatementNavigator.getStatementByTarget(element);
+        if (augAssignmentStatement != null) {
+          startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, augAssignmentStatement);
+        }
+        else {
+          startInstruction = i;
+        }
+        analyzeUntypedWritesInScope(name, owner, instructions, startInstruction, as(element, PyReferenceExpression.class));
+      }
+    }
+  }
+
+  private void analyzeUntypedWritesInScope(@NotNull String name,
+                                           @NotNull ScopeOwner owner,
+                                           @NotNull Instruction[] instructions,
+                                           int startInstruction,
+                                           @Nullable PsiElement scopeAnchor) {
+    // Check if the element is declared out of scope, mark all out of scope write accesses as used
+    if (scopeAnchor != null) {
+      final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(scopeAnchor, name);
+      if (declOwner != null && declOwner != owner) {
+        final Collection<PsiElement> writeElements = ScopeUtil.getElementsOfAccessType(name, declOwner, ReadWriteInstruction.ACCESS.WRITE);
+        for (PsiElement e : writeElements) {
+          myUsedElements.add(e);
+          myUnusedElements.remove(e);
+        }
+      }
+    }
+    ControlFlowUtil.iteratePrev(startInstruction, instructions, inst -> {
+      if (inst instanceof ReadWriteInstruction && inst.num() != startInstruction) {
+        final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
+        if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
+          final PsiElement instElement = rwInstruction.getElement();
+          if (instElement != null && PsiTreeUtil.isAncestor(owner, instElement, false)) {
+            if (instElement instanceof PyAnnotationOwner && ((PyAnnotationOwner)instElement).getAnnotation() != null) {
+              myUsedTypeDeclarations.add((PyAnnotationOwner)instElement);
+              myUnusedTypeDeclarations.remove(instElement);
+            }
           }
           return ControlFlowUtil.Operation.CONTINUE;
         }
@@ -373,6 +451,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
+          // Don't report assignments that also serve as a source of a type hint
+          if (element instanceof PyAnnotationOwner && myUsedTypeDeclarations.contains(element)) {
+            continue;
+          }
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
             continue;
           }
@@ -384,7 +466,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             }
           }
           else if (!myIgnoreVariablesStartingWithUnderscore || !name.startsWith(PyNames.UNDERSCORE)) {
-            registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name), new PyRemoveStatementQuickFix());
+            final String message;
+            if (element.getParent() instanceof PyTypeDeclarationStatement) {
+              message = PyBundle.message("INSP.unused.locals.type.declaration.isnot.used", name);
+            }
+            else {
+              message = PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name);
+            }
+            registerWarning(element, message, new PyRemoveStatementQuickFix());
           }
         }
       }

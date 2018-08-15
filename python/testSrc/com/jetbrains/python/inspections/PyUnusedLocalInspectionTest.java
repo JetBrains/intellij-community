@@ -166,6 +166,31 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-22204
+  public void testUsedTypeDeclarationWithoutAssignment() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22204
+  public void testUsedTypeDeclarationWithAssignment() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22204
+  public void testTypeDeclarationRedundantByTypeComment() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22204
+  public void testTypeDeclarationRedundantByAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22204
+  public void testTypeDeclarationRedundantByAnotherTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
