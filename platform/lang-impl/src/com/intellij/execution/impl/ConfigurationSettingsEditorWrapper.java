@@ -14,6 +14,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HideableDecorator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,21 +94,29 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   @Override
   public void applyEditorTo(@NotNull final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
-    doApply(settings);
+    doApply(settings, false);
   }
 
   @NotNull
   @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings result = myEditor.getSnapshot();
-    doApply(result);
+    doApply(result, true);
     return result;
   }
 
-  private void doApply(@NotNull RunnerAndConfigurationSettings settings) {
+  private void doApply(@NotNull RunnerAndConfigurationSettings settings, boolean isSnapshot) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = ((RunnerAndConfigurationSettingsImpl)settings).getManager();
-    runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true));
+
+    List<BeforeRunTask<?>> tasks = ContainerUtil.copyList(myBeforeRunStepsPanel.getTasks());
+    if (isSnapshot) {
+      runConfiguration.setBeforeRunTasks(tasks);
+    }
+    else {
+      runManager.setBeforeRunTasks(runConfiguration, tasks);
+    }
+
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
@@ -123,9 +132,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myBeforeRunStepsPanel.addTask(task);
   }
 
+  /**
+   * You MUST NOT modify tasks in the returned list.
+   */
   @NotNull
-  public List<BeforeRunTask> getStepsBeforeLaunch() {
-    return myBeforeRunStepsPanel.getTasks(true);
+  public List<BeforeRunTask<?>> getStepsBeforeLaunch() {
+    return myBeforeRunStepsPanel.getTasks();
   }
 
   @Override

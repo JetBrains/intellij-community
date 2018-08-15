@@ -50,6 +50,8 @@ class BeforeRunStepsPanel extends JPanel {
   private final StepsBeforeRunListener myListener;
   private final JPanel myPanel;
 
+  private final Set<BeforeRunTask<?>> clonedTasks = new THashSet<>();
+
   BeforeRunStepsPanel(@NotNull StepsBeforeRunListener listener) {
     myListener = listener;
     myModel = new CollectionListModel<>();
@@ -89,10 +91,15 @@ class BeforeRunStepsPanel extends JPanel {
         }
 
         BeforeRunTask<?> task = selection.getTask();
+        if (!clonedTasks.contains(task)) {
+          task = task.clone();
+          clonedTasks.add(task);
+          myModel.setElementAt(task, selection.getIndex());
+        }
+
         selection.getProvider().configureTask(button.getDataContext(), myRunConfiguration, task)
           .onSuccess(changed -> {
             if (changed) {
-              myModel.setElementAt(task, selection.getIndex());
               updateText();
             }
           });
@@ -162,6 +169,8 @@ class BeforeRunStepsPanel extends JPanel {
   }
 
   void doReset(@NotNull RunnerAndConfigurationSettings settings) {
+    clonedTasks.clear();
+
     myRunConfiguration = settings.getConfiguration();
 
     originalTasks.clear();
@@ -224,12 +233,9 @@ class BeforeRunStepsPanel extends JPanel {
   }
 
   @NotNull
-  public List<BeforeRunTask> getTasks(boolean applyCurrentState) {
-    if (applyCurrentState) {
-      originalTasks.clear();
-      originalTasks.addAll(myModel.getItems());
-    }
-    return Collections.unmodifiableList(originalTasks);
+  public List<BeforeRunTask<?>> getTasks() {
+    List<BeforeRunTask<?>> items = myModel.getItems();
+    return items.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(items);
   }
 
   public boolean needEditBeforeRun() {
