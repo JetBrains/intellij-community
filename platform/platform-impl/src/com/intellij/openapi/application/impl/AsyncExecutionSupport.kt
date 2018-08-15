@@ -112,10 +112,10 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
 
   /** @see SimpleContextConstraint */
   internal class SimpleConstraintDispatcher(delegate: CoroutineDispatcher,
-                                            constraint: SimpleContextConstraint) : ChainedConstraintDispatcher(delegate),
-                                                                                   SimpleContextConstraint by constraint {
+                                            private val constraint: SimpleContextConstraint) : ChainedConstraintDispatcher(delegate),
+                                                                                               SimpleContextConstraint by constraint {
     override fun doConstraintSchedule(context: CoroutineContext, block: Runnable) = schedule(block)
-    override fun toString() = super.toString()
+    override fun toString() = constraint.toString()
   }
 
   /** @see ExpirableContextConstraint */
@@ -173,7 +173,7 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
       }
     }
 
-    override fun toString() = "${expirable}@${super.toString()}"
+    override fun toString() = "$constraint : $expirable"
   }
 
   private class RescheduleAttemptLimitAwareDispatcher(delegate: CoroutineDispatcher,
@@ -234,9 +234,9 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
     : CancellationException("Already disposed: $disposable")
 
   companion object {
-    private val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
+    internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
 
-    private class RunOnce : (() -> Unit) -> Unit {
+    internal class RunOnce : (() -> Unit) -> Unit {
       private val hasNotRunYet = AtomicBoolean(true)
       override operator fun invoke(block: () -> Unit) {
         if (hasNotRunYet.compareAndSet(true, false)) block()
@@ -245,15 +245,14 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
       fun runnable(block: () -> Unit) = Runnable { block() }
     }
 
-    private operator fun <T> Set<T>.plus(element: T): Set<T> = if (element in this) this else this.plusElement(element)
-
     private val CoroutineDispatcher.chainFallbackDispatcher: CoroutineDispatcher
       get() = (this as? DelegateDispatcher)?.chainFallbackDispatcher ?: this
 
     private val DelegateDispatcher.chainFallbackDispatcher: CoroutineDispatcher
       get() = if (isChainFallback) this else delegate.chainFallbackDispatcher
 
-    private fun CoroutineDispatcher.dispatchIfNeededOrInvoke(context: CoroutineContext, block: () -> Unit) {
+    internal inline fun CoroutineDispatcher.dispatchIfNeededOrInvoke(context: CoroutineContext,
+                                                                     crossinline block: () -> Unit) {
       if (isDispatchNeeded(context)) {
         dispatch(context, Runnable { block() })
       }
@@ -262,7 +261,7 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
       }
     }
 
-    private fun CoroutineDispatcher.fallbackDispatch(context: CoroutineContext, block: () -> Unit) {
+    internal fun CoroutineDispatcher.fallbackDispatch(context: CoroutineContext, block: () -> Unit) {
       val primaryDispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
       val fallbackDispatcher = primaryDispatcher?.chainFallbackDispatcher ?: this.chainFallbackDispatcher
 
@@ -302,7 +301,7 @@ internal abstract class AsyncExecutionSupport : AsyncExecution {
       return child
     }
 
-    private fun Disposable.cancelJobOnDisposal(job: Job, onceCancelledBlock: () -> Unit = {}) {
+    internal fun Disposable.cancelJobOnDisposal(job: Job, onceCancelledBlock: () -> Unit = {}) {
       val debugTraceThrowable = Throwable()
       registerOrInvokeJobDisposable(job) {
         if (!job.isCancelled && !job.isCompleted) {
