@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.codeInspection.ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
-
 public class JavaDocReferenceInspection extends LocalInspectionTool {
   private static final String SHORT_NAME = "JavadocReference";
 
@@ -41,15 +39,15 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("<html>Report inaccessible symbols<br>(javadoc tool maybe unable to create hyperlink)", this, "REPORT_INACCESSIBLE");
+    return new SingleCheckboxOptionsPanel("<html>Report inaccessible symbols<br>(javadoc tool may be unable to create hyperlink)", this, "REPORT_INACCESSIBLE");
   }
 
-  protected LocalQuickFix createAddQualifierFix(PsiJavaCodeReferenceElement reference) {
+  private static LocalQuickFix createAddQualifierFix(PsiJavaCodeReferenceElement reference) {
     List<PsiClass> classesToImport = new ImportClassFix(reference).getClassesToImport();
     return classesToImport.isEmpty() ? null : new AddQualifierFix(classesToImport);
   }
 
-  protected RenameReferenceQuickFix createRenameReferenceQuickFix(Set<String> unboundParams) {
+  private static RenameReferenceQuickFix createRenameReferenceQuickFix(Set<String> unboundParams) {
     return new RenameReferenceQuickFix(unboundParams);
   }
 
@@ -87,7 +85,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (info != null && info.isInline()) {
       String message = info.checkTagValue(value);
       if (message != null) {
-        holder.registerProblem(holder.getManager().createProblemDescriptor(value, message, isOnTheFly, null, LIKE_UNKNOWN_SYMBOL));
+        holder.registerProblem(holder.getManager().createProblemDescriptor(value, message, isOnTheFly, null,
+                                                                           ProblemHighlightType.LIKE_UNKNOWN_SYMBOL));
       }
     }
 
@@ -100,7 +99,6 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     PsiDocTagValue valueElement = tag.getValueElement();
     if (valueElement == null) return;
     CharSequence paramName = value.getContainingFile().getViewProvider().getContents().subSequence(textOffset, value.getTextRange().getEndOffset());
-    String params = "<code>" + paramName + "</code>";
 
     String message = getResolveErrorMessage(element, context, paramName);
     if (message == null) {
@@ -128,7 +126,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     fixes.add(new RemoveTagFix(tagName, paramName));
 
     holder.registerProblem(holder.getManager().createProblemDescriptor(valueElement, reference.getRangeInElement(), message,
-                                              LIKE_UNKNOWN_SYMBOL, isOnTheFly, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
+                                                                       ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
   }
 
   @Override
@@ -214,7 +212,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
           PsiElement element = referenceNameElement != null ? referenceNameElement : reference;
 
           LocalQuickFix fix = isOnTheFly ? createAddQualifierFix(reference) : null;
-          holder.registerProblem(holder.getManager().createProblemDescriptor(element, message, fix, LIKE_UNKNOWN_SYMBOL, isOnTheFly));
+          holder.registerProblem(holder.getManager().createProblemDescriptor(element, message, fix,
+                                                                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly));
         }
       }
 
@@ -245,7 +244,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   private static class RenameReferenceQuickFix implements LocalQuickFix {
     private final Set<String> myUnboundParams;
 
-    public RenameReferenceQuickFix(Set<String> unboundParams) {
+    RenameReferenceQuickFix(Set<String> unboundParams) {
       myUnboundParams = unboundParams;
     }
 
@@ -281,7 +280,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   private static class AddQualifierFix implements LocalQuickFix {
     private final List<? extends PsiClass> originalClasses;
 
-    public AddQualifierFix(final List<? extends PsiClass> originalClasses) {
+    AddQualifierFix(final List<? extends PsiClass> originalClasses) {
       this.originalClasses = originalClasses;
     }
 
@@ -307,7 +306,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
           JBPopupFactory.getInstance()
             .createPopupChooserBuilder(originalClasses)
             .setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title"))
-            .setItemChosenCallback((psiClass) -> {
+            .setItemChosenCallback(psiClass -> {
               if (!element.isValid()) return;
               WriteCommandAction.writeCommandAction(project, element.getContainingFile()).run(() -> {
                 if (psiClass.isValid()) {
@@ -327,7 +326,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     private final String myTagName;
     private final CharSequence myParamName;
 
-    public RemoveTagFix(String tagName, CharSequence paramName) {
+    RemoveTagFix(String tagName, CharSequence paramName) {
       myTagName = tagName;
       myParamName = paramName;
     }
