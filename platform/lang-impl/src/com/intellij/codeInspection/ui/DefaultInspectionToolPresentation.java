@@ -514,7 +514,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       @NotNull
       @Override
       protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
-        return CommonProblemDescriptor[]::new;
+        return CommonProblemDescriptor.ARRAY_FACTORY;
       }
     };
   }
