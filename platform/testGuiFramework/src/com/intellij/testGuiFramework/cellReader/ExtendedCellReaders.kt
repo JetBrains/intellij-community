@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.cellReader
 
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithBFS
+import com.intellij.ui.MultilineTreeCellRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import org.fest.swing.cell.JComboBoxCellReader
@@ -95,6 +96,7 @@ private fun getValueWithCellRenderer(cellRendererComponent: Component): String? 
   val result = when (cellRendererComponent) {
     is JLabel -> cellRendererComponent.text
     is SimpleColoredComponent -> cellRendererComponent.getText()
+    is MultilineTreeCellRenderer -> cellRendererComponent.text
     else -> cellRendererComponent.findText()
   }
   return result?.trimEnd()
