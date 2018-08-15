@@ -143,8 +143,8 @@ object GuiTestUtilKt {
     }
   }
 
-  fun findComponentByText(robot: Robot, container: Container, text: String): Component {
-    return withPauseWhenNull {
+  private fun findComponentByText(robot: Robot, container: Container, text: String, timeout: Timeout = Timeouts.seconds30): Component {
+    return withPauseWhenNull(timeout = timeout) {
       robot.finder().findAll(container, ComponentMatcher { component ->
         component!!.isShowing && component.isTextComponent() && component.getComponentText() == text
       }).firstOrNull()
@@ -156,7 +156,7 @@ object GuiTestUtilKt {
                                                     text: String,
                                                     componentType: Class<BoundedComponent>,
                                                     timeout: Timeout = Timeouts.seconds30): BoundedComponent {
-    val componentWithText = findComponentByText(robot, container, text)
+    val componentWithText = findComponentByText(robot, container, text, timeout)
     if (componentWithText is JLabel && componentWithText.labelFor != null) {
       val labeledComponent = componentWithText.labelFor
       if (componentType.isInstance(labeledComponent)) return labeledComponent as BoundedComponent
