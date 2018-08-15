@@ -81,7 +81,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
-        for (VisiblePackChangeListener listener: myVisiblePackChangeListeners) {
+        for (VisiblePackChangeListener listener : myVisiblePackChangeListeners) {
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
@@ -143,6 +143,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   @Override
   public boolean isValid() {
     return myState.isValid();
+  }
+
+  @Override
+  public String toString() {
+    return "VisiblePackRefresher \'" + myLogId + "\' state = " + myState;
   }
 
   @Override
