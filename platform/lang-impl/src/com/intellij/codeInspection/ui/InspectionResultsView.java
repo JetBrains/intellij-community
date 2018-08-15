@@ -232,6 +232,20 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private OccurenceNavigatorSupport initOccurenceNavigator() {
     return new OccurenceNavigatorSupport(myTree) {
       @Override
+      protected boolean isOccurrenceNode(@NotNull DefaultMutableTreeNode node) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded()) {
+          return false;
+        }
+        if (node instanceof RefElementNode) {
+          final RefElementNode refNode = (RefElementNode)node;
+          if (refNode.hasDescriptorsUnder()) return false;
+          final RefEntity element = refNode.getElement();
+          return element != null && element.isValid();
+        }
+        return node instanceof ProblemDescriptionNode;
+      }
+
+      @Override
       @Nullable
       protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
         if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded()) {

@@ -2147,8 +2147,8 @@ public class UsageViewImpl implements UsageViewEx {
     UsageNode usageNode = myUsageNodes.get(toDelete);
     if (usageNode == null) return null;
 
-    DefaultMutableTreeNode node = myRootPanel.mySupport.findNode(myTree, usageNode, true, null);
-    if (node == null) node = myRootPanel.mySupport.findNode(myTree, usageNode, false, null); // last node
+    DefaultMutableTreeNode node = myRootPanel.mySupport.findNextNodeAfter(myTree, usageNode, true);
+    if (node == null) node = myRootPanel.mySupport.findNextNodeAfter(myTree, usageNode, false); // last node
 
     return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
   }
