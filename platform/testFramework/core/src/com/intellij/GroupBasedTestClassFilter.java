@@ -45,7 +45,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   private final List<Group> myGroups = ContainerUtil.newSmartList();
   private final Set<String> myTestGroupNames;
 
-  public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
+  public GroupBasedTestClassFilter(MultiMap<String, String> filters, Collection<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
     myTestGroupNames = ContainerUtil.newTroveSet(testGroupNames);
 
@@ -145,8 +145,17 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   @Override
   public boolean matches(String className, String moduleName) {
-    if (myGroups.stream().filter(g -> myTestGroupNames.contains(g.name)).anyMatch(g -> g.matches(className))) return true;
-    return containsAllExcludeDefinedGroup(myTestGroupNames) && myGroups.stream().noneMatch(g -> g.matches(className));
+    return matchGroup(className) != null;
+  }
+
+  public String matchGroup(String className) {
+    return myGroups.stream()
+      .filter(g -> myTestGroupNames.contains(g.name))
+      .filter(g -> g.matches(className))
+      .findFirst().map(g -> g.name)
+      .orElseGet(() -> containsAllExcludeDefinedGroup(myTestGroupNames) &&
+                       myGroups.stream().noneMatch(g -> g.matches(className))
+                       ? ALL_EXCLUDE_DEFINED : null);
   }
 
   private static boolean containsAllExcludeDefinedGroup(Set<String> groupNames) {
@@ -163,7 +172,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
       this.excluded = excluded;
       this.included = included;
     }
-    
+
     private boolean matches(String className) {
       return !matchesAnyPattern(excluded, className) && matchesAnyPattern(included, className);
     }
