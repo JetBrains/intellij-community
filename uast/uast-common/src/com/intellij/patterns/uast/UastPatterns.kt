@@ -10,6 +10,7 @@ import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.*
@@ -52,6 +53,9 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex, callExpression().constructor(classFQN))
 
+  fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
+    callParameter(parameterIndex, callExpression().withResolvedMethod(methodPattern))
+
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
 
@@ -61,6 +65,10 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
     filter { (it.receiverType as? PsiClassType)?.resolve()?.let { classPattern.accepts(it) } ?: false }
 
   fun withMethodName(methodName : String): UCallExpressionPattern = withMethodName(string().equalTo(methodName))
+
+  fun withResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = filter {
+    it.resolve()?.let { method.accepts(it) } ?: false
+  }
 
   fun withMethodName(namePattern: ElementPattern<String>): UCallExpressionPattern = filter { it.methodName?.let { namePattern.accepts(it) } ?: false }
 
