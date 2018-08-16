@@ -2,15 +2,16 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Test;
 
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -21,55 +22,54 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
 
   public static final String MORE_ITEM = "...MORE";
 
-  public void testWithoutCollisions() {
-    Collection<SearchEverywhereContributor<?>> contributors = Arrays.asList(
-      createTestContributor("test1", "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", 
-                            "item1_9", "item1_10", "item1_11", "item1_12", "item1_13", "item1_14", "item1_15"),
-      createTestContributor("test2", "item2_1", "item2_2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8",
-                            "item2_9", "item2_10", "item2_11", "item2_12"),
-      createTestContributor("test3", "item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8"),
-      createTestContributor("test4", "item4_1", "item4_2", "item4_3", "item4_4", "item4_5", "item4_6", "item4_7", "item4_8",
-                            "item4_9", "item4_10", "item4_11", "item4_12", "item4_13"),
-      createTestContributor("test5"),
-      createTestContributor("test6", "item6_1", "item6_2", "item6_3", "item6_4", "item6_5", "item6_6", "item6_7", "item6_8",
-                            "item6_9", "item6_10", "item6_11", "item6_12", "item6_13"),
-      createTestContributor("test7", "item7_1", "item7_2", "item7_3", "item7_4", "item7_5", "item7_6", "item7_7", "item7_8",
-                            "item7_9", "item7_10"),
-      createTestContributor("test8", "item8_1", "item8_2", "item8_3", "item8_4", "item8_5")
-    );
-
+  public void testScenarios() {
+    Collection<Scenario> scenarios = createScenarios();
     SearchResultsCollector collector = new SearchResultsCollector();
     MultithreadSearcher searcher = new MultithreadSearcher(collector);
-    searcher.search(contributors, null, false, ignrd -> null, 10);
 
-    try {
+    scenarios.forEach(scenario -> {
+      searcher.search(scenario.contributorsAndLimits.keySet(), null, false, ignrd -> null, 10);
       collector.awaitFinish();
-      checkResult(collector, "test1", 10, true);
-      checkResult(collector, "test2", 10, true);
-      checkResult(collector, "test3", 8, false);
-      checkResult(collector, "test4", 10, true);
-      checkResult(collector, "test5", 0, false);
-      checkResult(collector, "test6", 10, true);
-      checkResult(collector, "test7", 10, false);
-      checkResult(collector, "test8", 5, false);
-    }
-    catch (InterruptedException e) {
-      Assert.fail("Thread was unexpectedly interrupted");
-    }
+      scenario.results.forEach((contributorId, results) -> {
+        List<String> values = collector.getContributorValues(contributorId);
+        Assert.assertEquals(String.format("Scenario '%s'. found elements by contributor %s", scenario.description, contributorId), results, values);
+      });
+      collector.clear();
+    });
   }
 
-  private static void checkResult(SearchResultsCollector collector, String contributorId, int expectedElements, boolean moreItemExpected) {
-    List<String> values = collector.getContributorValues(contributorId);
-    if (moreItemExpected) {
-      expectedElements += 1;
-    }
+  private static Collection<Scenario> createScenarios() {
+    Collection<Scenario> res = new ArrayList<>();
 
-    Assert.assertEquals("found elements in contributor " + contributorId, expectedElements, values.size());
-    if (moreItemExpected) {
-      Assert.assertEquals("'MORE' item in results for contributor " + contributorId, MORE_ITEM, values.get(values.size() - 1));
-    } else {
-      Assert.assertFalse("no 'MORE' item in results for contributor " + contributorId, values.contains(MORE_ITEM));
-    }
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    String scenarioName = "Simple without collisions";
+    Map<SearchEverywhereContributor<?>, Integer> contributors = ContainerUtil.newHashMap(
+      Pair.create(
+        createTestContributor("test1", "item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", "item1_11", "item1_12", "item1_13", "item1_14", "item1_15"), 10),
+      Pair.create(createTestContributor("test2", "item2_1", "item2_2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", "item2_9", "item2_10", "item2_11", "item2_12"), 10),
+      Pair.create(createTestContributor("test3", "item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8"), 10),
+      Pair.create(createTestContributor("test4", "item4_1", "item4_2", "item4_3", "item4_4", "item4_5", "item4_6", "item4_7", "item4_8", "item4_9", "item4_10", "item4_11", "item4_12", "item4_13"), 10),
+      Pair.create(createTestContributor("test5"), 10),
+      Pair.create(createTestContributor("test6", "item6_1", "item6_2", "item6_3", "item6_4", "item6_5", "item6_6", "item6_7", "item6_8", "item6_9", "item6_10", "item6_11", "item6_12", "item6_13"), 10),
+      Pair.create(createTestContributor("test7", "item7_1", "item7_2", "item7_3", "item7_4", "item7_5", "item7_6", "item7_7", "item7_8", "item7_9", "item7_10"), 10),
+      Pair.create(createTestContributor("test8", "item8_1", "item8_2", "item8_3", "item8_4", "item8_5"), 10)
+    );
+
+    Map<String, List<String>> results = ContainerUtil.newHashMap(
+      Pair.create("test1", Arrays.asList("item1_1", "item1_2", "item1_3", "item1_4", "item1_5", "item1_6", "item1_7", "item1_8", "item1_9", "item1_10", MORE_ITEM)),
+      Pair.create("test2", Arrays.asList("item2_1", "item2_2", "item2_3", "item2_4", "item2_5", "item2_6", "item2_7", "item2_8", "item2_9", "item2_10", MORE_ITEM)),
+      Pair.create("test3", Arrays.asList("item3_1", "item3_2", "item3_3", "item3_4", "item3_5", "item3_6", "item3_7", "item3_8")),
+      Pair.create("test4", Arrays.asList("item4_1", "item4_2", "item4_3", "item4_4", "item4_5", "item4_6", "item4_7", "item4_8", "item4_9", "item4_10", MORE_ITEM)),
+      Pair.create("test5", Collections.emptyList()),
+      Pair.create("test6", Arrays.asList("item6_1", "item6_2", "item6_3", "item6_4", "item6_5", "item6_6", "item6_7", "item6_8", "item6_9", "item6_10", MORE_ITEM)),
+      Pair.create("test7", Arrays.asList("item7_1", "item7_2", "item7_3", "item7_4", "item7_5", "item7_6", "item7_7", "item7_8", "item7_9", "item7_10")),
+      Pair.create("test8", Arrays.asList("item8_1", "item8_2", "item8_3", "item8_4", "item8_5"))
+    );
+
+    res.add(new Scenario(contributors, results, scenarioName));
+    //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    return res;
   }
 
   private static SearchEverywhereContributor<?> createTestContributor(String id, String... items) {
@@ -141,19 +141,37 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     };
   }
 
+  private static class Scenario {
+    private final Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits;
+    private final Map<String, List<String>> results;
+    private final String description;
+
+    public Scenario(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                    Map<String, List<String>> results, String description) {
+      this.contributorsAndLimits = contributorsAndLimits;
+      this.results = results;
+      this.description = description;
+    }
+  }
+
   private static class SearchResultsCollector implements MultithreadSearcher.Listener {
 
     private final Map<String, List<String>> myMap = new ConcurrentHashMap<>();
     private final AtomicBoolean myFinished = new AtomicBoolean(false);
-    private final CountDownLatch myLatch = new CountDownLatch(1);
+    private final Phaser myPhaser = new Phaser(2);
 
     public List<String> getContributorValues(String contributorId) {
       List<String> values = myMap.get(contributorId);
       return values != null ? values : Collections.emptyList();
     }
 
-    public void awaitFinish() throws InterruptedException {
-      myLatch.await();
+    public void awaitFinish() {
+      myPhaser.arriveAndAwaitAdvance();
+    }
+
+    public void clear() {
+      myMap.clear();
+      myFinished.set(false);
     }
 
     @Override
@@ -184,7 +202,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       boolean set = myFinished.compareAndSet(false, true);
       Assert.assertTrue("More than one finish event", set);
 
-      myLatch.countDown();
+      myPhaser.arrive();
     }
   }
 }
