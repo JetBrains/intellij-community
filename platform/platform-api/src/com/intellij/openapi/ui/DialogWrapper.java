@@ -131,7 +131,7 @@ public abstract class DialogWrapper {
   /**
    * The shared instance of default border for dialog's content pane.
    */
-  public static final Border ourDefaultBorder = new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
+  public static final Border ourDefaultBorder = new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
 
   private float myHorizontalStretch = 1.0f;
   private float myVerticalStretch = 1.0f;
@@ -2067,7 +2067,7 @@ public abstract class DialogWrapper {
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setBorder(JBUI.Borders.empty(16, 13));
+      myLabel.setBorder(createErrorTextBorder());
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -2076,6 +2076,18 @@ public abstract class DialogWrapper {
       pane.getViewport().setBackground(null);
       pane.setOpaque(false);
       add(pane, BorderLayout.CENTER);
+    }
+
+    private Border createErrorTextBorder() {
+      Border border = createContentPaneBorder();
+      Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
+      Insets baseInsets = JBUI.insets(16, 13);
+
+      //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.
+      return new EmptyBorder(baseInsets.top,
+                             baseInsets.left > contentInsets.left ? baseInsets.left - contentInsets.left : 0,
+                             baseInsets.bottom > contentInsets.bottom ? baseInsets.bottom - contentInsets.bottom : 0,
+                             baseInsets.right > contentInsets.right ? baseInsets.right - contentInsets.right : 0);
     }
 
     private void clearError() {
