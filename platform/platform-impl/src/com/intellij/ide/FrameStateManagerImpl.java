@@ -54,7 +54,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
         System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        if (!app.isActive() && !app.isDisposed()) {
+        if (!app.isDisposed()) {
           fireDeactivationEvent();
         }
       }
