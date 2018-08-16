@@ -19,6 +19,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -609,6 +610,22 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
 
+    if (isParameterOfMethod(expression, "error", "debug", "info", "trace", "equals", "startsWith", "endsWith", "log", "allocateTempFile", "getProperty")) {
+      return false;
+    }
+
+    if (isQualifierFor(expression, "equals", "length")) {
+      return false;
+    }
+
+    if (isValueOfParameterSubstring(expression, "debugName", "fileName", "componentName")) {
+      return false;
+    }
+
+    if (isValueOfParameter(expression, "id", "url")) {
+      return false;
+    }
+
     Pattern pattern = myCachedNonNlsPattern;
     if (pattern != null) {
       PsiFile file = expression.getContainingFile();
@@ -841,6 +858,78 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
            && method.getParameterList().isEmpty()
            && returnType != null
            && "java.lang.String".equals(returnType.getCanonicalText());
+  }
+
+  private static boolean isParameterOfMethod(final PsiLiteralExpression expression, String ... methodNames) {
+    final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+    if (methodCall == null) return false;
+    final String method = methodCall.getMethodExpression().getReferenceName();
+    if (method == null) return false;
+    for (String methodName: methodNames) {
+      if (methodName.equals(method)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isQualifierFor(final PsiLiteralExpression expression, String ... methodNames) {
+    final PsiReferenceExpressionImpl referenceExpression = PsiTreeUtil.getParentOfType(expression, PsiReferenceExpressionImpl.class);
+    if (referenceExpression == null) return false;
+    for (String methodName: methodNames) {
+      if (methodName.equals(referenceExpression.getReferenceName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isValueOfParameter(final PsiLiteralExpression expression, String ... parameterNames) {
+    final PsiCallExpression methodCall = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
+    if (methodCall == null) return false;
+    final PsiMethod method = methodCall.resolveMethod();
+    if (method != null) {
+      int index = -1;
+      for (int i = 0; i<methodCall.getArgumentList().getExpressions().length; i++) {
+        if (PsiTreeUtil.isAncestor(methodCall.getArgumentList().getExpressions()[i], expression, false)) {
+          index = i;
+          break;
+        }
+      }
+
+      if (index != -1 && index < method.getParameterList().getParameters().length) {
+        for (String parameterName : parameterNames) {
+          if (parameterName.equals(method.getParameterList().getParameters()[index].getName())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isValueOfParameterSubstring(final PsiLiteralExpression expression, String ... parameterNames) {
+    final PsiCallExpression methodCall = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
+    if (methodCall == null) return false;
+    final PsiMethod method = methodCall.resolveMethod();
+    if (method != null) {
+      int index = -1;
+      for (int i = 0; i<methodCall.getArgumentList().getExpressions().length; i++) {
+        if (PsiTreeUtil.isAncestor(methodCall.getArgumentList().getExpressions()[i], expression, false)) {
+          index = i;
+          break;
+        }
+      }
+
+      if (index != -1 && index < method.getParameterList().getParameters().length) {
+        for (String parameterName : parameterNames) {
+          if (method.getParameterList().getParameters()[index].getName().toLowerCase().contains(parameterName.toLowerCase())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isArgOfJUnitAssertion(PsiExpression expression) {
