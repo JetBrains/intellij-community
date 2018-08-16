@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -575,8 +574,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   @Override
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
                                                                @NotNull Collection<String> activeProfiles,
-                                                               @NotNull Collection<String> inactiveProfiles)
-    throws RemoteException, MavenServerProcessCanceledException {
+                                                               @NotNull Collection<String> inactiveProfiles) throws RemoteException {
     final DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
     Collection<MavenExecutionResult> results =
@@ -589,9 +587,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
           return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
         }
         catch (RemoteException e) {
-          ExceptionUtilRt.rethrowAllAsUnchecked(e);
+          throw new RuntimeException(e);
         }
-        return null;
       }
     });
   }
