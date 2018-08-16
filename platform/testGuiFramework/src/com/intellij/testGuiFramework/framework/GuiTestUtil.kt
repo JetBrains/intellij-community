@@ -32,6 +32,7 @@ import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher
 import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.KeyStrokeAdapter
@@ -89,7 +90,6 @@ object GuiTestUtil {
   val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
   val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
-  val projectCreationDirPath = createTempProjectCreationDir()
 
   val gradleHomePath: File?
     get() = getFilePathProperty("supported.gradle.home.path", "the path of a local Gradle 2.2.1 distribution", true)
@@ -179,7 +179,7 @@ object GuiTestUtil {
   }
 
   fun setUpDefaultProjectCreationLocationPath() {
-    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(projectCreationDirPath.path)
+    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(GuiTestOptions.projectDirPath.path)
   }
 
   // Called by IdeTestApplication via reflection.
@@ -340,23 +340,6 @@ object GuiTestUtil {
     }
     catch (we: WaitTimedOutError) {
       LOG.error("Timed out waiting for \"$dialogName\" JDialog. Continue...")
-    }
-
-  }
-
-  private fun createTempProjectCreationDir(): File {
-    try {
-      // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
-      // EditorFixture seems to require a canonical path when opening the file.
-      return File(
-        System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")),
-        "guiTest"
-      ).canonicalFile
-    }
-    catch (ex: IOException) {
-      // For now, keep the original behavior and point inside the source tree.
-      ex.printStackTrace()
-      return File(testProjectsRootDirPath, "newProjects")
     }
 
   }

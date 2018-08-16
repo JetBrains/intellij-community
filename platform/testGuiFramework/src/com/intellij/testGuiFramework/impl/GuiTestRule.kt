@@ -26,6 +26,7 @@ import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.screenRecorderJarDirPath
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.testsToRecord
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
@@ -436,12 +437,12 @@ class GuiTestRule : TestRule {
   }
 
 
-  fun getMasterProjectDirPath(projectDirName: String): File {
+  private fun getMasterProjectDirPath(projectDirName: String): File {
     return File(GuiTestUtil.testProjectsRootDirPath, projectDirName)
   }
 
-  fun getTestProjectDirPath(projectDirName: String): File {
-    return File(GuiTestUtil.projectCreationDirPath, projectDirName)
+  private fun getTestProjectDirPath(projectDirName: String): File {
+    return File(GuiTestOptions.projectDirPath, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {

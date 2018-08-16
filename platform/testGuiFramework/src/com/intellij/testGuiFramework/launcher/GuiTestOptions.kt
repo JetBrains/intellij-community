@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
+import java.io.File
 
 object GuiTestOptions {
 
@@ -66,6 +67,13 @@ object GuiTestOptions {
     catch (e: RuntimeException) {
       "../system"
     }
+  }
+
+  val tempDirPath: File by lazy { File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))) }
+  val projectDirPath: File by lazy {
+    // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
+    // EditorFixture seems to require a canonical path when opening the file.
+    File(tempDirPath, "guiTest").canonicalFile
   }
 
   private inline fun <reified ReturnType> getSystemProperty(key: String, defaultValue: ReturnType): ReturnType {
