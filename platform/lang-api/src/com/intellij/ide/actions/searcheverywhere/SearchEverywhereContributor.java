@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -34,6 +35,9 @@ public interface SearchEverywhereContributor<F> {
   default boolean isShownInSeparateTab() {
     return false;
   }
+
+  default void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
+                     ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {}
 
   ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
                                          ProgressIndicator progressIndicator, int elementsLimit);
