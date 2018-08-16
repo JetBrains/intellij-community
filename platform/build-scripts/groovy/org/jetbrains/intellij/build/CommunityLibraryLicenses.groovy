@@ -318,7 +318,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Maven Aether Provider", version: "3.3.9", license: "Apache 2.0",
                        url: "http://maven.apache.org/ref/3.3.9/maven-aether-provider",
                        libraryName: 'org.apache.maven:maven-aether-provider',
-                       additionalLibraryNames: ['org.apache.maven:maven-model', 'org.apache.maven:maven-model-builder', 'org.apache.maven:maven-artifact', 'org.apache.maven:maven-repository-metadata', 'org.apache.maven:maven-builder-support'],
+                       additionalLibraryNames: ['org.apache.maven:maven-model-builder', 'org.apache.maven:maven-artifact', 'org.apache.maven:maven-repository-metadata', 'org.apache.maven:maven-builder-support'],
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Maven Model", version: "3.0.5", libraryName: "maven-model", license: "Apache 2.0",
                        url: "http://maven.apache.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
