@@ -1,3 +1,5 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 /*
  * Author: atotic
  * Created on Mar 23, 2004
@@ -36,6 +38,7 @@ import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTranspor
 
 public class RemoteDebugger implements ProcessDebugger {
   private static final int RESPONSE_TIMEOUT = 60000;
+  private static final int SHORT_TIMEOUT = 2000;
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
 
@@ -205,6 +208,7 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getNewValue();
   }
 
+  @Override
   public void loadFullVariableValues(@NotNull String threadId,
                                      @NotNull String frameId,
                                      @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
@@ -339,8 +343,7 @@ public class RemoteDebugger implements ProcessDebugger {
     return myDebuggerTransport.isConnecting() || myDebuggerTransport.isConnected();
   }
 
-  @Override
-  public void execute(@NotNull final AbstractCommand command) {
+  public void execute(@NotNull final AbstractCommand command, int responseTimeout) {
     CountDownLatch myLatch = new CountDownLatch(1);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (command instanceof ResumeOrStepCommand) {
@@ -361,7 +364,7 @@ public class RemoteDebugger implements ProcessDebugger {
     if (command.isResponseExpected()) {
       // Note: do not wait for result from UI thread
       try {
-        myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        myLatch.await(responseTimeout, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) {
         // restore interrupted flag
@@ -370,6 +373,11 @@ public class RemoteDebugger implements ProcessDebugger {
         LOG.error(e);
       }
     }
+  }
+
+  @Override
+  public void execute(@NotNull final AbstractCommand command) {
+    execute(command, RESPONSE_TIMEOUT);
   }
 
   boolean sendFrame(final ProtocolFrame frame) {
@@ -663,6 +671,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
+  @Override
   public void addCloseListener(RemoteDebuggerCloseListener listener) {
     myCloseListeners.add(listener);
   }
@@ -674,14 +683,14 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix) {
     final GetCompletionsCommand command = new GetCompletionsCommand(this, threadId, frameId, prefix);
-    execute(command);
+    execute(command, SHORT_TIMEOUT);
     return command.getCompletions();
   }
 
   @Override
   public String getDescription(String threadId, String frameId, String cmd) {
     final GetDescriptionCommand command = new GetDescriptionCommand(this, threadId, frameId, cmd);
-    execute(command);
+    execute(command, SHORT_TIMEOUT);
     return command.getResult();
   }
 

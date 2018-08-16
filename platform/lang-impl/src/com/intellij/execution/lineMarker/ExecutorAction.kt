@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Key
+import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.mapSmartNotNull
 
 private val LOG = logger<ExecutorAction>()
@@ -49,16 +50,18 @@ class ExecutorAction private constructor(private val origin: AnAction,
     }
 
     private fun computeConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
-      val context = ConfigurationContext.getFromContext(dataContext)
-      if (context.location == null) {
-        return emptyList()
-      }
+      val originalContext = ConfigurationContext.getFromContext(dataContext)
+      val location = originalContext.location ?: return emptyList()
 
-      return RunConfigurationProducer.getProducers(context.project).mapSmartNotNull {
-        LOG.runAndLogException {
-          val configuration = it.createLightConfiguration(context) ?: return@mapSmartNotNull null
-          val settings = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.project), configuration, false)
-          ConfigurationFromContextImpl(it, settings, context.psiLocation)
+      val alternativeLocations = MultipleRunLocationsProvider.findAlternativeLocations(location)?.alternativeLocations
+      val contexts = alternativeLocations?.mapSmart { ConfigurationContext.createEmptyContextForLocation(it) } ?: listOf(originalContext)
+      return contexts.flatMap { context ->
+        RunConfigurationProducer.getProducers(context.project).mapSmartNotNull {
+          LOG.runAndLogException {
+            val configuration = it.createLightConfiguration(context) ?: return@mapSmartNotNull null
+            val settings = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(context.project), configuration, false)
+            ConfigurationFromContextImpl(it, settings, context.psiLocation)
+          }
         }
       }
     }

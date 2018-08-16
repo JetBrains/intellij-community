@@ -35,10 +35,12 @@ public class SMTRunnerTestTreeView extends TestTreeView {
 
   @Nullable private TestResultsViewer myResultsViewer;
 
+  @Override
   protected TreeCellRenderer getRenderer(final TestConsoleProperties properties) {
     return new TestTreeRenderer(properties);
   }
 
+  @Override
   @Nullable
   public SMTestProxy getSelectedTest(@NotNull final TreePath selectionPath) {
     final Object lastComponent = selectionPath.getLastPathComponent();
@@ -67,7 +69,7 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (SM_TEST_RUNNER_VIEW.is(dataId)) {
       return this;
     }

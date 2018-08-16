@@ -230,6 +230,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   private static class TreeNodeComparator implements Comparator<TreeNode> {
+    @Override
     public int compare(final TreeNode o1, final TreeNode o2) {
       if (o1 instanceof BreakpointItemNode && o2 instanceof BreakpointItemNode) {
         //noinspection unchecked

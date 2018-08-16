@@ -24,7 +24,8 @@ public class CaptureStorage {
     }
   };
 
-  private static boolean DEBUG = false;
+  @SuppressWarnings("StaticNonFinalField")
+  public static boolean DEBUG; // set from debugger
   private static boolean ENABLED = true;
 
   //// METHODS CALLED FROM THE USER PROCESS
@@ -216,9 +217,18 @@ public class CaptureStorage {
 
   // to be run from the debugger
   @SuppressWarnings("unused")
+  public static Object[][] getCurrentCapturedStack(int limit) {
+    return wrapInArray(CURRENT_STACKS.get().peekLast(), limit);
+  }
+
+  // to be run from the debugger
+  @SuppressWarnings("unused")
   public static Object[][] getRelatedStack(Object key, int limit) {
     //noinspection SuspiciousMethodCalls
-    CapturedStack stack = STORAGE.get(new HardKey(key));
+    return wrapInArray(STORAGE.get(new HardKey(key)), limit);
+  }
+
+  private static Object[][] wrapInArray(CapturedStack stack, int limit) {
     if (stack == null) {
       return null;
     }
@@ -259,10 +269,6 @@ public class CaptureStorage {
       }
     }
     return res;
-  }
-
-  public static void setDebug(boolean debug) {
-    DEBUG = debug;
   }
 
   public static void setEnabled(boolean enabled) {

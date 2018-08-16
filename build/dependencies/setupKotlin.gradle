@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 repositories {
-  if (project.ext.inJetBrainsNetwork) {
-    maven { url 'http://repo.labs.intellij.net/plugins.jetbrains.com' }
-  }
+  maven { url 'https://cache-redirector.jetbrains.com/plugins.jetbrains.com' }
   maven { url 'http://plugins.jetbrains.com/maven/' }
 }
 

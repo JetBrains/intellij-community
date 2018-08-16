@@ -18,8 +18,8 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
 
 public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageInfo {
@@ -30,6 +30,7 @@ public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageI
     myConflictingElement = conflictingElement;
   }
 
+  @Override
   public String getDescription() {
 
     PsiElement element = getElement();

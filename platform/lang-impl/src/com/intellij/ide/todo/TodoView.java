@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
@@ -20,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -147,10 +147,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Disposer.register(this, currentFileTodos);
     currentFileTodosContent.setComponent(currentFileTodos);
 
-    myChangeListTodosContent = contentFactory
-      .createContent(null, IdeBundle.message("changelist.todo.title",
-                                             ChangeListManager.getInstance(myProject).getDefaultChangeList().getName()),
-                     false);
+    String tabName = getTabNameForChangeList(ChangeListManager.getInstance(myProject).getDefaultChangeList().getName());
+    myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
     ChangeListTodosPanel changeListTodos = new ChangeListTodosPanel(myProject, state.current, myChangeListTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
@@ -230,10 +228,18 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         return expander != null && expander.canCollapse();
       }
     };
+    //CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent());
+    //CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent());
+    //((ToolWindowEx)toolWindow)
+    //  .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
+    //                   CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
+  }
 
-    ((ToolWindowEx)toolWindow)
-      .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
-                       CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
+  @NotNull
+  static String getTabNameForChangeList(@NotNull String changelistName) {
+    changelistName = changelistName.trim();
+    String suffix = "Changelist";
+    return StringUtil.endsWithIgnoreCase(changelistName, suffix) ? changelistName : changelistName + " " + suffix;
   }
 
   @NotNull

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -65,6 +51,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     }
 
 
+    @Override
     public boolean isAcceptable(Object element, PsiElement context) {
       if (element instanceof PsiElement) {
         final ASTNode ctxNode = context.getNode();
@@ -105,6 +92,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       return false;
     }
 
+    @Override
     public boolean isClassAcceptable(Class hintClass) {
       return true; // can't tell outright
     }
@@ -154,6 +142,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
    * NOTE: if lexer detected indents and/or EOLs as separate entities, this filter would not be needed, or would trivially work with PSI.
    */
   private static class StartOfLineFilter implements ElementFilter {
+    @Override
     public boolean isAcceptable(Object what, PsiElement context) {
       if (!(what instanceof PsiElement)) return false;
       PsiElement p = (PsiElement)what;
@@ -178,6 +167,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       return false;
     }
 
+    @Override
     public boolean isClassAcceptable(Class hintClass) {
       return true;
     }
@@ -190,6 +180,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       myLevel = level;
     }
 
+    @Override
     public boolean isAcceptable(Object element, PsiElement context) {
       if (!(element instanceof PsiElement)) {
         return false;
@@ -198,6 +189,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       return containingFile instanceof PyFile && ((PyFile)containingFile).getLanguageLevel().isAtLeast(myLevel);
     }
 
+    @Override
     public boolean isClassAcceptable(Class hintClass) {
       return true;
     }
@@ -401,8 +393,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
       new CompletionProvider<CompletionParameters>() {
+        @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeywords(result, TailType.NONE, PyNames.DEF, PyNames.CLASS, PyNames.FOR, PyNames.IF, PyNames.WHILE, PyNames.WITH);
           putKeywords(result, TailType.CASE_COLON, PyNames.TRY);
@@ -426,8 +419,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       CompletionType.BASIC,
       inStatement,
       new CompletionProvider<CompletionParameters>() {
+        @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeywords(result, TailType.SPACE, PyNames.ASSERT, PyNames.DEL, PyNames.EXEC, PyNames.FROM, PyNames.IMPORT, PyNames.RAISE);
           putKeywords(result, TailType.NONE, PyNames.PASS);
@@ -534,8 +528,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_FINALLY)
       ,
       new CompletionProvider<CompletionParameters>() {
+        @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeyword(PyNames.FINALLY, PyUnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
@@ -551,8 +546,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_FINALLY).andNot(AFTER_ELSE)
       ,
       new CompletionProvider<CompletionParameters>() {
+        @Override
         protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+          @NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           putKeyword(PyNames.EXCEPT, PyUnindentingInsertHandler.INSTANCE, TailType.NONE, result);
         }
@@ -782,7 +778,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       myInsertHandler = insertHandler;
     }
 
-    protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context,
+    @Override
+    protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context,
                                   @NotNull final CompletionResultSet result) {
       for (String s : myKeywords) {
         final PythonLookupElement element = new PythonLookupElement(s, true, null);

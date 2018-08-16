@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.diff.Block;
@@ -447,7 +433,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
@@ -477,12 +463,14 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       setShortcutSet(CommonShortcuts.getDiff());
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(myList.getSelectedRowCount() > 1 ||
                                      myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myLocalRevision);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       IntPair range = getSelectedRevisionsRange();
 
       VcsFileRevision beforeRevision = range.val2 < myRevisions.size() ? myRevisions.get(range.val2) : VcsFileRevision.NULL;
@@ -504,11 +492,13 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(myList.getSelectedRowCount() == 1 && myList.getSelectedObject() != myLocalRevision);
     }
 
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       VcsFileRevision revision = myList.getSelectedObject();
       if (revision == null) return;
 

@@ -67,6 +67,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   private void initComponents() {
     myAddToPanel.add(myParentProjectForm.getComponent());
     ActionListener updatingListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateComponents();
       }
@@ -112,6 +113,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     PropertiesComponent.getInstance().setValue(key, value);
   }
 
+  @Override
   public JComponent getComponent() {
     return myMainPanel;
   }

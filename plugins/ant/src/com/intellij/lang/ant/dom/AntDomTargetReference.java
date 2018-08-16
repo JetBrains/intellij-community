@@ -60,10 +60,12 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     group.addReference(this);
   }
 
+  @Override
   public PsiElement resolve() {
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     final DomElement targetDomElement = toDomElement(element);
     if (targetDomElement != null) {
@@ -96,7 +98,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
                 final String effectiveName = pair.getSecond();
                 if (currentRefText.startsWith(prefix)) {
                   if (newName == null || effectiveName.length() > newName.length()) {
-                    // this candidate's prefix matches current reference text and this name is longer 
+                    // this candidate's prefix matches current reference text and this name is longer
                     // than the previous candidate, then prefer this name
                     newName = effectiveName;
                   }
@@ -115,7 +117,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     return getElement();
   }
 
-  @Nullable 
+  @Nullable
   private AntDomElement getHostingAntDomElement() {
     final DomElement selfElement = DomUtil.getDomElement(getElement());
     if (selfElement == null) {
@@ -123,14 +125,15 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     }
     return selfElement.getParentOfType(AntDomElement.class, false);
   }
-  
+
+  @Override
   @NotNull
   public Object[] getVariants() {
     final TargetResolver.Result result = doResolve(getCanonicalText());
     if (result == null) {
       return EMPTY_ARRAY;
     }
-    final Map<String, AntDomTarget> variants = result.getVariants();                                                                          
+    final Map<String, AntDomTarget> variants = result.getVariants();
     final List resVariants = new ArrayList();
     final Set<String> existing = getExistingNames();
     for (String s : variants.keySet()) {
@@ -166,7 +169,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     }
     return TargetResolver.resolve(projectToSearchFrom, contextTarget, referenceText == null ? Collections.emptyList() : Collections.singletonList(referenceText));
   }
-  
+
   private Set<String> getExistingNames() {
     final AntDomElement hostingElement = getHostingAntDomElement();
     if (hostingElement == null) {
@@ -191,13 +194,15 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     return existing;
   }
 
+  @Override
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("cannot.resolve.target", getCanonicalText());
   }
 
   private static class MyResolver implements ResolveCache.Resolver {
     static final MyResolver INSTANCE = new MyResolver();
-    
+
+    @Override
     public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
       final TargetResolver.Result result = ((AntDomTargetReference)psiReference).doResolve(psiReference.getCanonicalText());
       if (result == null) {
@@ -208,14 +213,14 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
       return domTarget != null? PomService.convertToPsi(domTarget) : null;
     }
   }
-  
+
   public static class ReferenceGroup {
     private final List<AntDomTargetReference> myRefs = new ArrayList<>();
-    
+
     public void addReference(AntDomTargetReference ref) {
       myRefs.add(ref);
     }
-    
+
     public void textChanged(AntDomTargetReference ref, String newText) {
       Integer lengthDelta = null;
       for (AntDomTargetReference r : myRefs) {

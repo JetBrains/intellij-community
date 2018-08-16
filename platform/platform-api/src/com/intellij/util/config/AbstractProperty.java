@@ -53,14 +53,17 @@ public abstract class AbstractProperty<T> {
 
   public static abstract class AbstractPropertyContainer<PropertyImpl extends AbstractProperty> {
     public static final AbstractPropertyContainer EMPTY = new AbstractPropertyContainer() {
+      @Override
       public Object getValueOf(AbstractProperty property) {
         return property.getDefault(this);
       }
 
+      @Override
       public void setValueOf(AbstractProperty property, Object value) {
         throw new UnsupportedOperationException("Property: " + property.getName() + " value: " + value);
       }
 
+      @Override
       public boolean hasProperty(AbstractProperty property) {
         return false;
       }

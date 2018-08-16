@@ -1170,6 +1170,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "Serializable", "CharSequence", "Object");
   }
 
+  public void testSuggestMethodReturnTypeAnonymous() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "Object");
+  }
+
   public void testSuggestCastReturnTypeByCalledMethod() { doTest(); }
 
   public void testOnlyInterfacesInImplements() { doTest(); }

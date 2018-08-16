@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.DeprecatedMethodException;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,9 +43,10 @@ public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
   }
 
   public WeakValueHashMap() {
+    DeprecatedMethodException.report("Use ContainerUtil#createWeakValueMap() instead");
   }
 
-  public WeakValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
+  WeakValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
     super(strategy);
   }
 

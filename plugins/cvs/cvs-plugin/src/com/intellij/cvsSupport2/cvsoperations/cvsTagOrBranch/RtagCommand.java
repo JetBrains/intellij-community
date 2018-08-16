@@ -38,6 +38,7 @@ public class RtagCommand extends AbstractCommand{
     myTagName = tagName;
   }
 
+  @Override
   public final boolean execute(IRequestProcessor requestProcessor,
                                IEventSender eventSender,
                                ICvsListenerRegistry listenerRegistry,
@@ -54,6 +55,7 @@ public class RtagCommand extends AbstractCommand{
     return requestProcessor.processRequests(requests, new DummyRequestsProgressHandler());
   }
 
+  @Override
   public final String getCvsCommandLine() {
     @NonNls final StringBuffer cvsCommandLine = new StringBuffer("rtag ");
     cvsCommandLine.append(getCVSArguments());

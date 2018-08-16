@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -111,7 +112,13 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
     YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class);
-    if (object == null) object = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    // the original position can be either a sound element or a whitespace; whitespaces can belong to the parent
+    if (object == null || otherObject != null
+                          && PsiTreeUtil.isAncestor(CompletionUtil.getOriginalOrSelf(object),
+                                                    CompletionUtil.getOriginalOrSelf(otherObject), true)) {
+      object = otherObject;
+    }
     if (object == null) return Collections.emptySet();
     return object.getKeyValues().stream().filter(p -> p != null && p.getName() != null)
                  .map(p -> p.getName()).collect(Collectors.toSet());
@@ -156,8 +163,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (current instanceof YAMLMapping) {
           List<YAMLPsiElement> elements = ((YAMLMapping)current).getYAMLElements();
           if (elements.size() == 0) return null;
-          YAMLPsiElement last = elements.get(elements.size() - 1);
-          if (last == position) {
+          if (position instanceof YAMLPsiElement && elements.contains(position)) {
             continue;
           }
         }
@@ -183,6 +189,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return includeWhitespaces ? "\n  " : "";
   }
 
+  @Override
   @Nullable public String defaultObjectValueDescription() { return "start object"; }
 
   @Override
@@ -190,6 +197,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return includeWhitespaces ? "\n  - " : "- ";
   }
 
+  @Override
   @Nullable public String defaultArrayValueDescription() { return "start array"; }
 
   @Override

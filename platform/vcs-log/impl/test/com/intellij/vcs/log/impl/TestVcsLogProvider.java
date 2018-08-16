@@ -141,7 +141,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) {
+  public List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes) {
     throw new UnsupportedOperationException();
   }
 

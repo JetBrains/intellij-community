@@ -9,6 +9,8 @@ import org.jetbrains.annotations.ApiStatus
 abstract class UnstableApiUsageInspectionTestBase : JavaCodeInsightFixtureTestCase() {
   abstract override fun getBasePath(): String
 
+  val inspection = UnstableApiUsageInspection()
+
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(ApiStatus.Experimental::class.java))
   }
@@ -19,7 +21,7 @@ abstract class UnstableApiUsageInspectionTestBase : JavaCodeInsightFixtureTestCa
     super.setUp()
     performAdditionalSetUp()
 
-    myFixture.enableInspections(UnstableApiUsageInspection::class.java)
+    myFixture.enableInspections(inspection)
 
     myFixture.addFileToProject(
       "pkg/ExperimentalAnnotation.java", """

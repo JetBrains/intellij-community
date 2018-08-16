@@ -68,22 +68,27 @@ public class TestNGConfigurationType implements ConfigurationType {
         }
     }
 
+    @Override
     public String getDisplayName() {
         return "TestNG";
     }
 
+    @Override
     public String getConfigurationTypeDescription() {
         return "TestNG Configuration";
     }
 
+    @Override
     public Icon getIcon() {
         return TestngIcons.TestNG;
     }
 
+    @Override
     public ConfigurationFactory[] getConfigurationFactories() {
         return new ConfigurationFactory[] {myFactory};
     }
 
+    @Override
     @NotNull
     public String getId() {
         return "TestNG";

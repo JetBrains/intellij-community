@@ -48,6 +48,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesT
  */
 public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
 
+  @Override
   @Nullable
   public DelegatesToInfo getDelegatesToInfo(@NotNull final GrClosableBlock closableBlock) {
     GrCall call = getContainingCall(closableBlock);

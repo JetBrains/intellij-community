@@ -84,6 +84,7 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
     myProcessAsWordTokenSet = processAsWordTokenSet;
   }
 
+  @Override
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     myLexer.start(fileText);
     WordOccurrence occurrence = new WordOccurrence(fileText, 0, 0, null); // shared occurrence

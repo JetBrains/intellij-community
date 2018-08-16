@@ -41,7 +41,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -101,6 +100,9 @@ public class MoveClassesOrPackagesUtil {
     }
     else if (element instanceof PsiDirectory) {
       return getStringToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+    }
+    else if (element instanceof PsiClassOwner) {
+      return ((PsiClassOwner)element).getName();
     }
     else {
       LOG.error("Unknown element type");

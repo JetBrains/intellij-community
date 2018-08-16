@@ -147,7 +147,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
     mavenRunConfiguration.setShowConsoleOnStdErr(applicationConfiguration.isShowConsoleOnStdErr());
   }
 
-  private static List<String> patchVmParameters(ParametersList vmParameters) {
+  public static List<String> patchVmParameters(ParametersList vmParameters) {
     List<String> patchedVmParameters = new ArrayList<>(vmParameters.getList());
     for (Iterator<String> iterator = patchedVmParameters.iterator(); iterator.hasNext(); ) {
       String parameter = iterator.next();

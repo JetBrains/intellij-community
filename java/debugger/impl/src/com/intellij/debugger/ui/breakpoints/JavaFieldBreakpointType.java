@@ -120,6 +120,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   public XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final Ref<XLineBreakpoint<JavaFieldBreakpointProperties>> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
+      @Override
       protected boolean validateData() {
         final String className = getClassName();
         if (className.length() == 0) {

@@ -49,12 +49,12 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && !getTasks(e).isEmpty();
   }
 
   @Override
-  protected boolean doIsSelected(AnActionEvent e) {
+  protected boolean doIsSelected(@NotNull AnActionEvent e) {
     return hasTask(getTaskActivator(e), getTasks(e).get(0));
   }
 
@@ -70,7 +70,7 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
   }
 
   @NotNull
-  private static List<TaskData> getTasks(AnActionEvent e) {
+  private static List<TaskData> getTasks(@NotNull AnActionEvent e) {
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
     if (selectedNodes == null) return Collections.emptyList();
 
@@ -107,7 +107,7 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
   }
 
 
-  private ExternalSystemTaskActivator getTaskActivator(AnActionEvent e) {
+  private ExternalSystemTaskActivator getTaskActivator(@NotNull AnActionEvent e) {
     return ExternalProjectsManagerImpl.getInstance(getProject(e)).getTaskActivator();
   }
 }

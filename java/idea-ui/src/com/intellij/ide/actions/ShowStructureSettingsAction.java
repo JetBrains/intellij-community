@@ -33,7 +33,7 @@ public class ShowStructureSettingsAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();

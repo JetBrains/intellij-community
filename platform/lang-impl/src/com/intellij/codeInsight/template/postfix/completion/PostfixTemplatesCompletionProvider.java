@@ -20,7 +20,7 @@ import static com.intellij.codeInsight.template.postfix.completion.PostfixTempla
 
 class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
+  protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
     Editor editor = parameters.getEditor();
     if (!isCompletionEnabled(parameters) || LiveTemplateCompletionContributor.shouldShowAllTemplates() ||
         editor.getCaretModel().getCaretCount() != 1) {

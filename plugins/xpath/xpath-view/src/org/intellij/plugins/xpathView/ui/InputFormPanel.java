@@ -32,21 +32,26 @@ public class InputFormPanel extends JPanel implements InputForm {
         myRoot = this;
     }
 
+    @Override
     public JComponent getComponent() {
         return this;
     }
 
+    @Override
     public JLabel getIcon() {
         return myIcon;
     }
 
+    @Override
     public JButton getEditContextButton() {
         return myEditContextButton;
     }
 
+    @Override
     public JPanel getEditorPanel() {
         return myEditorPanel;
     }
 
+    @Override
     public void dispose() {}
 }

@@ -23,6 +23,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiLiteralExpression)) {
       return false;

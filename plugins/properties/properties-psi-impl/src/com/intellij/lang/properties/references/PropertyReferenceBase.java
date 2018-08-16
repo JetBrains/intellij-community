@@ -29,7 +29,6 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +59,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     myTextRange = range;
   }
 
+  @Override
   public PsiElement resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
@@ -70,6 +70,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return myKey;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -78,26 +79,31 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return getElement() == other.getElement() && getKeyText().equals(other.getKeyText());
   }
 
+  @Override
   public int hashCode() {
     return getKeyText().hashCode();
   }
 
+  @Override
   @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
+  @Override
   @NotNull
   public TextRange getRangeInElement() {
     return myTextRange;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myKey;
   }
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  @Override
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     /*PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
 
     if (myElement instanceof PsiLiteralExpression) {
@@ -114,11 +120,13 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     /*}*/
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("not implemented");
   }
 
-  public boolean isReferenceTo(PsiElement element) {
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!isProperty(element)) return false;
     for (ResolveResult result : multiResolve(false)) {
       final PsiElement el = result.getElement();
@@ -135,15 +143,18 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     mySoft = soft;
   }
 
+  @Override
   public boolean isSoft() {
     return mySoft;
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return PropertiesBundle.message("unresolved.property.key");
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final String key = getKeyText();
@@ -168,7 +179,8 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return getResolveResults(properties);
   }
 
-  protected static ResolveResult[] getResolveResults(List<IProperty> properties) {
+  @NotNull
+  private static ResolveResult[] getResolveResults(List<? extends IProperty> properties) {
     if (properties.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
     final ResolveResult[] results = new ResolveResult[properties.size()];
@@ -182,11 +194,6 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   @Nullable
   protected abstract List<PropertiesFile> getPropertiesFiles();
-
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
 
   private static boolean isProperty(PsiElement element) {
     if (element instanceof IProperty) {

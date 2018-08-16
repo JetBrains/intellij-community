@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -61,7 +60,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public class TemplateState implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateState");
+  private static final Logger LOG = Logger.getInstance(TemplateState.class);
   private Project myProject;
   private Editor myEditor;
 
@@ -79,7 +78,6 @@ public class TemplateState implements Disposable {
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged = false;
 
-  @Nullable private CommandListener myCommandListener;
   @Nullable private LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -102,13 +100,13 @@ public class TemplateState implements Disposable {
     if (isDisposed()) return;
     myEditorDocumentListener = new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent e) {
+      public void beforeDocumentChange(@NotNull DocumentEvent e) {
         myDocumentChanged = true;
       }
     };
-    myLookupListener = new LookupAdapter() {
+    myLookupListener = new LookupListener() {
       @Override
-      public void itemSelected(LookupEvent event) {
+      public void itemSelected(@NotNull LookupEvent event) {
         if (isCaretOutsideCurrentSegment(null)) {
           if (isCaretInsideNextVariable()) {
             nextTab();
@@ -130,7 +128,12 @@ public class TemplateState implements Disposable {
         }
       }
     }, this);
-    myCommandListener = new CommandListener() {
+
+    if (myEditor != null) {
+      installCaretListener(myEditor);
+    }
+    myDocument.addDocumentListener(myEditorDocumentListener, this);
+    myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
       boolean started = false;
 
       @Override
@@ -152,26 +155,20 @@ public class TemplateState implements Disposable {
           }
         }
       }
-    };
-
-    if (myEditor != null) {
-      installCaretListener(myEditor);
-    }
-    myDocument.addDocumentListener(myEditorDocumentListener, this);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+    });
   }
 
   private void installCaretListener(@NotNull Editor editor) {
     CaretListener listener = new CaretListener() {
       @Override
-      public void caretAdded(CaretEvent e) {
+      public void caretAdded(@NotNull CaretEvent e) {
         if (isMultiCaretMode()) {
           finishTemplateEditing();
         }
       }
 
       @Override
-      public void caretRemoved(CaretEvent e) {
+      public void caretRemoved(@NotNull CaretEvent e) {
         if (isMultiCaretMode()) {
           finishTemplateEditing();
         }
@@ -221,7 +218,6 @@ public class TemplateState implements Disposable {
     }
 
     myEditorDocumentListener = null;
-    myCommandListener = null;
 
     myProcessor = null;
 
@@ -635,8 +631,12 @@ public class TemplateState implements Disposable {
     return result;
   }
 
-  ExpressionContext getCurrentExpressionContext() {
+  public ExpressionContext getCurrentExpressionContext() {
     return createExpressionContext(mySegments.getSegmentStart(getCurrentSegmentNumber()));
+  }
+
+  public ExpressionContext getExpressionContextForSegment(int segmentNumber) {
+    return createExpressionContext(mySegments.getSegmentStart(segmentNumber));
   }
 
   Expression getCurrentExpression() {
@@ -660,15 +660,15 @@ public class TemplateState implements Disposable {
     }
     lookup.refreshUi(true, true);
     ourLookupShown = true;
-    lookup.addLookupListener(new LookupAdapter() {
+    lookup.addLookupListener(new LookupListener() {
       @Override
-      public void lookupCanceled(LookupEvent event) {
+      public void lookupCanceled(@NotNull LookupEvent event) {
         lookup.removeLookupListener(this);
         ourLookupShown = false;
       }
 
       @Override
-      public void itemSelected(LookupEvent event) {
+      public void itemSelected(@NotNull LookupEvent event) {
         lookup.removeLookupListener(this);
         if (isFinished()) return;
         ourLookupShown = false;
@@ -691,7 +691,7 @@ public class TemplateState implements Disposable {
     if (mySegments.isInvalid()) {
       gotoEnd(true);
     }
-    
+
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
       final TextResult value = getVariableValue(variableName);
@@ -937,6 +937,9 @@ public class TemplateState implements Disposable {
   }
 
   public void considerNextTabOnLookupItemSelected(LookupElement item) {
+    if (isFinished()) {
+      return;
+    }
     if (item != null) {
       ExpressionContext context = getCurrentExpressionContext();
       for (TemplateCompletionProcessor processor : Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {

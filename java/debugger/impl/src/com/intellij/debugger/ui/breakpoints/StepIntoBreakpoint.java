@@ -44,6 +44,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     myFilter = filter;
   }
 
+  @Override
   protected void createRequestForPreparedClass(DebugProcessImpl debugProcess, ReferenceType classType) {
     try {
       final CompoundPositionManager positionManager = debugProcess.getPositionManager();
@@ -106,6 +107,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     }
   }
 
+  @Override
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
     try {
       return myFilter.locationMatches(debugProcess, loc);

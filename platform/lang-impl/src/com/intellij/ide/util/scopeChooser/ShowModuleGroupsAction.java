@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowModuleGroupsAction extends ToggleAction {
   private final Runnable myUpdate;
@@ -42,7 +43,7 @@ public class ShowModuleGroupsAction extends ToggleAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(DependencyUISettings.getInstance().UI_SHOW_MODULES);
   }

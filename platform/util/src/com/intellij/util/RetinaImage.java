@@ -28,7 +28,7 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   }
 
   /**
-   * @deprecated use {@link #createFrom(Image, float, ImageObserver)} instead
+   * @deprecated use {@link #createFrom(Image, double, ImageObserver)} instead
    */
   @Deprecated
   @NotNull
@@ -61,6 +61,11 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   @NotNull
   public static BufferedImage create(Graphics2D g, int width, int height, int type) {
     return new JBHiDPIScaledImage(g, width, height, type);
+  }
+
+  @NotNull
+  public static BufferedImage create(Graphics2D g, double width, double height, int type, RoundingMode rm) {
+    return new JBHiDPIScaledImage(g, width, height, type, rm);
   }
 
   @NotNull

@@ -132,6 +132,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
     myTouchbarActionGroup = new UpdatableDefaultActionGroup();
+    TouchbarDataKeys.putActionDescriptor(myTouchbarActionGroup).setReplaceEsc(false);
 
     // UI
 
@@ -314,7 +315,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       myToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
-      myTouchbarActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
       myActiveRequest.onAssigned(false);
@@ -366,12 +366,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   private List<AnAction> getTouchbarActions() {
+    final DefaultActionGroup left = new DefaultActionGroup(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
+    final DefaultActionGroup main = new DefaultActionGroup(new MyPrevChangeAction(), new MyNextChangeAction());
+    TouchbarDataKeys.putActionDescriptor(main).setShowText(true).setShowImage(false).setMainGroup(true);
     return ContainerUtil.list(
-      new MyPrevDifferenceAction(),
-      new MyNextDifferenceAction(),
-      Separator.getInstance(),
-      new MyPrevChangeAction(),
-      new MyNextChangeAction()
+      left,
+      main
     );
   }
 
@@ -462,8 +462,7 @@ public abstract class DiffRequestProcessor implements Disposable {
                             new ShowInExternalToolAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
-    myTouchbarActionGroup.addAll(getTouchbarActions());
-    myTouchbarActionGroup.fireUpdate();
+    myTouchbarActionGroup.replaceAll(getTouchbarActions());
   }
 
   protected void collectPopupActions(@Nullable List<AnAction> viewerActions) {
@@ -545,7 +544,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       if (!ExternalDiffTool.isEnabled()) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
@@ -555,7 +554,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       try {
         ExternalDiffTool.showRequest(e.getProject(), myActiveRequest);
       }
@@ -569,7 +568,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     // TODO: add icons for diff tools, show only icon in toolbar - to reduce jumping on change ?
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
 
       DiffTool activeTool = myState.getActiveTool();
@@ -611,7 +610,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myForcedDiffTool == null);
     }
 
@@ -632,12 +631,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myPopupActionGroup.getChildrenCount() > 0);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Diff Actions", myPopupActionGroup, e.getDataContext(),
                                                                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
       popup.showInCenterOf(myPanel);
@@ -891,7 +890,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       Object data;
 
       DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());

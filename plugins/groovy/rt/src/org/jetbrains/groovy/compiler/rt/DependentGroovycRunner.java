@@ -47,11 +47,11 @@ public class DependentGroovycRunner {
   public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
   private static final String STUB_DIR = "stubDir";
 
-  public static boolean runGroovyc(boolean forStubs, String argsPath, 
+  public static boolean runGroovyc(boolean forStubs, String argsPath,
                                    @Nullable String configScript,
                                    @Nullable String targetBytecode, @Nullable Queue mailbox) {
     File argsFile = new File(argsPath);
-    final CompilerConfiguration config = new CompilerConfiguration();
+    CompilerConfiguration config = createCompilerConfiguration(targetBytecode);
     config.setClasspath("");
     config.setOutput(new PrintWriter(System.err));
     config.setWarningLevel(WarningMessage.PARANOIA);
@@ -94,10 +94,6 @@ public class DependentGroovycRunner {
       }
     }
 
-    if (targetBytecode != null) {
-      config.setTargetBytecode(targetBytecode);
-    }
-
     System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
     renameResources(finalOutputs, "", TEMP_RESOURCE_SUFFIX);
 
@@ -107,6 +103,7 @@ public class DependentGroovycRunner {
       final GroovyCompilerWrapper wrapper = new GroovyCompilerWrapper(compilerMessages, forStubs);
       final CompilationUnit unit = createCompilationUnit(forStubs, config, buildClassLoaderFor(config, resourceLoader), mailbox, wrapper);
       unit.addPhaseOperation(new CompilationUnit.SourceUnitOperation() {
+        @Override
         public void call(SourceUnit source) throws CompilationFailedException {
           File file = new File(source.getName());
           for (ClassNode aClass : source.getAST().getClasses()) {
@@ -143,6 +140,28 @@ public class DependentGroovycRunner {
     return false;
   }
 
+  private static CompilerConfiguration createCompilerConfiguration(@Nullable String targetBytecode) {
+    CompilerConfiguration config = new CompilerConfiguration();
+    if (targetBytecode != null) {
+      config.setTargetBytecode(targetBytecode);
+    }
+
+    if (config.getTargetBytecode() == null) {
+      // unsupported value (e.g. "1.6" with older Groovyc versions which know only 1.5)
+
+      // clear env because CompilerConfiguration constructor just sets the target bytecode to null on encountering invalid value in the env
+      System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE);
+
+      // now recreate conf taking the default from VM version
+      config = new CompilerConfiguration();
+
+      if (config.getTargetBytecode() == null) {
+        throw new AssertionError("Cannot determine bytecode target");
+      }
+    }
+    return config;
+  }
+
   // adapted from https://github.com/gradle/gradle/blob/c4fdfb57d336b1a0f1b27354c758c61c0a586942/subprojects/language-groovy/src/main/java/org/gradle/api/internal/tasks/compile/ApiGroovyCompiler.java
   private static void applyConfigurationScript(File configScript, CompilerConfiguration configuration) {
     Binding binding = new Binding();
@@ -160,7 +179,7 @@ public class DependentGroovycRunner {
       e.printStackTrace();
     }
   }
-  
+
   private static void renameResources(String[] finalOutputs, String removeSuffix, String addSuffix) {
     for (String output : finalOutputs) {
       for (String res : RESOURCES_TO_MASK) {
@@ -335,6 +354,7 @@ public class DependentGroovycRunner {
     try {
       unit = new CompilationUnit(config, null, classLoader, transformLoader) {
 
+        @Override
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
@@ -347,6 +367,7 @@ public class DependentGroovycRunner {
       //groovy 1.5.x
       unit = new CompilationUnit(config, null, classLoader) {
 
+        @Override
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
@@ -380,6 +401,7 @@ public class DependentGroovycRunner {
                   return source;
                 }
 
+                @Override
                 public void visitClass(ClassNode node) {
                   if (node.isEnum()) {
                     node.setModifiers(node.getModifiers() & ~Opcodes.ACC_FINAL);
@@ -417,6 +439,7 @@ public class DependentGroovycRunner {
         super.addPhaseOperation(op, phase);
       }
 
+      @Override
       public void gotoPhase(int phase) throws CompilationFailedException {
         if (phase < Phases.SEMANTIC_ANALYSIS) {
           System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovy stub generator: " + getPhaseDescription());
@@ -481,10 +504,11 @@ public class DependentGroovycRunner {
         super.loadClassDependencies(aClass);
       }
     };
-    
+
     GroovyClassLoader classLoader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
       public GroovyClassLoader run() {
         return new GroovyClassLoader(Thread.currentThread().getContextClassLoader(), compilerConfiguration) {
+          @Override
           public Class loadClass(String name, boolean lookupScriptFiles, boolean preferClassOverScript)
             throws ClassNotFoundException, CompilationFailedException {
             Class aClass;

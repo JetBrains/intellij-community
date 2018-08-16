@@ -19,8 +19,14 @@ public abstract class GraphAlgorithms {
     return ServiceManager.getService(GraphAlgorithms.class);
   }
 
+  /**
+   * @deprecated use more generic {@link #findShortestPath(InboundSemiGraph, Object, Object)} instead
+   */
   @Nullable
   public abstract <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish);
+
+  @Nullable
+  public abstract <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
 
   @NotNull
   public abstract <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,

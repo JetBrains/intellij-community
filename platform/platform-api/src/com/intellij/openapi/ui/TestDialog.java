@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 public interface TestDialog {
   TestDialog DEFAULT = new TestDialog() {
+    @Override
     public int show(String message) {
       throw new RuntimeException(message);
     }
@@ -14,6 +15,7 @@ public interface TestDialog {
     }
   };
   TestDialog NO = new TestDialog() {
+    @Override
     public int show(String message) {
       return Messages.NO;
     }

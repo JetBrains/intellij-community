@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
@@ -6,8 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.util.ui.UIUtil;
-import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
-import com.sun.java.swing.plaf.windows.WindowsTreeUI;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -22,6 +20,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
   public static final ColorUIResource TOOLTIP_BACKGROUND_COLOR = new ColorUIResource(255, 255, 231);
 
+  @Override
   public void initComponentDefaults(UIDefaults defaults) {
     super.initComponentDefaults(defaults);
     LafManagerImpl.initInputMapDefaults(defaults);
@@ -78,11 +77,11 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("OptionPane.informationIcon", AllIcons.General.InformationDialog);
     defaults.put("OptionPane.warningIcon", AllIcons.General.WarningDialog);
     defaults.put("OptionPane.questionIcon", AllIcons.General.QuestionDialog);
-    defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
-    defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
-    defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
-    defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
-    defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
+    //defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
+    //defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
+    //defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
+    //defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
+    //defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
                        "ctrl C", "copy",
                        "ctrl V", "paste",

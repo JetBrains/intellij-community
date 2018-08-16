@@ -5,7 +5,9 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -32,6 +34,7 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
@@ -109,7 +112,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.height
     );
 
-    if (Registry.is("suppress.focus.stealing")) {
+    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
 
@@ -206,8 +209,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
+  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen, DataProvider {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+    private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
 
@@ -257,6 +261,23 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
+      setTransferHandler(new TransferHandler(null) {
+        @Override
+        public boolean canImport(TransferSupport support) {
+          return true;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
+          if (list != null && list.size() > 0) {
+            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+          }
+          return false;
+        }
+      });
+
+      TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
 
     @Override
@@ -396,6 +417,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       DefaultActionGroup group = new DefaultActionGroup();
       collectAllActions(group, quickStart);
 
+      myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
         AnActionEvent e =
           AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
@@ -420,15 +442,25 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
+            TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
+          myTouchbarActions.add(action);
         }
       }
 
       WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
       panel.actions.add(actions);
       return panel.root;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull String dataId) {
+      if (TouchbarDataKeys.ACTIONS_KEY.is(dataId))
+        return myTouchbarActions;
+      return null;
     }
 
     /**
@@ -560,14 +592,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
       } else {
 
-        try {
-          InputStream is = url.openStream();
-          try {
-            return Font.createFont(Font.TRUETYPE_FONT, is);
-          }
-          finally {
-            is.close();
-          }
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
         }
         catch (Throwable t) {
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);

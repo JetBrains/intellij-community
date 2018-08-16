@@ -9,10 +9,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +24,13 @@ import java.awt.*;
 import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
+  protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
+    if (!UIUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus) {
+      return IconLoader.getDarkIcon(icon, true);
+    }
+    return icon;
+  }
+
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Object node = TreeUtil.getUserObject(value);
@@ -30,7 +39,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       NodeDescriptor descriptor = (NodeDescriptor)node;
       // TODO: use this color somewhere
       Color color = descriptor.getColor();
-      setIcon(descriptor.getIcon());
+      setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
     }
 
     ItemPresentation p0 = getPresentation(node);
@@ -38,7 +47,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     if (p0 instanceof PresentationData) {
       PresentationData presentation = (PresentationData)p0;
       Color color = node instanceof NodeDescriptor ? ((NodeDescriptor)node).getColor() : null;
-      setIcon(presentation.getIcon(false));
+      setIcon(fixIconIfNeeded(presentation.getIcon(false), selected, hasFocus));
 
       final List<PresentableNodeDescriptor.ColoredFragment> coloredText = presentation.getColoredText();
       Color forcedForeground = presentation.getForcedTextForeground();
@@ -65,7 +74,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
           if (first) {
             final TextAttributesKey textAttributesKey = presentation.getTextAttributesKey();
             if (textAttributesKey != null) {
-              final TextAttributes forcedAttributes = getColorsScheme().getAttributes(textAttributesKey);
+              TextAttributes forcedAttributes = getScheme().getAttributes(textAttributesKey);
               if (forcedAttributes != null) {
                 simpleTextAttributes = SimpleTextAttributes.merge(simpleTextAttributes, SimpleTextAttributes.fromTextAttributes(forcedAttributes));
               }
@@ -96,9 +105,6 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       append(text);
       setToolTipText(null);
     }
-    if (!AbstractTreeUi.isLoadingNode(value)) {
-      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
-    }
   }
 
   @Nullable
@@ -109,13 +115,20 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   }
 
   @NotNull
+  @Deprecated
+  @SuppressWarnings("unused")
   protected EditorColorsScheme getColorsScheme() {
-    return EditorColorsManager.getInstance().getGlobalScheme();
+    return getScheme();
+  }
+
+  @NotNull
+  private static EditorColorsScheme getScheme() {
+    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
 
   @NotNull
   protected SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation, Color color, @NotNull Object node) {
-    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(presentation, getColorsScheme());
+    SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(presentation, getScheme());
 
     return addColorToSimpleTextAttributes(simpleTextAttributes, color);
   }
@@ -130,7 +143,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   }
 
   public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation) {
-    return getSimpleTextAttributes(presentation, EditorColorsManager.getInstance().getGlobalScheme());
+    return getSimpleTextAttributes(presentation, getScheme());
   }
   
   public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,

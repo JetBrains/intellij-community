@@ -35,6 +35,7 @@ public class LibraryBasedFrameworkSupportProvider extends FrameworkSupportInModu
     return new LibrarySupportConfigurable();
   }
 
+  @Override
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
     return moduleType instanceof JavaModuleType;
   }

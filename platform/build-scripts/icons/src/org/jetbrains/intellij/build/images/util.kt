@@ -77,7 +77,11 @@ internal enum class ImageType(private val suffix: String) {
 
   companion object {
     fun getBasicName(file: File, prefix: List<String>): String {
-      val name = FileUtil.getNameWithoutExtension(file.name)
+      return getBasicName(file.name, prefix)
+    }
+
+    fun getBasicName(suffix: String, prefix: List<String>): String {
+      val name = FileUtil.getNameWithoutExtension(suffix)
       return stripSuffix((prefix + name).joinToString("/"))
     }
 

@@ -53,6 +53,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
     return myContentPane;
   }
 
+  @Override
   public void checkBoxSelectionChanged(int index, boolean value) {
     final Pair<T, Boolean> pair = myWorkingList.remove(index);
     myWorkingList.add(index, Pair.create(pair.first, value));

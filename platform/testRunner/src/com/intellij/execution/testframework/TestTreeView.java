@@ -45,8 +45,8 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
@@ -75,6 +75,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     myModel = model;
     Disposer.register(myModel, myModel.getRoot());
     Disposer.register(myModel, new Disposable() {
+      @Override
       public void dispose() {
         setModel(null);
         myModel = null;
@@ -84,6 +85,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     setCellRenderer(getRenderer(myModel.getProperties()));
   }
 
+  @Override
   public void setUI(final TreeUI ui) {
     super.setUI(ui);
     final int fontHeight = getFontMetrics(getFont()).getHeight();
@@ -92,7 +94,8 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     setLargeModel(true);
   }
 
-  public Object getData(final String dataId) {
+  @Override
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
@@ -168,8 +171,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     }
     else {
       AbstractTestProxy selectedTest = getSelectedTest();
-      fqn = selectedTest instanceof TestProxyRoot ? ((TestProxyRoot)selectedTest).getRootLocation() 
-                                                  : selectedTest != null ? selectedTest.getLocationUrl() : null;
+      fqn = selectedTest != null ? selectedTest.getLocationUrl() : null;
     }
     CopyPasteManager.getInstance().setContents(new StringSelection(fqn));
   }
@@ -177,9 +179,6 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     AbstractTestProxy test = getSelectedTest();
-    if (test instanceof TestProxyRoot) {
-      return ((TestProxyRoot)test).getRootLocation() != null;
-    }
     return test != null && test.getLocationUrl() != null;
   }
 
@@ -216,7 +215,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     final Collection<Integer> items = handler.getExpandedItems();
     return items.size() == 1 && row == items.iterator().next();
   }
-  
+
   @Override
   public void paint(Graphics g) {
     super.paint(g);

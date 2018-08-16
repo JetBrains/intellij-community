@@ -10,28 +10,28 @@
 -----
 Groovy script
   Literal
-    PsiElement(string)(''')
+    PsiElement(single quoted string)(''')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)('''')
+    PsiElement(single quoted string)('''')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''\'')
+    PsiElement(single quoted string)(''\'')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''\''')
+    PsiElement(single quoted string)(''\''')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''\\'')
+    PsiElement(single quoted string)(''\\'')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''foo')
+    PsiElement(single quoted string)(''foo')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''foo'')
+    PsiElement(single quoted string)(''foo'')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''\t\n'')
+    PsiElement(single quoted string)(''\t\n'')
   PsiElement(new line)('\n')
   Literal
-    PsiElement(string)(''\j\i'')
+    PsiElement(single quoted string)(''\j\i'')

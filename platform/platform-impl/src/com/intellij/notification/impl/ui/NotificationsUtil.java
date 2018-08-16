@@ -138,7 +138,7 @@ public class NotificationsUtil {
   @Nullable
   public static String getFontName() {
     Pair<String, Integer> data = getFontData();
-    return data == null ? null : data.first;
+    return Pair.getFirst(data);
   }
 
   @Nullable

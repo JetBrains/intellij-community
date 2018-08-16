@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -98,6 +97,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyChangeViewContent myContent;
   private boolean myModelUpdateInProgress;
+  private MyTreeExpander myTreeExpander;
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
@@ -109,6 +109,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager = contentManager;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myView = new ChangesListView(project);
+    myTreeExpander = new MyTreeExpander();
+    myView.setTreeExpander(myTreeExpander);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myTsl = new TreeSelectionListener() {
       @Override
@@ -146,13 +148,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
 
-
-    MyTreeExpander expander = new MyTreeExpander();
-    AnAction expandAll = CommonActionsManager.getInstance().createExpandAllHeaderAction(expander, myView);
-    AnAction collapseAll = CommonActionsManager.getInstance().createCollapseAllHeaderAction(expander, myView);
-    myContentManager.addToolWindowTitleAction(expandAll);
-    myContentManager.addToolWindowTitleAction(collapseAll);
-
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
                                                   () -> ApplicationManager.getApplication().invokeLater(() -> refreshView(), ModalityState.NON_MODAL, myProject.getDisposed()));
@@ -185,17 +180,18 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
 
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(CustomActionsSchema.getInstance().getCorrectedAction("ChangesViewToolbar"));
+    group.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
 
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Show Ignored Files", true);
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
     ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
     ignoreGroup.add(new ToggleShowIgnoredAction());
     ignoreGroup.add(new IgnoredSettingsAction());
     group.add(ignoreGroup);
-
+    group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
     group.addSeparator();
     group.add(new ToggleDetailsAction());
 
@@ -358,23 +354,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void selectChanges(@NotNull List<Change> changes) {
     List<TreePath> paths = new ArrayList<>();
 
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
     for (Change change : changes) {
-      ContainerUtil.addIfNotNull(paths, findObjectInTree(root, change));
+      ContainerUtil.addIfNotNull(paths, myView.findNodePathInTree(change));
     }
 
     if (!paths.isEmpty()) {
       TreeUtil.selectPaths(myView, paths);
     }
-  }
-
-  @Nullable
-  private static TreePath findObjectInTree(@NotNull DefaultMutableTreeNode root, Object userObject) {
-    DefaultMutableTreeNode objectNode =
-      userObject instanceof ChangeListChange
-      ? TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject))
-      : TreeUtil.findNodeWithObject(root, userObject);
-    return objectNode != null ? TreeUtil.getPathFromRoot(objectNode) : null;
   }
 
 
@@ -459,12 +445,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
 
     @Override
-    public boolean isVisible(AnActionEvent event) {
-      ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
-      return toolWindow != null && toolWindow.getContentManager().getSelectedContent() == myContent;
-    }
-
-    @Override
     public void collapseAll() {
       TreeUtil.collapseAll(myView, 2);
       TreeUtil.expand(myView, 1);
@@ -513,9 +493,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @NotNull
     @Override
     protected List<Wrapper> getSelectedChanges() {
-      List<Wrapper> result = wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
-      if (result.isEmpty()) result = getAllChanges();
-      return result;
+      boolean hasSelection = myView.getSelectionCount() != 0;
+      if (hasSelection) {
+        return wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
+      }
+      else {
+        return getAllChanges();
+      }
     }
 
     @NotNull
@@ -526,8 +510,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     @Override
     protected void selectChange(@NotNull Wrapper change) {
-      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      TreePath path = findObjectInTree(root, change.getUserObject());
+      TreePath path = myView.findNodePathInTree(change.getUserObject());
       if (path != null) {
         TreeUtil.selectPath(myView, path, false);
       }
@@ -541,7 +524,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
   
-    private MyChangeViewContent(JComponent component, String displayName, boolean isLockable) {
+    private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
       super(myProject, component, displayName, isLockable);
     }
 

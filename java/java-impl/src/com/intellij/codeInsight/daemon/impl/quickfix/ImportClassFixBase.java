@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.FileTypeUtils;
@@ -128,7 +130,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     boolean anyAccessibleFound = classList.stream().anyMatch(aClass -> isAccessible(aClass, myElement));
     PsiManager manager = myElement.getManager();
-    classList.removeIf(aClass -> (anyAccessibleFound || !manager.isInProject(aClass)) && !isAccessible(aClass, myElement));
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    classList.removeIf(aClass -> (anyAccessibleFound || !manager.isInProject(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
 
     if (acceptWrongNumberOfTypeParams && referenceHasTypeParameters) {
       final List<PsiClass> candidates = new ArrayList<>();
@@ -153,6 +156,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     filerByPackageName(classList, file);
+
+    return removeDuplicates(classList);
+  }
+
+  private static List<PsiClass> removeDuplicates(List<PsiClass> classList) {
+    Set<String> uniqueNames = new HashSet<>();
+    classList.removeIf(aClass -> !uniqueNames.add(aClass.getQualifiedName()));
     return classList;
   }
 
@@ -348,7 +358,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private static boolean autoImportWillInsertUnexpectedCharacters(PsiClass aClass) {
     PsiClass containingClass = aClass.getContainingClass();
     // when importing inner class, the reference might be qualified with outer class name and it can be confusing
-    return containingClass != null;
+    return containingClass != null &&
+           !CodeStyle.getSettings(aClass.getContainingFile()).getCustomSettings(JavaCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
   }
 
   private boolean canImportHere(boolean allowCaretNearRef, Editor editor, PsiFile psiFile, String exampleClassName) {

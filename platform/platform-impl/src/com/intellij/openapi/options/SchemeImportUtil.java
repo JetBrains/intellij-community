@@ -82,26 +82,12 @@ public class SchemeImportUtil {
 
   @NotNull
   public static Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
-    InputStream inputStream = null;
-    try {
-      inputStream = file.getInputStream();
+    try (InputStream inputStream = file.getInputStream()) {
       final Document document = JDOMUtil.loadDocument(inputStream);
-      final Element root = document.getRootElement();
-      inputStream.close();
-      return root;
+      return document.getRootElement();
     }
     catch (IOException | JDOMException e) {
       throw new SchemeImportException();
-    }
-    finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        }
-        catch (IOException e) {
-          // ignore
-        }
-      }
     }
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.wizard;
 
 import com.intellij.ide.wizard.StepAdapter;
@@ -20,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ArrayUtil;
@@ -86,10 +71,12 @@ final class BindToExistingBeanStep extends StepAdapter{
     myChkIsModified.setSelected(myData.myGenerateIsModified);
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
 
+  @Override
   public void _init() {
     // Check that data is correct
     LOG.assertTrue(!myData.myBindToNewBean);
@@ -97,6 +84,7 @@ final class BindToExistingBeanStep extends StepAdapter{
     myTableModel.fireTableDataChanged();
   }
 
+  @Override
   public void _commit(boolean finishChosen) {
     // Stop editing if any
     final TableCellEditor cellEditor = myTable.getCellEditor();
@@ -118,22 +106,27 @@ final class BindToExistingBeanStep extends StepAdapter{
         UIDesignerBundle.message("column.bean.property")};
     }
 
+    @Override
     public int getColumnCount() {
       return myColumnNames.length;
     }
 
+    @Override
     public String getColumnName(final int column) {
       return myColumnNames[column];
     }
 
+    @Override
     public int getRowCount() {
       return myData.myBindings.length;
     }
 
+    @Override
     public boolean isCellEditable(final int row, final int column) {
       return column == 1/*Bean Property*/;
     }
 
+    @Override
     public Object getValueAt(final int row, final int column) {
       if(column == 0/*Form Property*/){
         return myData.myBindings[row].myFormProperty;
@@ -146,6 +139,7 @@ final class BindToExistingBeanStep extends StepAdapter{
       }
     }
 
+    @Override
     public void setValueAt(final Object value, final int row, final int column) {
       LOG.assertTrue(column == 1/*Bean Property*/);
       final FormProperty2BeanProperty binding = myData.myBindings[row];
@@ -183,6 +177,7 @@ final class BindToExistingBeanStep extends StepAdapter{
       }
     }
 
+    @Override
     public Component getTableCellEditorComponent(
       final JTable table,
       final Object value,
@@ -259,6 +254,7 @@ final class BindToExistingBeanStep extends StepAdapter{
       return myCbx;
     }
 
+    @Override
     public Object getCellEditorValue() {
       LOG.assertTrue(myEditingRow != -1);
       try {

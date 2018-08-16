@@ -4,17 +4,19 @@ package com.intellij.ui.paint;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter2D;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.font.LineMetrics;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -141,7 +143,6 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
           double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g, RoundingMode.FLOOR);
-          @SuppressWarnings("TestOnlyProblems")
           double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(metrics.getStrikethroughThickness(), font), g, RoundingMode.FLOOR);
           drawLine(g, x, y - offset, width, thickness, this);
         }
@@ -153,7 +154,6 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     return height > 7 && Registry.is("ide.text.effect.new.scale") ? height / 2 : 3;
   }
 
-  @SuppressWarnings("TestOnlyProblems")
   private static void paintUnderline(Graphics2D g, double x, double y, double width, double height, Font font, double thickness, EffectPainter2D painter) {
     if (width > 0 && height > 0) {
       if (Registry.is("ide.text.effect.new.metrics")) {
@@ -303,8 +303,8 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     };
 
     // we should not recalculate caches when IDEA is on Retina and non-Retina
-    private final ConcurrentHashMap<Long, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Long, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
 
     abstract double getPeriod(double height);
 
@@ -320,21 +320,25 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     }
 
+    @Nullable
     BufferedImage getImage(Graphics2D g, Color color, double height) {
-      Long key = color.getRGB() ^ ((long)(JBUI.sysScale(g) * height) << 32);
-      ConcurrentHashMap<Long, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
-      return cache.computeIfAbsent(key, k -> createImage(g, color, height));
+      ConcurrentHashMap<Integer, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
+      int key = Objects.hash(color.getRGB(), JBUI.sysScale(g), height);
+      BufferedImage image = cache.get(key);
+      if (image == null) {
+        image = createImage(g, color, height);
+        if (image != null) cache.putIfAbsent(key, image);
+      }
+      return image;
     }
 
+    @Nullable
     BufferedImage createImage(Graphics2D g, Paint paint, double height) {
       double period = getPeriod(height);
       int width = (int)period << (paint instanceof Color ? 8 : 1);
-      BufferedImage image;
-      if (UIUtil.isJreHiDPI(g)) {
-        image = new JBHiDPIScaledImage(g, width, height, BufferedImage.TYPE_INT_ARGB);
-      } else {
-        image = UIUtil.createImage(g, width, (int)height, BufferedImage.TYPE_INT_ARGB);
-      }
+      if (width <= 0 || height <= 0) return null;
+
+      BufferedImage image = UIUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
       paintImage(image.createGraphics(), paint, width, height, period);
       return image;
     }
@@ -348,8 +352,9 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
       g.setComposite(AlphaComposite.SrcOver);
       BufferedImage image = paint instanceof Color ? getImage(g, (Color)paint, height) : createImage(g, paint, height);
-      int period = image.getWidth(null);
-      if (image instanceof JBHiDPIScaledImage) period /= 2;
+      if (image == null) return;
+
+      double period = ImageUtil.getRealWidth(image) / ImageUtil.getImageScale(image);
       double offset = (x % period + period) % period; // normalize
       g.translate(-offset, 0);
       for (double dx = -offset; dx < width; dx += period) {

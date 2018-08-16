@@ -30,15 +30,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class PropertyListStubElementType extends ILightStubElementType<PropertiesListStub, PropertiesList> {
-  public PropertyListStubElementType() {
+class PropertyListStubElementType extends ILightStubElementType<PropertiesListStub, PropertiesList> {
+  PropertyListStubElementType() {
     super("PROPERTIES_LIST", PropertiesElementTypes.LANG);
   }
 
+  @Override
   public PropertiesList createPsi(@NotNull final PropertiesListStub stub) {
     return new PropertiesListImpl(stub);
   }
 
+  @Override
   @NotNull
   public PropertiesListStub createStub(@NotNull final PropertiesList psi, final StubElement parentStub) {
     return new PropertiesListStubImpl(parentStub);
@@ -50,19 +52,23 @@ public class PropertyListStubElementType extends ILightStubElementType<Propertie
     return "properties.propertieslist";
   }
 
+  @Override
   public void serialize(@NotNull final PropertiesListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
+  @Override
   @NotNull
   public PropertiesListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PropertiesListStubImpl(parentStub);
   }
 
+  @Override
   public void indexStub(@NotNull final PropertiesListStub stub, @NotNull final IndexSink sink) {
   }
 
+  @NotNull
   @Override
-  public PropertiesListStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PropertiesListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     return new PropertiesListStubImpl(parentStub);
   }
 }

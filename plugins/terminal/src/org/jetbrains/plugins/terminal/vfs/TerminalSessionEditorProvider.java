@@ -18,10 +18,13 @@ package org.jetbrains.plugins.terminal.vfs;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.tabs.TabInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.JBTabInnerTerminalWidget;
 
 /**
  * @author traff
@@ -35,7 +38,26 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
   @NotNull
   @Override
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    return new TerminalSessionEditor(project, (TerminalSessionVirtualFileImpl)file);
+    if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
+      return new TerminalSessionEditor(project, (TerminalSessionVirtualFileImpl)file);
+    }
+    else {
+      TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
+      JBTabInnerTerminalWidget widget =
+        terminalFile.getTerminalWidget().getCreateNewSessionAction().apply(null);
+
+
+      widget.getTabbedWidget().removeTab(widget);
+
+
+      TabInfo tabInfo = new TabInfo(widget).setText(terminalFile.getName());
+      TerminalSessionVirtualFileImpl newSessionVirtualFile =
+        new TerminalSessionVirtualFileImpl(tabInfo, widget, terminalFile.getSettingsProvider());
+      tabInfo
+        .setObject(newSessionVirtualFile);
+
+      return new TerminalSessionEditor(project, newSessionVirtualFile);
+    }
   }
 
   @NotNull

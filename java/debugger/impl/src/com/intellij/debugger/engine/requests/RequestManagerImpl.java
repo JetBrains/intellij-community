@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -21,7 +19,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
-import java.util.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
@@ -73,7 +70,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   @Nullable
-  public Requestor findRequestor(EventRequest request) {
+  public static Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return request != null? (Requestor)request.getProperty(REQUESTOR) : null;
   }
@@ -183,6 +180,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   // requests creation
+  @Override
   @Nullable
   public ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
     if (myEventRequestManager == null) { // detached already
@@ -290,6 +288,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void callbackOnPrepareClasses(final ClassPrepareRequestor requestor, final SourcePosition classPosition) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
@@ -307,6 +306,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ClassPrepareRequest classPrepareRequest = createClassPrepareRequest(requestor, classOrPatternToBeLoaded);
@@ -320,6 +320,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void enableRequest(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
@@ -350,6 +351,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  @Override
   public void setInvalid(Requestor requestor, String message) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //deleteRequest(requestor);
@@ -358,7 +360,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       myRequestWarnings.put(requestor, message);
     }
   }
-  
+
   public @Nullable String getWarning(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return myRequestWarnings.get(requestor);
@@ -370,6 +372,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return findRequests(requestor).stream().anyMatch(r -> !(r instanceof ClassPrepareRequest));
   }
 
+  @Override
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myEventRequestManager = null;
@@ -377,6 +380,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myRequestorToBelongedRequests.clear();
   }
 
+  @Override
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
   }

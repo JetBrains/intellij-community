@@ -8,11 +8,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ import java.nio.charset.Charset;
  * @see VirtualFileManager
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
-  public static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
+  static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   /**
@@ -167,7 +167,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Gets the extension of this file. If file name contains '.' extension is the substring from the last '.'
-   * to the end of the name, otherwise extension is null.
+   * to the end of the name (not including the '.'), otherwise extension is null.
    *
    * @return the extension or null if file name doesn't contain '.'
    */
@@ -341,34 +341,29 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @Nullable
   public VirtualFile findFileByRelativePath(@NotNull String relPath) {
-    if (relPath.isEmpty()) return this;
-    relPath = StringUtil.trimStart(relPath, "/");
+    VirtualFile child = this;
 
-    int index = relPath.indexOf('/');
-    if (index < 0) index = relPath.length();
-    String name = relPath.substring(0, index);
+    for (int off = CharArrayUtil.shiftForward(relPath, 0, "/");
+         child != null && off < relPath.length();
+         off = CharArrayUtil.shiftForward(relPath, off, "/")) {
+      int nextOff = relPath.indexOf('/', off);
+      if (nextOff < 0) nextOff = relPath.length();
+      String name = relPath.substring(off, nextOff);
 
-    VirtualFile child;
-    if (name.equals(".")) {
-      child = this;
-    }
-    else if (name.equals("..")) {
-      if (is(VFileProperty.SYMLINK)) {
-        final VirtualFile canonicalFile = getCanonicalFile();
-        child = canonicalFile != null ? canonicalFile.getParent() : null;
+      if (name.equals("..")) {
+        if (child.is(VFileProperty.SYMLINK)) {
+          final VirtualFile canonicalFile = child.getCanonicalFile();
+          child = canonicalFile != null ? canonicalFile.getParent() : null;
+        }
+        else {
+          child = child.getParent();
+        }
       }
-      else {
-        child = getParent();
+      else if (!name.equals(".")) {
+        child = child.findChild(name);
       }
-    }
-    else {
-      child = findChild(name);
-    }
 
-    if (child == null) return null;
-
-    if (index < relPath.length()) {
-      return child.findFileByRelativePath(relPath.substring(index + 1));
+      off = nextOff;
     }
     return child;
   }
@@ -502,7 +497,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   @Nullable
-  protected Charset getStoredCharset() {
+  private Charset getStoredCharset() {
     return getUserData(CHARSET_KEY);
   }
 

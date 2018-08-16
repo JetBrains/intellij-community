@@ -147,6 +147,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     return treeBuilder;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
       setAddAction(new AnActionButtonRunnable() {
@@ -196,7 +197,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       }).
       setMoveUpActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return isMoveActionEnabled(-1);
         }
       }).
@@ -208,7 +209,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       }).
       setMoveDownActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return isMoveActionEnabled(+1);
         }
       }).

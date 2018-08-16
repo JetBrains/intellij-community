@@ -106,4 +106,22 @@ public class FunctionalExpressionUtils {
     }
     return null;
   }
+
+  /**
+   * Returns the type of functional expression (not {@link PsiLambdaExpressionType} or {@link PsiMethodReferenceType},
+   * but actual functional interface type).
+   *
+   * @param expression expression to find the type of.
+   * @return type of functional expression.
+   */
+  public static PsiType getFunctionalExpressionType(PsiExpression expression) {
+    PsiType argumentType;
+    if (expression instanceof PsiFunctionalExpression) {
+      argumentType = ((PsiFunctionalExpression)expression).getFunctionalInterfaceType();
+    }
+    else {
+      argumentType = expression.getType();
+    }
+    return argumentType;
+  }
 }

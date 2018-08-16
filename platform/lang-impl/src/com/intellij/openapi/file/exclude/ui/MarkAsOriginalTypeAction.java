@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude.ui;
 
 import com.intellij.idea.ActionsBundle;
@@ -23,9 +9,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -36,7 +24,7 @@ import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager
  */
 public class MarkAsOriginalTypeAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     if (project == null || typeManager == null) return;
@@ -47,7 +35,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       typeManager == null ? JBIterable.empty() :
@@ -59,7 +47,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
 
     if (fileTypes.size() == 1) {
       FileType original = fileTypes.iterator().next();
-      String originalName = original.getName();
+      String originalName = StringUtil.defaultIfEmpty(original.getDescription(), original.getName());
       String text = ActionsBundle.actionText("MarkAsOriginalTypeAction").replace("Original File Type", originalName);
       e.getPresentation().setText(text);
       e.getPresentation().setIcon(original.getIcon());

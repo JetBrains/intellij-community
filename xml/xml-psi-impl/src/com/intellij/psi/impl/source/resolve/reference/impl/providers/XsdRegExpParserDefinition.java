@@ -38,6 +38,7 @@ public class XsdRegExpParserDefinition extends RegExpParserDefinition {
                                                                     RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
                                                                     RegExpCapability.UNICODE_CATEGORY_SHORTHAND);
 
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new RegExpLexer(CAPABILITIES);

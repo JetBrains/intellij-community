@@ -171,8 +171,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }, null);
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     JPanel panel = new BorderLayoutPanel() {
       @Override
       public Dimension getPreferredSize() {
@@ -281,7 +282,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return null;
   }
 
@@ -290,7 +291,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     //    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myIsUsedTrigger = true;
 
         final String pattern = editor.getText();
@@ -572,14 +573,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean isEnabled = IS_ACTION_ENABLED.getValue();
     e.getPresentation().setVisible(isEnabled);
     e.getPresentation().setEnabled(isEnabled);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
       if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_CONTROL) {
         return;
@@ -804,7 +805,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private void setHandleMatchedConfiguration() {
     myPopupField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
       }
     });
@@ -918,7 +919,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final PropertiesComponent storage = PropertiesComponent.getInstance(e.getProject());
         final String[] values = storage.getValues(RUN_ANYTHING_HISTORY_KEY);
         if (values != null) {
@@ -934,7 +935,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(editor.getCaretPosition() == 0);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("LEFT"), editor, balloon);
@@ -1280,9 +1281,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             updatePopupBounds();
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
 
-            ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+            ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
               @Override
-              public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+              public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
                 if (action instanceof TextComponentEditorAction) {
                   return;
                 }
@@ -1290,7 +1291,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                   myPopup.cancel();
                 }
               }
-            }, myPopup);
+            });
           }
           else {
             myList.revalidate();
@@ -1489,7 +1490,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
         return getTextEditor().getText();
       }

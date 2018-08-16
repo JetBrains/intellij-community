@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
@@ -59,7 +60,7 @@ abstract class GitImplBase implements Git {
 
       @Override
       public void errorLineReceived(@NotNull String line) {
-        if (!looksLikeError(line)) {
+        if (Registry.is("git.allow.stderr.to.stdout.mixing") && !looksLikeError(line)) {
           addOutputLine(line);
         }
         else {
@@ -69,6 +70,7 @@ abstract class GitImplBase implements Git {
     };
   }
 
+  @Override
   @NotNull
   public GitCommandResult runCommandWithoutCollectingOutput(@NotNull GitLineHandler handler) {
     return run(handler, new OutputCollector() {
@@ -248,7 +250,7 @@ abstract class GitImplBase implements Git {
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
       GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
-      handler.addLineListener(new GitLineHandlerAdapter() {
+      handler.addLineListener(new GitLineHandlerListener() {
         @Override
         public void onLineAvailable(String line, Key outputType) {
           if (!handler.isSilent() && !StringUtil.isEmptyOrSpaces(line)) {

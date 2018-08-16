@@ -48,12 +48,14 @@ public class RegExpFileType extends LanguageFileType {
         myIcon =  null;
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getName() {
         return "RegExp";
     }
 
+    @Override
     @NotNull
     public String getDescription() {
         return "Regular Expression";
@@ -66,6 +68,7 @@ public class RegExpFileType extends LanguageFileType {
         return "regexp";
     }
 
+    @Override
     @Nullable
     public Icon getIcon() {
         return myIcon;

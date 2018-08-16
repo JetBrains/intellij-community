@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.google.common.cache.CacheBuilder
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -11,6 +12,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
+import java.util.concurrent.TimeUnit
 
 private val nullCredentials = Credentials("\u0000", OneTimeString("\u0000"))
 
@@ -22,13 +24,19 @@ internal val NOTIFICATION_MANAGER by lazy {
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
   private val fallbackStore = lazy { KeePassCredentialStore(memoryOnly = true) }
 
-  private val queueProcessor = QueueProcessor<() -> Unit>({ it() })
+  private val queueProcessor = QueueProcessor<() -> Unit> { it() }
 
   private val postponedCredentials = KeePassCredentialStore(memoryOnly = true)
+  private val deniedItems = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<CredentialAttributes, Boolean>()
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     postponedCredentials.get(attributes)?.let {
       return if (it == nullCredentials) null else it
+    }
+
+    if (deniedItems.getIfPresent(attributes) != null) {
+      LOG.warn("User denied access to $attributes")
+      return null
     }
 
     var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
@@ -36,6 +44,10 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
     val userName = attributes.userName
     try {
       val value = store.get(attributes)
+      if (value === ACCESS_TO_KEY_CHAIN_DENIED) {
+        deniedItems.put(attributes, true)
+        return null
+      }
       if (value != null || requestor == null || userName == null) {
         return value
       }

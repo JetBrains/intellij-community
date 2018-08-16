@@ -56,10 +56,12 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
     return ServiceManager.getService(project, ExcludedFromValidationConfiguration.class);
   }
 
+  @Override
   public ValidationConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull final ValidationConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }

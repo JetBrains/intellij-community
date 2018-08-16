@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     String m = "Started loading content";
     LOG.info(m);
@@ -105,7 +106,7 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 }

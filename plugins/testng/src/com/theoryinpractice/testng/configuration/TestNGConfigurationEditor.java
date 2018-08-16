@@ -120,6 +120,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     alternateJDK.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModulesComponent(), false));
     commonJavaParameters.setModuleContext(moduleSelector.getModule());
     moduleClasspath.getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         commonJavaParameters.setModuleContext(moduleSelector.getModule());
       }
@@ -155,6 +156,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
                            });
     registerListener(new JRadioButton[]{packagesInProject, packagesInModule, packagesAcrossModules}, null);
     packagesInProject.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         evaluateModuleClassPath();
       }
@@ -391,8 +393,8 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
     }));
 
-    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true, 
-                                                                                                      JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
+    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true,
+                                                                                                      JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
     methodField.setComponent(methodEditorTextField);
 
@@ -462,7 +464,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
           }
         }).setAddActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !project.isDefault();
         }
       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
@@ -571,6 +573,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       super(project);
     }
 
+    @Override
     protected Condition<PsiMethod> getFilter(PsiClass testClass) {
       return method -> TestNGUtil.hasTest(method);
     }

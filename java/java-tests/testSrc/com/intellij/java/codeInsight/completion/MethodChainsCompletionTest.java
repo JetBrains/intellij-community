@@ -45,6 +45,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     }
   }
 
+  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/methodChains/";
   }

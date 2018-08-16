@@ -22,10 +22,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +41,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -61,8 +59,8 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -73,7 +71,7 @@ public class RecentProjectPanel extends JPanel {
   protected AnAction removeRecentProjectAction;
   private int myHoverIndex = -1;
   private final int closeButtonInset = JBUI.scale(7);
-  private Icon currentIcon = AllIcons.Welcome.Project.Remove;
+  private Icon currentIcon = toSize(AllIcons.Welcome.Project.Remove);
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
   Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>(0);
 
@@ -149,7 +147,7 @@ public class RecentProjectPanel extends JPanel {
           if (cellBounds.contains(event.getPoint())) {
             Object selection = myList.getSelectedValue();
             if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
-              removeRecentProjectAction.actionPerformed(null);
+              removeRecentProject();
             } else if (selection != null) {
               AnAction selectedAction = (AnAction) selection;
               AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
@@ -185,22 +183,8 @@ public class RecentProjectPanel extends JPanel {
 
     removeRecentProjectAction = new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        Object[] selection = myList.getSelectedValues();
-
-        if (selection != null && selection.length > 0) {
-          final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
-                                                     "Remove '" + StringUtil.join(selection, action -> ((AnAction)action).getTemplatePresentation().getText(), "'\n'") +
-                                                     "' from recent projects list?",
-                                                     "Remove Recent Project",
-                                                     Messages.getQuestionIcon());
-          if (rc == Messages.OK) {
-            for (Object projectAction : selection) {
-              removeRecentProjectElement(projectAction);
-            }
-            ListUtil.removeSelectedItems(myList);
-          }
-        }
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        removeRecentProject();
       }
 
       @Override
@@ -242,6 +226,25 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+  }
+
+  private void removeRecentProject() {
+    Object[] selection = myList.getSelectedValues();
+
+    if (selection != null && selection.length > 0) {
+      final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
+                                                 "Remove '" + StringUtil
+                                                   .join(selection, action -> ((AnAction)action).getTemplatePresentation().getText(), "'\n'") +
+                                                 "' from recent projects list?",
+                                                 "Remove Recent Project",
+                                                 Messages.getQuestionIcon());
+      if (rc == Messages.OK) {
+        for (Object projectAction : selection) {
+          removeRecentProjectElement(projectAction);
+        }
+        ListUtil.removeSelectedItems(myList);
+      }
+    }
   }
 
   protected boolean isPathValid(String path) {
@@ -293,9 +296,9 @@ public class RecentProjectPanel extends JPanel {
           if (cellBounds != null && cellBounds.contains(point)) {
             UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             if (rectInListCoordinatesContains(cellBounds, point)) {
-              currentIcon = AllIcons.Welcome.Project.Remove_hover;
+              currentIcon = toSize(AllIcons.Welcome.Project.Remove_hover);
             } else {
-              currentIcon = AllIcons.Welcome.Project.Remove;
+              currentIcon = toSize(AllIcons.Welcome.Project.Remove);
             }
             myHoverIndex = index;
             myList.repaint(cellBounds);
@@ -314,7 +317,7 @@ public class RecentProjectPanel extends JPanel {
       @Override
       public void mouseExited(MouseEvent e) {
         myHoverIndex = -1;
-        currentIcon = AllIcons.Welcome.Project.Remove;
+        currentIcon = toSize(AllIcons.Welcome.Project.Remove);
         myList.repaint();
       }
     };
@@ -367,8 +370,10 @@ public class RecentProjectPanel extends JPanel {
 
     public Rectangle getCloseIconRect(int index) {
       final Rectangle bounds = getCellBounds(index, index);
-      Icon icon = AllIcons.Welcome.Project.Remove;
-      return new Rectangle(bounds.width - icon.getIconWidth() - 10, bounds.y + 10, icon.getIconWidth(), icon.getIconHeight());
+      Icon icon = toSize(AllIcons.Welcome.Project.Remove);
+      return new Rectangle(bounds.width - icon.getIconWidth() - JBUI.scale(10),
+                           bounds.y + (bounds.height - icon.getIconHeight()) / 2,
+                           icon.getIconWidth(), icon.getIconHeight());
     }
 
     @Override
@@ -378,7 +383,7 @@ public class RecentProjectPanel extends JPanel {
         final int index = locationToIndex(myMousePoint);
         if (index != -1) {
           final Rectangle iconRect = getCloseIconRect(index);
-          Icon icon = iconRect.contains(myMousePoint) ? AllIcons.Welcome.Project.Remove_hover : AllIcons.Welcome.Project.Remove;
+          Icon icon = toSize(iconRect.contains(myMousePoint) ? AllIcons.Welcome.Project.Remove_hover : AllIcons.Welcome.Project.Remove);
           icon.paintIcon(this, g, iconRect.x, iconRect.y);
         }
       }
@@ -649,5 +654,12 @@ public class RecentProjectPanel extends JPanel {
       tmp = tmp.getParentFile();
     }
     return false;
+  }
+
+  @NotNull
+  private static Icon toSize(@NotNull Icon icon) {
+    return IconUtil.toSize(icon,
+                           (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth(),
+                           (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());
   }
 }

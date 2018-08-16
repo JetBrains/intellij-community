@@ -28,19 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavaModuleGraphUtil {
-  private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
-
   private JavaModuleGraphUtil() { }
 
   @Nullable
@@ -63,13 +56,7 @@ public class JavaModuleGraphUtil {
     if (index.isInLibrary(file)) {
       VirtualFile root = index.getClassRootForFile(file);
       if (root != null) {
-        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-        if (descriptorFile == null) {
-          VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
-          if (alt != null && isMultiReleaseJar(root)) {
-            descriptorFile = alt;
-          }
-        }
+        VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
         if (descriptorFile != null) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
           if (psiFile instanceof PsiJavaFile) {
@@ -86,20 +73,6 @@ public class JavaModuleGraphUtil {
     }
 
     return null;
-  }
-
-  private static boolean isMultiReleaseJar(VirtualFile root) {
-    if (root.getFileSystem() instanceof JarFileSystem) {
-      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      if (manifest != null) {
-        try (InputStream stream = manifest.getInputStream()) {
-          return Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(MULTI_RELEASE));
-        }
-        catch (IOException ignored) { }
-      }
-    }
-
-    return false;
   }
 
   @Nullable
@@ -218,6 +191,7 @@ public class JavaModuleGraphUtil {
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = ContainerUtil.newTroveSet();
+
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
     for (String key : index.getAllKeys(project)) {
@@ -254,7 +228,7 @@ public class JavaModuleGraphUtil {
     private final Graph<PsiJavaModule> myGraph;
     private final Set<String> myTransitiveEdges;
 
-    public RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
+    private RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
       myGraph = graph;
       myTransitiveEdges = transitiveEdges;
     }
@@ -329,7 +303,7 @@ public class JavaModuleGraphUtil {
     private final MultiMap<N, N> myEdges;
     private final boolean myInbound;
 
-    public ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
+    private ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
       myNodes = new THashSet<>();
       edges.entrySet().forEach(e -> {
         myNodes.add(e.getKey());
@@ -339,16 +313,19 @@ public class JavaModuleGraphUtil {
       myInbound = inbound;
     }
 
+    @NotNull
     @Override
     public Collection<N> getNodes() {
       return myNodes;
     }
 
+    @NotNull
     @Override
     public Iterator<N> getIn(N n) {
       return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
     }
 
+    @NotNull
     @Override
     public Iterator<N> getOut(N n) {
       return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();

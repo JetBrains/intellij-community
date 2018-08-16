@@ -31,14 +31,13 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @NotNull
   public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
     RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
-    RunConfigurationProducer[] allProducers = Extensions.getExtensions(EP_NAME);
-    List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.length);
+    List<RunConfigurationProducer> allProducers = EP_NAME.getExtensionList();
+    List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.size());
     for (RunConfigurationProducer producer : allProducers) {
       if (!runConfigurationProducerService.isIgnored(producer)) {
         result.add(producer);
       }
     }
-
     return result;
   }
 

@@ -1,14 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -17,12 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-/**
- * @author Max Medvedev
- */
-public class GrReferenceHighlighterFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  public GrReferenceHighlighterFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
-    super(project);
+public class GrReferenceHighlighterFactory implements TextEditorHighlightingPassFactory {
+  public GrReferenceHighlighterFactory(TextEditorHighlightingPassRegistrar registrar) {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
   }
 

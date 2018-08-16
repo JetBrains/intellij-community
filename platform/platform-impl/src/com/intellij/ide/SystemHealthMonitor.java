@@ -17,7 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SystemHealthMonitor implements ApplicationComponent {
+public class SystemHealthMonitor implements BaseComponent {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
@@ -85,7 +85,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();
-            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
+            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(e);
           }
         };
 

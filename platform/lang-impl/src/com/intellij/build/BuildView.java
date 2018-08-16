@@ -271,7 +271,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
     }
     final DefaultActionGroup consoleActionGroup = new DefaultActionGroup() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         String eventViewName = BuildTreeConsoleView.class.getName();
         e.getPresentation().setVisible(!BuildView.this.isViewEnabled(eventViewName));
@@ -318,7 +318,10 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
+    if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+      return getConsoleView();
+    }
     Object data = super.getData(dataId);
     if (data != null) return data;
     StartBuildEvent startBuildEvent = myStartBuildEventRef.get();

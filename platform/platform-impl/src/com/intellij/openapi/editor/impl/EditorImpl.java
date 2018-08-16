@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
@@ -88,8 +89,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
@@ -116,8 +117,8 @@ import java.lang.reflect.Field;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -149,7 +150,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
-  private long myLastTypedActionTimestamp = -1;
+  private volatile long myLastTypedActionTimestamp = -1;
   private String myLastTypedAction;
 
   private static final Cursor EMPTY_CURSOR;
@@ -457,7 +458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Nullable private IndentGuideDescriptor myCurrentCaretGuide;
 
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (myStickySelection) {
           int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
@@ -488,7 +489,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void caretAdded(CaretEvent e) {
+      public void caretAdded(@NotNull CaretEvent e) {
         if (myPrimaryCaret != null) {
           myPrimaryCaret.updateVisualPosition(); // repainting old primary caret's row background
         }
@@ -497,7 +498,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       @Override
-      public void caretRemoved(CaretEvent e) {
+      public void caretRemoved(@NotNull CaretEvent e) {
         repaintCaretRegion(e);
         myPrimaryCaret = myCaretModel.getPrimaryCaret(); // repainting new primary caret's row background
         myPrimaryCaret.updateVisualPosition();
@@ -946,7 +947,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+    if (myProject == null || !myProject.isDisposed()) {
+      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+    }
 
     if (myBulkUpdateListener != null) {
       ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
@@ -1161,7 +1164,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final ActionCallback result = new ActionCallback();
 
     for (int i = 0; i < text.length(); i++) {
-      if (!processKeyTyped(text.charAt(i))) {
+      myLastTypedActionTimestamp = System.currentTimeMillis();
+      char c = text.charAt(i);
+      myLastTypedAction = Character.toString(c);
+      if (!processKeyTyped(c)) {
         result.setRejected();
         return result;
       }
@@ -1203,6 +1209,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     EditorActionPlan plan = new EditorActionPlan(this);
     EditorActionManager.getInstance().getTypedAction().beforeActionPerformed(this, c, dataContext, plan);
     if (myImmediatePainter.paint(graphics, plan)) {
+      measureTypingLatency();
       myLastTypedActionTimestamp = -1;
     }
   }
@@ -1361,7 +1368,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   // optimization: do not do column calculations here since we are interested in line number only
-  int offsetToVisualLine(int offset) {
+  public int offsetToVisualLine(int offset) {
     return myView.offsetToVisualLine(offset, false);
   }
 
@@ -3241,10 +3248,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  public void recordLatencyAwareAction(String actionId, AnActionEvent event) {
-    InputEvent inputEvent = event.getInputEvent();
-    if (inputEvent == null) return;
-    myLastTypedActionTimestamp = inputEvent.getWhen();
+  public void recordLatencyAwareAction(String actionId, long timestampMs) {
+    myLastTypedActionTimestamp = timestampMs;
     myLastTypedAction = actionId;
   }
 
@@ -3253,6 +3258,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       LatenciometerKt.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
       myLastTypedActionTimestamp = -1;
     }
+  }
+
+  public boolean isProcessingTypedAction() {
+    return myLastTypedActionTimestamp != -1;
   }
 
   void beforeModalityStateChanged() {
@@ -4143,13 +4152,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Nullable
     @Override
     public Color getColor(ColorKey key) {
-      if (myOwnColors.containsKey(key)) return myOwnColors.get(key);
+      if (myOwnColors.containsKey(key)) {
+        return myOwnColors.get(key);
+      }
       return getDelegate().getColor(key);
     }
 
     @Override
     public void setColor(ColorKey key, Color color) {
-      myOwnColors.put(key, color);
+      if (color == AbstractColorsScheme.INHERITED_COLOR_MARKER) {
+        myOwnColors.remove(key);
+      }
+      else {
+        myOwnColors.put(key, color);
+      }
 
       // These two are here because those attributes are cached and I do not whant the clients to call editor's reinit
       // settings in this case.

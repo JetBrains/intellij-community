@@ -210,7 +210,7 @@ public class ConvertMapToClassIntention extends Intention {
     if (mapToParams == null) return null;
 
     final Pair<PsiParameter, PsiType> parameterPair = mapToParams.get(arg);
-    final PsiParameter parameter = parameterPair == null ? null : parameterPair.getFirst();
+    final PsiParameter parameter = Pair.getFirst(parameterPair);
 
     return parameter instanceof GrParameter? ((GrParameter)parameter):null;
   }

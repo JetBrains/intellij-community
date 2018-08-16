@@ -39,6 +39,7 @@ public class ForStatementEvaluator extends ForStatementEvaluatorBase {
     myUpdateEvaluator = updateEvaluator != null ? DisableGC.create(updateEvaluator) : null;
   }
 
+  @Override
   public Modifier getModifier() {
     return myModifier;
   }

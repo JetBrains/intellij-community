@@ -51,6 +51,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
     myModel = model;
   }
 
+  @Override
   public String valueOf(IdeaPluginDescriptor base) {
     if (columnIdx == COLUMN_NAME) {
       return base.getName();

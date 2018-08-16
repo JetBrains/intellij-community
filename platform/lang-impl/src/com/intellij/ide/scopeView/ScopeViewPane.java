@@ -8,12 +8,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
-import com.intellij.ide.projectView.impl.CompoundTreeStructureProvider;
-import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewTree;
-import com.intellij.ide.projectView.impl.ShowModulesAction;
+import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -48,11 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTree;
-import javax.swing.ToolTipManager;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -121,17 +112,17 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
       public void changeListRemoved(ChangeList list) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
       public void changeListRenamed(ChangeList list, String name) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
@@ -233,7 +224,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     NamedScopeFilter current = myTreeModel.getFilter();
     if (select(element, file, requestFocus, current)) return;
-    for (NamedScopeFilter filter: getFilters()) {
+    for (NamedScopeFilter filter : getFilters()) {
       if (current != filter && select(element, file, requestFocus, filter)) return;
     }
   }
@@ -324,12 +315,12 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Nullable
   @Override
-  public Object getElementFromTreeNode(@Nullable Object node) {
+  public Object getValueFromNode(@Nullable Object node) {
     return myTreeModel.getContent(node);
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     Object data = super.getData(dataId);
     if (data != null) return data;
     //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);
@@ -351,7 +342,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @NotNull
   private static LinkedHashMap<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
     LinkedHashMap<String, NamedScopeFilter> map = new LinkedHashMap<>();
-    for (NamedScopeFilter filter: NamedScopeFilter.list(holders)) {
+    for (NamedScopeFilter filter : NamedScopeFilter.list(holders)) {
       NamedScopeFilter old = map.put(filter.toString(), filter);
       if (old != null) LOG.warn("DUPLICATED: " + filter);
     }

@@ -20,8 +20,7 @@ class TreeTableFixture(val robot: Robot, val target: TreeTable) :
     ComponentPreconditions.checkEnabledAndShowing(target)
 
     val tree = target.tree
-    val pathWithoutRoot = ExtendedJTreePathFinder().findMatchingPath(tree, pathStrings.asList())
-    val path = ExtendedJTreeDriver.addRootIfInvisible(tree, pathWithoutRoot)
+    val path = ExtendedJTreePathFinder(tree).findMatchingPath(*pathStrings)
 
     var x = target.location.x + (0 until column).sumBy { target.columnModel.getColumn(it).width }
     x += target.columnModel.getColumn(column).width / 3

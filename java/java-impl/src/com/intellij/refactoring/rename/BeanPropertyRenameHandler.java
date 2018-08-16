@@ -37,18 +37,22 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
+  @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     return false;
   }
 
+  @Override
   public boolean isRenaming(@NotNull DataContext dataContext) {
     return getProperty(dataContext) != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     performInvoke(editor, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     performInvoke(null, dataContext);
   }
@@ -134,6 +138,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
       myProperty = property;
     }
 
+    @Override
     protected void doAction() {
       final String newName = getNewName();
       final boolean searchInComments = isSearchInComments();

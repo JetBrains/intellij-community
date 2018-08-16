@@ -10,12 +10,10 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
@@ -78,6 +76,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
+  private final DebugEnvironment myDebugEnvironment;
   private final GlobalSearchScope mySearchScope;
   private Sdk myAlternativeJre;
   private final Sdk myRunJre;
@@ -118,6 +117,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public Sdk getRunJre() {
     return myRunJre;
+  }
+
+  public DebugEnvironment getDebugEnvironment() {
+    return myDebugEnvironment;
   }
 
   public boolean isModifiedClassesScanRequired() {
@@ -187,11 +190,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  static DebuggerSession create(String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment)
+  static DebuggerSession create(@NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment)
     throws ExecutionException {
-    DebuggerSession session = new DebuggerSession(sessionName, debugProcess, environment);
+    DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess, environment);
     try {
-      session.attach(environment);
+      session.attach();
     }
     catch (ExecutionException e) {
       session.dispose();
@@ -208,8 +211,8 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
     myDebugProcess.addEvaluationListener(new MyEvaluationListener());
-    myDebugProcess.setAgentInsertPoints(CaptureSettingsProvider.getIdeInsertPoints());
     ValueLookupManager.getInstance(getProject()).startListening();
+    myDebugEnvironment = environment;
     mySearchScope = environment.getSearchScope();
     myAlternativeJre = environment.getAlternativeJre();
     myRunJre = environment.getRunJre();
@@ -427,16 +430,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return getContextManager().getContext().getSuspendContext();
   }
 
-  @Nullable
-  private ExecutionResult attach(DebugEnvironment environment) throws ExecutionException {
-    RemoteConnection remoteConnection = environment.getRemoteConnection();
+  private void attach() throws ExecutionException {
+    RemoteConnection remoteConnection = myDebugEnvironment.getRemoteConnection();
     final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
     final String transportName = DebuggerBundle.getTransportName(remoteConnection);
-    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(environment, this);
+    myDebugProcess.attachVirtualMachine(myDebugEnvironment, this);
     getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH,
                                  Event.START_WAIT_ATTACH,
                                  DebuggerBundle.message("status.waiting.attach", addressDisplayName, transportName));
-    return executionResult;
   }
 
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {

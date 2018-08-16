@@ -58,6 +58,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"), visitor)
       VfsUtilCore.visitChildrenRecursively(getTestFile("${PlatformTestUtil.getRtJarPath()}!/java/lang"), visitor)
     }
   }

@@ -18,8 +18,8 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
@@ -73,6 +73,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
    *                         services to this command, including the ability to actually process
    *                         all the requests
    */
+  @Override
   public boolean execute(IRequestProcessor requestProcessor,
                          IEventSender eventSender,
                          ICvsListenerRegistry listenerRegistry,
@@ -91,6 +92,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
    * After calling this method, the command should have no switches defined
    * and should behave defaultly.
    */
+  @Override
   public void resetCvsCommand() {
     super.resetCvsCommand();
     setRecursive(true);
@@ -109,6 +111,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
    *
    * @return <command's name> [<parameters>] files/dirs. Example: checkout -p CvsCommand.java
    */
+  @Override
   public String getCvsCommandLine() {
     @NonNls final StringBuffer cvsCommandLine = new StringBuffer("checkout ");
     cvsCommandLine.append(getCvsArguments());
@@ -149,6 +152,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
     return resetStickyOnes;
   }
 
+  @Override
   public void setResetStickyOnes(boolean resetStickyOnes) {
     this.resetStickyOnes = resetStickyOnes;
   }
@@ -157,6 +161,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
     return useHeadIfNotFound;
   }
 
+  @Override
   public void setUseHeadIfNotFound(boolean useHeadIfNotFound) {
     this.useHeadIfNotFound = useHeadIfNotFound;
   }
@@ -165,6 +170,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
     return updateByDate;
   }
 
+  @Override
   public void setUpdateByDate(String updateByDate) {
     this.updateByDate = updateByDate;
   }
@@ -173,6 +179,7 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
     return updateByRevisionOrTag;
   }
 
+  @Override
   public void setUpdateByRevisionOrTag(String updateByRevisionOrTag) {
     this.updateByRevisionOrTag = updateByRevisionOrTag;
   }

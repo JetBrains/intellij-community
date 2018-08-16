@@ -34,6 +34,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -45,14 +46,13 @@ public class ScanSourceCommentsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.tools.ScanSourceCommentsAction");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
 
     final Project p = e.getProject();
     final String file =
       Messages.showInputDialog(p, "Enter path to the file comments will be extracted to", "Comments File Path", Messages.getQuestionIcon());
 
-    try {
-      final PrintStream stream = new PrintStream(file);
+    try (final PrintStream stream = new PrintStream(file)){
       stream.println("Comments in " + p.getName());
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -76,10 +76,6 @@ public class ScanSourceCommentsAction extends AnAction {
         }
 
       }, "Generating Comments", true, p);
-
-
-      stream.close();
-
     }
     catch (Throwable e1) {
       LOG.error(e1);

@@ -46,15 +46,18 @@ public class DefaultEntryParser
 
 	// Implemented ============================================================
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.addEntryListener(this);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.removeEntryListener(this);
 	}
 
-	public void gotEntry(FileObject fileObject, Entry entry) {
+	@Override
+        public void gotEntry(FileObject fileObject, Entry entry) {
 		final File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
 		eventManager.notifyFileInfoListeners(new DefaultFileInfo(fileObject, file));
 	}

@@ -32,7 +32,8 @@ final class EditEditorsMessageParser extends AbstractMessageParser {
 
 	// Implemented ============================================================
 
-	public void parseLine(String line, boolean isErrorMessage) {
+	@Override
+        public void parseLine(String line, boolean isErrorMessage) {
 		if (isErrorMessage) {
 			return;
 		}
@@ -53,6 +54,7 @@ final class EditEditorsMessageParser extends AbstractMessageParser {
 		filesEdited = true;
 	}
 
+  @Override
   public void outputDone() {
 	}
 

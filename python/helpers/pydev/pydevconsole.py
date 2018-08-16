@@ -97,28 +97,13 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.interpreter = InteractiveConsole(self.namespace)
         self._input_error_printed = False
 
-
     def do_add_exec(self, codeFragment):
         command = Command(self.interpreter, codeFragment)
         command.run()
         return command.more
 
-
     def get_namespace(self):
         return self.namespace
-
-
-    def getCompletions(self, text, act_tok):
-        try:
-            from _pydev_bundle._pydev_completer import Completer
-
-            completer = Completer(self.namespace, None)
-            return completer.complete(act_tok)
-        except:
-            import traceback
-
-            traceback.print_exc()
-            return []
 
     def close(self):
         sys.exit(0)
@@ -454,7 +439,10 @@ def console_exec(thread_id, frame_id, expression, dbg):
     frame = pydevd_vars.find_frame(thread_id, frame_id)
 
     is_multiline = expression.count('@LINE@') > 1
-    expression = str(expression.replace('@LINE@', '\n'))
+    try:
+        expression = str(expression.replace('@LINE@', '\n'))
+    except UnicodeEncodeError as e:
+        expression = expression.replace('@LINE@', '\n')
 
     #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
     #(Names not resolved in generator expression in method)

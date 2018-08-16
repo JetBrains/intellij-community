@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.packaging.elements.PackagingElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author nik
@@ -34,12 +35,12 @@ public class AddNewPackagingElementAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(myType.canCreate(myArtifactEditor.getContext(), myArtifactEditor.getArtifact()));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myArtifactEditor.addNewPackagingElement(myType);
   }
 }

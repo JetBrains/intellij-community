@@ -417,7 +417,7 @@ public class ControlFlowUtil {
       // process chain of goto's
       gotoOffset = promoteThroughGotoChain(flow, gotoOffset);
 
-      if (!exitPoints.contains(gotoOffset) && (gotoOffset >= end || gotoOffset < start) && gotoOffset > 0) {
+      if (gotoOffset > 0 && (gotoOffset >= end || gotoOffset < start) && !exitPoints.contains(gotoOffset)) {
         exitPoints.add(gotoOffset);
       }
       if (gotoOffset >= end || gotoOffset < start) {

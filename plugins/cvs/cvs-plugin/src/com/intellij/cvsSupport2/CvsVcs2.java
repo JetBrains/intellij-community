@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2;
 
 
@@ -20,7 +6,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
-import com.intellij.cvsSupport2.application.CvsStorageComponent;
+import com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
@@ -75,11 +61,10 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;
 
-  private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private final CvsHistoryProvider myCvsHistoryProvider;
   private final CvsCheckinEnvironment myCvsCheckinEnvironment;
   private final CvsCheckoutProvider myCvsCheckoutProvider;
-  
+
   private RollbackEnvironment myCvsRollbackEnvironment;
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
@@ -99,7 +84,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
-  public CvsVcs2(@NotNull Project project, CvsStorageComponent cvsStorageComponent) {
+  public CvsVcs2(@NotNull Project project) {
     super(project, NAME);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
     myCvsCheckinEnvironment = new CvsCheckinEnvironment(getProject());
@@ -109,7 +94,6 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     myCvsStatusEnvironment = new CvsStatusEnvironment(myProject);
 
     myConfigurable = new Cvs2Configurable(getProject());
-    myStorageComponent = cvsStorageComponent;
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject, myCvsHistoryProvider);
     myDiffProvider = new CvsDiffProvider(myProject);
     myCommittedChangesProvider = new CvsCommittedChangesProvider(myProject);
@@ -149,32 +133,38 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
 
   /* ======================================== AbstractVcs*/
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return CvsBundle.getCvsDisplayName();
   }
 
+  @Override
   public Configurable getConfigurable() {
     return myConfigurable;
   }
 
 
+  @Override
   public TransactionProvider getTransactionProvider() {
     return this;
   }
 
+  @Override
   public void startTransaction(Object parameters) {
     myCvsStandardOperationsProvider.createTransaction();
   }
 
+  @Override
   public void commitTransaction(Object parameters) throws VcsException {
     myCvsStandardOperationsProvider.commit(parameters);
   }
 
+  @Override
   public void rollbackTransaction(Object parameters) {
     myCvsStandardOperationsProvider.rollback();
   }
-  
+
   public CvsStandardOperationsProvider getStandardOperationsProvider() {
     return myCvsStandardOperationsProvider;
   }
@@ -217,10 +207,12 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return myCheckoutOptions;
   }
 
+  @Override
   public EditFileProvider getEditFileProvider() {
     return this;
   }
 
+  @Override
   public void editFiles(final VirtualFile[] files) {
     if (getEditOptions().getValue()) {
       EditOptionsDialog editOptionsDialog = new EditOptionsDialog(myProject);
@@ -234,10 +226,12 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
 
   }
 
+  @Override
   public String getRequestText() {
     return CvsBundle.message("message.text.edit.file.request");
   }
 
+  @Override
   public ChangeProvider getChangeProvider() {
     if (myChangeProvider == null) {
       myChangeProvider = new CvsChangeProvider(this, CvsEntriesManager.getInstance());
@@ -245,13 +239,15 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return myChangeProvider;
   }
 
+  @Override
   protected void activate() {
-    myStorageComponent.init(getProject(), false);
+    CvsStorageSupportingDeletionComponent.getInstance(myProject).init(getProject());
     CvsEntriesManager.getInstance().addCvsEntriesListener(myCvsEntriesListener);
   }
 
+  @Override
   protected void deactivate() {
-    myStorageComponent.dispose();
+    CvsStorageSupportingDeletionComponent.getInstance(myProject).deactivate();
     CvsEntriesManager.getInstance().removeCvsEntriesListener(myCvsEntriesListener);
   }
 
@@ -259,11 +255,13 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     FileStatusManager.getInstance(getProject()).fileStatusChanged(file);
   }
 
+  @Override
   @NotNull
   public CheckinEnvironment createCheckinEnvironment() {
     return myCvsCheckinEnvironment;
   }
 
+  @Override
   public RollbackEnvironment createRollbackEnvironment() {
     if (myCvsRollbackEnvironment == null) {
       myCvsRollbackEnvironment = new CvsRollbackEnvironment(myProject);
@@ -271,35 +269,43 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return myCvsRollbackEnvironment;
   }
 
+  @Override
   public VcsHistoryProvider getVcsBlockHistoryProvider() {
     return myCvsHistoryProvider;
   }
 
+  @Override
   @NotNull
   public VcsHistoryProvider getVcsHistoryProvider() {
     return myCvsHistoryProvider;
   }
 
+  @Override
   public String getMenuItemText() {
     return CvsBundle.message("menu.text.cvsGroup");
   }
 
+  @Override
   public UpdateEnvironment createUpdateEnvironment() {
     return myCvsUpdateEnvironment;
   }
 
+  @Override
   public boolean fileIsUnderVcs(FilePath filePath) {
     return CvsUtil.fileIsUnderCvs(filePath.getIOFile());
   }
 
+  @Override
   public boolean fileExistsInVcs(FilePath path) {
     return CvsUtil.fileExistsInCvs(path);
   }
 
+  @Override
   public UpdateEnvironment getStatusEnvironment() {
     return myCvsStatusEnvironment;
   }
 
+  @Override
   public AnnotationProvider getAnnotationProvider() {
     return myCvsAnnotationProvider;
   }
@@ -308,6 +314,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return myCvsAnnotationProvider.annotate(cvsVirtualFile, revision, environment);
   }
 
+  @Override
   public DiffProvider getDiffProvider() {
     return myDiffProvider;
   }
@@ -324,11 +331,13 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return myRemoveConfirmation;
   }
 
+  @Override
   @Nullable
   public RevisionSelector getRevisionSelector() {
     return new CvsRevisionSelector(myProject);
   }
 
+  @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
     return myCommittedChangesProvider;
   }
@@ -349,6 +358,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return child != null && child.isDirectory();
   }
 
+  @Override
   public CvsCheckoutProvider getCheckoutProvider() {
     return myCvsCheckoutProvider;
   }
@@ -356,6 +366,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   @Override
   public RootsConvertor getCustomConvertor() {
     return new RootsConvertor() {
+      @Override
       @NotNull
       public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
         return FindAllRootsHelper.findVersionedUnder(result);

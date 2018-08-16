@@ -72,6 +72,14 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
     doTest();
   }
 
+  public void testSetupCallWithComments() throws IOException {
+    doTest();
+  }
+
+  public void testInitializerWithComments() throws IOException {
+    doTest();
+  }
+
   private void doTest() throws IOException {
     final VirtualFile form = myTestProjectRoot.findChild("Test.form");
     assertNotNull(form);

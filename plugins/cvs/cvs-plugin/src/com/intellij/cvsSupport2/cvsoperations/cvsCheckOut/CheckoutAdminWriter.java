@@ -16,12 +16,12 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut;
 
 import com.intellij.util.containers.SLRUCache;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
-import org.netbeans.lib.cvsclient.command.IOCommandException;
 import org.netbeans.lib.cvsclient.admin.*;
+import org.netbeans.lib.cvsclient.command.IOCommandException;
 import org.netbeans.lib.cvsclient.file.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,50 +38,60 @@ public class CheckoutAdminWriter implements IAdminWriter {
     myDelegate = new AdminWriter(lineSeparator, charset, myEntriesCreator);
   }
 
+  @Override
   public void ensureCvsDirectory(final DirectoryObject directoryObject,
                                  final String repositoryPath,
                                  final CvsRoot cvsRoot, final ICvsFileSystem cvsFileSystem) throws IOException {
     myDelegate.ensureCvsDirectory(directoryObject, repositoryPath, cvsRoot, cvsFileSystem);
   }
 
+  @Override
   public void setEntry(final DirectoryObject directoryObject, final Entry entry, final ICvsFileSystem cvsFileSystem) throws IOException {
     myDelegate.setEntry(directoryObject, entry, cvsFileSystem);
   }
 
+  @Override
   public void removeEntryForFile(final AbstractFileObject fileObject, final ICvsFileSystem cvsFileSystem) throws IOException {
     myDelegate.removeEntryForFile(fileObject, cvsFileSystem);
   }
 
+  @Override
   public void pruneDirectory(final DirectoryObject directoryObject, final ICvsFileSystem cvsFileSystem) {
     myDelegate.pruneDirectory(directoryObject, cvsFileSystem);
   }
 
+  @Override
   public void editFile(final FileObject fileObject,
                        final Entry entry, final ICvsFileSystem cvsFileSystem, final IFileReadOnlyHandler fileReadOnlyHandler)
     throws IOException {
     myDelegate.editFile(fileObject, entry, cvsFileSystem, fileReadOnlyHandler);
   }
 
+  @Override
   public void uneditFile(final FileObject fileObject, final ICvsFileSystem cvsFileSystem, final IFileReadOnlyHandler fileReadOnlyHandler)
     throws IOException {
     myDelegate.uneditFile(fileObject, cvsFileSystem, fileReadOnlyHandler);
   }
 
+  @Override
   public void setStickyTagForDirectory(final DirectoryObject directoryObject, final String tag, final ICvsFileSystem cvsFileSystem)
     throws IOException {
     myDelegate.setStickyTagForDirectory(directoryObject, tag, cvsFileSystem);
   }
 
+  @Override
   public void setEntriesDotStatic(final DirectoryObject directoryObject, final boolean set, final ICvsFileSystem cvsFileSystem)
     throws IOException {
     myDelegate.setEntriesDotStatic(directoryObject, set, cvsFileSystem);
   }
 
+  @Override
   public void writeTemplateFile(final DirectoryObject directoryObject, final int fileLength, final InputStream inputStream,
                                 final IReaderFactory readerFactory, final IClientEnvironment clientEnvironment) throws IOException {
     myDelegate.writeTemplateFile(directoryObject, fileLength, inputStream, readerFactory, clientEnvironment);
   }
 
+  @Override
   public void directoryAdded(final DirectoryObject directory, final ICvsFileSystem cvsFileSystem) throws IOException {
     myDelegate.directoryAdded(directory, cvsFileSystem);
   }
@@ -97,6 +107,7 @@ public class CheckoutAdminWriter implements IAdminWriter {
       myCache = new MyCache(charset, lineSeparator);
     }
 
+    @Override
     public void addEntry(final File directory, final Entry entry) throws IOException {
       try {
         final EntriesHandler handler = myCache.get(directory.getAbsolutePath());
@@ -122,6 +133,7 @@ public class CheckoutAdminWriter implements IAdminWriter {
       myLineSeparator = lineSeparator;
     }
 
+    @Override
     @NotNull
     public EntriesHandler createValue(final String key) {
       try {

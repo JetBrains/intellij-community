@@ -204,32 +204,38 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupEditor(PsiMethod method, final Editor newEditor) {
+  public static void setupEditor(@NotNull PsiMethod method, @NotNull Editor newEditor) {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
-      PsiElement l = PsiTreeUtil.skipWhitespacesForward(body.getLBrace());
-      PsiElement r = PsiTreeUtil.skipWhitespacesBackward(body.getRBrace());
-      if (l != null && r != null) {
-        int start = l.getTextRange().getStartOffset();
-        int end = r.getTextRange().getEndOffset();
-        newEditor.getCaretModel().moveToOffset(Math.max(start, end));
-        if (end < start) {
-          newEditor.getCaretModel().moveToOffset(end + 1);
-          CodeStyleManager styleManager = CodeStyleManager.getInstance(method.getProject());
-          PsiFile containingFile = method.getContainingFile();
-          final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
-          PsiDocumentManager manager = PsiDocumentManager.getInstance(method.getProject());
-          manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
-          EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
-          EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
-        }
-        else {
-          //correct position caret for groovy and java methods
-          final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
+      setupEditor(body, newEditor);
+    }
+  }
+
+  public static void setupEditor(@NotNull PsiCodeBlock body, @NotNull Editor newEditor) {
+    PsiElement l = PsiTreeUtil.skipWhitespacesForward(body.getLBrace());
+    PsiElement r = PsiTreeUtil.skipWhitespacesBackward(body.getRBrace());
+    if (l != null && r != null) {
+      int start = l.getTextRange().getStartOffset();
+      int end = r.getTextRange().getEndOffset();
+      newEditor.getCaretModel().moveToOffset(Math.max(start, end));
+      if (end < start) {
+        newEditor.getCaretModel().moveToOffset(end + 1);
+        CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
+        PsiFile containingFile = body.getContainingFile();
+        final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
+        PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
+        manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
+        EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
+        EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
+      }
+      else {
+        //correct position caret for groovy and java methods
+        if (body.getParent() instanceof PsiMethod) {
+          final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo((PsiMethod)body.getParent());
           info.positionCaret(newEditor, true);
         }
-        newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
+      newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 
@@ -500,7 +506,8 @@ public class CreateFromUsageUtils {
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
-        if (expression instanceof PsiReferenceExpression) {
+        if (expression instanceof PsiReferenceExpression && 
+            (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
           if (Comparing.equal(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
             result.add(expr);
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.Set;
 
 class EnumSwitchPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       PsiElement prevSibling = element.getPrevSibling();
@@ -57,15 +58,11 @@ class EnumSwitchPredicate implements PsiElementPredicate {
     }
     final Set<String> enumElements = new HashSet<>(fields.length);
     for (final PsiField field : fields) {
-      final PsiType fieldType = field.getType();
-      if (!fieldType.equals(type)) {
-        continue;
+      if (field instanceof PsiEnumConstant) {
+        enumElements.add(field.getName());
       }
-      final String fieldName = field.getName();
-      enumElements.add(fieldName);
     }
-    final PsiStatement[] statements = body.getStatements();
-    for (PsiStatement statement : statements) {
+    for (PsiStatement statement : body.getStatements()) {
       if (!(statement instanceof PsiSwitchLabelStatement)) {
         continue;
       }

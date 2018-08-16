@@ -87,6 +87,7 @@ public class LwContainer extends LwComponent implements IContainer{
     return getLayout() instanceof GridLayoutManager;
   }
 
+  @Override
   public final boolean isXY(){
     return getLayout() instanceof XYLayoutManager;
   }
@@ -114,14 +115,17 @@ public class LwContainer extends LwComponent implements IContainer{
     component.setParent(this);
   }
 
+  @Override
   public final IComponent getComponent(final int index) {
     return (IComponent)myComponents.get(index);
   }
 
+  @Override
   public final int getComponentCount() {
     return myComponents.size();
   }
 
+  @Override
   public int indexOfComponent(final IComponent lwComponent) {
     return myComponents.indexOf(lwComponent);
   }
@@ -131,10 +135,12 @@ public class LwContainer extends LwComponent implements IContainer{
    *
    * @see BorderType
    */
+  @Override
   public final BorderType getBorderType(){
     return myBorderType;
   }
 
+  @Override
   public boolean accept(ComponentVisitor visitor) {
     if (!super.accept(visitor)) {
       return false;
@@ -167,6 +173,7 @@ public class LwContainer extends LwComponent implements IContainer{
    * @return border's title. If the container doesn't have any title then the
    * method returns {@code null}.
    */
+  @Override
   public final StringDescriptor getBorderTitle(){
     return myBorderTitle;
   }
@@ -205,7 +212,7 @@ public class LwContainer extends LwComponent implements IContainer{
 
   /**
    * TODO[anton,vova] looks like it is better to pass contraints tag
-   * 
+   *
    * @param element XML element which should contains 'constraints' tag
    */
   protected void readConstraintsForChild(final Element element, final LwComponent component){
@@ -343,13 +350,14 @@ public class LwContainer extends LwComponent implements IContainer{
       myLayoutSerializer = FormLayoutSerializer.INSTANCE;
     }
     else if (UIFormXmlConstants.LAYOUT_GRIDBAG.equals(myLayoutManager)) {
-      myLayoutSerializer = GridBagLayoutSerializer.INSTANCE;      
+      myLayoutSerializer = GridBagLayoutSerializer.INSTANCE;
     }
     else {
       myLayoutSerializer = GridLayoutSerializer.INSTANCE;
     }
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     readBase(element);
 
@@ -379,6 +387,7 @@ public class LwContainer extends LwComponent implements IContainer{
     readChildren(element, provider);
   }
 
+  @Override
   public boolean areChildrenExclusive() {
     return UIFormXmlConstants.LAYOUT_CARD.equals(myLayoutManager);
   }

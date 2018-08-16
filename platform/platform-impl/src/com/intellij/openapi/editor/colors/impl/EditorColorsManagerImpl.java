@@ -8,6 +8,8 @@ import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UITheme;
+import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -41,6 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,6 +130,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager,
                            @NotNull Collection<? extends EditorColorsScheme> schemes) {
         loadBundledSchemes();
+        loadSchemesFromThemes();
         initEditableDefaultSchemesCopies();
         initEditableBundledSchemesCopies();
       }
@@ -135,6 +139,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
     initDefaultSchemes();
     loadBundledSchemes();
+    loadSchemesFromThemes();
     mySchemeManager.loadSchemes();
 
     String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
@@ -143,7 +148,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       scheme = getScheme(wizardEditorScheme);
       LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
     }
-    
+
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
@@ -167,12 +172,26 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
+      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensionList()) {
         mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
       }
     }
   }
-  
+
+  private void loadSchemesFromThemes() {
+    if (!isUnitTestOrHeadlessMode()) {
+      for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
+        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+          UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
+          String path = theme.getEditorScheme();
+          if (path != null) {
+            mySchemeManager.loadBundledScheme(path, theme);
+          }
+        }
+      }
+    }
+  }
+
   private void initEditableBundledSchemesCopies() {
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof BundledScheme) {
@@ -180,7 +199,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
     }
   }
-  
+
   private void resolveLinksToBundledSchemes() {
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
@@ -247,7 +266,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
-  public TextAttributes getDefaultAttributes(TextAttributesKey key) {
+  public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
     final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
     // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
     // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show

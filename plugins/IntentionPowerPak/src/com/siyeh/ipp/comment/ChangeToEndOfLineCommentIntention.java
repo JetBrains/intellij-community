@@ -24,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChangeToEndOfLineCommentIntention extends Intention {
 
+  @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
     return new CStyleCommentPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     final PsiComment comment = (PsiComment)element;
     final Project project = comment.getProject();
@@ -53,7 +55,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
       }
     }
     final PsiComment newComment =
-      factory.createCommentFromText("//" + lines[0], parent);
+      factory.createCommentFromText("//" + lines[0].trim(), parent);
     final PsiElement replacedComment = comment.replace(newComment);
     codeStyleManager.reformat(replacedComment);
   }

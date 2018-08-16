@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,18 +41,21 @@ public interface PopupComponent {
     boolean isNativePopup();
 
     class AwtDefault implements Factory {
+      @Override
       public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
         final PopupFactory factory = PopupFactory.getSharedInstance();
         final Popup popup = factory.getPopup(owner, content, x, y);
         return new AwtPopupWrapper(popup, jbPopup);
       }
 
+      @Override
       public boolean isNativePopup() {
         return true;
       }
     }
 
     class AwtHeavyweight implements Factory {
+      @Override
       public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
         if (OurHeavyWeightPopup.isEnabled()) {
           return new AwtPopupWrapper(new OurHeavyWeightPopup(owner, content, x, y), jbPopup);
@@ -81,16 +70,19 @@ public interface PopupComponent {
         return new AwtPopupWrapper(popup, jbPopup);
       }
 
+      @Override
       public boolean isNativePopup() {
         return true;
       }
     }
 
     class Dialog implements Factory {
+      @Override
       public PopupComponent getPopup(Component owner, Component content, int x, int y, JBPopup jbPopup) {
         return new DialogPopupWrapper(owner, content, x, y, jbPopup);
       }
 
+      @Override
       public boolean isNativePopup() {
         return false;
       }
@@ -101,6 +93,7 @@ public interface PopupComponent {
     private final JDialog myDialog;
     private boolean myRequestFocus = true;
 
+    @Override
     public void setRequestFocus(boolean requestFocus) {
       myRequestFocus = requestFocus;
     }
@@ -134,10 +127,12 @@ public interface PopupComponent {
       myDialog.setLocation(x, y);
     }
 
+    @Override
     public Window getWindow() {
       return myDialog;
     }
 
+    @Override
     public void hide(boolean dispose) {
       myDialog.setVisible(false);
       if (dispose) {
@@ -146,6 +141,7 @@ public interface PopupComponent {
       }
     }
 
+    @Override
     public void show() {
 
       if (!myRequestFocus) {
@@ -189,6 +185,7 @@ public interface PopupComponent {
       return wnd != null && wnd == window;
     }
 
+    @Override
     public void hide(boolean dispose) {
       myPopup.hide();
       if (!dispose) return;
@@ -199,13 +196,14 @@ public interface PopupComponent {
       DialogWrapper.cleanupWindowListeners(window);
     }
 
+    @Override
     public void show() {
       Window wnd = getWindow();
-      
+
       fixFlickering(wnd, false);
       myPopup.show();
       fixFlickering(wnd, true);
-      
+
       if (wnd instanceof JWindow) {
         ((JWindow)wnd).getRootPane().putClientProperty(JBPopup.KEY, myJBPopup);
       }
@@ -219,11 +217,13 @@ public interface PopupComponent {
       } catch (Exception ignore) {}
     }
 
+    @Override
     public Window getWindow() {
       final Component c = ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
       return c instanceof JWindow ? (JWindow)c : null;
     }
 
+    @Override
     public void setRequestFocus(boolean requestFocus) {
     }
   }

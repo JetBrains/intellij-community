@@ -40,12 +40,9 @@
     <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"
                         serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
 
-    <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
-               serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.config.CvsConfiguration"
-               serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.application.CvsStorageComponent"
-               serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
 
     <vcsCheckinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
@@ -79,7 +76,7 @@
     <action id="Cvs.GetFromRepository" class="com.intellij.cvsSupport2.actions.GetFileFromRepositoryAction">
       <add-to-group group-id="UpdateActionGroup" anchor="last"/>
     </action>
-    
+
     <group id="AddOptionDialogActionGroup">
       <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction"/>
     </group>

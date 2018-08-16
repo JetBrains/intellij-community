@@ -24,7 +24,9 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,7 +65,7 @@ public class TestStatusLine extends NonOpaquePanel {
                                 final long endTime) {
     myState.clear();
     if (testsTotal == 0) {
-      testsTotal = finishedTestsCount + failuresCount + ignoredTestsCount;
+      testsTotal = finishedTestsCount;
       if (testsTotal == 0) return;
     }
     int passedCount = finishedTestsCount - failuresCount - ignoredTestsCount;
@@ -122,7 +124,7 @@ public class TestStatusLine extends NonOpaquePanel {
   public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
     myProgressPanel.remove(myProgressBar);
     if (info != null) {
-      myState.setIcon(TestIconMapper.getIcon(info));
+      myState.setIcon(TestIconMapper.getToolbarIcon(info));
     }
   }
 
@@ -153,9 +155,15 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressPanel.setMinimumSize(size);
     myProgressPanel.setPreferredSize(size);
   }
-  
+
   public void setText(String progressStatus_text) {
     myState.clear();
     myState.append(progressStatus_text);
+  }
+
+  @TestOnly
+  @NotNull
+  public String getStateText() {
+    return myState.toString();
   }
 }

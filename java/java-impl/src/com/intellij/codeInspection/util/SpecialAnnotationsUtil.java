@@ -129,7 +129,7 @@ public class SpecialAnnotationsUtil {
         .addExtraAction(
           new AnActionButton(InspectionsBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               String selectedPattern = Messages.showInputDialog(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
                                                                 InspectionsBundle.message("special.annotations.list.annotation.pattern"),
                                                                 Messages.getQuestionIcon());

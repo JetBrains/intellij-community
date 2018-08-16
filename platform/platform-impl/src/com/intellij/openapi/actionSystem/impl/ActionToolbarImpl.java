@@ -209,7 +209,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ourToolbars.add(this);
 
     // should update action right on the showing, otherwise toolbar may not be displayed at all,
-    // since by default all updates are postponed until frame gets focused.  
+    // since by default all updates are postponed until frame gets focused.
     updateActionsImmediately();
   }
 
@@ -239,7 +239,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public int getLayoutPolicy() {
-    return myLayoutPolicy;                                             
+    return myLayoutPolicy;
   }
 
   @Override
@@ -373,6 +373,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
     if (clickable != null) {
       class ToolbarClicksCollectorListener extends MouseAdapter {
+        @Override
         public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace);}
       }
       if (Arrays.stream(clickable.getMouseListeners()).noneMatch(ml -> ml instanceof ToolbarClicksCollectorListener)) {
@@ -392,7 +393,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private Dimension getMinimumButtonSize() {
     return isInsideNavBar() ? NAVBAR_MINIMUM_BUTTON_SIZE : DEFAULT_MINIMUM_BUTTON_SIZE;
-  } 
+  }
 
   public ActionButton createToolbarButton(final AnAction action, final ActionButtonLook look, final String place, final Presentation presentation, final Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
@@ -580,7 +581,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (actualLayout) {
       myAutoPopupRec = null;
     }
-               
+
     int autoButtonSize = AllIcons.Ide.Link.getIconWidth();
     boolean full = false;
 
@@ -713,14 +714,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         // Lay components out
         int xOffset = 0;
         int yOffset = 0;
-        // Calculate max size of a row. It's not possible to make more than 3 row toolbar
-        int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
-        for (int i = 0; i < componentCount; i++) {
-          final Component component = getComponent(i);
-          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
-            maxRowWidth -= getChildPreferredSize(i).width;
-          }
-        }
+        int maxRowWidth = getMaxRowWidth(widthToFit, maxWidth);
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
             xOffset = 0;
@@ -770,13 +764,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
-        for (int i = 0; i < componentCount; i++) {
-          final Component component = getComponent(i);
-          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
-            maxRowWidth -= getChildPreferredSize(i).width;
-          }
-        }
+        int maxRowWidth = getMaxRowWidth(widthToFit, myMinimumButtonSize.width());
 
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
@@ -820,6 +808,19 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
       }
     }
+  }
+
+  private int getMaxRowWidth(int widthToFit, int maxWidth) {
+    int componentCount = getComponentCount();
+    // Calculate max size of a row. It's not possible to make more than 3 row toolbar
+    int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
+    for (int i = 0; i < componentCount; i++) {
+      final Component component = getComponent(i);
+      if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+        maxRowWidth -= getChildPreferredSize(i).width;
+      }
+    }
+    return maxRowWidth;
   }
 
   /**
@@ -911,6 +912,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     return dimension;
   }
+
+  /**
+   * Forces the minimum size of the toolbar to show all buttons, When set to <code>true</code>. By default (<code>false</code>) the
+   * toolbar will shrink further and show the auto popup chevron button.
+   * @param force
+   */
   public void setForceMinimumSize(boolean force) {
     myForceMinimumSize = force;
   }
@@ -962,7 +969,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static class ToolbarReference extends WeakReference<ActionToolbarImpl> {
     private static final ReferenceQueue<ActionToolbarImpl> ourQueue = new ReferenceQueue<>();
     private volatile Disposable myDisposable;
-    
+
     ToolbarReference(ActionToolbarImpl toolbar) {
       super(toolbar, ourQueue);
       processQueue();
@@ -1161,6 +1168,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private static void updateWhenFirstShown(JComponent targetComponent, final ToolbarReference ref) {
     Activatable activatable = new Activatable.Adapter() {
+      @Override
       public void showNotify() {
         ActionToolbarImpl toolbar = ref.get();
         if (toolbar != null) {
@@ -1273,7 +1281,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     });
     myPopup = builder.createPopup();
-    final AnActionListener.Adapter listener = new AnActionListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         final JBPopup popup = myPopup;
@@ -1281,15 +1289,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           popup.cancel();
         }
       }
-    };
-    ActionManager.getInstance().addAnActionListener(listener);
-    Disposer.register(myPopup, popupToolbar);
-    Disposer.register(popupToolbar, new Disposable() {
-      @Override
-      public void dispose() {
-        ActionManager.getInstance().removeAnActionListener(listener);
-      }
     });
+    Disposer.register(myPopup, popupToolbar);
 
     myPopup.showInScreenCoordinates(this, location);
 
@@ -1363,7 +1364,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                         final KeymapManagerEx keymapManager,
                         JComponent parent) {
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
-      myActionManager.addAnActionListener(this);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       if (myParent != null) {
         setBorder(myParent.getBorder());
@@ -1378,11 +1379,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public void dispose() {
-      myActionManager.removeAnActionListener(this);
     }
 
     @Override
-    public void beforeActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
     @Override
@@ -1394,7 +1394,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     protected abstract void onOtherActionPerformed();
   }
-
 
   @Override
   public void setReservePlaceAutoPopupIcon(final boolean reserve) {

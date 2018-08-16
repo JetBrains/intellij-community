@@ -42,6 +42,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     init();
   }
 
+  @Override
   protected String getNameLabelText() {
     final String occurrencesString = myOccurrencesNumber > -1 ? "has " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
 
@@ -49,14 +50,17 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     return RefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
   }
 
+  @Override
   protected String getBorderTitle() {
     return RefactoringBundle.message("inline.field.border.title");
   }
 
+  @Override
   protected String getInlineThisText() {
     return RefactoringBundle.message("this.reference.only.and.keep.the.field");
   }
 
+  @Override
   protected String getInlineAllText() {
     return RefactoringBundle.message(myField.isWritable() ?"all.references.and.remove.the.field" : "all.invocations.in.project");
   }
@@ -72,6 +76,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     return true;
   }
 
+  @Override
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_FIELD_THIS;
   }
@@ -101,6 +106,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD = searchInTextOccurrences;
   }
 
+  @Override
   protected void doAction() {
     super.doAction();
     invokeRefactoring(
@@ -112,6 +118,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INLINE_FIELD);
   }

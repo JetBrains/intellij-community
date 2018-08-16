@@ -222,7 +222,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final Module module = e.getData(LangDataKeys.MODULE);
       if (module == null) {
         return;
@@ -295,7 +295,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myModule.getProject();
       }
@@ -690,7 +690,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
         for (final ClasspathType classpathType : ClasspathType.values()) {
           myItems.addAction(new DumbAwareAction(classpathType.getDescription()) {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               mySettings.setRuntime(classpathType.isRuntime());
               mySettings.setTest(classpathType.isTest());
               updateTree();
@@ -705,7 +705,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       updateText(presentation);
     }

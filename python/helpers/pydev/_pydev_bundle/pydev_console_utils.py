@@ -510,6 +510,18 @@ class BaseInterpreterInterface:
         xml.write("</xml>")
         return xml.getvalue()
 
+    def getCompletions(self, text, act_tok):
+        try:
+            from _pydev_bundle._pydev_completer import Completer
+
+            completer = Completer(self.get_namespace(), None)
+            return completer.complete(act_tok)
+        except:
+            import traceback
+
+            traceback.print_exc()
+            return []
+
     def loadFullValue(self, seq, scope_attrs):
         """
         Evaluate full value for async Console variables in a separate thread and send results to IDE side

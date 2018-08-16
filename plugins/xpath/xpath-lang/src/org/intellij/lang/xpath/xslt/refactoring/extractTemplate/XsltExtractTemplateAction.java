@@ -48,6 +48,7 @@ import java.util.Set;
 
 @SuppressWarnings({ "ComponentNotRegistered" })
 public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
+    @Override
     public String getRefactoringName() {
         return "Extract Template";
     }
@@ -246,6 +247,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         return true;
     }
 
+    @Override
     protected boolean actionPerformedImpl(PsiFile file, Editor editor, XmlAttribute context, int offset) {
         return false;
     }

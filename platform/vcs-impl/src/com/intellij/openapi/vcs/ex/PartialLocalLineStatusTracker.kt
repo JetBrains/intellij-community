@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
@@ -21,8 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -55,7 +39,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
-import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
@@ -96,7 +79,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
     if (undoStateRecordingEnabled) {
       document.addDocumentListener(MyUndoDocumentListener(), disposable)
-      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+      project.messageBus.connect(disposable).subscribe(CommandListener.TOPIC, MyUndoCommandListener())
       Disposer.register(disposable, Disposable { dropExistingUndoActions() })
     }
 
@@ -265,17 +248,13 @@ class PartialLocalLineStatusTracker(project: Project,
     if (!affectedBlocks.isEmpty()) {
       dropExistingUndoActions()
 
-      runInEdt(ModalityState.any()) {
-        for (block in affectedBlocks) {
-          updateHighlighter(block)
-        }
-      }
+      updateHighlighters()
     }
   }
 
 
   private inner class MyUndoDocumentListener : DocumentListener {
-    override fun beforeDocumentChange(event: DocumentEvent?) {
+    override fun beforeDocumentChange(event: DocumentEvent) {
       if (hasUndoInCommand) return
       if (undoManager.isRedoInProgress || undoManager.isUndoInProgress) return
       hasUndoInCommand = true
@@ -512,12 +491,11 @@ class PartialLocalLineStatusTracker(project: Project,
   protected class MyLineStatusMarkerRenderer(override val tracker: PartialLocalLineStatusTracker) :
     LineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
 
-    override fun paint(editor: Editor, range: Range, g: Graphics) {
-      if (range !is LocalRange ||
-          range.changelistId == tracker.defaultMarker.changelistId) {
-        super.paint(editor, range, g)
-      } else {
-        paintIgnoredRange(g, editor, range)
+    override fun createMerger(editor: Editor): VisibleRangeMerger {
+      return object : VisibleRangeMerger(editor) {
+        override fun isIgnored(range: Range): Boolean {
+          return range is LocalRange && range.changelistId != tracker.defaultMarker.changelistId
+        }
       }
     }
 
@@ -545,7 +523,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
       val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
       object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent?) {
+        override fun actionPerformed(e: AnActionEvent) {
           link.linkLabel.doClick()
         }
       }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
@@ -757,15 +735,15 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private fun restoreChangelistsState(states: List<RangeState>) {
     val changelistIds = changeListManager.changeLists.map { it.id }
-    val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator(), { ChangeListMarker(it) })
+    val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator()) { ChangeListMarker(it) }
 
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->
       block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
-      updateHighlighter(block)
     }
 
     updateAffectedChangeLists()
+    updateHighlighters()
   }
 
 

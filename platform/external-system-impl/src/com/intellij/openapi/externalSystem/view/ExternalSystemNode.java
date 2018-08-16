@@ -37,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -97,6 +97,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myParent = parent;
   }
 
+  @Override
   public boolean isAutoExpandNode() {
     SimpleNode parent = getParent();
     return parent != null && parent.getChildCount() == 1;
@@ -194,6 +195,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return ExternalProjectsStructure.DisplayKind.NEVER;
   }
 
+  @Override
   @NotNull
   public final ExternalSystemNode[] getChildren() {
     if (myChildren == null) {

@@ -25,6 +25,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -43,6 +45,7 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
     myLink.getIpad().left = 0;
   }
 
+  @Override
   public void customizeCellRenderer(@NotNull final JTree tree,
                                     final Object value,
                                     final boolean selected,
@@ -129,13 +132,9 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
   @Override
   protected void doPaint(Graphics2D g) {
     if (myHaveLink) {
-      Graphics2D textGraphics = (Graphics2D)g.create(0, 0, myLinkOffset, g.getClipBounds().height);
-      try {
+      useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), textGraphics -> {
         super.doPaint(textGraphics);
-      }
-      finally {
-        textGraphics.dispose();
-      }
+      });
       g.translate(myLinkOffset, 0);
       myLink.setHeight(getHeight());
       myLink.doPaint(g);

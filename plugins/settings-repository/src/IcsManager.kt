@@ -33,7 +33,7 @@ internal const val PLUGIN_NAME = "Settings Repository"
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
+  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java)!!.icsManager
 }
 
 class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
@@ -67,10 +67,10 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   private @Volatile var autoCommitEnabled = true
 
-  @Volatile var repositoryActive: Boolean = false
+  @Volatile var isRepositoryActive: Boolean = false
 
-  val active: Boolean
-    get() = repositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
+  val isActive: Boolean
+    get() = isRepositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
 
   internal val autoSyncManager = AutoSyncManager(this)
   internal val syncManager = SyncManager(this, autoSyncManager)
@@ -83,7 +83,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   inner class ApplicationLevelProvider : IcsStreamProvider(null) {
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (!repositoryActive) {
+      if (!isRepositoryActive) {
         return false
       }
 
@@ -127,7 +127,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
     finally {
       autoCommitEnabled = true
-      repositoryActive = repositoryManager.isRepositoryExists()
+      isRepositoryActive = repositoryManager.isRepositoryExists()
     }
   }
 
@@ -139,7 +139,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   }
 
   fun beforeApplicationLoaded(application: Application) {
-    repositoryActive = repositoryManager.isRepositoryExists()
+    isRepositoryActive = repositoryManager.isRepositoryExists()
 
     application.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
 
@@ -166,9 +166,12 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   open inner class IcsStreamProvider(private val projectId: String?) : StreamProvider {
     override val enabled: Boolean
-      get() = this@IcsManager.active
+      get() = this@IcsManager.isActive
 
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = repositoryActive
+    override val isDisableExportAction: Boolean
+      get() = this@IcsManager.isRepositoryActive
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
       val fullPath = toRepositoryPath(path, roamingType, null)
@@ -178,7 +181,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
         repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
 
-      if (!repositoryActive) {
+      if (!isRepositoryActive) {
         return false
       }
 
@@ -201,7 +204,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-      if (!repositoryActive) {
+      if (!isRepositoryActive) {
         return false
       }
 

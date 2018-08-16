@@ -9,6 +9,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 @property (nonatomic) NSButtonType btype;
 @property (nonatomic) CGFloat bwidth;
 @property (nonatomic) execute jaction;
+@property (nonatomic) NSString * uid; // for debug only
 - (id)init;
 - (void)doAction;
 + (Class)cellClass;
@@ -17,6 +18,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 @interface NSButtonCellEx : NSButtonCell
 @property (nonatomic) CGFloat myBorder;
 @property (nonatomic) CGFloat myMargin;
+@property (retain) NSImage * myArrowImg;
 @end
 
 @implementation NSButtonJAction
@@ -28,7 +30,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
         NSCell * cell = [self cell];
         [cell setLineBreakMode:NSLineBreakByTruncatingTail];
         [self setBezelStyle:NSRoundedBezelStyle];
-        [self setMargins:2 border:5];
+        [self setMargins:3 border:8];
         // NSLog(@"created button [%@]: cell-class=%@", self, [[self cell] className]);
     }
     return self;
@@ -42,6 +44,14 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
     } else
         nserror(@"setMargin mustn't be called because internal cell isn't kind of NSButtonCellEx");
 }
+- (void)setArrowImg:(NSImage *)arrowImg {
+    NSCell * cell = [self cell];
+    if ([cell isKindOfClass:[NSButtonCellEx class]]) {
+        NSButtonCellEx * cellEx = cell;
+        cellEx.myArrowImg = arrowImg;
+    } else
+        nserror(@"setArrowImg mustn't be called because internal cell isn't kind of NSButtonCellEx");
+}
 - (void)doAction {
     if (self.jaction) {
         nstrace(@"button [%@]: doAction", self);
@@ -49,6 +59,22 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
     } else
         nstrace(@"button [%@]: empty action, nothing to execute", self);
 }
+// Uncomment for visual debug
+//
+//- (void) drawRect:(NSRect)dirtyRect {
+//    [[NSGraphicsContext currentContext] saveGraphicsState];
+//
+////    NSColor* backgroundColor = [NSColor clearColor];
+////    NSColor* backgroundColor = [NSColor yellowColor];
+////    [backgroundColor setFill];
+////    NSRectFill(dirtyRect);
+//
+//    [NSGraphicsContext restoreGraphicsState];
+//
+//    NSLog(@"drawRect [%@]: %@", self.uid, NSStringFromRect(dirtyRect));
+//    [super drawRect:dirtyRect];
+//}
+
 + (Class)cellClass
 {
     return [NSButtonCellEx class];
@@ -60,7 +86,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 //
 //-(void)drawBezelWithFrame:(NSRect)frame inView:(NSView *)controlView
 //{
-//    NSLog(@"drawBezelWithFrame: %@", NSStringFromRect(frame));
+//    NSLog(@"\tdrawBezelWithFrame: %@", NSStringFromRect(frame));
 //    [super drawBezelWithFrame:frame inView:controlView];
 //
 //    [[NSGraphicsContext currentContext] saveGraphicsState];
@@ -103,40 +129,54 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
     return result;
 }
 - (void)drawInteriorWithFrame:(NSRect)frame inView:(NSView *)controlView {
-//    NSLog(@"drawInteriorWithFrame: %@", NSStringFromRect(frame));
+    // NSLog(@"\tdrawInteriorWithFrame: %@", NSStringFromRect(frame));
     if (self.title == nil || self.title.length <= 0) {
         [super drawImage:self.image withFrame:frame inView:controlView];
         return;
     }
 
     const CGFloat imgW = self.image == nil ? 0 : self.image.size.width;
+    const CGFloat arrowImgW = self.myArrowImg == nil ? 0 : self.myArrowImg.size.width;
+    const CGFloat arrowMarginL = 2;
+    const CGFloat arrowMarginR = 2;
+
     const CGFloat imgWithMargin = imgW > 0 ? self.myMargin + imgW : 0;
+    const CGFloat arrowImgWithMargins = arrowImgW > 0 ? arrowMarginL + arrowImgW + arrowMarginR : 0;
 
     NSSize txtSize = [self.title sizeWithAttributes:@{ NSFontAttributeName:self.font }];
     const CGFloat txtW = txtSize.width;
-    const CGFloat fullW = self.myBorder*2 + txtW + imgWithMargin;
+    const CGFloat borderL = self.myBorder;
+    const CGFloat borderR = arrowImgW > 0 ? 2 : self.myBorder;
+    const CGFloat fullContentW = borderL + imgWithMargin + txtW + borderR;
+    const CGFloat availableWidth = frame.size.width - arrowImgWithMargins;
     NSRect rcImg = frame;
     rcImg.size.width = imgW;
     NSRect rcTxt = frame;
-    if (fullW <= frame.size.width) {
-        const CGFloat delta = frame.size.width - fullW;
+    if (fullContentW <= availableWidth) {
+        const CGFloat delta = availableWidth - fullContentW;
         if (imgW > 0) {
-            rcImg.origin.x = delta/2 + self.myBorder;
+            rcImg.origin.x = delta/2 + borderL;
             rcTxt.origin.x = rcImg.origin.x + imgWithMargin;
-            rcTxt.size.width = txtW + 1;
         } else {
-            rcTxt.origin.x = delta/2 + self.myBorder;
-            rcTxt.size.width = txtW + 1;
+            rcTxt.origin.x = delta/2 + borderL;
         }
+        rcTxt.size.width = txtW + 1;
     } else {
         if (imgW > 0) {
-            rcImg.origin.x = self.myBorder;
+            rcImg.origin.x = borderL;
             rcTxt.origin.x = rcImg.origin.x + imgWithMargin;
-            rcTxt.size.width = frame.size.width - self.myBorder - rcTxt.origin.x;
+            rcTxt.size.width = availableWidth - borderR - rcTxt.origin.x;
         } else {
-            rcTxt.origin.x = self.myBorder;
-            rcTxt.size.width = frame.size.width - self.myBorder*2;
+            rcTxt.origin.x = borderL;
+            rcTxt.size.width = availableWidth - borderL - borderR;
         }
+    }
+
+    if (arrowImgW > 0) {
+        NSRect rcArrow = frame;
+        rcArrow.size.width = arrowImgW;
+        rcArrow.origin.x = frame.size.width - arrowMarginR - arrowImgW;
+        [super drawImage:self.myArrowImg withFrame:rcArrow inView:controlView];
     }
 
     if (imgW > 0) {
@@ -164,6 +204,7 @@ const int BUTTON_FLAG_DISABLED  = 1;
 const int BUTTON_FLAG_SELECTED  = 1 << 1;
 const int BUTTON_FLAG_COLORED   = 1 << 2;
 const int BUTTON_FLAG_TOGGLE    = 1 << 3;
+const int BUTTON_FLAG_TRANSPARENT_BG = 1 << 4;
 
 const unsigned int LAYOUT_WIDTH_MASK       = 0x0FFF;
 const unsigned int LAYOUT_FLAG_MIN_WIDTH   = 1 << 15;
@@ -281,6 +322,9 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int layou
         if (enabled != button.enabled) {
             [button setEnabled:enabled];
         }
+
+        if (buttonFlags & BUTTON_FLAG_TRANSPARENT_BG)
+            [button setBordered:NO];
     }
 
     if (button.image != nil) {
@@ -307,6 +351,7 @@ id createButton(
 
     NSCustomTouchBarItem *customItemForButton = [[NSCustomTouchBarItem alloc] initWithIdentifier:nsUid]; // create non-autorelease object to be owned by java-wrapper
     NSButtonJAction *button = [[[NSButtonJAction alloc] init] autorelease];
+    button.uid = nsUid;
 
     NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
     NSString *nstext = createStringFromUTF8(text);
@@ -348,6 +393,31 @@ void updateButton(
             // NOTE: block is copied, img/text objects is automatically retained
             // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
             _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);
+        });
+    }
+
+    [edtPool release];
+}
+
+// NOTE: now is called from AppKit-thread (creation when TB becomes visible), but can be called from EDT (when update UI)
+void setArrowImage(id buttObj, const char *raster4ByteRGBA, int w, int h) {
+    NSCustomTouchBarItem *container = buttObj; // TODO: check types
+    NSButtonJAction *button = (container).view; // TODO: check types
+    NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
+
+    NSImage *img = nil;
+    if (raster4ByteRGBA != NULL && w > 0)
+        img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
+
+    if ([NSThread isMainThread]) {
+        [button setArrowImg:img];
+        //NSLog(@"sync set arrow: w=%d h=%d", w, h);
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // NOTE: block is copied, img/text objects is automatically retained
+            // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+            [button setArrowImg:img];
+            //NSLog(@"async set arrow: w=%d h=%d", w, h);
         });
     }
 

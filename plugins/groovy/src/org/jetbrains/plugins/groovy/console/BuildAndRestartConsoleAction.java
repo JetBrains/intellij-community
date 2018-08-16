@@ -52,7 +52,7 @@ public class BuildAndRestartConsoleAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled());
   }
 
@@ -66,7 +66,7 @@ public class BuildAndRestartConsoleAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(myExecutor, myContentDescriptor)) {
       CompilerManager.getInstance(myProject).compile(myModule, new CompileStatusNotification() {
         @Override

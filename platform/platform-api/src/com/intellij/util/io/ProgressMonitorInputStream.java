@@ -34,6 +34,7 @@ final class ProgressMonitorInputStream extends InputStream {
     available = length;
   }
 
+  @Override
   public int read() throws IOException {
     int c = in.read();
     updateProgress(c >= 0 ? 1 : 0);
@@ -44,28 +45,32 @@ final class ProgressMonitorInputStream extends InputStream {
     indicator.checkCanceled();
     if (increment > 0) {
       count += increment;
-      indicator.setFraction((double)count / available);
+      if(!indicator.isIndeterminate()) indicator.setFraction((double)count / available);
     }
   }
 
+  @Override
   public int read(byte[] b) throws IOException {
     int r = in.read(b);
     updateProgress(r);
     return r;
   }
 
+  @Override
   public int read(byte[] b, int off, int len) throws IOException {
     int r = in.read(b, off, len);
     updateProgress(r);
     return r;
   }
 
+  @Override
   public long skip(long n) throws IOException {
     long r = in.skip(n);
     updateProgress(r);
     return r;
   }
 
+  @Override
   public void close() throws IOException {
     in.close();
   }

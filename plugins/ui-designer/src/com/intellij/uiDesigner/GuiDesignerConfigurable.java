@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -57,6 +43,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     myProject = project;
   }
 
+  @Override
   public String getDisplayName() {
     return UIDesignerBundle.message("title.gui.designer");
   }
@@ -67,6 +54,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     return "project.propGUI";
   }
 
+  @Override
   public JComponent createComponent() {
     if (myGeneralUI == null) {
       myGeneralUI = new MyGeneralUI();
@@ -75,6 +63,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     return myGeneralUI.myPanel;
   }
 
+  @Override
   public boolean isModified() {
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
 
@@ -101,10 +90,11 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     if (configuration.RESIZE_HEADERS != myGeneralUI.myResizeHeaders.isSelected()) {
       return true;
     }
-    
+
     return false;
   }
 
+  @Override
   public void apply() {
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
     configuration.COPY_FORMS_RUNTIME_TO_OUTPUT = myGeneralUI.myChkCopyFormsRuntime.isSelected();
@@ -121,6 +111,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     }
   }
 
+  @Override
   public void reset() {
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
 
@@ -143,10 +134,11 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     myGeneralUI.myLayoutManagerCombo.setSelectedItem(configuration.DEFAULT_LAYOUT_MANAGER);
 
     myGeneralUI.myDefaultFieldAccessibilityCombo.setSelectedItem(configuration.DEFAULT_FIELD_ACCESSIBILITY);
-    
+
     myGeneralUI.myResizeHeaders.setSelected(configuration.RESIZE_HEADERS);
   }
 
+  @Override
   public void disposeUIResources() {
     myGeneralUI = null;
   } /*UI for "General" tab*/
@@ -209,11 +201,13 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
       }, "", null);
     }
 
+    @Override
     public void run() {
       ProgressManager.getInstance().runProcess(() -> applyImpl(), myProgressWindow);
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();

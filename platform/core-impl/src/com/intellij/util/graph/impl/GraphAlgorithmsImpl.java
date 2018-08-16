@@ -6,6 +6,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -15,6 +16,12 @@ import java.util.*;
 public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish) {
+    return findShortestPath((InboundSemiGraph<Node>)graph, start, finish);
+  }
+
+  @Nullable
+  @Override
+  public <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish) {
     return new ShortestPathFinder<>(graph).findPath(start, finish);
   }
 
@@ -35,14 +42,20 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> Graph<Node> invertEdgeDirections(@NotNull final Graph<Node> graph) {
     return new Graph<Node>() {
+      @Override
+      @NotNull
       public Collection<Node> getNodes() {
         return graph.getNodes();
       }
 
+      @Override
+      @NotNull
       public Iterator<Node> getIn(final Node n) {
         return graph.getOut(n);
       }
 
+      @Override
+      @NotNull
       public Iterator<Node> getOut(final Node n) {
         return graph.getIn(n);
       }
@@ -70,11 +83,13 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
     }
 
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Chunk<Node>>() {
+      @NotNull
       @Override
       public Collection<Chunk<Node>> getNodes() {
         return chunks;
       }
 
+      @NotNull
       @Override
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();

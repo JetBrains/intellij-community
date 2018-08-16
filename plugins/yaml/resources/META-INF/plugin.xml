@@ -8,7 +8,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- YAML -->
+    <additionalTextAttributes scheme="Default" file="colorSchemes/YAMLDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>
+
     <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
+    <enterHandlerDelegate implementation="org.jetbrains.yaml.formatter.YAMLEnterAtIndentHandler" order="first"/>
+    <copyPastePreProcessor implementation="org.jetbrains.yaml.formatter.YAMLCopyPasteProcessor"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
     <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>

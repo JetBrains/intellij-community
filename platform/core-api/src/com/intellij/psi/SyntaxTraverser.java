@@ -427,6 +427,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     private final UserDataHolder userDataHolder = new UserDataHolderBase();
     private final ThreadLocalCachedValue<FlyweightCapableTreeStructure<LighterASTNode>> structure =
       new ThreadLocalCachedValue<FlyweightCapableTreeStructure<LighterASTNode>>() {
+        @NotNull
         @Override
         protected FlyweightCapableTreeStructure<LighterASTNode> create() {
           return builder.getLightTree();

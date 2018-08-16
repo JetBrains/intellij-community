@@ -51,6 +51,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     super(project, aClass, settings);
   }
 
+  @Override
   protected void changeSelf(final PsiElementFactory factory, final UsageInfo[] usages) throws IncorrectOperationException {
     PsiClass containingClass = myMember.getContainingClass();
 
@@ -165,6 +166,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     return fieldName;
   }
 
+  @Override
   protected void changeSelfUsage(final SelfUsageInfo usageInfo) throws IncorrectOperationException {
     PsiElement parent = usageInfo.getElement().getParent();
     LOG.assertTrue(parent instanceof PsiCallExpression); //either this() or new()
@@ -192,6 +194,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
   }
 
+  @Override
   protected void changeInternalUsage(final InternalUsageInfo usage, final PsiElementFactory factory) throws IncorrectOperationException {
     if (!mySettings.isChangeSignature()) return;
 
@@ -242,6 +245,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
   }
 
+  @Override
   protected void changeExternalUsage(final UsageInfo usage, final PsiElementFactory factory) throws IncorrectOperationException {
     final PsiElement element = usage.getElement();
     if (!(element instanceof PsiJavaCodeReferenceElement)) return;
@@ -354,6 +358,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
   }
 
+  @Override
   protected MultiMap<PsiElement,String> getConflictDescriptions(final UsageInfo[] usages) {
     final MultiMap<PsiElement, String> conflicts = super.getConflictDescriptions(usages);
 
@@ -385,6 +390,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     return conflicts;
   }
 
+  @Override
   protected void findExternalUsages(final ArrayList<UsageInfo> result) {
     PsiMethod[] constructors = myMember.getConstructors();
     if (constructors.length > 0) {

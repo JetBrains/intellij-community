@@ -213,6 +213,7 @@ public class SelectBranchPopup {
       myDateLabel.setForeground(UIUtil.getInactiveTextColor());
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (isSelected || cellHasFocus) {
         setBackground(UIUtil.getListSelectionBackground());

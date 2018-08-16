@@ -16,11 +16,13 @@ import java.util.Set;
 
 public class VcsNamesUsagesCollector extends ProjectUsagesCollector {
 
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.vcs.names";
   }
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     return getDescriptors(project);

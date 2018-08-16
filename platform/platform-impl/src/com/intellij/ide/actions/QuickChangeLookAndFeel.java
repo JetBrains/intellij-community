@@ -20,13 +20,15 @@ import javax.swing.*;
  */
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
 
+  @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     LafManager lafMan = LafManager.getInstance();
     UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
     UIManager.LookAndFeelInfo current = lafMan.getCurrentLookAndFeel();
     for (UIManager.LookAndFeelInfo lf : lfs) {
       group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
-        public void actionPerformed(AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
           switchLafAndUpdateUI(lafMan, lf, false);
         }
       });
@@ -70,6 +72,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     }
   }
 
+  @Override
   protected boolean isEnabled() {
     return LafManager.getInstance().getInstalledLookAndFeels().length > 1;
   }

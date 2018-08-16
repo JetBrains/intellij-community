@@ -17,7 +17,6 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -65,6 +64,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -132,8 +132,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Alarm myStatusUpdateAlarm = new Alarm();
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
-
-  private List<CapturePoint> myAgentInsertPoints = Collections.emptyList();
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -578,16 +576,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
                                                           e.getClass().getName() + " : " + e.getLocalizedMessage()));
     }
-    Connector connector = StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
-    if (connector == null) {
-      throw new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName));
-    }
-    return connector;
+    return StreamEx.of(virtualMachineManager.allConnectors())
+      .findFirst(c -> connectorName.equals(c.name()))
+      .orElseThrow(() -> new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName)));
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {
-    final String version = vm.version();
-    if ("1.4.0".equals(version)) {
+    final String versionString = vm.version();
+    if ("1.4.0".equals(versionString)) {
       DebuggerInvocationUtil.swingInvokeLater(myProject, () -> Messages.showMessageDialog(
         myProject,
         DebuggerBundle.message("warning.jdk140.unstable"), DebuggerBundle.message("title.jdk140.unstable"), Messages.getWarningIcon()
@@ -595,13 +591,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     if (getSession().getAlternativeJre() == null) {
       Sdk runjre = getSession().getRunJre();
-      if ((runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
+      JavaVersion version = JavaVersion.tryParse(versionString);
+      if (version != null && (runjre == null || runjre.getSdkType() instanceof JavaSdkType) && !versionMatch(runjre, version)) {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
             DebuggerBundle.message("message.remote.jre.version.mismatch",
-                                   version,
+                                   versionString,
                                    runjre != null ? runjre.getVersionString() : "unknown",
                                    sdk.getName())
             , MessageType.INFO).notify(myProject);
@@ -611,10 +608,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean versionMatch(@Nullable Sdk sdk, String version) {
+  private static boolean versionMatch(@Nullable Sdk sdk, @NotNull JavaVersion version) {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
       String versionString = sdk.getVersionString();
-      return versionString != null && versionString.contains(version);
+      return versionString != null && version.equals(JavaVersion.tryParse(versionString));
     }
     return false;
   }
@@ -1307,7 +1304,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Override
-  public ReferenceType findClass(EvaluationContext evaluationContext, String className,
+  public ReferenceType findClass(@Nullable EvaluationContext evaluationContext, String className,
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -1318,9 +1315,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           break;
         }
       }
-      final EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
-      if (result == null && evalContext.isAutoLoadClasses()) {
-        return loadClass(evalContext, className, classLoader);
+      if (result == null && evaluationContext != null) {
+        EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
+        if (evalContext.isAutoLoadClasses()) {
+          return loadClass(evalContext, className, classLoader);
+        }
       }
       return result;
     }
@@ -1833,7 +1832,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySession.getSearchScope();
   }
 
-  public void reattach(final DebugEnvironment environment) throws ExecutionException {
+  public void reattach(final DebugEnvironment environment) {
     if (!myIsStopped.get()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
@@ -2202,14 +2201,5 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
-  }
-
-  @NotNull
-  public List<CapturePoint> getAgentInsertPoints() {
-    return myAgentInsertPoints;
-  }
-
-  public void setAgentInsertPoints(@NotNull List<CapturePoint> agentInsertPoints) {
-    myAgentInsertPoints = agentInsertPoints;
   }
 }

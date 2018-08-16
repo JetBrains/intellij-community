@@ -38,7 +38,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Command arguments
               Literal
-                PsiElement(Gstring)('"I'm a trait"')
+                PsiElement(double quoted string)('"I'm a trait"')
           PsiWhiteSpace(' ')
           PsiElement(})('}')
       PsiElement(new line)('\n')

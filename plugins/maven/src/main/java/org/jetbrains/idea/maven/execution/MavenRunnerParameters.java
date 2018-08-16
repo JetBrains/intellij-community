@@ -249,6 +249,7 @@ public class MavenRunnerParameters implements Cloneable {
     myResolveToWorkspace = resolveToWorkspace;
   }
 
+  @Override
   public MavenRunnerParameters clone() {
     return new MavenRunnerParameters(this);
   }

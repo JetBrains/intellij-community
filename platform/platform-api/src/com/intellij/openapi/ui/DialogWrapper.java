@@ -35,6 +35,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -494,11 +495,11 @@ public abstract class DialogWrapper {
         actions.add(getOKAction());
       }
 
-      // move cancel action to the left
+      // move cancel action to the left of OK action, if present, and to the leftmost position otherwise
       int cancelNdx = actions.indexOf(getCancelAction());
       if (cancelNdx > 0) {
         actions.remove(getCancelAction());
-        actions.add(0, getCancelAction());
+        actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
       }
     }
     else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
@@ -515,15 +516,15 @@ public abstract class DialogWrapper {
     List<JButton> leftSideButtons = createButtons(leftSideActions);
     List<JButton> rightSideButtons = createButtons(actions);
 
+    int index = 0;
     myButtonMap.clear();
     for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
       myButtonMap.put(button.getAction(), button);
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
+      TouchbarDataKeys.putDialogButtonDescriptor(button, index++).setMainGroup(index >= leftSideButtons.size());
     }
-
-    myPeer.setTouchBarButtons(rightSideButtons);
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
@@ -1344,7 +1345,7 @@ public abstract class DialogWrapper {
   private static void installEnterHook(JComponent root, Disposable disposable) {
     new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner instanceof JButton && owner.isEnabled()) {
           ((JButton)owner).doClick();
@@ -1352,7 +1353,7 @@ public abstract class DialogWrapper {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }
@@ -1407,14 +1408,17 @@ public abstract class DialogWrapper {
     }
   }
 
+  @Deprecated
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
+  @Deprecated
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
+  @Deprecated
   protected boolean isSouthStrictedToPreferredSize() {
     return true;
   }

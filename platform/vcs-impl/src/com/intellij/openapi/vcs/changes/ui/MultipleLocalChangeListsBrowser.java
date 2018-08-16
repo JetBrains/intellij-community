@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -50,8 +49,8 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
@@ -137,11 +136,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     if (myEnableUnversioned) {
       result.add(new ShowHideUnversionedFilesAction());
-
-      // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck checkboxes in the tree.
-      ActionGroup unversionedGroup = UnversionedViewDialog.getUnversionedPopupGroup();
-      result.add(unversionedGroup);
-      ActionUtil.recursiveRegisterShortcutSet(unversionedGroup, myViewer, null);
+      result.add(UnversionedViewDialog.registerUnversionedPopupGroup(myViewer));
     }
     else {
       // avoid duplicated actions on toolbar
@@ -219,6 +214,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     ((MyChangesBrowserTreeList)myViewer).updateExclusionStates();
   }
 
+  @Override
   public void updateDisplayedChangeLists() {
     List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
     myChangeListChooser.setAvailableLists(changeLists);
@@ -277,7 +273,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
       return VcsTreeModelData.selected(myViewer).userObjectsStream(VirtualFile.class);
     }
@@ -483,7 +479,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     }
 
     @Nullable
-    private Object getUserObject(AnActionEvent e) {
+    private Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;

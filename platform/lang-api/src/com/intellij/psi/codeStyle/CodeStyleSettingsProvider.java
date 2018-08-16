@@ -72,4 +72,14 @@ public abstract class CodeStyleSettingsProvider {
     return null;
   }
 
+  /**
+   * @return {@code CodeStyleGroup} instance if a configurable returned by {@link #createSettingsPage(CodeStyleSettings, CodeStyleSettings)}
+   *         is a part of a code style group or {@code null} if the configurable must be shown directly under "Code Style" settings node.
+   * @see CodeStyleGroup
+   */
+  @Nullable
+  public CodeStyleGroup getGroup() {
+    return null;
+  }
+
 }

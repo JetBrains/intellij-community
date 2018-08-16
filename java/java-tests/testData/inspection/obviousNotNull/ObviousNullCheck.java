@@ -24,6 +24,16 @@ abstract class ObviousNullCheck {
     System.out.println(inferred(<warning descr="Redundant null-check: literal is never null">"foo"</warning>));
   }
 
+  static String concat(String s, String m) {
+    if(s == null) throw new NullPointerException();
+    return s+m;
+  }
+
+  void testStrings(List<String> list) {
+    list.forEach(s -> concat(<warning descr="Redundant null-check: literal is never null">"Not null!"</warning>, s));
+    list.stream().map(s -> concat("Not null!", s)).forEach(System.out::println);
+  }
+
   @Contract(value="null -> fail", pure=true)
   String trim(String s) {
     return s.trim();

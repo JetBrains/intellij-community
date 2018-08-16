@@ -1044,7 +1044,6 @@ String test(int aParameter, int bParameter) {
 
       "/**\n" +
       " *\n" +
-      " *\n" +
       " */\n" +
       "void check() {\n" +
       "}")
@@ -1282,6 +1281,38 @@ public class Test {
     }
 
     private void test2(Object a, Object b, Object c, Object d, Object e) {
+    }
+}
+"""
+    )
+  }
+
+  fun testIdea180882() {
+    codeStyleBean.apply {
+      isJavaDocKeepEmptyParameter = false;
+    }
+    doTextTest(
+"""
+public class Test {
+
+    /**
+     * @param a
+     * @param b
+     */
+    public void foo(boolean a, boolean b) {
+
+    }
+}
+""",
+
+"""
+public class Test {
+
+    /**
+     *
+     */
+    public void foo(boolean a, boolean b) {
+
     }
 }
 """

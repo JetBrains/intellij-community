@@ -54,20 +54,10 @@ public class NetUtils {
   }
 
   private static boolean canBindToLocalSocket(String host, int port) {
-    try {
-      ServerSocket socket = new ServerSocket();
-      try {
-        //it looks like this flag should be set but it leads to incorrect results for NodeJS under Windows
-        //socket.setReuseAddress(true);
-        socket.bind(new InetSocketAddress(host, port));
-      }
-      finally {
-        try {
-          socket.close();
-        }
-        catch (IOException ignored) {
-        }
-      }
+    try (ServerSocket socket = new ServerSocket()) {
+      //it looks like this flag should be set but it leads to incorrect results for NodeJS under Windows
+      //socket.setReuseAddress(true);
+      socket.bind(new InetSocketAddress(host, port));
       return true;
     }
     catch (IOException e) {
@@ -88,8 +78,7 @@ public class NetUtils {
   }
 
   public static int findAvailableSocketPort() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(0);
-    try {
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
@@ -104,9 +93,6 @@ public class NetUtils {
         }
       }
       return port;
-    }
-    finally {
-      serverSocket.close();
     }
   }
 

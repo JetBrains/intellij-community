@@ -231,7 +231,7 @@ public class PyDataView implements DumbAware {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       addTab(myFrameAccessor);
     }
   }
@@ -248,7 +248,7 @@ public class PyDataView implements DumbAware {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myTabs.removeTab(myInfo);
       if (getVisibleTabs().isEmpty()) {
         addTab(myFrameAccessor);

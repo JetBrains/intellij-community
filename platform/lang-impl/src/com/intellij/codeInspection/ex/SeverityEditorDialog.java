@@ -171,19 +171,19 @@ public class SeverityEditorDialog extends DialogWrapper {
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myCurrentSelection != null && !SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity());
         }
       }).setEditActionName("Rename").createPanel();
     ToolbarDecorator.findRemoveButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return !SeverityRegistrar.isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity());
       }
     });
     ToolbarDecorator.findUpButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         boolean canMove = ListUtil.canMoveSelectedItemsUp(myOptionsList);
         if (canMove) {
           SeverityBasedTextAttributes pair =
@@ -202,7 +202,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     });
     ToolbarDecorator.findDownButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         boolean canMove = ListUtil.canMoveSelectedItemsDown(myOptionsList);
         if (canMove) {
           SeverityBasedTextAttributes pair =

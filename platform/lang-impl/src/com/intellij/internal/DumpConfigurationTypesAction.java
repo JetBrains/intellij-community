@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class DumpConfigurationTypesAction extends AnAction implements DumbAware {
   public DumpConfigurationTypesAction() {
@@ -30,7 +31,7 @@ public class DumpConfigurationTypesAction extends AnAction implements DumbAware 
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     for (ConfigurationType factory : RunManager.getInstance(project).getConfigurationFactories()) {
       System.out.println(factory.getDisplayName() + " : " + factory.getId());
@@ -38,7 +39,7 @@ public class DumpConfigurationTypesAction extends AnAction implements DumbAware 
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 }

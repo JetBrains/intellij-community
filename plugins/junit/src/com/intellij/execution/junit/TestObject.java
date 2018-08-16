@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -124,12 +123,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         if (perModule != null && psiElement != null) {
           final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
           if (module != null) {
-            List<String> list = perModule.get(module);
-            if (list == null) {
-              list = new ArrayList<>();
-              perModule.put(module, list);
-            }
-            list.add(name);
+            fillForkModule(perModule, module, name);
           }
         }
         else {
@@ -147,7 +141,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         Collections.sort(testNames); //sort tests in FQN order
       }
 
-      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) 
+      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT)
                               ? data.getCategory()
                               : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? data.getTags().replaceAll(" ", "") : "";
       final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
@@ -158,6 +152,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  protected void fillForkModule(Map<Module, List<String>> perModule, Module module, String name) {
+    perModule.computeIfAbsent(module, elemList -> new ArrayList<>()).add(name);
   }
 
   public Module[] getModulesToCompile() {
@@ -210,7 +208,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   public static File getJUnit5RtFile() {
     File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
     String junit4Name = junit4Rt.getName();
-    String junit5Name = junit4Rt.isDirectory() ? junit4Name.replace("junit", "junit.v5") 
+    String junit5Name = junit4Rt.isDirectory() ? junit4Name.replace("junit", "junit.v5")
                                                : junit4Name.replace("junit", "junit5");
     return new File(junit4Rt.getParent(), junit5Name);
   }
@@ -238,7 +236,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (preferredRunner != null) {
       javaParameters.getProgramParametersList().add(preferredRunner);
     }
-    
+
     return javaParameters;
   }
 
@@ -272,8 +270,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-        String version = StringUtil.compareVersionNumbers(launcherVersion, "1.1.0") < 0 
-                         ? "4.12." + StringUtil.getShortName(launcherVersion) 
+        String version = StringUtil.compareVersionNumbers(launcherVersion, "1.1.0") < 0
+                         ? "4.12." + StringUtil.getShortName(launcherVersion)
                          : jupiterVersion;
         downloadDependenciesWhenRequired(project, classPath,
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
@@ -303,9 +301,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private static void downloadDependenciesWhenRequired(Project project,
-                                                       PathsList classPath, 
+                                                       PathsList classPath,
                                                        RepositoryLibraryProperties properties) throws CantRunException {
-    Collection<OrderRoot> roots = 
+    Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
     if (roots.isEmpty()) {
       throw new CantRunException("Failed to resolve " + properties.getMavenId());
@@ -333,6 +331,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                             configuration.getProject() );
   }
 
+  @Override
   @NotNull
   protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
@@ -347,6 +346,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return processHandler;
   }
 
+  @Override
   public void appendRepeatMode() throws ExecutionException {
     final String repeatMode = getConfiguration().getRepeatMode();
     if (!RepeatCount.ONCE.equals(repeatMode)) {
@@ -414,9 +414,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       int idx = qName.indexOf(',');
       String className = idx > 0 ? qName.substring(0, idx) : qName;
       return JavaPsiFacade.getInstance(project).findClass(className, scope != null
-                                                                     ? scope.getGlobalSearchScope() 
+                                                                     ? scope.getGlobalSearchScope()
                                                                      : GlobalSearchScope.projectScope(project));
-      
+
     }
     return element instanceof PsiElement ? (PsiElement)element : null;
   }
@@ -429,20 +429,24 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
+  @Override
   @NotNull
   protected String getFrameworkName() {
     return JUNIT_TEST_FRAMEWORK_NAME;
   }
 
+  @Override
   @NotNull
   protected String getFrameworkId() {
     return "junit";
   }
 
+  @Override
   protected void passTempFile(ParametersList parametersList, String tempFilePath) {
     parametersList.add("@" + tempFilePath);
   }
 
+  @Override
   @NotNull
   public JUnitConfiguration getConfiguration() {
     return myConfiguration;
@@ -453,6 +457,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getConfiguration().getPersistentData().getScope();
   }
 
+  @Override
   protected void passForkMode(String forkMode, File tempFile, JavaParameters parameters) throws ExecutionException {
     parameters.getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {

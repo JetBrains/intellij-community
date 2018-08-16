@@ -64,6 +64,7 @@ public class CheckBox extends JCheckBox {
             this.model = model;
         }
 
+        @Override
         public void stateChanged(ChangeEvent e) {
             setPropertyValue(owner, property, model.isSelected());
         }

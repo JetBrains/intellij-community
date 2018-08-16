@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -260,7 +261,7 @@ public class VfsData {
       int offset = getOffset(id) * 2 + 1;
       while (true) {
         int oldInt = myIntArray.get(offset);
-        int updated = value ? (oldInt | mask) : (oldInt & ~mask);
+        int updated = BitUtil.set(oldInt, mask, value);
         if (myIntArray.compareAndSet(offset, oldInt, updated)) {
           return;
         }
@@ -287,8 +288,14 @@ public class VfsData {
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   public static class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
-    @NotNull volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
-    @NotNull int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
+    @NotNull
+    volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+    /**
+     * sorted by {@link VfsData#getNameByFileId(int)}
+     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
+     */
+    @NotNull
+    int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
     private Set<CharSequence> myAdoptedNames; // guarded by this
 
     @NotNull
@@ -323,7 +330,7 @@ public class VfsData {
       }
       myAdoptedNames.add(name);
     }
-    void addAdoptedNames(Collection<CharSequence> names, boolean caseSensitive) {
+    void addAdoptedNames(Collection<? extends CharSequence> names, boolean caseSensitive) {
       if (myAdoptedNames == null) {
         myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
       }

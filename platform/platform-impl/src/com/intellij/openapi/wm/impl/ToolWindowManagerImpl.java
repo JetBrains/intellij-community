@@ -7,9 +7,8 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,8 +61,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 @State(
@@ -134,16 +133,17 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       return;
     }
 
-    actionManager.addAnActionListener((action, dataContext, event) -> {
-      if (myCurrentState != KeyState.hold) {
-        resetHoldState();
-      }
-    }, project);
-
     MessageBusConnection busConnection = project.getMessageBus().connect();
 
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, myDispatcher.getMulticaster());
-
+    busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
+      @Override
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (myCurrentState != KeyState.hold) {
+          resetHoldState();
+        }
+      }
+    });
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
@@ -1154,7 +1154,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     myLayout.unregister(id);
     myActiveStack.remove(id, true);
     mySideStack.remove(id);
-    appendRemoveButtonCmd(id, commandsList);
+    appendRemoveButtonCmd(id, info, commandsList);
     appendApplyWindowInfoCmd(info, commandsList);
 
     execute(commandsList, false);
@@ -1466,7 +1466,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
     // if tool window isn't visible or only order number is changed then just remove/add stripe button
     if (!info.isVisible() || anchor == info.getAnchor() || info.isFloating() || info.isWindowed()) {
-      appendRemoveButtonCmd(id, commandsList);
+      appendRemoveButtonCmd(id, info, commandsList);
       myLayout.setAnchor(id, anchor, order);
       // update infos for all window. Actually we have to update only infos affected by
       // setAnchor method
@@ -1478,7 +1478,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     else { // for docked and sliding windows we have to move buttons and window's decorators
       info.setVisible(false);
       appendRemoveDecoratorCmd(id, false, commandsList);
-      appendRemoveButtonCmd(id, commandsList);
+      appendRemoveButtonCmd(id, info, commandsList);
       myLayout.setAnchor(id, anchor, order);
       // update infos for all window. Actually we have to update only infos affected by
       // setAnchor method
@@ -1680,8 +1680,11 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   /**
    * @see ToolWindowsPane#createAddButtonCmd
    */
-  private void appendRemoveButtonCmd(@NotNull String id, @NotNull List<FinalizableCommand> commandsList) {
-    commandsList.add(myToolWindowsPane.createRemoveButtonCmd(id, myCommandProcessor));
+  private void appendRemoveButtonCmd(@NotNull String id, @NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
+    FinalizableCommand cmd = myToolWindowsPane.createRemoveButtonCmd(info, id, myCommandProcessor);
+    if (cmd != null) {
+      commandsList.add(cmd);
+    }
   }
 
   private void appendRequestFocusInToolWindowCmd(final String id, List<FinalizableCommand> commandList) {
@@ -2010,6 +2013,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         //windowLocation.translate(windowLocation.x - point.x, windowLocation.y - point.y);
         window.setLocation(2 * windowBounds.x - point.x,  2 * windowBounds.y - point.y);
         window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height);
+        window.toFront();
       }
       finally {
         finish();

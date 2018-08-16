@@ -224,7 +224,7 @@ public class FileStructureDialog extends DialogWrapper {
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final boolean succeeded = myCommanderPanel.navigateSelectedElement();
         if (succeeded) {
           unregisterCustomShortcutSet(myCommanderPanel);
@@ -336,7 +336,7 @@ public class FileStructureDialog extends DialogWrapper {
       text += " (" + KeymapUtil.getShortcutText(shortcuts [0]) + ")";
       new AnAction() {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           chkFilter.doClick();
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myCommanderPanel);
@@ -408,7 +408,7 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       Object selectedElement = myCommanderPanel.getSelectedValue();
 
       if (selectedElement instanceof TreeElement) selectedElement = ((StructureViewTreeElement)selectedElement).getValue();

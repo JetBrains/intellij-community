@@ -63,6 +63,11 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
+  @NotNull
+  public TestStatusLine getStatusLine() {
+    return myStatusLine;
+  }
+
   public void initUI() {
     myLeftPane = ScrollPaneFactory.createScrollPane();
     myLeftPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
@@ -141,7 +146,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     final TestTreeView view = getTreeView();
     if (view != null) {
       return view.getData(dataId);

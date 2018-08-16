@@ -52,6 +52,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner, J
    *
    * @return the class name, or null if the annotation is unresolved.
    */
+  @Override
   @Nullable
   @NonNls
   String getQualifiedName();

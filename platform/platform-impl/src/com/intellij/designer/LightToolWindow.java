@@ -377,11 +377,10 @@ public class LightToolWindow extends JPanel {
     GearAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setIcon(AllIcons.General.Gear);
-      presentation.setHoveredIcon(AllIcons.General.GearHover);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int x = 0;
       int y = 0;
       InputEvent inputEvent = e.getInputEvent();
@@ -413,7 +412,7 @@ public class LightToolWindow extends JPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       updateContent(false, true);
     }
   }

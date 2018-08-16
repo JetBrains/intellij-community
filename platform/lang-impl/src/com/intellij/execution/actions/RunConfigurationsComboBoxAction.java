@@ -1,24 +1,21 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -44,7 +41,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   private ComboBoxButton myButton;
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
@@ -85,7 +82,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         }
       }
       presentation.setText(name, false);
-      setConfigurationIcon(presentation, settings, project);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        setConfigurationIcon(presentation, settings, project);
+      }
     }
     else {
       presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
@@ -102,23 +101,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                            final RunnerAndConfigurationSettings settings,
                                            final Project project) {
     try {
-      Icon icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings);
-      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
-      List<RunContentDescriptor> runningDescriptors = executionManager.getRunningDescriptors(s -> s == settings);
-      if (runningDescriptors.size() == 1) {
-        icon = ExecutionUtil.getLiveIndicator(icon);
-      }
-      if (runningDescriptors.size() > 1) {
-        icon = IconUtil.addText(icon, String.valueOf(runningDescriptors.size()));
-      }
-      presentation.setIcon(icon);
+      presentation.setIcon(RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings, true));
     }
     catch (IndexNotReadyException ignored) {
     }
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace())) {
       final Presentation presentation = e.getPresentation();
       if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
@@ -134,8 +124,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return true;
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(final Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull final Presentation presentation) {
     myButton = new ComboBoxButton(presentation) {
       @Override
       public Dimension getPreferredSize() {
@@ -227,7 +218,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         RunnerAndConfigurationSettings settings = chooseTempSettings(project);
@@ -239,7 +230,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) {
@@ -291,7 +282,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ExecutionTargetManager.setActiveTarget(myProject, myTarget);
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject),
                          RunManager.getInstance(myProject).getSelectedConfiguration(),
@@ -329,13 +320,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation(), e.getPlace());
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       updateIcon(e.getPresentation());
     }

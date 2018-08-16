@@ -353,8 +353,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
-      CommentTracker ct = new CommentTracker();
-      ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+      new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
   }
 

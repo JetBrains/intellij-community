@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -65,8 +64,7 @@ import java.util.stream.Stream;
 import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
-public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> extends AbstractProjectComponent
-  implements CompilerReferenceService, ModificationTracker {
+public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> implements CompilerReferenceService, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(CompilerReferenceServiceBase.class);
 
   protected final Set<FileType> myFileTypes;
@@ -76,6 +74,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   protected final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   protected final Lock myReadDataLock = myLock.readLock();
   protected final Lock myOpenCloseLock = myLock.writeLock();
+  protected final Project myProject;
   protected final CompilerReferenceReaderFactory<? extends Reader> myReaderFactory;
   // index build start/finish callbacks are not ordered, so "build1 started" -> "build2 started" -> "build1 finished" -> "build2 finished" is expected sequence
   protected int myActiveBuilds = 0;
@@ -83,11 +82,10 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   protected volatile Reader myReader;
 
   public CompilerReferenceServiceBase(Project project, FileDocumentManager fileDocumentManager,
-                                      PsiDocumentManager psiDocumentManager, 
+                                      PsiDocumentManager psiDocumentManager,
                                       CompilerReferenceReaderFactory<? extends Reader> readerFactory,
                                       BiConsumer<MessageBusConnection, Set<String>> compilationAffectedModulesSubscription) {
-    super(project);
-
+    myProject = project;
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = Stream.of(LanguageCompilerRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
@@ -98,17 +96,17 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   public void projectOpened() {
     if (CompilerReferenceService.isEnabled()) {
       myDirtyScopeHolder.installVFSListener();
-      
+
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
           File buildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
-          
+
           boolean validIndexExists = buildDir != null
                                      && CompilerReferenceIndex.exists(buildDir)
                                      && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
-          
+
           if (validIndexExists) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);
@@ -124,11 +122,11 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           });
         });
       }
-      
+
       Disposer.register(myProject, () -> closeReaderIfNeed(IndexCloseReason.PROJECT_CLOSED));
     }
   }
-  
+
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
@@ -431,7 +429,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       myOpenCloseLock.unlock();
     }
   }
-  
+
   protected void markAsOutdated(boolean decrementBuildCount) {
     myOpenCloseLock.lock();
     try {
@@ -485,11 +483,6 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     @Override
     public boolean contains(@NotNull VirtualFile file) {
       return file instanceof VirtualFileWithId && myIndex.isInSourceContent(file) && !myReferentIds.contains(((VirtualFileWithId)file).getId());
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
     }
 
     @Override

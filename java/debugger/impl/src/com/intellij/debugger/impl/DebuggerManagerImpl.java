@@ -7,7 +7,6 @@ import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -35,11 +34,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -48,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -137,17 +135,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myDispatcher.removeListener(listener);
   }
 
-  public DebuggerManagerImpl(Project project, StartupManager startupManager) {
+  public DebuggerManagerImpl(@NotNull Project project) {
     myProject = project;
-    myBreakpointManager = new BreakpointManager(myProject, startupManager, this);
+    myBreakpointManager = new BreakpointManager(myProject, this);
+    MessageBusConnection busConnection = project.getMessageBus().connect();
     if (!project.isDefault()) {
-      project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
         @Override
         public void globalSchemeChange(EditorColorsScheme scheme) {
           getBreakpointManager().updateBreakpointsUI();
         }
       });
     }
+    myBreakpointManager.addListeners(busConnection);
   }
 
   @Nullable
@@ -164,11 +164,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       final Collection<DebuggerSession> values = mySessions.values();
       return values.isEmpty() ? Collections.emptyList() : new ArrayList<>(values);
     }
-  }
-
-  @Override
-  public void projectOpened() {
-    myBreakpointManager.init();
   }
 
   @Nullable
@@ -201,7 +196,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
-    DebuggerSession session = DebuggerSession.create(environment.getSessionName(), debugProcess, environment);
+    DebuggerSession session = DebuggerSession.create(debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
     if (executionResult == null) {
       return null;
@@ -324,12 +319,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   public boolean isDebuggerManagerThread() {
     return DebuggerManagerThreadImpl.isManagerThread();
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "DebuggerManager";
   }
 
   @NotNull
@@ -504,10 +493,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static final String AGENT_FILE_NAME = "debugger-agent.jar";
-  private static final String STORAGE_FILE_NAME = "debugger-agent-storage.jar";
 
   private static void addDebuggerAgent(JavaParameters parameters) {
-    if (StackCapturingLineBreakpoint.isAgentEnabled()) {
+    if (AsyncStacksUtils.isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
       if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_FILE_NAME))) {
@@ -533,12 +521,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null, f -> {
-                String name = f.getName();
-                return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
-              });
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
+                agentFile.getAbsolutePath(), "captureAgent", null, f -> AGENT_FILE_NAME.equals(f.getName()));
               if (agentPath != null) {
-                parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
+                parametersList.add(prefix + agentPath + generateAgentSettings());
               }
             }
             else {
@@ -554,29 +540,20 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static String generateAgentSettings() {
-    Properties properties = new Properties();
-    if (Registry.is("debugger.capture.points.agent.debug")) {
-      properties.setProperty("debug", "true");
-    }
-    int idx = 0;
-    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getPoints()) {
-      properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
-                             point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                             point.myKey.asString());
-    }
-    try {
-      File file = FileUtil.createTempFile("capture", ".props");
-      try (FileOutputStream out = new FileOutputStream(file)) {
-        properties.store(out, null);
-        return file.toURI().toASCIIString();
+    Properties properties = CaptureSettingsProvider.getPointsProperties();
+    if (!properties.isEmpty()) {
+      try {
+        File file = FileUtil.createTempFile("capture", ".props");
+        try (FileOutputStream out = new FileOutputStream(file)) {
+          properties.store(out, null);
+          return "=" + file.toURI().toASCIIString();
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
+    return "";
   }
 
   private static boolean shouldForceNoJIT(Sdk jdk) {

@@ -14,6 +14,7 @@ import java.io.IOException;
  */
 public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTest {
 
+  @Override
   public void testArtifactPresenceFieldToProperty() {
     configureByFiles(null, getTestName(false) + ".java");
     final IntentionAction intentionAction = getIntentionAction();

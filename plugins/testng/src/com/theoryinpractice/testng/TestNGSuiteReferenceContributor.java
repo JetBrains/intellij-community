@@ -52,6 +52,7 @@ public class TestNGSuiteReferenceContributor extends PsiReferenceContributor {
                                                         .withParent(xmlTag().withName("suite-files")
                                                                       .withParent(xmlTag().withName("suite")))));
 
+  @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(ourTestClassPattern, new JavaClassReferenceProvider());
     registrar.registerReferenceProvider(ourListenerClassPattern, new JavaClassReferenceProvider());

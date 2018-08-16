@@ -31,7 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, RefactoringListenerProvider {
+  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
+             RefactoringListenerProvider, InputRedirectAware {
 
   /* deprecated, but 3rd-party used variables */
   @Deprecated public String MAIN_CLASS_NAME;
@@ -43,6 +44,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   /* */
 
   private ShortenCommandLine myShortenCommandLine = null;
+  private final InputRedirectAware.InputRedirectOptions myInputRedirectOptions = new InputRedirectOptions();
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
@@ -296,6 +298,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
+    myInputRedirectOptions.readExternal(element);
   }
 
   @Override
@@ -304,6 +307,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
+    myInputRedirectOptions.writeExternal(element);
   }
 
   @Nullable
@@ -315,6 +319,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   public void setShortenCommandLine(ShortenCommandLine mode) {
     myShortenCommandLine = mode;
+  }
+
+  @NotNull
+  @Override
+  public InputRedirectOptions getInputRedirectOptions() {
+    return myInputRedirectOptions;
   }
 
   public boolean isSwingInspectorEnabled() {

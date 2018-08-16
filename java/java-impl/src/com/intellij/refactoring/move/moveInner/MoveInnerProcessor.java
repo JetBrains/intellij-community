@@ -44,7 +44,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,16 +87,19 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     setup(innerClass, name, passOuterClass, parameterName, true, true, targetContainer);
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("move.inner.class.command", myDescriptiveName);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new MoveInnerViewDescriptor(myInnerClass);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     LOG.assertTrue(myTargetContainer != null);
@@ -158,6 +160,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     mySearchInNonJavaFiles = searchInNonJavaFiles;
   }
 
+  @Override
   protected void performRefactoring(@NotNull final UsageInfo[] usages) {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -319,6 +322,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final HashMap<PsiElement,HashSet<PsiElement>> reported = new HashMap<>();

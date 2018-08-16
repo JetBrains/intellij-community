@@ -2,10 +2,10 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.testGuiFramework.fixtures.GutterFixture
-import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.util.*
-import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
@@ -14,9 +14,8 @@ import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
-import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -92,6 +91,7 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
   ideFrame {
     this.waitForBackgroundTasksToFinish()
   }
+  robot().waitForIdle()
   Pause.pause(extraTimeOut)
 }
 
@@ -109,8 +109,15 @@ fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
   }
 }
 
-
-fun ExtendedTreeFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
+/**
+ * Selects specified [path] in the tree by keyboard searching
+ * @param path in string form
+ * @param testCase - test case is required only because of keyboard related functions
+ *
+ * TODO: remove [testCase] parameter (so move [shortcut] and [typeText] functions
+ * out of GuiTestCase)
+ * */
+fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
   fun currentValue(): String {
     val selectedRow = target().selectionRows.first()
     return valueAt(selectedRow) ?: throw IllegalStateException("Nothing is selected in the tree")
@@ -132,7 +139,7 @@ fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")
   ideFrame {
     toolwindow(id = "Gradle") {
-      content(tabName = "projects") {
+      content(tabName = "") {
         //        waitAMoment()
         actionButton("Refresh all external projects").click()
       }
@@ -143,9 +150,17 @@ fun GuiTestCase.gradleReimport() {
 fun GuiTestCase.mavenReimport() {
   logTestStep("Reimport maven project")
   ideFrame {
-    toolwindow(id = "Maven Projects") {
+    toolwindow(id = "Maven") {
       content(tabName = "") {
-        actionButton("Reimport All Maven Projects").click()
+        val button = actionButton("Reimport All Maven Projects")
+        Pause.pause(object : Condition("Wait for button Reimport All Maven Projects to be enabled.") {
+          override fun test(): Boolean {
+            return button.isEnabled
+          }
+        }, Timeouts.minutes02)
+        robot().waitForIdle()
+        button.click()
+        robot().waitForIdle()
       }
     }
   }
@@ -156,11 +171,7 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   ideFrame {
     logTestStep("Going to check how the project compiles")
     invokeMainMenu("CompileProject")
-    shortcut(Modifier.CONTROL + Modifier.SHIFT + Key.A)
     waitAMoment()
-    typeText(textEventLog)
-    waitAMoment()
-    shortcut(Key.ENTER)
     toolwindow(id = textEventLog) {
       content(tabName = "") {
         editor{
@@ -171,39 +182,6 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
         }
       }
     }
-  }
-}
-
-fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
-  val cfgName = configuration.last()
-  val runDebugConfigurations = "Run/Debug Configurations"
-  ideFrame {
-    logTestStep("Going to check presence of Run/Debug configuration `$cfgName`")
-    navigationBar {
-      assert(exists { button(cfgName) }) { "Button `$cfgName` not found on Navigation bar" }
-      button(cfgName).click()
-      popupClick("Edit Configurations...")
-    }
-    dialog(runDebugConfigurations) {
-      assert(exists { jTree(*configuration) })
-      jTree(*configuration).clickPath(*configuration)
-      for ((field, expectedValue) in expectedValues) {
-        logTestStep("Field `$field`has a value = `$expectedValue`")
-        checkOneValue(this@checkRunConfiguration, field, expectedValue)
-      }
-      button("Cancel").click()
-    }
-  }
-}
-
-fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String, expectedValue: String){
-  val actualValue = when {
-    guiTestCase.exists {textfield(expectedField)} -> textfield(expectedField).text()
-    guiTestCase.exists { combobox(expectedField) } -> combobox(expectedField).selectedItem()
-    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
-  }
-  assert(actualValue == expectedValue) {
-    "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
   }
 }
 
@@ -249,15 +227,4 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
       }
     }
   }
-}
-
-fun GuiTestCase.checkFileExists(filePath: String){
-  logTestStep("Going to check whether file `$filePath` created")
-  assert(File(filePath).exists()) { "Can't find a file `$filePath`" }
-}
-
-fun GuiTestCase.checkFileContainsLine(filePath: String, line: String){
-  val inputFile = Paths.get(filePath)
-  logTestStep("Going to check whether ${inputFile.fileName} contains line `$line`")
-  assert(Files.readAllLines(inputFile).contains(line)) { "Line `$line` not found" }
 }

@@ -58,6 +58,7 @@ public interface NSTLibrary extends Library {
   int BUTTON_FLAG_SELECTED  = 1 << 1;
   int BUTTON_FLAG_COLORED   = 1 << 2;
   int BUTTON_FLAG_TOGGLE    = 1 << 3;
+  int BUTTON_FLAG_TRANSPARENT_BG = 1 << 4;
 
   int LAYOUT_WIDTH_MASK       = 0x0FFF;
   int LAYOUT_FLAG_MIN_WIDTH   = 1 << 15;
@@ -75,6 +76,8 @@ public interface NSTLibrary extends Library {
   void updateButton(ID buttonObj, int updateOptions, int buttWidth, int buttonFlags, String text, byte[] raster4ByteRGBA, int w, int h, Action action);
   void updatePopover(ID popoverObj, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
   void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
+
+  void setArrowImage(ID buttObj, byte[] raster4ByteRGBA, int w, int h);
 
   static int priority2mask(byte prio) { return (prio + 128) << BUTTON_PRIORITY_SHIFT; }
   static int margin2mask(byte margin) { return ((int)margin & 0xFF) << LAYOUT_MARGIN_SHIFT; }

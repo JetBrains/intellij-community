@@ -39,23 +39,23 @@ public abstract class ExternalSystemAction extends AnAction implements DumbAware
     p.setEnabled(visible && isEnabled(e));
   }
 
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return hasProject(e) && getSystemId(e) != null;
   }
 
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     return true;
   }
 
-  protected Project getProject(AnActionEvent e) {
+  protected Project getProject(@NotNull AnActionEvent e) {
     return e.getProject();
   }
 
-  protected ProjectSystemId getSystemId(AnActionEvent e) {
+  protected ProjectSystemId getSystemId(@NotNull AnActionEvent e) {
     return ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
   }
 
-  protected boolean hasProject(AnActionEvent e) {
+  protected boolean hasProject(@NotNull AnActionEvent e) {
     return getProject(e) != null;
   }
 
@@ -67,7 +67,7 @@ public abstract class ExternalSystemAction extends AnAction implements DumbAware
     getTemplatePresentation().setDescription(message);
   }
 
-  protected void setText(AnActionEvent e, String message) {
+  protected void setText(@NotNull AnActionEvent e, String message) {
     e.getPresentation().setText(message);
   }
 }

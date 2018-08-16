@@ -159,7 +159,8 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
   public String getName() {
     return myNameRule.getMethodName();
   }
-  
+
+  @Override
   protected String getTestContentRoot() {
     String methodName = myNameRule.getMethodName();
     methodName = methodName.substring(0, methodName.indexOf("["));

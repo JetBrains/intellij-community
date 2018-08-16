@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.IdeaWideProxySelector;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +66,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
     LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
-    myHandler.addLineListener(new GitLineHandlerAdapter() {
+    myHandler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
         String lowerCaseLine = line.toLowerCase();
@@ -150,7 +149,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   private static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
     return ContainerUtil.exists(urls, url -> {
       String host = URLUtil.parseHostFromSshUrl(url);
-      return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+      return httpConfigurable.isProxyException(host);
     });
   }
 }

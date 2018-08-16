@@ -292,7 +292,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       hideToolWindow();
     }
 

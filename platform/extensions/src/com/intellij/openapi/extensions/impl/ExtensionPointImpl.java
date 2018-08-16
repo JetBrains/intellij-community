@@ -32,7 +32,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final String myClassName;
   private final Kind myKind;
 
-  private volatile T[] myExtensionsCache;
+  private volatile List<T> myExtensionsCache;
 
   private final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
@@ -165,31 +165,39 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  @Override
   @NotNull
-  public T[] getExtensions() {
-    T[] result = myExtensionsCache;
+  @Override
+  public List<T> getExtensionList() {
+    List<T> result = myExtensionsCache;
     if (result == null) {
       synchronized (this) {
         result = myExtensionsCache;
         if (result == null) {
-          result = processAdapters();
-          if (result == null) {
-            //noinspection unchecked
-            result = (T[])Array.newInstance(getExtensionClass(), 0);
+          T[] array = processAdapters();
+          if (array == null) {
+            result = Collections.emptyList();
+          }
+          else {
+            result = Collections.unmodifiableList(Arrays.asList(array));
           }
           myExtensionsCache = result;
         }
       }
     }
-    return result.length == 0 ? result : result.clone();
+    return result;
+  }
+
+  @Override
+  @NotNull
+  public T[] getExtensions() {
+    return ArrayUtil.toObjectArray(getExtensionList(), getExtensionClass());
   }
 
   @Override
   public boolean hasAnyExtensions() {
-    final T[] cache = myExtensionsCache;
+    final List<T> cache = myExtensionsCache;
     if (cache != null) {
-      return cache.length > 0;
+      return !cache.isEmpty();
     }
     synchronized (this) {
       return myExtensionAdapters.size() + myLoadedAdapters.size() > 0;
@@ -265,7 +273,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  @SuppressWarnings("unused") // upsource
   public synchronized void removeUnloadableExtensions() {
     ExtensionComponentAdapter[] adapters = myExtensionAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
     for (ExtensionComponentAdapter adapter : adapters) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -82,8 +83,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -133,7 +134,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     myListenerList =
       new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-    if (Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME).length > 0) {
+    if (!FileEditorAssociateFinder.EP_NAME.getExtensionList().isEmpty()) {
       myListenerList.add(new FileEditorManagerListener() {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
@@ -1292,22 +1293,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @Nullable
   public FileEditor getSelectedEditor(@NotNull final VirtualFile file) {
-    final Pair<FileEditor, FileEditorProvider> selectedEditorWithProvider = getSelectedEditorWithProvider(file);
-    return selectedEditorWithProvider == null ? null : selectedEditorWithProvider.getFirst();
+    FileEditorWithProvider editorWithProvider = getSelectedEditorWithProvider(file);
+    return editorWithProvider == null ? null : editorWithProvider.getFileEditor();
   }
 
 
   @Override
   @Nullable
-  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
+  public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
-      return composite.getSelectedEditorWithProvider();
+      return composite.getSelectedWithProvider();
     }
 
     final List<EditorWithProviderComposite> composites = getEditorComposites(file);
-    return composites.isEmpty() ? null : composites.get(0).getSelectedEditorWithProvider();
+    return composites.isEmpty() ? null : composites.get(0).getSelectedWithProvider();
   }
 
   @Override
@@ -1590,9 +1591,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
     else {
       file = composite.getFile();
-      final Pair<FileEditor, FileEditorProvider> pair = composite.getSelectedEditorWithProvider();
-      editor = pair.first;
-      provider = pair.second;
+      final FileEditorWithProvider pair = composite.getSelectedWithProvider();
+      editor = pair.getFileEditor();
+      provider = pair.getProvider();
     }
     return new Trinity<>(file, editor, provider);
   }

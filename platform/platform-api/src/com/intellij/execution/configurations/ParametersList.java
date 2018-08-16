@@ -301,12 +301,16 @@ public final class ParametersList implements Cloneable {
   /** @noinspection MethodDoesntCallSuperMethod*/
   @Override
   public ParametersList clone() {
-    ParametersList clone = new ParametersList();
-    clone.myParameters.addAll(myParameters);
+    return copyTo(new ParametersList());
+  }
+
+  @NotNull
+  ParametersList copyTo(@NotNull ParametersList target) {
+    target.myParameters.addAll(myParameters);
     for (ParamsGroup group : myGroups) {
-      clone.myGroups.add(group.clone());
+      target.myGroups.add(group.clone());
     }
-    return clone;
+    return target;
   }
 
   /**

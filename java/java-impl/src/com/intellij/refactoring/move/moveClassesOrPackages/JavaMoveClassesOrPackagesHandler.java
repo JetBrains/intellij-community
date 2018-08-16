@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -82,7 +83,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     PsiFile parentFile;
     if (element instanceof PsiClassOwner) {
       final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-      if (classes.length == 0) return true;
+      if (classes.length == 0 && !PackageUtil.isPackageInfoFile(element)) return true;
       for (PsiClass aClass : classes) {
         if (aClass instanceof PsiSyntheticClass) return true;
       }
@@ -108,10 +109,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return areAllClasses && psiElement instanceof PsiClass;
   }
 
+  @Override
   public PsiElement[] adjustForMove(final Project project, final PsiElement[] sourceElements, final PsiElement targetElement) {
     return MoveClassesOrPackagesImpl.adjustForMove(project,sourceElements, targetElement);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
     final PsiDirectory[] directories = new PsiDirectory[elements.length];
     final String prompt = getPromptToMoveDirectoryLibrariesSafe(elements);
@@ -367,19 +370,23 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        init();
      }
 
+     @Override
      protected JComponent createNorthPanel() {
        return new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
      }
 
+     @Override
      public JComponent getPreferredFocusedComponent() {
        return myRbMovePackage;
      }
 
+     @Override
      protected String getDimensionServiceKey() {
        return "#com.intellij.refactoring.move.MoveHandler.SelectRefactoringDialog";
      }
 
 
+     @Override
      protected JComponent createCenterPanel() {
        JPanel panel = new JPanel(new BorderLayout());
 
@@ -455,6 +462,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
    }
 
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if (isPackageOrDirectory(element)) return false;

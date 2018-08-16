@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiClassConverter extends Converter<PsiClass> implements CustomReferenceConverter<PsiClass> {
 
+  @Override
   public PsiClass fromString(final String s, final ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(s)) return null;
 
@@ -40,15 +41,18 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return DomJavaUtil.findClass(s.trim(), context.getFile(), context.getModule(), scope);
   }
 
+  @Override
   @Nullable
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
     return null;
   }
 
+  @Override
   public String toString(final PsiClass t, final ConvertContext context) {
     return t == null ? null : t.getQualifiedName();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<PsiClass> genericDomValue, PsiElement element, ConvertContext context) {
 

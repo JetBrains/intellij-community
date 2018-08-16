@@ -72,6 +72,11 @@ public final class IconLoader {
     clearCache();
   }
 
+  public static void removePathPatcher(@NotNull IconPathPatcher patcher) {
+    ourPatchers.remove(patcher);
+    clearCache();
+  }
+
   @Deprecated
   @NotNull
   public static Icon getIcon(@NotNull final Image image) {
@@ -490,12 +495,6 @@ public final class IconLoader {
     if (icon instanceof MenuBarIconProvider) {
       return ((MenuBarIconProvider)icon).getMenuBarIcon(dark);
     }
-    if (icon instanceof CachedImageIcon) {
-      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity(), dark);
-      if (img != null) {
-        icon = new ImageIcon(img);
-      }
-    }
     return icon;
   }
 
@@ -507,21 +506,20 @@ public final class IconLoader {
     if (icon instanceof RetrievableIcon) {
       icon = getOrigin((RetrievableIcon)icon);
     }
-    if (icon instanceof CachedImageIcon) {
-      icon = ((CachedImageIcon)icon).copy();
-      ((CachedImageIcon)icon).setDark(dark);
+    if (icon instanceof DarkIconProvider) {
+      return ((DarkIconProvider)icon).getDarkIcon(dark);
     }
     return icon;
   }
 
-  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
+  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
     @NotNull
     private URL myUrl;
     private volatile boolean myDark;
-    private volatile boolean myDarkOverriden;
+    private volatile boolean myDarkOverridden;
     private volatile int numberOfPatchers = ourPatchers.size();
     private final boolean useCacheOnLoad;
     private int myClearCacheCounter = clearCacheCounter;
@@ -545,7 +543,7 @@ public final class IconLoader {
       myClassLoader = icon.myClassLoader;
       myUrl = icon.myUrl;
       myDark = icon.myDark;
-      myDarkOverriden = icon.myDarkOverriden;
+      myDarkOverridden = icon.myDarkOverridden;
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
       useCacheOnLoad = icon.useCacheOnLoad;
@@ -592,12 +590,12 @@ public final class IconLoader {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myClearCacheCounter = clearCacheCounter;
         myRealIcon = null;
-        if (!myDarkOverriden) myDark = USE_DARK_ICONS;
+        if (!myDarkOverridden) myDark = USE_DARK_ICONS;
         setGlobalFilter(IMAGE_FILTER);
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
           numberOfPatchers = ourPatchers.size();
-          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, null);
+          Pair<String, ClassLoader> patchedPath = patchPath(myOriginalPath, myClassLoader);
           String path = myOriginalPath == null ? null : patchedPath.first;
           if (patchedPath.second != null) {
             myClassLoader = patchedPath.second;
@@ -627,7 +625,7 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return (!myDarkOverriden && myDark == USE_DARK_ICONS) &&
+      return (!myDarkOverridden && myDark == USE_DARK_ICONS) &&
              getGlobalFilter() == IMAGE_FILTER &&
              numberOfPatchers == ourPatchers.size() &&
              myClearCacheCounter == clearCacheCounter;
@@ -674,12 +672,28 @@ public final class IconLoader {
     }
 
     private synchronized void setDark(boolean dark) {
-      myDarkOverriden = true;
+      myDarkOverridden = true;
       if (myDark != dark) {
         myRealIcon = null;
         myClearCacheCounter = -1;
         myDark = dark;
       }
+    }
+
+    @Override
+    public Icon getDarkIcon(boolean isDark) {
+      CachedImageIcon newIcon = copy();
+      newIcon.setDark(isDark);
+      return newIcon;
+    }
+
+    @Override
+    public Icon getMenuBarIcon(boolean isDark) {
+      Image img = loadFromUrl(ScaleContext.createIdentity(), isDark);
+      if (img != null) {
+        return new ImageIcon(img);
+      }
+      return this;
     }
 
     @NotNull
@@ -806,8 +820,13 @@ public final class IconLoader {
     }
   }
 
+  // todo: remove and use DarkIconProvider when JBSDK supports scalable icons in menu
   public interface MenuBarIconProvider {
     Icon getMenuBarIcon(boolean isDark);
+  }
+
+  public interface DarkIconProvider {
+    Icon getDarkIcon(boolean isDark);
   }
 
   private static Icon getOrigin(RetrievableIcon icon) {

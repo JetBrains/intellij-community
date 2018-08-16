@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -28,11 +15,13 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +50,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   private JRadioButton myCreateInnerClassRb;
   private JRadioButton myCreateAnonymousClassWrapperRb;
-  private JTextArea mySignatureArea;
+  private MethodSignatureComponent mySignatureArea;
   private JCheckBox myCbMakeStatic;
   private JCheckBox myCbMakeVarargs;
   private JCheckBox myCbMakeVarargsAnonymous;
@@ -224,7 +213,6 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   @Override
   protected JComponent createCenterPanel() {
-    mySignatureArea.setEditable(false);
     myCreateInnerClassRb.setSelected(true);
 
     final ActionListener enableDisableListener = new ActionListener() {
@@ -283,7 +271,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
     final DocumentListener nameListener = new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent e) {
+      public void documentChanged(@NotNull final DocumentEvent e) {
         update();
       }
     };
@@ -428,5 +416,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
 
   public boolean createInnerClass() {
     return myCreateInnerClassRb.isSelected();
+  }
+
+  private void createUIComponents() {
+    mySignatureArea = new MethodSignatureComponent("", myProject, JavaFileType.INSTANCE);
+    mySignatureArea.setPreferredSize(JBUI.size(500, 100));
+    mySignatureArea.setMinimumSize(JBUI.size(500, 100));
   }
 }

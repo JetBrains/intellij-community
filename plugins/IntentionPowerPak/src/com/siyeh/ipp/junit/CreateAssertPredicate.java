@@ -22,6 +22,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class CreateAssertPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiExpressionStatement)) {
       return false;

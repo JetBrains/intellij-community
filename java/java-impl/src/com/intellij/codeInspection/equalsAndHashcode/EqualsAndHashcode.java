@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class EqualsAndHashcode extends EqualsAndHashcodeBase {
 
+  @Override
   protected LocalQuickFix[] buildFixes(boolean isOnTheFly, boolean hasEquals) {
     if (!isOnTheFly) {
       return LocalQuickFix.EMPTY_ARRAY;

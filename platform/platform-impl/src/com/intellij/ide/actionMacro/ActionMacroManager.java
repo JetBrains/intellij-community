@@ -28,9 +28,11 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.AnimatedIcon.Recording;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.PositionTracker;
@@ -49,12 +51,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-@State(
-  name = "ActionMacroManager",
-  storages = @Storage("macros.xml")
-)
+@State(name = "ActionMacroManager", storages = @Storage("macros.xml"))
 public class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actionMacro.ActionMacroManager");
+  private static final Logger LOG = Logger.getInstance(ActionMacroManager.class);
 
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
   private static final String RECORDED = "Recorded: ";
@@ -75,12 +74,12 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
   private String myLastTyping = "";
 
-  public ActionMacroManager(ActionManagerEx actionManagerEx) {
-    myActionManager = actionManagerEx;
-    myActionManager.addAnActionListener(new AnActionListener() {
+  public ActionMacroManager(ActionManagerEx actionManager, @NotNull MessageBus messageBus) {
+    myActionManager = actionManager;
+    messageBus.connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, final AnActionEvent event) {
-        String id = myActionManager.getId(action);
+      public void beforeActionPerformed(@NotNull AnAction action, DataContext dataContext, final AnActionEvent event) {
+        String id = actionManager.getId(action);
         if (id == null) return;
         //noinspection HardCodedStringLiteral
         if ("StartStopMacroRecording".equals(id)) {
@@ -144,12 +143,9 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
 
     private final AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
-                                                         new Icon[]{
-                                                     AllIcons.Ide.Macro.Recording_1,
-                                                     AllIcons.Ide.Macro.Recording_2,
-                                                     AllIcons.Ide.Macro.Recording_3,
-                                                     AllIcons.Ide.Macro.Recording_4},
-                                                         AllIcons.Ide.Macro.Recording_1, 1000);
+                                                         Recording.ICONS.toArray(new Icon[0]),
+                                                         AllIcons.Ide.Macro.Recording_1,
+                                                         Recording.DELAY * Recording.ICONS.size());
     private final StatusBar myStatusBar;
     private final WidgetPresentation myPresentation;
 
@@ -481,12 +477,12 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       IdeEventQueue.getInstance().doWhenReady(() -> getInstance().playMacro(myMacro));
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!getInstance().isPlaying());
     }

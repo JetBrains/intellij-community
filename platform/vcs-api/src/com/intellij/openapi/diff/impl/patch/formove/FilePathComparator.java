@@ -27,6 +27,7 @@ public final class FilePathComparator implements Comparator<VirtualFile> {
     return ourInstance;
   }
 
+  @Override
   public int compare(final VirtualFile o1, final VirtualFile o2) {
     if (Comparing.equal(o1, o2)) return 0;
     return o1.getPath().compareTo(o2.getPath());

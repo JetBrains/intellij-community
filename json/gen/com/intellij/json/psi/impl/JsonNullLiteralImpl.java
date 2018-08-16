@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public class JsonNullLiteralImpl extends JsonLiteralImpl implements JsonNullLiteral {
 
-  public JsonNullLiteralImpl(ASTNode node) {
+  public JsonNullLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 

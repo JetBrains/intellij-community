@@ -56,7 +56,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   }
 
   public GradleProjectImportBuilder(@NotNull ProjectDataManager dataManager) {
-    super(dataManager, new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
+    super(dataManager, () -> new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
   }
 
   @NotNull

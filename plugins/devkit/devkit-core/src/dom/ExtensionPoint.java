@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,11 @@ public interface ExtensionPoint extends DomElement {
     IDEA_MODULE,
     IDEA_APPLICATION
   }
+
+
+  @NotNull
+  @Override
+  XmlTag getXmlTag();
 
   @NotNull
   @Stubbed

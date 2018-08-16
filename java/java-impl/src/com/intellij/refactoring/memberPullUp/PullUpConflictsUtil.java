@@ -354,6 +354,7 @@ public class PullUpConflictsUtil {
       myInterfaceContainmentVerifier = interfaceContainmentVerifier;
     }
 
+    @Override
     protected void visitClassMemberReferenceElement(PsiMember classMember,
                                                     PsiJavaCodeReferenceElement classMemberReference) {
       if (classMember != null

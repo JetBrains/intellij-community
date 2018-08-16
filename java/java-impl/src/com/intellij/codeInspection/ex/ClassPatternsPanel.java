@@ -34,6 +34,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -76,7 +77,7 @@ class ClassPatternsPanel extends JPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return myTable.getSelectedRow() >= 0;
         }
       });
@@ -191,14 +192,17 @@ class ClassPatternsPanel extends JPanel {
       myNames = new String[] {"With Subclasses",  "Class", "Method"};
     }
 
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public int getRowCount() {
       return myModifiedPatterns.size();
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int row, int col) {
       if (row < 0 || row > myModifiedPatterns.size() - 1) return null;
@@ -213,10 +217,12 @@ class ClassPatternsPanel extends JPanel {
       return classPattern.method;
     }
 
+    @Override
     public String getColumnName(int column) {
       return myNames[column];
     }
 
+    @Override
     public Class getColumnClass(int col) {
       if (col == 0) {
         return Boolean.class;
@@ -230,10 +236,12 @@ class ClassPatternsPanel extends JPanel {
       throw new IllegalArgumentException(String.valueOf(col));
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
       return true;
     }
 
+    @Override
     public void setValueAt(Object aValue, int row, int col) {
       EntryPointsManagerBase.ClassPattern classPattern = myModifiedPatterns.get(row);
       if (classPattern == null) return;

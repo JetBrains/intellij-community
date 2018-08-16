@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.parser;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -15,6 +16,7 @@ public class YAMLParserTest extends ParsingTestCase {
     super("", "yml", new YAMLParserDefinition());
   }
 
+  @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/parser/data/";
   }
@@ -248,6 +250,10 @@ public class YAMLParserTest extends ParsingTestCase {
   }
 
   public void testInlineMapWithBlockScalarValue()  {
+    doTest(true);
+  }
+
+  public void testPlainMultilineScalarRuby21788() {
     doTest(true);
   }
 }

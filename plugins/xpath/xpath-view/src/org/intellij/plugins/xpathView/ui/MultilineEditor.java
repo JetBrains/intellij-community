@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -45,6 +46,7 @@ public class MultilineEditor extends JPanel {
 
         String getItemString(int index);
 
+        @Override
         int getSize();
     }
 
@@ -59,6 +61,7 @@ public class MultilineEditor extends JPanel {
         super(new BorderLayout());
         this.myModel = model;
         myEditorTextField = new EditorTextField(document, project, fileType) {
+          @Override
           protected EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
 
@@ -78,12 +81,15 @@ public class MultilineEditor extends JPanel {
         };
         add(myEditorTextField, BorderLayout.CENTER);
         model.addListDataListener(new ListDataListener() {
+            @Override
             public void intervalAdded(ListDataEvent e) {
             }
 
+            @Override
             public void intervalRemoved(ListDataEvent e) {
             }
 
+            @Override
             public void contentsChanged(ListDataEvent e) {
                 final int selectedIndex = myModel.getSelectedIndex();
                 if (selectedIndex != -1) {
@@ -99,28 +105,32 @@ public class MultilineEditor extends JPanel {
     private void addHistoryPagers() {
         final DefaultActionGroup pagerGroup = new DefaultActionGroup(null, false);
         pagerGroup.add(new ItemAction("PreviousOccurence", this) {
-            public void update(AnActionEvent e) {
+            @Override
+            public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() < myModel.getSize() - 1);
                 presentation.setText("Previous history element");
                 presentation.setDescription("Navigate to the previous history element");
             }
 
-            public void actionPerformed(AnActionEvent e) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
                 myModel.setSelectedIndex(myModel.getSelectedIndex() + 1);
                 refocus();
 
             }
         });
         pagerGroup.add(new ItemAction("NextOccurence", this) {
-            public void update(AnActionEvent e) {
+            @Override
+            public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() > 0);
                 presentation.setText("Next history element");
                 presentation.setDescription("Navigate to the next history element");
             }
 
-            public void actionPerformed(AnActionEvent e) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
                 myModel.setSelectedIndex(myModel.getSelectedIndex() - 1);
                 refocus();
             }

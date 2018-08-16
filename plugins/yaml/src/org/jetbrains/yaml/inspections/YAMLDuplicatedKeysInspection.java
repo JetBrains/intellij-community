@@ -41,6 +41,8 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
           if (entry.getValue().size() > 1) {
             entry.getValue().forEach((duplicatedKey) -> {
               assert duplicatedKey.getKey() != null;
+              assert duplicatedKey.getParentMapping() != null : "This key is get from mapping";
+
               holder.registerProblem(duplicatedKey.getKey(),
                                      YAMLBundle.message("YAMLDuplicatedKeysInspection.duplicated.key", entry.getKey()),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveDuplicatedKeyQuickFix(duplicatedKey));
@@ -68,7 +70,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       YAMLKeyValue keyVal = myKeyValueHolder.getElement();
-      if (keyVal == null) {
+      if (keyVal == null || keyVal.getParentMapping() == null) {
         return;
       }
 

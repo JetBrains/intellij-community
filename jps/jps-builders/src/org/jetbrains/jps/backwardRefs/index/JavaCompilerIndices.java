@@ -23,14 +23,14 @@ import java.util.List;
 
 public class JavaCompilerIndices {
   //TODO manage version separately
-  public final static int VERSION = 7;
+  public static final int VERSION = 7;
 
-  public final static IndexId<CompilerRef, Integer> BACK_USAGES = IndexId.create("back.refs");
-  public final static IndexId<CompilerRef, Collection<CompilerRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");
-  public final static IndexId<CompilerRef, Void> BACK_CLASS_DEF = IndexId.create("back.class.def");
-  public final static IndexId<SignatureData, Collection<CompilerRef>> BACK_MEMBER_SIGN = IndexId.create("back.member.sign");
-  public final static IndexId<CompilerRef, Collection<CompilerRef>> BACK_CAST = IndexId.create("back.cast");
-  public final static IndexId<CompilerRef, Void> IMPLICIT_TO_STRING = IndexId.create("implicit.to.string");
+  public static final IndexId<CompilerRef, Integer> BACK_USAGES = IndexId.create("back.refs");
+  public static final IndexId<CompilerRef, Collection<CompilerRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");
+  public static final IndexId<CompilerRef, Void> BACK_CLASS_DEF = IndexId.create("back.class.def");
+  public static final IndexId<SignatureData, Collection<CompilerRef>> BACK_MEMBER_SIGN = IndexId.create("back.member.sign");
+  public static final IndexId<CompilerRef, Collection<CompilerRef>> BACK_CAST = IndexId.create("back.cast");
+  public static final IndexId<CompilerRef, Void> IMPLICIT_TO_STRING = IndexId.create("implicit.to.string");
 
   public static List<IndexExtension<?, ?, CompiledFileData>> getIndices() {
     return Arrays.asList(createBackwardClassDefinitionExtension(),
@@ -114,21 +114,25 @@ public class JavaCompilerIndices {
         return VERSION;
       }
 
+      @Override
       @NotNull
       public IndexId<CompilerRef, Integer> getName() {
         return BACK_USAGES;
       }
 
+      @Override
       @NotNull
       public DataIndexer<CompilerRef, Integer, CompiledFileData> getIndexer() {
         return CompiledFileData::getReferences;
       }
 
+      @Override
       @NotNull
       public KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
+      @Override
       @NotNull
       public DataExternalizer<Integer> getValueExternalizer() {
         return new UnsignedByteExternalizer();
@@ -159,21 +163,25 @@ public class JavaCompilerIndices {
         return VERSION;
       }
 
+      @Override
       @NotNull
       public IndexId<CompilerRef, Collection<CompilerRef>> getName() {
         return BACK_HIERARCHY;
       }
 
+      @Override
       @NotNull
       public DataIndexer<CompilerRef, Collection<CompilerRef>, CompiledFileData> getIndexer() {
         return CompiledFileData::getBackwardHierarchy;
       }
 
+      @Override
       @NotNull
       public KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
+      @Override
       @NotNull
       public DataExternalizer<Collection<CompilerRef>> getValueExternalizer() {
         return createCompilerRefSeqExternalizer();
@@ -188,21 +196,25 @@ public class JavaCompilerIndices {
         return VERSION;
       }
 
+      @Override
       @NotNull
       public IndexId<CompilerRef, Void> getName() {
         return BACK_CLASS_DEF;
       }
 
+      @Override
       @NotNull
       public DataIndexer<CompilerRef, Void, CompiledFileData> getIndexer() {
         return CompiledFileData::getDefinitions;
       }
 
+      @Override
       @NotNull
       public KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
+      @Override
       @NotNull
       public DataExternalizer<Void> getValueExternalizer() {
         return VoidDataExternalizer.INSTANCE;

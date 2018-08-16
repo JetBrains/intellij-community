@@ -39,19 +39,22 @@ public class DefineAttributeQuickFix implements LocalQuickFix {
     myNamespace = namespace;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Define " + myAttrName + " attribute";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Define attribute";
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     XmlTag tag = (XmlTag)descriptor.getPsiElement();
-    XmlAttribute attribute = tag.setAttribute(myAttrName, myNamespace, "");
+    XmlAttribute attribute = tag.setAttribute(myAttrName, myNamespace.equals(tag.getNamespace())? "": myNamespace, "");
     PsiNavigationSupport.getInstance().createNavigatable(project, tag.getContainingFile().getVirtualFile(),
                                                          attribute.getValueElement().getTextRange().getStartOffset() +
                                                          1).navigate(true);

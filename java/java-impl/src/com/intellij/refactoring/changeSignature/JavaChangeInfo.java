@@ -31,10 +31,12 @@ public interface JavaChangeInfo extends ChangeInfo {
 
   boolean isExceptionSetOrOrderChanged();
 
+  @Override
   PsiMethod getMethod();
 
   CanonicalTypes.Type getNewReturnType();
 
+  @Override
   @NotNull
   JavaParameterInfo[] getNewParameters();
 

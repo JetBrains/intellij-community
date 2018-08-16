@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 
 public class JsonArrayImpl extends JsonContainerImpl implements JsonArray {
 
-  public JsonArrayImpl(ASTNode node) {
+  public JsonArrayImpl(@NotNull ASTNode node) {
     super(node);
   }
 

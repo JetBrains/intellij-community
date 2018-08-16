@@ -28,19 +28,23 @@ public class ExtractMethodObjectViewDescriptor implements UsageViewDescriptor {
     myMethod = method;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[]{myMethod};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return "Method to be converted";
   }
 
+  @Override
   public String getCodeReferencesText(final int usagesCount, final int filesCount) {
     return "References to be changed";
   }
 
+  @Override
   public String getCommentReferencesText(final int usagesCount, final int filesCount) {
     return null;
   }

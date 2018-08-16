@@ -3,6 +3,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.*;
@@ -227,10 +228,12 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     }
     catch (Throwable e) {
       // do not lose queued tasks because of this exception
-      try {
-        LOG.error(e);
-      }
-      catch (Throwable ignored) {
+      if (!(e instanceof ControlFlowException)) {
+        try {
+          LOG.error(e);
+        }
+        catch (Throwable ignored) {
+        }
       }
     }
   }

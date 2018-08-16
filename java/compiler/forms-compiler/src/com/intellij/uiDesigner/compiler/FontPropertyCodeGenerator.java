@@ -43,6 +43,7 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Method ourGetStyleMethod = new Method("getStyle", Type.INT_TYPE, new Type[0]);
   private static final Method ourCanDisplay = new Method("canDisplay", Type.BOOLEAN_TYPE, new Type[]{Type.CHAR_TYPE});
 
+  @Override
   public boolean generateCustomSetValue(final LwComponent lwComponent,
                                         final InstrumentationClassFinder.PseudoClass componentClass,
                                         final LwIntrospectedProperty property,
@@ -97,6 +98,7 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
     }
   }
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     throw new IllegalStateException("Unknown font type");
   }

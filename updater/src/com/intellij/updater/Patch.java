@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -20,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
 public class Patch {
@@ -319,7 +306,17 @@ public class Patch {
       }
 
       if (backupDir != null) {
-        forEach(actionsToApply, "Backing up files...", ui, action -> action.backup(toDir, backupDir));
+        File _backupDir = backupDir;
+        forEach(actionsToApply, "Backing up files...", ui, action -> action.backup(toDir, _backupDir));
+      }
+      else {
+        List<PatchAction> specialActions = actionsToApply.stream().filter(PatchAction::mandatoryBackup).collect(Collectors.toList());
+        if (!specialActions.isEmpty()) {
+          backupDir = Utils.getTempFile("partial_backup");
+          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+          File _backupDir = backupDir;
+          forEach(specialActions, "Preparing update...", ui, action -> action.backup(toDir, _backupDir));
+        }
       }
     }
     catch (OperationCancelledException e) {
@@ -332,6 +329,7 @@ public class Patch {
     Set<File> createdOptionalFiles = new HashSet<>();
 
     try {
+      File _backupDir = backupDir;
       forEach(actionsToApply, "Applying patch...", ui, action -> {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
           Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
@@ -341,7 +339,7 @@ public class Patch {
         }
         else {
           appliedActions.add(action);
-          action.apply(patchFile, backupDir, toDir);
+          action.apply(patchFile, _backupDir, toDir);
 
           if (action instanceof CreateAction) {
             File file = action.getFile(toDir);

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
@@ -218,7 +217,13 @@ class TestingTasksImpl extends TestingTasks {
     def testObject = System.getProperty("teamcity.remote-debug.junit.type")
     def junitClass = System.getProperty("teamcity.remote-debug.junit.class")
     if (testObject != "class") {
-      context.messages.error("Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'")
+      def message = "Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'"
+      if (testObject == "method") {
+        context.messages.warning(message)
+        context.messages.warning("Launching all test methods in the class $junitClass")
+      } else {
+        context.messages.error(message)
+      }
     }
     if (junitClass == null) {
       context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
@@ -393,8 +398,8 @@ class TestingTasksImpl extends TestingTasks {
         formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
       }
 
-      //if it is Windows OS, test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
-      if (SystemInfo.isWindows && !isBootstrapSuiteDefault()) {
+      //test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
+      if (!isBootstrapSuiteDefault()) {
         def classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), bootstrapClasspath)
         classpath {
           pathelement(location: classpathJarFile.path)

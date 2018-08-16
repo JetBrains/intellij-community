@@ -57,10 +57,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -72,8 +70,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public static final DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
 
   private static final String STACKTRACE_ATTACHMENT = "stacktrace.txt";
-  private static final String INDUCED_STACKTRACES_ATTACHMENT = "induced.txt";
-  private static final DateFormat TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
   private static final String ACCEPTED_NOTICES_KEY = "exception.accepted.notices";
   private static final String ACCEPTED_NOTICES_SEPARATOR = ":";
   private static List<Developer> ourDevelopersList = Collections.emptyList();
@@ -99,7 +95,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private ComboBox<Developer> myAssigneeCombo;
   private HyperlinkLabel myCredentialsLabel;
 
-  public IdeErrorsDialog(@NotNull MessagePool messagePool, @Nullable Project project, @Nullable LogMessage defaultMessage) {
+  IdeErrorsDialog(@NotNull MessagePool messagePool, @Nullable Project project, @Nullable LogMessage defaultMessage) {
     super(project, true);
     myMessagePool = messagePool;
     myProject = project;
@@ -206,7 +202,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myCommentArea.setMargin(JBUI.insets(2));
     myCommentArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         selectedMessage().setAdditionalInfo(myCommentArea.getText().trim());
       }
     });
@@ -241,7 +237,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myAttachmentArea.setMargin(JBUI.insets(2));
     myAttachmentArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         if (myAttachmentsList.getSelectedIndex() == 0) {
           String detailsText = myAttachmentArea.getText();
           MessageCluster cluster = selectedCluster();
@@ -392,30 +388,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     List<AbstractMessage> rawMessages = myMessagePool.getFatalErrors(true, true);
     Map<Long, MessageCluster> clusters = new LinkedHashMap<>();
     for (AbstractMessage raw : rawMessages) {
-      AbstractMessage message = raw instanceof GroupedLogMessage ? pack((GroupedLogMessage)raw) : raw;
+      AbstractMessage message = raw instanceof GroupedLogMessage ? ((GroupedLogMessage)raw).getProxyMessage() : raw;
       CRC32 digest = new CRC32();
       digest.update(ExceptionUtil.getThrowableText(message.getThrowable()).getBytes(StandardCharsets.UTF_8));
       clusters.computeIfAbsent(digest.getValue(), k -> new MessageCluster(message)).messages.add(message);
     }
     myMessageClusters.clear();
     myMessageClusters.addAll(clusters.values());
-  }
-
-  private static AbstractMessage pack(GroupedLogMessage message) {
-    AbstractMessage mainCause = message.getMessages().get(0);
-
-    List<Attachment> attachments = new ArrayList<>(mainCause.getAllAttachments());
-    StringBuilder stacktraces = new StringBuilder("Following exceptions happened soon after this one, most probably they are induced.");
-    for (AbstractMessage each : message.getMessages()) {
-      if (each != mainCause) {
-        stacktraces.append("\n\n\n").append(TIMESTAMP_FORMAT.format(each.getDate())).append('\n');
-        if (!StringUtil.isEmptyOrSpaces(each.getMessage())) stacktraces.append(each.getMessage()).append('\n');
-        stacktraces.append(each.getThrowableText());
-      }
-    }
-    attachments.add(new Attachment(INDUCED_STACKTRACES_ATTACHMENT, stacktraces.toString()));
-
-    return new RepackedLogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments, message);
   }
 
   private void updateControls() {
@@ -454,7 +433,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     IdeaPluginDescriptor plugin = cluster.plugin;
 
     StringBuilder info = new StringBuilder();
-    String url = null;
 
     if (pluginId != null) {
       info.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId));
@@ -470,6 +448,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     int count = cluster.messages.size();
     info.append(' ').append(DiagnosticBundle.message("error.list.message.info", date, count));
 
+    String url = null;
     if (message.isSubmitted()) {
       SubmittedReportInfo submissionInfo = message.getSubmissionInfo();
       appendSubmissionInformation(submissionInfo, info);
@@ -538,7 +517,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myAttachmentsList.clear();
     myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
     for (Attachment attachment : message.getAllAttachments()) {
-      myAttachmentsList.addItem(attachment.getName(), myInternalMode || attachment.isIncluded());
+      myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
     }
     myAttachmentsList.setSelectedIndex(0);
     myAttachmentsList.setEditable(canReport);
@@ -634,7 +613,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       String disable = DiagnosticBundle.message("error.dialog.disable.plugin.action.disable");
       String cancel = IdeBundle.message("button.cancel");
 
-      boolean doDisable, doRestart;
+      boolean doDisable;
+      boolean doRestart;
       if (canRestart) {
         String restart = DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
         int result = Messages.showYesNoCancelDialog(myProject, message, title, disable, restart, cancel, Messages.getQuestionIcon());
@@ -674,12 +654,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myIndex > 0);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myIndex--;
       updateControls();
     }
@@ -695,12 +675,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myIndex < myMessageClusters.size() - 1);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myIndex++;
       updateControls();
     }
@@ -740,7 +720,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     private boolean myEditable = true;
 
     private void addItem(String item, boolean selected) {
-      super.addItem(item, item + "  ", selected);
+      addItem(item, item + "  ", selected);
     }
 
     public void setEditable(boolean editable) {
@@ -790,7 +770,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public void entryWasRead() { }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return CURRENT_TRACE_KEY.is(dataId) ? selectedMessage().getThrowableText() : null;
   }
 
@@ -798,9 +778,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private static class MessageCluster {
     private final AbstractMessage first;
-    private final @Nullable PluginId pluginId;
-    private final @Nullable IdeaPluginDescriptor plugin;
-    private final @Nullable ErrorReportSubmitter submitter;
+    @Nullable private final PluginId pluginId;
+    @Nullable private final IdeaPluginDescriptor plugin;
+    @Nullable private final ErrorReportSubmitter submitter;
     private String detailsText;
     private final List<AbstractMessage> messages = new ArrayList<>();
 
@@ -823,7 +803,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         return t.getMessage();
       }
 
-      String userMessage = message.getMessage(), stacktrace = message.getThrowableText();
+      String userMessage = message.getMessage();
+      String stacktrace = message.getThrowableText();
       return StringUtil.isEmptyOrSpaces(userMessage) ? stacktrace : userMessage + "\n\n" + stacktrace;
     }
 
@@ -850,22 +831,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private static class RepackedLogMessage extends LogMessage {
-    private final GroupedLogMessage myOriginal;
-
-    private RepackedLogMessage(Throwable throwable, String message, List<Attachment> attachments, GroupedLogMessage original) {
-      super(throwable, message, attachments);
-      myOriginal = original;
-    }
-
-    @Override
-    public void setRead(boolean isRead) {
-      super.setRead(isRead);
-      myOriginal.setRead(isRead);
-    }
-  }
-
-  public static @Nullable Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
+  /**
+   * @return (plugin name, version)
+   */
+  @Nullable
+  public static Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -879,7 +849,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
   }
 
-  public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
+  @Nullable
+  public static PluginId findPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
@@ -963,7 +934,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t) {
+  @Nullable
+  static ErrorReportSubmitter getSubmitter(@NotNull Throwable t) {
     PluginId pluginId = findPluginId(t);
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     return getSubmitter(t, pluginId, plugin);

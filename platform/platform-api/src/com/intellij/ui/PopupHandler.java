@@ -40,6 +40,7 @@ public abstract class PopupHandler extends MouseAdapter {
 
   public abstract void invokePopup(Component comp, int x, int y);
 
+  @Override
   public void mouseClicked(MouseEvent e) {
     if (e.isPopupTrigger()) {
       invokePopup(e.getComponent(), e.getX(), e.getY());
@@ -47,6 +48,7 @@ public abstract class PopupHandler extends MouseAdapter {
     }
   }
 
+  @Override
   public void mousePressed(MouseEvent e) {
     if (e.isPopupTrigger()) {
       invokePopup(e.getComponent(), e.getX(), e.getY());
@@ -54,6 +56,7 @@ public abstract class PopupHandler extends MouseAdapter {
     }
   }
 
+  @Override
   public void mouseReleased(MouseEvent e) {
     if (e.isPopupTrigger()) {
       invokePopup(e.getComponent(), e.getX(), e.getY());
@@ -83,6 +86,7 @@ public abstract class PopupHandler extends MouseAdapter {
                                                   @Nullable PopupMenuListener menuListener) {
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
     PopupHandler popupHandler = new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
         popupMenu.setTargetComponent(component);
@@ -122,6 +126,7 @@ public abstract class PopupHandler extends MouseAdapter {
                                                       @NotNull ShowPopupPredicate condition) {
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
     PopupHandler handler = new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         if (condition.shouldShowPopup(comp, x, y)) {
           ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);

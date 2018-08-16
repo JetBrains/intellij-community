@@ -33,6 +33,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher.requestFocusInNonFocusedWindow;
 import static java.awt.event.KeyEvent.VK_SPACE;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
@@ -97,8 +98,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myMinimumButtonSize = JBDimension.create(size);
   }
 
+  @Override
   public void paintChildren(Graphics g) {}
 
+  @Override
   public int getPopState() {
     if (myAction instanceof Toggleable) {
       Boolean selected = (Boolean)myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
@@ -204,6 +207,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Override
   public void removeNotify() {
     if (myRollover) {
       onMousePresenceChanged(false);
@@ -217,10 +221,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     super.removeNotify();
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     if (myPresentationListener == null) {
-      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
+      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
@@ -228,6 +233,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     updateIcon();
   }
 
+  @Override
   public void setToolTipText(String s) {
     if (!Registry.is("ide.helptooltip.enabled")) {
       String tooltipText = KeymapUtil.createTooltipText(s, myAction);
@@ -235,19 +241,22 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  @Override public Insets getInsets() {
+  @Override
+  public Insets getInsets() {
     ActionToolbarImpl owner = UIUtil.getParentOfType(ActionToolbarImpl.class, this);
     return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
   }
 
-  @Override public void updateUI() {
+  @Override
+  public void updateUI() {
     if (myLook != null) {
       myLook.updateUI();
     }
     updateToolTipText();
   }
 
-  @Override public Dimension getPreferredSize() {
+  @Override
+  public Dimension getPreferredSize() {
     if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     Icon icon = getIcon();
     if (icon.getIconWidth() < myMinimumButtonSize.width &&
@@ -271,6 +280,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myInsets = insets != null ? JBUI.insets(insets) : JBUI.emptyInsets();
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
@@ -326,14 +336,22 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return HelpTooltip.Alignment.BOTTOM;
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
 
     paintButtonLook(g);
+    paintDownArrowIfGroup(g);
+  }
 
-    if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(6));
-    }
+  private void paintDownArrowIfGroup(Graphics g) {
+    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return;
+    Container parent = getParent();
+    boolean horizontal = !(parent instanceof ActionToolbarImpl) ||
+                         ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
+    int x = horizontal ? JBUI.scale(6) : JBUI.scale(5);
+    int y = horizontal ? JBUI.scale(5) : JBUI.scale(6);
+    AllIcons.General.Dropdown.paintIcon(this, g, x, y);
   }
 
   protected void paintButtonLook(Graphics g) {
@@ -359,7 +377,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     repaint();
   }
 
+  @Override
   protected void processMouseEvent(MouseEvent e) {
+    requestFocusInNonFocusedWindow(e);
     super.processMouseEvent(e);
     if (e.isConsumed()) return;
     boolean skipPress = checkSkipPressForEvent(e);
@@ -416,13 +436,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Override
   public AnAction getAction() {
     return myAction;
   }
 
-  protected void presentationPropertyChanded(PropertyChangeEvent e) {
+  protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
     String propertyName = e.getPropertyName();
-    if (Presentation.PROP_TEXT.equals(propertyName)) {
+    if (Presentation.PROP_TEXT.equals(propertyName) || Presentation.PROP_DESCRIPTION.equals(propertyName)) {
       updateToolTipText();
     }
     else if (Presentation.PROP_ENABLED.equals(propertyName) || Presentation.PROP_ICON.equals(propertyName)) {

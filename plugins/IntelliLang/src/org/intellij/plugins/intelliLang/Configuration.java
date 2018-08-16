@@ -276,9 +276,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
           while (enumeration.hasMoreElements()) {
             URL url = enumeration.nextElement();
             if (!visited.add(url.getFile())) continue; // for DEBUG mode
-            InputStream stream = null;
-            try {
-              stream = url.openStream();
+            try (InputStream stream = url.openStream()) {
               cfgList.add(load(stream));
             }
             catch (ProcessCanceledException e) {
@@ -286,11 +284,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
             }
             catch (Exception e) {
               LOG.warn(e);
-            }
-            finally {
-              if (stream != null) {
-                stream.close();
-              }
             }
           }
         }
@@ -510,8 +503,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
                                         List<? extends BaseInjection> newInjections,
                                         List<? extends BaseInjection> originalInjections,
                                         List<? extends PsiElement> psiElementsToRemove) {
-    replaceInjectionsWithUndo(project, hostFile, newInjections, originalInjections, psiElementsToRemove,
-                              (add, remove) -> {
+    replaceInjectionsWithUndo(project, hostFile, newInjections, originalInjections, true, psiElementsToRemove, (add, remove) -> {
                                 replaceInjectionsWithUndoInner(add, remove);
                                 if (ContainerUtil.find(add, LANGUAGE_INJECTION_CONDITION) != null ||
                                     ContainerUtil.find(remove, LANGUAGE_INJECTION_CONDITION) != null) {
@@ -526,7 +518,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   /**
-   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, Object, Object, List, PairProcessor)},
+   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, Object, Object, boolean, List, PairProcessor)},
    * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
    * especially when {@code psiElementsToRemove} is null (IDEA-109366)
    * To be removed in IDEA 2019.2
@@ -535,32 +527,31 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
                                                    final List<? extends PsiElement> psiElementsToRemove,
                                                    final PairProcessor<T, T> actualProcessor) {
-    replaceInjectionsWithUndo(project, null, add, remove, psiElementsToRemove, actualProcessor);
+    replaceInjectionsWithUndo(project, null, add, remove, true, psiElementsToRemove, actualProcessor);
   }
 
   /**
    * @since 2018.3
    */
-  public static <T> void replaceInjectionsWithUndo(final Project project, @Nullable PsiFile hostFile, final T add, final T remove,
+  public static <T> void replaceInjectionsWithUndo(final Project project,
+                                                   @Nullable PsiFile hostFile,
+                                                   final T add,
+                                                   final T remove,
+                                                   boolean global,
                                                    final List<? extends PsiElement> psiElementsToRemove,
                                                    final PairProcessor<T, T> actualProcessor) {
 
     PsiFile[] psiFiles = StreamEx.ofNullable(hostFile)
                                  .append(psiElementsToRemove
                                            .stream()
-                                           .filter(e -> !(e instanceof PsiCompiledElement))
                                            .map(e -> e.getContainingFile()))
+                                 .filter(e -> !(e instanceof PsiCompiledElement))
                                  .toArray(PsiFile.class);
 
     DocumentReference[] documentReferences = ContainerUtil
       .map2Array(psiFiles, DocumentReference.class, file -> DocumentReferenceManager.getInstance().create(file.getVirtualFile()));
 
-    if (documentReferences.length == 0) {
-      LOG.error("documentReferences array is empty, undo-redo for language injection will not be registered for any document/file," +
-                " please pass a proper `hostFile`, current hostFile = '" + hostFile + "'"); //refer IDEA-109366
-    }
-
-    final UndoableAction action = new GlobalUndoableAction(documentReferences) {
+    final UndoableAction action = new BasicUndoableAction(documentReferences) {
       @Override
       public void undo() {
         actualProcessor.process(remove, add);
@@ -569,6 +560,11 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       @Override
       public void redo() {
         actualProcessor.process(add, remove);
+      }
+
+      @Override
+      public boolean isGlobal() {
+        return global;
       }
     };
     WriteCommandAction.writeCommandAction(project, psiFiles)

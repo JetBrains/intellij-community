@@ -38,7 +38,7 @@ public abstract class ProjectWizardStepFactory {
 
   public abstract ModuleWizardStep createSourcePathsStep(WizardContext context, SourcePathsBuilder builder, Icon icon, @NonNls String helpId);
 
-  public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
+  public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisible, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext);
 

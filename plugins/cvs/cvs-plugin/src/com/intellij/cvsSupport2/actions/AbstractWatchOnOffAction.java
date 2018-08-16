@@ -24,8 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.watch.WatchMode;
 
 public abstract class AbstractWatchOnOffAction extends AbstractActionFromEditGroup {
+  @Override
   protected abstract String getTitle(VcsContext context);
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     WatchOperation watchOperation = new WatchOperation(getMode());
     VirtualFile[] files = context.getSelectedFiles();

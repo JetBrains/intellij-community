@@ -178,11 +178,6 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
               }
 
               @Override
-              public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-                return 0;
-              }
-
-              @Override
               public boolean isSearchInModuleContent(@NotNull Module aModule) {
                 return true;
               }
@@ -231,11 +226,6 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
           }
 
           @Override
-          public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-            return 0;
-          }
-
-          @Override
           public boolean isSearchInModuleContent(@NotNull final Module aModule) {
             return true;
           }
@@ -253,7 +243,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return ContainerUtil.newArrayList(result);
   }
 
-  private static void addHierarchyScope(@NotNull Project project, Collection<SearchScope> result) {
+  private static void addHierarchyScope(@NotNull Project project, Collection<? super SearchScope> result) {
     final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY);
     if (toolWindow == null) {
       return;
@@ -287,7 +277,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return null;
   }
 
-  protected static Set<VirtualFile> collectFiles(Set<Usage> usages, boolean findFirst) {
+  @NotNull
+  protected static Set<VirtualFile> collectFiles(Set<? extends Usage> usages, boolean findFirst) {
     final Set<VirtualFile> files = new HashSet<>();
     for (Usage usage : usages) {
       if (usage instanceof PsiElementUsage) {

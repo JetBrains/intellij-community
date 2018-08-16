@@ -93,7 +93,7 @@ class ThisAsVariable {
       } else {
         Runnable r = new Runnable() {
           public void run() {
-            System.out.println(s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+            System.out.println(s.<warning descr="Method invocation 'trim' will produce 'java.lang.NullPointerException'">trim</warning>());
           }
         };
         r.run();

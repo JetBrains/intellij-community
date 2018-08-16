@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
@@ -86,7 +86,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
     new ConcurrentHashMap<>();
 
-  private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.<PyThreadInfo>newArrayList());
+  private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.newArrayList());
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newConcurrentMap();
   private final Object myFrameCacheObject = new Object();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
@@ -560,6 +560,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
   public void suspendAllOtherThreads(PyThreadInfo thread) {
     myDebugger.suspendOtherThreads(thread);
   }
@@ -726,6 +727,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return applyNewValue(myStackFrameCache.get(frame.getThreadFrameId()), frame.getThreadFrameId());
   }
 
+  @Override
   public void loadAsyncVariablesValues(@NotNull final List<PyAsyncValue<String>> pyAsyncValues) {
     PyDebugValueExecutionService.getInstance(getProject()).submitTask(this, () -> {
       try {
@@ -1016,7 +1018,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @NotNull
   public List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
     if (isConnected()) {
-      dropFrameCaches();
       final PyStackFrame frame = currentFrame();
       return myDebugger.getCompletions(frame.getThreadId(), frame.getFrameId(), prefix);
     }
@@ -1026,7 +1027,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @NotNull
   public String getDescription(String prefix) throws Exception {
     if (isConnected()) {
-      dropFrameCaches();
       final PyStackFrame frame = currentFrame();
       return myDebugger.getDescription(frame.getThreadId(), frame.getFrameId(), prefix);
     }

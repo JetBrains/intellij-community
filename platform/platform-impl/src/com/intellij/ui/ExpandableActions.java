@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import java.util.function.Consumer;
@@ -29,7 +30,7 @@ public abstract class ExpandableActions extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     Expandable expandable = getExpandable(event);
     if (expandable != null) consumer.accept(expandable);
   }
@@ -40,7 +41,7 @@ public abstract class ExpandableActions extends DumbAwareAction {
     }
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       Expandable expandable = getExpandable(event);
       event.getPresentation().setEnabled(expandable != null && !expandable.isExpanded());
     }
@@ -52,7 +53,7 @@ public abstract class ExpandableActions extends DumbAwareAction {
     }
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       Expandable expandable = getExpandable(event);
       event.getPresentation().setEnabled(expandable != null && expandable.isExpanded());
     }

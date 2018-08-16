@@ -44,6 +44,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -238,7 +239,7 @@ public class DiffUtil {
   public static boolean canNavigateToFile(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || project.isDefault()) return false;
     if (file == null || !file.isValid()) return false;
-    if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
+    if (OutsidersPsiFileSupport.isOutsiderFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
   }
@@ -808,6 +809,15 @@ public class DiffUtil {
   // Document modification
   //
 
+  public static boolean isSomeRangeSelected(@NotNull Editor editor, @NotNull Condition<? super BitSet> condition) {
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    if (carets.size() != 1) return true;
+    Caret caret = carets.get(0);
+    if (caret.hasSelection()) return true;
+
+    return condition.value(getSelectedLines(editor));
+  }
+
   @NotNull
   public static BitSet getSelectedLines(@NotNull Editor editor) {
     Document document = editor.getDocument();
@@ -840,13 +850,21 @@ public class DiffUtil {
       lines.set(line1, line2 + 1);
       if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
     }
-    else if (expectedCaretOffset == -1) {
-      lines.set(caret.getLogicalPosition().line);
-      if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
-    }
     else {
-      lines.set(document.getLineNumber(expectedCaretOffset));
-      if (expectedCaretOffset == document.getTextLength()) lines.set(totalLines);
+      int offset;
+      VisualPosition visualPosition;
+      if (expectedCaretOffset == -1) {
+        offset = caret.getOffset();
+        visualPosition = caret.getVisualPosition();
+      }
+      else {
+        offset = expectedCaretOffset;
+        visualPosition = editor.offsetToVisualPosition(expectedCaretOffset);
+      }
+
+      Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
+      lines.set(pair.first.line, pair.second.line);
+      if (offset == document.getTextLength()) lines.set(totalLines);
     }
   }
 
@@ -1184,6 +1202,7 @@ public class DiffUtil {
   @NotNull
   public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
                                                @NotNull Equality<ThreeSide> equality,
+                                               @Nullable Equality<ThreeSide> trueEquality,
                                                @NotNull BooleanGetter conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
@@ -1214,7 +1233,14 @@ public class DiffUtil {
       else { // -==, ==-, ===
         boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
         boolean unchangedRight = equality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
-        assert !unchangedLeft || !unchangedRight;
+
+        if (unchangedLeft && unchangedRight) {
+          assert trueEquality != null;
+          boolean trueUnchangedLeft = trueEquality.equals(ThreeSide.BASE, ThreeSide.LEFT);
+          boolean trueUnchangedRight = trueEquality.equals(ThreeSide.BASE, ThreeSide.RIGHT);
+          assert !trueUnchangedLeft || !trueUnchangedRight;
+          return new MergeConflictType(TextDiffType.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
+        }
 
         if (unchangedLeft) return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
         if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
@@ -1232,12 +1258,24 @@ public class DiffUtil {
   }
 
   @NotNull
+  public static MergeConflictType getLineThreeWayDiffType(@NotNull MergeLineFragment fragment,
+                                                          @NotNull List<? extends CharSequence> sequences,
+                                                          @NotNull List<LineOffsets> lineOffsets,
+                                                          @NotNull ComparisonPolicy policy) {
+    return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
+                        null,
+                        () -> canResolveLineConflict(fragment, sequences, lineOffsets));
+  }
+
+  @NotNull
   public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
                                                    @NotNull List<? extends CharSequence> sequences,
                                                    @NotNull List<LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT, side1, side2),
                         () -> canResolveLineConflict(fragment, sequences, lineOffsets));
   }
 
@@ -1290,6 +1328,7 @@ public class DiffUtil {
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2),
+                        null,
                         BooleanGetter.FALSE);
   }
 

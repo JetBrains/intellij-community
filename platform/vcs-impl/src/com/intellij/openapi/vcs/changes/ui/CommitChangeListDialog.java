@@ -397,8 +397,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                          public void on(Integer integer) {
                                                            if (integer == 0) return;
                                                            myDiffDetails.refresh(false);
-                                                           mySplitter.skipNextLayouting();
-                                                           myDetailsSplitter.getComponent().skipNextLayouting();
+                                                           mySplitter.skipNextLayout();
+                                                           myDetailsSplitter.getComponent().skipNextLayout();
                                                            Dimension dialogSize = getSize();
                                                            setSize(dialogSize.width, dialogSize.height + integer);
                                                            repaint();
@@ -408,8 +408,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                          public void off(Integer integer) {
                                                            if (integer == 0) return;
                                                            myDiffDetails.clear(); // TODO: we may want to keep it in memory
-                                                           mySplitter.skipNextLayouting();
-                                                           myDetailsSplitter.getComponent().skipNextLayouting();
+                                                           mySplitter.skipNextLayout();
+                                                           myDetailsSplitter.getComponent().skipNextLayout();
                                                            Dimension dialogSize = getSize();
                                                            setSize(dialogSize.width, dialogSize.height - integer);
                                                            repaint();
@@ -1106,7 +1106,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (Refreshable.PANEL_KEY.is(dataId)) {
       return this;
     }

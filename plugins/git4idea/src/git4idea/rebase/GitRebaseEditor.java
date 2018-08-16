@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.icons.AllIcons;
@@ -145,6 +131,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     setOKActionEnabled(true);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return ToolbarDecorator.createDecorator(myCommitsTable)
       .disableAddAction()
@@ -177,7 +164,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyProvider;
     }
@@ -215,14 +202,17 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     }
 
+    @Override
     public int getRowCount() {
       return myEntries.size();
     }
 
+    @Override
     public int getColumnCount() {
       return SUBJECT_COLUMN + 1;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       GitRebaseEntry e = myEntries.get(rowIndex);
       switch (columnIndex) {
@@ -390,7 +380,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int row = myCommitsTable.getSelectedRow();
       assert row >= 0 && row < myTableModel.getRowCount();
       GitRebaseEntry entry = myTableModel.myEntries.get(row);
@@ -414,7 +404,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int[] selectedRows = myCommitsTable.getSelectedRows();
       for (int i : selectedRows) {
         myTableModel.setValueAt(myAction, i, MyTableModel.ACTION_COLUMN);

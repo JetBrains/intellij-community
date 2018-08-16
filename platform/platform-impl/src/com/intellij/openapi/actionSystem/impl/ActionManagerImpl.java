@@ -43,6 +43,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -54,12 +55,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @NonNls public static final String ACTION_ELEMENT_NAME = "action";
@@ -124,12 +125,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
+  private final AnActionListener messageBusPublisher;
 
-  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager) {
+  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
     myDataManager = dataManager;
 
     registerPluginActions();
+    messageBusPublisher = messageBus.syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
@@ -626,6 +629,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
+    boolean customClass = false;
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
       if ("true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))) {
@@ -655,6 +659,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
             return null;
           }
         }
+        customClass = true;
         group = (ActionGroup)obj;
       }
       // read ID and register loaded group
@@ -694,6 +699,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
+      if (id != null && customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+        myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+      }
+
       // process all group's children. There are other groups, actions, references and links
       for (Element child : element.getChildren()) {
         String name = child.getName();
@@ -1159,17 +1168,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void addAnActionListener(final AnActionListener listener, final Disposable parentDisposable) {
-    addAnActionListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeAnActionListener(listener);
-      }
-    });
-  }
-
-  @Override
   public void removeAnActionListener(AnActionListener listener) {
     myActionListeners.remove(listener);
   }
@@ -1189,6 +1187,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
+    messageBusPublisher.beforeActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1205,6 +1204,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       catch(AbstractMethodError ignored) { }
     }
+    messageBusPublisher.afterActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1232,6 +1232,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeEditorTyping(c, dataContext);
     }
+    messageBusPublisher.beforeEditorTyping(c, dataContext);
   }
 
   @Override
@@ -1416,6 +1417,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     private void runListenerAction(final TimerListener listener) {
       ModalityState modalityState = listener.getModalityState();
       if (modalityState == null) return;
+      LOG.debug("notify ", listener);
       if (!ModalityState.current().dominates(modalityState)) {
         try {
           listener.run();

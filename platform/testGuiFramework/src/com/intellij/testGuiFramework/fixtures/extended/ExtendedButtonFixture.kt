@@ -15,21 +15,24 @@
  */
 package com.intellij.testGuiFramework.fixtures.extended
 
+import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toSec
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import org.fest.swing.core.Robot
 import org.fest.swing.fixture.JButtonFixture
+import org.fest.swing.timing.Timeout
 import javax.swing.JButton
 
 class ExtendedButtonFixture(robot: Robot, button: JButton) : JButtonFixture(robot, button) {
 
-  fun waitEnabled(timeoutInSeconds: Int = 30): ExtendedButtonFixture {
-    waitUntil("Waiting $timeoutInSeconds sec until button with text ${target().text} will be enabled",
-              timeoutInSeconds = timeoutInSeconds) { isEnabled }
+  fun waitEnabled(timeout: Timeout = Timeouts.seconds30): ExtendedButtonFixture {
+    waitUntil("Waiting ${timeout.toSec()} sec until button with text ${target().text} will be enabled",
+              timeout = timeout) { isEnabled }
     return this
   }
 
-  fun clickWhenEnabled(timeoutInSeconds: Int = 30) {
-    waitEnabled(timeoutInSeconds)
+  fun clickWhenEnabled(timeout: Timeout = Timeouts.seconds30) {
+    waitEnabled(timeout)
     super.click()
   }
 

@@ -860,7 +860,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
               group.addSeparator();
               group.add(new AnAction("Propagate Value Across of Resource Bundle") {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   final String valueToPropagate = editor.getDocument().getText();
                   final String currentSelectedProperty = getSelectedPropertyName();
                   if (currentSelectedProperty == null) {
@@ -902,7 +902,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     @Override
     @Nullable
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       return ResourceBundleEditor.this.getData(dataId);
     }
   }

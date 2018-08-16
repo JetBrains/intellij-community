@@ -54,7 +54,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
         g.fillRect(0, 0, component.getWidth(), component.getHeight());
       }
 
-      if (component.getBorder() instanceof DarculaTextBorder) {
+      if (component.getBorder() instanceof DarculaTextBorder && !isTableCellEditor(component)) {
         paintDarculaBackground(g, component);
       } else if (component.isOpaque()) {
         super.paintBackground(g);
@@ -88,7 +88,8 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Insets getDefaultMargins() {
-    return isCompact(getComponent()) ? JBUI.insets(0, 5) : JBUI.insets(2, 5);
+    return isCompact(getComponent()) ? JBUI.insets(0, 5) :
+           isTableCellEditor(getComponent()) ? JBUI.insets(0, 3) : JBUI.insets(2, 5);
   }
 
   protected float bw() {

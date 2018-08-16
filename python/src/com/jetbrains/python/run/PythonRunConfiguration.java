@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
@@ -59,6 +57,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     return new PythonRunConfigurationEditor(this);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return new PythonScriptCommandLineState(this, env);
   }
@@ -81,6 +80,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     }
   }
 
+  @Override
   public String suggestedName() {
     final String scriptName = getScriptName();
     if (scriptName == null) return null;
@@ -91,26 +91,32 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     return name;
   }
 
+  @Override
   public String getScriptName() {
     return myScriptName;
   }
 
+  @Override
   public void setScriptName(String scriptName) {
     myScriptName = scriptName;
   }
 
+  @Override
   public String getScriptParameters() {
     return myScriptParameters;
   }
 
+  @Override
   public void setScriptParameters(String scriptParameters) {
     myScriptParameters = scriptParameters;
   }
 
+  @Override
   public boolean showCommandLineAfterwards() {
     return myShowCommandLineAfterwards;
   }
 
+  @Override
   public void setShowCommandLineAfterwards(boolean showCommandLineAfterwards) {
     myShowCommandLineAfterwards = showCommandLineAfterwards;
   }
@@ -125,6 +131,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myEmulateTerminal = emulateTerminal;
   }
 
+  @Override
   public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
@@ -136,6 +143,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myInputFile  = JDOMExternalizerUtil.readField(element, INPUT_FILE, "");
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
@@ -147,6 +155,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, INPUT_FILE, myInputFile);
   }
 
+  @Override
   public AbstractPythonRunConfigurationParams getBaseParams() {
     return this;
   }

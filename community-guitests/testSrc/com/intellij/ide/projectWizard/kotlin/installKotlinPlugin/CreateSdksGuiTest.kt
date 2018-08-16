@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.kotlin.installKotlinPlugin
 
 import com.intellij.ide.projectWizard.kotlin.model.KotlinGuiTestCase
 import com.intellij.ide.projectWizard.kotlin.model.KotlinTestProperties
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.logTestStep
@@ -17,13 +18,13 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
     logTestStep("Create a JDK on the path `${KotlinTestProperties.jdk_path}`")
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Project Defaults")
-      popupClick("Project Structure")
+      popupMenu("Project Defaults").clickSearchedItem()
+      popupMenu("Project Structure").clickSearchedItem()
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")
         actionButton("Add New SDK").click()
-        popupClick("JDK")
+        popupMenu("JDK").clickSearchedItem()
         logUIStep("Open `Select Home Directory for JDK` dialog")
         dialog("Select Home Directory for JDK") {
           actionButton("Refresh").click()
@@ -43,22 +44,22 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
     logTestStep("Create a Kotlin SDK")
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Project Defaults")
-      popupClick("Project Structure")
+      popupMenu("Project Defaults").clickSearchedItem()
+      popupMenu("Project Structure").clickSearchedItem()
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")
         val kotlinSdk = "Kotlin SDK"
         try{
-          jTree(kotlinSdk, timeout = 1L)
+          jTree(kotlinSdk, timeout = Timeouts.noTimeout)
           logInfo("$kotlinSdk exists")
         }
         catch (e: ComponentLookupException){
           logUIStep("Going to create $kotlinSdk")
           actionButton("Add New SDK").click()
-          popupClick(kotlinSdk)
+          popupMenu(kotlinSdk).clickSearchedItem()
           logUIStep("Going to check whether $kotlinSdk created")
-          jTree(kotlinSdk, timeout = 1L)
+          jTree(kotlinSdk, timeout = Timeouts.seconds05)
         }
         finally {
           logUIStep("Close `$dialogName` dialog with OK")

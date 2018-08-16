@@ -40,7 +40,7 @@ public abstract class FileIndexBase implements FileIndex {
       !isScopeDisposed() && isInContent(file));
   };
 
-  public FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
+  FileIndexBase(@NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
     myDirectoryIndex = directoryIndex;
     myFileTypeRegistry = fileTypeManager;
   }

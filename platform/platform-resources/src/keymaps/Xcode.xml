@@ -477,6 +477,12 @@
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+  </action>
   <action id="Back">
     <keyboard-shortcut first-keystroke="meta control LEFT"/>
     <mouse-shortcut keystroke="button4"/>

@@ -167,7 +167,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   private static class LightJavaModuleReferenceElement extends LightElement implements PsiJavaModuleReferenceElement {
     private final String myText;
 
-    public LightJavaModuleReferenceElement(@NotNull PsiManager manager, @NotNull String text) {
+    private LightJavaModuleReferenceElement(@NotNull PsiManager manager, @NotNull String text) {
       super(manager, JavaLanguage.INSTANCE);
       myText = text;
     }
@@ -193,7 +193,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   private static class LightPackageAccessibilityStatement extends LightElement implements PsiPackageAccessibilityStatement {
     private final String myPackageName;
 
-    public LightPackageAccessibilityStatement(@NotNull PsiManager manager, @NotNull String packageName) {
+    private LightPackageAccessibilityStatement(@NotNull PsiManager manager, @NotNull String packageName) {
       super(manager, JavaLanguage.INSTANCE);
       myPackageName = packageName;
     }

@@ -651,15 +651,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();
-        try {
-          final JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar");
-          try {
-            final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
-            myBuildDate.setTime(new Date(jarEntry.getTime()));
-          }
-          finally {
-            bootstrapJar.close();
-          }
+        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar")) {
+          final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
+          myBuildDate.setTime(new Date(jarEntry.getTime()));
         }
         catch (Exception ignore) { }
       }

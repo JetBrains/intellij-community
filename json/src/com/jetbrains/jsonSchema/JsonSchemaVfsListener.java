@@ -18,13 +18,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
@@ -48,6 +51,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     super(new VirtualFileContentsChangedAdapter() {
       private final MyUpdater myUpdater = updater;
 
+      @Override
       protected void onFileChange(@NotNull final VirtualFile schemaFile) {
         myUpdater.onFileChange(schemaFile);
       }
@@ -65,6 +69,8 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     @NotNull private final JsonSchemaService myService;
     private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
     private final Runnable myRunnable;
+    private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+      "JsonVfsUpdaterExecutor");
 
     protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
       myProject = project;
@@ -75,8 +81,9 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         myDirtySchemas.removeAll(scope);
 
-        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file) && myService.isSchemaFile(file));
+        Collection<VirtualFile> finalScope = ContainerUtil.filter(scope, file -> myService.isApplicableToFile(file) && ((JsonSchemaServiceImpl)myService).isMappedSchema(file));
         if (finalScope.isEmpty()) return;
+        if (myProject.isDisposed()) return;
         myProject.getMessageBus().syncPublisher(JSON_SCHEMA_CHANGED).run();
 
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
@@ -85,17 +92,17 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         Arrays.stream(editors).filter(editor -> editor instanceof EditorEx)
               .map(editor -> ((EditorEx)editor).getVirtualFile())
               .filter(file -> file != null && file.isValid())
-              .forEach(file -> ReadAction.run(() -> {
-                final Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
+              .forEach(file -> {
+                final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
                 if (schemaFiles.stream().anyMatch(finalScope::contains)) {
-                  Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart);
+                  ReadAction.nonBlocking(() -> Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart)).submit(myTaskExecutor);
                 }
-              }));
+              });
       };
     }
 
     protected void onFileChange(@NotNull final VirtualFile schemaFile) {
-      if (JsonFileType.INSTANCE.equals(schemaFile.getFileType())) {
+      if (JsonFileType.DEFAULT_EXTENSION.equals(schemaFile.getExtension())) {
         myDirtySchemas.add(schemaFile);
         myUpdater.queue(myRunnable);
       }

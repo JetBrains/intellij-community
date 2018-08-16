@@ -312,6 +312,7 @@ jaxb
 jaxen
 jetbrains
 jibx
+jira
 jndi
 jnilib
 jooq
@@ -326,6 +327,7 @@ json
 jsonb
 junit
 keepduplicates
+kerberos
 keychain
 keychains
 keyframe
@@ -561,6 +563,7 @@ processlist
 profileable
 profiler
 progressbar
+projectreactor
 proto
 proven
 proxool
@@ -695,6 +698,7 @@ sourcecode
 sourceforge
 spellchecker
 spellchecking
+sql
 sqlcode
 sqlerror
 sqlexception
@@ -802,6 +806,9 @@ undoable
 undofile
 unescaped
 unfoldr
+ungroup
+ungrouped
+ungrouping
 unhandled
 uninstall
 uniques

@@ -155,6 +155,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
   }
 
+  @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
@@ -330,6 +331,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return null;
   }
 
+  @Override
   public Icon getNodeIcon() {
     return getModuleType().getNodeIcon(false);
   }

@@ -28,6 +28,7 @@ class LiteralEvaluator implements Evaluator {
     myExpectedType = expectedType;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     if (myValue == null) {
       return null;

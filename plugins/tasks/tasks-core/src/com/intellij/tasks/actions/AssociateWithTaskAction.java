@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.tasks.TaskManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -33,7 +34,7 @@ import com.intellij.tasks.TaskManager;
 public class AssociateWithTaskAction extends ToggleAction implements DumbAware {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean isChangelist = e.getData(VcsDataKeys.CHANGE_LISTS) == null;
     e.getPresentation().setVisible(isChangelist);
     if (isChangelist) {

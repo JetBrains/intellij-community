@@ -40,7 +40,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.sun.jdi.*;
@@ -80,11 +79,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return myIsStatic;
   }
 
+  @Override
   @NotNull
   public Key<MethodBreakpoint> getCategory() {
     return CATEGORY;
   }
 
+  @Override
   public boolean isValid() {
     return super.isValid() && getMethodName() != null;
   }
@@ -159,7 +160,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
     };
 
-    XDebuggerManager.getInstance(debugProcess.getProject()).getBreakpointManager().addBreakpointListener(listener, indicator);
+    debugProcess.getProject().getMessageBus().connect(indicator).subscribe(XBreakpointListener.TOPIC, listener);
     ProgressManager.getInstance().executeProcessUnderProgress(
       () -> processPreparedSubTypes(baseType,
                                     (subType, classesByName) ->
@@ -265,6 +266,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
+  @Override
   protected void createRequestForPreparedClass(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
     if (isEmulated()) {
       createRequestForPreparedClassEmulated(this, debugProcess, classType, true);
@@ -326,6 +328,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
+  @Override
   public String getEventMessage(@NotNull LocatableEvent event) {
     return getEventMessage(event, getFileName());
   }
@@ -357,10 +360,12 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     );
   }
 
+  @Override
   public PsiElement getEvaluationElement() {
     return getPsiClass();
   }
 
+  @Override
   protected Icon getDisabledIcon(boolean isMuted) {
     if (DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this) != null && isMuted) {
       return AllIcons.Debugger.Db_muted_dep_method_breakpoint;
@@ -373,12 +378,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return isSuspend() ? AllIcons.Debugger.Db_verified_method_breakpoint : AllIcons.Debugger.Db_verified_no_suspend_method_breakpoint;
   }
 
+  @Override
   @NotNull
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
     return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint,
                            AllIcons.General.WarningDecorator);
   }
 
+  @Override
   public String getDisplayName() {
     final StringBuilder buffer = new StringBuilder();
     if(isValid()) {
@@ -400,6 +407,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return buffer.toString();
   }
 
+  @Override
   public boolean evaluateCondition(@NotNull EvaluationContextImpl context, @NotNull LocatableEvent event) throws EvaluateException {
     if (!matchesEvent(event, context.getDebugProcess())) {
       return false;
@@ -495,10 +503,12 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return getProperties().EMULATED;
   }
 
+  @Override
   public boolean isWatchEntry() {
     return getProperties().WATCH_ENTRY;
   }
 
+  @Override
   public boolean isWatchExit() {
     return getProperties().WATCH_EXIT;
   }

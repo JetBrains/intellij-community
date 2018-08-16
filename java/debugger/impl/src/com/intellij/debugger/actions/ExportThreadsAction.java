@@ -16,11 +16,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class ExportThreadsAction extends AnAction implements AnAction.TransparentUpdate {
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -32,6 +34,7 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
       final DebugProcessImpl process = context.getDebugProcess();
       if (process != null) {
         process.getManagerThread().invoke(new DebuggerCommandImpl() {
+          @Override
           protected void action() {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
             ApplicationManager.getApplication().invokeLater(() -> ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.NON_MODAL);
@@ -41,7 +44,8 @@ public class ExportThreadsAction extends AnAction implements AnAction.Transparen
     }
   }
 
-  public void update(AnActionEvent e){
+  @Override
+  public void update(@NotNull AnActionEvent e){
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {

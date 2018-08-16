@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
@@ -153,7 +154,7 @@ public class JavaSharedImplUtil {
       element = firstBracket;
       while (true) {
         ASTNode next = element.getTreeNext();
-        variableElement.removeChild(element);
+        CodeEditUtil.removeChild(variableElement, element);
         if (element == lastBracket) break;
         element = next;
       }
@@ -169,7 +170,7 @@ public class JavaSharedImplUtil {
         newType.acceptTree(new GeneratedMarkerVisitor());
       }
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
-      variableElement.replaceChild(type, newType);
+      CodeEditUtil.replaceChild(variableElement, type, newType);
     }
   }
 

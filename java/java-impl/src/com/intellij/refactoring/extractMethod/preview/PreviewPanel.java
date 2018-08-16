@@ -78,7 +78,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
       return myExclusionHandler;
     }
@@ -143,6 +143,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
 
   void onTreeUpdated() {
     myTree.repaint();
+    myDiffPanel.updateLater();
   }
 
   private void updateLater() {

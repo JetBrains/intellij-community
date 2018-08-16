@@ -22,7 +22,7 @@ public class AlienChangeListBrowser extends CommitDialogChangesBrowser {
   public AlienChangeListBrowser(@NotNull Project project,
                                 @NotNull LocalChangeList changelist,
                                 @NotNull List<Change> changes) {
-    super(project, true, true);
+    super(project, false, true);
     myChangeList = changelist;
     myChanges = changes;
 
@@ -87,7 +87,7 @@ public class AlienChangeListBrowser extends CommitDialogChangesBrowser {
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       return new ChangeList[]{myChangeList};
     }

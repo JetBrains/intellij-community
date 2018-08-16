@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -15,6 +13,8 @@ import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -53,7 +53,9 @@ public class StackFrameItem {
   public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
     @Override
     public void onClick(MouseEvent event) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(null, CaptureConfigurable.class);
+      ShowSettingsUtil.getInstance().showSettingsDialog(
+        CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(event.getComponent())),
+        CaptureConfigurable.class);
       event.consume();
     }
   };
@@ -146,7 +148,7 @@ public class StackFrameItem {
           StackFrameItem frameItem = new StackFrameItem(location, vars);
           res.add(frameItem);
 
-          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext, false);
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             res.add(null); // separator
             res.addAll(relatedStack);
@@ -252,10 +254,12 @@ public class StackFrameItem {
       return mySourcePosition;
     }
 
+    @Override
     public boolean isSynthetic() {
       return myIsSynthetic;
     }
 
+    @Override
     public boolean isInLibraryContent() {
       return myIsInLibraryContent;
     }

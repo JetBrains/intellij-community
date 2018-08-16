@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.DiffContext;
@@ -540,7 +526,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   private class MyOnesideDocumentListener implements DocumentListener {
     @Override
-    public void beforeDocumentChange(DocumentEvent e) {
+    public void beforeDocumentChange(@NotNull DocumentEvent e) {
       if (myDuringOnesideDocumentModification) return;
       if (myChangedBlockData == null) {
         LOG.warn("oneside beforeDocumentChange - myChangedBlockData == null");
@@ -680,7 +666,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       String title = e.getPresentation().getText() + " selected changes";
       DiffUtil.executeWriteCommand(getDocument(myModifiedSide), e.getProject(), title, () -> {
         // state is invalidated during apply(), but changes are in reverse order, so they should not conflict with each other
-        apply(selectedChanges);
+        apply(ContainerUtil.reverse(selectedChanges));
         scheduleRediff();
       });
     }
@@ -690,16 +676,22 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
       if (changes.isEmpty()) return false;
 
-      List<Caret> carets = getEditor().getCaretModel().getAllCarets();
-      if (carets.size() != 1) return true;
-      Caret caret = carets.get(0);
-      if (caret.hasSelection()) return true;
-      int line = getEditor().getDocument().getLineNumber(getEditor().getExpectedCaretOffset());
+      return DiffUtil.isSomeRangeSelected(getEditor(), lines -> {
+        return ContainerUtil.exists(changes, change -> isChangeSelected(change, lines));
+      });
+    }
 
-      for (UnifiedDiffChange change : changes) {
-        if (DiffUtil.isSelectedByLine(line, change.getLine1(), change.getLine2())) return true;
-      }
-      return false;
+    @NotNull
+    @CalledInAwt
+    private List<UnifiedDiffChange> getSelectedChanges() {
+      if (myChangedBlockData == null) return Collections.emptyList();
+      final BitSet lines = DiffUtil.getSelectedLines(myEditor);
+      List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
+      return ContainerUtil.filter(changes, change -> isChangeSelected(change, lines));
+    }
+
+    private boolean isChangeSelected(@NotNull UnifiedDiffChange change, @NotNull BitSet lines) {
+      return DiffUtil.isSelectedByLine(lines, change.getLine1(), change.getLine2());
     }
 
     @CalledWithWriteLock
@@ -893,26 +885,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return null;
   }
 
-  @NotNull
-  @CalledInAwt
-  private List<UnifiedDiffChange> getSelectedChanges() {
-    if (myChangedBlockData == null) return Collections.emptyList();
-    final BitSet lines = DiffUtil.getSelectedLines(myEditor);
-    List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
-
-    List<UnifiedDiffChange> affectedChanges = new ArrayList<>();
-    for (int i = changes.size() - 1; i >= 0; i--) {
-      UnifiedDiffChange change = changes.get(i);
-      int line1 = change.getLine1();
-      int line2 = change.getLine2();
-
-      if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
-        affectedChanges.add(change);
-      }
-    }
-    return affectedChanges;
-  }
-
   @CalledInAwt
   @Nullable
   protected Navigatable getNavigatable(@NotNull LineCol position) {
@@ -1050,7 +1022,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
     }

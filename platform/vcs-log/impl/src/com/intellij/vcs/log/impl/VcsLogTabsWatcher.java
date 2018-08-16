@@ -107,10 +107,10 @@ public class VcsLogTabsWatcher implements Disposable {
   @NotNull
   private List<String> getTabs() {
     return StreamEx.of(myRefresher.getLogWindows())
-                   .select(VcsLogTab.class)
-                   .map(VcsLogTab::getTabId)
-                   .filter(tabId -> !VcsLogTabsProperties.MAIN_LOG_ID.equals(tabId))
-                   .toList();
+      .select(VcsLogTab.class)
+      .map(VcsLogTab::getTabId)
+      .filter(tabId -> !VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(tabId))
+      .toList();
   }
 
   @Override
@@ -136,6 +136,11 @@ public class VcsLogTabsWatcher implements Disposable {
     public String getTabId() {
       return myTabId;
     }
+
+    @Override
+    public String toString() {
+      return "VcsLogTab \'" + myTabId + '\'';
+    }
   }
 
   private class MyRefreshPostponedEventsListener extends ContentManagerAdapter
@@ -152,6 +157,7 @@ public class VcsLogTabsWatcher implements Disposable {
       VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(),
                                                   window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
       if (logWindow != null) {
+        LOG.debug("Selected log window \'" + logWindow + "\'");
         myRefresher.refresherActivated(logWindow.getRefresher(), false);
       }
     }

@@ -34,7 +34,7 @@ public abstract class DnDActivateOnHoldTargetContent extends ContentImpl impleme
   private final SingleAlarm myAlarm;
   @NotNull private final Project myProject;
 
-  protected DnDActivateOnHoldTargetContent(@NotNull Project project, JComponent component, String displayName, boolean isLockable) {
+  protected DnDActivateOnHoldTargetContent(@NotNull Project project, JComponent component, @NotNull String displayName, boolean isLockable) {
     super(component, displayName, isLockable);
     myProject = project;
     myAlarm = new SingleAlarm(() -> activateContent(), 700);

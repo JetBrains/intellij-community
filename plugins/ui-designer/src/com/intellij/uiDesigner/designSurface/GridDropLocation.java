@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,12 +7,11 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Rectangle;
-import java.awt.LayoutManager;
+import java.awt.*;
 
 /**
  * @author yole
@@ -52,10 +37,12 @@ public class GridDropLocation implements ComponentDropLocation {
     return myColumn;
   }
 
+  @Override
   public RadContainer getContainer() {
     return myContainer;
   }
 
+  @Override
   public boolean canDrop(final ComponentDragObject dragObject) {
     // If target point doesn't belong to any cell and column then do not allow drop.
     if (myRow == -1 || myColumn == -1) {
@@ -97,6 +84,7 @@ public class GridDropLocation implements ComponentDropLocation {
     return myContainer.findComponentInRect(startRow, startCol, rowSpan, colSpan);
   }
 
+  @Override
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     Rectangle feedbackRect = null;
     if (getContainer().getLayoutManager().isGrid()) {
@@ -149,7 +137,7 @@ public class GridDropLocation implements ComponentDropLocation {
     if (rc.x < 0 || rc.y < 0 || rc.y + h > getContainer().getGridRowCount() || rc.x + w > getContainer().getGridColumnCount()) {
       return null;
     }
-    
+
     return new Rectangle(rc.x, rc.y, w - 1, h - 1);
   }
 
@@ -179,6 +167,7 @@ public class GridDropLocation implements ComponentDropLocation {
                                                                       cellRect.y+h, cellRect.x+w);
   }
 
+  @Override
   public void processDrop(final GuiEditor editor,
                           final RadComponent[] components,
                           final GridConstraints[] constraintsToAdjust,
@@ -186,13 +175,14 @@ public class GridDropLocation implements ComponentDropLocation {
     dropIntoGrid(myContainer, components, myRow, myColumn, dragObject);
   }
 
+  @Override
   @Nullable
   public ComponentDropLocation getAdjacentLocation(Direction direction) {
     switch(direction) {
       case LEFT:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnBefore);
       case UP:    return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowBefore);
       case RIGHT: return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnAfter);
-      case DOWN:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowAfter); 
+      case DOWN:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowAfter);
     }
     return null;
   }

@@ -41,6 +41,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     myTitle = title;
   }
 
+  @Override
   @Nullable
   protected String showDialog() {
     final ClassFilter.ClassFilterWithScope classFilter;
@@ -133,10 +134,12 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
       myModuleSelector = moduleSelector;
     }
 
+    @Override
     protected PsiClass findClass(final String className) {
       return myModuleSelector.findClass(className);
     }
 
+    @Override
     protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
       final Module module = myModuleSelector.getModule();
       final GlobalSearchScope scope;
@@ -148,10 +151,12 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
       }
       final ClassFilter filter = createFilter(module);
       return new ClassFilter.ClassFilterWithScope() {
+        @Override
         public GlobalSearchScope getScope() {
           return scope;
         }
 
+        @Override
         public boolean isAccepted(final PsiClass aClass) {
           return filter == null || filter.isAccepted(aClass);
         }

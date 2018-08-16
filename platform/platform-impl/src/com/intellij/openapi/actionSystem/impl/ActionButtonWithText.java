@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
@@ -14,6 +15,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -77,10 +79,17 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public Dimension getPreferredSize() {
     Dimension basicSize = super.getPreferredSize();
 
     Icon icon = getIcon();
+    int position = horizontalTextPosition();
+    if ((icon == null || icon instanceof EmptyIcon) && myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
+      icon = AllIcons.General.LinkDropTriangle;
+      position = SwingConstants.LEFT;
+    }
+
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = new Rectangle(0, 0, Short.MAX_VALUE, Short.MAX_VALUE);
     Insets insets = getInsets();
@@ -91,7 +100,7 @@ public class ActionButtonWithText extends ActionButton {
     Rectangle textR = new Rectangle();
     SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
                                        SwingConstants.CENTER, horizontalTextAlignment(),
-                                       SwingConstants.CENTER, horizontalTextPosition(),
+                                       SwingConstants.CENTER, position,
                                        viewRect, iconR, textR, iconTextSpace());
     int x1 = Math.min(iconR.x, textR.x);
     int x2 = Math.max(iconR.x + iconR.width, textR.x + textR.width);
@@ -119,8 +128,15 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  @Override
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
+    int position = horizontalTextPosition();
+    if ((icon == null || icon instanceof EmptyIcon) && myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
+      icon = AllIcons.General.LinkDropTriangle;
+      position = SwingConstants.LEFT;
+    }
+
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
@@ -129,7 +145,7 @@ public class ActionButtonWithText extends ActionButton {
     Rectangle textRect = new Rectangle();
     String text = SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
-                                                     SwingConstants.CENTER, horizontalTextPosition(),
+                                                     SwingConstants.CENTER, position,
                                                      viewRect, iconRect, textRect, iconTextSpace());
     ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
@@ -149,8 +165,8 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @Override
-  protected void presentationPropertyChanded(PropertyChangeEvent e) {
-    super.presentationPropertyChanded(e);
+  protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
+    super.presentationPropertyChanged(e);
     if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
     }
@@ -160,12 +176,10 @@ public class ActionButtonWithText extends ActionButton {
     return UIUtil.getInactiveTextColor();
   }
 
-  @SuppressWarnings("unused")
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
     myHorizontalTextPosition = position;
   }
 
-  @SuppressWarnings("unused")
   public void setHorizontalTextAlignment(@MagicConstant(flagsFromClass = SwingConstants.class) int alignment) {
     myHorizontalTextAlignment = alignment;
   }
@@ -206,6 +220,7 @@ public class ActionButtonWithText extends ActionButton {
     return -1;
   }
 
+  @NotNull
   private String getText() {
     final String text = myPresentation.getText();
     return text != null ? text : "";

@@ -46,6 +46,7 @@ public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
     this(project, title, backgroundOption, itemsToProcess, false);
   }
 
+  @Override
   public void run(@NotNull ProgressIndicator indicator) {
     for(T item: myItems) {
       try {
@@ -64,6 +65,7 @@ public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
     return myExceptions.isEmpty();
   }
 
+  @Override
   public void onSuccess() {
     if (!myExceptions.isEmpty()) {
       AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myTitle);

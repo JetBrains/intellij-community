@@ -36,8 +36,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES;
 
@@ -68,7 +68,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     myOptions = options;
     myPage = page;
 
-    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS, 
+    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS,
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
@@ -89,7 +89,7 @@ public class SimpleEditorPreview implements PreviewPanel {
 
       myEditor.getCaretModel().addCaretListener(new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
+        public void caretPositionChanged(@NotNull CaretEvent e) {
           navigate(true, e.getNewPosition());
         }
       });
@@ -116,7 +116,7 @@ public class SimpleEditorPreview implements PreviewPanel {
       // tag-based navigation first
       type = RainbowHighlighter.isRainbowTempKey(highlightData.getHighlightKey())
              ? RainbowHighlighter.RAINBOW_TYPE
-             : highlightData.getAdditionalColorKey() == null ? highlightData.getHighlightType() 
+             : highlightData.getAdditionalColorKey() == null ? highlightData.getHighlightType()
                                                              : highlightData.getAdditionalColorKey().getExternalName();
     }
     else {
@@ -259,8 +259,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     List<HighlightData> highlights = new ArrayList<>();
     List<HighlightData> matchingHighlights = new ArrayList<>();
     for (HighlightData highlightData : myHighlightData) {
-      boolean highlight = show && (highlightData.getHighlightType().equals(attrKey) || 
-                                   highlightData.getAdditionalColorKey() != null && 
+      boolean highlight = show && (highlightData.getHighlightType().equals(attrKey) ||
+                                   highlightData.getAdditionalColorKey() != null &&
                                    highlightData.getAdditionalColorKey().getExternalName().equals(attrKey));
       highlightData.addToCollection(highlights, highlight);
       if (highlight) {

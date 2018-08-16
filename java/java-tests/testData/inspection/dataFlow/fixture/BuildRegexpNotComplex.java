@@ -8,7 +8,7 @@ class X  {
       final char c = pattern.charAt(i);
       if (c == '*') { }
       else if (c == ' ') { }
-      else if (c == ':' || prevIsUppercase) { }
+      else if (c == ':' || <warning descr="Condition 'prevIsUppercase' is always 'false' when reached">prevIsUppercase</warning>) { }
     }
     System.out.println(forCompletion);
     System.out.println(exactPrefixLen);

@@ -15,6 +15,10 @@ import org.jetbrains.annotations.NotNull;
 public interface ProjectLifecycleListener {
   Topic<ProjectLifecycleListener> TOPIC = Topic.create("Various stages of project lifecycle notifications", ProjectLifecycleListener.class);
 
+  /**
+   * Invoked after implementation classes for project's components were determined (and loaded),
+   * but before components are instantiated.
+   */
   default void projectComponentsRegistered(@NotNull Project project) {
   }
 

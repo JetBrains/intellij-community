@@ -548,7 +548,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     boolean special = false;
     if (_handler == null) {
       _handler = pattern.getHandlerSimple(reference);
-      special = true;
+      special = reference.resolve() != null;
     }
 
     final PsiElement other = myMatchingVisitor.getElement();
@@ -811,6 +811,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
         if (regExpPredicate != null) {
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
+            @Override
             public String getText(PsiElement element) {
               StringBuilder builder = new StringBuilder(RegExpPredicate.getMeaningfulText(element));
               for (int i = 0; i < matchedArrayDimensions; ++i) builder.append("[]");

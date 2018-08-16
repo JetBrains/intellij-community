@@ -44,6 +44,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     return myMainComponentBinding;
   }
 
+  @Override
   public String getClassToBind(){
     return myClassToBind;
   }
@@ -52,6 +53,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     myClassToBind = classToBind;
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     if (element == null) {
       throw new IllegalArgumentException("element cannot be null");
@@ -104,10 +106,12 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     }
   }
 
+  @Override
   public IButtonGroup[] getButtonGroups() {
     return (LwButtonGroup[])myButtonGroups.toArray(new LwButtonGroup[0]);
   }
 
+  @Override
   public String getButtonGroupName(IComponent component) {
     for(int i=0; i<myButtonGroups.size(); i++) {
       LwButtonGroup group = (LwButtonGroup) myButtonGroups.get(i);
@@ -121,6 +125,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     return null;
   }
 
+  @Override
   public String[] getButtonGroupComponentIds(String groupName) {
     for(int i=0; i<myButtonGroups.size(); i++) {
       LwButtonGroup group = (LwButtonGroup) myButtonGroups.get(i);
@@ -131,6 +136,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
     throw new IllegalArgumentException("Cannot find group " + groupName);
   }
 
+  @Override
   public boolean isInspectionSuppressed(final String inspectionId, final String componentId) {
     for (Iterator iterator = myInspectionSuppressions.iterator(); iterator.hasNext();) {
       LwInspectionSuppression suppression = (LwInspectionSuppression)iterator.next();

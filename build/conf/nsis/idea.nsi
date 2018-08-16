@@ -331,7 +331,7 @@ done:
 FunctionEnd
 
 
-Function getInstallationOptionsPostions
+Function getInstallationOptionsPositions
   !insertmacro INSTALLOPTIONS_READ $launcherShortcut "Desktop.ini" "Settings" "DesktopShortcutToLauncher"
   !insertmacro INSTALLOPTIONS_READ $secondLauncherShortcut "Desktop.ini" "Settings" "DesktopShortcutToSecondLauncher"
   !insertmacro INSTALLOPTIONS_READ $addToPath "Desktop.ini" "Settings" "AddToPath"
@@ -351,7 +351,7 @@ Function ConfirmDesktopShortcut
     StrCpy $R1 ""
   ${EndIf}
 
-  Call getInstallationOptionsPostions
+  Call getInstallationOptionsPositions
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" $R0
 
   ${If} $R1 != ""
@@ -507,7 +507,7 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 Function .onInit
   SetRegView 32
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
-  Call getInstallationOptionsPostions
+  Call getInstallationOptionsPositions
   IfSilent silent_mode uac_elevate
 silent_mode:
   IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
@@ -554,7 +554,7 @@ FunctionEnd
 
 Function silentConfigReader
   ; read Desktop.ini
-  Call getInstallationOptionsPostions
+  Call getInstallationOptionsPositions
   ${GetParameters} $R0
   ClearErrors
 
@@ -562,6 +562,7 @@ Function silentConfigReader
   IfErrors no_silent_config
 
   ${ConfigRead} "$R1" "mode=" $R0
+  IfErrors no_silent_config
   StrCpy $silentMode "user"
   IfErrors launcher_32
   StrCpy $silentMode $R0
@@ -612,9 +613,22 @@ loop:
 
 update_settings:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
+  goto done
 no_silent_config:
+  Call IncorrectSilentInstallParameters
 done:
 FunctionEnd
+
+
+Function IncorrectSilentInstallParameters
+  !define msg1 "How to run installation in Silent Mode:$\r$\n"
+  !define msg2 "<installation> /S /CONFIG=<path to silent cofig> /D=<install dir>$\r$\n$\r$\n"
+  !define msg3 "Example:$\r$\n"
+  !define msg4 "d:\download\Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\r$\n"
+  MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}"
+  Abort
+FunctionEnd
+
 
 Function checkVersion
   StrCpy $2 ""
@@ -1374,6 +1388,22 @@ done:
 FunctionEnd
 
 
+Function un.DeleteDirIfEmpty
+  FindFirst $R0 $R1 "$0\*.*"
+  strcmp $R1 "." 0 NoDelete
+   FindNext $R0 $R1
+   strcmp $R1 ".." 0 NoDelete
+    ClearErrors
+    FindNext $R0 $R1
+    IfErrors 0 NoDelete
+     FindClose $R0
+     Sleep 1000
+     RMDir "$0"
+  NoDelete:
+   FindClose $R0
+FunctionEnd
+
+
 Section "Uninstall"
   Call un.customUninstallActions
   SetRegView 32
@@ -1460,6 +1490,7 @@ skip_delete_settings:
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre32\bin\client\classes.jsa"
+  Delete "$INSTDIR\jre64\bin\server\classes.jsa"
 
   Push "Complete"
   Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
@@ -1468,11 +1499,13 @@ skip_delete_settings:
   Push "$INSTDIR\bin\$0"
   Call un.compareFileInstallationTime
   ${If} $9 != "Modified"
-    RMDir /r "$INSTDIR"
-  ${Else}
-    !include "unidea_win.nsh"
-    RMDir "$INSTDIR"
+    Delete "$INSTDIR\bin\idea.properties"
+    Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
+    Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
+  !include "unidea_win.nsh"
+  StrCpy $0 "$INSTDIR"
+  Call un.DeleteDirIfEmpty
 
 ; remove desktop shortcuts
 desktop_shortcut_launcher32:

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -69,13 +70,15 @@ public class AddNamespaceDialog extends DialogWrapper {
             final Component component = boxEditor.getEditorComponent();
             if (component instanceof JTextField) {
                 ((JTextField)component).getDocument().addDocumentListener(new DocumentAdapter() {
-                    protected void textChanged(DocumentEvent e) {
+                    @Override
+                    protected void textChanged(@NotNull DocumentEvent e) {
                         updateOkAction();
                     }
                 });
             }
         }
         comboBox.addItemListener(new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
                 updateOkAction();
             }
@@ -86,6 +89,7 @@ public class AddNamespaceDialog extends DialogWrapper {
         getOKAction().setEnabled(getURI().length() > 0 && getPrefix().length() > 0);
     }
 
+    @Override
     protected JComponent createCenterPanel() {
         return myRoot;
     }

@@ -93,7 +93,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
   @Override
   public ListCellRenderer getElementsRenderer(JList<?> list) {
-    return myModel.getListCellRenderer();
+    return new GotoActionModel.GotoActionListCellRenderer(myModel::getGroupName, true);
   }
 
   @Override
@@ -152,7 +152,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     @Nullable
     @Override
-    public SearchEverywhereContributorFilter<Void> createFilter() {
+    public SearchEverywhereContributorFilter<Void> createFilter(AnActionEvent initEvent) {
       return null;
     }
   }

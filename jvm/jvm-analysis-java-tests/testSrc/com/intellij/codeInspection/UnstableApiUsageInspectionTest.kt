@@ -9,6 +9,12 @@ class UnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
   override fun getBasePath() = "${TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage"
 
   fun testInspection() {
+    inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting(true, false, false, "UnstableElementsTest.java")
+  }
+
+  fun testIgnoreImports() {
+    inspection.myIgnoreInsideImports = true
+    myFixture.testHighlighting(true, false, false, "UnstableElementsIgnoreImportsTest.java")
   }
 }

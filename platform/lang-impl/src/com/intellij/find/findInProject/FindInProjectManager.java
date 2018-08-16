@@ -67,11 +67,11 @@ public class FindInProjectManager {
     final FindModel findModel;
     if (model != null) {
       findModel = model.clone();
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     }
     else {
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(false);
-      findModel.setOpenInNewTabVisible(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
       initModel(findModel, dataContext);
@@ -87,12 +87,10 @@ public class FindInProjectManager {
   }
 
   public void findInPath(@NotNull FindModel findModel) {
-    findModel.setOpenInNewTabVisible(false);
     if (findModel.isOpenInNewTabEnabled()) {
       FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
     }
     startFindInProject(findModel);
-    findModel.setOpenInNewTabVisible(false);
   }
 
   @SuppressWarnings("WeakerAccess")

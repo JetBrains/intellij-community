@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
@@ -10,17 +11,22 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubParseException;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import java.util.Locale;
 
 /**
  * Github server reference allowing to specify custom port and path to instance
  */
 @Tag("server")
 public class GithubServerPath {
+  public static final String DEFAULT_HOST = "github.com";
+  private static final String API_PREFIX = "api.";
+  private static final String ENTERPRISE_API_SUFFIX = "/api/v3";
+
+  @Attribute("useHttp")
+  @Nullable private final Boolean myUseHttp;
   @Attribute("host")
   @NotNull private final String myHost;
   @Attribute("port")
@@ -29,17 +35,26 @@ public class GithubServerPath {
   @Nullable private final String mySuffix;
 
   public GithubServerPath() {
-    this("", null, null);
+    this(null, "", null, null);
   }
 
   public GithubServerPath(@NonNls @NotNull String host) {
-    this(host, null, null);
+    this(null, host, null, null);
   }
 
-  public GithubServerPath(@NonNls @NotNull String host, @Nullable Integer port, @NonNls @Nullable String suffix) {
+  public GithubServerPath(@Nullable Boolean useHttp,
+                          @NonNls @NotNull String host,
+                          @Nullable Integer port,
+                          @NonNls @Nullable String suffix) {
+    myUseHttp = useHttp;
     myHost = host.toLowerCase(Locale.ENGLISH);
     myPort = port;
-    mySuffix = suffix != null ? suffix.toLowerCase(Locale.ENGLISH) : null;
+    mySuffix = suffix;
+  }
+
+  @NotNull
+  public String getSchema() {
+    return (myUseHttp == null || !myUseHttp) ? "https" : "http";
   }
 
   @NotNull
@@ -62,14 +77,17 @@ public class GithubServerPath {
     return StringUtil.startsWithIgnoreCase(url, myHost + StringUtil.notNullize(mySuffix));
   }
 
-  // 2 - host, 4 - port, 5 - path
-  private final static Pattern URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?");
+  // 1 - schema, 2 - host, 4 - port, 5 - path
+  private final static Pattern URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?",
+                                                           Pattern.CASE_INSENSITIVE);
 
   @NotNull
   public static GithubServerPath from(@NotNull String uri) throws GithubParseException {
     Matcher matcher = URL_REGEX.matcher(uri);
 
     if (!matcher.matches()) throw new GithubParseException("Not a valid URL");
+    String schema = matcher.group(1);
+    Boolean httpSchema = (schema == null || schema.isEmpty()) ? null : schema.equalsIgnoreCase("http://");
     String host = matcher.group(2);
     if (host == null) throw new GithubParseException("Empty host");
 
@@ -89,12 +107,39 @@ public class GithubServerPath {
 
     String path = StringUtil.nullize(matcher.group(5));
 
-    return new GithubServerPath(host, port, path);
+    return new GithubServerPath(httpSchema, host, port, path);
+  }
+
+  @NotNull
+  public String toUrl() {
+    return getSchemaUrlPart() + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
+  }
+
+  @NotNull
+  public String toApiUrl() {
+    StringBuilder builder = new StringBuilder(getSchemaUrlPart());
+    if (myHost.equalsIgnoreCase(DEFAULT_HOST)) {
+      builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
+    }
+    else {
+      builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(ENTERPRISE_API_SUFFIX);
+    }
+    return builder.toString();
   }
 
   public String toString() {
-    String port = myPort != null ? (":" + myPort.toString()) : "";
-    return myHost + port + StringUtil.notNullize(mySuffix);
+    String schema = myUseHttp != null ? getSchemaUrlPart() : "";
+    return schema + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
+  }
+
+  @NotNull
+  private String getPortUrlPart() {
+    return myPort != null ? (":" + myPort.toString()) : "";
+  }
+
+  @NotNull
+  private String getSchemaUrlPart() {
+    return getSchema() + URLUtil.SCHEME_SEPARATOR;
   }
 
   @Override
@@ -102,14 +147,14 @@ public class GithubServerPath {
     if (this == o) return true;
     if (!(o instanceof GithubServerPath)) return false;
     GithubServerPath path = (GithubServerPath)o;
-    return Objects.equals(myHost, path.myHost) &&
+    return Objects.equals(myUseHttp, path.myUseHttp) &&
+           Objects.equals(myHost, path.myHost) &&
            Objects.equals(myPort, path.myPort) &&
            Objects.equals(mySuffix, path.mySuffix);
   }
 
   @Override
   public int hashCode() {
-
-    return Objects.hash(myHost, myPort, mySuffix);
+    return Objects.hash(myUseHttp, myHost, myPort, mySuffix);
   }
 }

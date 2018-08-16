@@ -3,14 +3,17 @@ package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.fileSearchAndReplace
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Timeout
 import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 import org.hamcrest.core.Is.`is` as Matcher_Is
 
 /**
@@ -428,7 +431,7 @@ fun KotlinGuiTestCase.editorClearSearchAndReplace() {
   }
 }
 
-fun KotlinGuiTestCase.addDevRepositoryToBuildGradle(fileName: String, isKotlinDslUsed: Boolean) {
+fun KotlinGuiTestCase.addDevRepositoryToBuildGradle(fileName: Path, isKotlinDslUsed: Boolean) {
   val mavenCentral = "mavenCentral()"
   val urlGDsl = "maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }"
   val urlKDsl = "maven { setUrl (\"https://dl.bintray.com/kotlin/kotlin-dev/\") }"
@@ -446,7 +449,7 @@ fun KotlinGuiTestCase.addDevRepositoryToBuildGradle(fileName: String, isKotlinDs
     }
 }
 
-fun KotlinGuiTestCase.addDevRepositoryToPomXml(fileName: String) {
+fun KotlinGuiTestCase.addDevRepositoryToPomXml(fileName: Path) {
   val searchedLine = """</dependencies>"""
   val changingLine = """
     <repositories>
@@ -474,7 +477,7 @@ fun KotlinGuiTestCase.addDevRepositoryToPomXml(fileName: String) {
   }
 }
 
-fun KotlinGuiTestCase.changeKotlinVersionInBuildGradle(fileName: String,
+fun KotlinGuiTestCase.changeKotlinVersionInBuildGradle(fileName: Path,
                                                        isKotlinDslUsed: Boolean,
                                                        kotlinVersion: String) {
   fileSearchAndReplace( fileName = fileName){
@@ -490,7 +493,7 @@ fun KotlinGuiTestCase.changeKotlinVersionInBuildGradle(fileName: String,
   }
 }
 
-fun KotlinGuiTestCase.changeKotlinVersionInPomXml(fileName: String, kotlinVersion: String) {
+fun KotlinGuiTestCase.changeKotlinVersionInPomXml(fileName: Path, kotlinVersion: String) {
   val oldVersion = "<kotlin\\.version>.+<\\/kotlin\\.version>"
   val newVersion = "<kotlin.version>$kotlinVersion</kotlin.version>"
   fileSearchAndReplace(fileName = fileName) {
@@ -526,19 +529,18 @@ fun KotlinGuiTestCase.openPomXml(vararg projectName: String) {
 fun KotlinGuiTestCase.editSettingsGradle(){
   //   if project is configured to old Kotlin version, it must be released and no changes are required in the settings.gradle file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
-  val fileName = "$projectFolder/settings.gradle"
+  val fileName = Paths.get(projectFolder, "settings.gradle")
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
 }
 
 fun KotlinGuiTestCase.editBuildGradle(
   kotlinVersion: String,
   isKotlinDslUsed: Boolean = false,
-  vararg projectName: String = arrayOf()) {
+  vararg projectName: String = emptyArray()) {
   //   if project is configured to old Kotlin version, it must be released and no changes are required in the build.gradle file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
 
-  val innerPath = if (projectName.isNotEmpty()) "/" + projectName.joinToString(separator = "/") else ""
-  val fileName = projectFolder + innerPath + "/build.gradle${if (isKotlinDslUsed) ".kts" else ""}"
+  val fileName = Paths.get(projectFolder, *projectName , "build.gradle${if (isKotlinDslUsed) ".kts" else ""}")
   logTestStep("Going to edit $fileName")
 
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed)
@@ -548,12 +550,11 @@ fun KotlinGuiTestCase.editBuildGradle(
 
 fun KotlinGuiTestCase.editPomXml(kotlinVersion: String,
                                  kotlinKind: KotlinKind,
-                                 vararg projectName: String = arrayOf()) {
+                                 vararg projectName: String = emptyArray()) {
   //   if project is configured to old Kotlin version, it must be released and no changes are required in the pom.xml file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
 
-  val innerPath = if (projectName.isNotEmpty()) "/" + projectName.joinToString(separator = "/") else ""
-  val fileName = "$projectFolder$innerPath/pom.xml"
+  val fileName = Paths.get(projectFolder, *projectName, "pom.xml")
   logTestStep("Going to edit $fileName")
 
   if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToPomXml(fileName)
@@ -618,7 +619,7 @@ fun KotlinGuiTestCase.checkFacetState(facet: FacetStructure) {
 // TODO: remove it after GUI-59 fixing
 fun KotlinGuiTestCase.dialogWithoutClosing(title: String? = null,
                                            ignoreCaseTitle: Boolean = false,
-                                           timeout: Long = defaultTimeout,
+                                           timeout: Timeout = defaultTimeout,
                                            func: JDialogFixture.() -> Unit) {
   val dialog = dialog(title, ignoreCaseTitle, timeout)
   func(dialog)

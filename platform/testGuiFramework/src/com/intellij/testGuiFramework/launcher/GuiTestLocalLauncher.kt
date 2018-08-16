@@ -19,7 +19,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testGuiFramework.impl.GuiTestStarter
-import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
+import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.toClasspathJarFile
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
@@ -52,7 +52,7 @@ import kotlin.concurrent.thread
  */
 object GuiTestLocalLauncher {
 
-  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")!!
+  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")
 
   private const val TEST_GUI_FRAMEWORK_MODULE_NAME = "intellij.platform.testGuiFramework"
 
@@ -72,9 +72,16 @@ object GuiTestLocalLauncher {
     modulesList.module(TEST_GUI_FRAMEWORK_MODULE_NAME) ?: throw Exception("Unable to find module '$TEST_GUI_FRAMEWORK_MODULE_NAME'")
   }
 
-  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0, testClassNames: List<String> = emptyList()) {
-    //todo: check that we are going to run test locally
-    val args = createArgs(ide = ide, port = port, testClassNames = testClassNames)
+
+  /**
+   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
+   * By default set as an empty array – no additional JVM options
+   */
+  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0),
+                    port: Int = 0,
+                    testClassNames: List<String> = emptyList(),
+                    additionalJvmOptions: Array<Pair<String, String>> = emptyArray()) {
+    val args = createArgs(ide = ide, port = port, testClassNames = testClassNames, additionalJvmOptions = additionalJvmOptions)
     return startIde(ide = ide, args = args)
   }
 
@@ -116,7 +123,8 @@ object GuiTestLocalLauncher {
         }
         else {
           System.err.println("${ide.ideType} process execution error:")
-          val collectedError = BufferedReader(InputStreamReader(IdeProcessControlManager.getErrorStream())).lines().collect(Collectors.joining("\n"))
+          val collectedError = BufferedReader(InputStreamReader(IdeProcessControlManager.getErrorStream())).lines().collect(
+            Collectors.joining("\n"))
           System.err.println(collectedError)
           LOG.error("${ide.ideType} process execution error:")
           LOG.error(collectedError)
@@ -131,47 +139,60 @@ object GuiTestLocalLauncher {
 
   }
 
-  private fun startIdeAndWait(ide: Ide, args: List<String>)
-    = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
+  private fun startIdeAndWait(ide: Ide, args: List<String>) = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
 
 
-  private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0, testClassNames: List<String>): List<String>
-    = createArgsBase(ide = ide,
-                     mainClass = mainClass,
-                     commandName = GuiTestStarter.COMMAND_NAME,
-                     port = port,
-                     testClassNames = testClassNames)
+  /**
+   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
+   * By default set as an empty array – no additional JVM options
+   */
+  private fun createArgs(ide: Ide,
+                         mainClass: String = "com.intellij.idea.Main",
+                         port: Int = 0,
+                         testClassNames: List<String>,
+                         additionalJvmOptions: Array<Pair<String, String>> = emptyArray()):
+    List<String> = createArgsBase(ide = ide,
+                                  mainClass = mainClass,
+                                  commandName = GuiTestStarter.COMMAND_NAME,
+                                  port = port,
+                                  testClassNames = testClassNames,
+                                  additionalJvmOptions = additionalJvmOptions)
 
-  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String>
-    = createArgsBase(ide = ide,
-                     mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
-                     firstStartClassName = firstStartClassName,
-                     commandName = null,
-                     port = port,
-                     testClassNames = emptyList())
+  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String> = createArgsBase(
+    ide = ide,
+    mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
+    firstStartClassName = firstStartClassName,
+    commandName = null,
+    port = port,
+    testClassNames = emptyList())
 
   /**
    * customVmOptions should contain a full VM options formatted items like: customVmOptions = listOf("-Dapple.laf.useScreenMenuBar=true", "-Dide.mac.file.chooser.native=false").
    * GuiTestLocalLauncher passed all VM options from test, that starts with "-Dpass."
+   *
+   * @additionalJvmOptions - an array of key-value pairs written without -D, for example: {@code arrayOf(Pair("idea.debug.mode", "true"))
+   * By default set as an empty array – no additional JVM options
    */
   private fun createArgsBase(ide: Ide,
                              mainClass: String,
                              commandName: String?,
                              firstStartClassName: String = "undefined",
                              port: Int,
-                             testClassNames: List<String>): List<String> {
+                             testClassNames: List<String>,
+                             additionalJvmOptions: Array<Pair<String, String>> = emptyArray()): List<String> {
     val customVmOptions = getCustomPassedOptions()
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultAndCustomVmOptions(ide, customVmOptions))
+      .plus(additionalJvmOptions.map { val (key, value) = it; "-D$key=$value" })
       .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
-      .plus(getOsSpecificClasspath(ide.ideType.mainModule, testClassNames))
+      .plus(composeClasspathJar(ide.ideType.mainModule, testClassNames))
       .plus(mainClass)
 
     if (commandName != null) resultingArgs = resultingArgs.plus(commandName)
     if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
-//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+    //    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
 
     return resultingArgs
   }
@@ -184,7 +205,7 @@ object GuiTestLocalLauncher {
     )
     if (SystemInfo.isMac()) resultingArgs.add(0, "open")
     if (port != 0) resultingArgs.add("port=$port")
-//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+    //    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
     return resultingArgs
   }
 
@@ -223,19 +244,20 @@ object GuiTestLocalLauncher {
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
-      .plus(if (ide.ideType.platformPrefix.isNullOrEmpty()) "" else "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(customVmOptions)
       .plus("-Xdebug")
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
       .plus("-Duse.linux.keychain=false")
+      .plus("-Didea.suppress.statistics.report")
   }
 
   private fun getCurrentJavaExec(): String {
     return PathUtils.getJreBinPath()
   }
 
-  private fun getOsSpecificClasspath(moduleName: String, testClassNames: List<String>): String = ClassPathBuilder.buildOsSpecific(
-    getFullClasspath(moduleName, testClassNames).map { it.path })
+  private fun composeClasspathJar(moduleName: String, testClassNames: List<String>): String =
+    getFullClasspath(moduleName, testClassNames).map { it.path }.toClasspathJarFile().path
 
 
   /**
@@ -272,15 +294,16 @@ object GuiTestLocalLauncher {
   private fun substituteAllMacro(classpath: MutableSet<File>): MutableSet<File> {
     val macroList = listOf("\$MAVEN_REPOSITORY\$", "\$KOTLIN_BUNDLED\$")
     val macroMap = mutableMapOf<String, String>()
-    macroList.forEach { macroMap.put(it, resolveMacro(classpath, it)) }
+    macroList.forEach { macroMap[it] = resolveMacro(classpath, it) }
     val mutableClasspath = mutableListOf<File>()
     classpath.forEach { file ->
       val macro = file.path.findStartsWith(macroList)
       if (macro != null) {
-        val resolvedMacro = macroMap.get(macro)
+        val resolvedMacro = macroMap[macro]
         val newPath = resolvedMacro + file.path.substring(macro.length + 1)
         mutableClasspath.add(File(newPath))
-      } else mutableClasspath.add(file)
+      }
+      else mutableClasspath.add(file)
     }
     return mutableClasspath.toMutableSet()
   }
@@ -296,13 +319,11 @@ object GuiTestLocalLauncher {
     @Suppress("UNCHECKED_CAST")
     val urlsListOrArray = getUrlsMethod.invoke(classLoader)
     var urls = (urlsListOrArray as? List<*> ?: (urlsListOrArray as Array<*>).toList()).filterIsInstance(URL::class.java)
-    if (SystemInfo.isWin()) {
-      val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
-      if (classPathUrl != null) {
-        val jarStream = JarInputStream(File(classPathUrl.path).inputStream())
-        val mf = jarStream.manifest
-        urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
-      }
+    val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
+    if (classPathUrl != null) {
+      val jarStream = JarInputStream(File(classPathUrl.path).inputStream())
+      val mf = jarStream.manifest
+      urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
     }
     return urls.map { Paths.get(it.toURI()).toFile().path }
   }
@@ -389,5 +410,17 @@ object GuiTestLocalLauncher {
   private fun URL.correctPath(): String {
     return Paths.get(this.toURI()).toFile().path
   }
+
+  /**
+   * Returns a list containing all elements of the original collection including the given [element] if [condition] is true.
+   */
+  private fun <T> List<T>.plusIf(condition: Boolean, element: T): List<T> {
+    if (!condition) return this
+    val result = ArrayList<T>(size + 1)
+    result.addAll(this)
+    result.add(element)
+    return result
+  }
+
 
 }

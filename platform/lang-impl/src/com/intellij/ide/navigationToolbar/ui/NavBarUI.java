@@ -65,8 +65,6 @@ public interface NavBarUI {
    */
   short getSelectionAlpha();
 
-  boolean isDrawMacShadow(boolean selected, boolean focused);
-
   /**
    * NavBarItem offsets
    * @param item NavBar element

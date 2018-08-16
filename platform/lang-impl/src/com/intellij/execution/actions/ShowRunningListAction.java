@@ -61,7 +61,7 @@ public class ShowRunningListAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null || project.isDisposed()) return;
     final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<>();
@@ -182,7 +182,7 @@ public class ShowRunningListAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       boolean enabled = project != null && !project.isDisposed()

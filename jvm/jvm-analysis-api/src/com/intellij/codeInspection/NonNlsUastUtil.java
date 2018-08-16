@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -27,6 +28,15 @@ public final class NonNlsUastUtil {
   }
 
   /**
+   * @return <code>true</code> if expression qualifier (part before <code>::</code>) should be considered non-localizable;
+   * <code>false</code> otherwise.
+   */
+  public static boolean isCallableReferenceExpressionWithNonNlsQualifier(@Nullable UCallableReferenceExpression expression) {
+    if (expression == null) return false;
+    return false; //TODO implement
+  }
+
+  /**
    * @return <code>true</code> if expression receiver should be considered non-localizable; <code>false</code> otherwise.
    */
   public static boolean isCallExpressionWithNonNlsReceiver(@Nullable UCallExpression expression) {
@@ -39,6 +49,10 @@ public final class NonNlsUastUtil {
     }
     if (receiver instanceof USimpleNameReferenceExpression) { // reference to variable/field/parameter
       return isReferenceToNonNlsElement((USimpleNameReferenceExpression)receiver);
+    }
+    if (receiver instanceof UCallExpression || receiver instanceof UQualifiedReferenceExpression) { // call chain
+      PsiElement resolved = ((UResolvable)receiver).resolve();
+      return resolved != null && isNonNlsAnnotatedPsi(resolved);
     }
 
     UElement expressionParent = expression.getUastParent();
@@ -57,27 +71,43 @@ public final class NonNlsUastUtil {
     if (!UastLiteralUtils.isStringLiteral(expression)) return false;
     if (isPlacedInNonNlsClass(expression) || isPlacedInNonNlsPackage(expression)) return true;
 
-    UElement parent = expression.getUastParent();
-    if (parent instanceof UPolyadicExpression && !(parent instanceof UBinaryExpression)) { // multiline string literals
-      parent = parent.getUastParent();
-    }
+    UElement parent = UastUtils.getParentOfType(expression,
+                                                true,
+                                                UExpressionList.class,
+                                                UVariable.class,
+                                                UReturnExpression.class,
+                                                UCallExpression.class,
+                                                UBinaryExpression.class);
 
     if (parent instanceof UField || parent instanceof ULocalVariable || parent instanceof UParameter) {
       return isNonNlsAnnotated(parent);
     }
-    else if (parent instanceof UBinaryExpression) { // e.g. assigning value to parameter
-      UExpression leftOperand = ((UBinaryExpression)parent).getLeftOperand();
-      if (leftOperand instanceof USimpleNameReferenceExpression) {
-        return isReferenceToNonNlsElement((USimpleNameReferenceExpression)leftOperand);
-      }
-    }
-    else if (parent instanceof UReturnExpression) {
+    if (parent instanceof UReturnExpression) {
       return isReturnExpressionInNonNlsMethod((UReturnExpression)parent);
     }
-    else if (parent instanceof UCallExpression) {
+    if (parent instanceof UCallExpression) {
       return isNonNlsArgument(expression, (UCallExpression)parent) ||
              isCallExpressionWithNonNlsReceiver((UCallExpression)parent);
     }
+
+    while (parent instanceof UBinaryExpression) {
+      if (!isAssignmentExpression((UBinaryExpression)parent)) {
+        // go upper to find assignment expression (or field/variable declaration)
+        parent = UastUtils.getParentOfType(parent, true, UBinaryExpression.class, UVariable.class);
+        if (parent instanceof UVariable) {
+          return isNonNlsAnnotated(parent);
+        }
+        continue;
+      }
+
+      UExpression leftOperand = ((UBinaryExpression)parent).getLeftOperand();
+      //TODO probably this doesn't cover all cases
+      return leftOperand instanceof USimpleNameReferenceExpression &&
+             isReferenceToNonNlsElement((USimpleNameReferenceExpression)leftOperand);
+    }
+
+    //TODO UExpressionList?
+
     return false;
   }
 
@@ -116,12 +146,25 @@ public final class NonNlsUastUtil {
   private static boolean isNonNlsArgument(@NotNull ULiteralExpression argument, @NotNull UCallExpression callExpression) {
     PsiParameter parameter = UastUtils.getParameterForArgument(callExpression, argument);
     if (parameter == null) return false;
-    if (AnnotationUtil.findAnnotation(parameter, AnnotationUtil.NON_NLS) != null) return true;
+    if (isNonNlsAnnotatedPsi(parameter)) return true;
 
     // special handling for equals()
     if (!HardcodedMethodConstants.EQUALS.equals(callExpression.getMethodName())) return false;
     PsiMethod method = callExpression.resolve();
     if (!MethodUtils.isEquals(method)) return false;
     return isCallExpressionWithNonNlsReceiver(callExpression);
+  }
+
+  //TODO looks dirty, is there a better way to check this?  <--  see UElementAsPsiInspection
+  private static boolean isAssignmentExpression(@NotNull UBinaryExpression expression) {
+    UIdentifier operatorIdentifier = expression.getOperatorIdentifier();
+    if (operatorIdentifier == null) return false;
+    String operatorName = operatorIdentifier.getName();
+    return operatorName.equals("=") || operatorName.equals("+=");
+  }
+
+  private static boolean isNonNlsAnnotatedPsi(@NotNull PsiElement element) {
+    return element instanceof PsiModifierListOwner &&
+           AnnotationUtil.findAnnotation((PsiModifierListOwner)element, AnnotationUtil.NON_NLS) != null;
   }
 }

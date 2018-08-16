@@ -1,33 +1,16 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.CompositeDiffPanel;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.FrameWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
 import org.jetbrains.annotations.NotNull;
@@ -35,13 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
-  public final static String ourDefaultTab = "Contents";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.MultiLevelDiffTool");
   private final List<DiffTool> myTools;
 
@@ -75,7 +55,8 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       builder.setDimensionServiceKey(request.getGroupKey());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           builder.getDialogWrapper().close(0);
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
@@ -93,7 +74,8 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       DiffUtil.initDiffFrame(request.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
 
       new AnAction() {
-        public void actionPerformed(final AnActionEvent e) {
+        @Override
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           Disposer.dispose(frameWrapper);
         }
       }.registerCustomShortcutSet(getActiveKeymapShortcuts("CloseContent"), diffPanel.getComponent());
@@ -103,32 +85,13 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   }
 
   private CompositeDiffPanel createPanel(final DiffRequest request, final Window window, @NotNull Disposable parentDisposable) {
-    final CompositeDiffPanel panel = new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
-    request.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
-    final List<Pair<String, DiffRequest>> layers = request.getOtherLayers();
-    if (layers != null) {
-      for (Pair<String, DiffRequest> layer : layers) {
-        layer.getSecond().getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
-      }
-    }
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        final String name = PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName();
-        request.getGenericData().remove(name);
-        if (layers != null) {
-          for (Pair<String, DiffRequest> layer : layers) {
-            layer.getSecond().getGenericData().remove(name);
-          }
-        }
-      }
-    });
-    return panel;
+    return new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
   }
 
+  @Override
   public DiffViewer viewerForRequest(Window window,
                                      @NotNull Disposable parentDisposable,
-                                      final String name, DiffRequest current) {
+                                     final String name, DiffRequest current) {
     DiffViewer viewer = null;
     for (DiffTool tool : myTools) {
       if (tool.canShow(current)) {
@@ -139,20 +102,6 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       }
     }
     return viewer;
-  }
-
-  public Map<String, DiffRequest> discloseRequest(DiffRequest request) {
-    final Map<String, DiffRequest> pairs = new TreeMap<>((o1, o2) -> {
-      if (ourDefaultTab.equals(o1)) return -1;
-      if (ourDefaultTab.equals(o2)) return 1;
-      return Comparing.compare(o1, o2);
-    });
-    final List<Pair<String, DiffRequest>> layers = request.getOtherLayers();
-    for (Pair<String, DiffRequest> layer : layers) {
-      pairs.put(layer.getFirst(), layer.getSecond());
-    }
-    pairs.put(ourDefaultTab, request);
-    return pairs;
   }
 
   @Override

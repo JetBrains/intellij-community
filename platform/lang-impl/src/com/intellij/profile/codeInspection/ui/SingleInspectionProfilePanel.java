@@ -441,8 +441,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     actions.add(actionManager.createExpandAllAction(myTreeExpander, myTreeTable));
     actions.add(actionManager.createCollapseAllAction(myTreeExpander, myTreeTable));
-    actions.add(new DumbAwareAction("Reset to Empty", "Reset to empty", AllIcons.Actions.Reset_to_empty){
-
+    actions.add(new DumbAwareAction("Reset to Empty", "Reset to empty", AllIcons.Actions.Unselectall) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myProfile != null && myProfile.isExecutable(myProjectProfileManager.getProject()));
@@ -851,7 +850,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
           new AnActionButtonUpdater() {
             @Override
-            public boolean isEnabled(AnActionEvent e) {
+            public boolean isEnabled(@NotNull AnActionEvent e) {
               final int selectedRow = scopesAndScopesAndSeveritiesTable.getSelectedRow();
               final int rowCount = scopesAndScopesAndSeveritiesTable.getRowCount();
               return rowCount - 1 != selectedRow;

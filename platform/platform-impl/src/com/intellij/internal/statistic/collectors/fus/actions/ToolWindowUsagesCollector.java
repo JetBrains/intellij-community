@@ -16,6 +16,7 @@ import java.util.Set;
  */
 public class ToolWindowUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     ToolWindowCollector.State state = ToolWindowCollector.getInstance().getState();
@@ -23,6 +24,7 @@ public class ToolWindowUsagesCollector extends ApplicationUsagesCollector implem
     return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(UsageDescriptorKeyValidator.ensureProperKey(e.getKey()), e.getValue()));
   }
 
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.toolwindows.performed";

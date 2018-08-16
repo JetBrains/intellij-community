@@ -224,7 +224,7 @@ public class NamePathComponent extends JPanel {
   public void addChangeListener(Runnable callback) {
     DocumentAdapter adapter = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         callback.run();
       }
     };
@@ -240,7 +240,7 @@ public class NamePathComponent extends JPanel {
     public NameFieldDocument() {
       addDocumentListener(new DocumentAdapter() {
         @Override
-        public void textChanged(DocumentEvent event) {
+        public void textChanged(@NotNull DocumentEvent event) {
           myIsNameChangedByUser = true;
           syncNameAndPath();
         }
@@ -287,7 +287,7 @@ public class NamePathComponent extends JPanel {
     public PathFieldDocument() {
       addDocumentListener(new DocumentAdapter() {
         @Override
-        public void textChanged(DocumentEvent event) {
+        public void textChanged(@NotNull DocumentEvent event) {
           myIsPathChangedByUser = true;
           syncPathAndName();
         }

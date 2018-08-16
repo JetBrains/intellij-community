@@ -47,6 +47,7 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
     this(expression, referenceElement, !RemoveUnusedVariableUtil.checkSideEffects(expression, null, new ArrayList<>()));
   }
 
+  @Override
   public void deleteElement() throws IncorrectOperationException {
     if (isSafeDelete()) {
       PsiElement element = getElement();

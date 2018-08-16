@@ -52,7 +52,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final FacetType type = myFacetType;
     if (type == null) return;
 

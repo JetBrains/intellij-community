@@ -34,32 +34,28 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   private static final int VERSION = 5;
   public static final Integer ANT_FILES_WITH_IMPORTS_KEY = new Integer(0);
   
-  private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = new DataIndexer<Integer, Void, FileContent>() {
-    @Override
-    @NotNull
-    public Map<Integer, Void> map(@NotNull final FileContent inputData) {
-      final Map<Integer, Void> map = new HashMap<>();
+  private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = inputData -> {
+    final Map<Integer, Void> map = new HashMap<>();
 
-      NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
-        private boolean isFirstElement = true;
-        @Override
-        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
-          if (isFirstElement) {
-            if (!"project".equalsIgnoreCase(elemName)) {
-              stop();
-            }
-            isFirstElement = false;
+    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
+      private boolean isFirstElement = true;
+      @Override
+      public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
+        if (isFirstElement) {
+          if (!"project".equalsIgnoreCase(elemName)) {
+            stop();
           }
-          else {
-            if ("import".equalsIgnoreCase(elemName) || "include".equalsIgnoreCase(elemName)) {
-              map.put(ANT_FILES_WITH_IMPORTS_KEY, null);
-              stop();
-            }
+          isFirstElement = false;
+        }
+        else {
+          if ("import".equalsIgnoreCase(elemName) || "include".equalsIgnoreCase(elemName)) {
+            map.put(ANT_FILES_WITH_IMPORTS_KEY, null);
+            stop();
           }
         }
-      });
-      return map;
-    }
+      }
+    });
+    return map;
   };
 
   @Override

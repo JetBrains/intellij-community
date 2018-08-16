@@ -85,6 +85,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     myIsConstant = isConstant;
   }
 
+  @Override
   protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
     final PsiElement element = getPhysicalElement(selectedExpr);
 
@@ -693,6 +694,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myParentClass = parentClass;
     }
 
+    @Override
     public void run() {
       try {
         InitializationPlace initializerPlace = mySettings.getInitializerPlace();

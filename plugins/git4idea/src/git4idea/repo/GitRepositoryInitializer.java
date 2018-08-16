@@ -19,7 +19,7 @@ public class GitRepositoryInitializer implements VcsRepositoryInitializer {
   public void initRepository(@NotNull File rootDir) throws VcsException {
     // TODO remove the fake project instance when GitHandler knows how to run without project
     GitLineHandler handler = new GitLineHandler(ProjectManager.getInstance().getDefaultProject(), rootDir, GitCommand.INIT);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   @NotNull

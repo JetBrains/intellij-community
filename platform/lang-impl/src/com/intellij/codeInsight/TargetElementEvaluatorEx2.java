@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.Editor;
@@ -29,18 +15,18 @@ import java.util.Collection;
 /**
  * Advanced customization interface used in {@link TargetElementUtil} class to support specifics of various languages.
  * The exact API is not documented and is subject to change.
- * Please refer to {@link TargetElementUtil} for additional information.  
+ * Please refer to {@link TargetElementUtil} for additional information.
  */
 public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluator {
-  @Nullable 
+  @Nullable
   public PsiElement getNamedElement(@NotNull PsiElement element) {
     return null;
   }
-  
+
   public boolean isAcceptableNamedParent(@NotNull PsiElement parent) {
     return true;
   }
-                   
+
   @Nullable
   public PsiElement adjustElement(Editor editor, int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     return element;
@@ -62,7 +48,7 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
 
   @Nullable
   public PsiElement adjustReference(@NotNull PsiReference ref) {
-    return null; 
+    return null;
   }
 
   @Nullable
@@ -80,12 +66,13 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
     return ThreeState.UNSURE;
   }
 
+  @Override
   public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
     return true;
   }
-  
+
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @NotNull PsiElement element) {
-    return true;  
+    return true;
   }
 
   /**

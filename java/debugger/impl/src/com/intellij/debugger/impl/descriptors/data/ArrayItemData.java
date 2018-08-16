@@ -36,10 +36,12 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
     myIndex = idx;
   }
 
+  @Override
   protected ArrayElementDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ArrayElementDescriptorImpl(project, myArray, myIndex);
   }
 
+  @Override
   public DisplayKey<ArrayElementDescriptorImpl> getDisplayKey() {
     return new ArrayItemDisplayKeyImpl(myIndex);
   }

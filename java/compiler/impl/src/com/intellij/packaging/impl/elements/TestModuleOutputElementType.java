@@ -43,6 +43,7 @@ public class TestModuleOutputElementType extends ModuleOutputElementTypeBase<Tes
     return new TestModuleOutputPackagingElement(project);
   }
 
+  @Override
   protected ModuleOutputPackagingElementBase createElement(@NotNull Project project, @NotNull ModulePointer pointer) {
     return new TestModuleOutputPackagingElement(project, pointer);
   }
@@ -63,6 +64,7 @@ public class TestModuleOutputElementType extends ModuleOutputElementTypeBase<Tes
     return CompilerBundle.message("node.text.0.test.compile.output", moduleName);
   }
 
+  @Override
   public boolean isSuitableModule(@NotNull ModulesProvider modulesProvider, @NotNull Module module) {
     return !modulesProvider.getRootModel(module).getSourceRoots(JavaModuleSourceRootTypes.TESTS).isEmpty();
   }

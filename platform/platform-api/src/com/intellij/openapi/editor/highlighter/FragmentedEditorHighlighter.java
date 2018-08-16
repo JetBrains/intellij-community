@@ -75,7 +75,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
       }
 
       if (range.getEndOffset() < iterator.getEnd()) {
-        offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shoene separators
+        offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shown separators
         int lastEnd = myPieces.isEmpty() ? -1 : myPieces.get(myPieces.size() - 1).getEnd();
         addElement(new Element(Math.max(offset - 1 - myAdditionalOffset, lastEnd), offset, null, TextAttributes.ERASE_MARKER));
         index++;

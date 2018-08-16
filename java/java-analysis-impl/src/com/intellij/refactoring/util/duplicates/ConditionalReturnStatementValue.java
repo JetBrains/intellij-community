@@ -21,6 +21,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -32,6 +34,7 @@ public class ConditionalReturnStatementValue implements ReturnValue {
     myReturnValue = returnValue;
   }
 
+  @Override
   public boolean isEquivalent(ReturnValue other) {
     if (!(other instanceof ConditionalReturnStatementValue)) return false;
     PsiExpression otherReturnValue = ((ConditionalReturnStatementValue) other).myReturnValue;
@@ -39,7 +42,9 @@ public class ConditionalReturnStatementValue implements ReturnValue {
     return PsiEquivalenceUtil.areElementsEquivalent(myReturnValue, otherReturnValue);
   }
 
-  public PsiStatement createReplacement(final PsiMethod extractedMethod, PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
+  @Override
+  @Nullable
+  public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     PsiIfStatement statement;
     if (myReturnValue == null) {

@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
+  @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
 
@@ -60,10 +61,12 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   protected abstract boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context);
 
+  @Override
   public String toString(@Nullable String s, ConvertContext context) {
     return s;
   }
 
+  @Override
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
     MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(context.getProject());
@@ -94,6 +97,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
   }
 
+  @Override
   public boolean isSoft(@NotNull DomElement element) {
     DomElement dependencyOrPluginElement = element.getParent();
     if (dependencyOrPluginElement instanceof MavenDomDependency) {
@@ -155,11 +159,13 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private static class MyUpdateIndicesFix implements LocalQuickFix {
+    @Override
     @NotNull
     public String getFamilyName() {
       return MavenDomBundle.message("inspection.group");
     }
 
+    @Override
     @NotNull
     public String getName() {
       return MavenDomBundle.message("fix.update.indices");
@@ -170,6 +176,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       MavenProjectIndicesManager.getInstance(project).scheduleUpdateAll();
     }
@@ -352,6 +359,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return myPlugin ? "Plugin" : "Build Extension";
     }
 
+    @Override
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
       if (StringUtil.isEmpty(id.getGroupId())) {
         for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {

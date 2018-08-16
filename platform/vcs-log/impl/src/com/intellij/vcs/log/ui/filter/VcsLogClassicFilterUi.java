@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -125,7 +111,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     actionGroup.add(new FilterActionComponent(() -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi()));
     actionGroup.add(new FilterActionComponent(() -> new DateFilterPopupComponent(myDateFilterModel).initUi()));
     actionGroup.add(new FilterActionComponent(
-      () -> new StructureFilterPopupComponent(myStructureFilterModel, myUi.getColorManager()).initUi()));
+      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel, myUi.getColorManager()).initUi()));
     return actionGroup;
   }
 
@@ -215,8 +201,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       myComponentCreator = componentCreator;
     }
 
+    @NotNull
     @Override
-    public JComponent createCustomComponent(Presentation presentation) {
+    public JComponent createCustomComponent(@NotNull Presentation presentation) {
       return myComponentCreator.compute();
     }
 
@@ -311,7 +298,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  private static class FileFilterModel extends FilterModel<VcsLogFileFilter> {
+  static class FileFilterModel extends FilterModel<VcsLogFileFilter> {
     @NotNull private static final String ROOTS = "roots";
     @NotNull private static final String STRUCTURE = "structure";
     @NotNull private final Set<VirtualFile> myRoots;
@@ -338,13 +325,18 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
 
     @NotNull
-    private static List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
+    static List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
       return ContainerUtil.map(filter.getFiles(), FilePath::getPath);
     }
 
     @NotNull
     private static List<String> getFilterValues(@NotNull VcsLogRootFilter filter) {
       return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
+    }
+
+    @NotNull
+    static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
+      return new VcsLogStructureFilterImpl(ContainerUtil.map(values, VcsUtil::getFilePath));
     }
 
     @Nullable
@@ -380,11 +372,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
       if (selectedRoots.isEmpty()) return null;
       return new VcsLogRootFilterImpl(selectedRoots);
-    }
-
-    @NotNull
-    private static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return new VcsLogStructureFilterImpl(ContainerUtil.map(values, VcsUtil::getFilePath));
     }
 
     @NotNull
@@ -462,7 +449,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       getTextEditor().addActionListener(e -> applyFilter());
       addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           try {
             myTextFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
           }

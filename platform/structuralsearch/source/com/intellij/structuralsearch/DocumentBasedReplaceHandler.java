@@ -24,6 +24,7 @@ public class DocumentBasedReplaceHandler extends StructuralReplaceHandler {
     myProject = project;
   }
 
+  @Override
   public void replace(ReplacementInfo info, ReplaceOptions options) {
     final RangeMarker rangeMarker = myRangeMarkers.get(info);
     final Document document = rangeMarker.getDocument();

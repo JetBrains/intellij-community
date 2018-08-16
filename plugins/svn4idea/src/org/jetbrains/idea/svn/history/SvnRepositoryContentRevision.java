@@ -37,6 +37,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     myRevision = revision;
   }
 
+  @Override
   @NotNull
   public String getContent() throws VcsException {
     return ContentRevisionCache.getAsString(getContentAsBytes(), myFile, null);
@@ -76,6 +77,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     return buffer;
   }
 
+  @Override
   @NotNull
   public SvnRevisionNumber getRevisionNumber() {
     return new SvnRevisionNumber(Revision.of(myRevision));
@@ -138,6 +140,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
       return myException;
     }
 
+    @Override
     public void run() {
       ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
       if (progress != null) {

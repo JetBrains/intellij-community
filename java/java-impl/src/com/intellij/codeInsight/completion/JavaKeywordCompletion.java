@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -115,7 +116,8 @@ public class JavaKeywordCompletion {
   JavaKeywordCompletion(CompletionParameters parameters, JavaCompletionSession session) {
     myParameters = parameters;
     mySession = session;
-    myKeywordMatcher = new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
+    myKeywordMatcher = Registry.is("ide.completion.typo.tolerance") ? session.getMatcher()
+                                                                    : new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
@@ -401,7 +403,7 @@ public class JavaKeywordCompletion {
             }
 
             @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
+            public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               super.handleInsert(context, item);
               TailType.insertChar(context.getEditor(), context.getTailOffset(), ';');
             }
@@ -490,7 +492,7 @@ public class JavaKeywordCompletion {
         createKeyword(PsiKeyword.INSTANCEOF),
         new InsertHandler<LookupElementDecorator<LookupElement>>() {
           @Override
-          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
             TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
             if (tailType.isApplicable(context)) {
               tailType.processTail(context.getEditor(), context.getTailOffset());

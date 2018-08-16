@@ -23,7 +23,7 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware, Action
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
     ActionPresentation actionPresentation = myAction.getPresentation();

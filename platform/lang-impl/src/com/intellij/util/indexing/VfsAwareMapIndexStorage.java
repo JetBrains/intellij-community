@@ -218,57 +218,39 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
 
   @NotNull
   private static TIntHashSet loadHashedIds(@NotNull File fileWithCaches) throws IOException {
-    DataInputStream inputStream = null;
-    try {
-      inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(fileWithCaches)));
+    try (DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(fileWithCaches)))) {
       int capacity = DataInputOutputUtil.readINT(inputStream);
       TIntHashSet hashMaskSet = new TIntHashSet(capacity);
-      while(capacity > 0) {
+      while (capacity > 0) {
         hashMaskSet.add(DataInputOutputUtil.readINT(inputStream));
         --capacity;
       }
-      inputStream.close();
       return hashMaskSet;
-    }
-    finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        }
-        catch (IOException ignored) {}
-      }
     }
   }
 
   private void saveHashedIds(@NotNull TIntHashSet hashMaskSet, int largestId, @NotNull GlobalSearchScope scope) {
     File newFileWithCaches = getSavedProjectFileValueIds(largestId, scope);
     assert newFileWithCaches != null;
-    DataOutputStream stream = null;
 
-    boolean savedSuccessfully = false;
-    try {
-      stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)));
+    boolean savedSuccessfully;
+    try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)))) {
       DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
-      final DataOutputStream finalStream = stream;
       savedSuccessfully = hashMaskSet.forEach(value -> {
         try {
-          DataInputOutputUtil.writeINT(finalStream, value);
+          DataInputOutputUtil.writeINT(stream, value);
           return true;
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
           return false;
         }
       });
     }
     catch (IOException ignored) {
+      savedSuccessfully = false;
     }
-    finally {
-      if (stream != null) {
-        try {
-          stream.close();
-          if (savedSuccessfully) myLastScannedId = largestId;
-        }
-        catch (IOException ignored) {}
-      }
+    if (savedSuccessfully) {
+      myLastScannedId = largestId;
     }
   }
 

@@ -9,13 +9,15 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.SearchDialog;
 import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
+import org.jetbrains.annotations.NotNull;
 
 public class StructuralSearchAction extends AnAction {
 
   /** Handles IDEA action event
    * @param event the event of action
    */
-  public void actionPerformed(AnActionEvent event) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
     triggerAction(null, SearchContext.buildFromDataContext(event.getDataContext()));
   }
 
@@ -47,7 +49,8 @@ public class StructuralSearchAction extends AnAction {
   /** Updates the state of the action
    * @param event the action event
    */
-  public void update(AnActionEvent event) {
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext context = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(context);

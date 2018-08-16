@@ -34,6 +34,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -131,10 +132,12 @@ public class GenerationOptionsImpl extends GenerationOptions {
     return myGenerateIdeaHomeProperty;
   }
 
+  @Override
   public String getBuildFileName() {
     return getOutputFileName() + ".xml";
   }
 
+  @Override
   public String getPropertiesFileName() {
     return getOutputFileName() + ".properties";
   }
@@ -166,6 +169,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
     return myMacroReplacementMap.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   public String getPropertyRefForUrl(String url) {
     return myOutputUrlToPropertyRefMap.get(url);
   }
@@ -230,22 +234,29 @@ public class GenerationOptionsImpl extends GenerationOptions {
     }
 
     final Graph<ModuleChunk> moduleChunkGraph = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleChunk>() {
+      @Override
+      @NotNull
       public Collection<ModuleChunk> getNodes() {
         return map.values();
       }
 
+      @NotNull
+      @Override
       public Iterator<ModuleChunk> getIn(ModuleChunk n) {
         final Chunk<Module> chunk = reverseMap.get(n);
         final Iterator<Chunk<Module>> in = chunkGraph.getIn(chunk);
         return new Iterator<ModuleChunk>() {
+          @Override
           public boolean hasNext() {
             return in.hasNext();
           }
 
+          @Override
           public ModuleChunk next() {
             return map.get(in.next());
           }
 
+          @Override
           public void remove() {
             throw new IncorrectOperationException("Method is not supported");
           }
@@ -276,6 +287,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   /**
    * {@inheritDoc}
    */
+  @Override
   public ChunkCustomCompilerExtension[] getCustomCompilers() {
     ChunkCustomCompilerExtension[] sorted = myCustomCompilers.toArray(new ChunkCustomCompilerExtension[0]);
     Arrays.sort(sorted, ChunkCustomCompilerExtension.COMPARATOR);
@@ -297,6 +309,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   private static class ChunksComparator implements Comparator<ModuleChunk> {
     final Map<ModuleChunk, Integer> myCachedLevels = new HashMap<>();
 
+    @Override
     public int compare(final ModuleChunk o1, final ModuleChunk o2) {
       final int level1 = getChunkLevel(o1);
       final int level2 = getChunkLevel(o2);

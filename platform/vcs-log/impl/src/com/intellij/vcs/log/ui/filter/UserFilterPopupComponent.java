@@ -31,23 +31,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 
 /**
  * Show a popup to select a user or enter the user name.
  */
-class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogUserFilter> {
+public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogUserFilter> {
+  public static final String USER_FILER_NAME = "User";
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final List<String> myAllUsers;
 
   UserFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                            @NotNull VcsLogData logData,
                            @NotNull FilterModel<VcsLogUserFilter> filterModel) {
-    super("User", uiProperties, filterModel);
+    super(USER_FILER_NAME, uiProperties, filterModel);
     myLogData = logData;
-    myAllUsers = collectUsers(logData);
   }
 
   @NotNull
@@ -79,7 +77,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SpeedsearchPredefinedValueAction(VcsLogUserFilterImpl.ME));
     group.add(Separator.getInstance());
-    for (String user : myAllUsers) {
+    for (String user : collectUsers(myLogData)) {
       group.add(new SpeedsearchPredefinedValueAction(user));
     }
     return group;
@@ -87,19 +85,8 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
 
   @NotNull
   @Override
-  protected List<List<String>> getRecentValuesFromSettings() {
-    return myUiProperties.getRecentlyFilteredUserGroups();
-  }
-
-  @Override
-  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredUserGroup(new ArrayList<>(values));
-  }
-
-  @NotNull
-  @Override
   protected List<String> getAllValues() {
-    return myAllUsers;
+    return collectUsers(myLogData);
   }
 
   @NotNull

@@ -142,11 +142,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement();
+        node.dropProblemCountCaches();
       }
 
       @Override
       public void includeNode(@NotNull InspectionTreeNode node) {
         node.amnestyElement();
+        node.dropProblemCountCaches();
       }
 
       @Override
@@ -157,9 +159,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       @Override
       public void onDone(boolean isExcludeAction) {
         if (isExcludeAction) {
-          if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-            myTree.removeSelectedProblems();
-          }
+          myTree.removeSelectedProblems();
           myTree.repaint();
         }
         else {
@@ -228,11 +228,26 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     SmartExpander.installOn(myTree);
   }
 
+  @NotNull
   private OccurenceNavigatorSupport initOccurenceNavigator() {
     return new OccurenceNavigatorSupport(myTree) {
       @Override
+      protected boolean isOccurrenceNode(@NotNull DefaultMutableTreeNode node) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded()) {
+          return false;
+        }
+        if (node instanceof RefElementNode) {
+          final RefElementNode refNode = (RefElementNode)node;
+          if (refNode.hasDescriptorsUnder()) return false;
+          final RefEntity element = refNode.getElement();
+          return element != null && element.isValid();
+        }
+        return node instanceof ProblemDescriptionNode;
+      }
+
+      @Override
       @Nullable
-      protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
+      protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
         if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded()) {
           return null;
         }
@@ -250,19 +265,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }
         }
         else if (node instanceof ProblemDescriptionNode) {
-          boolean isValid;
-          if (((ProblemDescriptionNode)node).isValid()) {
-            if (((ProblemDescriptionNode)node).isQuickFixAppliedFromView()) {
-              isValid = ((ProblemDescriptionNode)node).calculateIsValid();
-            } else {
-              isValid = true;
-            }
-          } else {
-            isValid = false;
-          }
+          ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+          boolean isValid = problemNode.isValid() && (!problemNode.isQuickFixAppliedFromView() ||
+                                                      problemNode.calculateIsValid());
           return isValid
-                 ? navigate(((ProblemDescriptionNode)node).getDescriptor())
-                 : InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
+                 ? navigate(problemNode.getDescriptor())
+                 : InspectionResultsViewUtil.getNavigatableForInvalidNode(problemNode);
         }
         return null;
       }
@@ -729,7 +737,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     if (DATA_KEY.is(dataId)) return this;
     if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;

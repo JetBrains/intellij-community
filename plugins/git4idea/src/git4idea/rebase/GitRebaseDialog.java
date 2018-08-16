@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -43,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -94,10 +81,6 @@ public class GitRebaseDialog extends DialogWrapper {
    * The root panel of the dialog
    */
   private JPanel myPanel;
-  /**
-   * If selected, remote branches are shown as well
-   */
-  protected JCheckBox myShowRemoteBranchesCheckBox;
   /**
    * Preserve merges checkbox
    */
@@ -156,6 +139,7 @@ public class GitRebaseDialog extends DialogWrapper {
                                                 validateRunnable);
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, null);
     myGitRootComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateFields();
       }
@@ -164,12 +148,11 @@ public class GitRebaseDialog extends DialogWrapper {
     myInteractiveCheckBox.setSelected(mySettings.isInteractive());
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
     myShowTagsCheckBox.setSelected(mySettings.showTags());
-    myShowRemoteBranchesCheckBox.setSelected(mySettings.showRemoteBranches());
-    overwriteOntoForCurrentBranch(mySettings);
-
-    myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
 
     setupBranches();
+    overwriteOntoForCurrentBranch(mySettings);
+    myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
+
     validateFields();
   }
 
@@ -216,7 +199,6 @@ public class GitRebaseDialog extends DialogWrapper {
     mySettings.setInteractive(myInteractiveCheckBox.isSelected());
     mySettings.setPreserveMerges(myPreserveMergesCheckBox.isSelected());
     mySettings.setShowTags(myShowTagsCheckBox.isSelected());
-    mySettings.setShowRemoteBranches(myShowRemoteBranchesCheckBox.isSelected());
     String onto = StringUtil.nullize(GitUIUtil.getTextField(myOntoComboBox).getText(), true);
     if (onto != null && !onto.equals(myOriginalOntoBranch)) {
       mySettings.setOnto(onto);
@@ -256,26 +238,29 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   private void setupBranches() {
     GitUIUtil.getTextField(myOntoComboBox).getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateFields();
       }
     });
     final ActionListener rootListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         loadRefs();
         updateBranches();
       }
     };
     final ActionListener showListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         updateOntoFrom();
       }
     };
-    myShowRemoteBranchesCheckBox.addActionListener(showListener);
     myShowTagsCheckBox.addActionListener(showListener);
     rootListener.actionPerformed(null);
     myGitRootComboBox.addActionListener(rootListener);
     myBranchComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         updateTrackedBranch();
       }
@@ -308,24 +293,20 @@ public class GitRebaseDialog extends DialogWrapper {
     String from = GitUIUtil.getTextField(myFromComboBox).getText();
     myFromComboBox.removeAllItems();
     myOntoComboBox.removeAllItems();
-    for (GitBranch b : myLocalBranches) {
-      myFromComboBox.addItem(b);
-      myOntoComboBox.addItem(b);
-    }
-    if (myShowRemoteBranchesCheckBox.isSelected()) {
-      for (GitBranch b : myRemoteBranches) {
-        myFromComboBox.addItem(b);
-        myOntoComboBox.addItem(b);
-      }
-    }
+    addRefsToOntoAndFrom(myLocalBranches);
+    addRefsToOntoAndFrom(myRemoteBranches);
     if (myShowTagsCheckBox.isSelected()) {
-      for (GitTag t : myTags) {
-        myFromComboBox.addItem(t);
-        myOntoComboBox.addItem(t);
-      }
+      addRefsToOntoAndFrom(myTags);
     }
     GitUIUtil.getTextField(myOntoComboBox).setText(onto);
     GitUIUtil.getTextField(myFromComboBox).setText(from);
+  }
+
+  private void addRefsToOntoAndFrom(Collection<? extends GitReference> refs) {
+    for (GitReference ref: refs) {
+      myFromComboBox.addItem(ref);
+      myOntoComboBox.addItem(ref);
+    }
   }
 
   /**
@@ -365,7 +346,7 @@ public class GitRebaseDialog extends DialogWrapper {
         String remote = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".remote");
         String mergeBranch = GitConfigUtil.getValue(myProject, root, "branch." + currentBranch + ".merge");
         if (remote == null || mergeBranch == null) {
-          trackedBranch = null;
+          trackedBranch = myRepositoryManager.getRepositoryForRoot(root).getBranches().findBranchByName("master");
         }
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
@@ -437,6 +418,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * {@inheritDoc}
    */
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

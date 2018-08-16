@@ -36,6 +36,11 @@ public class ServiceManager {
   }
 
   @Nullable
+  public static <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+    return doGetService(ApplicationManager.getApplication(), serviceClass, false);
+  }
+
+  @Nullable
   private static <T> T doGetService(ComponentManager componentManager, @NotNull Class<T> serviceClass, boolean isCreate) {
     String componentKey = serviceClass.getName();
 

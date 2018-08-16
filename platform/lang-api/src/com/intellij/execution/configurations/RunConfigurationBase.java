@@ -44,7 +44,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<>();
 
-  private List<BeforeRunTask> myBeforeRunTasks = Collections.emptyList();
+  private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
   protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, String name) {
     myProject = project;
@@ -64,12 +64,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   @NotNull
   @Transient
-  public List<BeforeRunTask> getBeforeRunTasks() {
+  public List<BeforeRunTask<?>> getBeforeRunTasks() {
     return myBeforeRunTasks;
   }
 
   @Override
-  public void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
+  public void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
     myBeforeRunTasks = value;
   }
 

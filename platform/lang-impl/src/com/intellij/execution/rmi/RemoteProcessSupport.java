@@ -152,12 +152,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }
     }
-    if (ref.isNull()) throw new RuntimeException("Unable to acquire remote proxy for: " + getName(target));
     RunningInfo info = ref.get();
-    if (info.handler == null) {
-      String message = info instanceof FailedInfo ? ((FailedInfo)info).stderr : null;
-      Throwable cause = info instanceof FailedInfo ? ((FailedInfo)info).cause : null;
-      throw new ExecutionException(message, cause);
+    if (info instanceof FailedInfo) {
+      FailedInfo o = (FailedInfo)info;
+      String message = o.cause != null && StringUtil.isEmptyOrSpaces(o.stderr) ? o.cause.getMessage() : o.stderr;
+      throw new ExecutionException(message, o.cause);
+    }
+    else if (info == null || info.handler == null) {
+      throw new ExecutionException("Unable to acquire remote proxy for: " + getName(target));
     }
     return acquire(info);
   }

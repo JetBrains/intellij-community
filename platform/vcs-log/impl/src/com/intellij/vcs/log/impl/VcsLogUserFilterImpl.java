@@ -59,6 +59,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     }
   }
 
+  @Override
   @NotNull
   public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
     Set<VcsUser> result = ContainerUtil.newHashSet();

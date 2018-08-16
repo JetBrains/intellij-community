@@ -22,6 +22,7 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Resize image to actual size.
@@ -31,7 +32,8 @@ import org.intellij.images.ui.ImageComponentDecorator;
  * @see ImageZoomModel#setZoomFactor
  */
 public final class ActualSizeAction extends AnAction implements DumbAware {
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
         ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
         if (decorator != null) {
             ImageZoomModel zoomModel = decorator.getZoomModel();
@@ -40,7 +42,8 @@ public final class ActualSizeAction extends AnAction implements DumbAware {
         }
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
         super.update(e);
         if (ImageEditorActionUtil.setEnabled(e)) {
             ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);

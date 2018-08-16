@@ -86,6 +86,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     return true;
   }
 
+  @NotNull
   protected abstract String getViewName();
 
   protected Map<BuildInfo, BuildView> getBuildsMap() {
@@ -237,7 +238,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       boolean selected = !myContent.isPinned();
       if (selected) {
         myContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);

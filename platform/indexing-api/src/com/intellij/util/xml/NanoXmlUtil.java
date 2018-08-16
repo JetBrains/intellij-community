@@ -135,12 +135,8 @@ public class NanoXmlUtil {
 
   @NotNull
   public static XmlFileHeader parseHeaderWithException(final VirtualFile file) throws IOException {
-    final InputStream stream = file.getInputStream();
-    try {
+    try (InputStream stream = file.getInputStream()) {
       return parseHeader(new MyXMLReader(stream));
-    }
-    finally {
-      stream.close();
     }
   }
 

@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,6 +15,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -203,7 +205,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     inlineCallArguments(callExpression, element, ct);
     // body could be invalidated after inlining
     expression = LambdaUtil.extractSingleExpressionFromBody(element.getBody());
-    ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(expression));
+    ct.replaceAndRestoreComments(callExpression, expression);
   }
 
   private static void replaceCodeBlock(PsiLambdaExpression element) {
@@ -220,24 +222,39 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
     PsiReturnStatement statement = null;
     if (statements.length > 0) {
-      final PsiStatement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class, false);
+      PsiElement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class, false);
       statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
       if (anchor != null) {
-        final PsiElement gParent = anchor.getParent();
-        for (PsiElement child : body.getChildren()) {
-          if (child != statement && !(child instanceof PsiJavaToken)) {
-            gParent.addBefore(ct.markUnchanged(child), anchor);
+        PsiElement gParent = anchor.getParent();
+        if (hasNameConflict(statements, anchor)) {
+          gParent.addBefore(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(ct.text(body), anchor), anchor);
+        }
+        else {
+          for (PsiElement child : body.getChildren()) {
+            if (child != statement && !(child instanceof PsiJavaToken)) {
+              gParent.addBefore(ct.markUnchanged(child), anchor);
+            }
           }
         }
       }
     }
     final PsiExpression returnValue = statement == null ? null : statement.getReturnValue();
     if (returnValue != null) {
-      ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(returnValue));
+      ct.replaceAndRestoreComments(callExpression, returnValue);
     }
     else {
       ct.deleteAndRestoreComments(callExpression);
     }
+  }
+
+  private static boolean hasNameConflict(PsiStatement[] statements, PsiElement anchor) {
+    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(anchor.getProject());
+    return StreamEx.of(statements).select(PsiDeclarationStatement.class)
+      .flatArray(PsiDeclarationStatement::getDeclaredElements)
+      .select(PsiNamedElement.class)
+      .map(PsiNamedElement::getName)
+      .nonNull()
+      .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, anchor, true)));
   }
 
   private static void inlineCallArguments(PsiMethodCallExpression callExpression,

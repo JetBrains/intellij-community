@@ -123,16 +123,10 @@ public class ProcessListUtil {
       if (pid == -1) continue;
 
       List<String> cmdline;
-      try {
-        FileInputStream stream = new FileInputStream(new File(each, "cmdline"));
-        try {
-          //noinspection SSBasedInspection - no better candidate for system encoding anyways 
-          String cmdlineString = new String(FileUtil.loadBytes(stream));
-          cmdline = StringUtil.split(cmdlineString, "\0");
-        }
-        finally {
-          stream.close();
-        }
+      try (FileInputStream stream = new FileInputStream(new File(each, "cmdline"))) {
+        //noinspection SSBasedInspection - no better candidate for system encoding anyways
+        String cmdlineString = new String(FileUtil.loadBytes(stream));
+        cmdline = StringUtil.split(cmdlineString, "\0");
       }
       catch (IOException e) {
         continue;

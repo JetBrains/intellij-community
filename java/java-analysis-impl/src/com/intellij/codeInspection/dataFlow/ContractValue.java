@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,10 @@ public abstract class ContractValue {
   }
 
   public OptionalInt getNullCheckedArgument(boolean equalToNull) {
+    return getArgumentComparedTo(nullValue(), equalToNull);
+  }
+
+  public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
     return OptionalInt.empty();
   }
 
@@ -115,8 +120,7 @@ public abstract class ContractValue {
       if (arguments.myArguments.length <= myIndex) {
         return DfaUnknownValue.getInstance();
       }
-      DfaValue arg = arguments.myArguments[myIndex];
-      return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
+      return arguments.myArguments[myIndex];
     }
 
     @Override
@@ -150,10 +154,10 @@ public abstract class ContractValue {
       new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), "empty");
     static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
-    private final Function<DfaValueFactory, DfaValue> mySupplier;
+    private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
     private final String myPresentation;
 
-    IndependentValue(Function<DfaValueFactory, DfaValue> supplier, String presentation) {
+    IndependentValue(Function<? super DfaValueFactory, ? extends DfaValue> supplier, String presentation) {
       mySupplier = supplier;
       myPresentation = presentation;
     }
@@ -243,7 +247,7 @@ public abstract class ContractValue {
       if (index >= 0 && index < arguments.myArguments.length) {
         DfaValue arg = arguments.myArguments[index];
         if (arg instanceof DfaFactMapValue) {
-          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.CAN_BE_NULL, false);
+          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
           if (newArg != arg) {
             DfaValue[] newArguments = arguments.myArguments.clone();
             newArguments[index] = newArg;
@@ -255,28 +259,39 @@ public abstract class ContractValue {
     }
 
     @Override
-    public OptionalInt getNullCheckedArgument(boolean equalToNull) {
-      if (myRelationType == DfaRelationValue.RelationType.equivalence(equalToNull)) {
-        ContractValue notNull;
-        if (myLeft == IndependentValue.NULL) {
-          notNull = myRight;
+    public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
+      if (myRelationType == DfaRelationValue.RelationType.equivalence(equal)) {
+        ContractValue other;
+        if (myLeft == value) {
+          other = myRight;
         }
-        else if (myRight == IndependentValue.NULL) {
-          notNull = myLeft;
+        else if (myRight == value) {
+          other = myLeft;
         }
         else {
           return OptionalInt.empty();
         }
-        if (notNull instanceof Argument) {
-          return OptionalInt.of(((Argument)notNull).myIndex);
+        if (other instanceof Argument) {
+          return OptionalInt.of(((Argument)other).myIndex);
         }
+      }
+      if (value == IndependentValue.FALSE) {
+        return getArgumentComparedTo(IndependentValue.TRUE, !equal);
       }
       return OptionalInt.empty();
     }
 
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
-      return factory.createCondition(myLeft.makeDfaValue(factory, arguments), myRelationType, myRight.makeDfaValue(factory, arguments));
+      DfaValue left = myLeft.makeDfaValue(factory, arguments);
+      DfaValue right = myRight.makeDfaValue(factory, arguments);
+      if (left instanceof DfaConstValue && ((DfaConstValue)left).getType() instanceof PsiPrimitiveType && right instanceof DfaBoxedValue) {
+        right = ((DfaBoxedValue)right).getWrappedValue();
+      }
+      if (right instanceof DfaConstValue && ((DfaConstValue)right).getType() instanceof PsiPrimitiveType && left instanceof DfaBoxedValue) {
+        left = ((DfaBoxedValue)left).getWrappedValue();
+      }
+      return factory.createCondition(left, myRelationType, right);
     }
 
     @Override

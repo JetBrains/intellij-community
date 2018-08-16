@@ -374,7 +374,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final String functionQName = function.getQualifiedName();
 
     if ("typing.cast".equals(functionQName)) {
@@ -775,12 +775,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static Ref<PyType> getTypeForResolvedElement(@Nullable PyTargetExpression alias,
                                                        @NotNull PsiElement resolved,
                                                        @NotNull Context context) {
-    if (context.getExpressionCache().contains(resolved)) {
-      // Recursive types are not yet supported
-      return null;
+    if (alias != null) {
+      if (context.getExpressionCache().contains(alias)) {
+        // Recursive types are not yet supported
+        return null;
+      }
+      context.getExpressionCache().add(alias);
     }
-
-    context.getExpressionCache().add(resolved);
     try {
       final PyType unionType = getUnionType(resolved, context);
       if (unionType != null) {
@@ -825,7 +826,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return null;
     }
     finally {
-      context.getExpressionCache().remove(resolved);
+      if (alias != null) {
+        context.getExpressionCache().remove(alias);
+      }
     }
   }
 

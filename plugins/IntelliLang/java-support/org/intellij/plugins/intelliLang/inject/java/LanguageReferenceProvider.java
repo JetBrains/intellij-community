@@ -35,6 +35,7 @@ import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvi
  */
 public final class LanguageReferenceProvider extends PsiReferenceContributor {
 
+  @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
     registerUastReferenceProvider(registrar, stringLiteralExpression().annotationParam(StandardPatterns.string().with(

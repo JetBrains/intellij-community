@@ -49,6 +49,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     super(project, xBreakpoint);
   }
 
+  @Override
   public Key<? extends ExceptionBreakpoint> getCategory() {
     return CATEGORY;
   }
@@ -72,29 +73,36 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     return dotIndex >= 0? qualifiedName.substring(0, dotIndex) : "";
   }
 
+  @Override
   public String getClassName() {
     return getQualifiedName();
   }
 
+  @Override
   public String getPackageName() {
     return getProperties().myPackageName;
   }
 
+  @Override
   public PsiClass getPsiClass() {
     return ReadAction.compute(() -> getQualifiedName() != null ? DebuggerUtils.findClass(getQualifiedName(), myProject, GlobalSearchScope.allScope(myProject)) : null);
   }
 
+  @Override
   public String getDisplayName() {
     return DebuggerBundle.message("breakpoint.exception.breakpoint.display.name", getQualifiedName());
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
+  @Override
   public void reload() {
   }
 
+  @Override
   public void createRequest(final DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!shouldCreateRequest(debugProcess)) {
@@ -114,6 +122,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     }
   }
 
+  @Override
   public void processClassPrepare(DebugProcess process, ReferenceType refType) {
     DebugProcessImpl debugProcess = (DebugProcessImpl)process;
     if (shouldCreateRequest(debugProcess, true)) {
@@ -137,13 +146,15 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     return event.location().declaringType().name();
   }
 
+  @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     if(event instanceof ExceptionEvent) {
       return ((ExceptionEvent) event).exception();
     }
-    return super.getThisObject(context, event);    
+    return super.getThisObject(context, event);
   }
 
+  @Override
   public String getEventMessage(LocatableEvent event) {
     String exceptionName = (getQualifiedName() != null)? getQualifiedName() : CommonClassNames.JAVA_LANG_THROWABLE;
     String threadName    = null;
@@ -190,6 +201,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     return super.evaluateCondition(context, event);
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
@@ -204,6 +216,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   //  }
   //}
 
+  @Override
   public PsiElement getEvaluationElement() {
     if (getClassName() == null) {
       return null;
@@ -211,6 +224,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     return JavaPsiFacade.getInstance(myProject).findClass(getClassName(), GlobalSearchScope.allScope(myProject));
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
 

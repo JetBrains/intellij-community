@@ -102,7 +102,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         for (BookmarkItem item : list.getSelectedValuesList()) {
           if (item != null) {
             itemChosen(item, project, popup, true);

@@ -1,13 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
+import com.intellij.concurrency.JobScheduler
 import com.intellij.testFramework.assertConcurrent
+import com.intellij.testFramework.assertConcurrentPromises
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class AsyncPromiseTest {
   @Test
@@ -35,25 +40,36 @@ class AsyncPromiseTest {
   fun state() {
     val promise = AsyncPromise<String>()
     val count = AtomicInteger()
+    val log = StringBuffer()
 
-    val r = {
-      promise
-        .onSuccess { count.incrementAndGet() }
+    class Incrementer(val descr:String) : ()->Promise<String> {
+      override fun toString(): String {
+        return descr
+      }
+
+      override fun invoke(): Promise<String> {
+        return promise.onSuccess { count.incrementAndGet(); log.append("\n" + this + " " + System.identityHashCode(this)) }
+      }
     }
 
-    val s = {
+    val setResulter: () -> Promise<String> = {
       promise.setResult("test")
+      promise
     }
 
     val numThreads = 30
-    assertConcurrent(*Array(numThreads, {
-      if ((it and 1) == 0) r else s
-    }))
+    val array = Array(numThreads) {
+      if ((it and 1) == 0) Incrementer("handler $it") else setResulter
+    }
+    assertConcurrentPromises(*array)
 
+    if (count.get() != (numThreads / 2)) {
+      fail("count: "+count +" "+ log.toString()+"\n---Array:\n"+ Arrays.toString(array))
+    }
     assertThat(count.get()).isEqualTo(numThreads / 2)
     assertThat(promise.get()).isEqualTo("test")
 
-    r()
+    Incrementer("extra").invoke()
     assertThat(count.get()).isEqualTo((numThreads / 2) + 1)
   }
 
@@ -130,4 +146,19 @@ class AsyncPromiseTest {
     r()
     assertThat(count.get()).isEqualTo(numThreads + 1)
   }
+
+  @Test
+  fun collectResultsMustReturnArrayWithTheSameOrder() {
+    val promise0 = AsyncPromise<String>()
+    val promise1 = AsyncPromise<String>()
+    val f0 = JobScheduler.getScheduler().schedule({ promise0.setResult("0") }, 10, TimeUnit.SECONDS)
+    val f1 = JobScheduler.getScheduler().schedule({ promise1.setResult("1") }, 1, TimeUnit.SECONDS)
+    val list = Arrays.asList(promise0, promise1)
+    val results = list.collectResults()
+    val l = results.blockingGet(1, TimeUnit.MINUTES)
+    assertEquals(listOf("0", "1"), l)
+    f0.get();
+    f1.get();
+  }
+
 }
