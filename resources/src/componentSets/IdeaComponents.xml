@@ -11,9 +11,11 @@
     <component>
       <implementation-class>com.intellij.openapi.util.registry.RegistryState</implementation-class>
     </component>
+    <!-- Android Studio: this service is not used, we have our on statistics jobs in AndroidStudioInitializer
     <component>
       <implementation-class>com.intellij.internal.statistic.updater.StatisticsJobsScheduler</implementation-class>
     </component>
+    -->
     <component>
       <interface-class>com.intellij.openapi.project.impl.ProjectStoreClassProvider</interface-class>
       <implementation-class>com.intellij.configurationStore.PlatformLangProjectStoreClassProvider</implementation-class>
