@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.AsyncExecution.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashSet
@@ -12,6 +13,7 @@ import kotlinx.coroutines.experimental.*
 import java.lang.UnsupportedOperationException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -63,15 +65,45 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       }
     }
 
-  protected open fun createCoroutineDispatcher(): DelegateDispatcher =
+  protected open fun createCoroutineDispatcher(): FallbackDispatcherSupport =
     RescheduleAttemptLimitAwareDispatcher(dispatcher)
 
   /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
-  internal abstract class DelegateDispatcher(val delegate: CoroutineDispatcher) : CoroutineDispatcher() {
+  internal abstract class FallbackDispatcherSupport : CoroutineDispatcher() {
     abstract val isChainFallback: Boolean
 
     open fun initializeJob(job: Job) = Unit
 
+    // This is a hackish workaround to ensure execution throws at the suspension point we resume at.
+    // Otherwise, it is possible that it resumes from, say, channel.receive() running in
+    // the fallback (that is, invalid) execution context.
+    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
+      return super.interceptContinuation(object : Continuation<T> by continuation {
+        private fun getFallbackException(throwable: Throwable) =
+          ExceptionUtil.findCause(throwable, FallbackDispatchCancellationException::class.java)
+
+        override fun resume(value: T) {
+          val job = context[Job]!!
+          if (job.isCancelled) {
+            getFallbackException(job.getCancellationException())?.let {
+              return continuation.resumeWithException(it)
+            }
+          }
+          continuation.resume(value)
+        }
+
+        override fun resumeWithException(exception: Throwable) {
+          continuation.resumeWithException(getFallbackException(exception) ?: exception)
+        }
+
+        override fun toString() = continuation.toString()
+      })
+    }
+
+  }
+
+  /** A CoroutineDispatcher which dispatches after ensuring its delegate is dispatched. */
+  internal abstract class DelegateDispatcher(val delegate: CoroutineDispatcher) : FallbackDispatcherSupport() {
     override fun isDispatchNeeded(context: CoroutineContext) = true  // because of the need to check the delegate
   }
 
@@ -242,6 +274,8 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
     }
   }
 
+  open class FallbackDispatchCancellationException internal constructor(message: String) : CancellationException(message)
+
   /**
    * Thrown at a cancellation point when the executor is unable to arrange the requested context after a reasonable number of attempts.
    *
@@ -249,11 +283,11 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
    *          The fallback context is EDT with a proper modality state, no other guarantee is made.
    */
   class TooManyRescheduleAttemptsException internal constructor(lastConstraints: Collection<CoroutineDispatcher>)
-    : CancellationException("Too many reschedule requests, probably constraints can't be satisfied all together: " +
-                            lastConstraints.joinToString())
+    : FallbackDispatchCancellationException("Too many reschedule requests, probably constraints can't be satisfied all together: " +
+                                            lastConstraints.joinToString())
 
   class DisposedException(disposable: Disposable)
-    : CancellationException("Already disposed: $disposable")
+    : FallbackDispatchCancellationException("Already disposed: $disposable")
 
   companion object {
     internal val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
@@ -287,7 +321,14 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
       val primaryDispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
       val fallbackDispatcher = primaryDispatcher?.chainFallbackDispatcher ?: this.chainFallbackDispatcher
 
-      fallbackDispatcher.dispatchIfNeededOrInvoke(context, block)
+//      fallbackDispatcher.dispatchIfNeededOrInvoke(context, block)
+      if (fallbackDispatcher !== Unconfined) {
+        // Invoke later unconditionally to avoid running arbitrary code from inside dispose() handler.
+        fallbackDispatcher.dispatch(context, Runnable { block() })
+      }
+      else {
+        block()
+      }
     }
 
     private fun tryRegisterDisposable(parent: Disposable, child: Disposable): Boolean {
